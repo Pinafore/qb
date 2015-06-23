@@ -255,6 +255,31 @@ class QuestionDatabase:
             if nn > min_count:
                 yield aa
 
+    def prune_text(self):
+        """
+        Remove sentences that do not have an entry in the database
+        """
+
+        c = self._conn.cursor()
+        command = 'select id from questions group by id'
+        c.execute(command)
+        questions = set(x for x in c)
+
+        c = self._conn.cursor()
+        command = 'select question from text group by question'
+        c.execute(command)
+        text = set(x for x in c)
+
+        orphans = text - questions
+
+        c = self._conn.cursor()
+        for ii in orphans:
+            command = 'delete from text where question=%i' % ii
+            c.execute(command)
+        print("Keeping %i Pruning %i" % (len(questions - orphans),
+                                         len(orphans)))
+        self._conn.commit()
+
     def page_by_count(self, min_count=1):
         """
         Return all answers that appear at least the specified number
@@ -352,16 +377,7 @@ class QuestionDatabase:
 
 
 if __name__ == "__main__":
-    from util import flags
-
-    flags.define_string("db_location", None, "Location of database")
-    flags.InitFlags()
-
-    db = QuestionDatabase(flags.db_location)
-    print("\t".join(list(db.categories())))
-
+    db = QuestionDatabase("data/non_naqt.db")
     print(list(db.answer_by_count("Literature", 3)))
 
     print(list(db.text_by_answer("Kazuo _Ishiguro_", "Literature")))
-
-    db.set_assoiated_page('Literature', "_All the King's Men_", "All the King's Men", "work")
