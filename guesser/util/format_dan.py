@@ -1,4 +1,4 @@
-from qdb import *
+from util.qdb import *
 import string, cPickle
 import regex
 
@@ -67,8 +67,8 @@ class Preprocessor:
 
 if __name__ == "__main__":
     thresh = 5
-    pp = Preprocessor('../data/ners')
-    db = QuestionDatabase('../data/questions.db')
+    pp = Preprocessor('data/common/ners')
+    db = QuestionDatabase('data/questions.db')
     for ans in db.page_by_count(min_count=thresh):
         print ans
     pages = set(db.page_by_count(min_count=thresh))
@@ -91,8 +91,8 @@ if __name__ == "__main__":
                 print 'done with ', i
 
         print fold, len(proc_fold)
-        cPickle.dump(proc_fold, open('../data/deep/' + fold + str(thresh), 'wb'), \
+        cPickle.dump(proc_fold, open('data/deep/' + fold, 'wb'),
                     protocol=cPickle.HIGHEST_PROTOCOL)
 
-    cPickle.dump((pp.vocab, pp.vdict), open('../data/deep/vocab', 'wb'), \
+    cPickle.dump((pp.vocab, pp.vdict), open('data/deep/vocab', 'wb'), \
                 protocol=cPickle.HIGHEST_PROTOCOL)
