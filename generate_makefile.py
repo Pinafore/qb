@@ -37,12 +37,39 @@ if __name__ == "__main__":
     # -------------------------------------------------------
 """)
 
+    # Glove data
+    o.write("data/deep/glove.840B.300d.txt.gz:\n")
+    o.write("\tmkdir -p data/deep\n")
+    o.write("\tcurl http://www-nlp.stanford.edu/data/glove.840B.300d.txt.gz")
+    o.write(" > $@\n\n")
+
+    # Deep guesser
+    o.write("data/deep/params.pkl: data/deep/glove.840B.300d.txt.gz\n")
+    o.write("\tpython guesser/util/format_dan.py\n")
+    o.write("\tpython guesser/util/load_embeddings.py\n")
+    o.write("\tpython guesser/dan.py\n\n")
+
     # Classifiers
     for cc in kCLASSIFIER_FIELDS:
         o.write("data/classifier/%s.pkl: " % cc)
         o.write("util/classifier.py extractors/classifier.py\n")
         o.write("\tpython util/classifier.py --attribute %s\n\n"
                 % cc)
+
+    # Generate per sentence text files
+    o.write("data/wikifier/input: util/wikification.py\n")
+    o.write("\trm -rf $@\n")
+    o.write("\tmkdir -p $@\n")
+    o.write("\tpython util/wikification.py\n")
+
+    # Generate wiki links data
+    o.write("data/wikifier/output: data/wikifier/input\n")
+    o.write("\trm -rf $@\n")
+    o.write("\tmkdir -p $@\n")
+    o.write("\tjava -Xmx10G -jar ")
+    o.write("lib/wikifier-3.0-jar-with-dependencies.jar ")
+    o.write("-annotateData data/wikifier/input $@ ")
+    o.write("false lib/STAND_ALONE_GUROBI.xml\n\n")
 
     # Generate IR lookups for categories if a boolean is true
     if kIR_CATEGORIES:
@@ -69,7 +96,6 @@ if __name__ == "__main__":
         o.write("--min_answers=2 ")
         o.write("--whoosh_index=data/ir/whoosh_wiki\n\n")
 
-
     # Rule for generating IR lookup
     for cc in kIR_CUTOFFS:
         o.write("data/ir/whoosh_wiki_%i: util/build_whoosh.py\n" % cc)
@@ -88,7 +114,7 @@ if __name__ == "__main__":
         o.write("--use_qb\n\n")
 
     # Rule for generating the guess list
-    o.write("data/guesses.db: extract_features.py")
+    o.write("data/guesses.db: extract_features.py ")
     o.write("\n")
     o.write("\tpython extract_features.py --guesses " +
             "--guess_db=data/temp_guesses.db\n\n")
@@ -393,6 +419,7 @@ if __name__ == "__main__":
     o.write(" ".join(feature_prereq))
     o.write("\n\tmkdir -p features/expo")
     o.write("\n\tmkdir -p results/expo")
+    o.write("\n\trm data/expo_guess.db")
     o.write("\n\tpython extract_expo_features.py")
     o.write("\n\n")
 
@@ -459,7 +486,7 @@ if __name__ == "__main__":
         o.write("\tpython reporting/evaluate_predictions.py ")
         o.write("--buzzes=$@ ")
         o.write("--qbdb=%s " % kQBDB)
-        o.write("--question_out=results/expo/questions.csv ")
+        o.write("--question_out='' ")
         o.write("--meta=features/expo/word.meta ")
         o.write("--perf=results/expo/word.%i.%s.perf " %
                             (int(ww), kFINAL_MOD))

@@ -4,11 +4,11 @@ from collections import Counter
 
 # given a vocab (list of words), return a word embedding matrix
 if __name__ == '__main__':
-    
-    vec_file = gzip.open('../data/glove.840B.300d.txt.gz', 'r')
+
+    vec_file = gzip.open('data/deep/glove.840B.300d.txt.gz', 'r')
     all_vocab = {}
     print 'loading vocab...'
-    vocab, wmap = cPickle.load(open('../data/deep/vocab', 'rb'))
+    vocab, wmap = cPickle.load(open('data/deep/vocab', 'rb'))
 
     for line in vec_file:
         split = line.split()
@@ -43,4 +43,4 @@ if __name__ == '__main__':
     print 'We shape: ', We.shape
 
     print 'dumping...'
-    cPickle.dump( We, open('../data/deep/We', 'wb'), protocol=cPickle.HIGHEST_PROTOCOL)
+    cPickle.dump( We, open('data/deep/We', 'wb'), protocol=cPickle.HIGHEST_PROTOCOL)

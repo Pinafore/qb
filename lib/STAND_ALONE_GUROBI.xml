@@ -5,15 +5,15 @@ Pre-populating the configuration with preset can reduce the cluttering in this f
 please make sure you understand what each preset does.-->
 <wikifierConfigurations>
     <paths>
-        <protobufferAccessDir>data/Lucene4Index/</protobufferAccessDir>
-        <wikiRelationIndexDir>data/WikiData/Index/WikiRelation/</wikiRelationIndexDir>
-        <models>data/Models/TitleMatchPlusLexicalPlusCoherence/</models>
-        <titleStringIndex>data/WikiData/Index/TitleAndRedirects/</titleStringIndex>
-        <wordnetConfig>configs/jwnl_properties.xml</wordnetConfig>
-        <stopwords>data/OtherData/stopwords_big</stopwords>
-        <wordNetDictionaryPath>data/WordNet/</wordNetDictionaryPath>
-        <nerConfig>configs/NER.config</nerConfig>
-        <neSimPath>data/NESimdata/config.txt</neSimPath>
+        <protobufferAccessDir>data/wikifier/Lucene4Index/</protobufferAccessDir>
+        <wikiRelationIndexDir>data/wikifier/WikiData/Index/WikiRelation/</wikiRelationIndexDir>
+        <models>data/wikifier/Models/TitleMatchPlusLexicalPlusCoherence/</models>
+        <titleStringIndex>data/wikifier/WikiData/Index/TitleAndRedirects/</titleStringIndex>
+        <wordnetConfig>data/wikifier/configs/jwnl_properties.xml</wordnetConfig>
+        <stopwords>data/wikifier/OtherData/stopwords_big</stopwords>
+        <wordNetDictionaryPath>data/wikifier/WordNet/</wordNetDictionaryPath>
+        <nerConfig>data/wikifier/configs/NER.config</nerConfig>
+        <neSimPath>data/wikifier/NESimdata/config.txt</neSimPath>
     </paths>
     <parameters>
         <minLinkability>0.05</minLinkability>
