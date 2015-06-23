@@ -47,12 +47,12 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
 
             # compute error
             delta = zeros((d, 1))
-            
+
             # randomly sample 100 wrong answers
             inds = array([w_ind for w_ind in random.randint(0, L.shape[1], 100)])
             wrong_ans = L[:, inds]
             prod = wrong_ans.T.dot(p3)
-                
+
             base = 1 - comp.T.dot(p3)
             delta_base = -1 * comp.ravel()
             a = base + prod
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--do_val', help='check performance on dev set after this many\
                          epochs', type=int, default=50)
     parser.add_argument('-o', '--output', help='desired location of output model', \
-                         default='models/params')
+                         default='data/deep/params')
 
     args = vars(parser.parse_args())
     d = args['d']
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
         # create mini-batches
         random.shuffle(train_qs)
-        batches = [train_qs[x : x + args['batch_size']] for x in xrange(0, len(train_qs), 
+        batches = [train_qs[x : x + args['batch_size']] for x in xrange(0, len(train_qs),
                    args['batch_size'])]
 
         epoch_error = 0.0

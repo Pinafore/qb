@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- This is an auto-generated configuration file. Manually set options will override
+the parameter presets. To set a parameter to null, simply delete the correspoding xml tags.
+Pre-populating the configuration with preset can reduce the cluttering in this file but
+please make sure you understand what each preset does.-->
+<wikifierConfigurations>
+    <paths>
+        <protobufferAccessDir>data/Lucene4Index/</protobufferAccessDir>
+        <wikiRelationIndexDir>data/WikiData/Index/WikiRelation/</wikiRelationIndexDir>
+        <models>data/Models/TitleMatchPlusLexicalPlusCoherence/</models>
+        <titleStringIndex>data/WikiData/Index/TitleAndRedirects/</titleStringIndex>
+        <wordnetConfig>configs/jwnl_properties.xml</wordnetConfig>
+        <stopwords>data/OtherData/stopwords_big</stopwords>
+        <wordNetDictionaryPath>data/WordNet/</wordNetDictionaryPath>
+        <nerConfig>configs/NER.config</nerConfig>
+        <neSimPath>data/NESimdata/config.txt</neSimPath>
+    </paths>
+    <parameters>
+        <minLinkability>0.05</minLinkability>
+        <minSurfaceLen>3.0</minSurfaceLen>
+        <maxCandidatesToGenerateInitially>20</maxCandidatesToGenerateInitially>
+        <EXCLUDE_DISAMBIGUATION_PAGE>true</EXCLUDE_DISAMBIGUATION_PAGE>
+        <GENERATE_CONTEXTUAL_CANDIDATES>true</GENERATE_CONTEXTUAL_CANDIDATES>
+        <GENERATE_LONG_ENTITIES>true</GENERATE_LONG_ENTITIES>
+        <UNINDEXED_AS_NULL>true</UNINDEXED_AS_NULL>
+        <USE_LEXICAL_SEARCH_HEURSTICS>true</USE_LEXICAL_SEARCH_HEURSTICS>
+        <USE_SPELL_CHECK>true</USE_SPELL_CHECK>
+        <USE_FUZZY_SEARCH>true</USE_FUZZY_SEARCH>
+        <USE_COREF>false</USE_COREF>
+        <DISABLE_LOC_COREF>true</DISABLE_LOC_COREF>
+        <USE_RELATIONAL_INFERENCE>true</USE_RELATIONAL_INFERENCE>
+        <RESOLVE_NOMINAL_COREF>false</RESOLVE_NOMINAL_COREF>
+        <useLexicalFeaturesNaive>false</useLexicalFeaturesNaive>
+        <unambiguousThreshold>0.99</unambiguousThreshold>
+        <disallowEntityOverlap>false</disallowEntityOverlap>
+        <useNestedNER>true</useNestedNER>
+        <useOnlyConditionalTitleProbabilitiesInTitleMatchFeatures>false</useOnlyConditionalTitleProbabilitiesInTitleMatchFeatures>
+        <useLexicalFeaturesReweighted>true</useLexicalFeaturesReweighted>
+        <useUnambiguousInDisambiguationContext>false</useUnambiguousInDisambiguationContext>
+        <useNamedEntitiesInDisambiguationContext>false</useNamedEntitiesInDisambiguationContext>
+        <useAllSurfaceFormsInDisambiguationContext>true</useAllSurfaceFormsInDisambiguationContext>
+        <useOnlyLinkedSurfaceFormsForDisambiguationContext>true</useOnlyLinkedSurfaceFormsForDisambiguationContext>
+        <useCoherenceFeatures>true</useCoherenceFeatures>
+        <useGoldSolutionsForCoherence>false</useGoldSolutionsForCoherence>
+        <generateFeaturesConjunctions>false</generateFeaturesConjunctions>
+        <numCandidatesAtCoherenceLevel>3</numCandidatesAtCoherenceLevel>
+        <preset>STAND_ALONE_GUROBI</preset>
+    </parameters>
+    <settings>
+        <annotateNER>true</annotateNER>
+        <annotateCOREF>false</annotateCOREF>
+        <annotateSHALLOW_PARSE>true</annotateSHALLOW_PARSE>
+        <featureExtractionThreadCount>AUTO</featureExtractionThreadCount>
+        <wikiAccessProvider>Lucene</wikiAccessProvider>
+        <bypassCurator>true</bypassCurator>
+    </settings>
+</wikifierConfigurations>
