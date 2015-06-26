@@ -66,4 +66,5 @@ def evaluate(train_qs, test_qs, params, d):
     print ''
 
     print 'dumping classifier'
-    cPickle.dump(classifier, open('models/classifier', 'wb'), protocol=cPickle.HIGHEST_PROTOCOL)
+    cPickle.dump(classifier, open('data/deep/classifier', 'wb'),
+                 protocol=cPickle.HIGHEST_PROTOCOL)

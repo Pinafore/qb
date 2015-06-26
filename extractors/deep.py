@@ -73,7 +73,7 @@ class DeepExtractor(FeatureExtractor):
             p = relu(np.dot(W, av) + b)
             p2 = relu(np.dot(W2, p) + b2)
             p3 = relu(np.dot(W3, p2) + b3)
-        
+
         else:
             p3 = np.zeros((self.d, 1))
 
@@ -105,7 +105,7 @@ class DeepExtractor(FeatureExtractor):
             p = relu(np.dot(W, av) + b)
             p2 = relu(np.dot(W2, p) + b2)
             p3 = relu(np.dot(W3, p2) + b3)
-        
+
         else:
             p3 = np.zeros((self.d, 1))
 
@@ -123,13 +123,13 @@ class DeepExtractor(FeatureExtractor):
         c = Counter()
         for k,v in preds._prob_dict.items():
             c[k] = v
-        
+
         res = defaultdict(dict)
         for k,v in c.most_common(self._limit):
             try:
                 res[self.page_dict[self.vocab[k]]][0] = v
             except KeyError:
-                # Workaround for odd unicode issues (Jordan)             
+                # Workaround for odd unicode issues (Jordan)
                 try:
                     html_parser
                 except NameError:
@@ -144,13 +144,13 @@ class DeepExtractor(FeatureExtractor):
         return res
 
     # return softmax probability of title given text
-    ## to-do (mohit): cache probdist for given text, so if we've already computed 
+    ## to-do (mohit): cache probdist for given text, so if we've already computed
     ##                it then we can just look it up later
     def score_one_guess(self, title, text):
 
         if isinstance(text, list):
             text = ' '.join(text)
-        
+
         # lowercase and concatenate title words
         title = title.lower().replace(' ', '_')
 
@@ -183,7 +183,7 @@ class DeepExtractor(FeatureExtractor):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Demo for deep guesser")
-    parser.add_argument("--classifier", default="data/deep/lr_classifier.pkl",
+    parser.add_argument("--classifier", default="data/deep/classifier",
                         help="Location of classifier pickle")
     parser.add_argument("--params", default="data/deep/params.pkl",
                         help="Location of parameter pickle")
@@ -191,7 +191,6 @@ if __name__ == "__main__":
                         help="Location of vocab pickle")
     parser.add_argument("--ners", default="data/common/ners.pkl",
                         help="Location of NER pickle")
-
     flags = parser.parse_args()
 
     import time
@@ -201,7 +200,7 @@ if __name__ == "__main__":
     questions = questions = QuestionDatabase("data/questions.db")
     page_dict = {}
     for page in questions.get_all_pages():
-        page_dict[page.lower().replace(' ', '_')] = page    
+        page_dict[page.lower().replace(' ', '_')] = page
     ws = DeepExtractor(flags.classifier, flags.params, flags.vocab, flags.ners,
                        page_dict)
 
@@ -215,7 +214,7 @@ if __name__ == "__main__":
     German folk hero, the subject of an opera by Wagner [VAHG-ner]."""
 
     guesses = ["Arkansas", "Australia", u"Tannhäuser (opera)", "William Shakespeare"]
-    
+
     for ii in tests:
         print(ii)
 
@@ -225,4 +224,3 @@ if __name__ == "__main__":
             end = time.time()
             print("Score for %s: %f computed in %f seconds" %
                   (gg, score, end-start))
-

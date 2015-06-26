@@ -24,12 +24,10 @@ from nltk.corpus import stopwords
 
 from feature_extractor import FeatureExtractor
 
-kIR_CUTOFFS = [5]
 kNEG_INF = float("-inf")
 kQB_STOP = set(["10", "ten", "points", "tenpoints", "one", "name", ",", ")",
                 "``", "(", '"', ']', '[', ":", "due", "!", "'s", "''"])
 kQUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
-kIR_CATEGORIES = False
 
 paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize

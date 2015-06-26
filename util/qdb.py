@@ -292,7 +292,9 @@ class QuestionDatabase:
         c.execute(command)
 
         for aa, nn in c:
-            if nn > min_count:
+            if nn < min_count:
+                continue
+            else:
                 yield aa
 
     def text_by_answer(self, answer, category):

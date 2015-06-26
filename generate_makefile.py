@@ -1,22 +1,13 @@
 from extract_features import kGRANULARITIES, kFEATURES, kFOLDS
 from util.reweight_labels import kNEG_WEIGHTS
 from util.qdb import QuestionDatabase
-from extractors.ir import kIR_CUTOFFS, kIR_CATEGORIES
 from extractors.classifier import kCLASSIFIER_FIELDS
 
-kVWOPT = {"mohit": "--early_terminate 100 -k -b 24 --loss_function logistic",
-#"16_log_quad": "-k -b 16 -q gl --loss_function logistic",
-#          "16_log_qd_l1~1e-1": "-k -b 16 -q gl --loss_function logistic --l1 0.1",
-#          "16_log_qd_l1~1": "-k -b 16 -q gl --loss_function logistic --l1 1",
-#          "16_log_qd_l1~10": "-k -b 16 -q gl --loss_function logistic --l1 10",
-#          "16_log_qd_l1~100": "-k -b 16 -q gl --loss_function logistic --l1 100",
-#          "16_log_qd_l2~1e-1": "-k -b 16 -q gl --loss_function logistic --l2 0.1",
-#          "16_log_qd_l2~1": "-k -b 16 -q gl --loss_function logistic --l2 1",
-#          "16_log_qd_l2~10": "-k -b 16 -q gl --loss_function logistic --l2 10",
-#          "16_log_qd_l2~100": "-k -b 16 -q gl --loss_function logistic --l2 100"
-}
+kMIN_APPEARANCES = 4
+kVWOPT = {"mohit": "--early_terminate 100 -k -b 24 --loss_function logistic"}
 kQBDB = "data/questions.db"
 kFINAL_MOD = "mohit"
+
 assert kFINAL_MOD in kVWOPT, "Final model (%s) not in the set of VW models" % \
     kFINAL_MOD
 
@@ -44,8 +35,9 @@ if __name__ == "__main__":
     o.write(" > $@\n\n")
 
     # Deep guesser
-    o.write("data/deep/params.pkl: data/deep/glove.840B.300d.txt.gz\n")
-    o.write("\tpython guesser/util/format_dan.py\n")
+    o.write("data/deep/params: data/deep/glove.840B.300d.txt.gz\n")
+    o.write("\tpython guesser/util/format_dan.py ")
+    o.write("--database=%s --threshold=%i\n" % (kQBDB, kMIN_APPEARANCES))
     o.write("\tpython guesser/util/load_embeddings.py\n")
     o.write("\tpython guesser/dan.py\n\n")
 
@@ -53,51 +45,27 @@ if __name__ == "__main__":
     for cc in kCLASSIFIER_FIELDS:
         o.write("data/classifier/%s.pkl: " % cc)
         o.write("util/classifier.py extractors/classifier.py\n")
-        o.write("\tpython util/classifier.py --attribute %s\n\n"
+        o.write("\tmkdir -p data/classifier\n")
+        o.write("\tpython util/classifier.py --attribute=%s\n\n"
                 % cc)
 
     # Generate per sentence text files
-    o.write("data/wikifier/input: util/wikification.py\n")
+    o.write("data/wikifier/data/input: util/wikification.py\n")
     o.write("\trm -rf $@\n")
     o.write("\tmkdir -p $@\n")
-    o.write("\tpython util/wikification.py\n")
+    o.write("\tpython util/wikification.py\n\n")
 
     # Generate wiki links data
-    o.write("data/wikifier/output: data/wikifier/input\n")
+    o.write("data/wikifier/data/output: data/wikifier/data/input\n")
     o.write("\trm -rf $@\n")
     o.write("\tmkdir -p $@\n")
-    o.write("\tjava -Xmx10G -jar ")
-    o.write("lib/wikifier-3.0-jar-with-dependencies.jar ")
-    o.write("-annotateData data/wikifier/input $@ ")
-    o.write("false lib/STAND_ALONE_GUROBI.xml\n\n")
-
-    # Generate IR lookups for categories if a boolean is true
-    if kIR_CATEGORIES:
-        qbdb = QuestionDatabase("data/questions.db")
-        cats = qbdb.column_options("category")
-        print(cats)
-        o.write(" ".join("data/ir/whoosh_qb_%s" % x for x in cats))
-        o.write(": util/build_segmented_whoosh.py\n")
-        for cc in cats:
-            o.write("\trm -rf data/ir/whoosh_qb_%s\n" % cc)
-
-        o.write("\tpython util/build_segmented_whoosh.py --use_qb ")
-        o.write("--classifier=data/classifier/category.pkl ")
-        o.write("--whoosh_index=data/ir/whoosh_qb ")
-        o.write("--min_answers=2\n\n")
-
-        o.write(" ".join("data/ir/whoosh_wiki_%s" % x for x in cats))
-        o.write(": util/build_segmented_whoosh.py\n")
-        for ii in cats:
-            o.write("\trm -rf data/ir/whoosh_wiki_%s\n" % cc)
-
-        o.write("\tpython util/build_segmented_whoosh.py --use_wiki ")
-        o.write("--classifier=data/classifier/category_classifier.pkl ")
-        o.write("--min_answers=2 ")
-        o.write("--whoosh_index=data/ir/whoosh_wiki\n\n")
+    o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
+    o.write("../../lib/wikifier-3.0-jar-with-dependencies.jar ")
+    o.write("-annotateData data/input data/output ")
+    o.write("false ../../lib/STAND_ALONE_GUROBI.xml)\n\n")
 
     # Rule for generating IR lookup
-    for cc in kIR_CUTOFFS:
+    for cc in [kMIN_APPEARANCES]:
         o.write("data/ir/whoosh_wiki_%i: util/build_whoosh.py\n" % cc)
         o.write("\trm -rf $@\n")
         o.write("\tmkdir -p $@\n")
@@ -114,15 +82,16 @@ if __name__ == "__main__":
         o.write("--use_qb\n\n")
 
     # Rule for generating the guess list
-    o.write("data/guesses.db: extract_features.py ")
+    o.write("data/guesses.db: extract_features.py data/deep/params")
     o.write("\n")
     o.write("\tpython extract_features.py --guesses " +
+            "--ans_limit=%i" % kMIN_APPEARANCES +
             "--guess_db=data/temp_guesses.db\n\n")
     o.write("\tcp data/temp_guesses.db $@\n\n")
 
     # Rule for generating LM model
     o.write("data/lm.pkl: extractors/lm.py\n")
-    o.write("\tpython extractors/lm.py --min_answers=5\n\n")
+    o.write("\tpython extractors/lm.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
 
     # Generate rules for generating the features
     for gg in kGRANULARITIES:
@@ -144,20 +113,11 @@ if __name__ == "__main__":
             if ff == "ir":
                 o.write(" ")
                 o.write(" ".join("data/ir/whoosh_wiki_%i data/ir/whoosh_qb_%i"
-                                 % (x, x) for x in kIR_CUTOFFS))
-                for cc in kIR_CUTOFFS:
+                                 % (x, x) for x in [kMIN_APPEARANCES]))
+                for cc in [kMIN_APPEARANCES]:
                     feature_prereq.add("data/ir/whoosh_wiki_%i" % cc)
                     feature_prereq.add("data/ir/whoosh_qb_%i" % cc)
 
-                if kIR_CATEGORIES:
-                    o.write(" ")
-                    o.write(" ".join("data/ir/whoosh_qb_%s" % x for x in cats))
-                    o.write(" ")
-                    category_indices = ["data/ir/whoosh_wiki_%s" %
-                                        x for x in cats]
-                    o.write(" ".join(category_indices))
-                    for cc in category_indices:
-                        feature_prereq.add(cc)
             if ff == "lm":
                 o.write(" ")
                 o.write("data/lm.pkl")

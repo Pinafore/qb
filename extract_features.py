@@ -9,17 +9,18 @@ from unidecode import unidecode
 from numpy import var, mean
 
 from util.qdb import QuestionDatabase
-from extractors.ir import IrExtractor, kIR_CUTOFFS, kIR_CATEGORIES
+from extractors.ir import IrExtractor
 from extractors.text import TextExtractor
 from feature_extractor import FeatureExtractor
 from extractors.lm import *
 from extractors.deep import *
 from extractors.classifier import *
+from extractors.wikilinks import *
 from extractors.title_not_in_qtext import TitleNotinQTextExtractor
 
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
-    # ("text", None), # ("title_not_in_qtext", None), Not working for me
-    ("classifier", None)
+    ("title_not_in_qtext", None),
+    ("classifier", None), ("wikilinks", None),
     ])
 
 # Add features that actually guess
@@ -123,9 +124,11 @@ def instantiate_feature(feature_name, questions):
         page_dict = {}
         for page in questions.get_all_pages():
             page_dict[page.lower().replace(' ', '_')] = page
-        feature = DeepExtractor("data/deep/lr_classifier.pkl", \
-            "data/deep/params.pkl", "data/deep/deep_vocab.pkl", \
-            "data/common/ners.pkl", page_dict, 200)
+        feature = DeepExtractor("data/deep/classifier", \
+            "data/deep/params", "data/deep/vocab", \
+            "data/common/ners", page_dict, 200)
+    elif feature_name == "wikilinks":
+        feature = WikiLinks()
     elif feature_name == "title_not_in_qtext":
         feature = TitleNotinQTextExtractor(questions)
     elif feature_name == "label":
@@ -378,7 +381,9 @@ if __name__ == "__main__":
         all_questions = questions.questions_with_pages()
         page_num = 0
         for page in all_questions:
-            if len(all_questions[page]) > flags.ans_limit:
+            if len(all_questions[page]) < flags.ans_limit:
+                continue
+            else:
                 print("%s\t%i" % (page, len(all_questions[page])))
                 question_num = 0
                 page_num += 1

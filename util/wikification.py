@@ -7,7 +7,7 @@ if __name__ == "__main__":
     parser.add_argument('--database', type=str, default='data/questions.db')
     parser.add_argument('--min_pages', type=int, default=4)
     parser.add_argument("--output_directory", type=str,
-                        default="data/wikifier/input/",
+                        default="data/wikifier/data/input/",
                         help="Where we write output file")
 
     flags = parser.parse_args()

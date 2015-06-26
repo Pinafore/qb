@@ -1,5 +1,7 @@
 from util.qdb import *
 import string, cPickle
+import argparse
+
 import regex
 
 class Preprocessor:
@@ -66,12 +68,20 @@ class Preprocessor:
 
 
 if __name__ == "__main__":
-    thresh = 5
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument("--database", type=str,
+                        default='data/questions.db',
+                        help="Question Database")
+    parser.add_argument("--threshold", type=int,
+                        default=5,
+                        help="Number of appearances")
+    flags = parser.parse_args()
+
     pp = Preprocessor('data/common/ners')
     db = QuestionDatabase('data/questions.db')
-    for ans in db.page_by_count(min_count=thresh):
+    for ans in db.page_by_count(min_count=flags.threshold):
         print ans
-    pages = set(db.page_by_count(min_count=thresh))
+    pages = set(db.page_by_count(min_count=flags.threshold))
     print len(pages)
     folds = ['train', 'test', 'devtest', 'dev']
     for fold in folds:

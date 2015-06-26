@@ -2,7 +2,7 @@
 
 Setups
 -----------
-0.  You'll need Python, R, and Vowpal Wabbit installed and accessible on the
+0.  You'll need Python, R, Gorobi, and Vowpal Wabbit installed and accessible on the
     path.
 
 1.  Make sure you have the question database, store it as data/questions.db
@@ -11,7 +11,13 @@ Setups
 several python packages you'll need.  (You may need admin access.)  This will
 also download some nltk data.
 
-3. Download the deep model / classifier here: https://www.dropbox.com/s/ly51cxnak0fqth5/deep.tar.gz?dl=0 and extract it to data/deep/
+3. Download the Illinois Wikifier code.  Place the data directory in
+   data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib
+   directory.
+
+http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
+
+4.  Copy the non_naqt.db to data/questions.db (or make a symbolic link)
 
 Steps
 -----------
@@ -31,6 +37,3 @@ Steps
 4. generate features, train all models, and get predictions
 
 ``make all_sentence_buzz``
-
-
-

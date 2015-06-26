@@ -18,14 +18,13 @@ from numpy import mean, var
 
 from util.build_whoosh import text_iterator
 from util.qdb import QuestionDatabase
-from extractors.ir import stopwords, kIR_CUTOFFS
+from extractors.ir import stopwords
 from feature_extractor import FeatureExtractor
 
 #kINTERP_CONSTANTS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 kINTERP_CONSTANTS = [0.9]
 kNEG_INF = -1e6
 kTOKENIZER = TreebankWordTokenizer().tokenize
-kMIN_PAGES = min(kIR_CUTOFFS)
 
 good_char = re.compile(r"[a-zA-Z0-9]*")
 
@@ -212,7 +211,7 @@ class LanguageModel(FeatureExtractor):
 
     def vw_from_title(self, title, text):
         self.set_sentence(text)
-        val = ["|lm"]
+        val = ["|%s" % self._name]
         for corpus in self._lm:
             max_ngram = 0.0
             ngram_count = 0
@@ -498,9 +497,7 @@ if __name__ == "__main__":
 
     combined = LanguageModel(flags.global_lms)
 
-    min_answers = kMIN_PAGES
-    if flags.min_answers > 0:
-        min_answers = max(flags.min_answers, kMIN_PAGES)
+    min_answers = flags.min_answers
     print("Training language model with pages that appear more than %i times" %
           min_answers)
 
