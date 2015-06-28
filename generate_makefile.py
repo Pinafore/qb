@@ -3,7 +3,7 @@ from util.reweight_labels import kNEG_WEIGHTS
 from util.qdb import QuestionDatabase
 from extractors.classifier import kCLASSIFIER_FIELDS
 
-kMIN_APPEARANCES = 4
+kMIN_APPEARANCES = 7
 kVWOPT = {"mohit": "--early_terminate 100 -k -b 24 --loss_function logistic"}
 kQBDB = "data/questions.db"
 kFINAL_MOD = "mohit"
@@ -35,6 +35,7 @@ if __name__ == "__main__":
     o.write(" > $@\n\n")
 
     # Deep guesser
+    feature_prereq.add("data/deep/params")
     o.write("data/deep/params: data/deep/glove.840B.300d.txt.gz\n")
     o.write("\tpython guesser/util/format_dan.py ")
     o.write("--database=%s --threshold=%i\n" % (kQBDB, kMIN_APPEARANCES))
