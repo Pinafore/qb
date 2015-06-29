@@ -86,7 +86,7 @@ if __name__ == "__main__":
     o.write("data/guesses.db: extract_features.py data/deep/params")
     o.write("\n")
     o.write("\tpython extract_features.py --guesses " +
-            "--ans_limit=%i" % kMIN_APPEARANCES +
+            "--ans_limit=%i " % kMIN_APPEARANCES +
             "--guess_db=data/temp_guesses.db\n\n")
     o.write("\tcp data/temp_guesses.db $@\n\n")
 

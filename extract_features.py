@@ -348,7 +348,8 @@ if __name__ == "__main__":
                         default="sentence")
     parser.add_argument("--limit", type=int, default=-1,
                         help="How many answer to write to feature files")
-    parser.add_argument("--ans_limit", type=int, default=5, help="minimum answer limit")
+    parser.add_argument("--ans_limit", type=int, default=5,
+                        help="minimum answer limit")
 
     flags = parser.parse_args()
 
