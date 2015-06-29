@@ -22,6 +22,8 @@ def text_iterator(use_wiki, wiki_location, use_qb, qb_location, limit,
     errors = {}
     for pp in sorted(pages, key=lambda k: len(pages[k]),
                      reverse=True):
+        # This bit of code needs to line up with the logic in qdb.py
+        # to have the same logic as the page_by_count function
         if len(pages[pp]) < min_pages:
             continue
 
