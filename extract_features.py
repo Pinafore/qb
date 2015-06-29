@@ -75,6 +75,7 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
             else:
                 feat = feature_generator.\
                     vw_from_title(pp, qq.get_text(ss, tt))
+            # print(pp, feat)
             yield ss, tt, pp, feat
 
 
@@ -460,6 +461,7 @@ if __name__ == "__main__":
                                                      unidecode(pp)))
                             assert feat is not None
                             o[qq.fold].write("%s\n" % feat)
+                            print(ss, tt, pp, feat)
                         o[qq.fold].flush()
 
                 if flags.limit > 0 and page_count > flags.limit:

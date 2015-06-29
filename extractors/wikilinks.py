@@ -4,7 +4,7 @@ import argparse
 from glob import glob
 from math import log
 
-from wikipedia.exceptions import DisambiguationError
+from wikipedia.exceptions import DisambiguationError, PageError
 from feature_extractor import FeatureExtractor
 from util.cached_wikipedia import CachedWikipedia
 from extractors.lm import good_char
@@ -21,6 +21,13 @@ class WikiLinks(FeatureExtractor):
         self._cache = -1
         self._matches = None
 
+    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+        FeatureExtractor.set_metadata\
+          (self, answer, category, qnum, sent, token, guesses, fold)
+        print(qnum, sent, token, answer)
+        if not qnum in self._links:
+            self.load_xml(qnum)
+
     def vw_from_title(self, title, text):
         if hash(text) != self._cache:
             self._cache = hash(text)
@@ -32,22 +39,32 @@ class WikiLinks(FeatureExtractor):
                         self._links[self._qnum].get(ii, {}).values())
 
             for jj in self._links[self._qnum].get(self._sent, []):
-                title, pos, index, score = self._links[self._qnum][ii][jj]
+                title, pos, index, score = \
+                    self._links[self._qnum][self._sent][jj]
                 if self._token > pos:
                     self._matches.add(title)
 
         total = 0
         matches = ["|%s" % self._name]
         display_title = "".join(x for x in good_char.findall(title) if x)
+        bad = set()
         for ii in [x for x in self._matches]:
             try:
                 page = self._wiki[ii]
             except DisambiguationError:
+                bad.add(ii)
                 continue
+            except PageError:
+                bad.add(ii)
+                continue
+
             if title in page.links:
                 norm = "".join(x for x in good_char.findall(ii) if x)
                 matches.append("%s_%s" % (norm, display_title))
                 total += 1
+        for ii in bad:
+            self._matches.remove(ii)
+
         matches.append("Total:%f" % log(1 + total))
         return " ".join(matches)
 
