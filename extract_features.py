@@ -19,7 +19,7 @@ from extractors.wikilinks import *
 from extractors.title_not_in_qtext import TitleNotinQTextExtractor
 
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
-    ("title_not_in_qtext", None),
+    ("title_not_in_qtext", None), # ("text", None),
     ("classifier", None), ("wikilinks", None),
     ])
 
@@ -40,7 +40,7 @@ if TitleNotinQTextExtractor.has_guess():
     kHAS_GUESSES.add("title_not_in_qtext")
 
 kGRANULARITIES = ["sentence"]
-kFOLDS = ["train", "dev", "devtest", "test"]
+kFOLDS = ["dev", "devtest", "test"]
 kNEGINF = float("-inf")
 
 
@@ -461,7 +461,7 @@ if __name__ == "__main__":
                                                      unidecode(pp)))
                             assert feat is not None
                             o[qq.fold].write("%s\n" % feat)
-                            print(ss, tt, pp, feat)
+                            # print(ss, tt, pp, feat)
                         o[qq.fold].flush()
 
                 if flags.limit > 0 and page_count > flags.limit:
