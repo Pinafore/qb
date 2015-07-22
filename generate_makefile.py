@@ -1,15 +1,15 @@
 from extract_features import kGRANULARITIES, kFEATURES, kFOLDS
+from extract_features import kMIN_APPEARANCES
 from util.reweight_labels import kNEG_WEIGHTS
-from util.qdb import QuestionDatabase
 from extractors.classifier import kCLASSIFIER_FIELDS
 
-kMIN_APPEARANCES = 7
 kVWOPT = {"mohit": "--early_terminate 100 -k -b 24 --loss_function logistic"}
 kQBDB = "data/questions.db"
 kFINAL_MOD = "mohit"
 
 assert kFINAL_MOD in kVWOPT, "Final model (%s) not in the set of VW models" % \
     kFINAL_MOD
+
 
 def base_feat(feat):
     if feat.startswith("ir"):

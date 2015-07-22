@@ -24,7 +24,7 @@ class WikiLinks(FeatureExtractor):
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         FeatureExtractor.set_metadata\
           (self, answer, category, qnum, sent, token, guesses, fold)
-        print(qnum, sent, token, answer)
+        # print(qnum, sent, token, answer)
         if not qnum in self._links:
             self.load_xml(qnum)
 
@@ -51,9 +51,6 @@ class WikiLinks(FeatureExtractor):
         for ii in [x for x in self._matches]:
             try:
                 page = self._wiki[ii]
-            except DisambiguationError:
-                bad.add(ii)
-                continue
             except PageError:
                 bad.add(ii)
                 continue
@@ -92,7 +89,7 @@ class WikiLinks(FeatureExtractor):
                     self._links[question][sentence] = {}
                 self._links[question][sentence][surface] = \
                     (page, start, id, score)
-        print self._links[question]
+        #print self._links[question]
 
 
 if __name__ == "__main__":

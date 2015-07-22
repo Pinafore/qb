@@ -18,6 +18,7 @@ from extractors.classifier import *
 from extractors.wikilinks import *
 from extractors.title_not_in_qtext import TitleNotinQTextExtractor
 
+kMIN_APPEARANCES = 7
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
     ("title_not_in_qtext", None), # ("text", None),
     ("classifier", None), ("wikilinks", None),
@@ -90,33 +91,19 @@ def instantiate_feature(feature_name, questions):
     print("Loading feature %s ..." % feature_name)
     if feature_name == "ir":
         feature = IrExtractor()
-        for cc in kIR_CUTOFFS:
-            wiki_mean = 0.0
-            wiki_var = 1.0
-            qb_mean = 0.0
-            qb_var = 1.0
 
-            feature.add_index("wiki_%i" % cc, "%s_%i" %
-                                      ("data/ir/whoosh_wiki", cc),
-                                      wiki_mean, wiki_var)
-            feature.add_index("qb_%i" % cc, "%s_%i" %
-                                      ("data/ir/whoosh_qb", cc),
-                                      qb_mean, qb_var)
-        if kIR_CATEGORIES:
-            categories = questions.column_options("category")
-            print("Adding categories %s" % str(categories))
-            for cc in categories:
-                wiki_mean = 0.0
-                wiki_var = 1.0
-                qb_mean = 0.0
-                qb_var = 1.0
+        wiki_mean = 0.0
+        wiki_var = 1.0
+        qb_mean = 0.0
+        qb_var = 1.0
 
-                feature.add_index("wiki_%s" % cc, "%s_%s" %
-                                  ("data/ir/whoosh_wiki", cc),
-                                  wiki_mean, wiki_var)
-                feature.add_index("qb_%s" % cc, "%s_%s" %
-                                  ("data/ir/whoosh_qb", cc),
-                                  qb_mean, qb_var)
+        feature.add_index("wiki_%i" % kMIN_APPEARANCES, "%s_%i" %
+                          ("data/ir/whoosh_wiki", kMIN_APPEARANCES),
+                          wiki_mean, wiki_var)
+        feature.add_index("qb_%i" % kMIN_APPEARANCES, "%s_%i" %
+                          ("data/ir/whoosh_qb", kMIN_APPEARANCES),
+                          qb_mean, qb_var)
+
     elif feature_name == "text":
         feature = TextExtractor()
     elif feature_name == "lm":
