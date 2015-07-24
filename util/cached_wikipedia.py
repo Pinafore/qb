@@ -95,19 +95,21 @@ class CachedWikipedia:
                                      list(raw.links),
                                      list(raw.categories))
                 print("Writing file to %s" % filename)
-                pickle.dump(page, open(filename, 'wb'))
+                pickle.dump(page, open(filename, 'wb'),
+                            protocol=pickle.HIGHEST_PROTOCOL)
             else:
                 print("Dummy page for %s" % key)
                 page = WikipediaPage()
                 if self._write_dummy:
-                    pickle.dump(page, open(filename, 'wb'))
+                    pickle.dump(page, open(filename, 'wb'),
+                                protocol=pickle.HIGHEST_PROTOCOL)
 
         self._cache[key] = page
         return page
 
 if __name__ == "__main__":
     cw = CachedWikipedia("data/wikipedia")
-    for ii in ["Camille_Saint-Saens", "Napoleon", "Langston Hughes", "Whigs_(British_political_party)", "Carthage", "Stanwix"]:
+    for ii in ["Camille_Saint-Saens", "Napoleon", "Langston Hughes", "Whigs_(British_political_party)", "Carthage", "Stanwix", "Lango people", "Lango language (Uganda)", "Keokuk"]:
         print("~~~~~")
         print(ii)
         start = time.time()
