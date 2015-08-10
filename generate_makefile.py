@@ -100,6 +100,7 @@ if __name__ == "__main__":
         o.write(" ".join("features/%s/%s.label.feat" % (x, gg)
                          for x in kFOLDS))
         o.write(": extract_features.py\n")
+
         for cc in kFOLDS:
             o.write("\tmkdir -p features/%s\n" % cc)
         o.write("\tpython extract_features.py --label --granularity=%s\n\n"
@@ -118,6 +119,11 @@ if __name__ == "__main__":
                 for cc in [kMIN_APPEARANCES]:
                     feature_prereq.add("data/ir/whoosh_wiki_%i" % cc)
                     feature_prereq.add("data/ir/whoosh_qb_%i" % cc)
+
+            if ff == "wikilinks":
+                o.write(" ")
+                o.write("data/wikifier/data/output")
+                feature_prereq.add("data/wikifier/data/output")
 
             if ff == "lm":
                 o.write(" ")
