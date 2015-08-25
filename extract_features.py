@@ -16,11 +16,11 @@ from extractors.lm import *
 from extractors.deep import *
 from extractors.classifier import *
 from extractors.wikilinks import *
-from extractors.title_not_in_qtext import TitleNotinQTextExtractor
+from extractors.answer_present import AnswerPresent
 
 kMIN_APPEARANCES = 7
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
-    ("title_not_in_qtext", None), # ("text", None),
+    ("answer_present", None), ("text", None),
     ("classifier", None), ("wikilinks", None),
     ])
 
@@ -37,8 +37,8 @@ if DeepExtractor.has_guess():
     kHAS_GUESSES.add("deep")
 if Classifier.has_guess():
     kHAS_GUESSES.add("classifier")
-if TitleNotinQTextExtractor.has_guess():
-    kHAS_GUESSES.add("title_not_in_qtext")
+if AnswerPresent.has_guess():
+    kHAS_GUESSES.add("answer_present")
 
 kGRANULARITIES = ["sentence"]
 kFOLDS = ["dev", "devtest", "test"]
@@ -117,8 +117,8 @@ def instantiate_feature(feature_name, questions):
             "data/common/ners", page_dict, 200)
     elif feature_name == "wikilinks":
         feature = WikiLinks()
-    elif feature_name == "title_not_in_qtext":
-        feature = TitleNotinQTextExtractor(questions)
+    elif feature_name == "answer_present":
+        feature = AnswerPresent()
     elif feature_name == "label":
         feature = Labeler(questions)
     elif feature_name == "classifier":
@@ -221,9 +221,9 @@ class GuessList:
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
         sql = 'CREATE TABLE IF NOT EXISTS guesses (' + \
-            'question INTEGER, sentence INTEGER, token INTEGER, page TEXT,' + \
+            'fold TEXT, question INTEGER, sentence INTEGER, token INTEGER, page TEXT,' + \
             ' guesser TEXT, feature TEXT, score NUMERIC, PRIMARY KEY ' + \
-            '(question, sentence, token, page, guesser, feature));'
+            '(fold, question, sentence, token, page, guesser, feature));'
         c.execute(sql)
         conn.commit()
 
@@ -302,7 +302,7 @@ class GuessList:
             guesses[(ss, tt)][pp][ff] = vv
         return guesses
 
-    def add_guesses(self, guesser, question, guesses):
+    def add_guesses(self, guesser, question, fold, guesses):
         # Remove the old guesses
         query = 'DELETE FROM guesses WHERE question=? AND guesser=?;'
         c = self._conn.cursor()
@@ -310,13 +310,14 @@ class GuessList:
 
         # Add in the new guesses
         query = 'INSERT INTO guesses' + \
-            '(question, sentence, token, page, guesser, score, feature) ' + \
-            'VALUES(?, ?, ?, ?, ?, ?, ?);'
+            '(fold, question, sentence, token, page, guesser, score, feature) ' + \
+            'VALUES(?, ?, ?, ?, ?, ?, ?, ?);'
         for ss, tt in guesses:
             for gg in guesses[(ss, tt)]:
                 for feat, val in guesses[(ss, tt)][gg].items():
                     c.execute(query,
-                              (question, ss, tt, gg, guesser, val, feat))
+                              (fold, question, ss, tt, gg,
+                               guesser, val, feat))
         self._conn.commit()
 
 if __name__ == "__main__":
@@ -368,6 +369,7 @@ if __name__ == "__main__":
         print("Guesses %s" % "\t".join(x for x in features_that_guess))
 
         all_questions = questions.questions_with_pages()
+
         page_num = 0
         for page in all_questions:
             if len(all_questions[page]) < flags.ans_limit:
@@ -386,7 +388,8 @@ if __name__ == "__main__":
 
                     # Save the guesses
                     for guesser in guesses:
-                        guess_list.add_guesses(guesser, qq.qnum, guesses[guesser])
+                        guess_list.add_guesses(guesser, qq.qnum, qq.fold,
+                                               guesses[guesser])
                     print("%i/%i" % (question_num, len(all_questions[page])))
 
                 print("%i(%i) of\t%i\t%s\t" %
@@ -396,6 +399,8 @@ if __name__ == "__main__":
     if flags.feature or flags.label:
         o = {}
         meta = {}
+        count = defaultdict(int)
+
         if flags.feature:
             assert flags.feature in kFEATURES, "%s not a feature" % flags.feature
             kFEATURES[flags.feature] = instantiate_feature(flags.feature,
@@ -420,6 +425,14 @@ if __name__ == "__main__":
             meta[ii] = open(filename, 'w')
 
         all_questions = questions.questions_with_pages()
+
+        totals = defaultdict(int)
+        for page in all_questions:
+            for qq in all_questions[page]:
+                totals[qq.fold] += 1
+        print("TOTALS")
+        print(totals)
+
         page_count = 0
         feat_lines = 0
         start = time.time()
@@ -427,6 +440,7 @@ if __name__ == "__main__":
             if len(all_questions[page]) > flags.ans_limit:
                 page_count += 1
                 if page_count % 50 == 0:
+                    print(count)
                     print("Page %i of %i (%s), %f feature lines per sec" %
                           (page_count, len(all_questions),
                            feature_generator.name(),
@@ -437,6 +451,8 @@ if __name__ == "__main__":
 
                 for qq in all_questions[page]:
                     if qq.fold != 'train':
+                        count[qq.fold] += 1
+                        fold_here = qq.fold
                         # All the guesses we need to make (on non-train questions)
                         for ss, tt, pp, feat in feature_lines(qq, guess_list,
                                                               flags.granularity,
@@ -448,6 +464,7 @@ if __name__ == "__main__":
                                                      unidecode(pp)))
                             assert feat is not None
                             o[qq.fold].write("%s\n" % feat)
+                            assert fold_here == qq.fold, "%s %s" % (fold_here, qq.fold)
                             # print(ss, tt, pp, feat)
                         o[qq.fold].flush()
 

@@ -7,6 +7,10 @@ kVWOPT = {"mohit": "--early_terminate 100 -k -b 24 --loss_function logistic"}
 kQBDB = "data/questions.db"
 kFINAL_MOD = "mohit"
 
+# Path of wikifier input for expo files
+kWIKIFIER_EXPO_IN = "data/wikifier/data/expo_input"
+kWIKIFIER_EXPO_OUT = "data/wikifier/data/expo_output"
+
 assert kFINAL_MOD in kVWOPT, "Final model (%s) not in the set of VW models" % \
     kFINAL_MOD
 
@@ -136,7 +140,9 @@ if __name__ == "__main__":
                     o.write(" %s" % fname)
                     feature_prereq.add(fname)
 
-            o.write("\n")
+            # All features depend on guesses being generated
+            o.write(" data/guesses.db\n")
+
             for cc in kFOLDS:
                 o.write("\tmkdir -p features/%s\n" % cc)
             o.write("\tpython extract_features.py --feature=%s " % ff +
@@ -380,10 +386,31 @@ if __name__ == "__main__":
                     (ff, gg, ff, gg))
             o.write("Rscript reporting/running_score.R $< $@\n\n")
 
+    # Expo wikifier
+    o.write("%s: data/expo.csv util/wikification.py\n" %
+            (kWIKIFIER_EXPO_IN))
+    o.write("\trm -rf $@\n")
+    o.write("\tmkdir -p $@\n")
+    o.write("\tpython util/wikification.py --output_directory=$@")
+    o.write(" --database='' --min_pages=-1 --expo=data/expo.csv\n\n")
+
+    o.write("%s: %s\n" % (kWIKIFIER_EXPO_OUT, kWIKIFIER_EXPO_IN))
+    o.write("\trm -rf $@\n")
+    o.write("\tmkdir -p $@\n")
+    o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
+    o.write("../../lib/wikifier-3.0-jar-with-dependencies.jar ")
+    o.write("-annotateData %s %s " %
+            (kWIKIFIER_EXPO_IN.replace("data/wikifier/", ""),
+             kWIKIFIER_EXPO_OUT.replace("data/wikifier/", "")))
+    o.write("false ../../lib/STAND_ALONE_GUROBI.xml)\n")
+    o.write("\tcp $@/* data/wikifier/data/output\n\n")
+
+
     # Expo features
     o.write("features/expo/word.label.feat: ")
     o.write("extract_expo_features.py ")
     o.write(" ".join(feature_prereq))
+    o.write(" %s" % kWIKIFIER_EXPO_OUT)
     o.write("\n\tmkdir -p features/expo")
     o.write("\n\tmkdir -p results/expo")
     o.write("\n\trm data/expo_guess.db")
@@ -474,3 +501,7 @@ if __name__ == "__main__":
         o.write(" --finals=results/expo/expo.%i.final" % ww)
         o.write(" --power=data/expo_power.csv")
         o.write('\n\n')
+
+    o.write('\n\n')
+    o.write("clean:\n")
+    o.write("\trm -rf data/guesses.db features")

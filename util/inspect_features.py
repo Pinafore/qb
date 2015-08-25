@@ -3,7 +3,43 @@ from csv import DictWriter
 import argparse
 
 
-class VwReader:
+class PurgingCounter(Counter):
+    def __init__(self, max_size=1000000):
+        self._max = max_size
+
+    def __setitem__(self, item, val):
+        if len(pg) > self._max * 2:
+            print("Purging")
+            to_delete = self.most_common()[self._max:]
+            for ii in to_delete:
+                del self[ii]
+
+        Counter.__setitem__(self, item, val)
+
+
+class VwDiscreteReader:
+    def __init__(self, input_file, name, label):
+        self._observations = defaultdict(PurgingCounter)
+        self._input_file = input_file
+        self._label_file = label
+        self._name = name
+
+        self._fields = ["feature", "name", "correct", "wrong"]
+
+    def read_file(self):
+        for feat, label in zip(open(self._input_file),
+                               open(self._label_file)):
+            fields = label.split()
+            label = True if int(fields[0]) > 0 else "wrong"
+            sent = int(float([x.split(":")[1] for x in fields
+                              if x.startswith("sent:")][0]))
+
+            for jj in [x for x in feat.split()
+                       if not ":" in x and not "|" in x]:
+                self._observations[(label, sent)] += 1
+
+
+class VwContReader:
     def __init__(self, input_file, name, label):
         self._discrete = defaultdict(int)
         self._continuous = defaultdict(set)
@@ -18,7 +54,7 @@ class VwReader:
                                open(self._label_file)):
             fields = label.split()
             d = {}
-            d["correct"] = int(fields[0])
+            d["correct"] = "correct" if int(fields[0]) > 0 else "wrong"
             d["sent"] = float([x.split(":")[1] for x in fields
                                if x.startswith("sent:")][0])
 

@@ -12,7 +12,7 @@ from extract_features import instantiate_feature, \
     feature_lines, guesses_for_question, \
     kFEATURES, GuessList
 
-kEXPO_START = 10000000
+kEXPO_START = 700000000
 kQUES_OUT = ["id", "answer", "sent", "text"]
 
 
@@ -85,10 +85,12 @@ if __name__ == "__main__":
             print(guesses)
 
             for guesser in guesses:
-                guess_list.add_guesses(guesser, qq.qnum, guesses[guesser])
+                guess_list.add_guesses(guesser, qq.qnum, "expo",
+                                       guesses[guesser])
 
     # Generate the features serially
-    for ff in ["label"] + kFEATURES.keys():
+    #    for ff in ["label"] + kFEATURES.keys():
+    for ff in ["label", "wikilinks"]:
         print("Loading %s" % ff)
         feat = instantiate_feature(ff, qdb)
         if ff == "label":

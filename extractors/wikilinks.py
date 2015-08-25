@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     wl = WikiLinks(flags.xml_location)
 
-    wl.load_xml(111111)
-    wl.set_metadata("", "", 111111, 10, 0, 50, "train")
+    wl.load_xml(700000024)
+    wl.set_metadata("", "", 700000024, 10, 0, 50, "expo")
     print wl._qnum
-    print wl.vw_from_title("Melampus", "")
+    print wl.vw_from_title("Yukio Mishima", "")
