@@ -8,7 +8,7 @@ from feature_extractor import FeatureExtractor
 
 
 kNEG_INF = float("-inf")
-class TitleNotinQTextExtractor(FeatureExtractor):
+class AnsPresent(FeatureExtractor):
     def __init__(self, gender_db = 'data/questions.db', gender_table = 'questions'):
         self._gender_table = gender_table
         self._features = ["title_not_present"]
@@ -24,7 +24,7 @@ class TitleNotinQTextExtractor(FeatureExtractor):
         return True
 
     def name(self):
-	return "answer_in_text"
+        return "ans_present"
 
     def get_title_nouns(self):
         for title in self._gender_dict:
