@@ -396,6 +396,10 @@ if __name__ == "__main__":
                     (page_num, len(all_questions[page]),
                      len(all_questions), page), end="")
 
+                if flags.limit > 0 and page_num > flags.limit:
+                    break
+
+
     if flags.feature or flags.label:
         o = {}
         meta = {}
