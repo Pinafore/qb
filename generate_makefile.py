@@ -96,6 +96,7 @@ if __name__ == "__main__":
 
     # Rule for generating LM model
     o.write("data/lm.pkl: extractors/lm.py\n")
+    o.write("\tmkdir -p data/wikipedia\n")
     o.write("\tpython extractors/lm.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
 
     # Generate rules for generating the features
