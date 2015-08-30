@@ -236,114 +236,6 @@ if __name__ == "__main__":
                     o.write("--pred=$<")
                     o.write("\n\n")
 
-    # generate restrictions
-    for gg in kGRANULARITIES:
-        for ff in kFOLDS:
-            if ff == "train" or ff == "dev":
-                continue
-            for ww in kNEG_WEIGHTS:
-                o.write("features/restrict/%s/train.%s.%i.vw_input:"
-                        % (ff, gg, ww))
-                o.write(" features/dev/%s.%i.vw_input" % (gg, ww))
-                o.write(" features/%s/%s.%i.vw_input" % (ff, gg, ww))
-                o.write("\n")
-                o.write("\tmkdir -p features/restrict/%s\n" % ff)
-                o.write("\tpython util/restrict_answer.py ")
-                o.write("--answer_set_source features/%s/%s.%i.vw_input "
-                        % (ff, gg, ww))
-                o.write("--unfiltered_vw features/dev/%s.%i.vw_input "
-                        % (gg, ww))
-                o.write("--meta_in features/dev/%s.meta " % gg)
-                o.write("--meta_out features/restrict/%s/train.%s.meta "
-                        % (ff, gg))
-                o.write("--vw_out $@")
-                o.write("\n\n")
-
-                o.write("features/restrict/%s/%s.%i.vw_input:"
-                        % (ff, gg, ww))
-                o.write(" features/%s/%s.%i.vw_input" % (ff, gg, ww))
-                o.write("\n")
-                o.write("\tmkdir -p features/restrict/%s\n" % ff)
-                o.write("\tpython util/restrict_answer.py ")
-                o.write("--answer_set_source features/%s/%s.%i.vw_input "
-                        % (ff, gg, ww))
-                o.write("--unfiltered_vw features/%s/%s.%i.vw_input "
-                        % (ff, gg, ww))
-                o.write("--meta_in features/%s/%s.meta " % (ff, gg))
-                o.write("--meta_out features/restrict/%s/%s.meta "
-                        % (ff, gg))
-                o.write("--vw_out $@")
-                o.write("\n\n")
-
-    # generate models
-    for gg in kGRANULARITIES:
-        for ll in kVWOPT:
-            for ff in kFOLDS:
-                if ff == "train" or ff == "dev":
-                    continue
-                for ww in kNEG_WEIGHTS:
-                    o.write("models/restrict/%s.%s.%s.%i.vw: " %
-                            (gg, ll, ff, ww))
-                    o.write("features/restrict/%s/dev.%s.%i.vw_input\n" %
-                            (ff, gg, ww))
-                    o.write("\tmkdir -p models/restrict\n")
-                    o.write("\tvw --compressed -d $< %s -f $@ " % kVWOPT[ll])
-                    if "--ngram" in kVWOPT[ll] or " -q " in kVWOPT[ll] or \
-                        " --quadratic" in kVWOPT[ll]:
-                        None
-                    else:
-                        o.write("--invert_hash models/restrict/%s.%s.%i.read\n" %
-                            (ll, ff, int(ww)))
-                        o.write("\tpython ")
-                        o.write("util/sort_features.py models/restrict/%s.%s.%i.read" %
-                                (ll, ff, int(ww)))
-                        o.write(" models/restrict/%s.%s.%i.sorted\n" %
-                                (ll, ff, int(ww)))
-                        o.write("\trm models/restrict/%s.%s.%i.read\n" %
-                                (ll, ff, int(ww)))
-                    o.write("\n\n")
-
-    # predictions from restricted models
-    for gg in kGRANULARITIES:
-        for ll in kVWOPT:
-            for ff in kFOLDS:
-                if ff == "train":
-                    continue
-                for ww in kNEG_WEIGHTS:
-                    # Switch input file to do the filtering
-                    # input_file = "features/%s/%s.%i.vw_input" % (ff, gg, ww)
-                    input_file = "features/restrict/%s/%s.%i.vw_input" % \
-                        (ff, gg, ww)
-                    model_file = "models/restrict/%s.%s.%s.%i.vw" % \
-                        (gg, ll, ff, ww)
-                    o.write("results/restrict/%s/%s.%i.%s.pred: " %
-                            (ff, gg, ww, ll))
-                    o.write("%s " % model_file)
-                    o.write("%s\n" % input_file)
-                    o.write("\tmkdir -p results/restrict/%s\n" % ff)
-                    o.write("\tvw --compressed -t -d %s -i %s " %
-                            (input_file, model_file) +
-                            kVWOPT[ll] + " -p $@\n\n")
-
-                    # performance from restricted models
-                    o.write("results/restrict/%s/%s.%i.%s.buzz: " %
-                            (ff, gg, int(ww), ll))
-                    o.write(" results/restrict/%s/%s.%i.%s.pred " %
-                            (ff, gg, ww, ll))
-                    o.write("reporting/evaluate_predictions.py\n")
-                    o.write("\tmkdir -p results/%s\n" % ff)
-                    o.write("\tpython reporting/evaluate_predictions.py ")
-                    o.write("--buzzes=$@ ")
-                    o.write("--qbdb=%s " % kQBDB)
-                    o.write("--question_out=results/restrict/%s/questions.csv " % ff)
-                    # o.write("--meta=features/%s/%s.meta " % (ff, gg))
-                    o.write("--meta=features/restrict/%s/%s.meta " % (ff, gg))
-                    o.write("--perf=results/restrict/%s/%s.%i.%s.perf " %
-                            (ff, gg, ww, ll))
-                    o.write("--neg_weight=%f " % ww)
-                    o.write("--vw_config=%s " % ll)
-                    o.write("--pred=$<")
-                    o.write("\n\n")
 
     # Target for all predictions
     o.write("# Train all of the models")
@@ -387,6 +279,30 @@ if __name__ == "__main__":
                     (ff, gg, ff, gg))
             o.write("Rscript reporting/running_score.R $< $@\n\n")
 
+    # plots of feature densities
+    for gg in kGRANULARITIES:
+        o.write("results/%s.features_cont.csv results/%s.features_disc.csv: " %
+                (gg, gg))
+        o.write("util/inspect_features.py ")
+        o.write(" ".join("features/dev/%s.%s.feat" % (gg, x)
+                         for x in kFEATURES))
+        o.write("\n")
+        o.write("\tpython util/inspect_features.py --feats ")
+        o.write(" ".join("features/dev/%s.%s.feat" % (gg, x)
+                         for x in kFEATURES))
+        o.write(" --label features/dev/%s.label.feat" % gg)
+        o.write(" --output_cont results/%s.features_cont.csv" % gg)
+        o.write(" --output_disc results/%s.features_disc.csv" % gg)
+        o.write("\n\n")
+
+        o.write("results/%s.features_disc.csv results/%s.features_disc.csv: " %
+                (gg, gg))
+        o.write("results/%s.features_cont.csv results/%s.features_disc.csv " %
+                (gg, gg))
+        o.write("density_plots.R\n")
+        o.write("\tRscript util/density_plots.R %s\n\n" % gg)
+
+
     # Expo wikifier
     o.write("%s: data/expo.csv util/wikification.py\n" %
             (kWIKIFIER_EXPO_IN))
@@ -423,7 +339,6 @@ if __name__ == "__main__":
     o.write(": features/expo/word.label.feat\n")
     o.write("\tpython util/reweight_labels.py $<\n\n")
 
-    # produce restrictions
     for ww in kNEG_WEIGHTS:
         o.write("features/expo/expo.%i.vw_input: features/expo/word.label.%i"
                 % (ww, ww))
