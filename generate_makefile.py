@@ -295,11 +295,11 @@ if __name__ == "__main__":
         o.write(" --output_disc results/%s.features_disc.csv" % gg)
         o.write("\n\n")
 
-        o.write("results/%s.features_disc.csv results/%s.features_disc.csv: " %
+        o.write("results/%s.features_disc.pdf results/%s.features_cont.pdf: " %
                 (gg, gg))
         o.write("results/%s.features_cont.csv results/%s.features_disc.csv " %
                 (gg, gg))
-        o.write("density_plots.R\n")
+        o.write("util/density_plots.R\n")
         o.write("\tRscript util/density_plots.R %s\n\n" % gg)
 
 
