@@ -30,7 +30,7 @@ http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
 
 ``make data/lm.pkl``
 
-4. generate features, train all models, and get predictions
+4. generate features, train all models, and get predictions.
 
 ``make all_sentence_buzz``
 
