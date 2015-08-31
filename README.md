@@ -37,7 +37,7 @@ http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
 
 ## Steps for quick test
 If you are interested in getting the qb system running end to end without training the full system,
-you can follow these steps
+you can follow these steps.
 
 1. Generate the Makefile like above
 2. Run `make data/deep/glove.840B.300d.txt.gz` to download some data
