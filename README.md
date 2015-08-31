@@ -17,7 +17,6 @@ also download some nltk data.
 http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
 
 ## Steps
-
 1.  Generate the Makefile
 
 ``python generate_makefile.py``
