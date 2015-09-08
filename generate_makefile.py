@@ -227,6 +227,8 @@ if __name__ == "__main__":
                     o.write("\tpython reporting/evaluate_predictions.py ")
                     o.write("--buzzes=$@ ")
                     o.write("--qbdb=%s " % kQBDB)
+                    o.write("--finals=results/%s/%s.%i.%s.final " %
+                            (ff, gg, int(ww), ll))
                     o.write("--question_out=results/%s/questions.csv " % ff)
                     o.write("--meta=features/%s/%s.meta " % (ff, gg))
                     o.write("--perf=results/%s/%s.%i.%s.perf " %
