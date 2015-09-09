@@ -422,7 +422,7 @@ if __name__ == "__main__":
             o[ii] = open(filename, 'w')
             if flags.label:
                 filename = ("features/%s/%s.meta" %
-                                (ii, 'label'))
+                                (ii, flags.granularity))
             else:
                 filename = ("features/%s/%s.meta" %
                                 (ii, flags.feature))
