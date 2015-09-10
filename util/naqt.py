@@ -130,9 +130,9 @@ if __name__ == "__main__":
     conn = qdb._conn
     answer_map = qdb.answer_map()
 
-    # Delete NAQT questions
+    # Find existing naqt questions
     c = conn.cursor()
-    command = 'DELETE FROM questions WHERE naqt >= 0;'
+    command = 'SELECT naqt FROM questions WHERE naqt >= 0;'
     c.execute(command)
     conn.commit()
     qdb.prune_text()
