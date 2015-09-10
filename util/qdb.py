@@ -1,7 +1,7 @@
 import sqlite3
 import random
 from unidecode import unidecode
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, Counter
 import re
 
 import string
@@ -164,6 +164,18 @@ class QuestionDatabase:
             if not id in ids_to_exclude:
                 answers[normalized][aa] = answers[normalized].get(aa, 0) + 1
         return answers
+
+    def answer_map(self):
+        c = self._conn.cursor()
+        command = 'select answer, page from questions ' + \
+            'where page != ""'
+        c.execute(command)
+
+        d = defaultdict(Counter)
+        for aa, pp in c:
+            d[aa][pp] += 1
+
+        return d
 
     def questions_by_answer(self, answer):
         questions = self.query('from questions where answer == ?', (answer,))
