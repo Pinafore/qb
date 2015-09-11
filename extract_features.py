@@ -18,7 +18,7 @@ from extractors.classifier import *
 from extractors.wikilinks import *
 from extractors.answer_present import AnswerPresent
 
-kMIN_APPEARANCES = 7
+kMIN_APPEARANCES = 5
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
     ("answer_present", None), ("text", None),
     ("classifier", None), ("wikilinks", None),

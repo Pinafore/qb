@@ -299,8 +299,8 @@ class QuestionDatabase:
         """
         c = self._conn.cursor()
         command = 'select page, count(*) as num from questions where ' + \
-                  'page <> "" ' + \
-                  'group by answer order by num desc'
+                  'page != "" ' + \
+                  'group by page order by num desc'
         c.execute(command)
 
         for aa, nn in c:
@@ -391,7 +391,9 @@ class QuestionDatabase:
 
 
 if __name__ == "__main__":
-    db = QuestionDatabase("data/non_naqt.db")
-    print(list(db.answer_by_count("Literature", 3)))
+    from unidecode import unidecode
+    from extract_features import kMIN_APPEARANCES
 
-    print(list(db.text_by_answer("Kazuo _Ishiguro_", "Literature")))
+    db = QuestionDatabase("data/questions.db")
+    for ii in db.page_by_count(kMIN_APPEARANCES):
+        print(unidecode(ii))
