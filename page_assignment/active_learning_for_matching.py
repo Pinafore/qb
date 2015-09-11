@@ -12,8 +12,6 @@ from random import shuffle, sample
 from sklearn import linear_model
 import pandas as pd
 
-from util import flags
-
 kDERIVED_COLUMNS = [('Astronomy', ''), ('Biology', ''), ('Chemistry',
 ''), ('Chemistry', 'chemistry)'), ('Earth Science', ''), ('Fine Arts',
 ''), ('History', ''), ('Mathematics', ''), ('Other', ''), ('Physics',
@@ -277,40 +275,40 @@ def simple_menu(choices, index, scores=None, escape='x'):
     return chosen_page
 
 
-if __name__ == "__main__":
-    flags.define_glob("raw_csv", "data/*.csv", "Input file")
-    flags.define_int("max_size", -1, "Max size of our raw dataset")
-    flags.define_string("wiki_index", None, "Index of wikipages")
-    flags.define_list("train_columns", ["title_score", "title_edit_dist", "bias", "body_score"],
-                      "Columns used to build model")
-    flags.define_string("match_location", None,
-                        "Where we write the matches learned")
+# if __name__ == "__main__":
+#     flags.define_glob("raw_csv", "data/*.csv", "Input file")
+#     flags.define_int("max_size", -1, "Max size of our raw dataset")
+#     flags.define_string("wiki_index", None, "Index of wikipages")
+#     flags.define_list("train_columns", ["title_score", "title_edit_dist", "bias", "body_score"],
+#                       "Columns used to build model")
+#     flags.define_string("match_location", None,
+#                         "Where we write the matches learned")
 
-    flags.InitFlags()
+#     flags.InitFlags()
 
-    al = ActiveLearner(flags.raw_csv, flags.match_location, flags.train_columns, max_size=flags.max_size)
-    al.relearn()
+#     al = ActiveLearner(flags.raw_csv, flags.match_location, flags.train_columns, max_size=flags.max_size)
+#     al.relearn()
 
-    if flags.wiki_index:
-        wiki_index = pickle.load(open(flags.wiki_index))
-    else:
-        wiki_index = []
+#     if flags.wiki_index:
+#         wiki_index = pickle.load(open(flags.wiki_index))
+#     else:
+#         wiki_index = []
 
-    interactions = 0
-    usr = ''
-    for qid, column in al.uncertain():
-        candidates = al._raw[al._raw['id'] == qid].sort(column, ascending=False)
-        choices = candidates['page']
-        scores = candidates['guess']
+#     interactions = 0
+#     usr = ''
+#     for qid, column in al.uncertain():
+#         candidates = al._raw[al._raw['id'] == qid].sort(column, ascending=False)
+#         choices = candidates['page']
+#         scores = candidates['guess']
 
-        print(max(candidates['text']))
-        print(max(candidates['answer']))
-        chosen_page = simple_menu(choices, wiki_index, scores, 'x')
+#         print(max(candidates['text']))
+#         print(max(candidates['answer']))
+#         chosen_page = simple_menu(choices, wiki_index, scores, 'x')
 
-        if chosen_page is not None:
-            al.remember(qid, chosen_page)
-            al.relearn()
-        else:
-            break
+#         if chosen_page is not None:
+#             al.remember(qid, chosen_page)
+#             al.relearn()
+#         else:
+#             break
 
-    al.dump(flags.match_location)
+#     al.dump(flags.match_location)

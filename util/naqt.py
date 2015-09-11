@@ -134,14 +134,11 @@ if __name__ == "__main__":
     c = conn.cursor()
     command = 'SELECT naqt FROM questions WHERE naqt >= 0;'
     c.execute(command)
-    conn.commit()
-    qdb.prune_text()
+    existing = set(int(x[0]) for x in c)
 
     last_id = kNAQT_START
     if flags.naqt_path:
         for qq in naqt_reader(flags.naqt_path):
-            last_id += 1
-
             if qq.answer in answer_map and len(answer_map[qq.answer]) == 1:
                 page = answer_map[qq.answer].keys()[0]
             else:
@@ -149,6 +146,11 @@ if __name__ == "__main__":
 
             if not qq.text:
                 print("Bad question %s" % str(qq.metadata["ID"]))
+
+            if int(qq.metadata["ID"]) in existing:
+                continue
+            else:
+                last_id += 1
 
             add_question(conn, last_id, qq.tournaments,
                          map_naqt(qq.metadata["SUBJECT"], qq.text, page),
@@ -160,3 +162,4 @@ if __name__ == "__main__":
                 print(qq.tournaments)
 
     print("Added %i" % (last_id - kNAQT_START))
+    qdb.prune_text()

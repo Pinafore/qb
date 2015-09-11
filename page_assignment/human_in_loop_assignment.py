@@ -1,16 +1,16 @@
 import sys
 print(sys.path)
-from util.new_db import QuestionDatabase
+from util.qdb import QuestionDatabase
 import argparse
-from ir_match.active_learning_for_matching import ActiveLearner, simple_menu
-from offline_human_answer.client import TitleFinder
+from page_assignment.active_learning_for_matching import ActiveLearner, simple_menu
+from page_assignment.client import TitleFinder, normalize
 import operator
 
 kBAD_ANSWERS = ["", "red river", "the", "figaro", "normal", "s", "p"]
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser('Interactive assign pages to questions')
-    args.add_argument('--database', type=str, default='data/consolidated.db',
+    args.add_argument('--database', type=str, default='data/questions.db',
                       help='sqlite3 database of questions')
     args.add_argument('--titles', type=str, default='data/wiki_index.pkl',
                       help='page title candiates')
@@ -20,6 +20,8 @@ if __name__ == "__main__":
 
     # Open up the database
     d = QuestionDatabase(args.database)
+    page_diversity = d.answer_map(normalize)
+    
     # Set up the active learner for writing assignments
     al = ActiveLearner(None, args.labels)
     existing_labels = set(x[0] for x in al.human_labeled())
@@ -38,8 +40,13 @@ if __name__ == "__main__":
         choices = list(tf.query(ans))
         print("--------- (%i)" % sum(count.values()))
         print(ans)
-        page = simple_menu([x[0] for x in choices], tf._index,
-                           [x[1] for x in choices])
+
+        if sum(page_diversity[ans].values()) >= 5 and len(page_diversity[ans]) == 1:
+            page = page_diversity[ans].keys()[0]
+            print("Autoassigning %s to %s" % (ans, page))
+        else:
+            page = simple_menu([x[0] for x in choices], tf._index,
+                               [x[1] for x in choices])
         if page:
             for query in count:
                 for question in d.questions_by_answer(query):

@@ -165,7 +165,7 @@ class QuestionDatabase:
                 answers[normalized][aa] = answers[normalized].get(aa, 0) + 1
         return answers
 
-    def answer_map(self):
+    def answer_map(self, normalization = lambda x: x):
         c = self._conn.cursor()
         command = 'select answer, page from questions ' + \
             'where page != ""'
@@ -173,7 +173,7 @@ class QuestionDatabase:
 
         d = defaultdict(Counter)
         for aa, pp in c:
-            d[aa][pp] += 1
+            d[normalization(aa)][pp] += 1
 
         return d
 
