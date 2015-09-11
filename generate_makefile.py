@@ -422,4 +422,5 @@ if __name__ == "__main__":
 
     o.write('\n\n')
     o.write("clean:\n")
-    o.write("\trm -rf data/guesses.db features")
+    o.write("\trm -rf data/guesses.db features data/deep/params\n")
+    o.write("\trm -rf data/classifier/*.pkl data/wikifier/data/input data/wikifier/data/output")
