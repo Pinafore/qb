@@ -120,7 +120,7 @@ class NaqtQuestion:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(help='Import questions')
+    parser = argparse.ArgumentParser(description='Import questions')
     parser.add_argument('--naqt_path', type=str)
     parser.add_argument('--db', type=str, default='data/questions.db')
 

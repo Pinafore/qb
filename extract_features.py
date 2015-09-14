@@ -440,13 +440,15 @@ if __name__ == "__main__":
         page_count = 0
         feat_lines = 0
         start = time.time()
+        max_relevant = sum(1 for x in all_questions
+                           if len(all_questions[page]) > flags.ans_limit)
         for page in all_questions:
             if len(all_questions[page]) > flags.ans_limit:
                 page_count += 1
                 if page_count % 50 == 0:
                     print(count)
                     print("Page %i of %i (%s), %f feature lines per sec" %
-                          (page_count, len(all_questions),
+                          (page_count, max_relevant,
                            feature_generator.name(),
                            float(feat_lines) / (time.time() - start)))
                     print(unidecode(page))

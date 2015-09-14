@@ -46,6 +46,9 @@ class CachedWikipedia:
             except AttributeError:
                 print("Error loading %s" % key)
                 page = None
+            except ImportError:
+                print("Error importing %s" % key)
+                page = None
 
         if page is None:
             print("Loading %s" % key)
