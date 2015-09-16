@@ -1,7 +1,7 @@
 try:
-   import cPickle as pickle
+    import cPickle as pickle
 except:
-   import pickle
+    import pickle
 
 import re
 from feature_extractor import FeatureExtractor
@@ -11,6 +11,7 @@ from nltk.util import ngrams
 
 alphanum = re.compile('[\W_]+')
 kCLASSIFIER_FIELDS = ["category", "ans_type", "gender"]
+
 
 class Classifier(FeatureExtractor):
     def __init__(self, bigram_path, question_db):

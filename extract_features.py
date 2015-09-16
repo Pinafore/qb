@@ -84,7 +84,6 @@ def instantiate_feature(feature_name, questions):
     """
     @param feature_name: The feature to instantiate
     @param questions: question database
-    @param first_pass_guess: Is this our first pass generating guesses?  (Used for standardizing IR scores)
     """
 
     feature = None
@@ -362,7 +361,6 @@ if __name__ == "__main__":
         #         kFEATURES["ir"].add_index("qb_%s" % cc, "%s_%s" %
         #                                   (flags.whoosh_qb, cc))
 
-
         kFEATURES["deep"] = instantiate_feature("deep", questions)
         # features_that_guess = set(kFEATURES[x] for x in kHAS_GUESSES)
         features_that_guess = {"deep": kFEATURES["deep"]}
@@ -396,9 +394,8 @@ if __name__ == "__main__":
                     (page_num, len(all_questions[page]),
                      len(all_questions), page), end="")
 
-                if flags.limit > 0 and page_num > flags.limit:
+                if 0 < flags.limit < page_num:
                     break
-
 
     if flags.feature or flags.label:
         o = {}
@@ -474,5 +471,5 @@ if __name__ == "__main__":
                             # print(ss, tt, pp, feat)
                         o[qq.fold].flush()
 
-                if flags.limit > 0 and page_count > flags.limit:
+                if 0 < flags.limit < page_count:
                     break
