@@ -35,11 +35,12 @@ hours---and guesses---40 hours)
 ``make all_sentence_buzz``
 
 Feature timings:
-        lm: 139.028408 feature lines per sec
-        deep: 84.391876 feature lines per sec
-        text: 158.384899 feature lines per sec
-        wikilinks: 62.842486 feature lines per sec
-        answer_present: 155.469810 feature lines per sec
+      *  classifier: 216 features lines per sec
+      *  lm: 139.028408 feature lines per sec
+      *  deep: 84.391876 feature lines per sec
+      *  text: 158.384899 feature lines per sec
+      *  wikilinks: 62.842486 feature lines per sec
+      *  answer_present: 155.469810 feature lines per sec
 
 ## Steps for quick test
 If you are interested in getting the qb system running end to end without training the full system,
