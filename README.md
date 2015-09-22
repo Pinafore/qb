@@ -21,11 +21,12 @@ http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
 
 ``python generate_makefile.py``
 
-2.  Generate the guess database
+2.  Generate the guess database (this takes a while, depends on DAN---60
+hours---and guesses---40 hours)
 
 ``make data/guesses.db``
 
-3.  Generate the LM pickle
+3.  Generate the LM pickle (18 hours)
 
 ``make data/lm.pkl``
 
@@ -33,6 +34,12 @@ http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
 
 ``make all_sentence_buzz``
 
+Feature timings:
+        lm: 139.028408 feature lines per sec
+        deep: 84.391876 feature lines per sec
+        text: 158.384899 feature lines per sec
+        wikilinks: 62.842486 feature lines per sec
+        answer_present: 155.469810 feature lines per sec
 
 ## Steps for quick test
 If you are interested in getting the qb system running end to end without training the full system,
