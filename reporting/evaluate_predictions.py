@@ -1,15 +1,17 @@
 import argparse
 import sys
-from util.qdb import QuestionDatabase
 from collections import defaultdict
 from csv import DictWriter, DictReader
 import operator
 
+from unidecode import unidecode
+
+from util.qdb import QuestionDatabase
 from extract_expo_features import kEXPO_START
 
 kBUZZ_OUT = ["question", "sentence", "word", "page", "evidence", "final",
              "weight"]
-kPERF_OUT = ["question", "sentence", "token", "guess",
+kPERF_OUT = ["question", "sentence", "token", "guess", "answer",
              "corr", "weight", "present_forward", "present_backward",
              "vw"]
 kQUES_OUT = ["id", "answer", "sent", "text"]
@@ -213,6 +215,7 @@ if __name__ == "__main__":
                 # Write performance
                 d = questions_with_buzzes[qq.qnum]
                 d["corr"] = (d["guess"] == qq.page)
+                d["answer"] = unidecode(qq.page)
                 d["weight"] = flags.neg_weight
                 d["vw"] = flags.vw_config
                 perf_out.writerow(d)
