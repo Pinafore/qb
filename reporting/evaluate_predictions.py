@@ -44,6 +44,7 @@ class PositionIterator:
     def __iter__(self):
         buffer = defaultdict(dict)
         last_question = -1
+        question = None
         for mm, pp in zip(self._meta, self._pred):
             question, sent, token, guess = mm.split("\t")
             question = int(question)
@@ -69,7 +70,8 @@ class PositionIterator:
             right_answer = (guess == self._answers[question])
             buffer[(sent, token)][guess] = \
                 (score, right_answer)
-        yield question, buffer
+        if not question is None:
+            yield question, buffer
 
 
 def answer_presence(all_guesses):
