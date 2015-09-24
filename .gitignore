@@ -7,4 +7,6 @@ data/wikifier
 data/deep
 data/guesses.db
 data/wikipedia
+data/ir/
+data/lm.pkl
 lib/*.jar
