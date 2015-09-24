@@ -35,6 +35,7 @@ hours---and guesses---40 hours)
 ``make all_sentence_buzz``
 
 Feature timings:
+
       *  classifier: 216 features lines per sec
       *  lm: 139.028408 feature lines per sec
       *  deep: 84.391876 feature lines per sec
