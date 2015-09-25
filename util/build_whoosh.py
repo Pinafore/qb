@@ -12,7 +12,7 @@ from qdb import QuestionDatabase
 
 
 def text_iterator(use_wiki, wiki_location, use_qb, qb_location, limit,
-                  min_pages=0, country_list='data/countries.txt'):
+                  min_pages=0, country_list='data/country_list.txt'):
     qdb = QuestionDatabase(qb_location)
     doc_num = 0
 
