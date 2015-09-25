@@ -4,10 +4,13 @@ import time
 from time import sleep
 from requests import ConnectionError
 from requests.exceptions import ReadTimeout
-from wikipedia.exceptions import WikipediaException
+from itertools import chain
 
 from unidecode import unidecode
 import wikipedia, fileinput
+from wikipedia.exceptions import WikipediaException
+
+kCOUNTRY_SUB = ["History of ", "Geography of ", ""]
 
 
 class WikipediaPage:
@@ -18,7 +21,7 @@ class WikipediaPage:
 
 
 class CachedWikipedia:
-    def __init__(self, location, write_dummy=True):
+    def __init__(self, location, country_list, write_dummy=True):
         """
         @param write_dummy If this is true, it writes an empty pickle if there
         is an error accessing a page in Wikipedia.  This will speed up future
@@ -27,6 +30,50 @@ class CachedWikipedia:
         self._path = location
         self._cache = {}
         self._write_dummy = write_dummy
+        self._countries = dict(x.split('\t') for x in open(country_list))
+
+    @staticmethod
+    def load_page(key):
+        print("Loading %s" % key)
+        try:
+            raw = wikipedia.page(key, preload=True)
+            print(unidecode(raw.content[:80]))
+            print(unidecode(str(raw.links)[:80]))
+            print(unidecode(str(raw.categories)[:80]))
+        except KeyError:
+            print("Key error")
+            raw = None
+        except wikipedia.exceptions.DisambiguationError:
+            print("Disambig error!")
+            raw = None
+        except wikipedia.exceptions.PageError:
+            print("Page error!")
+            raw = None
+        except ReadTimeout:
+            # Wait a while, see if the network comes back
+            print("Connection error, waiting 10 minutes ...")
+            sleep(600)
+            print("trying again")
+            return self[key]
+        except ConnectionError:
+            # Wait a while, see if the network comes back
+            print("Connection error, waiting 10 minutes ...")
+            sleep(600)
+            print("trying again")
+            return self[key]
+        except ValueError:
+            # Wait a while, see if the network comes back
+            print("Connection error, waiting 10 minutes ...")
+            sleep(600)
+            print("trying again")
+            return self[key]
+        except WikipediaException:
+            # Wait a while, see if the network comes back
+            print("Connection error, waiting 10 minutes ...")
+            sleep(600)
+            print("trying again")
+            return self.load_page(key)
+        return raw
 
     def __getitem__(self, key):
         key = key.replace("_", " ")
@@ -51,52 +98,27 @@ class CachedWikipedia:
                 page = None
 
         if page is None:
-            print("Loading %s" % key)
-            try:
-                raw = wikipedia.page(key, preload=True)
-                print(unidecode(raw.content[:80]))
-                print(unidecode(str(raw.links)[:80]))
-                print(unidecode(str(raw.categories)[:80]))
-            except KeyError:
-                print("Key error")
-                raw = None
-            except wikipedia.exceptions.DisambiguationError:
-                print("Disambig error!")
-                raw = None
-            except wikipedia.exceptions.PageError:
-                print("Page error!")
-                raw = None
-            except ReadTimeout:
-                # Wait a while, see if the network comes back
-                print("Connection error, waiting 10 minutes ...")
-                sleep(600)
-                print("trying again")
-                return self[key]
-            except ConnectionError:
-                # Wait a while, see if the network comes back
-                print("Connection error, waiting 10 minutes ...")
-                sleep(600)
-                print("trying again")
-                return self[key]
-            except ValueError:
-                # Wait a while, see if the network comes back
-                print("Connection error, waiting 10 minutes ...")
-                sleep(600)
-                print("trying again")
-                return self[key]
-            except WikipediaException:
-                # Wait a while, see if the network comes back
-                print("Connection error, waiting 10 minutes ...")
-                sleep(600)
-                print("trying again")
-                return self[key]
+            if key in self._countries:
+                raw = [CachedWikipedia.load_page("%s%s" %
+                                                 (x, self._countries[key]))
+                                                  for x in kCOUNTRY_SUB]
+                print("%s is a country!" % key)
+            else:
+                raw = [CachedWikipedia.load_page(key)]
 
+            raw = [x for x in raw if not x is None]
 
             sleep(.3)
             if raw:
-                page = WikipediaPage(unidecode(raw.content),
-                                     list(raw.links),
-                                     list(raw.categories))
+                if len(raw) > 1:
+                    print("%i pages for %s" % (len(raw), key))
+                page = WikipediaPage("\n".join(unidecode(x.content) for
+                                               x in raw),
+                                     [x for x in chain.from_iterable(x.links)
+                                      for x in raw],
+                                     [x for x in chain.from_iterable(x.categories)
+                                      for x in raw])
+
                 print("Writing file to %s" % filename)
                 pickle.dump(page, open(filename, 'wb'),
                             protocol=pickle.HIGHEST_PROTOCOL)
@@ -111,8 +133,8 @@ class CachedWikipedia:
         return page
 
 if __name__ == "__main__":
-    cw = CachedWikipedia("data/wikipedia")
-    for ii in ["Camille_Saint-Saens", "Napoleon", "Langston Hughes", "Whigs_(British_political_party)", "Carthage", "Stanwix", "Lango people", "Lango language (Uganda)", "Keokuk"]:
+    cw = CachedWikipedia("data/wikipedia", "data/country_list.txt")
+    for ii in ["Camille_Saint-Saens", "Napoleon", "Langston Hughes", "Whigs_(British_political_party)", "Carthage", "Stanwix", "Lango people", "Lango language (Uganda)", "Keokuk", "Burma", "Germany"]:
         print("~~~~~")
         print(ii)
         start = time.time()

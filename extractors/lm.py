@@ -28,6 +28,7 @@ kTOKENIZER = TreebankWordTokenizer().tokenize
 
 good_char = re.compile(r"[a-zA-Z0-9]*")
 
+
 class DistCounter:
     def __init__(self):
         self._total = 0
