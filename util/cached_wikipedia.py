@@ -114,9 +114,11 @@ class CachedWikipedia:
                     print("%i pages for %s" % (len(raw), key))
                 page = WikipediaPage("\n".join(unidecode(x.content) for
                                                x in raw),
-                                     [x for x in chain.from_iterable(x.links)
+                                     [y for y in
+                                      x.links
                                       for x in raw],
-                                     [x for x in chain.from_iterable(x.categories)
+                                     [y for y in
+                                      x.categories
                                       for x in raw])
 
                 print("Writing file to %s" % filename)
