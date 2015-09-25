@@ -10,7 +10,7 @@ from unidecode import unidecode
 import wikipedia, fileinput
 from wikipedia.exceptions import WikipediaException
 
-kCOUNTRY_SUB = ["History of ", "Geography of ", ""]
+kCOUNTRY_SUB = ["History of ", "Geography of "]
 
 
 class WikipediaPage:
@@ -102,6 +102,7 @@ class CachedWikipedia:
                 raw = [CachedWikipedia.load_page("%s%s" %
                                                  (x, self._countries[key]))
                                                   for x in kCOUNTRY_SUB]
+                raw.append(CachedWikipedia.load_page(key))
                 print("%s is a country!" % key)
             else:
                 raw = [CachedWikipedia.load_page(key)]
@@ -136,7 +137,7 @@ class CachedWikipedia:
 
 if __name__ == "__main__":
     cw = CachedWikipedia("data/wikipedia", "data/country_list.txt")
-    for ii in ["Camille_Saint-Saens", "Napoleon", "Langston Hughes", "Whigs_(British_political_party)", "Carthage", "Stanwix", "Lango people", "Lango language (Uganda)", "Keokuk", "Burma", "Germany"]:
+    for ii in ["Camille_Saint-Saens", "Napoleon", "Langston Hughes", "Whigs_(British_political_party)", "Carthage", "Stanwix", "Lango people", "Lango language (Uganda)", "Keokuk", "Burma", "United Kingdom"]:
         print("~~~~~")
         print(ii)
         start = time.time()
