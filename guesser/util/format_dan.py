@@ -79,8 +79,7 @@ if __name__ == "__main__":
 
     pp = Preprocessor('data/common/ners')
     db = QuestionDatabase('data/questions.db')
-    for ans in db.page_by_count(min_count=flags.threshold):
-        print ans
+
     pages = set(db.page_by_count(min_count=flags.threshold))
     print len(pages)
     folds = ['train', 'test', 'devtest', 'dev']

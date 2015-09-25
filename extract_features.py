@@ -18,7 +18,7 @@ from extractors.classifier import *
 from extractors.wikilinks import *
 from extractors.answer_present import AnswerPresent
 
-kMIN_APPEARANCES = 7
+kMIN_APPEARANCES = 5
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
     ("answer_present", None), ("text", None),
     ("classifier", None), ("wikilinks", None),
@@ -84,7 +84,6 @@ def instantiate_feature(feature_name, questions):
     """
     @param feature_name: The feature to instantiate
     @param questions: question database
-    @param first_pass_guess: Is this our first pass generating guesses?  (Used for standardizing IR scores)
     """
 
     feature = None
@@ -203,7 +202,7 @@ class Labeler(FeatureExtractor):
         else:
             return "-1 %i '%s |guess %s sent:%0.1f count:%f " % \
                 (self._num_guesses, self._id,
-                 unidecode(title).replace(" ", "_"), self._sent,
+                 unidecode(title).replace(" ", "_"), self._sent - 2.0,
                  self._counts.get(title, -2))
 
     def name(self):
@@ -362,7 +361,6 @@ if __name__ == "__main__":
         #         kFEATURES["ir"].add_index("qb_%s" % cc, "%s_%s" %
         #                                   (flags.whoosh_qb, cc))
 
-
         kFEATURES["deep"] = instantiate_feature("deep", questions)
         # features_that_guess = set(kFEATURES[x] for x in kHAS_GUESSES)
         features_that_guess = {"deep": kFEATURES["deep"]}
@@ -396,9 +394,8 @@ if __name__ == "__main__":
                     (page_num, len(all_questions[page]),
                      len(all_questions), page), end="")
 
-                if flags.limit > 0 and page_num > flags.limit:
+                if 0 < flags.limit < page_num:
                     break
-
 
     if flags.feature or flags.label:
         o = {}
@@ -440,13 +437,15 @@ if __name__ == "__main__":
         page_count = 0
         feat_lines = 0
         start = time.time()
+        max_relevant = sum(1 for x in all_questions
+                           if len(all_questions[page]) > flags.ans_limit)
         for page in all_questions:
             if len(all_questions[page]) > flags.ans_limit:
                 page_count += 1
                 if page_count % 50 == 0:
                     print(count)
                     print("Page %i of %i (%s), %f feature lines per sec" %
-                          (page_count, len(all_questions),
+                          (page_count, max_relevant,
                            feature_generator.name(),
                            float(feat_lines) / (time.time() - start)))
                     print(unidecode(page))
@@ -472,5 +471,5 @@ if __name__ == "__main__":
                             # print(ss, tt, pp, feat)
                         o[qq.fold].flush()
 
-                if flags.limit > 0 and page_count > flags.limit:
+                if 0 < flags.limit < page_count:
                     break

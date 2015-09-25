@@ -136,6 +136,7 @@ if __name__ == "__main__":
     c.execute(command)
     existing = set(int(x[0]) for x in c)
 
+    num_skipped = 0
     last_id = kNAQT_START
     if flags.naqt_path:
         for qq in naqt_reader(flags.naqt_path):
@@ -148,6 +149,7 @@ if __name__ == "__main__":
                 print("Bad question %s" % str(qq.metadata["ID"]))
 
             if int(qq.metadata["ID"]) in existing:
+                num_skipped += 1
                 continue
             else:
                 last_id += 1
@@ -161,5 +163,5 @@ if __name__ == "__main__":
                 print(last_id, qq.answer, page, qq.text)
                 print(qq.tournaments)
 
-    print("Added %i" % (last_id - kNAQT_START))
+    print("Added %i, skipped %i" % (last_id - kNAQT_START, num_skipped))
     qdb.prune_text()

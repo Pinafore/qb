@@ -3,9 +3,23 @@ from extract_features import kMIN_APPEARANCES
 from util.reweight_labels import kNEG_WEIGHTS
 from extractors.classifier import kCLASSIFIER_FIELDS
 
-kVWOPT = {"mohit": "--early_terminate 100 -k -b 24 --loss_function logistic"}
+kVWOPT = \
+    {"full":
+     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic",
+     "nowiki":
+     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic --ignore w",
+     "nolm":
+     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic --ignore l",
+     "notext":
+     "--early_terminate 100 -k -q ga -b 24 --loss_function logistic --ignore t",
+     "nodeep":
+     "--early_terminate 100 -k -q ga -q gt -b 24 --loss_function logistic --ignore d",
+     "noir":
+     "--early_terminate 100 -k -q ga -q gt -b 24 --loss_function logistic --ignore w",
+}
+
 kQBDB = "data/questions.db"
-kFINAL_MOD = "mohit"
+kFINAL_MOD = "full"
 
 # Path of wikifier input for expo files
 kWIKIFIER_EXPO_IN = "data/wikifier/data/expo_input"
@@ -422,4 +436,5 @@ if __name__ == "__main__":
 
     o.write('\n\n')
     o.write("clean:\n")
-    o.write("\trm -rf data/guesses.db features")
+    o.write("\trm -rf data/guesses.db features data/deep/params\n")
+    o.write("\trm -rf data/classifier/*.pkl data/wikifier/data/input data/wikifier/data/output")

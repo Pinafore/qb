@@ -5,4 +5,8 @@ data/questions.db
 data/temp_guesses.db
 data/wikifier
 data/deep
+data/guesses.db
+data/wikipedia
+data/ir/
+data/lm.pkl
 lib/*.jar
