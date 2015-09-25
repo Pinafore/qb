@@ -12,11 +12,11 @@ from qdb import QuestionDatabase
 
 
 def text_iterator(use_wiki, wiki_location, use_qb, qb_location, limit,
-                  min_pages=0):
+                  min_pages=0, country_list='data/countries.txt'):
     qdb = QuestionDatabase(qb_location)
     doc_num = 0
 
-    cw = CachedWikipedia(wiki_location)
+    cw = CachedWikipedia(wiki_location, country_list)
     pages = qdb.questions_with_pages()
 
     errors = {}
