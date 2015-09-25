@@ -202,7 +202,7 @@ class Labeler(FeatureExtractor):
         else:
             return "-1 %i '%s |guess %s sent:%0.1f count:%f " % \
                 (self._num_guesses, self._id,
-                 unidecode(title).replace(" ", "_"), self._sent,
+                 unidecode(title).replace(" ", "_"), self._sent - 2.0,
                  self._counts.get(title, -2))
 
     def name(self):

@@ -1,15 +1,17 @@
 import argparse
 import sys
-from util.qdb import QuestionDatabase
 from collections import defaultdict
 from csv import DictWriter, DictReader
 import operator
 
+from unidecode import unidecode
+
+from util.qdb import QuestionDatabase
 from extract_expo_features import kEXPO_START
 
 kBUZZ_OUT = ["question", "sentence", "word", "page", "evidence", "final",
              "weight"]
-kPERF_OUT = ["question", "sentence", "token", "guess",
+kPERF_OUT = ["question", "sentence", "token", "guess", "answer",
              "corr", "weight", "present_forward", "present_backward",
              "vw"]
 kQUES_OUT = ["id", "answer", "sent", "text"]
@@ -42,6 +44,7 @@ class PositionIterator:
     def __iter__(self):
         buffer = defaultdict(dict)
         last_question = -1
+        question = None
         for mm, pp in zip(self._meta, self._pred):
             question, sent, token, guess = mm.split("\t")
             question = int(question)
@@ -67,7 +70,8 @@ class PositionIterator:
             right_answer = (guess == self._answers[question])
             buffer[(sent, token)][guess] = \
                 (score, right_answer)
-        yield question, buffer
+        if not question is None:
+            yield question, buffer
 
 
 def answer_presence(all_guesses):
@@ -213,6 +217,7 @@ if __name__ == "__main__":
                 # Write performance
                 d = questions_with_buzzes[qq.qnum]
                 d["corr"] = (d["guess"] == qq.page)
+                d["answer"] = unidecode(qq.page)
                 d["weight"] = flags.neg_weight
                 d["vw"] = flags.vw_config
                 perf_out.writerow(d)

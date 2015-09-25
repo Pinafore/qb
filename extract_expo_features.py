@@ -89,8 +89,8 @@ if __name__ == "__main__":
                                        guesses[guesser])
 
     # Generate the features serially
-    #    for ff in ["label"] + kFEATURES.keys():
-    for ff in ["label", "wikilinks"]:
+    # for ff in ["label", "wikilinks"]:
+    for ff in ["label"] + kFEATURES.keys():
         print("Loading %s" % ff)
         feat = instantiate_feature(ff, qdb)
         if ff == "label":
