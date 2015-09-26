@@ -1,7 +1,7 @@
 # QANTA
 
 ## Setups
-0.  You'll need Python, R, Gorobi, and Vowpal Wabbit installed and accessible on the
+0.  You'll need Python, R, Gorobi, Spark, and Vowpal Wabbit installed and accessible on the
     path.
 
 1. Either copy non_naqt.db to data/questions.db, simlink it, or copy your own questions.db file.
@@ -10,7 +10,7 @@
 several python packages you'll need.  (You may need admin access.)  This will
 also download some nltk data.
 
-3. Download the Illinois Wikifier code.  Place the data directory in
+3. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in
    data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib
    directory.
 
