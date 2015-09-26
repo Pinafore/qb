@@ -10,3 +10,4 @@ data/wikipedia
 data/ir/
 data/lm.pkl
 lib/*.jar
+.ipynb_checkpoints/
