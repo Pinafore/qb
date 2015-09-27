@@ -12,11 +12,12 @@ from extractors.lm import good_char
 
 class WikiLinks(FeatureExtractor):
     def __init__(self, xml_location="data/wikifier/data/output",
-                 wikipedia="data/wikipedia"):
+                 wikipedia="data/wikipedia",
+                 country_list="data/country_list.txt"):
         self._name = "wikilinks"
         self._location = xml_location
         self._links = defaultdict(dict)
-        self._wiki = CachedWikipedia(wikipedia)
+        self._wiki = CachedWikipedia(wikipedia, country_list)
 
         self._cache = -1
         self._matches = None

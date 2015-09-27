@@ -1,6 +1,6 @@
 import pip
 
-kREQ_PKG = ['unidecode', 'wikipedia', 'whoosh', 'nltk', 'scikit-learn', 'regex', 'fuzzywuzzy']
+kREQ_PKG = ['unidecode', 'wikipedia', 'whoosh', 'nltk', 'scikit-learn', 'regex', 'fuzzywuzzy', 'python-Levenshtein']
 
 
 def install(package):
@@ -10,6 +10,4 @@ if __name__ == '__main__':
     for ii in kREQ_PKG:
         install(ii)
 
-    import nltk
-    nltk.download("stopwords")
-    nltk.download('punkt')
+    
