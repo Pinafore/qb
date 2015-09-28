@@ -1,17 +1,21 @@
 import argparse
-from requests import ConnectionError
+import gzip
+import zlib
+import os
 
 from whoosh.index import create_in
 from whoosh.fields import TEXT, ID, Schema
-from time import sleep
 
-import wikipedia
+from unidecode import unidecode
 
 from cached_wikipedia import CachedWikipedia
 from qdb import QuestionDatabase
 
 
-def text_iterator(use_wiki, wiki_location, use_qb, qb_location, limit,
+def text_iterator(use_wiki, wiki_location,
+                  use_qb, qb_location,
+                  use_source, source_location,
+                  limit=-1,
                   min_pages=0, country_list='data/country_list.txt'):
     qdb = QuestionDatabase(qb_location)
     doc_num = 0
@@ -34,39 +38,29 @@ def text_iterator(use_wiki, wiki_location, use_qb, qb_location, limit,
         else:
             question_text = u''
 
+        if use_source:
+            filename = '%s/%s' % (source_location, pp)
+            if os.path.isfile(filename):
+                try:
+                    with gzip.open(filename, 'rb') as f:
+                        source_text = f.read()
+                except zlib.error:
+                    print("Error reading %s" % filename)
+            else:
+                source_text = ''
+        else:
+            source_text = u''
+
         if use_wiki:
-            try:
-                wiki_links = cw[pp].links
-            except:
-                wiki_links = []
-
-            try:
-                wiki_categories = cw[pp].categories
-            except:
-                wiki_categories = []
-
-            try:
-                wikipedia_text = cw[pp].content + ' ' + \
-                    ' '.join(wiki_links + wiki_categories)
-            except wikipedia.exceptions.PageError:
-                errors[pp] = "Not found"
-                continue
-            except wikipedia.exceptions.DisambiguationError:
-                errors[pp] = "Disambiguation"
-            except KeyError:
-                errors[pp] = "KeyError"
-            except ValueError:
-                errors[pp] = "No JSON object could be decoded"
-            except ConnectionError:
-                print("Connection error ... ")
-                errors[pp] = "Connection error"
-                sleep(600)
-                print("done waiting")
+            wikipedia_text = cw[pp].content
         else:
             wikipedia_text = u""
 
         total_text = wikipedia_text
+        total_text += "\n"
         total_text += question_text
+        total_text += "\n"
+        total_text += unidecode(source_text)
 
         yield pp, total_text
         doc_num += 1
@@ -85,10 +79,15 @@ if __name__ == "__main__":
     parser.add_argument('--question_db', type=str, default='data/questions.db')
     parser.add_argument('--use_qb', default=False, action='store_true',
                         help="Use the QB data")
+    parser.add_argument('--use_source', default=False, action='store_true',
+                        help="Use the source data")
     parser.add_argument('--use_wiki', default=False, action='store_true',
                         help="Use wikipedia data")
     parser.add_argument("--whoosh_index", default="data/ir/whoosh",
                         help="Location of IR index")
+    parser.add_argument("--source_location", type=str,
+                        default="data/source",
+                        help="Location of source documents")
     parser.add_argument("--wiki_location", type=str,
                         default="data/wikipedia",
                         help="Location of wiki cache")
@@ -107,6 +106,7 @@ if __name__ == "__main__":
     doc_num = 0
     for title, text in text_iterator(flags.use_wiki, flags.wiki_location,
                                      flags.use_qb, flags.question_db,
+                                     flags.use_source, flags.source_location,
                                      flags.max_pages, flags.min_answers):
 
         try:
@@ -115,10 +115,12 @@ if __name__ == "__main__":
             errors[title] = "Index error on add"
         except Exception:
             errors[title] = "Start when already in a doc"
-        doc_num += 1
 
-        if doc_num % 2500 == 0:
-            print("Adding %i %s" % (doc_num, title))
+        if len(text) > 0:
+            doc_num += 1
+
+        if doc_num % 2500 == 1:
+            print("Adding %i %s %i" % (doc_num, title, len(text)))
             writer.commit()
             writer = ix.writer()  # ix.writer(procs=4, limitmb=1024)
     writer.commit()
