@@ -316,6 +316,7 @@ class Buzzes:
                     return bb
         return None
 
+
 class Questions:
     def __init__(self, question_file):
         qfile = DictReader(open(question_file, 'r'))
@@ -336,7 +337,9 @@ class Questions:
     def answer(self, val):
         return self._answers[val]
 
-def format_display(question_text, sent, word, current_guesses, answer=None, guess_limit=5):
+
+def format_display(question_text, sent, word, current_guesses, answer=None,
+                   guess_limit=5):
     sep = "".join(["-"] * 80)
 
     current_text = ""
@@ -398,6 +401,7 @@ def present_question(question_id, question_text, buzzes, final,
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
             if lower(ww) == lower(power):
+                print("Power %s found, going to 10" % power)
                 question_value = 10
             press = interpret_keypress()
             current_guesses = buzzes.current_guesses(question_id, ss, ii)
@@ -423,6 +427,8 @@ def present_question(question_id, question_text, buzzes, final,
                         response = None
             # Don't buzz if anyone else has gotten it wrong
             elif buzz_now and human_delta == 0 and computer_delta == 0:
+                print(format_display(question_text, ss, ii + 1,
+                                     current_guesses, answer=correct))
                 answer(buzz_now[0].page.split('(')[0])
                 if buzz_now[0].page == correct:
                     return (human + human_delta, computer + question_value,
