@@ -3,6 +3,7 @@ from collections import defaultdict, OrderedDict
 import argparse
 import sqlite3
 import sys
+import time
 import pickle
 from unidecode import unidecode
 
@@ -106,7 +107,10 @@ def instantiate_feature(feature_name, questions):
     elif feature_name == "text":
         feature = TextExtractor()
     elif feature_name == "lm":
-        feature = pickle.load(open("data/lm.pkl"))
+        feature = LanguageModel("data/lm.txt")
+        feature.add_corpus("qb")
+        feature.add_corpus("wiki")
+        feature.add_corpus("source")
     elif feature_name == "deep":
         page_dict = {}
         for page in questions.get_all_pages():

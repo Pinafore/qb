@@ -5,18 +5,19 @@ from extractors.classifier import kCLASSIFIER_FIELDS
 
 kVWOPT = \
     {"full":
-     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic",
-     "nowiki":
-     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic --ignore w",
-     "nolm":
-     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic --ignore l",
-     "notext":
-     "--early_terminate 100 -k -q ga -b 24 --loss_function logistic --ignore t",
-     "nodeep":
-     "--early_terminate 100 -k -q ga -q gt -b 24 --loss_function logistic --ignore d",
-     "noir":
-     "--early_terminate 100 -k -q ga -q gt -b 24 --loss_function logistic --ignore w",
-}
+     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic"}
+# ,
+#      "nowiki":
+#      "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic --ignore w",
+#      "nolm":
+#      "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic --ignore l",
+#      "notext":
+#      "--early_terminate 100 -k -q ga -b 24 --loss_function logistic --ignore t",
+#      "nodeep":
+#      "--early_terminate 100 -k -q ga -q gt -b 24 --loss_function logistic --ignore d",
+#      "noir":
+#      "--early_terminate 100 -k -q ga -q gt -b 24 --loss_function logistic --ignore w",
+# }
 
 kQBDB = "data/questions.db"
 kFINAL_MOD = "full"
@@ -78,10 +79,14 @@ if __name__ == "__main__":
     o.write("data/wikifier/data/output: data/wikifier/data/input\n")
     o.write("\trm -rf $@\n")
     o.write("\tmkdir -p $@\n")
+    o.write("\tcp lib/wikifier-3.0-jar-with-dependencies.jar ")
+    o.write("data/wikifier/wikifier-3.0-jar-with-dependencies.jar\n")
+    o.write("\tcp lib/STAND_ALONE_GUROBI.xml ")
+    o.write("data/wikifier/STAND_ALONE_GUROBI.xml\n")
     o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
-    o.write("../../lib/wikifier-3.0-jar-with-dependencies.jar ")
+    o.write("wikifier-3.0-jar-with-dependencies.jar ")
     o.write("-annotateData data/input data/output ")
-    o.write("false ../../lib/STAND_ALONE_GUROBI.xml)\n\n")
+    o.write("false STAND_ALONE_GUROBI.xml)\n\n")
 
     # Rule for generating IR lookup
     for cc in [kMIN_APPEARANCES]:
@@ -109,9 +114,21 @@ if __name__ == "__main__":
     o.write("\tcp data/temp_guesses.db $@\n\n")
 
     # Rule for generating LM model
-    o.write("data/lm.pkl: extractors/lm.py\n")
+    o.write("clm/clm_wrap.cxx: clm/clm.swig\n")
+    o.write("\tswig -c++ -python $<\n\n")
+
+    o.write("clm/clm_wrap.o: clm/clm_wrap.cxx\n")
+    o.write("\tgcc -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
+
+    o.write("clm/clm.o: clm/clm.cpp clm/clm.h\n")
+    o.write("\tgcc -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
+
+    o.write("clm/_clm.so: clm/clm.o clm/clm_wrap.o\n")
+    o.write("\tg++ -shared `python-config --ldflags` $^ -o $@\n\n")
+
+    o.write("data/lm.txt: clm/lm_wrapper.py clm/_clm.so\n")
     o.write("\tmkdir -p data/wikipedia\n")
-    o.write("\tpython extractors/lm.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
+    o.write("\tpython clm/lm_wrapper.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
 
     # Generate rules for generating the features
     for gg in kGRANULARITIES:
@@ -146,8 +163,8 @@ if __name__ == "__main__":
 
             if ff == "lm":
                 o.write(" ")
-                o.write("data/lm.pkl")
-                feature_prereq.add("data/lm.pkl")
+                o.write("data/lm.txt")
+                feature_prereq.add("data/lm.txt")
 
             if ff == "classifier":
                 for cc in kCLASSIFIER_FIELDS:
@@ -229,8 +246,7 @@ if __name__ == "__main__":
                     o.write("%s %s\n" % (input_file, model_file))
                     o.write("\tmkdir -p results/%s\n" % ff)
                     o.write("\tvw --compressed -t -d %s -i %s " %
-                            (input_file, model_file) +
-                            kVWOPT[ll] + " -p $@\n")
+                            (input_file, model_file) + " -p $@\n")
                     o.write("\n")
 
                     o.write("results/%s/%s.%i.%s.buzz: " %
@@ -346,7 +362,7 @@ if __name__ == "__main__":
     o.write(" %s" % kWIKIFIER_EXPO_OUT)
     o.write("\n\tmkdir -p features/expo")
     o.write("\n\tmkdir -p results/expo")
-    o.write("\n\trm data/expo_guess.db")
+    o.write("\n\trm -f data/expo_guess.db")
     o.write("\n\tpython extract_expo_features.py")
     o.write("\n\n")
 
@@ -364,46 +380,16 @@ if __name__ == "__main__":
             o.write(" features/expo/word.%s.feat" % ff)
         o.write("| gzip > $@\n\n")
 
-        train_file = "features/dev/sentence.%i.vw_input" % ww
-        o.write("features/expo/train.%i.vw_input: features/expo.%i.vw_input"
-                % (ww, ww))
-        o.write("%s\n" % train_file)
-        o.write("\tpython util/restrict_answer.py ")
-        o.write("--answer_set_source $<")
-        o.write("--unfiltered_vw ")
-        o.write(train_file)
-        o.write(" --vw_out $@")
-        o.write("\n\n")
-
-        # train models
-        for mm in kVWOPT:
-            o.write("models/restrict.%s.%i.vw: features/expo/expo.%i.vw_input\n" %
-                    (mm, ww, ww))
-            o.write("\tvw --compressed -d $< %s -f $@ " % kVWOPT[mm])
-            if "--ngram" in kVWOPT[mm] or " -q " in kVWOPT[mm] or \
-                    " --quadratic" in kVWOPT[mm]:
-                o.write("\n")
-            else:
-                o.write("--invert_hash models/expo/restrict/%s.%i.read\n" %
-                        (mm, int(ww)))
-                o.write("\tpython ")
-                o.write("util/sort_features.py models/restrict/%s.%i.read" %
-                        (ll, int(ww)))
-                o.write(" models/restrict/%s.%i.sorted\n" % (mm, int(ww)))
-                o.write("\trm models/restrict/%s.%i.read\n" % (mm, int(ww)))
-                o.write("\n")
-
     # produce predictions and buzzes
     for ww in kNEG_WEIGHTS:
         # predictions
         input_file = "features/expo/expo.%i.vw_input" % ww
         model_file = "models/sentence.%s.%i.vw" % (kFINAL_MOD, ww)
         o.write("results/expo/expo.%i.pred: %s" % (ww, input_file))
-        # Having trouble bypassing this dependency, so deleting
-        # o.write(" %s" % model_file)
+        o.write(" %s" % model_file)
         o.write("\n")
         o.write("\tvw --compressed -t -d %s -i %s " %
-                (input_file, model_file) + kVWOPT[kFINAL_MOD] + " -p $@\n\n")
+                (input_file, model_file) + " -p $@\n\n")
 
         # Buzzes
         o.write("results/expo/expo.%i.buzz: results/expo/expo.%i.pred\n" %
