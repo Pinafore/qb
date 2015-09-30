@@ -74,8 +74,12 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
                 feat = feature_generator.\
                     vw_from_score(guesses_cached[(ss, tt)][pp])
             else:
-                feat = feature_generator.\
-                    vw_from_title(pp, qq.get_text(ss, tt))
+                try:
+                    feat = feature_generator.\
+                      vw_from_title(pp, qq.get_text(ss, tt))
+                except ValueError:
+                    print("Value error!")
+                    feat = ""
             # print(pp, feat)
             yield ss, tt, pp, feat
 
@@ -95,6 +99,8 @@ def instantiate_feature(feature_name, questions):
         wiki_var = 1.0
         qb_mean = 0.0
         qb_var = 1.0
+        source_mean = 0.0
+        source_var = 1.0
 
         feature.add_index("wiki_%i" % kMIN_APPEARANCES, "%s_%i" %
                           ("data/ir/whoosh_wiki", kMIN_APPEARANCES),
@@ -102,6 +108,9 @@ def instantiate_feature(feature_name, questions):
         feature.add_index("qb_%i" % kMIN_APPEARANCES, "%s_%i" %
                           ("data/ir/whoosh_qb", kMIN_APPEARANCES),
                           qb_mean, qb_var)
+        feature.add_index("source_%i" % kMIN_APPEARANCES, "%s_%i" %
+                          ("data/ir/whoosh_source", kMIN_APPEARANCES),
+                          source_mean, source_var)
 
     elif feature_name == "text":
         feature = TextExtractor()
