@@ -148,6 +148,14 @@ if __name__ == "__main__":
                            fieldnames=["question", "answer"])
     final_out.writeheader()
 
+    # Check file length
+    with open(flags.meta) as infile:
+        meta_lines = sum(1 for line in infile)
+    with open(flags.pred) as infile:
+        pred_lines = sum(1 for line in infile)
+    assert meta_lines == pred_lines, "Prediction and meta files mismatch" + \
+        "(%s: %i vs %s: %i)" % (flags.meta, meta_lines, flags.pred, pred_lines)
+
     pi = PositionIterator(open(flags.meta), open(flags.pred),
                           qdb.all_answers())
     if flags.expo:
