@@ -100,6 +100,13 @@ if __name__ == "__main__":
         o.write("--min_answers=%i " % cc)
         o.write("--use_qb\n\n")
 
+        o.write("data/ir/whoosh_source_%i: util/build_whoosh.py\n" % cc)
+        o.write("\trm -rf $@\n")
+        o.write("\tmkdir -p $@\n")
+        o.write("\tpython util/build_whoosh.py --whoosh_index=$@ ")
+        o.write("--min_answers=%i " % cc)
+        o.write("--use_source\n\n")
+
     # Rule for generating the guess list
     o.write("data/guesses.db: extract_features.py data/deep/params")
     o.write("\n")
