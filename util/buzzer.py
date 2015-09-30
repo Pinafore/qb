@@ -480,7 +480,7 @@ if __name__ == "__main__":
             print("Thanks for buzzing in, player %i!" % press)
             current_players.add(press)
 
-    sleep(10)
+    sleep(4)
     answer("I'm ready too")
 
     human = 0
