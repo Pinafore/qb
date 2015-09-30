@@ -7,7 +7,7 @@ from math import log
 from wikipedia.exceptions import DisambiguationError, PageError
 from feature_extractor import FeatureExtractor
 from util.cached_wikipedia import CachedWikipedia
-from extractors.lm import good_char
+from clm.lm_wrapper import kGOODCHAR
 
 
 class WikiLinks(FeatureExtractor):
@@ -47,7 +47,7 @@ class WikiLinks(FeatureExtractor):
 
         total = 0
         matches = ["|%s" % self._name]
-        display_title = "".join(x for x in good_char.findall(title) if x)
+        display_title = "".join(x for x in kGOODCHAR.findall(title) if x)
         bad = set()
         for ii in [x for x in self._matches]:
             try:
@@ -57,7 +57,7 @@ class WikiLinks(FeatureExtractor):
                 continue
 
             if title in page.links:
-                norm = "".join(x for x in good_char.findall(ii) if x)
+                norm = "".join(x for x in kGOODCHAR.findall(ii) if x)
                 matches.append("%s_%s" % (norm, display_title))
                 total += 1
         for ii in bad:
