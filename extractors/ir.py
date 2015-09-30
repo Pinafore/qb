@@ -101,6 +101,9 @@ class IrIndex:
                 for field, word in self._query_terms:
                     try:
                         self._idf[word] = r.idf(field, word)
+                    except ValueError:
+                        # print("Error computing idf for %s" % word)
+                        self._idf[word] = 0.0
                     except TypeError:
                         terms = list(word.terms())
                         # print(terms)
