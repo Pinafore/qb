@@ -10,6 +10,7 @@ import sys
 import os
 
 kSHOW_RIGHT = False
+kPAUSE = .5
 
 kBIGNUMBERS = {-1:
 """
@@ -194,7 +195,6 @@ d8F      ^%888E
 9:
 """
 
-
   .xn!~%x.
  x888   888.
 X8888   8888:
@@ -211,15 +211,22 @@ X8888   8888:
 """}
 
 
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 class PowerPositions:
     def __init__(self, filename):
         self._power_marks = {}
         try:
             infile = DictReader(open(filename, 'r'))
             for ii in infile:
-                self._power_marks[ii['question']] = ii['word']
+                question = int(ii['question'])
+                self._power_marks[question] = ii['word']
         except:
             print("Couldn't load from %s" % filename)
+        print("Read power marks from %s: %s ..." %
+              (filename, str(self._power_marks.keys())[1:69]))
+        print(self._power_marks[700000020])
 
     def __call__(self, question):
         if question in self._power_marks:
@@ -267,7 +274,9 @@ class _GetchWindows:
 
 getch = _Getch()
 
+
 def show_score(human, computer):
+    clear_screen()
     for line in xrange(1, 15):
         for num in [human, computer]:
             for place in [100, 10, 1]:
@@ -338,8 +347,8 @@ class Questions:
         return self._answers[val]
 
 
-def format_display(question_text, sent, word, current_guesses, answer=None,
-                   guess_limit=5):
+def format_display(display_num, question_text, sent, word, current_guesses,
+                   answer=None, guess_limit=5, points=10):
     sep = "".join(["-"] * 80)
 
     current_text = ""
@@ -348,7 +357,8 @@ def format_display(question_text, sent, word, current_guesses, answer=None,
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
 
-    report = "%s\n%s\n%s\n\n" % (sep, current_text, sep)
+    report = "Question %i: %i points\n%s\n%s\n%s\n\n" % \
+        (display_num, points, sep, current_text, sep)
 
     for gg in sorted(current_guesses, key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]:
         guess = current_guesses[gg]
@@ -382,16 +392,16 @@ def interpret_keypress():
         press = None
     return press
 
+
 def answer(ans):
     print("QANTA says:")
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    sleep(1)
     os.system("say -v Tom %s" % ans.replace("'", ""))
-    sleep(.1)
+    sleep(kPAUSE)
     print(ans)
 
 
-def present_question(question_id, question_text, buzzes, final,
+def present_question(display_num, question_id, question_text, buzzes, final,
                      correct, human=0, computer=0, power="10"):
 
     human_delta = 0
@@ -400,8 +410,7 @@ def present_question(question_id, question_text, buzzes, final,
     for ss in sorted(question_text):
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
-            if lower(ww) == lower(power):
-                print("Power %s found, going to 10" % power)
+            if lower(ww).startswith(lower(power)):
                 question_value = 10
             press = interpret_keypress()
             current_guesses = buzzes.current_guesses(question_id, ss, ii)
@@ -412,12 +421,12 @@ def present_question(question_id, question_text, buzzes, final,
                 response = None
                 while response is None:
                     response = raw_input("Player %i, provide an answer:\t"
-                                         % press)
-                    if response.startswith('+'):
+                                         %press)
+                    if '+' in response:
                         return (human + question_value,
                                 computer + computer_delta,
                                 response[1:])
-                    elif response.startswith('-'):
+                    elif '-' in response:
                         if computer_delta == -5:
                             return (human, computer + computer_delta,
                                     response[1:])
@@ -427,30 +436,51 @@ def present_question(question_id, question_text, buzzes, final,
                         response = None
             # Don't buzz if anyone else has gotten it wrong
             elif buzz_now and human_delta == 0 and computer_delta == 0:
-                print(format_display(question_text, ss, ii + 1,
-                                     current_guesses, answer=correct))
+                show_score(human + human_delta,
+                           computer + computer_delta)
+                print(format_display(display_num, question_text, ss, ii + 1,
+                                     current_guesses, answer=correct,
+                                     points=question_value))
                 answer(buzz_now[0].page.split('(')[0])
                 if buzz_now[0].page == correct:
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
                     computer_delta = -5
+                    show_score(human + human_delta,
+                               computer + computer_delta)
+                    format_display(display_num, question_text,
+                                   max(question_text), 0,
+                                   current_guesses, answer=correct,
+                                   points=question_value)
             else:
-                os.system('cls' if os.name == 'nt' else 'clear')
                 show_score(human + human_delta,
                            computer + computer_delta)
-                print(format_display(question_text, ss, ii + 1,
-                                     current_guesses, answer=correct))
+                print(format_display(display_num, question_text, ss, ii + 1,
+                                     current_guesses, answer=correct,
+                                     points=question_value))
     if computer_delta == 0:
         answer(final.split('(')[0])
         if final == correct:
-            print("Final buzz %s %s" % (final, correct))
             return (human + human_delta, computer + 10, final)
         else:
-            print("Final buzz %s %s" % (final, correct))
-            return (human + human_delta, computer, final)
-    else:
-        return (human + human_delta, computer + computer_delta, "")
+            print("Incorrect answer: %s" % final)
+
+    if human_delta == 0:
+        response = None
+        while response is None:
+            response = raw_input("Player, take a guess:\t")
+            if '+' in response:
+                return (human + 10,
+                        computer + computer_delta,
+                        response[1:])
+            elif '-' in response:
+                return (human, computer + computer_delta,
+                        response[1:])
+            else:
+                response = None
+
+    return (human + human_delta, computer + computer_delta, "")
 
 
 
@@ -470,12 +500,11 @@ if __name__ == "__main__":
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
     print("Done loading data")
-    sleep(.5)
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-    print("Time for a buzzer check")
+    clear_screen()
 
     current_players = set()
+
+    print("Time for a buzzer check")
     players_needed = [1]
     while len(current_players) < len(players_needed):
         print("Player %i, please buzz in" % min(x for x in players_needed \
@@ -486,18 +515,23 @@ if __name__ == "__main__":
             print("Thanks for buzzing in, player %i!" % press)
             current_players.add(press)
 
-    sleep(4)
+    sleep(1.5)
     answer("I'm ready too")
 
     human = 0
     computer = 0
     question_num = 0
-    question_ids = questions._questions.keys()
-    shuffle(question_ids)
+    question_ids = sorted(questions._questions.keys(), key=lambda x: x % 11)
     for ii in question_ids:
         question_num += 1
-        hum, comp, ans = present_question(ii, questions[ii], buzzes,
-                                          finals[ii],
+        if question_num < 38:
+            continue
+        power_mark = power(ii)
+        if power_mark == "10":
+            print("Looking for power for %i, got %s %s" %
+                  (ii, power_mark, str(ii in power._power_marks.keys())))
+        hum, comp, ans = present_question(question_num, ii, questions[ii],
+                                          buzzes, finals[ii],
                                           questions.answer(ii),
                                           human=human,
                                           computer=computer,
@@ -507,17 +541,19 @@ if __name__ == "__main__":
 
         print("Correct answer of Question %i: %s" % (question_num,
                                                      questions.answer(ii)))
-        sleep(1)
+        sleep(kPAUSE)
 
-        if question_num > flags.max_questions:
+        if question_num > flags.max_questions - 1:
             break
+
     show_score(human, computer)
 
-    if human==computer:
-        for ii in question_ids[question_num - 1:]:
+    if human == computer:
+        print("Tiebreaker!")
+        for ii in question_ids[question_num:]:
             question_num += 1
-            hum, comp, ans = present_question(ii, questions[ii], buzzes,
-                                              finals[ii],
+            hum, comp, ans = present_question(question_num, ii, questions[ii],
+                                              buzzes, finals[ii],
                                               questions.answer(ii),
                                               human=human,
                                               computer=computer,
@@ -527,6 +563,6 @@ if __name__ == "__main__":
 
             print("Correct answer of Question %i: %s" % (question_num,
                                                          questions.answer(ii)))
-            sleep(1)
+            sleep(kPAUSE)
 
     show_score(human, computer)
