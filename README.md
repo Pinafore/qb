@@ -20,22 +20,22 @@ some nltk data.  You should *not* use admin access for this script.
 http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
 
 ## Steps
-1.  Generate the Makefile
+1.  Generate the Makefile 
 
-``python generate_makefile.py``
+    ``python generate_makefile.py``
 
 2.  Generate the guess database (this takes a while, depends on DAN---60
 hours---and guesses---40 hours)
 
-``make data/guesses.db``
+    ``make data/guesses.db``
 
 3.  Generate the LM pickle (18 hours)
 
-``make data/lm.pkl``
+    ``make data/lm.pkl``
 
 4. generate features, train all models, and get predictions.
 
-``make all_sentence_buzz``
+    ``make all_sentence_buzz``
 
 Feature timings:
 
