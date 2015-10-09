@@ -13,7 +13,7 @@ several python packages you'll need.  (You may need admin access.)
 some nltk data.  You should *not* use admin access for this script.
 
 
-3. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in
+4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in
    data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib
    directory.
 
