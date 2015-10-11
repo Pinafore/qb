@@ -10,7 +10,6 @@ from nltk import bigrams
 from util.build_whoosh import text_iterator
 
 import clm
-from clm import intArray
 
 kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
 
@@ -101,6 +100,8 @@ class LanguageModelBase:
 
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8):
+        from clm import intArray
+            
         self._datafile = lm_file
         self._lm = clm.JelinekMercerFeature()
         self._lm.set_interpolation(interp)

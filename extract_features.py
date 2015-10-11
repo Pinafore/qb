@@ -141,13 +141,13 @@ def instantiate_feature(feature_name, questions):
     return feature
 
 
-def guesses_for_question(qq, features_that_guess, guess_list,
+def guesses_for_question(qq, features_that_guess, guess_list=None,
                          word_skip=-1):
     guesses = {}
 
     # Find out the guesses that we need for this question
     for ff in features_that_guess:
-        if guess_list.number_guesses(qq, ff) == 0:
+        if guess_list is None or guess_list.number_guesses(qq, ff) == 0:
             guesses[ff] = defaultdict(dict)
 
     # Gather all the guesses

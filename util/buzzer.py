@@ -10,7 +10,7 @@ import sys
 import os
 
 kSHOW_RIGHT = False
-kPAUSE = .5
+kPAUSE = .25
 
 kBIGNUMBERS = {-1:
 """
@@ -524,8 +524,6 @@ if __name__ == "__main__":
     question_ids = sorted(questions._questions.keys(), key=lambda x: x % 11)
     for ii in question_ids:
         question_num += 1
-        if question_num < 38:
-            continue
         power_mark = power(ii)
         if power_mark == "10":
             print("Looking for power for %i, got %s %s" %
