@@ -171,7 +171,7 @@ if __name__ == '__main__':
             now = time.time()
             err, grad = objective_and_grad(batch, r, d, len_voc)
             update = ag.rescale_update(grad)
-            r = r - update
+            r -= update
             lstring = 'epoch: ' + str(epoch) + ' batch_ind: ' + str(batch_ind) + \
                     ' error, ' + str(err) + ' time = '+ str(time.time()-now) + ' sec'
             print lstring
