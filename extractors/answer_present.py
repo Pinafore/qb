@@ -2,24 +2,22 @@
 from math import log
 import time
 
-import fuzzywuzzy
 from fuzzywuzzy import fuzz
 from nltk.corpus import stopwords
-stop = stopwords.words('english')
-
 from feature_extractor import FeatureExtractor
 
-
+stop = stopwords.words('english')
 kNEG_INF = float("-inf")
 
 
 class AnswerPresent(FeatureExtractor):
+    def __init__(self):
+        super(AnswerPresent, self).__init__()
+        self.name = 'answer_present'
+
     @staticmethod
     def has_guess():
         return False
-
-    def name(self):
-        return "answer_present"
 
     def score_one_guess(self, title, text):
         d = {}
@@ -43,7 +41,7 @@ class AnswerPresent(FeatureExtractor):
         return self.vw_from_score(val)
 
     def vw_from_score(self, results):
-        return "|%s %s" % (self.name(), " ".join("%s:%f" % (x, results[x])
+        return "|%s %s" % (self.name, " ".join("%s:%f" % (x, results[x])
                                                  for x in results))
 
 if __name__ == "__main__":

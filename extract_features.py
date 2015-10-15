@@ -55,8 +55,7 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
     guesses_cached = defaultdict(dict)
     if feature_generator.has_guess():
         guesses_cached = \
-            guess_list.get_guesses(feature_generator.name(), qq)
-        print("cache", guesses_cached)
+            guess_list.get_guesses(feature_generator.name, qq)
 
     for ss, tt in sorted(guesses_needed):
         if granularity == "sentence" and tt > 0:
@@ -190,6 +189,8 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
 
 class Labeler(FeatureExtractor):
     def __init__(self, question_db):
+        super(Labeler, self).__init__()
+
         self._correct = None
         self._num_guesses = 0
 
@@ -254,8 +255,7 @@ class GuessList:
         return 0
 
     def all_guesses(self, question):
-        query = 'SELECT sentence, token, page  ' + \
-            'FROM guesses WHERE question=?;'
+        query = 'SELECT sentence, token, page FROM guesses WHERE question=?;'
         c = self._conn.cursor()
         c.execute(query, (question.qnum,))
 
@@ -346,6 +346,7 @@ def spark_execute(question_db="data/questions.db",
     sc = SparkContext(appName="QuizBowl")
     questions = QuestionDatabase(question_db)
     guess_list = GuessList(guess_db)
+    b_guess_list = sc.broadcast(guess_list)
     all_questions = questions.questions_with_pages()
     b_all_questions = sc.broadcast(all_questions)
 
@@ -354,21 +355,21 @@ def spark_execute(question_db="data/questions.db",
         'label': instantiate_feature('label', questions),
     }
     b_features = sc.broadcast(features)
+    f_eval = lambda x: evaluate_feature_question(x, b_features, b_all_questions, b_guess_list, granularity)
     pages = sc.parallelize(all_questions.keys())\
         .filter(lambda p: len(b_all_questions.value[p]) > answer_limit)
-    pairs = sc.parallelize(['label']).cartesian(pages)
+    pairs = sc.parallelize(['label']).cartesian(pages).map(f_eval)
     pairs.collect()
     sc.stop()
 
 
-def evaluate_feature_question(pair, b_features, b_all_questions, granularity):
-    feature = b_features.value[pair[0]]
+def evaluate_feature_question(pair, b_features, b_all_questions, b_guess_list, granularity):
+    feature_generator = b_features.value[pair[0]]
     page = pair[1]
     questions = filter(lambda q: q.fold != 'train', b_all_questions.value[page])
-    for q in questions:
-        for ss, tt, pp, feat in feature_lines(qq, guess_list, granularity, feature_generator):
+    for qq in questions:
+        for ss, tt, pp, feat in feature_lines(qq, b_guess_list.value, granularity, feature_generator):
             pass
-
 
 
 if __name__ == "__main__":
@@ -465,7 +466,7 @@ if __name__ == "__main__":
             feature_generator = instantiate_feature("label", questions)
 
         for ii in kFOLDS:
-            name = feature_generator.name()
+            name = feature_generator.name
             filename = ("features/%s/%s.%s.feat" %
                         (ii, flags.granularity, name))
             print("Opening %s for output" % filename)
@@ -500,7 +501,7 @@ if __name__ == "__main__":
                     print(count)
                     print("Page %i of %i (%s), %f feature lines per sec" %
                           (page_count, max_relevant,
-                           feature_generator.name(),
+                           feature_generator.name,
                            float(feat_lines) / (time.time() - start)))
                     print(unidecode(page))
                     feat_lines = 0

@@ -15,6 +15,7 @@ kCLASSIFIER_FIELDS = ["category", "ans_type", "gender"]
 
 class Classifier(FeatureExtractor):
     def __init__(self, bigram_path, question_db):
+        super(Classifier, self).__init__()
         self._qdb = question_db
         self._bigrams = pickle.load(open(bigram_path, 'rb'))
         self._majority = {}
@@ -23,7 +24,7 @@ class Classifier(FeatureExtractor):
         self._fv = None
         self._pd = None
         self._classifiers = {}
-        self._name = 'classifier'
+        self.name = 'classifier'
         self.add_classifier('data/classifier/category.pkl', 'category')
         self.add_classifier('data/classifier/ans_type.pkl', 'ans_type')
         self.add_classifier('data/classifier/gender.pkl', 'gender')
@@ -51,7 +52,7 @@ class Classifier(FeatureExtractor):
         self._classifiers[column] = pickle.load(open(classifier_path, 'rb'))
 
     def vw_from_title(self, title, text):
-        pd = self.featurize(text)
+        self.featurize(text)
         # majority = self.majority(title)
 
         val = ["|classifier"]
@@ -91,9 +92,3 @@ class Classifier(FeatureExtractor):
             for cc in self._classifiers:
                 self._majority[guess][cc] = self._qdb.majority_frequency(guess, cc)
         return self._majority[guess]
-
-
-
-
-if __name__ == "__main__":
-    pass

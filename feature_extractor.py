@@ -1,4 +1,19 @@
-class FeatureExtractor:
+from abc import ABCMeta
+
+
+class FeatureExtractor(object):
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        self._correct = None
+        self._num_guesses = None
+        self._qnum = None
+        self._sent = None
+        self._token = None
+        self._fold = None
+        self._id = None
+        self.name = None
+
     def guesses(self, question):
         """
         Returns all of the guesses for a given question.  If this depends on
@@ -10,9 +25,6 @@ class FeatureExtractor:
     @staticmethod
     def has_guess():
         return False
-
-    def namespace(self):
-        return self._name
 
     def features(self, question, candidate):
         """
@@ -30,7 +42,7 @@ class FeatureExtractor:
         self._id = '%i_%i_%i' % (self._qnum, self._sent, self._token)
 
     def set_num_guesses(self, num_guesses):
-        None
+        pass
 
     def vw_from_score(self, results):
         """
@@ -40,6 +52,3 @@ class FeatureExtractor:
 
     def vw_from_title(self, title, text):
         raise NotImplementedError
-
-    def name(self):
-        return self._name

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 import sys
 import unicodedata
@@ -16,18 +14,19 @@ from nltk.corpus import stopwords
 from feature_extractor import FeatureExtractor
 from util.qdb import QuestionDatabase
 
-kQB_STOP = set(["10", "ten", "points", "name", ",", ")",
-                "(", '"', ']', '[', ":", "ftp"])
+kQB_STOP = {"10", "ten", "points", "name", ",", ")", "(", '"', ']', '[', ":", "ftp"}
 
 paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize
 stopwords = set(stopwords.words('english')) | kQB_STOP
-valid_strings = set(ascii_lowercase) | set(str(x) for x in xrange(10)) | set([' '])
+valid_strings = set(ascii_lowercase) | set(str(x) for x in xrange(10)) | {' '}
 punct_tbl = dict.fromkeys(i for i in xrange(sys.maxunicode)
                           if unicodedata.category(unichr(i)).startswith('P'))
 
+
 def relu(x):
     return x * (x > 0)
+
 
 def normalize(text):
     text = unidecode(text).lower().translate(maketrans(punctuation, ' '*len(punctuation)))
@@ -35,16 +34,17 @@ def normalize(text):
     text = " ".join(x for x in text.split() if x not in stopwords)
     return ''.join(x for x in text if x in valid_strings)
 
+
 class DeepExtractor(FeatureExtractor):
-    def __init__(self, classifier, params, vocab, ners, page_dict,
-                 num_results=200):
+    def __init__(self, classifier, params, vocab, ners, page_dict, num_results=200):
+        super(DeepExtractor, self).__init__()
         self.classifier = cPickle.load(open(classifier, 'rb'))
         self.params = cPickle.load(open(params, 'rb'))
         self.d = self.params[-1].shape[0]
         self.vocab, self.vdict = cPickle.load(open(vocab, 'rb'))
         self.ners = cPickle.load(open(ners, 'rb'))
         self.page_dict = page_dict
-        self._name = "deep"
+        self.name = "deep"
         self._limit = num_results
 
     @staticmethod
@@ -121,11 +121,11 @@ class DeepExtractor(FeatureExtractor):
         text = ' '.join(text)
         preds = self.compute_probs(text)
         c = Counter()
-        for k,v in preds._prob_dict.items():
+        for k, v in preds._prob_dict.items():
             c[k] = v
 
         res = defaultdict(dict)
-        for k,v in c.most_common(self._limit):
+        for k, v in c.most_common(self._limit):
             try:
                 res[self.page_dict[self.vocab[k]]][0] = v
             except KeyError:
@@ -171,7 +171,7 @@ class DeepExtractor(FeatureExtractor):
 
     def vw_from_score(self, val):
         val = val[val.keys()[0]]
-        res = "|%s" % self._name
+        res = "|%s" % self.name
         if val == -1:
             res += " deepfound:0 deepscore:0.0"
         else:

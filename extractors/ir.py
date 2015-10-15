@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-
 import re
 import sys
 import unicodedata
-import zlib
 from string import ascii_lowercase, ascii_uppercase, digits
 from collections import defaultdict
 
@@ -12,10 +9,8 @@ from numpy import isnan
 import whoosh
 from whoosh import index
 from whoosh import qparser
-from whoosh import query
 from whoosh import scoring
 from whoosh.collectors import TimeLimitCollector, TimeLimit
-from whoosh.scoring import BM25F, bm25
 
 from unidecode import unidecode
 
@@ -25,8 +20,8 @@ from nltk.corpus import stopwords
 from feature_extractor import FeatureExtractor
 
 kNEG_INF = float("-inf")
-kQB_STOP = set(["10", "ten", "points", "tenpoints", "one", "name", ",", ")",
-                "``", "(", '"', ']', '[', ":", "due", "!", "'s", "''"])
+kQB_STOP = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']', '[',
+            ":", "due", "!", "'s", "''"}
 kQUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 
 paren_expression = re.compile('\s*\([^)]*\)\s*')
@@ -38,7 +33,7 @@ punct_tbl = dict.fromkeys(i for i in xrange(sys.maxunicode)
                           if unicodedata.category(unichr(i)).startswith('P'))
 
 
-class IrIndex:
+class IrIndex(object):
     def __init__(self, location, mean, var, num_results, time_limit):
         self._name = location
         self._index = index.open_dir(location)
@@ -242,9 +237,10 @@ class IrIndex:
 
 class IrExtractor(FeatureExtractor):
     def __init__(self, num_results=50, time_limit=0.05):
+        super(IrExtractor, self).__init__()
         self._limit = num_results
         self._time = time_limit
-        self._name = "ir"
+        self.name = "ir"
         self._index = {}
 
     def add_index(self, name, location, mean=0, variance=1):
@@ -270,7 +266,7 @@ class IrExtractor(FeatureExtractor):
         return self.vw_from_score(val)
 
     def vw_from_score(self, results):
-        res = "|%s" % self._name
+        res = "|%s" % self.name
         for ii in results:
             if results[ii] > kNEG_INF:
                 res += " %sfound:1 %sscore:%f" % \

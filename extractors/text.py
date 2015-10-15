@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import re
-import sys
-
 from unidecode import unidecode
 
 from nltk.tokenize.treebank import TreebankWordTokenizer
@@ -18,14 +16,9 @@ stopwords = set(stopwords.words('english'))
 
 class TextExtractor(FeatureExtractor):
     def __init__(self):
-        self._cache = 0
-        self._line = ""
+        super(TextExtractor, self).__init__()
+        self.name = 'text'
 
     def vw_from_title(self, title, text):
-        if self._cache != hash(text):
-            self._cache = hash(text)
-            self._line = "|text %s" % alphanum.sub(' ', unidecode(text.lower()))
-        return self._line
+        return "|text %s" % alphanum.sub(' ', unidecode(text.lower()))
 
-    def name(self):
-        return "text"
