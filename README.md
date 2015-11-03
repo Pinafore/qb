@@ -36,6 +36,10 @@ hours---and guesses---40 hours)
 4. generate features, train all models, and get predictions.
 
     ``make all_sentence_buzz``
+    
+5. answer the questions found in data/expo.csv and run the demo
+
+    ``make demo4`` 
 
 Feature timings:
 
