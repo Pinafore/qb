@@ -202,8 +202,8 @@ class Labeler(FeatureExtractor):
             self._counts[ii] = sum(1 for x in all_questions[ii] if
                                    x.fold == "train")
         # Standardize the scores
-        count_mean = mean(self._counts.values())
-        count_var = var(self._counts.values())
+        count_mean = mean(list(self._counts.values()))
+        count_var = var(list(self._counts.values()))
         for ii in all_questions:
             self._counts[ii] = float(self._counts[ii] - count_mean) / count_var
 

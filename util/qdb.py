@@ -1,12 +1,15 @@
+from __future__ import print_function
+from future.builtins import range, str
+
 import sqlite3
 import random
 from unidecode import unidecode
 from collections import defaultdict, OrderedDict, Counter
 import re
-
 from whoosh.collectors import TimeLimitCollector, TimeLimit
-
 import string
+
+
 punc = set(string.punctuation)
 paren = re.compile("\\([^\\)]*\\)")
 
@@ -123,7 +126,7 @@ class Question:
             # correctly if word_skip > 0
             if word_skip > 0:
                 words = self.text[ii].split()
-                for jj in xrange(word_skip, len(words), word_skip):
+                for jj in range(word_skip, len(words), word_skip):
                     yield ii, jj, previous + [" ".join(words[:jj])]
 
             yield ii + 1, 0, [self.text[x] for x in sorted(self.text)
@@ -142,7 +145,7 @@ class Question:
         if self._last_query != (sentence, token):
             self._last_query = (sentence, token)
             previous = ""
-            for ii in xrange(sentence):
+            for ii in range(sentence):
                 previous += self.text.get(ii, "")
             if token > 0:
                 previous += " ".join(self.text[sentence].split()[:token])
@@ -155,7 +158,7 @@ class Question:
         """
         total_text = 0
         for ii in self.text:
-            for jj in xrange(len(self.text[ii].split())):
+            for jj in range(len(self.text[ii].split())):
                 total_text += 1
                 if total_text > offset:
                     return ii, jj
@@ -178,13 +181,13 @@ class Question:
                 "tournaments", "answer_type", "text"]
 
     def csv_row(self, random_text=False):
-        yield "id", unicode(self.qnum)
+        yield "id", str(self.qnum)
         yield "answer", unidecode(self.answer)
         yield "category", unidecode(self.category)
-        yield "naqt", unicode(self.naqt)
+        yield "naqt", str(self.naqt)
         yield "tournaments", unidecode(self.tournaments)
         yield "page", unidecode(self.page)
-        yield "fold", unicode(self.fold)
+        yield "fold", str(self.fold)
         yield "answer_type", unidecode(self.ans_type)
 
         if random_text:
@@ -279,7 +282,7 @@ class QuestionDatabase:
         questions = questions.values()
 
         for ii in sorted(questions, key=lambda x: x.answer):
-            if not page_map.has_key(ii.page):
+            if ii.page not in page_map:
                 page_map[ii.page] = []
             page_map[ii.page].append(ii)
         return page_map
@@ -424,7 +427,7 @@ class QuestionDatabase:
         majority = None
         majority_count = 0
         for pp, cc in c:
-            print pp, cc
+            print(pp, cc)
             if majority is None:
                 majority = pp
                 majority_count = cc

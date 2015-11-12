@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+from future.builtins import range, chr
 import re
 import sys
 import unicodedata
@@ -27,10 +30,10 @@ kQUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize
 stopwords = set(stopwords.words('english')) | kQB_STOP
-valid_strings = set(ascii_lowercase) | set(str(x) for x in xrange(10)) | \
+valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | \
     set(' ')
-punct_tbl = dict.fromkeys(i for i in xrange(sys.maxunicode)
-                          if unicodedata.category(unichr(i)).startswith('P'))
+punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
+                          if unicodedata.category(chr(i)).startswith('P'))
 
 
 class IrIndex(object):

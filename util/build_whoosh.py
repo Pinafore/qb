@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import argparse
 import gzip
 import zlib
@@ -8,8 +10,8 @@ from whoosh.fields import TEXT, ID, Schema
 
 from unidecode import unidecode
 
-from cached_wikipedia import CachedWikipedia
-from qdb import QuestionDatabase
+from util.cached_wikipedia import CachedWikipedia
+from util.qdb import QuestionDatabase
 
 
 def text_iterator(use_wiki, wiki_location,

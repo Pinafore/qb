@@ -1,9 +1,12 @@
+from __future__ import absolute_import
+from future.builtins import range, chr, str
+
 import re
+from util.imports import pickle
 import sys
 import unicodedata
 import numpy as np
-import cPickle
-from string import ascii_lowercase, maketrans, punctuation
+from string import ascii_lowercase, punctuation
 from collections import defaultdict, Counter
 
 from unidecode import unidecode
@@ -19,9 +22,9 @@ kQB_STOP = {"10", "ten", "points", "name", ",", ")", "(", '"', ']', '[', ":", "f
 paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize
 stopwords = set(stopwords.words('english')) | kQB_STOP
-valid_strings = set(ascii_lowercase) | set(str(x) for x in xrange(10)) | {' '}
-punct_tbl = dict.fromkeys(i for i in xrange(sys.maxunicode)
-                          if unicodedata.category(unichr(i)).startswith('P'))
+valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
+punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
+                          if unicodedata.category(chr(i)).startswith('P'))
 
 
 def relu(x):
@@ -29,7 +32,7 @@ def relu(x):
 
 
 def normalize(text):
-    text = unidecode(text).lower().translate(maketrans(punctuation, ' '*len(punctuation)))
+    text = unidecode(text).lower().translate(str.maketrans(punctuation, ' '*len(punctuation)))
     text = paren_expression.sub("", text)
     text = " ".join(x for x in text.split() if x not in stopwords)
     return ''.join(x for x in text if x in valid_strings)
@@ -38,11 +41,11 @@ def normalize(text):
 class DeepExtractor(FeatureExtractor):
     def __init__(self, classifier, params, vocab, ners, page_dict, num_results=200):
         super(DeepExtractor, self).__init__()
-        self.classifier = cPickle.load(open(classifier, 'rb'))
-        self.params = cPickle.load(open(params, 'rb'))
+        self.classifier = pickle.load(open(classifier, 'rb'))
+        self.params = pickle.load(open(params, 'rb'))
         self.d = self.params[-1].shape[0]
-        self.vocab, self.vdict = cPickle.load(open(vocab, 'rb'))
-        self.ners = cPickle.load(open(ners, 'rb'))
+        self.vocab, self.vdict = pickle.load(open(vocab, 'rb'))
+        self.ners = pickle.load(open(ners, 'rb'))
         self.page_dict = page_dict
         self.name = "deep"
         self._limit = num_results

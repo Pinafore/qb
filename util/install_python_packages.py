@@ -1,6 +1,8 @@
 import pip
 
-kREQ_PKG = ['unidecode', 'wikipedia', 'whoosh', 'nltk', 'scikit-learn', 'regex', 'fuzzywuzzy', 'python-Levenshtein', 'kenlm', 'pattern']
+kREQ_PKG = [
+    'unidecode', 'wikipedia', 'whoosh', 'nltk', 'scikit-learn', 'regex', 'fuzzywuzzy',
+    'python-Levenshtein', 'kenlm', 'pattern', 'six']
 
 
 def install(package):
