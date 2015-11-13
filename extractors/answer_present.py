@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 from math import log
 import time
 
 from fuzzywuzzy import fuzz
 from nltk.corpus import stopwords
-from feature_extractor import FeatureExtractor
+from extractors.abstract import FeatureExtractor
 
 stop = stopwords.words('english')
 kNEG_INF = float("-inf")
@@ -41,8 +43,7 @@ class AnswerPresent(FeatureExtractor):
         return self.vw_from_score(val)
 
     def vw_from_score(self, results):
-        return "|%s %s" % (self.name, " ".join("%s:%f" % (x, results[x])
-                                                 for x in results))
+        return "|%s %s" % (self.name, " ".join("%s:%f" % (x, results[x]) for x in results))
 
 if __name__ == "__main__":
     tests = {}
@@ -66,8 +67,8 @@ if __name__ == "__main__":
     start = time.time()
     print("Startup: %f sec" % (time.time() - start))
 
-
-    guesses = ["Thomas Cole", "James Fenimore Cooper", "The Last of the Mohicans", "William H. Seward", "Alaska Purchase"]
+    guesses = ["Thomas Cole", "James Fenimore Cooper", "The Last of the Mohicans",
+               "William H. Seward", "Alaska Purchase"]
     ge = AnswerPresent()
 
     for ii in tests:
@@ -79,4 +80,4 @@ if __name__ == "__main__":
             start = time.time()
             print(gg, ge.vw_from_title(gg, tests[ii]))
             elapsed = time.time() - start
-            print("%f secs" % (elapsed))
+            print("%f secs" % elapsed)

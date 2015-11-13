@@ -9,9 +9,9 @@ from math import log
 from numpy import median
 
 from wikipedia.exceptions import PageError
-from feature_extractor import FeatureExtractor
 from util.cached_wikipedia import CachedWikipedia, LinkResult
 from clm.lm_wrapper import LanguageModelBase
+from extractors.abstract import FeatureExtractor
 
 
 class WikiLinks(FeatureExtractor):
@@ -117,11 +117,10 @@ class WikiLinks(FeatureExtractor):
                 id = entity.find("WikiTitleID").text
                 score = float(entity.find("RankerScore").text)
 
-                if not sentence in self._links[question]:
+                if sentence not in self._links[question]:
                     self._links[question][sentence] = {}
                 self._links[question][sentence][surface] = \
                     (page, start, id, score)
-        #print self._links[question]
 
 
 if __name__ == "__main__":

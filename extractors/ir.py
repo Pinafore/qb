@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
 
-from future.builtins import range, chr
+from future.builtins import range, chr, str
+import six
 import re
 import sys
 import unicodedata
@@ -20,7 +22,7 @@ from unidecode import unidecode
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.corpus import stopwords
 
-from feature_extractor import FeatureExtractor
+from extractors.abstract import FeatureExtractor
 
 kNEG_INF = float("-inf")
 kQB_STOP = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']', '[',
@@ -179,11 +181,11 @@ class IrIndex(object):
         Given the raw text of a query, filter out inadmissable characters
         """
         search_tokens = [x.translate(punct_tbl)
-                         for x in tokenizer(unicode(raw_text))
+                         for x in tokenizer(str(raw_text))
                          if len(x) > 3]
-        search_string = u" ".join(filter(lambda y: y in
-                                         kQUERY_CHARS, unidecode(x))
-                                  for x in search_tokens)
+        search_string = u" ".join(
+                filter(lambda y: y in kQUERY_CHARS, unidecode(x)) for x in search_tokens
+        )
         return search_string, len(search_tokens)
 
     def create_query(self, raw_text, edit_dist=0, title=False):
@@ -192,25 +194,24 @@ class IrIndex(object):
         # sped up.
         if isinstance(raw_text, list):
             raw_text = u" ".join(raw_text)
+
         # print(search_string)
         search_string, search_len = self.prepare_query(raw_text)
         search_query = self._text_parser.parse(search_string)
 
         return search_query, search_len
 
-    def full_search(self, query, time_limit=-1, search_limit=50,
-                    edit_dist=0):
+    def full_search(self, query, time_limit=-1, search_limit=50, edit_dist=0):
         val = {}
 
-        try:
-            searcher = self._index.searcher(weighting=scoring.TF_IDF())
+        with self._index.searcher(weighting=scoring.TF_IDF()) as searcher:
             if time_limit > 0:
                 c = searcher.collector(limit=search_limit)
                 tlc = TimeLimitCollector(c, timelimit=time_limit)
                 try:
                     searcher.search_with_collector(query, tlc)
                 except TimeLimit:
-                    None
+                    pass
                 try:
                     res = tlc.results()
                 except TimeLimit:
@@ -220,8 +221,6 @@ class IrIndex(object):
 
             for ii in res:
                 val[ii['title']] = (ii.docnum, self.scale(ii.score))
-        finally:
-            searcher.close()
         return val
 
     def text_guess(self, text):
@@ -229,12 +228,11 @@ class IrIndex(object):
 
         results = {}
         try:
-            for kk, vv in self.full_search(text_query, time_limit=self._time,
-                                           search_limit=self._limit
-                                           ).iteritems():
+            for kk, vv in six.iteritems(self.full_search(
+                    text_query, time_limit=self._time, search_limit=self._limit)):
                 results[unidecode(kk)] = vv[1]
         except whoosh.searching.TimeLimit:
-            None
+            pass
         return results
 
 
@@ -320,14 +318,13 @@ if __name__ == "__main__":
 
     print("Startup: %f sec" % (time.time() - start))
 
-    tests = {}
-    tests[u"Tannhäuser (opera)"] = u"""He sought out the pope to
+    tests = {
+        u"Tannhäuser (opera)": u"""He sought out the pope to
     seek forgiveness of his sins, only to be told that just as the pope's staff
     would never (*) blossom, his sins are never be forgiven. Three days later,
     the pope's staff miraculously bore flowers. For 10 points--identify this
-    German folk hero, the subject of an opera by Wagner [VAHG-ner]."""
-
-    tests[u"Transformers: The Movie"] = u"""This movie wasn't a masterpiece of
+    German folk hero, the subject of an opera by Wagner [VAHG-ner].""",
+        u"Transformers: The Movie": u"""This movie wasn't a masterpiece of
     writing, featuring such lines as "spare me this mockery of justice"
     and "yes, friends and now destroy Unicron (*), kill
     the grand poobah, eliminate even the toughest stains."  It even lifted
@@ -339,7 +336,7 @@ if __name__ == "__main__":
     Welles in his last role as Unicron the giant robot planet.  For ten points,
     identify this 1986 animated film pitting the Autobots against the
     Decepticons, based on the successful cartoon and toy franchise which was
-    "More than meets the eye."."""
+    "More than meets the eye."."""}
 
     guesses = ["Arkansas", "Australia", "Transformers", "Aaron Burr"]
 

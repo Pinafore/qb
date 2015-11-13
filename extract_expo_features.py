@@ -1,3 +1,5 @@
+from __future__ import print_function, absolute_import
+
 import argparse
 from csv import DictReader, DictWriter
 from collections import defaultdict
@@ -8,9 +10,13 @@ from unidecode import unidecode
 
 from extractors.lm import *
 from util.qdb import QuestionDatabase, Question
-from extract_features import instantiate_feature, \
-    feature_lines, guesses_for_question, \
-    kFEATURES, GuessList
+from util.guess import GuessList
+from extract_features import (
+    instantiate_feature,
+    feature_lines,
+    guesses_for_question,
+    kFEATURES
+)
 
 kEXPO_START = 700000000
 kQUES_OUT = ["id", "answer", "sent", "text"]

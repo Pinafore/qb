@@ -2,16 +2,9 @@
 
 import re
 from unidecode import unidecode
+from extractors.abstract import FeatureExtractor
 
-from nltk.tokenize.treebank import TreebankWordTokenizer
-from nltk.corpus import stopwords
-
-from feature_extractor import FeatureExtractor
-
-kNEG_INF = float("-inf")
 alphanum = pattern = re.compile('[\W_]+')
-tokenizer = TreebankWordTokenizer().tokenize
-stopwords = set(stopwords.words('english'))
 
 
 class TextExtractor(FeatureExtractor):

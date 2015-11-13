@@ -1,13 +1,11 @@
-try:
-    import cPickle as pickle
-except:
-    import pickle
-
+from __future__ import print_function, absolute_import
 import re
-from feature_extractor import FeatureExtractor
 from unidecode import unidecode
 from collections import defaultdict, Counter
 from nltk.util import ngrams
+
+from util.imports import pickle
+from extractors.abstract import FeatureExtractor
 
 alphanum = re.compile('[\W_]+')
 kCLASSIFIER_FIELDS = ["category", "ans_type", "gender"]
@@ -38,7 +36,8 @@ class Classifier(FeatureExtractor):
         for page in all_questions:
             for qq in all_questions[page]:
                 if qq.fold == 'train':
-                    self._majority[attribute][qq.page][getattr(qq, attribute, "").split(":")[0].lower()] += 1
+                    self._majority[attribute][qq.page][
+                        getattr(qq, attribute, "").split(":")[0].lower()] += 1
 
         # normalize counter
         for page in self._majority[attribute]:
@@ -88,7 +87,7 @@ class Classifier(FeatureExtractor):
         return self._pd
 
     def majority(self, guess):
-        if not guess in self._majority:
+        if guess not in self._majority:
             for cc in self._classifiers:
                 self._majority[guess][cc] = self._qdb.majority_frequency(guess, cc)
         return self._majority[guess]

@@ -1,19 +1,21 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
+
 from collections import defaultdict, OrderedDict
 import argparse
 import sqlite3
 import sys
 import time
-import pickle
+from util.imports import pickle
 from unidecode import unidecode
 
-from numpy import var, mean
 from pyspark import SparkContext
 
 from util.qdb import QuestionDatabase
+from util.guess import GuessList
+from extractors.abstract import FeatureExtractor
+
 from extractors.ir import IrExtractor
 from extractors.text import TextExtractor
-from feature_extractor import FeatureExtractor
 from extractors.lm import *
 from extractors.deep import *
 from extractors.classifier import *
@@ -24,6 +26,16 @@ from extractors.answer_present import AnswerPresent
 from feature_config import kFEATURES
 
 kMIN_APPEARANCES = 5
+kFEATURES = OrderedDict([
+    ("ir", None),
+    ("lm", None),
+    ("deep", None),
+    ("answer_present", None),
+    ("text", None),
+    ("classifier", None),
+    ("wikilinks", None),
+    ("mentions", None)
+])
 
 # Add features that actually guess
 # TODO: Make this less cumbersome
@@ -163,7 +175,7 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
             for gg in results:
                 guesses[ff][(ss, ww)][gg] = results[gg]
             # add the correct answer if this is a training document and
-            if qq.fold == "train" and not qq.page in results:
+            if qq.fold == "train" and qq.page not in results:
                 guesses[ff][(ss, ww)][qq.page] = \
                   features_that_guess[ff].score_one_guess(qq.page, tt)
 
@@ -179,7 +191,7 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
         # Add missing guesses
         for ff in features_that_guess:
             missing = 0
-            for gg in [x for x in all_guesses if not x in
+            for gg in [x for x in all_guesses if x not in
                         guesses[ff][(ss, ww)]]:
                 guesses[ff][(ss, ww)][gg] = \
                     features_that_guess[ff].score_one_guess(gg, tt)
@@ -227,6 +239,7 @@ class Labeler(FeatureExtractor):
         return "label"
 
 
+<<<<<<< d5beb5b2e04e5788152807a3287d305476fce0d3
 class GuessList:
     def __init__(self, db_path):
         # Create the database structure if it doesn't exist
@@ -339,6 +352,8 @@ class GuessList:
         self._conn.commit()
 
 
+=======
+>>>>>>> More refactoring
 def spark_execute(question_db="data/questions.db",
                   guess_db="data/guesses.db",
                   answer_limit=5,

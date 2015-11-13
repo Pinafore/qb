@@ -14,14 +14,14 @@ from unidecode import unidecode
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.corpus import stopwords
 
-from feature_extractor import FeatureExtractor
+from extractors.abstract import FeatureExtractor
 from util.qdb import QuestionDatabase
 
-kQB_STOP = {"10", "ten", "points", "name", ",", ")", "(", '"', ']', '[', ":", "ftp"}
+QB_STOP = {"10", "ten", "points", "name", ",", ")", "(", '"', ']', '[', ":", "ftp"}
 
 paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize
-stopwords = set(stopwords.words('english')) | kQB_STOP
+stopwords = set(stopwords.words('english')) | QB_STOP
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
 punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
                           if unicodedata.category(chr(i)).startswith('P'))
@@ -32,7 +32,7 @@ def relu(x):
 
 
 def normalize(text):
-    text = unidecode(text).lower().translate(str.maketrans(punctuation, ' '*len(punctuation)))
+    text = unidecode(text).lower().translate(str.maketrans(punctuation, ' ' * len(punctuation)))
     text = paren_expression.sub("", text)
     text = " ".join(x for x in text.split() if x not in stopwords)
     return ''.join(x for x in text if x in valid_strings)
@@ -138,8 +138,9 @@ class DeepExtractor(FeatureExtractor):
                 except NameError:
                     import HTMLParser
                     html_parser = HTMLParser.HTMLParser()
-                replace_html = html_parser.unescape(self.vocab[k].encode('ascii', 'xmlcharrefreplace'))
-                if not replace_html in self.page_dict:
+                replace_html = html_parser.unescape(
+                    self.vocab[k].encode('ascii', 'xmlcharrefreplace'))
+                if replace_html not in self.page_dict:
                     print("Missing: %s" % replace_html)
                 else:
                     res[self.page_dict[replace_html]][0] = v
