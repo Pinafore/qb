@@ -15,3 +15,12 @@ class TextExtractor(FeatureExtractor):
     def vw_from_title(self, title, text):
         return "|text %s" % alphanum.sub(' ', unidecode(text.lower()))
 
+    def features(self, question, candidate):
+        pass
+
+    def guesses(self, question):
+        pass
+
+    def vw_from_score(self, results):
+        pass
+

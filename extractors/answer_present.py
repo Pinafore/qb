@@ -5,11 +5,8 @@ from math import log
 import time
 
 from fuzzywuzzy import fuzz
-from nltk.corpus import stopwords
 from extractors.abstract import FeatureExtractor
-
-stop = stopwords.words('english')
-kNEG_INF = float("-inf")
+from util.constants import STOP_WORDS
 
 
 class AnswerPresent(FeatureExtractor):
@@ -31,7 +28,7 @@ class AnswerPresent(FeatureExtractor):
 
         longest_match = 1
         for ii in title.split():
-            if ii.lower() in stop:
+            if ii.lower() in STOP_WORDS:
                 continue
             longest_match = max(longest_match, len(ii) if ii in text else 0)
         d["longest"] = log(longest_match)
@@ -44,6 +41,12 @@ class AnswerPresent(FeatureExtractor):
 
     def vw_from_score(self, results):
         return "|%s %s" % (self.name, " ".join("%s:%f" % (x, results[x]) for x in results))
+
+    def features(self, question, candidate):
+        pass
+
+    def guesses(self, question):
+        pass
 
 if __name__ == "__main__":
     tests = {}

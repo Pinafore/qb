@@ -1,4 +1,6 @@
+import re
 from nltk.corpus import stopwords
 
 NEG_INF = float('-inf')
-STOPWORDS = set(stopwords.words('english'))
+STOP_WORDS = set(stopwords.words('english'))
+PAREN_EXPRESSION = re.compile('\s*\([^)]*\)\s*')

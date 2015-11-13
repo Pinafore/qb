@@ -23,17 +23,15 @@ from nltk.tokenize.treebank import TreebankWordTokenizer
 from nltk.corpus import stopwords
 
 from extractors.abstract import FeatureExtractor
+from util.constants import NEG_INF, STOP_WORDS, PAREN_EXPRESSION
 
-kNEG_INF = float("-inf")
 kQB_STOP = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']', '[',
             ":", "due", "!", "'s", "''"}
 kQUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 
-paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize
-stopwords = set(stopwords.words('english')) | kQB_STOP
-valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | \
-    set(' ')
+stopwords = STOP_WORDS | kQB_STOP
+valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | set(' ')
 punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
                           if unicodedata.category(chr(i)).startswith('P'))
 
@@ -80,7 +78,7 @@ class IrIndex(object):
         if isinstance(text, list):
             text = " ".join(text)
         if not text:
-            return kNEG_INF
+            return NEG_INF
 
         # Get the document
         if self._query_hash != hash(text):
@@ -119,7 +117,7 @@ class IrIndex(object):
         # --- OR ---
         # We don't need the searcher around, so we perhaps save on some IDF
         # lookups.
-        if not title in self._document_cache:
+        if title not in self._document_cache:
             self._misses += 1
             # print("Cache miss for %s %f %s" % (unidecode(title),
             #                                    float(self._hits) /
@@ -129,7 +127,7 @@ class IrIndex(object):
                 docnum = r.document_number(id=title)
                 if docnum is None:
                     self._document_cache[title] = None
-                    return kNEG_INF
+                    return NEG_INF
                 vec = dict(r.vector_as("frequency", docnum, "content"))
                 self._document_cache[title] = vec
         else:
@@ -140,7 +138,7 @@ class IrIndex(object):
             #                                   self._name))
             vec = self._document_cache[title]
             if vec is None:
-                return kNEG_INF
+                return NEG_INF
 
         length = 0
         for field, word in [x for x in self._query_terms if x[1] in vec]:
@@ -167,10 +165,14 @@ class IrIndex(object):
 
     @staticmethod
     def normalize(text):
+<<<<<<< HEAD
         """
         Normalize text (but leave punctuation; c.f. prepare_query)
         """
         text = paren_expression.sub("", text)
+=======
+        text = PAREN_EXPRESSION.sub("", text)
+>>>>>>> Refactoring
         text = unidecode(text).lower()
         text = " ".join(x for x in text.split() if x not in stopwords)
         return ''.join(x for x in text if x in valid_strings)
@@ -255,7 +257,6 @@ class IrExtractor(FeatureExtractor):
     def has_guess():
         return False
 
-    # @profile
     def score_one_guess(self, title, text):
         val = {}
         for ii in self._index:
@@ -269,7 +270,7 @@ class IrExtractor(FeatureExtractor):
     def vw_from_score(self, results):
         res = "|%s" % self.name
         for ii in results:
-            if results[ii] > kNEG_INF:
+            if results[ii] > NEG_INF:
                 res += " %sfound:1 %sscore:%f" % \
                     (ii, ii, self._index[ii].scale(results[ii]))
             else:
@@ -294,9 +295,15 @@ class IrExtractor(FeatureExtractor):
 
         # Symmeterize the guesses
         for ii in res:
-            for jj in [x for x in self._index if not x in res[ii]]:
+            for jj in [x for x in self._index if x not in res[ii]]:
                 res[ii][jj] = self._index[jj].score_one_guess(ii, text)
         return res
+
+    def features(self, question, candidate):
+        pass
+
+    def guesses(self, question):
+        pass
 
 if __name__ == "__main__":
     import argparse

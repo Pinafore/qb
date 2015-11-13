@@ -31,7 +31,7 @@ class WikiLinks(FeatureExtractor):
         FeatureExtractor.set_metadata\
             (self, answer, category, qnum, sent, token, guesses, fold)
         # print(qnum, sent, token, answer)
-        if not qnum in self._links:
+        if qnum not in self._links:
             self.load_xml(qnum)
 
     def vw_from_title(self, title, text):
@@ -121,6 +121,15 @@ class WikiLinks(FeatureExtractor):
                     self._links[question][sentence] = {}
                 self._links[question][sentence][surface] = \
                     (page, start, id, score)
+
+    def features(self, question, candidate):
+        pass
+
+    def guesses(self, question):
+        pass
+
+    def vw_from_score(self, results):
+        pass
 
 
 if __name__ == "__main__":

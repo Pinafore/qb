@@ -16,10 +16,10 @@ from nltk.corpus import stopwords
 
 from extractors.abstract import FeatureExtractor
 from util.qdb import QuestionDatabase
+from util.constants import PAREN_EXPRESSION
 
 QB_STOP = {"10", "ten", "points", "name", ",", ")", "(", '"', ']', '[', ":", "ftp"}
 
-paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize
 stopwords = set(stopwords.words('english')) | QB_STOP
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
@@ -33,7 +33,7 @@ def relu(x):
 
 def normalize(text):
     text = unidecode(text).lower().translate(str.maketrans(punctuation, ' ' * len(punctuation)))
-    text = paren_expression.sub("", text)
+    text = PAREN_EXPRESSION.sub("", text)
     text = " ".join(x for x in text.split() if x not in stopwords)
     return ''.join(x for x in text if x in valid_strings)
 

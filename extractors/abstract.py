@@ -1,8 +1,8 @@
-from abc import ABCMeta
+import abc
 
 
 class FeatureExtractor(object):
-    __metaclass__ = ABCMeta
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self._correct = None
@@ -14,23 +14,24 @@ class FeatureExtractor(object):
         self._id = None
         self.name = None
 
+    @abc.abstractmethod
     def guesses(self, question):
         """
         Returns all of the guesses for a given question.  If this depends on
         another system for generating guesses, it can return an empty list.
         """
-
-        raise NotImplementedError
+        pass
 
     @staticmethod
     def has_guess():
         return False
 
+    @abc.abstractmethod
     def features(self, question, candidate):
         """
         Given a question and a candidate, returns the features
         """
-        raise NotImplementedError
+        pass
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         self._correct = answer
@@ -44,11 +45,13 @@ class FeatureExtractor(object):
     def set_num_guesses(self, num_guesses):
         pass
 
+    @abc.abstractmethod
     def vw_from_score(self, results):
         """
         Dictionary of feature key / value pairs
         """
-        raise NotImplementedError
+        pass
 
+    @abc.abstractmethod
     def vw_from_title(self, title, text):
-        raise NotImplementedError
+        pass

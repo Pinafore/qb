@@ -12,8 +12,8 @@ from pyspark import SparkContext
 
 from util.qdb import QuestionDatabase
 from util.guess import GuessList
-from extractors.abstract import FeatureExtractor
 
+from extractors.labeler import Labeler
 from extractors.ir import IrExtractor
 from extractors.text import TextExtractor
 from extractors.lm import *
@@ -39,23 +39,22 @@ kFEATURES = OrderedDict([
 
 # Add features that actually guess
 # TODO: Make this less cumbersome
-kHAS_GUESSES = set()
+HAS_GUESSES = set()
 if IrExtractor.has_guess():
-    kHAS_GUESSES.add("ir")
+    HAS_GUESSES.add("ir")
 if LanguageModel.has_guess():
-    kHAS_GUESSES.add("lm")
+    HAS_GUESSES.add("lm")
 if TextExtractor.has_guess():
-    kHAS_GUESSES.add("text")
+    HAS_GUESSES.add("text")
 if DeepExtractor.has_guess():
-    kHAS_GUESSES.add("deep")
+    HAS_GUESSES.add("deep")
 if Classifier.has_guess():
-    kHAS_GUESSES.add("classifier")
+    HAS_GUESSES.add("classifier")
 if AnswerPresent.has_guess():
-    kHAS_GUESSES.add("answer_present")
+    HAS_GUESSES.add("answer_present")
 
 kGRANULARITIES = ["sentence"]
 kFOLDS = ["dev", "devtest", "test"]
-kNEGINF = float("-inf")
 
 
 def feature_lines(qq, guess_list, granularity, feature_generator):
@@ -136,9 +135,14 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
         page_dict = {}
         for page in questions.get_all_pages():
             page_dict[page.lower().replace(' ', '_')] = page
-        feature = DeepExtractor("%s/classifier" % deep_data, \
-            "%s/params" % deep_data, "%s/vocab" % deep_data, \
-            "data/common/ners", page_dict, 200)
+        feature = DeepExtractor(
+            "data/deep/classifier",
+            "data/deep/params",
+            "data/deep/vocab",
+            "data/common/ners",
+            page_dict,
+            200
+        )
     elif feature_name == "wikilinks":
         feature = WikiLinks()
     elif feature_name == "answer_present":
@@ -191,14 +195,14 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
         # Add missing guesses
         for ff in features_that_guess:
             missing = 0
-            for gg in [x for x in all_guesses if x not in
-                        guesses[ff][(ss, ww)]]:
+            for gg in [x for x in all_guesses if x not in guesses[ff][(ss, ww)]]:
                 guesses[ff][(ss, ww)][gg] = \
                     features_that_guess[ff].score_one_guess(gg, tt)
                 missing += 1
     return guesses
 
 
+<<<<<<< 1da718819c7d6c82ac2ae045c2e768c94f3cac83
 class Labeler(FeatureExtractor):
     def __init__(self, question_db):
         super(Labeler, self).__init__()
@@ -354,6 +358,8 @@ class GuessList:
 
 =======
 >>>>>>> More refactoring
+=======
+>>>>>>> Refactoring
 def spark_execute(question_db="data/questions.db",
                   guess_db="data/guesses.db",
                   answer_limit=5,
@@ -430,7 +436,7 @@ if __name__ == "__main__":
         #                                   (flags.whoosh_qb, cc))
 
         kFEATURES["deep"] = instantiate_feature("deep", questions)
-        # features_that_guess = set(kFEATURES[x] for x in kHAS_GUESSES)
+        # features_that_guess = set(kFEATURES[x] for x in HAS_GUESSES)
         features_that_guess = {"deep": kFEATURES["deep"]}
         print("Guesses %s" % "\t".join(x for x in features_that_guess))
 
