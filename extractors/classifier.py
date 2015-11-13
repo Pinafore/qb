@@ -1,14 +1,11 @@
 from __future__ import print_function, absolute_import
-import re
 from unidecode import unidecode
 from collections import defaultdict, Counter
 from nltk.util import ngrams
 
 from util.imports import pickle
+from util.constants import ALPHANUMERIC
 from extractors.abstract import FeatureExtractor
-
-alphanum = re.compile('[\W_]+')
-kCLASSIFIER_FIELDS = ["category", "ans_type", "gender"]
 
 
 class Classifier(FeatureExtractor):
@@ -73,7 +70,7 @@ class Classifier(FeatureExtractor):
         if hash(text) != self._cache:
             self._cache = hash(text)
             feats = {}
-            total = alphanum.sub(' ', unidecode(text.lower()))
+            total = ALPHANUMERIC.sub(' ', unidecode(text.lower()))
             total = total.split()
             bgs = set(ngrams(total, 2))
             for bg in bgs.intersection(self._bigrams):
@@ -91,3 +88,12 @@ class Classifier(FeatureExtractor):
             for cc in self._classifiers:
                 self._majority[guess][cc] = self._qdb.majority_frequency(guess, cc)
         return self._majority[guess]
+
+    def vw_from_score(self, results):
+        pass
+
+    def guesses(self, question):
+        pass
+
+    def features(self, question, candidate):
+        pass

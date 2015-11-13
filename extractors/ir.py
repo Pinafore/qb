@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
 
-from future.builtins import range, chr, str
+from future.builtins import range, str
 import six
-import re
-import sys
-import unicodedata
 from string import ascii_lowercase, ascii_uppercase, digits
 from collections import defaultdict
 
@@ -19,21 +16,21 @@ from whoosh.collectors import TimeLimitCollector, TimeLimit
 
 from unidecode import unidecode
 
-from nltk.tokenize.treebank import TreebankWordTokenizer
-from nltk.corpus import stopwords
-
 from extractors.abstract import FeatureExtractor
-from util.constants import NEG_INF, STOP_WORDS, PAREN_EXPRESSION
+from util.constants import (
+    NEG_INF, STOP_WORDS, PAREN_EXPRESSION, treebank_tokenizer, PUNCTUATION_TABLE)
 
-kQB_STOP = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']', '[',
-            ":", "due", "!", "'s", "''"}
-kQUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
+QUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 
+<<<<<<< HEAD
 tokenizer = TreebankWordTokenizer().tokenize
 stopwords = STOP_WORDS | kQB_STOP
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | set(' ')
 punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
                           if unicodedata.category(chr(i)).startswith('P'))
+=======
+valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10))
+>>>>>>> Refactoring
 
 
 class IrIndex(object):
@@ -174,7 +171,7 @@ class IrIndex(object):
         text = PAREN_EXPRESSION.sub("", text)
 >>>>>>> Refactoring
         text = unidecode(text).lower()
-        text = " ".join(x for x in text.split() if x not in stopwords)
+        text = " ".join(x for x in text.split() if x not in STOP_WORDS)
         return ''.join(x for x in text if x in valid_strings)
 
     @staticmethod
@@ -196,7 +193,16 @@ class IrIndex(object):
         # sped up.
         if isinstance(raw_text, list):
             raw_text = u" ".join(raw_text)
+<<<<<<< HEAD
 
+=======
+        search_tokens = [x.translate(PUNCTUATION_TABLE)
+                         for x in treebank_tokenizer(str(raw_text))
+                         if len(x) > 3]
+        search_string = u" ".join(
+            filter(lambda y: y in QUERY_CHARS, unidecode(x)) for x in search_tokens
+        )
+>>>>>>> Refactoring
         # print(search_string)
         search_string, search_len = self.prepare_query(raw_text)
         search_query = self._text_parser.parse(search_string)

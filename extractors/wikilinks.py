@@ -2,7 +2,7 @@ from __future__ import absolute_import, print_function
 from future.builtins import range
 
 from collections import defaultdict
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
 import argparse
 from glob import glob
 from math import log
@@ -102,7 +102,7 @@ class WikiLinks(FeatureExtractor):
         for ii in glob("%s/%i-*.txt.wikification.tagged.full.xml" %
                         (self._location, question)):
             sentence = int(ii.split(".txt.wikification")[0].rsplit("-", 1)[-1])
-            tree = ET.parse(ii)
+            tree = ElementTree.parse(ii)
             root = tree.getroot()
 
             # text = tree.find("InputText").text

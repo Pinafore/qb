@@ -6,7 +6,7 @@ import time
 
 from fuzzywuzzy import fuzz
 from extractors.abstract import FeatureExtractor
-from util.constants import STOP_WORDS
+from util.constants import ENGLISH_STOP_WORDS
 
 
 class AnswerPresent(FeatureExtractor):
@@ -28,7 +28,7 @@ class AnswerPresent(FeatureExtractor):
 
         longest_match = 1
         for ii in title.split():
-            if ii.lower() in STOP_WORDS:
+            if ii.lower() in ENGLISH_STOP_WORDS:
                 continue
             longest_match = max(longest_match, len(ii) if ii in text else 0)
         d["longest"] = log(longest_match)

@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
-import re
+from __future__ import absolute_import
 from unidecode import unidecode
 from extractors.abstract import FeatureExtractor
-
-alphanum = pattern = re.compile('[\W_]+')
+from util.constants import ALPHANUMERIC
 
 
 class TextExtractor(FeatureExtractor):
@@ -13,7 +10,7 @@ class TextExtractor(FeatureExtractor):
         self.name = 'text'
 
     def vw_from_title(self, title, text):
-        return "|text %s" % alphanum.sub(' ', unidecode(text.lower()))
+        return "|text %s" % ALPHANUMERIC.sub(' ', unidecode(text.lower()))
 
     def features(self, question, candidate):
         pass

@@ -1,30 +1,19 @@
 from __future__ import absolute_import
-from future.builtins import range, chr, str
+from future.builtins import range, str
 
-import re
 from util.imports import pickle
-import sys
-import unicodedata
 import numpy as np
 from string import ascii_lowercase, punctuation
 from collections import defaultdict, Counter
 
 from unidecode import unidecode
 
-from nltk.tokenize.treebank import TreebankWordTokenizer
-from nltk.corpus import stopwords
-
 from extractors.abstract import FeatureExtractor
 from util.qdb import QuestionDatabase
-from util.constants import PAREN_EXPRESSION
+from util.constants import PAREN_EXPRESSION, STOP_WORDS
 
-QB_STOP = {"10", "ten", "points", "name", ",", ")", "(", '"', ']', '[', ":", "ftp"}
 
-tokenizer = TreebankWordTokenizer().tokenize
-stopwords = set(stopwords.words('english')) | QB_STOP
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
-punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
-                          if unicodedata.category(chr(i)).startswith('P'))
 
 
 def relu(x):
@@ -34,7 +23,7 @@ def relu(x):
 def normalize(text):
     text = unidecode(text).lower().translate(str.maketrans(punctuation, ' ' * len(punctuation)))
     text = PAREN_EXPRESSION.sub("", text)
-    text = " ".join(x for x in text.split() if x not in stopwords)
+    text = " ".join(x for x in text.split() if x not in STOP_WORDS)
     return ''.join(x for x in text if x in valid_strings)
 
 
