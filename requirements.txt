@@ -1,0 +1,8 @@
+unidecode
+wikipedia
+whoosh
+nltk
+scikit-learn
+regex
+fuzzywuzzy
+six
