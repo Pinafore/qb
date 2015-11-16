@@ -1,8 +1,7 @@
 # QANTA
 
 ## Setups
-0.  You'll need Python, R, Gorobi, Spark, and Vowpal Wabbit installed and accessible on the
-    path.
+0.  You'll need Python 3.5 or later, R, Gorobi, Apache Spark, and Vowpal Wabbit installed.
 
 1. Either copy non_naqt.db to data/questions.db, simlink it, or copy your own questions.db file.
 

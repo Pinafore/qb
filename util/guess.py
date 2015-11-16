@@ -1,9 +1,24 @@
+import abc
 import numpy as np
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import sqlite3
+from typing import Dict, Tuple, Set
+
+from util.constants import NEG_INF
 
 
-NEG_INF = float('-inf')
+Guess = namedtuple('Guess',
+                   ['fold', 'question', 'sentence', 'token', 'page', 'guesser', 'feature', 'score'])
+
+
+class AbstractGuessList(object):
+    __metaclass__ = abc.ABCMeta
+
+    def all_guesses(self, question):
+        pass
+
+    def get_guesses(self, guesser, question):
+        pass
 
 
 class GuessList:
@@ -13,7 +28,22 @@ class GuessList:
         self._conn = sqlite3.connect(db_path)
         self._stats = {}
 
-    def db_structure(self, db_path):
+    def db_structure(self, db_path: str) -> None:
+        """
+        Creates the database if it does not exist. The table has the following columns.
+
+        fold -> str: which fold from train/test/dev
+        question -> int: which question
+        sentence -> int: how many sentences have been seen to generate guess
+        token -> int: how many tokens have been seen to generate guess
+        page -> str: page which is unique answer guess
+        guesser -> str: set to "deep"
+        feature -> int: unused
+        score -> float: score from deep classifier
+
+        :param db_path: path to database
+        :return: None
+        """
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
         sql = 'CREATE TABLE IF NOT EXISTS guesses (' + \
@@ -31,17 +61,22 @@ class GuessList:
             return count
         return 0
 
-    def all_guesses(self, question):
+    def all_guesses(self, question) -> Dict[Tuple[int, int], Set[str]]:
+        """
+        Returns a list of guesses for a given question.
+        :param question:
+        :return:
+        """
         query = 'SELECT sentence, token, page FROM guesses WHERE question=?;'
         c = self._conn.cursor()
         c.execute(query, (question.qnum,))
 
         guesses = defaultdict(set)
-        for ss, tt, pp in c:
-            guesses[(ss, tt)].add(pp)
+        for sentence, token, page in c:
+            guesses[(sentence, token)].add(page)
         if question.page and question.fold == "train":
-            for (ss, tt) in guesses:
-                guesses[(ss, tt)].add(question.page)
+            for (sentence, token) in guesses:
+                guesses[(sentence, token)].add(question.page)
         return guesses
 
     def check_recall(self, question_list, guesser_list, correct_answer):

@@ -65,8 +65,7 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
     # guesses[(sent, token)][page][feat] = value
     guesses_cached = defaultdict(dict)
     if feature_generator.has_guess():
-        guesses_cached = \
-            guess_list.get_guesses(feature_generator.name, qq)
+        guesses_cached = guess_list.get_guesses(feature_generator.name, qq)
 
     for ss, tt in sorted(guesses_needed):
         if granularity == "sentence" and tt > 0:
@@ -78,11 +77,8 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
                                        qq.qnum, ss, tt,
                                        guess_size, qq.fold)
 
-        # print("*", qq.qnum, ss, tt, str(guesses_cached[(ss, tt)])[:160])
         for pp in sorted(guesses_needed[(ss, tt)]):
-            # Check to see if it's cached
             if pp in guesses_cached[(ss, tt)]:
-                # print(guesses_cached[(ss, tt)][pp])
                 feat = feature_generator.vw_from_score(guesses_cached[(ss, tt)][pp])
             else:
                 try:
@@ -91,7 +87,6 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
                 except ValueError:
                     print("Value error!")
                     feat = ""
-            # print(pp, feat)
             yield ss, tt, pp, feat
 
 
@@ -371,7 +366,8 @@ def spark_execute(question_db="data/questions.db",
     all_questions = questions.questions_with_pages()
     b_all_questions = sc.broadcast(all_questions)
 
-    feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier', 'wikilinks']
+    feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
+                     'wikilinks']
     features = {
         'label': instantiate_feature('label', questions),
     }

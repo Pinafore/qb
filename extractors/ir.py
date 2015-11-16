@@ -22,15 +22,11 @@ from util.constants import (
 
 QUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 
-<<<<<<< HEAD
 tokenizer = TreebankWordTokenizer().tokenize
 stopwords = STOP_WORDS | kQB_STOP
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | set(' ')
 punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
                           if unicodedata.category(chr(i)).startswith('P'))
-=======
-valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10))
->>>>>>> Refactoring
 
 
 class IrIndex(object):
@@ -162,14 +158,10 @@ class IrIndex(object):
 
     @staticmethod
     def normalize(text):
-<<<<<<< HEAD
         """
         Normalize text (but leave punctuation; c.f. prepare_query)
         """
-        text = paren_expression.sub("", text)
-=======
         text = PAREN_EXPRESSION.sub("", text)
->>>>>>> Refactoring
         text = unidecode(text).lower()
         text = " ".join(x for x in text.split() if x not in STOP_WORDS)
         return ''.join(x for x in text if x in valid_strings)
@@ -193,16 +185,7 @@ class IrIndex(object):
         # sped up.
         if isinstance(raw_text, list):
             raw_text = u" ".join(raw_text)
-<<<<<<< HEAD
 
-=======
-        search_tokens = [x.translate(PUNCTUATION_TABLE)
-                         for x in treebank_tokenizer(str(raw_text))
-                         if len(x) > 3]
-        search_string = u" ".join(
-            filter(lambda y: y in QUERY_CHARS, unidecode(x)) for x in search_tokens
-        )
->>>>>>> Refactoring
         # print(search_string)
         search_string, search_len = self.prepare_query(raw_text)
         search_query = self._text_parser.parse(search_string)
