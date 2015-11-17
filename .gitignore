@@ -1,6 +1,6 @@
 *.pyc
 .idea
-Makefile
+/Makefile
 data/questions.db
 data/temp_guesses.db
 data/wikifier
@@ -10,4 +10,5 @@ data/wikipedia
 data/ir/
 data/lm.pkl
 lib/*.jar
+docs/_build
 .ipynb_checkpoints/
