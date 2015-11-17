@@ -1,5 +1,6 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 from future.builtins import range, str
+from typing import List, Dict, Tuple
 
 import sqlite3
 import random
@@ -251,7 +252,7 @@ class QuestionDatabase:
                 answers[normalized][aa] = answers[normalized].get(aa, 0) + 1
         return answers
 
-    def answer_map(self, normalization = lambda x: x):
+    def answer_map(self, normalization=lambda x: x):
         c = self._conn.cursor()
         command = 'select answer, page from questions ' + \
             'where page != ""'
@@ -275,16 +276,15 @@ class QuestionDatabase:
         for ii in questions:
             return questions[ii]
 
-    def questions_with_pages(self):
+    def questions_with_pages(self) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
 
-        questions = self.query('from questions where page != ""', ())
-        questions = questions.values()
+        questions = self.query('from questions where page != ""', ()).values()
 
-        for ii in sorted(questions, key=lambda x: x.answer):
-            if ii.page not in page_map:
-                page_map[ii.page] = []
-            page_map[ii.page].append(ii)
+        for row in sorted(questions, key=lambda x: x.answer):
+            if row.page not in page_map:
+                page_map[row.page] = []
+            page_map[row.page].append(row)
         return page_map
 
     def questions_by_category(self, category, sort=None):

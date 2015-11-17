@@ -2,7 +2,7 @@ import abc
 import numpy as np
 from collections import defaultdict, namedtuple
 import sqlite3
-from typing import Dict, Tuple, Set
+from typing import Dict, Tuple, Set, Any
 
 from util.constants import NEG_INF
 
@@ -53,7 +53,7 @@ class GuessList:
         c.execute(sql)
         conn.commit()
 
-    def number_guesses(self, question, guesser):
+    def number_guesses(self, question: Any, guesser: str) -> int:
         query = 'SELECT COUNT(*) FROM guesses WHERE question=? AND guesser=?;'
         c = self._conn.cursor()
         c.execute(query, (question.qnum, guesser,))
