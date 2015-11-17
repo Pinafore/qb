@@ -6,8 +6,8 @@ def read(fname):
     with open(os.path.join(os.path.dirname(__file__), fname)) as output:
         return output.read()
 
-requirements = ['unidecode', 'wikipedia', 'whoosh', 'nltk', 'scikit-learn', 'regex', 'fuzzywuzzy',
-                'six']
+requirements = ['numpy', 'unidecode', 'wikipedia', 'whoosh', 'nltk', 'scikit-learn', 'regex',
+                'fuzzywuzzy', 'six']
 
 
 class DownloadCommand(Command):
