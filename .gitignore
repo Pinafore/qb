@@ -9,6 +9,8 @@ data/guesses.db
 data/wikipedia
 data/ir/
 data/lm.pkl
+metastore_db/
+*.log
 lib/*.jar
 docs/_build
 .ipynb_checkpoints/

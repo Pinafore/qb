@@ -9,6 +9,7 @@ from util.imports import pickle
 from unidecode import unidecode
 
 from pyspark import SparkContext
+from pyspark.sql import SQLContext
 
 from util.qdb import QuestionDatabase
 from util.guess import GuessList
@@ -360,7 +361,10 @@ def spark_execute(question_db="data/questions.db",
                   answer_limit=5,
                   granularity='sentence'):
     sc = SparkContext(appName="QuizBowl")
+    sql_context = SQLContext(sc)
     questions = QuestionDatabase(question_db)
+    guess_rdd = sql_context.read.format('jdbc')\
+        .options(url='jdbc:sqlite:/Users/pedro/Code/qb/data/guesses.db', dbtable='guesses').load()
     guess_list = GuessList(guess_db)
     b_guess_list = sc.broadcast(guess_list)
     all_questions = questions.questions_with_pages()
