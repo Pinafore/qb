@@ -58,7 +58,7 @@ class McScience:
         assert self.page in self.choices, "Correct answer %s not in the set %s" % \
             (self.page, str(self.choices))
         return d
-        
+
 def question_top_guesses(text, deep, guess_connection, id, page, num_guesses=4):
     """
     Return the top guesses for this page
@@ -76,12 +76,12 @@ def question_top_guesses(text, deep, guess_connection, id, page, num_guesses=4):
 
     # If we don't have enough guesses, generate more
     new_guesses = deep.text_guess(text)
-    
+
     # sort the guesses and add them
     for guess, score in sorted(new_guesses.items(), key=operator.itemgetter(1), reverse=True):
         if len(choices) < num_guesses and not guess in choices:
             choices.add(guess)
-    
+
     return choices
 
 def question_first_sentence(database_connection, question):
@@ -94,7 +94,7 @@ def question_first_sentence(database_connection, question):
 
     for ii, in c:
         return unidecode(ii)
-    
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='')
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     print("Opening %s" % flags.question_db)
     question_database = sqlite3.connect(flags.question_db)
     guess_database = sqlite3.connect(flags.guess_db)
-        
+
     # First get answers of interest and put them in a dictionary where the value is their count
     query = 'select page from questions where page != "" and ('
     query += " or ".join("category='%s'" % x for x in kCATEGORIES)
@@ -132,33 +132,38 @@ if __name__ == "__main__":
 
     print(list(x for x in answer_count if answer_count[x] >= kCOUNT_CUTOFF))
     print(len(list(x for x in answer_count if answer_count[x] >= kCOUNT_CUTOFF)))
-    
+
     # Load the DAN to generate guesses if they're missing from the database
     deep = instantiate_feature("deep", QuestionDatabase(flags.question_db))
-    
+
     questions = {}
+    question_num = 0
     for pp, ii, nn, ff in c:
         if nn >= 0 or answer_count[pp] < kCOUNT_CUTOFF:
             continue
+        question_num += 1
         question = McScience(pp, ii, ff)
         question.add_text(question_first_sentence(question_database, ii))
         choices = question_top_guesses(question.text, deep, guess_database, ii, pp,
                                        flags.num_choices)
         question.add_choices(choices)
         questions[ii] = question
+        if question_num % 100 == 0:
+            print(pp, ii, question_num)
+            print(choices)
 
     answer_choices = ["answer%s" % kCHOICEIDS[x] for x in xrange(flags.num_choices)]
-    
+
     train_out = DictWriter(open(flags.train_out, 'w'), ["id", "question", "correctAnswer"] +
                            answer_choices)
     train_out.writeheader()
-    
+
     test_out = DictWriter(open(flags.test_out, 'w'), ["id", "question"] + answer_choices)
     test_out.writeheader()
-    
+
     key_out = DictWriter(open(flags.key_out, 'w'), ["id", "correctAnswer"])
     key_out.writeheader()
-    
+
     # Now write the questions out
     for qq in questions.values():
         print(qq.fold)

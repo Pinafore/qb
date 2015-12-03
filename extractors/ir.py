@@ -32,7 +32,8 @@ kQUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 paren_expression = re.compile('\s*\([^)]*\)\s*')
 tokenizer = TreebankWordTokenizer().tokenize
 stopwords = set(stopwords.words('english')) | kQB_STOP
-valid_strings = set(ascii_lowercase) | set(str(x) for x in xrange(10))
+valid_strings = set(ascii_lowercase) | set(str(x) for x in xrange(10)) | \
+    set(' ')
 punct_tbl = dict.fromkeys(i for i in xrange(sys.maxunicode)
                           if unicodedata.category(unichr(i)).startswith('P'))
 
@@ -166,10 +167,26 @@ class IrIndex:
 
     @staticmethod
     def normalize(text):
+        """
+        Normalize text (but leave punctuation; c.f. prepare_query)
+        """
         text = paren_expression.sub("", text)
         text = unidecode(text).lower()
         text = " ".join(x for x in text.split() if x not in stopwords)
         return ''.join(x for x in text if x in valid_strings)
+
+    @staticmethod
+    def prepare_query(raw_text):
+        """
+        Given the raw text of a query, filter out inadmissable characters
+        """
+        search_tokens = [x.translate(punct_tbl)
+                         for x in tokenizer(unicode(raw_text))
+                         if len(x) > 3]
+        search_string = u" ".join(filter(lambda y: y in
+                                         kQUERY_CHARS, unidecode(x))
+                                  for x in search_tokens)
+        return search_string, len(search_tokens)
 
     def create_query(self, raw_text, edit_dist=0, title=False):
         # TODO: Much of this processesing is from an abundance of
@@ -177,16 +194,11 @@ class IrIndex:
         # sped up.
         if isinstance(raw_text, list):
             raw_text = u" ".join(raw_text)
-        search_tokens = [x.translate(punct_tbl)
-                         for x in tokenizer(unicode(raw_text))
-                         if len(x) > 3]
-        search_string = u" ".join(filter(lambda y: y in
-                                         kQUERY_CHARS, unidecode(x))
-                                  for x in search_tokens)
         # print(search_string)
-        query = self._text_parser.parse(search_string)
+        search_string, search_len = self.prepare_query(raw_text)
+        search_query = self._text_parser.parse(search_string)
 
-        return query, len(search_tokens)
+        return search_query, search_len
 
     def full_search(self, query, time_limit=-1, search_limit=50,
                     edit_dist=0):
@@ -199,9 +211,6 @@ class IrIndex:
                 tlc = TimeLimitCollector(c, timelimit=time_limit)
                 try:
                     searcher.search_with_collector(query, tlc)
-                except TimeLimit:
-                    None
-                try:
                     res = tlc.results()
                 except TimeLimit:
                     res = []

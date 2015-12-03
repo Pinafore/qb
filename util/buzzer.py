@@ -211,8 +211,25 @@ X8888   8888:
 """}
 
 
+class kCOLORS:
+    PURPLE = '\033[95m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+    @staticmethod
+    def print(text, color="RED", end='\n'):
+        start = getattr(kCOLORS, color)
+        print(start + text + kCOLORS.ENDC, end=end)
+
+
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
+
 
 class PowerPositions:
     def __init__(self, filename):
@@ -233,6 +250,7 @@ class PowerPositions:
             return self._power_marks[question]
         else:
             return "10"
+
 
 # Utilities for single character input
 class _Getch:
@@ -275,19 +293,30 @@ class _GetchWindows:
 getch = _Getch()
 
 
-def show_score(human, computer):
+def show_score(left_score, right_score,
+               left_header="HUMAN", right_header="COMPUTER",
+               left_color="GREEN", right_color="BLUE"):
     clear_screen()
+
+    # Print the header
+    print("%-15s" % "")
+    kCOLORS.print("%-15s" % left_header, left_color)
+    print("%-30s" % "")
+    kCOLORS.print("%-15s\n" % right_header, right_color)
+
     for line in xrange(1, 15):
-        for num in [human, computer]:
+        for num, color in [(left_score, left_color),
+                           (right_score, right_color)]:
             for place in [100, 10, 1]:
                 if place == 100 and num < 0:
                     val = -1
                 else:
                     val = (abs(num) % (place * 10)) / place
-                print("%-15s" % kBIGNUMBERS[val].split("\n")[line],
-                      end=' ')
+                kCOLORS.print("%-15s" % kBIGNUMBERS[val].split("\n")[line],
+                              color=color, end=' ')
             print("|", end=" ")
         print(" ")
+
 
 class Guess:
     def __init__(self, page, evidence, final, weight):
@@ -437,7 +466,8 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             # Don't buzz if anyone else has gotten it wrong
             elif buzz_now and human_delta == 0 and computer_delta == 0:
                 show_score(human + human_delta,
-                           computer + computer_delta)
+                           computer + computer_delta,
+                           "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
                                      points=question_value))
@@ -448,14 +478,16 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 else:
                     computer_delta = -5
                     show_score(human + human_delta,
-                               computer + computer_delta)
+                               computer + computer_delta,
+                               "HUMAN", "COMPUTER")
                     format_display(display_num, question_text,
                                    max(question_text), 0,
                                    current_guesses, answer=correct,
                                    points=question_value)
             else:
                 show_score(human + human_delta,
-                           computer + computer_delta)
+                           computer + computer_delta,
+                           "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
                                      points=question_value))
@@ -544,7 +576,8 @@ if __name__ == "__main__":
         if question_num > flags.max_questions - 1:
             break
 
-    show_score(human, computer)
+    show_score(human, computer,
+               "HUMAN", "COMPUTER")
 
     if human == computer:
         print("Tiebreaker!")
@@ -563,4 +596,5 @@ if __name__ == "__main__":
                                                          questions.answer(ii)))
             sleep(kPAUSE)
 
-    show_score(human, computer)
+    show_score(human, computer,
+               "HUMAN", "COMPUTER")

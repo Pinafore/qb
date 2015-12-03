@@ -4,9 +4,78 @@ from unidecode import unidecode
 from collections import defaultdict, OrderedDict, Counter
 import re
 
+from whoosh.collectors import TimeLimitCollector, TimeLimit
+
 import string
 punc = set(string.punctuation)
 paren = re.compile("\\([^\\)]*\\)")
+
+
+class ClosestQuestion:
+    def __init__(self, index_location):
+        from whoosh.fields import Schema, TEXT, STORED
+        from whoosh.index import create_in, open_dir
+
+        self.schema = Schema(id=STORED, text=TEXT)
+
+        self.index = create_in(index_location, self.schema)
+        self.index = open_dir(index_location)
+        self.writer = self.index.writer()
+        self.raw = {}
+
+        self.parser = None
+
+    def add_question(self, id, question):
+        self.writer.add_document(id=id, text=question)
+        self.raw[id] = question.lower()
+
+    def finalize(self):
+        self.writer.commit()
+
+    def find_closest(self, raw_query, threshold=50):
+        """
+        Returns the best score of similarity
+        """
+        from whoosh import qparser
+        from whoosh.qparser import QueryParser
+        from fuzzywuzzy import fuzz
+        from extractors.ir import IrIndex
+
+        if self.parser is None:
+            og = qparser.OrGroup.factory(0.9)
+            self.parser = QueryParser("text", schema=self.schema,
+                                      group=og)
+
+        query_text, query_len = IrIndex.prepare_query(raw_query.lower())
+        print("Query: %s" % query_text)
+        query = self.parser.parse(query_text)
+        print("-------------")
+        closest_question = -1
+        with self.index.searcher() as s:
+            c = s.collector(limit=10)
+            tlc = TimeLimitCollector(c, timelimit=5)
+            try:
+                s.search_with_collector(query, tlc)
+            except TimeLimit:
+                None
+            try:
+                results = tlc.results()
+            except TimeLimit:
+                print("Time limit reached!")
+                return -1
+
+            print(results[0]['id'],
+                  self.raw[results[0]['id']][:50])
+            similarity = fuzz.ratio(self.raw[results[0]['id']],
+                                    raw_query.lower())
+            if similarity > threshold:
+                closest_question = results[0]['id']
+                print("Old!", closest_question, similarity)
+            else:
+                print("NEW!  %f" % similarity)
+        print("-------------")
+        return closest_question
+        #return fuzz.ratio(a, b)
 
 
 class Question:
@@ -146,6 +215,20 @@ class QuestionDatabase:
                     questions[ii].add_text(ss, rr)
 
         return questions
+
+    def our_id_from_protobowl(self, protobowl_id):
+        c = self._conn.cursor()
+        command = "select id from questions where protobowl='%s'" % \
+            protobowl_id
+        c.execute(command)
+
+        for qq in c:
+            return qq
+
+        return -1
+
+    def all_questions(self):
+        return self.query("FROM questions", ())
 
     def unmatched_answers(self, ids_to_exclude=set()):
         """
