@@ -211,6 +211,9 @@ class IrIndex:
                 tlc = TimeLimitCollector(c, timelimit=time_limit)
                 try:
                     searcher.search_with_collector(query, tlc)
+                except TimeLimit:
+                    None
+                try:
                     res = tlc.results()
                 except TimeLimit:
                     res = []

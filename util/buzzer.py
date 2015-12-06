@@ -228,6 +228,7 @@ class kCOLORS:
 
 
 def clear_screen():
+    print("Clearing")
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
@@ -243,8 +244,6 @@ class PowerPositions:
             print("Couldn't load from %s" % filename)
         print("Read power marks from %s: %s ..." %
               (filename, str(self._power_marks.keys())[1:69]))
-        print(self._power_marks[700000020])
-
     def __call__(self, question):
         if question in self._power_marks:
             return self._power_marks[question]
@@ -295,13 +294,14 @@ getch = _Getch()
 
 def show_score(left_score, right_score,
                left_header="HUMAN", right_header="COMPUTER",
-               left_color="GREEN", right_color="BLUE"):
-    clear_screen()
-
+               left_color="GREEN", right_color="BLUE",
+               flush=True):
+    if flush:
+        clear_screen()
     # Print the header
-    print("%-15s" % "")
-    kCOLORS.print("%-15s" % left_header, left_color)
-    print("%-30s" % "")
+    print("%-15s" % "", end='')
+    kCOLORS.print("%-15s" % left_header, left_color, end='')
+    print("%-30s" % "", end='')
     kCOLORS.print("%-15s\n" % right_header, right_color)
 
     for line in xrange(1, 15):
@@ -403,6 +403,7 @@ def load_finals(final_file):
     for ii in ff:
         d[int(ii['question'])] = ii['answer']
     return d
+
 
 def interpret_keypress():
     """
