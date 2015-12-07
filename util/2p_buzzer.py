@@ -162,6 +162,7 @@ if __name__ == "__main__":
     parser.add_argument('--power', type=str, default="power.csv")
     parser.add_argument('--skip', type=int, default=0)
     parser.add_argument('--max_questions', type=int, default=20)
+    parser.add_argument('--readable', type=str, default="readable.txt")
 
     flags = parser.parse_args()
 
@@ -190,8 +191,19 @@ if __name__ == "__main__":
         answer("I'm ready too")
 
     score = Score()
-    question_num = 0
     question_ids = sorted(questions._questions.keys(), key=lambda x: x % 11)
+
+    if flags.readable != "":
+        question_num = 0
+        o = open(flags.readable, 'w')
+        for ii in question_ids:
+            question_num += 1
+            o.write("%i) " % question_num)
+            for jj in questions[ii]:
+                o.write("%s  " % questions[ii][jj])
+            o.write("\nANSWER: %s\n\n" % questions.answer(ii))
+
+    question_num = 0
     question_ids = list(question_ids)[flags.skip:]
     for ii in question_ids:
         # print(ii, questions[ii])

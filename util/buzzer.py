@@ -426,7 +426,7 @@ def interpret_keypress():
 def answer(ans):
     print("QANTA says:")
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say -v Tom %s" % ans.replace("'", ""))
+    os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
