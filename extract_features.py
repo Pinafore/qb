@@ -382,6 +382,8 @@ if __name__ == "__main__":
         all_questions = questions.questions_with_pages()
 
         page_num = 0
+        total_pages = sum(1 for x in all_questions if
+                          len(all_questions[x]) >= flags.ans_limit)
         for page in all_questions:
             if len(all_questions[page]) < flags.ans_limit:
                 continue
@@ -405,7 +407,7 @@ if __name__ == "__main__":
 
                 print("%i(%i) of\t%i\t%s\t" %
                     (page_num, len(all_questions[page]),
-                     len(all_questions), page), end="")
+                     total_pages, page), end="")
 
                 if 0 < flags.limit < page_num:
                     break
@@ -451,9 +453,9 @@ if __name__ == "__main__":
         feat_lines = 0
         start = time.time()
         max_relevant = sum(1 for x in all_questions
-                           if len(all_questions[page]) > flags.ans_limit)
+                           if len(all_questions[x]) >= flags.ans_limit)
         for page in all_questions:
-            if len(all_questions[page]) > flags.ans_limit:
+            if len(all_questions[page]) >= flags.ans_limit:
                 page_count += 1
                 if page_count % 50 == 0:
                     print(count)

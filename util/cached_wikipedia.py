@@ -72,7 +72,7 @@ class CachedWikipedia:
             print("Connection error, waiting 10 minutes ...")
             sleep(600)
             print("trying again")
-            return self.load_page(key)
+            return load_page(key)
         return raw
 
     def __getitem__(self, key):
