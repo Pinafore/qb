@@ -24,9 +24,22 @@ class AbstractGuessList(object):
 class GuessList:
     def __init__(self, db_path):
         # Create the database structure if it doesn't exist
+        self.db_path = db_path
         self.db_structure(db_path)
+        self._cursor_fail = False
         self._conn = sqlite3.connect(db_path)
         self._stats = {}
+
+    def _cursor(self):
+        try:
+            return self._conn.cursor()
+        except sqlite3.ProgrammingError as e:
+            if not self._cursor_fail:
+                self._cursor_fail = True
+                self._conn = sqlite3.connect(self.db_path)
+                return self._conn.cursor()
+            else:
+                raise sqlite3.ProgrammingError(e)
 
     def db_structure(self, db_path: str) -> None:
         """
@@ -55,7 +68,7 @@ class GuessList:
 
     def number_guesses(self, question: Any, guesser: str) -> int:
         query = 'SELECT COUNT(*) FROM guesses WHERE question=? AND guesser=?;'
-        c = self._conn.cursor()
+        c = self._cursor()
         c.execute(query, (question.qnum, guesser,))
         for count, in c:
             return count
@@ -68,7 +81,7 @@ class GuessList:
         :return:
         """
         query = 'SELECT sentence, token, page FROM guesses WHERE question=?;'
-        c = self._conn.cursor()
+        c = self._cursor()
         c.execute(query, (question.qnum,))
 
         guesses = defaultdict(set)
@@ -82,7 +95,7 @@ class GuessList:
     def check_recall(self, question_list, guesser_list, correct_answer):
         totals = defaultdict(int)
         correct = defaultdict(int)
-        c = self._conn.cursor()
+        c = self._cursor()
 
         query = 'SELECT count(*) as cnt FROM guesses WHERE guesser=? ' + \
             'AND page=? AND question=?;'
@@ -110,7 +123,7 @@ class GuessList:
             query = 'SELECT score FROM guesses WHERE guesser=? AND feature=? AND score>0 LIMIT %i;' % limit
         else:
             query = 'SELECT score FROM guesses WHERE guesser=? AND feature=? AND score>0;'
-        c = self._conn.cursor()
+        c = self._cursor()
         c.execute(query, (guesser, feature,))
 
         # TODO(jbg): Is there a way of computing this without casting to list?
@@ -121,7 +134,7 @@ class GuessList:
     def get_guesses(self, guesser, question):
         query = 'SELECT sentence, token, page, feature, score ' + \
             'FROM guesses WHERE question=? AND guesser=?;'
-        c = self._conn.cursor()
+        c = self._cursor()
         # print(query, question.qnum, guesser,)
         c.execute(query, (question.qnum, guesser,))
 
@@ -135,7 +148,7 @@ class GuessList:
     def add_guesses(self, guesser, question, fold, guesses):
         # Remove the old guesses
         query = 'DELETE FROM guesses WHERE question=? AND guesser=?;'
-        c = self._conn.cursor()
+        c = self._cursor()
         c.execute(query, (question, guesser,))
 
         # Add in the new guesses

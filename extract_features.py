@@ -197,188 +197,32 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
                 missing += 1
     return guesses
 
-
-<<<<<<< 1da718819c7d6c82ac2ae045c2e768c94f3cac83
-class Labeler(FeatureExtractor):
-    def __init__(self, question_db):
-        super(Labeler, self).__init__()
-
-        self._correct = None
-        self._num_guesses = 0
-
-        all_questions = question_db.questions_with_pages()
-        self._counts = {}
-
-        # Get the counts
-        for ii in all_questions:
-            self._counts[ii] = sum(1 for x in all_questions[ii] if
-                                   x.fold == "train")
-        # Standardize the scores
-        count_mean = mean(list(self._counts.values()))
-        count_var = var(list(self._counts.values()))
-        for ii in all_questions:
-            self._counts[ii] = float(self._counts[ii] - count_mean) / count_var
-
-    def vw_from_title(self, title, query):
-        assert self._correct, "Answer not set"
-        title = title.replace(":", "").replace("|", "")
-
-        # TODO: Incorporate token position here as well to improve
-        # position-based features
-        if title == self._correct:
-            return "1 '%s |guess %s |stats sent:%0.1f count:%f " % \
-                (self._id, unidecode(title).replace(" ", "_"), self._sent,
-                 self._counts.get(title, -2))
-        else:
-            return "-1 %i '%s |guess %s |stats sent:%0.1f count:%f " % \
-                (self._num_guesses, self._id,
-                 unidecode(title).replace(" ", "_"), self._sent,
-                 self._counts.get(title, -2))
-
-    def name(self):
-        return "label"
-
-
-<<<<<<< d5beb5b2e04e5788152807a3287d305476fce0d3
-class GuessList:
-    def __init__(self, db_path):
-        # Create the database structure if it doesn't exist
-        self.db_structure(db_path)
-        self._conn = sqlite3.connect(db_path)
-        self._stats = {}
-
-    def db_structure(self, db_path):
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
-        sql = 'CREATE TABLE IF NOT EXISTS guesses (' + \
-            'fold TEXT, question INTEGER, sentence INTEGER, token INTEGER, page TEXT,' + \
-            ' guesser TEXT, feature TEXT, score NUMERIC, PRIMARY KEY ' + \
-            '(fold, question, sentence, token, page, guesser, feature));'
-        c.execute(sql)
-        c.execute("CREATE INDEX IF NOT EXISTS guess_index ON " +
-                  "guesses (question, sentence, token, page);")
-        conn.commit()
-
-    def number_guesses(self, question, guesser):
-        query = 'SELECT COUNT(*) FROM guesses WHERE question=? AND guesser=?;'
-        c = self._conn.cursor()
-        c.execute(query, (question.qnum, guesser,))
-        for count, in c:
-            return count
-        return 0
-
-    def all_guesses(self, question):
-        query = 'SELECT sentence, token, page FROM guesses WHERE question=?;'
-        c = self._conn.cursor()
-        c.execute(query, (question.qnum,))
-
-        guesses = defaultdict(set)
-        for ss, tt, pp in c:
-            guesses[(ss, tt)].add(pp)
-        if question.page and question.fold == "train":
-            for (ss, tt) in guesses:
-                guesses[(ss, tt)].add(question.page)
-        return guesses
-
-    def check_recall(self, question_list, guesser_list, correct_answer):
-        totals = defaultdict(int)
-        correct = defaultdict(int)
-        c = self._conn.cursor()
-
-        query = 'SELECT count(*) as cnt FROM guesses WHERE guesser=? ' + \
-            'AND page=? AND question=?;'
-        for gg in guesser_list:
-            for qq in question_list:
-                if qq.fold == "train":
-                    continue
-
-                c.execute(query, (gg, correct_answer, qq.qnum,))
-                data = c.fetchone()[0]
-                if data != 0:
-                    correct[gg] += 1
-                totals[gg] += 1
-
-        for gg in guesser_list:
-            if totals[gg] > 0:
-                yield gg, float(correct[gg]) / float(totals[gg])
-
-    def guesser_statistics(self, guesser, feature, limit=5000):
-        """
-        Return the mean and variance of a guesser's scores.
-        """
-
-        if limit > 0:
-            query = 'SELECT score FROM guesses WHERE guesser=? AND feature=? AND score>0 LIMIT %i;' % limit
-        else:
-            query = 'SELECT score FROM guesses WHERE guesser=? AND feature=? AND score>0;'
-        c = self._conn.cursor()
-        c.execute(query, (guesser, feature,))
-
-        # TODO(jbg): Is there a way of computing this without casting to list?
-        values = list(x[0] for x in c if x[0] > kNEGINF)
-
-        return mean(values), var(values)
-
-    def get_guesses(self, guesser, question):
-        query = 'SELECT sentence, token, page, feature, score ' + \
-            'FROM guesses WHERE question=? AND guesser=?;'
-        c = self._conn.cursor()
-        # print(query, question.qnum, guesser,)
-        c.execute(query, (question.qnum, guesser,))
-
-        guesses = defaultdict(dict)
-        for ss, tt, pp, ff, vv in c:
-            if not pp in guesses[(ss, tt)]:
-                guesses[(ss, tt)][pp] = {}
-            guesses[(ss, tt)][pp][ff] = vv
-        return guesses
-
-    def add_guesses(self, guesser, question, fold, guesses):
-        # Remove the old guesses
-        query = 'DELETE FROM guesses WHERE question=? AND guesser=?;'
-        c = self._conn.cursor()
-        c.execute(query, (question, guesser,))
-
-        # Add in the new guesses
-        query = 'INSERT INTO guesses' + \
-            '(fold, question, sentence, token, page, guesser, score, feature) ' + \
-            'VALUES(?, ?, ?, ?, ?, ?, ?, ?);'
-        for ss, tt in guesses:
-            for gg in guesses[(ss, tt)]:
-                for feat, val in guesses[(ss, tt)][gg].items():
-                    c.execute(query,
-                              (fold, question, ss, tt, gg,
-                               guesser, val, feat))
-        self._conn.commit()
-
-
-=======
->>>>>>> More refactoring
-=======
->>>>>>> Refactoring
 def spark_execute(question_db="data/questions.db",
                   guess_db="data/guesses.db",
                   answer_limit=5,
                   granularity='sentence'):
-    sc = SparkContext(appName="QuizBowl")
+    sc = SparkContext(appName="QuizBowl", master='spark://terminus.local:7077')
     sql_context = SQLContext(sc)
-    questions = QuestionDatabase(question_db)
+    question_db = QuestionDatabase(question_db)
     guess_rdd = sql_context.read.format('jdbc')\
         .options(url='jdbc:sqlite:/Users/pedro/Code/qb/data/guesses.db', dbtable='guesses').load()
     guess_list = GuessList(guess_db)
     b_guess_list = sc.broadcast(guess_list)
-    all_questions = questions.questions_with_pages()
-    b_all_questions = sc.broadcast(all_questions)
+    questions = question_db.questions_with_pages()
+
+    b_questions = sc.broadcast(questions)
 
     feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
                      'wikilinks']
     features = {
-        'label': instantiate_feature('label', questions),
+        'label': instantiate_feature('label', question_db),
     }
     b_features = sc.broadcast(features)
-    f_eval = lambda x: evaluate_feature_question(x, b_features, b_all_questions, b_guess_list, granularity)
-    pages = sc.parallelize(all_questions.keys())\
-        .filter(lambda p: len(b_all_questions.value[p]) > answer_limit)
+    f_eval = lambda x: evaluate_feature_question(
+            x, b_features, b_questions, b_guess_list, granularity)
+    pages = sc.parallelize(questions.keys())\
+        .filter(lambda p: len(b_questions.value[p]) > answer_limit).cache()
+    print("Number of pages: {0}".format(pages.count()))
     pairs = sc.parallelize(['label']).cartesian(pages).map(f_eval)
     pairs.collect()
     sc.stop()
@@ -388,6 +232,7 @@ def evaluate_feature_question(pair, b_features, b_all_questions, b_guess_list, g
     feature_generator = b_features.value[pair[0]]
     page = pair[1]
     questions = filter(lambda q: q.fold != 'train', b_all_questions.value[page])
+    print("evaluating {0}".format(page))
     for qq in questions:
         for ss, tt, pp, feat in feature_lines(qq, b_guess_list.value, granularity, feature_generator):
             pass
@@ -492,14 +337,14 @@ if __name__ == "__main__":
                         (ii, flags.granularity, name))
             print("Opening %s for output" % filename)
 
-            o[ii] = open(filename, 'w')
+            #o[ii] = open(filename, 'w')
             if flags.label:
                 filename = ("features/%s/%s.meta" %
                                 (ii, flags.granularity))
             else:
                 filename = ("features/%s/%s.meta" %
                                 (ii, flags.feature))
-            meta[ii] = open(filename, 'w')
+            #meta[ii] = open(filename, 'w')
 
         all_questions = questions.questions_with_pages()
 
@@ -515,6 +360,7 @@ if __name__ == "__main__":
         start = time.time()
         max_relevant = sum(1 for x in all_questions
                            if len(all_questions[x]) >= flags.ans_limit)
+
         for page in all_questions:
             if len(all_questions[page]) >= flags.ans_limit:
                 page_count += 1
@@ -538,14 +384,15 @@ if __name__ == "__main__":
                                                               feature_generator):
                             feat_lines += 1
                             if meta:
-                                meta[qq.fold].write("%i %i %i %s\n" %
-                                                    (qq.qnum, ss, tt,
-                                                     unidecode(pp)))
+                                pass
+                                #meta[qq.fold].write("%i\t%i\t%i\t%s\n" %
+                                #                    (qq.qnum, ss, tt,
+                                #                     unidecode(pp)))
                             assert feat is not None
-                            o[qq.fold].write("%s\n" % feat)
+                            #o[qq.fold].write("%s\n" % feat)
                             assert fold_here == qq.fold, "%s %s" % (fold_here, qq.fold)
                             # print(ss, tt, pp, feat)
-                        o[qq.fold].flush()
+                        #o[qq.fold].flush()
 
                 if 0 < flags.limit < page_count:
                     break
