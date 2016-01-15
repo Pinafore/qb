@@ -197,15 +197,16 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
                 missing += 1
     return guesses
 
-def spark_execute(question_db="data/questions.db",
-                  guess_db="data/guesses.db",
+def spark_execute(spark_master,
+                  question_db,
+                  guess_db,
                   answer_limit=5,
                   granularity='sentence'):
-    sc = SparkContext(appName="QuizBowl", master='spark://terminus.local:7077')
+    sc = SparkContext(appName="QuizBowl", master=spark_master)
     sql_context = SQLContext(sc)
     question_db = QuestionDatabase(question_db)
     guess_rdd = sql_context.read.format('jdbc')\
-        .options(url='jdbc:sqlite:/Users/pedro/Code/qb/data/guesses.db', dbtable='guesses').load()
+        .options(url='jdbc:sqlite:{0}'.format(guess_db), dbtable='guesses').load()
     guess_list = GuessList(guess_db)
     b_guess_list = sc.broadcast(guess_list)
     questions = question_db.questions_with_pages()

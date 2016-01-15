@@ -1,4 +1,8 @@
+import os
 import extract_features
 
 if __name__ == '__main__':
-    extract_features.spark_execute()
+    question_db = os.environ.get('QB_QUESTION_DB')
+    guess_db = os.environ.get('QB_GUESS_DB')
+    spark_master = os.environ.get('QB_SPARK_MASTER')
+    extract_features.spark_execute(spark_master, question_db, guess_db)
