@@ -210,21 +210,26 @@ def spark_execute(spark_master,
     guess_list = GuessList(guess_db)
     b_guess_list = sc.broadcast(guess_list)
     questions = question_db.questions_with_pages()
+    pages = questions.keys()
+    num_pages = sum([1 for p in pages if len(questions[p]) > answer_limit])
 
     b_questions = sc.broadcast(questions)
 
     feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
                      'wikilinks']
     features = {
-        'label': instantiate_feature('label', question_db),
+        # 'label': instantiate_feature('label', question_db),
+        # 'deep': instantiate_feature('deep', question_db)
+        # 'classifier': instantiate_feature('classifier', question_db)
+        'text': instantiate_feature('text', question_db)
     }
     b_features = sc.broadcast(features)
     f_eval = lambda x: evaluate_feature_question(
             x, b_features, b_questions, b_guess_list, granularity)
-    pages = sc.parallelize(questions.keys())\
-        .filter(lambda p: len(b_questions.value[p]) > answer_limit).cache()
-    print("Number of pages: {0}".format(pages.count()))
-    pairs = sc.parallelize(['label']).cartesian(pages).map(f_eval)
+    pages = sc.parallelize(pages)\
+        .filter(lambda p: len(b_questions.value[p]) > answer_limit).repartition(int(num_pages / 3))
+    print("Number of pages: {0}".format(num_pages))
+    pairs = sc.parallelize(['text']).cartesian(pages).map(f_eval)
     pairs.collect()
     sc.stop()
 
@@ -235,7 +240,8 @@ def evaluate_feature_question(pair, b_features, b_all_questions, b_guess_list, g
     questions = filter(lambda q: q.fold != 'train', b_all_questions.value[page])
     print("evaluating {0}".format(page))
     for qq in questions:
-        for ss, tt, pp, feat in feature_lines(qq, b_guess_list.value, granularity, feature_generator):
+        for ss, tt, pp, feat in feature_lines(
+                qq, b_guess_list.value, granularity, feature_generator):
             pass
 
 

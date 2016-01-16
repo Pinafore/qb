@@ -30,13 +30,13 @@ def normalize(text):
 class DeepExtractor(FeatureExtractor):
     def __init__(self, classifier, params, vocab, ners, page_dict, num_results=200):
         super(DeepExtractor, self).__init__()
-        self.classifier = pickle.load(open(classifier, 'rb'))
-        self.params = pickle.load(open(params, 'rb'))
+        self.classifier = pickle.load(open(classifier, 'rb'), encoding='latin1')
+        self.params = pickle.load(open(params, 'rb'), encoding='latin1')
         self.d = self.params[-1].shape[0]
-        self.vocab, self.vdict = pickle.load(open(vocab, 'rb'))
-        self.ners = pickle.load(open(ners, 'rb'))
+        self.vocab, self.vdict = pickle.load(open(vocab, 'rb'), encoding='latin1')
+        self.ners = pickle.load(open(ners, 'rb'), encoding='latin1')
         self.page_dict = page_dict
-        self.name = "deep"
+        self.name = 'deep'
         self._limit = num_results
 
     @staticmethod
@@ -163,7 +163,7 @@ class DeepExtractor(FeatureExtractor):
         return self.vw_from_score(val)
 
     def vw_from_score(self, val):
-        val = val[val.keys()[0]]
+        val = val[list(val.keys())[0]]
         res = "|%s" % self.name
         if val == -1:
             res += " deepfound:0 deepscore:0.0"
