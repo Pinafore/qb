@@ -17,12 +17,14 @@ from extractors.lm import *
 from extractors.deep import *
 from extractors.classifier import *
 from extractors.wikilinks import *
+from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
 
 kMIN_APPEARANCES = 5
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
     ("answer_present", None), ("text", None),
     ("classifier", None), ("wikilinks", None),
+    ("mentions", None),
     ])
 
 # Add features that actually guess
@@ -135,6 +137,8 @@ def instantiate_feature(feature_name, questions):
         feature = Labeler(questions)
     elif feature_name == "classifier":
         feature = Classifier('data/classifier/bigrams.pkl', questions)
+    elif feature_name == "mentions":
+        feature = Mentions(questions, kMIN_APPEARANCES)
     else:
         print("Don't know what to do with %s" % feature_name)
     print("done")

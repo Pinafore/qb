@@ -30,7 +30,10 @@ class CachedWikipedia:
         self._path = location
         self._cache = {}
         self._write_dummy = write_dummy
-        self._countries = dict(x.split('\t') for x in open(country_list))
+        if country_list:
+            self._countries = dict(x.split('\t') for x in open(country_list))
+        else:
+            self._countries = dict()
 
     @staticmethod
     def load_page(key):
