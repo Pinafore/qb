@@ -16,5 +16,6 @@ class LanguageModel(FeatureExtractor):
         self._corpora.add(corpus_name)
 
     def vw_from_title(self, title, text):
-        return " ".join(self._lm.feature_line(x, title, text) for
-                        x in self._corpora)
+        return "|%s %s" % (self._name,
+                           " ".join(self._lm.feature_line(x, title, text) for
+                                    x in self._corpora))

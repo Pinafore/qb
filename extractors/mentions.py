@@ -97,13 +97,14 @@ class Mentions(FeatureExtractor):
     def vw_from_title(self, title, text):
         # Find mentions if the text has changed
         if text != self._text:
+            self._text = text
             self._pre = []
             self._ment = []
             self._suf = []
             for pp, mm, ss in find_references(text):
-                self._pre.append(pp.lower())
-                self._suf.append(ss.lower())
-                self._ment.append(mm.lower())
+                self._pre.append(unidecode(pp.lower()))
+                self._suf.append(unidecode(ss.lower()))
+                self._ment.append(unidecode(mm.lower()))
 
         best_score = float("-inf")
         for ref in self.referring_exs(title):
@@ -117,10 +118,13 @@ class Mentions(FeatureExtractor):
                 score = self._lm.score(query)
                 if score > best_score:
                     best_score = score / float(query_len)
-        res = "%s score:%f" % (self._name, best_score)
+        if best_score > float("-inf"):
+            res = "|%s score:%f" % (self._name, best_score)
+        else:
+            res = "|%s missing:1" % (self._name)
         for mm in self._ment:
             res += " "
-            res += ("%s:%s" % (title, mm)).replace(" ", "_")
+            res += ("%s:%s" % (unidecode(title), mm)).replace(" ", "_")
         return res
 
     def generate_refexs(self, answer_list):
