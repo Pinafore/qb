@@ -220,16 +220,20 @@ def spark_execute(spark_master,
     features = {
         # 'label': instantiate_feature('label', question_db),
         # 'deep': instantiate_feature('deep', question_db)
-        # 'classifier': instantiate_feature('classifier', question_db)
-        'text': instantiate_feature('text', question_db)
+        # 'classifier': instantiate_feature('classifier', question_db) doesn't work yet
+        # 'text': instantiate_feature('text', question_db)
+        # 'answer_present': instantiate_feature('answer_present', question_db)
+        'wikilinks': instantiate_feature('wikilinks', question_db)
     }
     b_features = sc.broadcast(features)
     f_eval = lambda x: evaluate_feature_question(
             x, b_features, b_questions, b_guess_list, granularity)
     pages = sc.parallelize(pages)\
-        .filter(lambda p: len(b_questions.value[p]) > answer_limit).repartition(int(num_pages / 3))
+        .filter(lambda p: len(b_questions.value[p]) > answer_limit)
     print("Number of pages: {0}".format(num_pages))
-    pairs = sc.parallelize(['text']).cartesian(pages).map(f_eval)
+    pairs = sc.parallelize(['wikilinks'])\
+        .cartesian(pages).repartition(int(num_pages / 3))\
+        .map(f_eval)
     pairs.collect()
     sc.stop()
 
