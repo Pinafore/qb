@@ -4,6 +4,8 @@ import argparse
 import gzip
 import zlib
 import os
+import traceback
+from requests import ConnectionError
 
 from whoosh.index import create_in
 from whoosh.fields import TEXT, ID, Schema
@@ -116,9 +118,13 @@ if __name__ == "__main__":
 
         try:
             writer.add_document(title=title, content=text, id=title)
-        except IndexError:
+        except IndexError as e:
+            print("Index error")
+            traceback.print_exc()
             errors[title] = "Index error on add"
-        except Exception:
+        except Exception as e:
+            print("exception")
+            traceback.print_exc()
             errors[title] = "Start when already in a doc"
 
         if len(text) > 0:
@@ -129,3 +135,4 @@ if __name__ == "__main__":
             writer.commit()
             writer = ix.writer()  # ix.writer(procs=4, limitmb=1024)
     writer.commit()
+    ix.close()

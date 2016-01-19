@@ -32,7 +32,7 @@ punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
 class IrIndex(object):
     def __init__(self, location, mean, var, num_results, time_limit):
         self._name = location
-        self._index = index.open_dir(location)
+        self._index = index.open_dir(location, readonly=True)
         self._query_hash = 0
         self._query_terms = None
 
@@ -43,11 +43,8 @@ class IrIndex(object):
 
         # TODO(jbg): This is a parameter that can be optimized
         og = qparser.OrGroup.factory(0.9)
-        self._text_parser = qparser.QueryParser("content",
-                                                self._index.schema, group=og)
-        self._id_parser = qparser.QueryParser("id",
-                                              self._index.schema,
-                                              group=og)
+        self._text_parser = qparser.QueryParser("content", self._index.schema, group=og)
+        self._id_parser = qparser.QueryParser("id", self._index.schema, group=og)
 
         if not isnan(mean):
             self._mean = mean
@@ -228,19 +225,29 @@ class IrIndex(object):
 
 
 class IrExtractor(FeatureExtractor):
-    def __init__(self, num_results=50, time_limit=0.05):
+    def __init__(self, num_results=50, time_limit=0.05, k_min_appearances=None):
         super(IrExtractor, self).__init__()
         self._limit = num_results
         self._time = time_limit
         self.name = "ir"
         self._index = {}
+        self.k_min_appearances = k_min_appearances
 
-    def add_index(self, name, location, mean=0, variance=1):
-        print("Adding %s (%s)" % (location, name))
-        self._index[name] = IrIndex(location, mean, variance,
-                                    self._limit, self._time)
-        print("Current set of indices: %s (%f, %f)" %
-              (list(self._index.keys()), mean, variance))
+    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+        super(IrExtractor, self).set_metadata(answer, category, qnum, sent, token, guesses, fold)
+
+        self.add_index("wiki_%i" % self.k_min_appearances,
+                       "%s_%i" % ("data/ir/whoosh_wiki", self.k_min_appearances))
+        self.add_index("qb_%i" % self.k_min_appearances,
+                       "%s_%i" % ("data/ir/whoosh_qb", self.k_min_appearances))
+
+    def add_index(self, name, location, mean=0.0, variance=1.0):
+        if name not in self._index:
+            print("Adding %s (%s)" % (location, name))
+            self._index[name] = IrIndex(location, mean, variance,
+                                        self._limit, self._time)
+            print("Current set of indices: %s (%f, %f)" %
+                  (list(self._index.keys()), mean, variance))
 
     @staticmethod
     def has_guess():

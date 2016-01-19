@@ -1,9 +1,11 @@
 from numpy import *
-from util.gen_util import *
-from util.math_util import *
-from classify.learn_classifiers import evaluate
-from util.adagrad import Adagrad
-import cPickle, time, argparse
+from future.builtins import range
+from guesser.util.gen_util import *
+from guesser.util.math_util import *
+from guesser.classify.learn_classifiers import evaluate
+from guesser.util.adagrad import Adagrad
+import time, argparse
+from util.imports import pickle
 
 # does both forward and backprop
 def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
@@ -117,22 +119,22 @@ if __name__ == '__main__':
     d = args['d']
 
     # load data
-    train = cPickle.load(open('data/deep/train', 'rb'))
-    dev = cPickle.load(open('data/deep/dev', 'rb'))
-    vocab, vdict = cPickle.load(open('data/deep/vocab', 'rb'))
+    train = pickle.load(open('data/deep/train', 'rb'))
+    dev = pickle.load(open('data/deep/dev', 'rb'))
+    vocab, vdict = pickle.load(open('data/deep/vocab', 'rb'))
 
     train_qs = train
     val_qs = dev
-    print 'total questions: ', len(train_qs)
+    print('total questions: ', len(train_qs))
     total = 0
     for qs, ans in train_qs:
         total += len(qs)
-    print 'total sentences: ', total
+    print('total sentences: ', total)
 
-    orig_We = cPickle.load(open(args['We'], 'rb'))
+    orig_We = pickle.load(open(args['We'], 'rb'))
 
     len_voc = orig_We.shape[1]
-    print 'vocab length: ', len_voc, ' We shape: ', orig_We.shape
+    print('vocab length: ', len_voc, ' We shape: ', orig_We.shape)
 
     # output log and parameter file destinations
     param_file = args['output']
@@ -146,7 +148,7 @@ if __name__ == '__main__':
     r = roll_params(params)
 
     dim = r.shape[0]
-    print 'parameter vector dimensionality:', dim
+    print('parameter vector dimensionality:', dim)
 
     log = open(log_file, 'w')
 
@@ -154,14 +156,14 @@ if __name__ == '__main__':
     ag = Adagrad(r.shape, args['lr'])
     min_error = float('inf')
 
-    print 'step 1 of 2: training DAN (takes 2-3 hours)'
+    print('step 1 of 2: training DAN (takes 2-3 hours)')
     for epoch in range(0, args['num_epochs']):
 
         lstring = ''
 
         # create mini-batches
         random.shuffle(train_qs)
-        batches = [train_qs[x : x + args['batch_size']] for x in xrange(0, len(train_qs),
+        batches = [train_qs[x : x + args['batch_size']] for x in list(range(0, len(train_qs)),
                    args['batch_size'])]
 
         epoch_error = 0.0
@@ -174,15 +176,15 @@ if __name__ == '__main__':
             r -= update
             lstring = 'epoch: ' + str(epoch) + ' batch_ind: ' + str(batch_ind) + \
                     ' error, ' + str(err) + ' time = '+ str(time.time()-now) + ' sec'
-            print lstring
+            print(lstring)
             log.write(lstring + '\n')
             log.flush()
 
             epoch_error += err
 
         # done with epoch
-        print time.time() - ep_t
-        print 'done with epoch ', epoch, ' epoch error = ', epoch_error, ' min error = ', min_error
+        print(time.time() - ep_t)
+        print('done with epoch ', epoch, ' epoch error = ', epoch_error, ' min error = ', min_error)
         lstring = 'done with epoch ' + str(epoch) + ' epoch error = ' + str(epoch_error) \
                  + ' min error = ' + str(min_error) + '\n\n'
         log.write(lstring)
@@ -191,9 +193,9 @@ if __name__ == '__main__':
         # save parameters if the current model is better than previous best model
         if epoch_error < min_error:
             min_error = epoch_error
-            print 'saving model...'
-            params = unroll_params(r, d, len_voc, deep = 3)
-            cPickle.dump( params, open(param_file, 'wb'))
+            print('saving model...')
+            params = unroll_params(r, d, len_voc, deep=3)
+            pickle.dump(params, open(param_file, 'wb'))
 
         # reset adagrad weights
         if epoch % args['adagrad_reset'] == 0 and epoch != 0:
@@ -201,13 +203,13 @@ if __name__ == '__main__':
 
         # check accuracy on validation set
         if epoch % args['do_val'] == 0 and epoch != 0:
-            print 'validating...'
-            params = unroll_params(r, d, len_voc, deep = 3)
+            print('validating...')
+            params = unroll_params(r, d, len_voc, deep=3)
             evaluate(train_qs, val_qs, params, d)
-            print '\n\n'
+            print('\n\n')
 
     log.close()
 
-    print 'step 2 of 2: training classifier over all answers (takes 10-15 hours depending on number of answers)'
-    params = cPickle.load(open(param_file, 'rb'))
+    print('step 2 of 2: training classifier over all answers (takes 10-15 hours depending on number of answers)')
+    params = pickle.load(open(param_file, 'rb'))
     evaluate(train_qs, val_qs, params, d)
