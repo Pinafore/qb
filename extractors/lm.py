@@ -1,11 +1,21 @@
-from feature_extractor import FeatureExtractor
+from extractors.abstract import FeatureExtractor
 from clm.lm_wrapper import LanguageModelReader
 
 kINTERP_CONSTANTS = 0.9
 
 
 class LanguageModel(FeatureExtractor):
+    def features(self, question, candidate):
+        pass
+
+    def vw_from_score(self, results):
+        pass
+
+    def guesses(self, question):
+        pass
+
     def __init__(self, filename):
+        super().__init__()
         self._lm = LanguageModelReader(filename)
         print("Starting to read the LM from %s" % filename)
         self._lm.init()

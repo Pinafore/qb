@@ -5,10 +5,10 @@ from string import punctuation
 import kenlm
 import nltk
 from unidecode import unidecode
-from pattern.en import pluralize
+from pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
-from feature_extractor import FeatureExtractor
+from extractors.abstract import FeatureExtractor
 from util.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
 from util.build_whoosh import text_iterator
@@ -60,6 +60,7 @@ def find_references(sentence, padding=5):
                         for x in tags[stop + 1:stop + padding + 1]))
 
 
+
 def build_lm_data(path="data/wikipedia", output="temp/wiki_sent"):
     import nltk
     cw = CachedWikipedia(path, "")
@@ -85,6 +86,7 @@ class Mentions(FeatureExtractor):
         return self._name
 
     def __init__(self, db, min_pages, lm="data/kenlm.apra"):
+        super().__init__()
         self._name = "mentions"
         self._refex_count = defaultdict(int)
         self._refex_lookup = defaultdict(set)

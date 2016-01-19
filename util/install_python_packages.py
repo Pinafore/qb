@@ -2,7 +2,7 @@ import pip
 
 kREQ_PKG = [
     'unidecode', 'wikipedia', 'whoosh', 'nltk', 'scikit-learn', 'regex', 'fuzzywuzzy',
-    'python-Levenshtein', 'kenlm', 'pattern', 'six']
+    'python-Levenshtein', 'kenlm', 'six']
 
 
 def install(package):
