@@ -1,6 +1,5 @@
 import os
 import extract_features
-from extractors.lm import LanguageModel, JelinekMercerLanguageModel, DistCounter
 
 if __name__ == '__main__':
     question_db = os.environ.get('QB_QUESTION_DB')

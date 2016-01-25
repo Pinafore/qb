@@ -4,6 +4,7 @@ import sqlite3
 import sys
 import re
 import os
+from util import environment
 from collections import Counter
 try:
    import cPickle as pickle
@@ -29,9 +30,11 @@ merged = {'Biology': 'Science',
           'Social Science': 'Social Studies',
           'Geography': 'Social Studies'}
 
+
 def write_bigrams(bigrams, output):
     o = open(output, 'wb')
     pickle.dump(bigrams, o, pickle.HIGHEST_PROTOCOL)
+
 
 def classify_text(classifier, text, all_bigrams):
     feats = {}
@@ -43,6 +46,7 @@ def classify_text(classifier, text, all_bigrams):
     for word in total:
         feats[word] = 1.0
     return classifier.prob_classify(feats)
+
 
 def compute_frequent_bigrams(thresh, qbdb):
     # TODO: don't use most frequent bigrams, look by class via feature selection
@@ -97,13 +101,13 @@ def train_classifier(out, bgset, questions, attribute, limit=-1):
                     train.append((feats, label))
             if limit > 0 and len(train) > limit:
                 break
-    print c
-    print len(train)
+    print(c)
+    print(len(train))
     print("training classifier")
     classifier = SklearnClassifier(LogisticRegression(C=10))
     classifier.train(train)
     pickle.dump(classifier, open(out, 'wb'))
-    print 'accuracy@1 train:', nltk.classify.util.accuracy(classifier, train)
+    print('accuracy@1 train:', nltk.classify.util.accuracy(classifier, train))
     return classifier
 
 
@@ -139,9 +143,9 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
                         feats[elem] = 1.0
 
                     dev.append((feats, label))
-    print c
-    print len(dev)
-    print 'accuracy@1 dev:', nltk.classify.util.accuracy(classifier, dev)
+    print(c)
+    print(len(dev))
+    print('accuracy@1 dev:', nltk.classify.util.accuracy(classifier, dev))
     probs = classifier.prob_classify_many([f for f, a in dev])
 
     corr = 0.
@@ -154,12 +158,12 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
         if dev[index][1] in topn:
             corr += 1
 
-    print 'top@', top, 'accuracy: ', corr / len(probs)
+    print('top@', top, 'accuracy: ', corr / len(probs))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--question_db', type=str, default='data/questions.db')
+    parser.add_argument('--question_db', type=str, default=environment.QB_QUESTION_DB)
     parser.add_argument('--attribute', type=str, default='category')
     parser.add_argument('--bigram_thresh', type=int, default=1000)
     parser.add_argument("--output", type=str,
@@ -178,7 +182,7 @@ if __name__ == "__main__":
         bgset = compute_frequent_bigrams(flags.bigram_thresh, questions)
         write_bigrams(bgset, bigram_filename)
 
-    train_classifier("%s/%s.pkl" % (flags.output, flags.attribute),
-                     bgset, questions, flags.attribute)
+    train_classifier(
+            "%s/%s.pkl" % (flags.output, flags.attribute), bgset, questions, flags.attribute)
     evaluate("%s/%s.pkl" % (flags.output, flags.attribute), 
             bgset, questions, flags.attribute)

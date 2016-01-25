@@ -132,6 +132,7 @@ class LanguageModelBase:
         yield self.vocab_lookup(kEND)
 
 
+
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8, min_span=2, start_rank=200,
                  smooth=0.001, cutoff=-2, slop=0, give_score=False,
@@ -174,7 +175,7 @@ class LanguageModelReader(LanguageModelBase):
 
         vocab_size = int(infile.readline())
         self._vocab = {}
-        for ii in xrange(vocab_size):
+        for ii in range(vocab_size):
             self._vocab[infile.readline().strip()] = ii
         if vocab_size > 100:
             print("Done reading %i vocab (Python)" % vocab_size)
@@ -387,6 +388,7 @@ class LanguageModelWriter(LanguageModelBase):
 
                 outfile.write("%i %i\n" %
                               (jj, self._obs_counts[corpus][ii][jj]))
+
 
 if __name__ == "__main__":
     import argparse

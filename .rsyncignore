@@ -1,0 +1,10 @@
+.git
+.ipyn_checkpoints
+.idea
+clm/_clm.so
+clm/clm.o
+clm/clm.py
+clm/clm_wrap.cxx
+clm/clm_wrap.o
+__pycache__/
+*.pyc

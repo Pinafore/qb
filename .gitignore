@@ -9,7 +9,15 @@ data/guesses.db
 data/wikipedia
 data/ir/
 data/lm.pkl
+data/kenlm.arpa
+data/classifier
 metastore_db/
+non_naqt.db
+*.o
+*.so
+clm/clm.py
+*.cxx
+temp/
 *.log
 lib/*.jar
 docs/_build

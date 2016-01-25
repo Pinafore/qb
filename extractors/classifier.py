@@ -8,6 +8,9 @@ from util.constants import ALPHANUMERIC
 from extractors.abstract import FeatureExtractor
 
 
+CLASSIFIER_FIELDS = ["category", "ans_type", "gender"]
+
+
 class Classifier(FeatureExtractor):
     def __init__(self, bigram_path, question_db):
         super(Classifier, self).__init__()

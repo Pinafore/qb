@@ -5,7 +5,6 @@ import gzip
 import zlib
 import os
 import traceback
-from requests import ConnectionError
 
 from whoosh.index import create_in
 from whoosh.fields import TEXT, ID, Schema

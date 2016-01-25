@@ -1,7 +1,7 @@
 from extract_features import kGRANULARITIES, kFEATURES, kFOLDS
 from extract_features import kMIN_APPEARANCES
 from util.reweight_labels import kNEG_WEIGHTS
-from extractors.classifier import kCLASSIFIER_FIELDS
+from extractors.classifier import CLASSIFIER_FIELDS
 
 kVWOPT = \
     {"full":
@@ -63,16 +63,16 @@ if __name__ == "__main__":
 
     o.write("data/kenlm.arpa: extractors/mentions.py\n")
     o.write("\tmkdir -p temp\n")
-    o.write("\tpython extractors/mentions.py --build_lm_data\n")
+    o.write("\tpython3 extractors/mentions.py --build_lm_data\n")
     o.write("\tlmplz -o 5 < temp/wiki_sent > $@\n")
     o.write("\trm temp/wiki_sent\n\n")
 
     # Classifiers
-    for cc in kCLASSIFIER_FIELDS:
+    for cc in CLASSIFIER_FIELDS:
         o.write("data/classifier/%s.pkl: " % cc)
         o.write("util/classifier.py extractors/classifier.py\n")
         o.write("\tmkdir -p data/classifier\n")
-        o.write("\tpython util/classifier.py --attribute=%s\n\n"
+        o.write("\tpython3 util/classifier.py --attribute=%s\n\n"
                 % cc)
 
     # Generate per sentence text files
@@ -134,10 +134,10 @@ if __name__ == "__main__":
     o.write("\tswig -c++ -python $<\n\n")
 
     o.write("clm/clm_wrap.o: clm/clm_wrap.cxx\n")
-    o.write("\tgcc -std=c++11 -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
+    o.write("\tgcc -O3 `python-config --includes` -fPIC -c $< -o $@\n\n")
 
     o.write("clm/clm.o: clm/clm.cpp clm/clm.h\n")
-    o.write("\tgcc -std=c++11 -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
+    o.write("\tgcc -O3 `python-config --includes` -fPIC -c $< -o $@\n\n")
 
     o.write("clm/_clm.so: clm/clm.o clm/clm_wrap.o\n")
     o.write("\tg++ -std=c++11 -shared `python-config --ldflags` $^ -o $@\n\n")
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     o.write("data/language_model.txt: clm/lm_wrapper.py clm/_clm.so\n")
     o.write("\trm -rf data/language_model\n")
     o.write("\tmkdir -p data/wikipedia\n")
-    o.write("\tpython clm/lm_wrapper.py\n\n")
+    o.write("\tpython3 clm/lm_wrapper.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
 
     # Generate rules for generating the features
     for gg in kGRANULARITIES:
@@ -184,7 +184,7 @@ if __name__ == "__main__":
                 feature_prereq.add("data/language_model.txt")
 
             if ff == "classifier":
-                for cc in kCLASSIFIER_FIELDS:
+                for cc in CLASSIFIER_FIELDS:
                     fname = "data/classifier/%s.pkl" % cc
                     o.write(" %s" % fname)
                     feature_prereq.add(fname)
