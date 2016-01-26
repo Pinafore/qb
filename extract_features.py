@@ -100,25 +100,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     feature = None
     print("Loading feature %s ..." % feature_name)
     if feature_name == "ir":
-        feature = IrExtractor()
-
-        wiki_mean = 0.0
-        wiki_var = 1.0
-        qb_mean = 0.0
-        qb_var = 1.0
-        source_mean = 0.0
-        source_var = 1.0
-
-        feature.add_index("wiki_%i" % kMIN_APPEARANCES, "%s_%i" %
-                          ("data/ir/whoosh_wiki", kMIN_APPEARANCES),
-                          wiki_mean, wiki_var)
-        feature.add_index("qb_%i" % kMIN_APPEARANCES, "%s_%i" %
-                          ("data/ir/whoosh_qb", kMIN_APPEARANCES),
-                          qb_mean, qb_var)
-        feature.add_index("source_%i" % kMIN_APPEARANCES, "%s_%i" %
-                          ("data/ir/whoosh_source", kMIN_APPEARANCES),
-                          source_mean, source_var)
-
+        feature = IrExtractor(kMIN_APPEARANCES)
     elif feature_name == "text":
         feature = TextExtractor()
     elif feature_name == "lm":
@@ -218,15 +200,15 @@ def spark_execute(spark_master,
     feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
                      'wikilinks']
     features = {
-        #'label': instantiate_feature('label', question_db),
+        # 'label': instantiate_feature('label', question_db),
         # 'deep': instantiate_feature('deep', question_db)
-        # 'classifier': instantiate_feature('classifier', question_db) #doesn't work yet
+        # 'classifier': instantiate_feature('classifier', question_db)
         # 'text': instantiate_feature('text', question_db)
         # 'answer_present': instantiate_feature('answer_present', question_db)
         # 'wikilinks': instantiate_feature('wikilinks', question_db)
-        # 'ir': instantiate_feature('ir', question_db) #doesn't work
-        'lm': instantiate_feature('lm', question_db) #doesn't work
-        #'mentions': instantiate_feature('mentions', question_db)
+        'ir': instantiate_feature('ir', question_db)
+        # 'lm': instantiate_feature('lm', question_db) #doesn't work
+        # 'mentions': instantiate_feature('mentions', question_db)
     }
     b_features = sc.broadcast(features)
     f_eval = lambda x: evaluate_feature_question(
@@ -234,7 +216,7 @@ def spark_execute(spark_master,
     pages = sc.parallelize(pages)\
         .filter(lambda p: len(b_questions.value[p]) > answer_limit)
     print("Number of pages: {0}".format(num_pages))
-    pairs = sc.parallelize(['lm'])\
+    pairs = sc.parallelize(['ir'])\
         .cartesian(pages).repartition(int(num_pages / 3))\
         .map(f_eval)
     results = pairs.collect()

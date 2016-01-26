@@ -75,7 +75,7 @@ class Classifier(FeatureExtractor):
             feats = {}
             total = ALPHANUMERIC.sub(' ', unidecode(text.lower()))
             total = total.split()
-            bgs = set(ngrams(total, 2))
+            bgs = set(map(str, ngrams(total, 2)))
             for bg in bgs.intersection(self._bigrams):
                 feats[bg] = 1.0
             for word in total:

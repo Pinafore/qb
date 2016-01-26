@@ -62,7 +62,7 @@ def compute_frequent_bigrams(thresh, qbdb):
                     total = ' '.join(tt).strip()
                     total = alphanum.sub(' ', unidecode(total.lower()))
                     total = total.split()
-                    bgs = list(ngrams(total, 2))
+                    bgs = list(map(str, ngrams(total, 2)))
                     for bg in bgs:
                         bcount[bg] += 1
 
@@ -137,7 +137,7 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
                         feats[word] = 1.0
 
                     # add bigrams
-                    currbg = set(ngrams(total, 2))
+                    currbg = set(map(str, ngrams(total, 2)))
                     inter = currbg.intersection(bgset)
                     for elem in inter:
                         feats[elem] = 1.0

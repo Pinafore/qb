@@ -174,7 +174,7 @@ class IrIndex(object):
                          for x in tokenizer(str(raw_text))
                          if len(x) > 3]
         search_string = u" ".join(
-                filter(lambda y: y in kQUERY_CHARS, unidecode(x)) for x in search_tokens
+                filter(lambda y: y in QUERY_CHARS, unidecode(x)) for x in search_tokens
         )
         return search_string, len(search_tokens)
 
@@ -227,7 +227,7 @@ class IrIndex(object):
 
 
 class IrExtractor(FeatureExtractor):
-    def __init__(self, num_results=50, time_limit=0.05, k_min_appearances=None):
+    def __init__(self, k_min_appearances, num_results=50, time_limit=0.05):
         super(IrExtractor, self).__init__()
         self._limit = num_results
         self._time = time_limit
@@ -242,6 +242,8 @@ class IrExtractor(FeatureExtractor):
                        "%s_%i" % ("data/ir/whoosh_wiki", self.k_min_appearances))
         self.add_index("qb_%i" % self.k_min_appearances,
                        "%s_%i" % ("data/ir/whoosh_qb", self.k_min_appearances))
+        self.add_index("source%i" % self.k_min_appearances,
+                       "%s_%i" % ("data/ir/whoosh_source", self.k_min_appearances))
 
     def add_index(self, name, location, mean=0.0, variance=1.0):
         if name not in self._index:

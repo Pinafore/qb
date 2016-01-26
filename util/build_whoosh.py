@@ -6,6 +6,7 @@ import zlib
 import os
 import traceback
 import six
+import re
 
 from whoosh.index import create_in
 from whoosh.fields import TEXT, ID, Schema
@@ -30,7 +31,6 @@ def text_iterator(use_wiki, wiki_location,
     cw = CachedWikipedia(wiki_location, country_list)
     pages = qdb.questions_with_pages()
 
-    errors = {}
     for pp in sorted(pages, key=lambda k: len(pages[k]), reverse=True):
         # This bit of code needs to line up with the logic in qdb.py
         # to have the same logic as the page_by_count function
@@ -78,15 +78,11 @@ def text_iterator(use_wiki, wiki_location,
         if limit > 0 and doc_num > limit:
             break
 
-    print("ERRORS")
-    print("----------------------------------------")
-    for ii in errors:
-        print("%s\t%s" % (ii, errors[ii]))
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--question_db', type=str, default='data/questions.db')
+    parser.add_argument('--question_db', type=str, default=os.getenv(
+            'QB_QUESTION_DB', 'data/questions.db'))
     parser.add_argument('--use_qb', default=False, action='store_true',
                         help="Use the QB data")
     parser.add_argument('--use_source', default=False, action='store_true',
@@ -107,28 +103,32 @@ if __name__ == "__main__":
                         help="How many pages to add to the index")
     flags = parser.parse_args()
 
-    schema = Schema(title=TEXT(stored=True),
-                    content=TEXT(vector=True), id=ID(stored=True))
+    schema = Schema(title=TEXT(stored=True), content=TEXT(vector=True), id=ID(stored=True))
     ix = create_in(flags.whoosh_index, schema)
     writer = ix.writer()  # ix.writer(procs=4, limitmb=1024)
 
-    errors = {}
     doc_num = 0
+    docs_added = set()
     for title, text in text_iterator(flags.use_wiki, flags.wiki_location,
                                      flags.use_qb, flags.question_db,
                                      flags.use_source, flags.source_location,
                                      flags.max_pages, flags.min_answers):
 
         try:
-            writer.add_document(title=title, content=text, id=title)
+            if not re.match('^\s+$', text):
+                writer.add_document(title=title, content=text, id=title)
         except IndexError as e:
             print("Index error")
             traceback.print_exc()
-            errors[title] = "Index error on add"
+            print(title)
+            print(text)
+            print(len(text))
+            break
+            # writer.commit()
+            # writer = ix.writer()
         except Exception as e:
             print("exception")
             traceback.print_exc()
-            errors[title] = "Start when already in a doc"
 
         if len(text) > 0:
             doc_num += 1
@@ -139,3 +139,4 @@ if __name__ == "__main__":
             writer = ix.writer()  # ix.writer(procs=4, limitmb=1024)
     writer.commit()
     ix.close()
+    print('Whoosh index closed')
