@@ -5,6 +5,7 @@ import gzip
 import zlib
 import os
 import traceback
+import six
 
 from whoosh.index import create_in
 from whoosh.fields import TEXT, ID, Schema
@@ -30,8 +31,7 @@ def text_iterator(use_wiki, wiki_location,
     pages = qdb.questions_with_pages()
 
     errors = {}
-    for pp in sorted(pages, key=lambda k: len(pages[k]),
-                     reverse=True):
+    for pp in sorted(pages, key=lambda k: len(pages[k]), reverse=True):
         # This bit of code needs to line up with the logic in qdb.py
         # to have the same logic as the page_by_count function
         if len(pages[pp]) < min_pages:
@@ -52,6 +52,7 @@ def text_iterator(use_wiki, wiki_location,
                         source_text = f.read()
                 except zlib.error:
                     print("Error reading %s" % filename)
+                    source_text = ''
             else:
                 source_text = ''
         else:
@@ -66,7 +67,10 @@ def text_iterator(use_wiki, wiki_location,
         total_text += "\n"
         total_text += question_text
         total_text += "\n"
-        total_text += unidecode(source_text)
+        if six.PY2:
+            total_text += unidecode(source_text)
+        elif six.PY3:
+            total_text += unidecode(str(source_text))
 
         yield pp, total_text
         doc_num += 1

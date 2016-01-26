@@ -1,25 +1,31 @@
 # QANTA
 
 ## Setups
-0.  You'll need Python 3.5 or later, R, Gorobi, Apache Spark, and Vowpal Wabbit installed.
+0. You'll need Python 3.5 or later, R, Gorobi, Apache Spark, and Vowpal Wabbit installed.
 
 1. Either copy non_naqt.db to data/questions.db, simlink it, or copy your own questions.db file.
 
-2.  Run the script "python util/install_python_packages.py", which will install
-several python packages you'll need.  (You may need admin access.)  
+2. Run the script "python util/install_python_packages.py", which will install several python packages you'll need.  (You may need admin access.)
 
-3.  Run the script "python util/install_nltk_data.py", which will download
-some nltk data.  You should *not* use admin access for this script.
+3. Run the script "python util/install_nltk_data.py", which will download some nltk data.  You should *not* use admin access for this script.
 
+4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
 
-4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in
-   data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib
-   directory.
+## Environment Variables
+To make running the QB software easier, certain environment variables are used to set data directories. Below are a list of the variables and what they currently work for
 
-http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
+```
+# Variables used by run_spark.py
+export QB_QUESTION_DB=data/non_naqt.db
+export QB_GUESS_DB=data/guesses.db
+export QB_SPARK_MASTER=spark-master-url
+```
+
+## Spark Configuration
+Be sure to edit `SPARK`
 
 ## Steps
-1.  Generate the Makefile 
+1.  Generate the Makefile
 
     ``python generate_makefile.py``
 
@@ -35,10 +41,10 @@ hours---and guesses---40 hours)
 4. generate features, train all models, and get predictions.
 
     ``make all_sentence_buzz``
-    
+
 5. answer the questions found in data/expo.csv and run the demo
 
-    ``make demo4`` 
+    ``make demo4``
 
 Feature timings:
 
@@ -55,4 +61,3 @@ you can follow these steps.
 
 1. Generate the Makefile like above
 2. Run `make data/deep/glove.840B.300d.txt.gz` to download some data
-

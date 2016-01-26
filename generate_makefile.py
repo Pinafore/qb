@@ -134,18 +134,18 @@ if __name__ == "__main__":
     o.write("\tswig -c++ -python $<\n\n")
 
     o.write("clm/clm_wrap.o: clm/clm_wrap.cxx\n")
-    o.write("\tgcc -O3 `python-config --includes` -fPIC -c $< -o $@\n\n")
+    o.write("\tgcc -O3 `python3-config --includes` -fPIC -c $< -o $@\n\n")
 
     o.write("clm/clm.o: clm/clm.cpp clm/clm.h\n")
-    o.write("\tgcc -O3 `python-config --includes` -fPIC -c $< -o $@\n\n")
+    o.write("\tgcc -O3 `python3-config --includes` -fPIC -c $< -o $@\n\n")
 
     o.write("clm/_clm.so: clm/clm.o clm/clm_wrap.o\n")
-    o.write("\tg++ -std=c++11 -shared `python-config --ldflags` $^ -o $@\n\n")
+    o.write("\tg++ -shared `python3-config --ldflags` $^ -o $@\n\n")
 
     o.write("data/language_model.txt: clm/lm_wrapper.py clm/_clm.so\n")
     o.write("\trm -rf data/language_model\n")
     o.write("\tmkdir -p data/wikipedia\n")
-    o.write("\tpython3 clm/lm_wrapper.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
+    o.write("\tpython3 run_clm.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
 
     # Generate rules for generating the features
     for gg in kGRANULARITIES:
