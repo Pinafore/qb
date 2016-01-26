@@ -15,6 +15,7 @@ from unidecode import unidecode
 
 from util.cached_wikipedia import CachedWikipedia
 from util.qdb import QuestionDatabase
+from util.environment import data_path, QB_QUESTION_DB
 
 
 def text_iterator(use_wiki, wiki_location,
@@ -81,21 +82,16 @@ def text_iterator(use_wiki, wiki_location,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--question_db', type=str, default=os.getenv(
-            'QB_QUESTION_DB', 'data/questions.db'))
-    parser.add_argument('--use_qb', default=False, action='store_true',
-                        help="Use the QB data")
+    parser.add_argument('--question_db', type=str, default=QB_QUESTION_DB)
+    parser.add_argument('--use_qb', default=False, action='store_true', help="Use the QB data")
     parser.add_argument('--use_source', default=False, action='store_true',
                         help="Use the source data")
-    parser.add_argument('--use_wiki', default=False, action='store_true',
-                        help="Use wikipedia data")
-    parser.add_argument("--whoosh_index", default="data/ir/whoosh",
+    parser.add_argument('--use_wiki', default=False, action='store_true', help="Use wikipedia data")
+    parser.add_argument("--whoosh_index", default=data_path("data/ir/whoosh"),
                         help="Location of IR index")
-    parser.add_argument("--source_location", type=str,
-                        default="data/source",
+    parser.add_argument("--source_location", type=str, default=data_path("data/source"),
                         help="Location of source documents")
-    parser.add_argument("--wiki_location", type=str,
-                        default="data/wikipedia",
+    parser.add_argument("--wiki_location", type=str, default=data_path("data/wikipedia"),
                         help="Location of wiki cache")
     parser.add_argument("--min_answers", type=int, default=0,
                         help="How many times does an answer need to appear to be included")
@@ -117,15 +113,6 @@ if __name__ == "__main__":
         try:
             if not re.match('^\s+$', text):
                 writer.add_document(title=title, content=text, id=title)
-        except IndexError as e:
-            print("Index error")
-            traceback.print_exc()
-            print(title)
-            print(text)
-            print(len(text))
-            break
-            # writer.commit()
-            # writer = ix.writer()
         except Exception as e:
             print("exception")
             traceback.print_exc()

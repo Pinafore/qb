@@ -1,10 +1,7 @@
-from collections import defaultdict
 import argparse
-import sqlite3
-import sys
 import re
 import os
-from util import environment
+from util.environment import QB_QUESTION_DB, data_path
 from collections import Counter
 try:
    import cPickle as pickle
@@ -163,11 +160,11 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--question_db', type=str, default=environment.QB_QUESTION_DB)
+    parser.add_argument('--question_db', type=str, default=QB_QUESTION_DB)
     parser.add_argument('--attribute', type=str, default='category')
     parser.add_argument('--bigram_thresh', type=int, default=1000)
     parser.add_argument("--output", type=str,
-                        default="data/classifier/",
+                        default=data_path("data/classifier/"),
                         help="Where we write output file")
 
     flags = parser.parse_args()

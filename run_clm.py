@@ -1,18 +1,18 @@
 from collections import defaultdict
 import time
-import os
 from unidecode import unidecode
 from util.build_whoosh import text_iterator
 
 from clm.lm_wrapper import LanguageModelWriter
+from util.environment import QB_QUESTION_DB, data_path
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--wiki_location', type=str, default='data/wikipedia')
-    parser.add_argument('--question_db', type=str, default=os.getenv('QB_QUESTION_DB', 'data/questions.db'))
-    parser.add_argument('--source_location', type=str, default='data/source')
+    parser.add_argument('--wiki_location', type=str, default=data_path('data/wikipedia'))
+    parser.add_argument('--question_db', type=str, default=QB_QUESTION_DB)
+    parser.add_argument('--source_location', type=str, default=data_path('data/source'))
     parser.add_argument('--global_lms', type=int, default=5,
                         help="The number of background LMs we maintain")
     parser.add_argument('--vocab_size', type=int, default=100000)
@@ -22,7 +22,7 @@ if __name__ == "__main__":
                         help="How many pages to add to the index")
     parser.add_argument("--stats_pages", type=int, default=5000,
                         help="How many pages to use for computing stats")
-    parser.add_argument("--lm_out", type=str, default='data/lm.txt')
+    parser.add_argument("--lm_out", type=str, default=data_path('data/lm.txt'))
     flags = parser.parse_args()
 
     min_answers = flags.min_answers

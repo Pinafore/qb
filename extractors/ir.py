@@ -21,6 +21,7 @@ from unidecode import unidecode
 from extractors.abstract import FeatureExtractor
 from util.constants import (
     NEG_INF, STOP_WORDS, PAREN_EXPRESSION, treebank_tokenizer, PUNCTUATION_TABLE, QB_STOP_WORDS)
+from util.environment import data_path
 
 QUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 
@@ -174,7 +175,7 @@ class IrIndex(object):
                          for x in tokenizer(str(raw_text))
                          if len(x) > 3]
         search_string = u" ".join(
-                filter(lambda y: y in QUERY_CHARS, unidecode(x)) for x in search_tokens
+                ''.join(filter(lambda y: y in QUERY_CHARS, unidecode(x))) for x in search_tokens
         )
         return search_string, len(search_tokens)
 
@@ -239,11 +240,11 @@ class IrExtractor(FeatureExtractor):
         super(IrExtractor, self).set_metadata(answer, category, qnum, sent, token, guesses, fold)
 
         self.add_index("wiki_%i" % self.k_min_appearances,
-                       "%s_%i" % ("data/ir/whoosh_wiki", self.k_min_appearances))
+                       "%s_%i" % (data_path("data/ir/whoosh_wiki"), self.k_min_appearances))
         self.add_index("qb_%i" % self.k_min_appearances,
-                       "%s_%i" % ("data/ir/whoosh_qb", self.k_min_appearances))
+                       "%s_%i" % (data_path("data/ir/whoosh_qb"), self.k_min_appearances))
         self.add_index("source%i" % self.k_min_appearances,
-                       "%s_%i" % ("data/ir/whoosh_source", self.k_min_appearances))
+                       "%s_%i" % (data_path("data/ir/whoosh_source"), self.k_min_appearances))
 
     def add_index(self, name, location, mean=0.0, variance=1.0):
         if name not in self._index:
@@ -308,9 +309,9 @@ class IrExtractor(FeatureExtractor):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Demo for IR guesser")
-    parser.add_argument("--whoosh_qb", default="data/ir/whoosh_wiki_4",
+    parser.add_argument("--whoosh_qb", default=data_path("data/ir/whoosh_wiki_4"),
                         help="Location of IR index of qb")
-    parser.add_argument("--whoosh_wiki", default="data/ir/whoosh_qb_4",
+    parser.add_argument("--whoosh_wiki", default=data_path("data/ir/whoosh_qb_4"),
                         help="Location of IR index of wiki")
 
     flags = parser.parse_args()
