@@ -13,6 +13,7 @@ from pyspark.sql import SQLContext
 
 from util.qdb import QuestionDatabase
 from util.guess import GuessList
+from util.environment import data_path
 
 from extractors.labeler import Labeler
 from extractors.ir import IrExtractor
@@ -83,8 +84,7 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
                 feat = feature_generator.vw_from_score(guesses_cached[(ss, tt)][pp])
             else:
                 try:
-                    feat = feature_generator.\
-                      vw_from_title(pp, qq.get_text(ss, tt))
+                    feat = feature_generator.vw_from_title(pp, qq.get_text(ss, tt))
                 except ValueError:
                     print("Value error!")
                     feat = ""
@@ -104,10 +104,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     elif feature_name == "text":
         feature = TextExtractor()
     elif feature_name == "lm":
-        feature = LanguageModel("data/language_model")
-        feature.add_corpus("qb")
-        feature.add_corpus("wiki")
-        feature.add_corpus("source")
+        feature = HTTPLanguageModel()
     elif feature_name == "deep":
         print("from %s" % deep_data)
         page_dict = {}
@@ -128,7 +125,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     elif feature_name == "label":
         feature = Labeler(questions)
     elif feature_name == "classifier":
-        feature = Classifier('data/classifier/bigrams.pkl', questions)
+        feature = Classifier(data_path('data/classifier/bigrams.pkl'), questions)
     elif feature_name == "mentions":
         feature = Mentions(questions, kMIN_APPEARANCES)
     else:
@@ -206,8 +203,8 @@ def spark_execute(spark_master,
         # 'text': instantiate_feature('text', question_db)
         # 'answer_present': instantiate_feature('answer_present', question_db)
         # 'wikilinks': instantiate_feature('wikilinks', question_db)
-        'ir': instantiate_feature('ir', question_db)
-        # 'lm': instantiate_feature('lm', question_db) #doesn't work
+        # 'ir': instantiate_feature('ir', question_db)
+        'lm': instantiate_feature('lm', question_db) #doesn't work
         # 'mentions': instantiate_feature('mentions', question_db)
     }
     b_features = sc.broadcast(features)
@@ -216,7 +213,7 @@ def spark_execute(spark_master,
     pages = sc.parallelize(pages)\
         .filter(lambda p: len(b_questions.value[p]) > answer_limit)
     print("Number of pages: {0}".format(num_pages))
-    pairs = sc.parallelize(['ir'])\
+    pairs = sc.parallelize(['lm'])\
         .cartesian(pages).repartition(int(num_pages / 3))\
         .map(f_eval)
     results = pairs.collect()

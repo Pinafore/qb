@@ -7,6 +7,7 @@ def read(fname):
         return output.read()
 
 requirements = [
+    'scipy',
     'numpy',
     'unidecode',
     'wikipedia',
@@ -16,7 +17,11 @@ requirements = [
     'regex',
     'fuzzywuzzy',
     'six',
-    'scipy'
+    'py4j',
+    'python-Levenshtein',
+    'tornado',
+    'flask',
+    'requests'
 ]
 
 

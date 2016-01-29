@@ -124,7 +124,7 @@ class LanguageModelBase:
         Prefix the sentence with <s>, replace words not in the vocabulary with
         <UNK>, and end the sentence with </s>.
         """
-        if not isinstance(sentence, basestring):
+        if not isinstance(sentence, str):
             sentence = ' '.join(list(sentence))
         yield self.vocab_lookup(kSTART)
         for ii in kTOKENIZER(unidecode(sentence)):
@@ -223,6 +223,7 @@ class LanguageModelReader(LanguageModelBase):
 
         return result
 
+
     def feature_line(self, corpus, guess, sentence):
         if self._sentence_hash != hash(sentence):
             self._sentence_hash = hash(sentence)
@@ -233,7 +234,11 @@ class LanguageModelReader(LanguageModelBase):
                 self._sentence[ii] = ww
 
         norm_title = self.normalize_title(corpus, guess)
+<<<<<<< 9825f7cff35ca2a1c14359caf823907010fa6dca
         if not norm_title in self._corpora or self._sentence_length == 0:
+=======
+        if norm_title not in self._corpora or self._sentence_length == 0:
+>>>>>>> Added web api for C LM to improve parallel memory performance
             return ""
         else:
             guess_id = self._corpora[norm_title]
@@ -347,7 +352,12 @@ class LanguageModelWriter(LanguageModelBase):
         outfile.write("%i\n" % len(self._unigram))
         outfile.write("%i\n" % len(self._vocab))
         vocab_size = len(self._vocab)
+<<<<<<< 9825f7cff35ca2a1c14359caf823907010fa6dca
         for ii in self._sort_voc:
+=======
+        for ii, count in sorted(self._vocab.items(),
+                                key=lambda key_value: key_value[1]):
+>>>>>>> Added web api for C LM to improve parallel memory performance
             outfile.write("%s\n" % ii)
         if vocab_size > 100:
             print("Done writing vocab")
