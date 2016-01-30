@@ -6,5 +6,6 @@ clm/clm.o
 clm/clm.py
 clm/clm_wrap.cxx
 clm/clm_wrap.o
+data/lm.txt
 __pycache__/
 *.pyc

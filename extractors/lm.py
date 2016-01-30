@@ -9,11 +9,18 @@ class LanguageModel(FeatureExtractor):
     def __init__(self, filename):
         super().__init__()
         self.filename = filename
-        print("Starting to read the LM from %s" % self.filename)
-        self._lm = LanguageModelReader(self.filename)
-        self._lm.init()
+        self.initialized = False
+        self._lm = None
         self._name = "lm"
         self._corpora = set()
+
+    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+        super(LanguageModel, self).set_metadata(answer, category, qnum, sent, token, guesses, fold)
+        if not self.initialized:
+            print("Starting to read the LM from %s" % self.filename)
+            self._lm = LanguageModelReader(self.filename)
+            self._lm.init()
+            self.initialized = True
 
     def add_corpus(self, corpus_name):
         self._corpora.add(corpus_name)
@@ -44,4 +51,4 @@ class HTTPLanguageModel(FeatureExtractor):
         pass
 
     def vw_from_title(self, title, text):
-        return requests.post('http://localhost/', data={title: title, text: text})
+        return requests.post('http://localhost:5000/', data={'title': title, 'text': text}).text

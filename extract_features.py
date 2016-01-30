@@ -1,12 +1,13 @@
 from __future__ import print_function, absolute_import
 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, namedtuple
 import argparse
 import sqlite3
 import sys
 import time
 from util.imports import pickle
 from unidecode import unidecode
+from random import shuffle
 
 from pyspark import SparkContext
 from pyspark.sql import SQLContext
@@ -58,6 +59,8 @@ if AnswerPresent.has_guess():
 kGRANULARITIES = ["sentence"]
 kFOLDS = ["dev", "devtest", "test"]
 
+Task = namedtuple('Task', ['page', 'question'])
+
 
 def feature_lines(qq, guess_list, granularity, feature_generator):
     guesses_needed = guess_list.all_guesses(qq)
@@ -104,7 +107,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     elif feature_name == "text":
         feature = TextExtractor()
     elif feature_name == "lm":
-        feature = HTTPLanguageModel()
+        feature = LanguageModel(data_path('data/lm.txt'))
     elif feature_name == "deep":
         print("from %s" % deep_data)
         page_dict = {}
@@ -184,51 +187,70 @@ def spark_execute(spark_master,
     sc = SparkContext(appName="QuizBowl", master=spark_master)
     sql_context = SQLContext(sc)
     question_db = QuestionDatabase(question_db)
+
+    print("Loading Guesses")
     guess_rdd = sql_context.read.format('jdbc')\
         .options(url='jdbc:sqlite:{0}'.format(guess_db), dbtable='guesses').load()
     guess_list = GuessList(guess_db)
     b_guess_list = sc.broadcast(guess_list)
-    questions = question_db.questions_with_pages()
-    pages = questions.keys()
-    num_pages = sum([1 for p in pages if len(questions[p]) > answer_limit])
 
-    b_questions = sc.broadcast(questions)
+    print("Loading Questions")
+    all_questions = question_db.questions_with_pages()
+    pages = list(filter(lambda p: len(all_questions[p]) > answer_limit, all_questions.keys()))
+    num_pages = len(pages)
+    print("Number of pages: {0}".format(num_pages))
 
-    feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
-                     'wikilinks']
+    print("Loading tasks")
+    tasks = []
+    for p in pages:
+        for q in filter(lambda q: q.fold != 'train', all_questions[p]):
+            tasks.append(Task(p, q))
+    shuffle(tasks)
+    print("Number of tasks: {0}".format(len(tasks)))
+
+    #feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
+    #                 'wikilinks']
+    feature_names = ['classifier']
     features = {
         # 'label': instantiate_feature('label', question_db),
         # 'deep': instantiate_feature('deep', question_db)
-        # 'classifier': instantiate_feature('classifier', question_db)
+        'classifier': instantiate_feature('classifier', question_db),
         # 'text': instantiate_feature('text', question_db)
         # 'answer_present': instantiate_feature('answer_present', question_db)
         # 'wikilinks': instantiate_feature('wikilinks', question_db)
         # 'ir': instantiate_feature('ir', question_db)
-        'lm': instantiate_feature('lm', question_db) #doesn't work
+        # 'lm': instantiate_feature('lm', question_db) #doesn't work
         # 'mentions': instantiate_feature('mentions', question_db)
     }
     b_features = sc.broadcast(features)
     f_eval = lambda x: evaluate_feature_question(
-            x, b_features, b_questions, b_guess_list, granularity)
-    pages = sc.parallelize(pages)\
-        .filter(lambda p: len(b_questions.value[p]) > answer_limit)
-    print("Number of pages: {0}".format(num_pages))
-    pairs = sc.parallelize(['lm'])\
-        .cartesian(pages).repartition(int(num_pages / 3))\
-        .map(f_eval)
-    results = pairs.collect()
+            x, b_features, b_guess_list, granularity)
+
+    print("Beggining spark job")
+    tasks_rdd = sc.parallelize(tasks)
+    feature_rdd = sc.parallelize(feature_names)\
+        .cartesian(tasks_rdd).repartition(150 * len(feature_names))\
+        .flatMap(f_eval)\
+        .cache()
+    for name in feature_names:
+        feature_rdd.filter(lambda x: x[0] == name).map(lambda x: x[1])\
+            .saveAsTextFile('/home/ubuntu/output/features/{0}'.format(name))
+    print("Computation Completed, stopping Spark")
     sc.stop()
 
 
-def evaluate_feature_question(pair, b_features, b_all_questions, b_guess_list, granularity):
+def evaluate_feature_question(pair, b_features, b_guess_list, granularity):
     feature_generator = b_features.value[pair[0]]
-    page = pair[1]
-    questions = filter(lambda q: q.fold != 'train', b_all_questions.value[page])
-    print("evaluating {0}".format(page))
-    for qq in questions:
-        for ss, tt, pp, feat in feature_lines(
-                qq, b_guess_list.value, granularity, feature_generator):
-            pass
+    page = pair[1].page
+    question = pair[1].question
+    result = []
+    for ss, tt, pp, feat in feature_lines(
+            question, b_guess_list.value, granularity, feature_generator):
+        result.append(
+            (feature_generator.name,
+             '%i\t%i\t%i\t%s' % (question.qnum, ss, tt, unidecode(pp)))
+        )
+    return result
 
 
 if __name__ == "__main__":
@@ -330,14 +352,14 @@ if __name__ == "__main__":
                         (ii, flags.granularity, name))
             print("Opening %s for output" % filename)
 
-            #o[ii] = open(filename, 'w')
+            o[ii] = open(filename, 'w')
             if flags.label:
                 filename = ("features/%s/%s.meta" %
                                 (ii, flags.granularity))
             else:
                 filename = ("features/%s/%s.meta" %
                                 (ii, flags.feature))
-            #meta[ii] = open(filename, 'w')
+            meta[ii] = open(filename, 'w')
 
         all_questions = questions.questions_with_pages()
 
@@ -377,15 +399,14 @@ if __name__ == "__main__":
                                                               feature_generator):
                             feat_lines += 1
                             if meta:
-                                pass
-                                #meta[qq.fold].write("%i\t%i\t%i\t%s\n" %
-                                #                    (qq.qnum, ss, tt,
-                                #                     unidecode(pp)))
+                                meta[qq.fold].write(
+                                    "%i\t%i\t%i\t%s\n" % (qq.qnum, ss, tt, unidecode(pp))
+                                )
                             assert feat is not None
-                            #o[qq.fold].write("%s\n" % feat)
+                            o[qq.fold].write("%s\n" % feat)
                             assert fold_here == qq.fold, "%s %s" % (fold_here, qq.fold)
                             # print(ss, tt, pp, feat)
-                        #o[qq.fold].flush()
+                        o[qq.fold].flush()
 
                 if 0 < flags.limit < page_count:
                     break
