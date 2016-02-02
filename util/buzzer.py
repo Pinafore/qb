@@ -248,7 +248,7 @@ class PowerPositions:
         if question in self._power_marks:
             return self._power_marks[question]
         else:
-            return "10"
+            return ""
 
 
 # Utilities for single character input
@@ -416,15 +416,17 @@ def interpret_keypress():
         getch()
         getch()
         press = "direction"
-    try:
-        press = int(press)
-    except ValueError:
-        press = None
+    if press != "direction":
+        try:
+            press = int(press)
+        except ValueError:
+            press = None
     return press
 
 
-def answer(ans):
-    print("QANTA says:")
+def answer(ans, print_string="QANTA says:"):
+    if print_string:
+        print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
     os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
     sleep(kPAUSE)

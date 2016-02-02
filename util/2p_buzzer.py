@@ -14,6 +14,8 @@ from buzzer import clear_screen, PowerPositions, show_score
 from buzzer import Guess, Buzzes, Questions, format_display
 from buzzer import load_finals, interpret_keypress, answer
 
+kPADDING = "WAIT"
+kPAD_LEN = 5
 
 class Score:
     def __init__(self, even=0, odd=0, human=0, computer=0):
@@ -48,31 +50,39 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 computer_guess = buzz_now[0].page
                 break
 
-    question_text[ss] += " WAIT WAIT WAIT WAIT WAIT "
+    question_text[ss] += " %s " % " ".join([kPADDING] * 5)
 
     question_done = False
     human_delta = 0
     computer_delta = 0
+    human_answers = 0
+    computer_answers = 0
     for ss in sorted(question_text):
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
-            if question_done:
+            if question_done or human_answers==2:
                 break
 
             if computer_position[0] == ss and computer_position[1] == ii:
                 # This is where the computer buzzes
                 if human_delta <= 0:
                     if computer_guess == correct:
+                        if human_answers == 2:
+                            answer(computer_guess.split("(")[0])
+                            computer_answers += 1
+                            question_done = True
                         os.system("afplay sounds/applause.wav")
                         if human_delta <= 0:
                             computer_delta = question_value
                     else:
-                        answer(computer_guess)
+                        answer(computer_guess.split("(")[0])
+                        computer_answers += 1
                         os.system("afplay sounds/sad_trombone.wav")
                         if human_delta == 0:
                             computer_delta = -5
                 else:
-                    answer(computer_guess)
+                    answer(computer_guess.split("(")[0])
+                    computer_answers += 1
                     question_done = True
                     computer_delta = 0
 
@@ -89,6 +99,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                     continue
                 if odd_delta != 0 and press % 2 != 0:
                     continue
+                human_answers += 1
 
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
@@ -103,14 +114,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                         if computer_delta < 0 and human_delta == 0:
                             human_delta = question_value
                             question_done = True
-                        elif computer_delta == 0:
+                        elif computer_delta == 0 and human_delta == 0:
                             human_delta = question_value
                     elif '-' in response:
-                        if even_delta == 0 and press % 2 != 0:
+                        if even_delta == 0 and press % 2 != 0 and ww != kPADDING:
                             odd_delta = -5
-                        if odd_delta == 0 and press % 2 == 0:
+                        if odd_delta == 0 and press % 2 == 0 and ww != kPADDING:
                             even_delta = -5
-                        if computer_delta < 0:
+                        if computer_delta == 0:
                             human_delta = -5
 
                         # Break if both teams have answered
@@ -131,24 +142,36 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                            score.computer + computer_delta,
                            "HUMAN", "COMPUTER",
                            flush=False)
-                print(human_delta, computer_delta, even_delta, odd_delta)
+
 
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
                                      points=question_value))
 
     # Now see what the computer would do
-    if computer_delta == 0 and human_delta <= 0:
+    if computer_delta == 0 and human_delta <= 0 and computer_answers == 0:
+        show_score(score.even + even_delta,
+                   score.odd + odd_delta,
+                   "TEAM A", "TEAM B",
+                   left_color="RED",
+                   right_color="YELLOW")
+        show_score(score.human + human_delta,
+                   score.computer + computer_delta,
+                   "HUMAN", "COMPUTER",
+                   flush=False)        
+        print(format_display(display_num, question_text, max(question_text) - 1,
+                             1000, current_guesses, answer=correct,
+                             points=computer_delta))
         answer(final.split('(')[0])
         if final == correct:
             computer_delta = 10
         else:
             print("Computer guesses incorrectly: %s" % final)
-    elif computer_delta > 0:
-        answer(computer_guess)
+    elif computer_delta > 0 and computer_answers == 0:
         format_display(display_num, question_text, computer_position[0],
                        computer_position[1], current_guesses, answer=correct,
-                       points=computer_delta)
+                       points=computer_delta)        
+        answer(computer_guess)
 
     return score.add(Score(even_delta, odd_delta, human_delta, computer_delta))
 
@@ -222,4 +245,10 @@ if __name__ == "__main__":
         if question_num > flags.max_questions - 1:
             break
 
+    show_score(score.even,
+               score.odd,
+               "TEAM A", "TEAM B",
+               left_color="RED",
+               right_color="YELLOW")
+        
     show_score(score.human, score.computer)
