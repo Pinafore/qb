@@ -29,7 +29,7 @@ def text_iterator(use_wiki, wiki_location,
         qdb = qb_location
     doc_num = 0
 
-    cw = CachedWikipedia(wiki_location, country_list)
+    cw = CachedWikipedia(wiki_location, data_path(country_list))
     pages = qdb.questions_with_pages()
 
     for pp in sorted(pages, key=lambda k: len(pages[k]), reverse=True):

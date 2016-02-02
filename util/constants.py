@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from future.builtins import chr, range
+from functools import lru_cache
 import re
 import sys
 import unicodedata
@@ -12,8 +13,17 @@ ENGLISH_STOP_WORDS = set(stopwords.words('english'))
 QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']', '[',
             ":", "due", "!", "'s", "''", 'ftp'}
 STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
-PUNCTUATION_TABLE = dict.fromkeys(
-    i for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith('P'))
 ALPHANUMERIC = re.compile('[\W_]+')
+GRANULARITIES = ["sentence"]
+FOLDS = ["dev", "devtest", "test"]
 
-treebank_tokenizer = TreebankWordTokenizer().tokenize
+
+@lru_cache(maxsize=None)
+def get_treebank_tokenizer():
+    return TreebankWordTokenizer().tokenize
+
+
+@lru_cache(maxsize=None)
+def get_punctuation_table():
+    return dict.fromkeys(
+        i for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith('P'))

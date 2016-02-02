@@ -2,9 +2,7 @@
 from __future__ import print_function, absolute_import
 
 from future.builtins import range, str
-import sys
 import six
-import unicodedata
 from string import ascii_lowercase, ascii_uppercase, digits
 from collections import defaultdict
 
@@ -20,16 +18,13 @@ from unidecode import unidecode
 
 from extractors.abstract import FeatureExtractor
 from util.constants import (
-    NEG_INF, STOP_WORDS, PAREN_EXPRESSION, treebank_tokenizer, PUNCTUATION_TABLE, QB_STOP_WORDS)
+    NEG_INF, STOP_WORDS, PAREN_EXPRESSION, get_treebank_tokenizer, get_punctuation_table)
 from util.environment import data_path
 
 QUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 
-tokenizer = treebank_tokenizer
-stopwords = STOP_WORDS | QB_STOP_WORDS
+tokenizer = get_treebank_tokenizer()
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | set(' ')
-punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
-                          if unicodedata.category(chr(i)).startswith('P'))
 
 
 class IrIndex(object):
@@ -171,7 +166,8 @@ class IrIndex(object):
         """
         Given the raw text of a query, filter out inadmissable characters
         """
-        search_tokens = [x.translate(punct_tbl)
+        punctuation_table = get_punctuation_table()
+        search_tokens = [x.translate(punctuation_table)
                          for x in tokenizer(str(raw_text))
                          if len(x) > 3]
         search_string = u" ".join(

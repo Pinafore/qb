@@ -21,7 +21,9 @@ requirements = [
     'python-Levenshtein',
     'tornado',
     'flask',
-    'requests'
+    'requests',
+    'click',
+    'future'
 ]
 
 

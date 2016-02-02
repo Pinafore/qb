@@ -101,26 +101,26 @@ class CachedWikipedia:
             raw = None
         except ReadTimeout:
             # Wait a while, see if the network comes back
-            print("Connection error, waiting 10 minutes ...")
-            sleep(600)
+            print("Connection error, waiting 1 minutes ...")
+            sleep(60)
             print("trying again")
             return CachedWikipedia.load_page(key)
         except ConnectionError:
             # Wait a while, see if the network comes back
-            print("Connection error, waiting 10 minutes ...")
-            sleep(600)
+            print("Connection error, waiting 1 minutes ...")
+            sleep(60)
             print("trying again")
             return CachedWikipedia.load_page(key)
         except ValueError:
             # Wait a while, see if the network comes back
-            print("Connection error, waiting 10 minutes ...")
-            sleep(600)
+            print("Connection error, waiting 1 minutes ...")
+            sleep(60)
             print("trying again")
             return CachedWikipedia.load_page(key)
         except WikipediaException:
             # Wait a while, see if the network comes back
-            print("Connection error, waiting 10 minutes ...")
-            sleep(600)
+            print("Connection error, waiting 1 minutes ...")
+            sleep(60)
             print("trying again")
             return CachedWikipedia.load_page(key)
         return raw

@@ -2,12 +2,12 @@
 # for negative answers
 import sys
 
-kNEG_WEIGHTS = [2., 4., 8., 16., 32., 64.]
+NEG_WEIGHTS = [2., 4., 8., 16., 32., 64.]
 
 if __name__ == "__main__":
     infilename = sys.argv[1]
 
-    for ww in kNEG_WEIGHTS:
+    for ww in NEG_WEIGHTS:
         fname = infilename.replace(".feat", ".%s" % str(int(ww)))
         o = open(fname, 'w')
         print(fname)

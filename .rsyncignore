@@ -7,5 +7,7 @@ clm/clm.py
 clm/clm_wrap.cxx
 clm/clm_wrap.o
 data/lm.txt
+data/kenlm.binary
+data/kenlm.arpa
 __pycache__/
 *.pyc

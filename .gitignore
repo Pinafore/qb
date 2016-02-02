@@ -10,6 +10,7 @@ data/wikipedia
 data/ir/
 data/lm.pkl
 data/kenlm.arpa
+data/kenlm.binary
 data/classifier
 data/lm.txt
 metastore_db/

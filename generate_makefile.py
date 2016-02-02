@@ -61,10 +61,11 @@ if __name__ == "__main__":
     o.write("\tpython guesser/util/load_embeddings.py\n")
     o.write("\tpython guesser/dan.py\n\n")
 
-    o.write("data/kenlm.arpa: extractors/mentions.py\n")
+    o.write("data/kenlm.binary: extractors/mentions.py\n")
     o.write("\tmkdir -p temp\n")
     o.write("\tpython3 extractors/mentions.py --build_lm_data\n")
-    o.write("\tlmplz -o 5 < temp/wiki_sent > $@\n")
+    o.write("\tlmplz -o 5 < temp/wiki_sent > data/kenlm.arpa\n")
+    o.write("\tbuild_binary data/kenlm.arpa $@\n")
     o.write("\trm temp/wiki_sent\n\n")
 
     # Classifiers
@@ -190,8 +191,8 @@ if __name__ == "__main__":
                     feature_prereq.add(fname)
 
             if ff == "mentions":
-                o.write(" data/kenlm.arpa")
-                feature_prereq.add("data/kenlm.arpa")
+                o.write(" data/kenlm.binary")
+                feature_prereq.add("data/kenlm.binary")
 
             # All features depend on guesses being generated
             o.write(" data/guesses.db\n")

@@ -1,6 +1,7 @@
 from glob import glob
 from collections import defaultdict
 from string import punctuation
+from functools import lru_cache
 
 import kenlm
 import nltk
@@ -11,28 +12,28 @@ from nltk.tokenize import word_tokenize
 from extractors.abstract import FeatureExtractor
 from util.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
+from util.environment import data_path
 from util.build_whoosh import text_iterator
 
 from nltk.corpus import wordnet as wn
-kSTATES = set()
-for ii in wn.synset("American_state.n.1").instance_hyponyms():
-    for jj in ii.lemmas():
-        if len(jj.name()) > 2 and not "_" in jj.name():
-            kSTATES.add(jj.name())
-        elif jj.name().startswith("New_"):
-            kSTATES.add(jj.name().replace("New_", ""))
 
-kDEMO_SENT = ["A 2011 play about this character was produced in collaboration between Rokia Traore, Peter Sellars, and Toni Morrison.",
-              "The founder of this movement was inspired to develop its style by the stained glass windows he made for the De Lange House.",
-              "Calvin Bridges sketched a specific type of these structures that contain diffuse regions called Balbiani rings and puffs.",
-              "This group is represented by a dove in the Book of the Three Birds, written by a Welsh member of this group named Morgan Llwyd. A member of this religious group adopted the pseudonym 'Martin Marprelate' to pen a series of attacks against authorities.",
-              "This leader spent three days in house arrest during an event masterminded by the 'Gang of Eight.'"]
-kDEMO_GUESS = ["Desdemona", "De Stijl", "Mikhail Gorbachev", "Chromosome"]
+
+@lru_cache(maxsize=None)
+def get_states():
+    states = set()
+    for ii in wn.synset("American_state.n.1").instance_hyponyms():
+        for jj in ii.lemmas():
+            if len(jj.name()) > 2 and "_" not in jj.name():
+                states.add(jj.name())
+            elif jj.name().startswith("New_"):
+                states.add(jj.name().replace("New_", ""))
+    return states
 
 
 def find_references(sentence, padding=5):
     tags = nltk.pos_tag(word_tokenize(sentence))
     tags.append(("END", "V"))
+    states = get_states()
 
     references_found = []
     this_ref_start = -1
@@ -42,7 +43,7 @@ def find_references(sentence, padding=5):
             this_ref_start = ii
         elif all(x in punctuation for x in word):
             continue
-        elif word in kSTATES:
+        elif word in states:
             continue
         elif this_ref_start >= 0 and tag.startswith('NN') and \
                 not tags[ii + 1][1].startswith('NN'):
@@ -85,20 +86,28 @@ class Mentions(FeatureExtractor):
     def name(self):
         return self._name
 
-    def __init__(self, db, min_pages, lm="data/kenlm.apra"):
+    def __init__(self, answers):
         super().__init__()
         self._name = "mentions"
+        self._answers = answers
+        self._initialized = False
         self._refex_count = defaultdict(int)
         self._refex_lookup = defaultdict(set)
+        self._lm = None
+        self.generate_refexs(self._answers)
+        self._pre = []
+        self._ment = []
+        self._suf = []
 
         # Get all of the answers
-        answers = set(x for x, y in text_iterator(False, "", False, db,
-                                                  False, "", limit=-1,
-                                                  min_pages=min_pages))
-        self.generate_refexs(answers)
 
         self._text = ""
-        self._lm = kenlm.LanguageModel('data/kenlm.arpa')
+
+    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+        super(Mentions, self).set_metadata(answer, category, qnum, sent, token, guesses, fold)
+        if not self._initialized:
+            self._lm = kenlm.LanguageModel(data_path('data/kenlm.binary'))
+            self._initialized = True
 
     def vw_from_title(self, title, text):
         # Find mentions if the text has changed
@@ -177,7 +186,8 @@ class Mentions(FeatureExtractor):
             if self._refex_count[ii] < max_count:
                 yield ii
 
-if __name__ == "__main__":
+
+def main():
     import argparse
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--build_lm_data', default=False, action='store_true',
@@ -195,9 +205,17 @@ if __name__ == "__main__":
 
     if flags.build_lm_data:
         build_lm_data()
-
+    kDEMO_SENT = [
+        "A 2011 play about this character was produced in collaboration between Rokia Traore, Peter Sellars, and Toni Morrison.",
+        "The founder of this movement was inspired to develop its style by the stained glass windows he made for the De Lange House.",
+        "Calvin Bridges sketched a specific type of these structures that contain diffuse regions called Balbiani rings and puffs.",
+        "This group is represented by a dove in the Book of the Three Birds, written by a Welsh member of this group named Morgan Llwyd. A member of this religious group adopted the pseudonym 'Martin Marprelate' to pen a series of attacks against authorities.",
+        "This leader spent three days in house arrest during an event masterminded by the 'Gang of Eight.'"]
+    kDEMO_GUESS = ["Desdemona", "De Stijl", "Mikhail Gorbachev", "Chromosome"]
     if flags.demo:
-        ment = Mentions(flags.db, flags.min_answers, flags.lm)
+        answers = set(x for x, y in text_iterator(
+            False, "", False, flags.db, False, "", limit=-1, min_pages=flags.min_answers))
+        ment = Mentions(answers)
 
         # Show the mentions
         for ii in kDEMO_GUESS:
@@ -209,3 +227,7 @@ if __name__ == "__main__":
                 print("\t%s\t|%s|\t%s" % jj)
             for jj in kDEMO_GUESS:
                 print(ment.vw_from_title(jj, ii))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,35 +1,32 @@
 from __future__ import print_function, absolute_import
 
 from collections import defaultdict, OrderedDict, namedtuple
-import argparse
-import sqlite3
 import sys
 import time
-from util.imports import pickle
 from unidecode import unidecode
 from random import shuffle
 
-from pyspark import SparkContext
-from pyspark.sql import SQLContext
+from pyspark.sql import SQLContext, Row
 
 from util.qdb import QuestionDatabase
 from util.guess import GuessList
 from util.environment import data_path
+from util.constants import FOLDS
+from util.build_whoosh import text_iterator
+from util.spark_features import SCHEMA
 
 from extractors.labeler import Labeler
 from extractors.ir import IrExtractor
 from extractors.text import TextExtractor
-from extractors.lm import *
-from extractors.deep import *
-from extractors.classifier import *
+from extractors.lm import LanguageModel
+from extractors.deep import DeepExtractor
+from extractors.classifier import Classifier
 from extractors.wikilinks import WikiLinks
 from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
 
-from feature_config import kFEATURES
-
-kMIN_APPEARANCES = 5
-kFEATURES = OrderedDict([
+MIN_APPEARANCES = 5
+FEATURES = OrderedDict([
     ("ir", None),
     ("lm", None),
     ("deep", None),
@@ -40,24 +37,8 @@ kFEATURES = OrderedDict([
     ("mentions", None)
 ])
 
-# Add features that actually guess
-# TODO: Make this less cumbersome
-HAS_GUESSES = set()
-if IrExtractor.has_guess():
-    HAS_GUESSES.add("ir")
-if LanguageModel.has_guess():
-    HAS_GUESSES.add("lm")
-if TextExtractor.has_guess():
-    HAS_GUESSES.add("text")
-if DeepExtractor.has_guess():
-    HAS_GUESSES.add("deep")
-if Classifier.has_guess():
-    HAS_GUESSES.add("classifier")
-if AnswerPresent.has_guess():
-    HAS_GUESSES.add("answer_present")
-
-kGRANULARITIES = ["sentence"]
-kFOLDS = ["dev", "devtest", "test"]
+HAS_GUESSES = set([e.has_guess() for e in [IrExtractor, LanguageModel, TextExtractor, DeepExtractor,
+                                           Classifier, AnswerPresent]])
 
 Task = namedtuple('Task', ['page', 'question'])
 
@@ -103,7 +84,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     feature = None
     print("Loading feature %s ..." % feature_name)
     if feature_name == "ir":
-        feature = IrExtractor(kMIN_APPEARANCES)
+        feature = IrExtractor(MIN_APPEARANCES)
     elif feature_name == "text":
         feature = TextExtractor()
     elif feature_name == "lm":
@@ -130,7 +111,9 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     elif feature_name == "classifier":
         feature = Classifier(data_path('data/classifier/bigrams.pkl'), questions)
     elif feature_name == "mentions":
-        feature = Mentions(questions, kMIN_APPEARANCES)
+        answers = set(x for x, y in text_iterator(
+            False, "", False, questions, False, "", limit=-1, min_pages=MIN_APPEARANCES))
+        feature = Mentions(answers)
     else:
         print("Don't know what to do with %s" % feature_name)
     print("done")
@@ -179,62 +162,55 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
                 missing += 1
     return guesses
 
-def spark_execute(spark_master,
-                  question_db,
-                  guess_db,
-                  answer_limit=5,
-                  granularity='sentence'):
-    sc = SparkContext(appName="QuizBowl", master=spark_master)
+
+def spark_execute(sc, question_db, guess_db, answer_limit=5, granularity='sentence'):
     sql_context = SQLContext(sc)
     question_db = QuestionDatabase(question_db)
 
     print("Loading Guesses")
-    guess_rdd = sql_context.read.format('jdbc')\
-        .options(url='jdbc:sqlite:{0}'.format(guess_db), dbtable='guesses').load()
     guess_list = GuessList(guess_db)
     b_guess_list = sc.broadcast(guess_list)
 
     print("Loading Questions")
     all_questions = question_db.questions_with_pages()
     pages = list(filter(lambda p: len(all_questions[p]) > answer_limit, all_questions.keys()))
-    num_pages = len(pages)
-    print("Number of pages: {0}".format(num_pages))
 
     print("Loading tasks")
     tasks = []
-    for p in pages:
-        for q in filter(lambda q: q.fold != 'train', all_questions[p]):
-            tasks.append(Task(p, q))
+    for page in pages:
+        for question in filter(lambda q: q.fold != 'train', all_questions[page]):
+            tasks.append(Task(page, question))
     shuffle(tasks)
     print("Number of tasks: {0}".format(len(tasks)))
 
-    #feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
-    #                 'wikilinks']
-    feature_names = ['classifier']
-    features = {
-        # 'label': instantiate_feature('label', question_db),
-        # 'deep': instantiate_feature('deep', question_db)
-        'classifier': instantiate_feature('classifier', question_db),
-        # 'text': instantiate_feature('text', question_db)
-        # 'answer_present': instantiate_feature('answer_present', question_db)
-        # 'wikilinks': instantiate_feature('wikilinks', question_db)
-        # 'ir': instantiate_feature('ir', question_db)
-        # 'lm': instantiate_feature('lm', question_db) #doesn't work
-        # 'mentions': instantiate_feature('mentions', question_db)
-    }
+    # feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
+    #                  'wikilinks']
+    feature_names = ['lm']
+    features = {name: instantiate_feature(name, question_db) for name in feature_names}
+
     b_features = sc.broadcast(features)
     f_eval = lambda x: evaluate_feature_question(
             x, b_features, b_guess_list, granularity)
 
-    print("Beggining spark job")
+    print("Beginning feature job")
     tasks_rdd = sc.parallelize(tasks)
     feature_rdd = sc.parallelize(feature_names)\
         .cartesian(tasks_rdd).repartition(150 * len(feature_names))\
         .flatMap(f_eval)\
         .cache()
-    for name in feature_names:
-        feature_rdd.filter(lambda x: x[0] == name).map(lambda x: x[1])\
-            .saveAsTextFile('/home/ubuntu/output/features/{0}'.format(name))
+
+    feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).repartition(32).cache()
+    feature_df.count()
+    print("Beginning write job")
+    for fold in FOLDS:
+        feature_df_by_fold = feature_df.where('fold = "{0}"'.format(fold)).cache()
+        for name in feature_names:
+            filename = '/home/ubuntu/output/features/{0}/{1}.{2}.parquet'\
+                .format(fold, granularity, name)
+
+            feature_df_by_fold.filter('feature_name = "{0}"'.format(name))\
+                .select('page', 'qnum', 'meta', 'feat').write.save(filename, mode='overwrite')
+        feature_df_by_fold.unpersist()
     print("Computation Completed, stopping Spark")
     sc.stop()
 
@@ -247,13 +223,20 @@ def evaluate_feature_question(pair, b_features, b_guess_list, granularity):
     for ss, tt, pp, feat in feature_lines(
             question, b_guess_list.value, granularity, feature_generator):
         result.append(
-            (feature_generator.name,
-             '%i\t%i\t%i\t%s' % (question.qnum, ss, tt, unidecode(pp)))
+            Row(
+                feature_generator.name,
+                question.fold,
+                page,
+                question.qnum,
+                '%i\t%i\t%i\t%s' % (question.qnum, ss, tt, unidecode(pp)),
+                feat
+            )
         )
     return result
 
 
-if __name__ == "__main__":
+def main():
+    import argparse
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--guesses', default=False, action='store_true',
                         help="Write the guesses")
@@ -280,24 +263,8 @@ if __name__ == "__main__":
     guess_list = GuessList(flags.guess_db)
 
     if flags.guesses:
-        # kFEATURES["ir"] = IrExtractor()
-        # for cc in kIR_CUTOFFS:
-        #     kFEATURES["ir"].add_index("wiki_%i" % cc, "%s_%i" %
-        #                               (flags.whoosh_wiki, cc))
-        #     kFEATURES["ir"].add_index("qb_%i" % cc, "%s_%i" %
-        #                               (flags.whoosh_qb, cc))
-        # if kIR_CATEGORIES:
-        #     categories = questions.column_options("category")
-        #     print("Adding categories %s" % str(categories))
-        #     for cc in categories:
-        #         kFEATURES["ir"].add_index("wiki_%s" % cc, "%s_%s" %
-        #                                   (flags.whoosh_wiki, cc))
-        #         kFEATURES["ir"].add_index("qb_%s" % cc, "%s_%s" %
-        #                                   (flags.whoosh_qb, cc))
-
-        kFEATURES["deep"] = instantiate_feature("deep", questions)
-        # features_that_guess = set(kFEATURES[x] for x in HAS_GUESSES)
-        features_that_guess = {"deep": kFEATURES["deep"]}
+        FEATURES["deep"] = instantiate_feature("deep", questions)
+        features_that_guess = {"deep": FEATURES["deep"]}
         print("Guesses %s" % "\t".join(x for x in features_that_guess))
 
         all_questions = questions.questions_with_pages()
@@ -339,14 +306,13 @@ if __name__ == "__main__":
         count = defaultdict(int)
 
         if flags.feature:
-            assert flags.feature in kFEATURES, "%s not a feature" % flags.feature
-            kFEATURES[flags.feature] = instantiate_feature(flags.feature,
-                                                           questions)
-            feature_generator = kFEATURES[flags.feature]
+            assert flags.feature in FEATURES, "%s not a feature" % flags.feature
+            FEATURES[flags.feature] = instantiate_feature(flags.feature, questions)
+            feature_generator = FEATURES[flags.feature]
         else:
             feature_generator = instantiate_feature("label", questions)
 
-        for ii in kFOLDS:
+        for ii in FOLDS:
             name = feature_generator.name
             filename = ("features/%s/%s.%s.feat" %
                         (ii, flags.granularity, name))
@@ -354,11 +320,9 @@ if __name__ == "__main__":
 
             o[ii] = open(filename, 'w')
             if flags.label:
-                filename = ("features/%s/%s.meta" %
-                                (ii, flags.granularity))
+                filename = ("features/%s/%s.meta" % (ii, flags.granularity))
             else:
-                filename = ("features/%s/%s.meta" %
-                                (ii, flags.feature))
+                filename = ("features/%s/%s.meta" % (ii, flags.feature))
             meta[ii] = open(filename, 'w')
 
         all_questions = questions.questions_with_pages()
@@ -373,8 +337,7 @@ if __name__ == "__main__":
         page_count = 0
         feat_lines = 0
         start = time.time()
-        max_relevant = sum(1 for x in all_questions
-                           if len(all_questions[x]) >= flags.ans_limit)
+        max_relevant = sum(1 for x in all_questions if len(all_questions[x]) >= flags.ans_limit)
 
         for page in all_questions:
             if len(all_questions[page]) >= flags.ans_limit:
@@ -410,3 +373,7 @@ if __name__ == "__main__":
 
                 if 0 < flags.limit < page_count:
                     break
+
+
+if __name__ == "__main__":
+    main()
