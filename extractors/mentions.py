@@ -101,10 +101,13 @@ class Mentions(FeatureExtractor):
             self._pre = []
             self._ment = []
             self._suf = []
+            # Find prefixes, suffixes, and mentions
             for pp, mm, ss in find_references(text):
-                self._pre.append(unidecode(pp.lower()))
-                self._suf.append(unidecode(ss.lower()))
-                self._ment.append(unidecode(mm.lower()))
+                # Exclude too short mentions
+                if len(mm.strip()) > 3:
+                    self._pre.append(unidecode(pp.lower()))
+                    self._suf.append(unidecode(ss.lower()))
+                    self._ment.append(unidecode(mm.lower()))
 
         best_score = float("-inf")
         for ref in self.referring_exs(title):
@@ -125,6 +128,8 @@ class Mentions(FeatureExtractor):
         for mm in self._ment:
             res += " "
             res += ("%s:%s" % (unidecode(title), mm)).replace(" ", "_")
+        assert not res.endswith(":"), "%s %s %s" % (title, str(self._ment), res)
+        assert not ": " in res, "%s %s %s" % (title, str(self._ment), res)
         return res
 
     def generate_refexs(self, answer_list):

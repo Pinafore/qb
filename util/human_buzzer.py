@@ -14,57 +14,75 @@ from buzzer import clear_screen, PowerPositions, show_score
 from buzzer import Guess, Buzzes, Questions, format_display
 from buzzer import load_finals, interpret_keypress, answer
 
-kPADDING = "WAIT"
-kPAD_LEN = 5
+kSTATE = ["AB", "EB", "OB", "ES", "OS"]
 
-def present_question(display_num):
-    even_delta = 0
-    odd_delta = 0
-    press = interpret_keypress()
-    while press != "direction":
-        if press:
-            # Check to see if buzz is valid
-            if even_delta != 0 and press % 2 == 0:
-                continue
-            if odd_delta != 0 and press % 2 != 0:
-                continue
-     
-            os.system("afplay /System/Library/Sounds/Glass.aiff")
-            response = None
-            while response is None:
-                    os.system("say -v Tom Player %s" % press)
-                    response = raw_input("Player %i, provide an answer:\t"
-                                         % press)
-                    if '+' in response:
-                        if press % 2 == 0:
-                            even_delta = int(response.split("+")[1])
-                        else:
-                            odd_delta = int(response.split("+")[1])
-                    elif '-' in response:
-                        if even_delta == 0 and press % 2 != 0:
-                            odd_delta = -5
-                        if odd_delta == 0 and press % 2 == 0:
-                            even_delta = -5
 
-                        # Break if both teams have answered
-                        if even_delta != 0 and press % 2 != 0:
-                            question_done = True
-                        if odd_delta != 0 and press % 2 == 0:
-                            question_done = True
-                    else:
-                        response = None
-        print("Waiting for buzz")
+def present_question(state, odd_score, even_score):
+    assert state in kSTATE, "Invalid state %s" % state
+
+    show_score(odd_score,
+               even_score,
+               "ODD TEAM", "EVEN TEAM",
+               left_color="RED",
+               right_color="YELLOW")
+
+    if state == "AB":
+        print("Free buzz!")
         press = interpret_keypress()
-        print(press)
+        if press == " ":
+            present_question("AB", odd_score, even_score)
+        if press % 2 == 0:
+            os.system("say -v Tom Player %s" % press)
+            present_question("ES", odd_score, even_score)
+        if press % 2 == 1:
+            os.system("say -v Tom Player %s" % press)
+            present_question("OS", odd_score, even_score)
 
-    return even_delta, odd_delta
+    elif state == "EB":
+        print("Even buzz!")
+        press = interpret_keypress()
+        if press == " ":
+            present_question("AB", odd_score, even_score)
+        if press % 2 == 1:
+            present_question("EB", odd_score, even_score)
+        if press % 2 == 0:
+            os.system("say -v Tom Player %s" % press)
+            present_question("ES", odd_score, even_score)
+    elif state == "OB":
+        print("Odd buzz!")
+        press = interpret_keypress()
+        if press == " ":
+            present_question("AB", odd_score, even_score)
+        if press % 2 == 0:
+            present_question("OB", odd_score, even_score)
+        if press % 2 == 1:
+            os.system("say -v Tom Player %s" % press)
+            present_question("OS", odd_score, even_score)
+
+    elif state == "ES" or state == "OS":
+        score = -100
+        while score < -5 or score > 45 or score % 5 != 0:
+            score = raw_input("Score change:")
+            try:
+                score = int(score)
+            except ValueError:
+                score = -100
+
+        if state == "ES":
+            if score < 0:
+                present_question("OB", odd_score, even_score + score)
+            else:
+                present_question("AB", odd_score, even_score + score)
+        else:
+            if score < 0:
+                present_question("EB", odd_score + score, even_score)
+            else:
+                present_question("AB", odd_score + score, even_score)
+
+
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--max_questions', type=int, default=26)
-
-    flags = parser.parse_args()    
     clear_screen()
 
     current_players = set(range(8))
@@ -83,19 +101,4 @@ if __name__ == "__main__":
 
         sleep(1.5)
 
-    question_num = 0
-    for ii in range(flags.max_questions):
-        # print(ii, questions[ii])
-        question_num += 1
-        score = present_question(question_num)
-
-        show_score(score[0],
-                   score[1],
-                   "TEAM A", "TEAM B",
-                   left_color="RED",
-                   right_color="YELLOW")
-
-        if question_num > flags.max_questions - 1:
-            break
-
-
+    present_question("AB", 0, 0)

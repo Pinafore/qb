@@ -416,7 +416,7 @@ def interpret_keypress():
         getch()
         getch()
         press = "direction"
-    if press != "direction":
+    if press != "direction" and press != " ":
         try:
             press = int(press)
         except ValueError:
