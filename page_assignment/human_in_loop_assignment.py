@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # Open up the database
     d = QuestionDatabase(args.database)
     page_diversity = d.answer_map(normalize)
-    
+
     # Set up the active learner for writing assignments
     al = ActiveLearner(None, args.labels)
     existing_labels = set(x[0] for x in al.human_labeled())
@@ -41,8 +41,10 @@ if __name__ == "__main__":
         print("--------- (%i)" % sum(count.values()))
         print(ans)
 
-        if sum(page_diversity[ans].values()) >= 5 and len(page_diversity[ans]) == 1:
-            page = page_diversity[ans].keys()[0]
+        normalized_answer = normalize(ans)
+        if sum(page_diversity[normalized_answer].values()) >= 5 and \
+                len(page_diversity[normalized_answer]) == 1:
+            page = page_diversity[normalized_answer].keys()[0]
             print("Autoassigning %s to %s" % (ans, page))
         else:
             page = simple_menu([x[0] for x in choices], tf._index,

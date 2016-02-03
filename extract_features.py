@@ -17,12 +17,14 @@ from extractors.lm import *
 from extractors.deep import *
 from extractors.classifier import *
 from extractors.wikilinks import *
+from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
 
 kMIN_APPEARANCES = 5
 kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
     ("answer_present", None), ("text", None),
     ("classifier", None), ("wikilinks", None),
+    ("mentions", None),
     ])
 
 # Add features that actually guess
@@ -135,6 +137,8 @@ def instantiate_feature(feature_name, questions):
         feature = Labeler(questions)
     elif feature_name == "classifier":
         feature = Classifier('data/classifier/bigrams.pkl', questions)
+    elif feature_name == "mentions":
+        feature = Mentions(questions, kMIN_APPEARANCES)
     else:
         print("Don't know what to do with %s" % feature_name)
     print("done")
@@ -382,6 +386,8 @@ if __name__ == "__main__":
         all_questions = questions.questions_with_pages()
 
         page_num = 0
+        total_pages = sum(1 for x in all_questions if
+                          len(all_questions[x]) >= flags.ans_limit)
         for page in all_questions:
             if len(all_questions[page]) < flags.ans_limit:
                 continue
@@ -405,7 +411,7 @@ if __name__ == "__main__":
 
                 print("%i(%i) of\t%i\t%s\t" %
                     (page_num, len(all_questions[page]),
-                     len(all_questions), page), end="")
+                     total_pages, page), end="")
 
                 if 0 < flags.limit < page_num:
                     break
@@ -451,9 +457,9 @@ if __name__ == "__main__":
         feat_lines = 0
         start = time.time()
         max_relevant = sum(1 for x in all_questions
-                           if len(all_questions[page]) > flags.ans_limit)
+                           if len(all_questions[x]) >= flags.ans_limit)
         for page in all_questions:
-            if len(all_questions[page]) > flags.ans_limit:
+            if len(all_questions[page]) >= flags.ans_limit:
                 page_count += 1
                 if page_count % 50 == 0:
                     print(count)

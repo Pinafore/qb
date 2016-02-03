@@ -17,7 +17,10 @@ def text_iterator(use_wiki, wiki_location,
                   use_source, source_location,
                   limit=-1,
                   min_pages=0, country_list='data/country_list.txt'):
-    qdb = QuestionDatabase(qb_location)
+    if isinstance(qb_location, str):
+        qdb = QuestionDatabase(qb_location)
+    else:
+        qdb = qb_location
     doc_num = 0
 
     cw = CachedWikipedia(wiki_location, country_list)
