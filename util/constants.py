@@ -10,12 +10,13 @@ from nltk.tokenize.treebank import TreebankWordTokenizer
 NEG_INF = float('-inf')
 PAREN_EXPRESSION = re.compile('\s*\([^)]*\)\s*')
 ENGLISH_STOP_WORDS = set(stopwords.words('english'))
-QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']', '[',
-            ":", "due", "!", "'s", "''", 'ftp'}
+QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']',
+                 '[', ":", "due", "!", "'s", "''", 'ftp'}
 STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile('[\W_]+')
 GRANULARITIES = ["sentence"]
 FOLDS = ["dev", "devtest", "test"]
+FEATURE_NAMES = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier', 'wikilinks']
 
 
 @lru_cache(maxsize=None)

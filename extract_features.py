@@ -43,36 +43,35 @@ HAS_GUESSES = set([e.has_guess() for e in [IrExtractor, LanguageModel, TextExtra
 Task = namedtuple('Task', ['page', 'question'])
 
 
-def feature_lines(qq, guess_list, granularity, feature_generator):
-    guesses_needed = guess_list.all_guesses(qq)
+def feature_lines(question, guess_list, granularity, feature_generator):
+    guesses_needed = guess_list.all_guesses(question)
 
     # Guess we might have already
     # It has the structure:
     # guesses[(sent, token)][page][feat] = value
     guesses_cached = defaultdict(dict)
     if feature_generator.has_guess():
-        guesses_cached = guess_list.get_guesses(feature_generator.name, qq)
+        guesses_cached = guess_list.get_guesses(feature_generator.name, question)
 
-    for ss, tt in sorted(guesses_needed):
-        if granularity == "sentence" and tt > 0:
+    for sentence, token in guesses_needed:
+        if granularity == "sentence" and token > 0:
             continue
 
         # Set metadata so the labeler can create ids and weights
-        guess_size = len(guesses_needed[(ss, tt)])
-        feature_generator.set_metadata(qq.page, qq.category,
-                                       qq.qnum, ss, tt,
-                                       guess_size, qq.fold)
+        guess_size = len(guesses_needed[(sentence, token)])
+        feature_generator.set_metadata(question.page, question.category, question.qnum, sentence,
+                                       token, guess_size, question)
 
-        for pp in sorted(guesses_needed[(ss, tt)]):
-            if pp in guesses_cached[(ss, tt)]:
-                feat = feature_generator.vw_from_score(guesses_cached[(ss, tt)][pp])
+        for page in sorted(guesses_needed[(sentence, token)]):
+            if page in guesses_cached[(sentence, token)]:
+                feat = feature_generator.vw_from_score(guesses_cached[(sentence, token)][page])
             else:
                 try:
-                    feat = feature_generator.vw_from_title(pp, qq.get_text(ss, tt))
+                    feat = feature_generator.vw_from_title(page, question.get_text(sentence, token))
                 except ValueError:
                     print("Value error!")
                     feat = ""
-            yield ss, tt, pp, feat
+            yield sentence, token, page, feat
 
 
 def instantiate_feature(feature_name, questions, deep_data="data/deep"):
@@ -163,7 +162,7 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
     return guesses
 
 
-def spark_execute(sc, question_db, guess_db, answer_limit=5, granularity='sentence'):
+def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, granularity='sentence'):
     sql_context = SQLContext(sc)
     question_db = QuestionDatabase(question_db)
 
@@ -183,14 +182,10 @@ def spark_execute(sc, question_db, guess_db, answer_limit=5, granularity='senten
     shuffle(tasks)
     print("Number of tasks: {0}".format(len(tasks)))
 
-    # feature_names = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier',
-    #                  'wikilinks']
-    feature_names = ['lm']
     features = {name: instantiate_feature(name, question_db) for name in feature_names}
 
     b_features = sc.broadcast(features)
-    f_eval = lambda x: evaluate_feature_question(
-            x, b_features, b_guess_list, granularity)
+    f_eval = lambda x: evaluate_feature_question(x, b_features, b_guess_list, granularity)
 
     print("Beginning feature job")
     tasks_rdd = sc.parallelize(tasks)
@@ -203,24 +198,23 @@ def spark_execute(sc, question_db, guess_db, answer_limit=5, granularity='senten
     feature_df.count()
     print("Beginning write job")
     for fold in FOLDS:
-        feature_df_by_fold = feature_df.where('fold = "{0}"'.format(fold)).cache()
+        feature_df_with_fold = feature_df.filter('fold = "{0}"'.format(fold)).cache()
         for name in feature_names:
             filename = '/home/ubuntu/output/features/{0}/{1}.{2}.parquet'\
                 .format(fold, granularity, name)
 
-            feature_df_by_fold.filter('feature_name = "{0}"'.format(name))\
-                .select('page', 'qnum', 'meta', 'feat').write.save(filename, mode='overwrite')
-        feature_df_by_fold.unpersist()
+            feature_df_with_fold.filter('feature_name = "{0}"'.format(name))\
+                .write.save(filename, mode='overwrite')
+        feature_df_with_fold.unpersist()
     print("Computation Completed, stopping Spark")
     sc.stop()
 
 
 def evaluate_feature_question(pair, b_features, b_guess_list, granularity):
     feature_generator = b_features.value[pair[0]]
-    page = pair[1].page
     question = pair[1].question
     result = []
-    for ss, tt, pp, feat in feature_lines(
+    for sentence, token, page, feat in feature_lines(
             question, b_guess_list.value, granularity, feature_generator):
         result.append(
             Row(
@@ -228,7 +222,9 @@ def evaluate_feature_question(pair, b_features, b_guess_list, granularity):
                 question.fold,
                 page,
                 question.qnum,
-                '%i\t%i\t%i\t%s' % (question.qnum, ss, tt, unidecode(pp)),
+                sentence,
+                token,
+                '%i\t%i\t%i\t%s' % (question.qnum, sentence, token, unidecode(page)),
                 feat
             )
         )

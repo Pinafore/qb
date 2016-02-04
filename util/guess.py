@@ -1,4 +1,3 @@
-import abc
 import numpy as np
 from collections import defaultdict, namedtuple
 import sqlite3
@@ -9,16 +8,6 @@ from util.constants import NEG_INF
 
 Guess = namedtuple('Guess',
                    ['fold', 'question', 'sentence', 'token', 'page', 'guesser', 'feature', 'score'])
-
-
-class AbstractGuessList(object):
-    __metaclass__ = abc.ABCMeta
-
-    def all_guesses(self, question):
-        pass
-
-    def get_guesses(self, guesser, question):
-        pass
 
 
 class GuessList:
