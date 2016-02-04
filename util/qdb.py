@@ -120,18 +120,17 @@ class Question:
 
     def partials(self, word_skip=-1):
         assert(isinstance(word_skip, int)), "Needs an integer %i" % word_skip
-        for ii in sorted(self.text):
-            previous = [self.text[x] for x in sorted(self.text) if x < ii]
+        for i in sorted(self.text):
+            previous = [self.text[x] for x in sorted(self.text) if x < i]
 
             # TODO(jbg): Test to make sure this gives individual words
             # correctly if word_skip > 0
             if word_skip > 0:
-                words = self.text[ii].split()
-                for jj in range(word_skip, len(words), word_skip):
-                    yield ii, jj, previous + [" ".join(words[:jj])]
+                words = self.text[i].split()
+                for j in range(word_skip, len(words), word_skip):
+                    yield i, j, previous + [" ".join(words[:j])]
 
-            yield ii + 1, 0, [self.text[x] for x in sorted(self.text)
-                              if x <= ii]
+            yield i + 1, 0, [self.text[x] for x in sorted(self.text) if x <= i]
 
     def text_lines(self):
         d = {}

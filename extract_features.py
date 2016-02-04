@@ -119,19 +119,19 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     return feature
 
 
-def guesses_for_question(qq, features_that_guess, guess_list=None,
-                         word_skip=-1, sentence_start=0):
+def guesses_for_question(question, features_that_guess, guess_list=None,
+                         word_skip=-1):
     guesses = {}
 
     # Find out the guesses that we need for this question
     for ff in features_that_guess:
-        if guess_list is None or guess_list.number_guesses(qq, ff) == 0:
+        if guess_list is None or guess_list.number_guesses(question, ff) == 0:
             guesses[ff] = defaultdict(dict)
 
     # Gather all the guesses
-    for ss, ww, tt in qq.partials(word_skip):
-        # We have problems at the very start, so lets skip
-        if ss < sentence_start or ss == sentence_start and ww <= word_skip:
+    for ss, ww, tt in question.partials(word_skip):
+        # We have problems at the very start
+        if ss == 0 and ww == word_skip:
             continue
         for ff in guesses:
             # print("Query from %s, %s" % (type(tt), tt))
@@ -139,9 +139,9 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
             for gg in results:
                 guesses[ff][(ss, ww)][gg] = results[gg]
             # add the correct answer if this is a training document and
-            if qq.fold == "train" and qq.page not in results:
-                guesses[ff][(ss, ww)][qq.page] = \
-                  features_that_guess[ff].score_one_guess(qq.page, tt)
+            if question.fold == "train" and question.page not in results:
+                guesses[ff][(ss, ww)][question.page] = \
+                  features_that_guess[ff].score_one_guess(question.page, tt)
 
             print(".", end="")
             sys.stdout.flush()
@@ -275,29 +275,27 @@ def main():
                 print("%s\t%i" % (page, len(all_questions[page])))
                 question_num = 0
                 page_num += 1
-                for qq in all_questions[page]:
+                for question in all_questions[page]:
                     # We don't need guesses for train questions
-                    if qq.fold == "train":
+                    if question.fold == "train":
                         continue
                     question_num += 1
-                    guesses = guesses_for_question(qq, features_that_guess,
-                                                   guess_list)
+                    guesses = guesses_for_question(question, features_that_guess, guess_list)
 
                     # Save the guesses
                     for guesser in guesses:
-                        guess_list.add_guesses(guesser, qq.qnum, qq.fold,
+                        guess_list.add_guesses(guesser, question.qnum, question.fold,
                                                guesses[guesser])
                     print("%i/%i" % (question_num, len(all_questions[page])))
 
                 print("%i(%i) of\t%i\t%s\t" %
-                    (page_num, len(all_questions[page]),
-                     total_pages, page), end="")
+                      (page_num, len(all_questions[page]), total_pages, page), end="")
 
                 if 0 < flags.limit < page_num:
                     break
 
     if flags.feature or flags.label:
-        o = {}
+        feature_files = {}
         meta = {}
         count = defaultdict(int)
 
@@ -308,25 +306,24 @@ def main():
         else:
             feature_generator = instantiate_feature("label", questions)
 
-        for ii in FOLDS:
+        for fold in FOLDS:
             name = feature_generator.name
-            filename = ("features/%s/%s.%s.feat" %
-                        (ii, flags.granularity, name))
+            filename = ("features/%s/%s.%s.feat" % (fold, flags.granularity, name))
             print("Opening %s for output" % filename)
 
-            o[ii] = open(filename, 'w')
+            feature_files[fold] = open(filename, 'w')
             if flags.label:
-                filename = ("features/%s/%s.meta" % (ii, flags.granularity))
+                filename = ("features/%s/%s.meta" % (fold, flags.granularity))
             else:
-                filename = ("features/%s/%s.meta" % (ii, flags.feature))
-            meta[ii] = open(filename, 'w')
+                filename = ("features/%s/%s.meta" % (fold, flags.feature))
+            meta[fold] = open(filename, 'w')
 
         all_questions = questions.questions_with_pages()
 
         totals = defaultdict(int)
         for page in all_questions:
-            for qq in all_questions[page]:
-                totals[qq.fold] += 1
+            for question in all_questions[page]:
+                totals[question.fold] += 1
         print("TOTALS")
         print(totals)
 
@@ -348,24 +345,23 @@ def main():
                     feat_lines = 0
                     start = time.time()
 
-                for qq in all_questions[page]:
-                    if qq.fold != 'train':
-                        count[qq.fold] += 1
-                        fold_here = qq.fold
+                for question in all_questions[page]:
+                    if question.fold != 'train':
+                        count[question.fold] += 1
+                        fold_here = question.fold
                         # All the guesses we need to make (on non-train questions)
-                        for ss, tt, pp, feat in feature_lines(qq, guess_list,
-                                                              flags.granularity,
-                                                              feature_generator):
+                        for sentence, token, page, feat in feature_lines(
+                                question, guess_list, flags.granularity, feature_generator):
                             feat_lines += 1
                             if meta:
-                                meta[qq.fold].write(
-                                    "%i\t%i\t%i\t%s\n" % (qq.qnum, ss, tt, unidecode(pp))
+                                meta[question.fold].write(
+                                    "%i\t%i\t%i\t%s\n" % (question.qnum, sentence, token, unidecode(page))
                                 )
                             assert feat is not None
-                            o[qq.fold].write("%s\n" % feat)
-                            assert fold_here == qq.fold, "%s %s" % (fold_here, qq.fold)
+                            feature_files[question.fold].write("%s\n" % feat)
+                            assert fold_here == question.fold, "%s %s" % (fold_here, question.fold)
                             # print(ss, tt, pp, feat)
-                        o[qq.fold].flush()
+                        feature_files[question.fold].flush()
 
                 if 0 < flags.limit < page_count:
                     break
