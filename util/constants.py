@@ -16,6 +16,7 @@ STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile('[\W_]+')
 GRANULARITIES = ["sentence"]
 FOLDS = ["dev", "devtest", "test"]
+# Do not change order, it matters for writing in correct order
 FEATURE_NAMES = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier', 'wikilinks']
 
 

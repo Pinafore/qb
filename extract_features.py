@@ -49,7 +49,7 @@ def feature_lines(question, guess_list, granularity, feature_generator):
     # Guess we might have already
     # It has the structure:
     # guesses[(sent, token)][page][feat] = value
-    guesses_cached = defaultdict(dict)
+    guesses_cached = None
     if feature_generator.has_guess():
         guesses_cached = guess_list.get_guesses(feature_generator.name, question)
 
@@ -62,16 +62,17 @@ def feature_lines(question, guess_list, granularity, feature_generator):
         feature_generator.set_metadata(question.page, question.category, question.qnum, sentence,
                                        token, guess_size, question)
 
-        for page in sorted(guesses_needed[(sentence, token)]):
-            if page in guesses_cached[(sentence, token)]:
-                feat = feature_generator.vw_from_score(guesses_cached[(sentence, token)][page])
+        for guess in guesses_needed[(sentence, token)]:
+            if guesses_cached is not None and guess in guesses_cached[(sentence, token)]:
+                feat = feature_generator.vw_from_score(guesses_cached[(sentence, token)][guess])
             else:
                 try:
-                    feat = feature_generator.vw_from_title(page, question.get_text(sentence, token))
+                    feat = feature_generator.vw_from_title(
+                        guess, question.get_text(sentence, token))
                 except ValueError:
                     print("Value error!")
                     feat = ""
-            yield sentence, token, page, feat
+            yield sentence, token, guess, feat
 
 
 def instantiate_feature(feature_name, questions, deep_data="data/deep"):
@@ -214,17 +215,17 @@ def evaluate_feature_question(pair, b_features, b_guess_list, granularity):
     feature_generator = b_features.value[pair[0]]
     question = pair[1].question
     result = []
-    for sentence, token, page, feat in feature_lines(
+    for sentence, token, guess, feat in feature_lines(
             question, b_guess_list.value, granularity, feature_generator):
         result.append(
             Row(
                 feature_generator.name,
                 question.fold,
-                page,
+                guess,
                 question.qnum,
                 sentence,
                 token,
-                '%i\t%i\t%i\t%s' % (question.qnum, sentence, token, unidecode(page)),
+                '%i\t%i\t%i\t%s' % (question.qnum, sentence, token, unidecode(guess)),
                 feat
             )
         )
@@ -350,12 +351,13 @@ def main():
                         count[question.fold] += 1
                         fold_here = question.fold
                         # All the guesses we need to make (on non-train questions)
-                        for sentence, token, page, feat in feature_lines(
+                        for sentence, token, guess, feat in feature_lines(
                                 question, guess_list, flags.granularity, feature_generator):
                             feat_lines += 1
                             if meta:
                                 meta[question.fold].write(
-                                    "%i\t%i\t%i\t%s\n" % (question.qnum, sentence, token, unidecode(page))
+                                    "%i\t%i\t%i\t%s\n" % (question.qnum, sentence, token,
+                                                          unidecode(guess))
                                 )
                             assert feat is not None
                             feature_files[question.fold].write("%s\n" % feat)
