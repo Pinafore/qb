@@ -89,6 +89,7 @@ class Mentions(FeatureExtractor):
     def __init__(self, answers):
         super().__init__()
         self._name = "mentions"
+        self.name = 'mentions'
         self._answers = answers
         self._initialized = False
         self._refex_count = defaultdict(int)

@@ -3,6 +3,7 @@ from pyspark import SparkConf, SparkContext
 
 from util.environment import QB_QUESTION_DB, QB_GUESS_DB, QB_SPARK_MASTER
 from util.constants import FEATURE_NAMES
+from util import spark_features
 import extract_features as ef
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -32,7 +33,8 @@ def extract_features(**kwargs):
 
 @spark.command()
 def merge_features(**kwargs):
-    pass
+    sc = create_spark_context(app_name='Quiz Bowl Merge')
+    spark_features.create_output(sc, '/home/ubuntu/output/features')
 
 
 if __name__ == '__main__':

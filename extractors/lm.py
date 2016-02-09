@@ -12,6 +12,7 @@ class LanguageModel(FeatureExtractor):
         self.initialized = False
         self._lm = None
         self._name = "lm"
+        self.name = 'lm'
         self._corpora = set()
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):

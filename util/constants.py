@@ -17,7 +17,8 @@ ALPHANUMERIC = re.compile('[\W_]+')
 GRANULARITIES = ["sentence"]
 FOLDS = ["dev", "devtest", "test"]
 # Do not change order, it matters for writing in correct order
-FEATURE_NAMES = ['label', 'ir', 'lm', 'deep', 'answer_present', 'text', 'classifier', 'wikilinks']
+FEATURE_NAMES = ['label', 'ir', 'lm', 'mentions', 'deep', 'answer_present', 'text', 'classifier',
+                 'wikilinks']
 
 
 @lru_cache(maxsize=None)

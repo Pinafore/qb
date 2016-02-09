@@ -44,7 +44,8 @@ def create_output(sc: SparkContext, path: str, granularity='sentence'):
 
             output_rdd = grouped_rdd.map(generate_string)
             output_rdd.saveAsTextFile(
-                '/home/ubuntu/output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)))
+                '/home/ubuntu/output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)),
+                compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
         grouped_rdd.unpersist()
 
 

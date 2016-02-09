@@ -212,14 +212,15 @@ def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, gran
 
 
 def evaluate_feature_question(pair, b_features, b_guess_list, granularity):
-    feature_generator = b_features.value[pair[0]]
+    feature_name = pair[0]
+    feature_generator = b_features.value[feature_name]
     question = pair[1].question
     result = []
     for sentence, token, guess, feat in feature_lines(
             question, b_guess_list.value, granularity, feature_generator):
         result.append(
             Row(
-                feature_generator.name,
+                feature_name,
                 question.fold,
                 guess,
                 question.qnum,
