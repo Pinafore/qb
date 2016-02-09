@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from future.builtins import chr, range
 from functools import lru_cache
+from collections import OrderedDict
 import re
 import sys
 import unicodedata
@@ -19,7 +20,18 @@ FOLDS = ["dev", "devtest", "test"]
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = ['label', 'ir', 'lm', 'mentions', 'deep', 'answer_present', 'text', 'classifier',
                  'wikilinks']
-
+NEGATIVE_WEIGHTS = [2., 4., 8., 16., 32., 64.]
+MIN_APPEARANCES = 5
+FEATURES = OrderedDict([
+    ("ir", None),
+    ("lm", None),
+    ("deep", None),
+    ("answer_present", None),
+    ("text", None),
+    ("classifier", None),
+    ("wikilinks", None),
+    ("mentions", None)
+])
 
 @lru_cache(maxsize=None)
 def get_treebank_tokenizer():

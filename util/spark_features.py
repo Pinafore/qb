@@ -8,7 +8,6 @@ from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 
 from util.constants import FOLDS, FEATURE_NAMES
 
-NEGATIVE_WEIGHTS = [2., 4., 8., 16., 32., 64.]
 
 
 SCHEMA = StructType([

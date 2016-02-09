@@ -102,6 +102,7 @@ def top_guesses(guesses):
             # We are not buzzing
             yield guess, 0, score[0]
 
+
 def final_guess(positions):
     """
     Go to the end of the question and gives the best answer at the end

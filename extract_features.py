@@ -1,6 +1,6 @@
 from __future__ import print_function, absolute_import
 
-from collections import defaultdict, OrderedDict, namedtuple
+from collections import defaultdict, namedtuple
 import sys
 import time
 from unidecode import unidecode
@@ -11,7 +11,7 @@ from pyspark.sql import SQLContext, Row
 from util.qdb import QuestionDatabase
 from util.guess import GuessList
 from util.environment import data_path
-from util.constants import FOLDS
+from util.constants import FOLDS, MIN_APPEARANCES
 from util.build_whoosh import text_iterator
 from util.spark_features import SCHEMA
 
@@ -24,18 +24,6 @@ from extractors.classifier import Classifier
 from extractors.wikilinks import WikiLinks
 from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
-
-MIN_APPEARANCES = 5
-FEATURES = OrderedDict([
-    ("ir", None),
-    ("lm", None),
-    ("deep", None),
-    ("answer_present", None),
-    ("text", None),
-    ("classifier", None),
-    ("wikilinks", None),
-    ("mentions", None)
-])
 
 HAS_GUESSES = set([e.has_guess() for e in [IrExtractor, LanguageModel, TextExtractor, DeepExtractor,
                                            Classifier, AnswerPresent]])

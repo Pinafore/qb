@@ -1,0 +1,88 @@
+# -------------------------------------------------------
+# This Makefile is automatically generated.  If you want to change the
+# system, e.g. to add additional features, then edit the file
+# generate_makefile.py instead.
+# -------------------------------------------------------
+data/deep/glove.840B.300d.txt.gz:
+	mkdir -p data/deep
+	curl http://www-nlp.stanford.edu/data/glove.840B.300d.txt.gz > $@
+
+data/deep/params: data/deep/glove.840B.300d.txt.gz
+	python guesser/util/format_dan.py --database={{ QBDB }} --threshold={{ MIN_APPEARANCES }}
+	python guesser/util/load_embeddings.py
+	python guesser/dan.py
+
+data/kenlm.binary: extractors/mentions.py
+	mkdir -p temp
+	python3 extractors/mentions.py --build_lm_data
+	lmplz -o 5 < temp/wiki_sent > data/kenlm.arpa
+	build_binary data/kenlm.arpa $@
+	rm temp/wiki_sent
+{% for classifier in CLASSIFIER_FIELDS %}
+data/classifier/{{ classifier }}.pkl: util/classifier.py extractors/classifier.py
+	mkdir -p data/classifier
+	python3 util/classifier.py --attribute={{ classifier }}
+{% endfor %}
+data/wikifier/data/input: util/wikification.py
+	rm -rf $@
+	mkdir -p $@
+	python util/wikification.py
+
+data/wikifier/data/output: data/wikifier/data/input
+	rm -rf $@
+	mkdir -p $@
+	cp lib/wikifier-3.0-jar-with-dependencies.jar data/wikifier/wikifier-3.0-jar-with-dependencies.jar
+	cp lib/STAND_ALONE_GUROBI.xml data/wikifier/STAND_ALONE_GUROBI.xml
+	(cd data/wikifier && java -Xmx10G -jar wikifier-3.0-jar-with-dependencies.jar -annotateData data/input data/output false STAND_ALONE_GUROBI.xml)
+
+data/ir/whoosh_wiki_{{ MIN_APPEARANCES }}: util/build_whoosh.py
+	rm -rf $@
+	mkdir -p $@
+	mkdir -p data/wikipedia
+	python util/build_whoosh.py --min_answers={{ MIN_APPEARANCES }} --whoosh_index=$@ --use_wiki
+
+data/ir/whoosh_qb_{{ MIN_APPEARANCES }}: util/build_whoosh.py
+	rm -rf $@
+	mkdir -p $@
+	python util/build_whoosh.py --whoosh_index=$@ --min_answers={{ MIN_APPEARANCES }} --use_qb
+
+data/ir/whoosh_source_{{ MIN_APPEARANCES }}: util/build_whoosh.py
+	rm -rf $@
+	mkdir -p $@
+	python util/build_whoosh.py --whoosh_index=$@ --min_answers={{ MIN_APPEARANCES }} --use_source
+
+data/guesses.db: extract_features.py data/deep/params
+	python extract_features.py --guesses --ans_limit={{ MIN_APPEARANCES }} --guess_db=data/temp_guesses.db
+
+	cp data/temp_guesses.db $@
+
+clm/clm_wrap.cxx: clm/clm.swig
+	swig -c++ -python $<
+
+clm/clm_wrap.o: clm/clm_wrap.cxx
+	gcc -O3 `python3-config --includes` -fPIC -c $< -o $@
+
+clm/clm.o: clm/clm.cpp clm/clm.h
+	gcc -O3 `python3-config --includes` -fPIC -c $< -o $@
+
+clm/_clm.so: clm/clm.o clm/clm_wrap.o
+	g++ -shared `python3-config --ldflags` $^ -o $@
+
+data/lm.txt: clm/lm_wrapper.py clm/_clm.so
+	mkdir -p data/wikipedia
+	python3 run_clm.py --min_answers={{ MIN_APPEARANCES }}
+
+{% for granularity in GRANULARITIES %}
+{{ granularity | label_targets }}: extract_features.py
+    {% for fold in FOLDS %}mkdir -p features/{{ fold }}
+    {% endfor %}
+    python extract_features.py --label --granularity={{ granularity }}
+
+{% for feature in FEATURES %}
+{{ granularity | feature_targets(feature) }}: extract_features.py extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}
+    {% for fold in FOLDS %}mkdir -p features/{{ fold }}
+    {% endfor %}
+    python extract_features.py --feature={{ feature }} --granularity={{ granularity }}
+
+{% endfor %}
+{% endfor %}

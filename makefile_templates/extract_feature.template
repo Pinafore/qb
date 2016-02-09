@@ -1,0 +1,5 @@
+features/{{ fold }}/{{ granularity }}.{{ feature }}.feat features/devtest/sentence.label.feat features/test/sentence.label.feat: extract_features.py
+	mkdir -p features/dev
+	mkdir -p features/devtest
+	mkdir -p features/test
+	python extract_features.py --label --granularity=sentence
