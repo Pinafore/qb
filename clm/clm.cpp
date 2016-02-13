@@ -41,13 +41,13 @@ void JelinekMercerFeature::read_counts(const std::string filename) {
   for (int cc=0; cc < _corpora; ++cc) {
     infile >> _corpus_names[cc];
     infile >> _compare[cc];
-    if (cc % 1000 == 0)
-      std::cout << "Read corpus for " << _corpus_names[cc] << " (" << cc << "/" << _corpora << ")" << std::endl;
     _unigram[cc].resize(_vocab);
     _normalizer[cc] = 0;
   }
 
   for (int cc=0; cc < _corpora; ++cc) {
+    if (cc % 1000 == 0)
+      std::cout << "Read corpus for " << _corpus_names[cc] << " (" << cc << "/" << _corpora << ")" << std::endl;
     for (int vv=0; vv < _vocab; ++vv) {
       infile >> type;
       infile >> count;
