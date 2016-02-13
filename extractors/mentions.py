@@ -127,7 +127,7 @@ class Mentions(FeatureExtractor):
             res = "|%s missing:1" % (self._name)
         for mm in self._ment:
             res += " "
-            res += ("%s:%s" % (unidecode(title), mm)).replace(" ", "_")
+            res += ("%s~%s" % (unidecode(title), mm)).replace(" ", "_")
         assert not res.endswith(":"), "%s %s %s" % (title, str(self._ment), res)
         assert not ": " in res, "%s %s %s" % (title, str(self._ment), res)
         return res

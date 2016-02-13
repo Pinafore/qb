@@ -45,7 +45,9 @@ void JelinekMercerFeature::read_counts(const std::string filename) {
       std::cout << "Read corpus for " << _corpus_names[cc] << " (" << cc << "/" << _corpora << ")" << std::endl;
     _unigram[cc].resize(_vocab);
     _normalizer[cc] = 0;
+  }
 
+  for (int cc=0; cc < _corpora; ++cc) {
     for (int vv=0; vv < _vocab; ++vv) {
       infile >> type;
       infile >> count;
@@ -114,7 +116,7 @@ const std::string JelinekMercerFeature::feature(const std::string name,
       // The current word is only true if the previous word was or it isn't
       // too frequent.
       _span_mask[ii] = _span_mask[ii - 1] || (sent[ii] >= kSTART_RANK_MIN);
-      
+
       // The previous mask is only true if it was already or the following
       // word isn't too frequent.
       _span_mask[ii - 1] = _span_mask[ii - 1] || (_span_mask[ii] && (sent[ii-1] >= kSTART_RANK_MIN));
@@ -195,7 +197,7 @@ const std::string JelinekMercerFeature::feature(const std::string name,
   float max_prob = 0;
   for (int ii=kMIN_SPAN; ii < length; ++ii) {
     if (_span_start[ii] >= 0) {
-      if (ii - _span_start[ii] > longest_span) 
+      if (ii - _span_start[ii] > longest_span)
 	longest_span = ii - _span_start[ii] + 1;
 
       // Skip if it's too short
