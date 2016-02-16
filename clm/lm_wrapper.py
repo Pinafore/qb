@@ -181,7 +181,7 @@ class LanguageModelReader(LanguageModelBase):
             print("Done reading %i vocab (Python)" % vocab_size)
 
         self._corpora = {}
-        for ii in xrange(num_lms):
+        for ii in range(num_lms):
             line = infile.readline()
             corpus, compare = line.split()
             self._corpora[corpus] = ii
@@ -373,6 +373,7 @@ class LanguageModelWriter(LanguageModelBase):
 
     def corpora(self):
         for ii in sorted(self._unigram):
+<<<<<<< fbe98863d57cf7a703043cab8b41a86fe4a7ffa5
             yield ii
 
     def write_corpus(self, corpus, offset, outfile):
@@ -399,6 +400,21 @@ class LanguageModelWriter(LanguageModelBase):
                 outfile.write("%i %i\n" %
                               (jj, self._obs_counts[corpus][ii][jj]))
 
+=======
+            for jj in range(vocab_size):
+
+                if jj in self._obs_counts[ii]:
+                    total = self._obs_counts[ii][jj].N()
+                    contexts = self._obs_counts[ii][jj].B()
+                else:
+                    total = 0
+                    contexts = 0
+                outfile.write("%i %i %i\n" % (jj, total, contexts))
+                if jj in self._obs_counts[ii]:
+                    for kk in self._obs_counts[ii][jj]:
+                        outfile.write("%i %i\n" %
+                                      (kk, self._obs_counts[ii][jj][kk]))
+>>>>>>> Fix issues in python 3 from rebase
 
 if __name__ == "__main__":
     import argparse
@@ -467,7 +483,15 @@ if __name__ == "__main__":
                 print("Adding train doc %i, %s (%s)" %
                       (doc_num, unidecode(title), corpus))
                 start = time.time()
+<<<<<<< fbe98863d57cf7a703043cab8b41a86fe4a7ffa5
             lm.add_train(corpus, title, text)
+=======
+            lm.add_train(norm_title, text)
+            comp = lm.compare(norm_title)
+            for ii in range(flags.global_lms):
+                if comp != ii:
+                    lm.add_train("compare_%i" % ii, text)
+>>>>>>> Fix issues in python 3 from rebase
 
     print("Done training")
     if flags.lm_out:
