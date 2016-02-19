@@ -20,9 +20,10 @@ kSTATE = ["AB", "EB", "OB", "ES", "OS"]
 def present_question(state, odd_score, even_score):
     assert state in kSTATE, "Invalid state %s" % state
 
-    show_score(odd_score,
-               even_score,
-               "ODD TEAM", "EVEN TEAM",
+    show_score(even_score,
+               odd_score,
+               "EVEN TEAM",
+               "ODD TEAM",
                left_color="RED",
                right_color="YELLOW")
 

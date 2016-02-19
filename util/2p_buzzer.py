@@ -105,7 +105,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 response = None
                 while response is None:
                     response = raw_input("Player %i, provide an answer:\t"
-                                         % press)
+                                         % str(press))
                     if '+' in response:
                         if press % 2 == 0:
                             even_delta = question_value
