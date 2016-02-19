@@ -6,8 +6,7 @@ from pyspark.sql import SQLContext, Row, DataFrame
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 
-from util.constants import FOLDS, FEATURE_NAMES
-
+from util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
 
 
 SCHEMA = StructType([

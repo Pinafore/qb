@@ -17,21 +17,38 @@ STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile('[\W_]+')
 GRANULARITIES = ["sentence"]
 FOLDS = ["dev", "devtest", "test"]
+
+LABEL = 'label'
+IR = 'ir'
+LM = 'lm'
+MENTIONS = 'mentions'
+DEEP = 'deep'
+ANSWER_PRESENT = 'answer_present'
+TEXT = 'text'
+CLASSIFIER = 'classifier'
+WIKILINKS = 'wikilinks'
+
 # Do not change order, it matters for writing in correct order
-FEATURE_NAMES = ['label', 'ir', 'lm', 'mentions', 'deep', 'answer_present', 'text', 'classifier',
-                 'wikilinks']
+FEATURE_NAMES = [LABEL, IR, LM, MENTIONS, DEEP, ANSWER_PRESENT, TEXT, CLASSIFIER, WIKILINKS]
 NEGATIVE_WEIGHTS = [2., 4., 8., 16., 32., 64.]
 MIN_APPEARANCES = 5
 FEATURES = OrderedDict([
-    ("ir", None),
-    ("lm", None),
-    ("deep", None),
-    ("answer_present", None),
-    ("text", None),
-    ("classifier", None),
-    ("wikilinks", None),
-    ("mentions", None)
+    (IR, None),
+    (LM, None),
+    (DEEP, None),
+    (ANSWER_PRESENT, None),
+    (TEXT, None),
+    (CLASSIFIER, None),
+    (WIKILINKS, None),
+    (MENTIONS, None)
 ])
+
+COMPUTE_OPT_FEATURES = [IR, DEEP, ANSWER_PRESENT, TEXT, CLASSIFIER, WIKILINKS, LABEL]
+MEMORY_OPT_FEATURES = [LM, MENTIONS]
+
+assert sorted(COMPUTE_OPT_FEATURES + MEMORY_OPT_FEATURES) == sorted(FEATURE_NAMES)
+assert len(COMPUTE_OPT_FEATURES) + len(MEMORY_OPT_FEATURES) == len(FEATURE_NAMES)
+
 
 @lru_cache(maxsize=None)
 def get_treebank_tokenizer():

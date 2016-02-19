@@ -72,17 +72,13 @@ data/lm.txt: clm/lm_wrapper.py clm/_clm.so
 	mkdir -p data/wikipedia
 	python3 run_clm.py --min_answers={{ MIN_APPEARANCES }}
 
-{% for granularity in GRANULARITIES %}
-{{ granularity | label_targets }}: extract_features.py
-    {% for fold in FOLDS %}mkdir -p features/{{ fold }}
-    {% endfor %}
-    python extract_features.py --label --granularity={{ granularity }}
+{% for granularity in GRANULARITIES %}{{ granularity | feature_targets(COMPUTE_OPT_FEATURES) }}{% endfor %}: extract_features.py {% for feature in COMPUTE_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
+	python3 run_spark.py extract_features {{ COMPUTE_OPT_FEATURES | join(' ')}}
 
-{% for feature in FEATURES %}
-{{ granularity | feature_targets(feature) }}: extract_features.py extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}
-    {% for fold in FOLDS %}mkdir -p features/{{ fold }}
-    {% endfor %}
-    python extract_features.py --feature={{ feature }} --granularity={{ granularity }}
+{% for granularity in GRANULARITIES %}{{ granularity | feature_targets(MEMORY_OPT_FEATURES) }}{% endfor %}: extract_features.py {% for feature in MEMORY_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
+	python3 run_spark.py extract_features --lm-memory {{ MEMORY_OPT_FEATURES | join(' ') }}
 
-{% endfor %}
-{% endfor %}
+{{ FOLDS | vw_input_targets(GRANULARITIES, NEGATIVE_WEIGHTS) }}: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(FEATURE_NAMES) }}{% endfor %}
+	python3 run_spark.py merge_features
+	{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
+	cat data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/part* > data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input{% endfor %}

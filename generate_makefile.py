@@ -1,5 +1,7 @@
+import itertools
 from jinja2 import Environment, FileSystemLoader
-from util.constants import GRANULARITIES, FEATURES, FOLDS, MIN_APPEARANCES, NEGATIVE_WEIGHTS
+from util.constants import (GRANULARITIES, FEATURE_NAMES, FEATURES, FOLDS, MIN_APPEARANCES,
+                            NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES)
 from extractors.classifier import CLASSIFIER_FIELDS
 
 VWOPT = {"full": "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic"}
@@ -22,12 +24,15 @@ def base_feat(feat):
         return feat
 
 
-def label_targets(granularity):
-    return ' '.join("features/%s/%s.label.feat" % (fold, granularity) for fold in FOLDS)
+def feature_targets(granularity, features):
+    return ' '.join("data/features/%s/%s.%s.parquet" % (fold, granularity, feature)
+                    for (fold, feature) in itertools.product(FOLDS, features))
 
 
-def feature_targets(granularity, feature):
-    return ' '.join("features/%s/%s.%s.feat" % (x, granularity, feature) for x in FOLDS)
+def vw_input_targets(folds, granularities, weights):
+    return ' '.join(
+        'data/vw_input/%s.%s.%i.vw_input' % (fold, granularity, weight)
+        for fold, granularity, weight in itertools.product(folds, granularities, weights))
 
 
 def get_feature_prereqs(feature):
@@ -47,12 +52,13 @@ def get_feature_prereqs(feature):
     return req + ' data/guesses.db' if req != '' else 'data/guesses.db'
 
 
-if __name__ == "__main__":
+def main():
     environment = Environment(loader=FileSystemLoader('makefile_templates'))
-    environment.filters['label_targets'] = label_targets
     environment.filters['feature_targets'] = feature_targets
     environment.filters['base_feat'] = base_feat
     environment.filters['get_feature_prereqs'] = get_feature_prereqs
+    environment.filters['product'] = itertools.product
+    environment.filters['vw_input_targets'] = vw_input_targets
     context = {
         'QBDB': QBDB,
         'VWOPT': VWOPT,
@@ -60,7 +66,11 @@ if __name__ == "__main__":
         'CLASSIFIER_FIELDS': CLASSIFIER_FIELDS,
         'GRANULARITIES': GRANULARITIES,
         'FOLDS': FOLDS,
-        'FEATURES': FEATURES
+        'FEATURES': FEATURES,
+        'MEMORY_OPT_FEATURES': MEMORY_OPT_FEATURES,
+        'COMPUTE_OPT_FEATURES': COMPUTE_OPT_FEATURES,
+        'NEGATIVE_WEIGHTS': NEGATIVE_WEIGHTS,
+        'FEATURE_NAMES': FEATURE_NAMES
     }
     o = open("Makefile", 'w')
     feature_prereq = set()
@@ -91,39 +101,8 @@ if __name__ == "__main__":
             if feature == "mentions":
                 feature_prereq.add("data/kenlm.binary")
 
-    # Create label files with the desired weights
-    for granularity in GRANULARITIES:
-        for fold in FOLDS:
-            o.write(" ".join("features/%s/%s.label." % (fold, granularity) + str(int(x))
-                             for x in NEGATIVE_WEIGHTS))
-            o.write(": features/%s/%s.label.feat\n" % (fold, granularity))
-            o.write("\tpython util/reweight_labels.py $<")
-            o.write("\n\n")
-
-    # Generate the training data
-    # (TODO): Perhaps create versions with different subsets of the features?
-    # (TODO): Perhaps compress the training files after pasting them together?
-    for granularity in GRANULARITIES:
-        for fold in FOLDS:
-            for weight in NEGATIVE_WEIGHTS:
-                feature_filenames = ' '.join("features/%s/%s.%s.feat" %
-                                             (fold, granularity, x) for x in FEATURES)
-                o.write("features/%s/%s.%i.vw_input: " % (fold, granularity, int(weight)))
-                o.write(feature_filenames)
-                o.write(" features/%s/%s.label.%i\n\t" % (fold, granularity, int(weight)))
-                o.write("paste features/%s/%s.label.%i " % (fold, granularity, int(weight)) +
-                        " ".join("features/%s/%s.%s.feat"  % (fold, granularity, x)
-                                 for x in FEATURES))
-                if fold == "train":
-                        temp_file = "vw_temp.%s.%s.%i" % (granularity, fold, weight)
-                        o.write(" | gzip > %s\n" % temp_file)
-                        o.write("\tpython scripts/shuffle.py %s $@\n" % temp_file)
-                        o.write("\trm %s" % temp_file)
-                else:
-                        o.write(" | gzip > $@")
-                o.write("\n\n")
-
     # Generate the VW model files and predictions
+    o.write('\n\n')
     for granularity in GRANULARITIES:
         for opt in VWOPT:
             for weight in NEGATIVE_WEIGHTS:
@@ -131,7 +110,7 @@ if __name__ == "__main__":
                 model_file = "models/%s.%s.%i.vw" % (granularity, opt, int(weight))
                 o.write("%s: " % model_file)
                 assert "dev" in FOLDS, "Need training data to create models"
-                o.write("features/%s/%s.%i.vw_input\n" %
+                o.write("data/vw_input/%s.%s.%i.vw_input\n" %
                         ("dev", granularity, int(weight)))
                 o.write("\tmkdir -p models\n")
                 o.write("\tvw --compressed -d $< %s -f $@ " % VWOPT[opt])
@@ -149,7 +128,7 @@ if __name__ == "__main__":
                 # Generate predictions
                 for fold in FOLDS:
                     o.write("\nresults/%s/%s.%i.%s.pred: " % (fold, granularity, int(weight), opt))
-                    input_file = "features/%s/%s.%i.vw_input" % (fold, granularity, int(weight))
+                    input_file = "data/vw_input/%s.%s.%i.vw_input" % (fold, granularity, int(weight))
 
                     o.write("%s %s\n" % (input_file, model_file))
                     o.write("\tmkdir -p results/%s\n" % fold)
@@ -328,3 +307,7 @@ if __name__ == "__main__":
     o.write("clean:\n")
     o.write("\trm -rf data/guesses.db features data/deep/params\n")
     o.write("\trm -rf data/classifier/*.pkl data/wikifier/data/input data/wikifier/data/output")
+
+
+if __name__ == "__main__":
+    main()
