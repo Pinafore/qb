@@ -5,6 +5,7 @@ from pyspark import SparkContext, RDD
 from pyspark.sql import SQLContext, Row, DataFrame
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
+from unidecode import unidecode
 
 from util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
 
@@ -30,6 +31,7 @@ def create_output(sc: SparkContext, path: str, granularity='sentence'):
             def generate_string(group):
                 rows = group[1]
                 result = ""
+                meta = None
                 for name in FEATURE_NAMES:
                     if name == 'label':
                         name = 'label{0}'.format(weight)
@@ -37,13 +39,16 @@ def create_output(sc: SparkContext, path: str, granularity='sentence'):
                     if len(named_feature_list) != 1:
                         continue
                     named_feature = named_feature_list[0]
+                    if meta is None:
+                        meta = '%i\t%i\t%i\t%s' % (
+                            named_feature.qnum, named_feature.sentence, named_feature.token,
+                            unidecode(named_feature.guess))
                     result = result + '\t' + named_feature.feat
-                return result
+                return result + '|||' + meta
 
             output_rdd = grouped_rdd.map(generate_string)
             output_rdd.saveAsTextFile(
-                '/home/ubuntu/output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)),
-                compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+                '/home/ubuntu/output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)))
         grouped_rdd.unpersist()
 
 
