@@ -153,7 +153,9 @@ if __name__ == "__main__":
 
     if os.path.isfile(kOUTPUT):
         events = pickle.load(open(kOUTPUT))
+        question = max(x[0] for x in events)
     else:
         events = {}
+        question = 1
 
-    present_question(1, "AB", events)
+    present_question(question, "AB", events)
