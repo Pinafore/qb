@@ -101,7 +101,7 @@ class LanguageModelBase:
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8):
         from clm import intArray
-            
+
         self._datafile = lm_file
         self._lm = clm.JelinekMercerFeature()
         self._lm.set_interpolation(interp)
@@ -120,19 +120,12 @@ class LanguageModelReader(LanguageModelBase):
             self._vocab[infile.readline().strip()] = ii
         print("Done reading %i vocab (Python)" % vocab_size)
 
-        line = infile.readline()
-        corpus_number = 0
         self._corpora = {}
-        while line:
-            if line[0].isalpha():
-                corpus, compare = line.split()
-                if corpus_number % 750 == 0:
-                    print("Reading corpus %s (%i of %i, Python)" %
-                          (corpus, corpus_number, num_lms))
-
-                self._corpora[corpus] = corpus_number
-                corpus_number += 1
+        for ii in xrange(num_lms):
             line = infile.readline()
+            corpus, compare = line.split()
+            self._corpora[corpus] = ii
+
         print(self._corpora.keys()[:10])
         self._lm.read_counts(self._datafile)
 
@@ -175,7 +168,6 @@ class LanguageModelWriter(LanguageModelBase):
             "Trying to add new words to finalized vocab"
 
         self._training_counts.inc(word, count)
-
 
     def finalize(self, vocab=None):
         """
@@ -234,10 +226,12 @@ class LanguageModelWriter(LanguageModelBase):
         for ii in sorted(self._unigram):
             corpus_num += 1
             if corpus_num % 100 == 0:
-                print("Writing LM for %s (%i of %i)" % 
+                print("Writing LM for %s (%i of %i)" %
                       (unidecode(ii), corpus_num, len(self._unigram)))
-            
+
             outfile.write("%s %i\n" % (ii, self.compare(ii)))
+
+        for ii in sorted(self._unigram):
             for jj in xrange(vocab_size):
                 if jj in self._obs_counts[ii]:
                     total = self._obs_counts[ii][jj].N()
@@ -316,11 +310,14 @@ if __name__ == "__main__":
             norm_title = lm.normalize_title(corpus, title)
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
-                print("Adding train doc %i, %s (%s)" % 
+                print("Adding train doc %i, %s (%s)" %
                       (doc_num, unidecode(title), corpus))
                 start = time.time()
             lm.add_train(norm_title, text)
-            lm.add_train("compare_%i" % lm.compare(norm_title), text)
+            comp = lm.compare(norm_title)
+            for ii in xrange(flags.global_lms):
+                if comp != ii:
+                    lm.add_train("compare_%i" % ii, text)
 
     print("Done training")
     if flags.lm_out:

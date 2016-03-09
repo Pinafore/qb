@@ -405,7 +405,7 @@ def load_finals(final_file):
     return d
 
 
-def interpret_keypress():
+def interpret_keypress(other_allowable=""):
     """
     See whether a number was pressed (give terminal bell if so) and return
     value.  Otherwise returns none.  Tries to handle arrows as a single
@@ -416,6 +416,10 @@ def interpret_keypress():
         getch()
         getch()
         press = "direction"
+
+    if press.upper() in other_allowable:
+        return press.upper()
+
     if press != "direction" and press != " ":
         try:
             press = int(press)
