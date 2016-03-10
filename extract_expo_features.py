@@ -15,7 +15,7 @@ from extract_features import (
     instantiate_feature,
     feature_lines,
     guesses_for_question,
-    kFEATURES
+    FEATURES
 )
 
 kEXPO_START = 700000000
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     # Generate the features serially
     # for ff in ["label", "wikilinks"]:
-    for ff in sorted(["label"] + kFEATURES.keys()):
+    for ff in ["label"] + list(FEATURES.keys()):
         print("Loading %s" % ff)
         feat = instantiate_feature(ff, qdb)
         if ff == "label":

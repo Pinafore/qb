@@ -80,5 +80,9 @@ data/lm.txt: clm/lm_wrapper.py clm/_clm.so
 
 {{ FOLDS | vw_input_targets(GRANULARITIES, NEGATIVE_WEIGHTS) }}: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(FEATURE_NAMES) }}{% endfor %}
 	python3 run_spark.py merge_features
+	rm data/vw_input/*.vw_input
+	rm data/vw_input/*.meta
 	{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
-	cat data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/part* > data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input{% endfor %}
+	cat data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/part* | python3 util/split_feature_meta.py data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.meta
+	cat data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input | gzip > data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input.gz
+	rm data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input{% endfor %}
