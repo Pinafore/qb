@@ -10,7 +10,7 @@ from nltk.tokenize import word_tokenize
 
 from feature_extractor import FeatureExtractor
 from util.cached_wikipedia import CachedWikipedia
-from clm.lm_wrapper import kTOKENIZER
+from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
 from util.build_whoosh import text_iterator
 
 from nltk.corpus import wordnet as wn
@@ -125,9 +125,11 @@ class Mentions(FeatureExtractor):
             res = "|%s score:%f" % (self._name, best_score)
         else:
             res = "|%s missing:1" % (self._name)
+
+        norm_title = LanguageModelBase.normalize_title(unidecode(title))
         for mm in self._ment:
             res += " "
-            res += ("%s~%s" % (unidecode(title), mm)).replace(" ", "_")
+            res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
         assert not res.endswith(":"), "%s %s %s" % (title, str(self._ment), res)
         assert not ": " in res, "%s %s %s" % (title, str(self._ment), res)
         return res
