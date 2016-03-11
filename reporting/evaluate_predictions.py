@@ -92,7 +92,7 @@ def top_guesses(guesses):
     score, and whether the correct answer was in the set
     """
 
-    high_keys = sorted(guesses.iteritems(), reverse=True,
+    high_keys = sorted(guesses.items(), reverse=True,
                        key=operator.itemgetter(1))[:5]
     for guess, score in high_keys:
         if guess == high_keys[0][0] and guesses[guess][0] > 0:

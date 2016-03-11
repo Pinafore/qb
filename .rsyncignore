@@ -12,3 +12,4 @@ data/kenlm.arpa
 __pycache__/
 *.pyc
 metastore_db/
+split/target
