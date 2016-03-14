@@ -15,7 +15,7 @@ from util.constants import FOLDS, MIN_APPEARANCES, FEATURES
 from util.build_whoosh import text_iterator
 from util.spark_features import SCHEMA
 
-from extractors.labeler import Labeler
+from extractors.label import Labeler
 from extractors.ir import IrExtractor
 from extractors.text import TextExtractor
 from extractors.lm import LanguageModel

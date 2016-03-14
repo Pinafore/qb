@@ -25,7 +25,7 @@ def base_feat(feat):
 
 
 def feature_targets(granularity, features):
-    return ' '.join("data/features/%s/%s.%s.parquet" % (fold, granularity, feature)
+    return ' '.join("data/features/%s/%s.%s.parquet/_SUCCESS" % (fold, granularity, feature)
                     for (fold, feature) in itertools.product(FOLDS, features))
 
 
@@ -101,66 +101,13 @@ def main():
             if feature == "mentions":
                 feature_prereq.add("data/kenlm.binary")
 
-    # Generate the VW model files and predictions
-    o.write('\n\n')
-    for granularity in GRANULARITIES:
-        for opt in VWOPT:
-            for weight in NEGATIVE_WEIGHTS:
-                # Model files
-                model_file = "models/%s.%s.%i.vw" % (granularity, opt, int(weight))
-                o.write("%s: " % model_file)
-                assert "dev" in FOLDS, "Need training data to create models"
-                o.write("data/vw_input/%s.%s.%i.vw_input\n" %
-                        ("dev", granularity, int(weight)))
-                o.write("\tmkdir -p models\n")
-                o.write("\tvw --compressed -d $< %s -f $@ " % VWOPT[opt])
-                if "--ngram" in VWOPT[opt] or " -q " in VWOPT[opt] or " --quadratic" in VWOPT[opt]:
-                    o.write("\n")
-                else:
-                    o.write("--invert_hash models/%s.%s.%i.read\n" %
-                            (granularity, opt, int(weight)))
-                    o.write("\tpython ")
-                    o.write("util/sort_features.py models/%s.%s.%i.read" %
-                            (granularity, opt, int(weight)))
-                    o.write(" models/%s.%s.%i.sorted\n" % (granularity, opt, int(weight)))
-                    o.write("\trm models/%s.%s.%i.read\n" % (granularity, opt, int(weight)))
-
-                # Generate predictions
-                for fold in FOLDS:
-                    o.write("\nresults/%s/%s.%i.%s.pred: " % (fold, granularity, int(weight), opt))
-                    input_file = "data/vw_input/%s.%s.%i.vw_input" % (fold, granularity, int(weight))
-
-                    o.write("%s %s\n" % (input_file, model_file))
-                    o.write("\tmkdir -p results/%s\n" % fold)
-                    o.write("\tvw --compressed -t -d %s -i %s " %
-                            (input_file, model_file) + " -p $@\n")
-                    o.write("\n")
-
-                    o.write("results/%s/%s.%i.%s.buzz: " % (fold, granularity, int(weight), opt))
-                    o.write(" results/%s/%s.%i.%s.pred " % (fold, granularity, int(weight), opt))
-                    o.write("reporting/evaluate_predictions.py\n")
-                    o.write("\tpython reporting/evaluate_predictions.py ")
-                    o.write("--buzzes=$@ ")
-                    o.write("--qbdb=%s " % QBDB)
-                    o.write("--finals=results/%s/%s.%i.%s.final " %
-                            (fold, granularity, int(weight), opt))
-                    o.write("--question_out=results/%s/questions.csv " % fold)
-                    o.write("--meta=features/%s/%s.meta " % (fold, granularity))
-                    o.write("--perf=results/%s/%s.%i.%s.perf " %
-                            (fold, granularity, int(weight), opt))
-                    o.write("--neg_weight=%f " % weight)
-                    o.write("--vw_config=%s " % opt)
-                    o.write("--pred=$<")
-                    o.write("\n\n")
-
-
     # Target for all predictions
     o.write("# Train all of the models")
     for granularity in GRANULARITIES:
         all_vw_models = []
         for opt in VWOPT:
             for weight in NEGATIVE_WEIGHTS:
-                all_vw_models.append("models/%s.%s.%i.vw" % (granularity, opt, int(weight)))
+                all_vw_models.append("data/models/%s.%s.%i.vw" % (granularity, opt, int(weight)))
         o.write("\n\nall_%s_models: " % granularity + " ".join(all_vw_models) + "\n\n")
 
     # Target for all buzzes
@@ -170,7 +117,7 @@ def main():
         for opt in VWOPT:
             for weight in NEGATIVE_WEIGHTS:
                 for fold in FOLDS:
-                    all_buzzes.append("results/%s/%s.%i.%s.buzz" %
+                    all_buzzes.append("data/results/%s/%s.%i.%s.buzz" %
                                       (fold, granularity, int(weight), opt))
         o.write("\n\nall_%s_buzz: " % granularity + " ".join(all_buzzes) + "\n\n")
 
@@ -182,38 +129,38 @@ def main():
             all_perfs = []
             for opt in VWOPT:
                 for weight in NEGATIVE_WEIGHTS:
-                    all_perfs.append("results/%s/%s.%i.%s" % (fold, granularity, int(weight), opt))
+                    all_perfs.append("data/results/%s/%s.%i.%s" % (fold, granularity, int(weight), opt))
             o.write(" ".join("%s.buzz" % x for x in all_perfs))
             o.write(" reporting/summarize.py\n\t")
-            o.write("python reporting/summarize.py --output $@ -p ")
+            o.write("python3 reporting/summarize.py --output $@ -p ")
             o.write(" ".join("%s.perf" % x for x in all_perfs))
             o.write("\n\n")
 
     for fold in FOLDS:
         for granularity in GRANULARITIES:
-            o.write("results/%s.%s.pdf: results/%s.%s.csv\n\t" %
+            o.write("data/results/%s.%s.pdf: data/results/%s.%s.csv\n\t" %
                     (fold, granularity, fold, granularity))
             o.write("Rscript reporting/running_score.R $< $@\n\n")
 
     # plots of feature densities
     for granularity in GRANULARITIES:
-        o.write("results/%s.features_cont.csv results/%s.features_disc.csv: " %
+        o.write("data/results/%s.features_cont.csv data/results/%s.features_disc.csv: " %
                 (granularity, granularity))
         o.write("util/inspect_features.py ")
-        o.write(" ".join("features/dev/%s.%s.feat" % (granularity, x)
+        o.write(" ".join("data/features/dev/%s.%s.feat" % (granularity, x)
                          for x in FEATURES))
         o.write("\n")
-        o.write("\tpython util/inspect_features.py --feats ")
-        o.write(" ".join("features/dev/%s.%s.feat" % (granularity, x)
+        o.write("\tpython3 util/inspect_features.py --feats ")
+        o.write(" ".join("data/features/dev/%s.%s.feat" % (granularity, x)
                          for x in FEATURES))
-        o.write(" --label features/dev/%s.label.feat" % granularity)
-        o.write(" --output_cont results/%s.features_cont.csv" % granularity)
-        o.write(" --output_disc results/%s.features_disc.csv" % granularity)
+        o.write(" --label data/features/dev/%s.label.feat" % granularity)
+        o.write(" --output_cont data/results/%s.features_cont.csv" % granularity)
+        o.write(" --output_disc data/results/%s.features_disc.csv" % granularity)
         o.write("\n\n")
 
-        o.write("results/%s.features_disc.pdf results/%s.features_cont.pdf: " %
+        o.write("data/results/%s.features_disc.pdf results/%s.features_cont.pdf: " %
                 (granularity, granularity))
-        o.write("results/%s.features_cont.csv results/%s.features_disc.csv " %
+        o.write("data/results/%s.features_cont.csv results/%s.features_disc.csv " %
                 (granularity, granularity))
         o.write("util/density_plots.R\n")
         o.write("\tRscript util/density_plots.R %s\n\n" % granularity)

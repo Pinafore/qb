@@ -35,18 +35,18 @@ data/wikifier/data/output: data/wikifier/data/input
 	cp lib/STAND_ALONE_GUROBI.xml data/wikifier/STAND_ALONE_GUROBI.xml
 	(cd data/wikifier && java -Xmx10G -jar wikifier-3.0-jar-with-dependencies.jar -annotateData data/input data/output false STAND_ALONE_GUROBI.xml)
 
-data/ir/whoosh_wiki_{{ MIN_APPEARANCES }}: util/build_whoosh.py
+data/ir/whoosh_wiki_{{ MIN_APPEARANCES }}/: util/build_whoosh.py
 	rm -rf $@
 	mkdir -p $@
 	mkdir -p data/wikipedia
 	python util/build_whoosh.py --min_answers={{ MIN_APPEARANCES }} --whoosh_index=$@ --use_wiki
 
-data/ir/whoosh_qb_{{ MIN_APPEARANCES }}: util/build_whoosh.py
+data/ir/whoosh_qb_{{ MIN_APPEARANCES }}/: util/build_whoosh.py
 	rm -rf $@
 	mkdir -p $@
 	python util/build_whoosh.py --whoosh_index=$@ --min_answers={{ MIN_APPEARANCES }} --use_qb
 
-data/ir/whoosh_source_{{ MIN_APPEARANCES }}: util/build_whoosh.py
+data/ir/whoosh_source_{{ MIN_APPEARANCES }}/: util/build_whoosh.py
 	rm -rf $@
 	mkdir -p $@
 	python util/build_whoosh.py --whoosh_index=$@ --min_answers={{ MIN_APPEARANCES }} --use_source
@@ -72,17 +72,40 @@ data/lm.txt: clm/lm_wrapper.py clm/_clm.so
 	mkdir -p data/wikipedia
 	python3 run_clm.py --min_answers={{ MIN_APPEARANCES }}
 
-{% for granularity in GRANULARITIES %}{{ granularity | feature_targets(COMPUTE_OPT_FEATURES) }}{% endfor %}: extract_features.py {% for feature in COMPUTE_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
+{% for granularity in GRANULARITIES %}{{ granularity | feature_targets(COMPUTE_OPT_FEATURES) }}{% endfor %} : extract_features.py {% for feature in COMPUTE_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
 	python3 run_spark.py extract_features {{ COMPUTE_OPT_FEATURES | join(' ')}}
 
-{% for granularity in GRANULARITIES %}{{ granularity | feature_targets(MEMORY_OPT_FEATURES) }}{% endfor %}: extract_features.py {% for feature in MEMORY_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
+{% for granularity in GRANULARITIES %}{{ granularity | feature_targets(MEMORY_OPT_FEATURES) }}{% endfor %} : extract_features.py {% for feature in MEMORY_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
 	python3 run_spark.py extract_features --lm-memory {{ MEMORY_OPT_FEATURES | join(' ') }}
 
-{{ FOLDS | vw_input_targets(GRANULARITIES, NEGATIVE_WEIGHTS) }}: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(FEATURE_NAMES) }}{% endfor %}
+
+{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/ {% endfor %}: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(FEATURE_NAMES) }}{% endfor %}
 	python3 run_spark.py merge_features
-	rm data/vw_input/*.vw_input
-	rm data/vw_input/*.meta
-	{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
-	cat data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/part* | python3 util/split_feature_meta.py data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.meta
-	cat data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input | gzip > data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input.gz
-	rm data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input{% endfor %}
+
+{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
+data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz: data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/_SUCCESS
+	rm -f data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz
+	rm -f data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input
+	rm -f data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.meta
+	cat data/vw_input/{{ fold }}/{{ granularity}}.{{ weight | int }}.vw_input/* | python3 util/split_feature_meta.py data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.meta
+	cat data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input | gzip > data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz
+	rm -f data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input
+{% endfor %}
+
+merge_features:{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %} data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz{% endfor %}
+
+{% for _, granularity, weight in ['dev'] | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
+data/models/{{ granularity }}.full.{{ weight | int }}.vw: data/vw_input/dev.{{ granularity }}.{{ weight | int }}.vw_input.gz
+	mkdir -p data/models
+	vw --compressed -d $< --early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic -f $@
+{% for fold in FOLDS %}
+data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred: data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz data/models/{{ granularity }}.full.{{ weight | int }}.vw
+	mkdir -p data/results/{{ fold }}
+	vw --compressed -t -d data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input.gz -i data/models/{{ sentence }}.full.{{ weight | int }}.vw -p $@
+
+data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.buzz: data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred reporting/evaluate_predictions.py
+	python3 reporting/evaluate_predictions.py --buzzes=$@ --qbdb=data/questions.db --finals=data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.final --question_out=data/results/{{ fold }}/questions.csv --meta=data/features/{{ fold }}/{{ granularity }}.{{ weight | int }}.meta --perf=data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.perf --neg_weight={{ weight }} --vw_config=full --pred $<
+{% endfor %}
+{% endfor %}
+
+
