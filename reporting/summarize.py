@@ -1,4 +1,3 @@
-
 import argparse
 from collections import defaultdict
 from csv import DictWriter, DictReader

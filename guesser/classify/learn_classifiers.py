@@ -5,7 +5,7 @@ from nltk.classify.scikitlearn import SklearnClassifier
 from sklearn.linear_model import LogisticRegression
 from scipy import stats
 from collections import Counter
-import cPickle, csv, random, argparse
+import pickle, csv, random, argparse
 
 def check_accuracy_at_1():
     d=300
@@ -96,18 +96,18 @@ def evaluate(train_qs, test_qs, params, d):
                 else:
                     test_feats.append( (curr_feats, ans[0]) )
 
-    print 'total training instances:', len(train_feats)
-    print 'total testing instances:', len(test_feats)
+    print('total training instances:', len(train_feats))
+    print('total testing instances:', len(test_feats))
     random.shuffle(train_feats)
 
     # can modify this classifier / do grid search on regularization parameter using sklearn
     classifier = SklearnClassifier(LogisticRegression(C=10))
     classifier.train(train_feats)
 
-    print 'accuracy train:', nltk.classify.util.accuracy(classifier, train_feats)
-    print 'accuracy test:', nltk.classify.util.accuracy(classifier, test_feats)
-    print ''
+    print('accuracy train:', nltk.classify.util.accuracy(classifier, train_feats))
+    print('accuracy test:', nltk.classify.util.accuracy(classifier, test_feats))
+    print('')
 
-    print 'dumping classifier'
-    cPickle.dump(classifier, open('data/deep/classifier', 'wb'),
-                 protocol=cPickle.HIGHEST_PROTOCOL)
+    print('dumping classifier')
+    pickle.dump(classifier, open('data/deep/classifier', 'wb'),
+                 protocol=pickle.HIGHEST_PROTOCOL)

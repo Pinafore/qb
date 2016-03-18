@@ -13,6 +13,7 @@ data/kenlm.arpa
 data/kenlm.binary
 data/classifier
 data/lm.txt
+data/naqt.db
 metastore_db/
 non_naqt.db
 *.o

@@ -5,11 +5,11 @@ from guesser.util.math_util import *
 from guesser.classify.learn_classifiers import evaluate
 from guesser.util.adagrad import Adagrad
 import time, argparse
-from util.imports import pickle
+import pickle
+
 
 # does both forward and backprop
 def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
-
     params = unroll_params(params, d, len_voc, deep=3)
     (W, b, W2, b2, W3, b3, L) = params
     grads = init_grads(d, len_voc, deep=3)
@@ -163,8 +163,8 @@ if __name__ == '__main__':
 
         # create mini-batches
         random.shuffle(train_qs)
-        batches = [train_qs[x : x + args['batch_size']] for x in list(range(0, len(train_qs)),
-                   args['batch_size'])]
+        batches = [train_qs[x: x + args['batch_size']] for x in list(range(0, len(train_qs),
+                   args['batch_size']))]
 
         epoch_error = 0.0
         ep_t = time.time()

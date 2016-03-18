@@ -1,7 +1,8 @@
 import itertools
 from jinja2 import Environment, FileSystemLoader
-from util.constants import (GRANULARITIES, FEATURE_NAMES, FEATURES, FOLDS, MIN_APPEARANCES,
+from util.constants import (GRANULARITIES, FEATURE_NAMES, FEATURES, MIN_APPEARANCES,
                             NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES)
+from util.constants import FOLDS_NON_NAQT as FOLDS
 from extractors.classifier import CLASSIFIER_FIELDS
 
 VWOPT = {"full": "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic"}
@@ -125,7 +126,7 @@ def main():
     o.write("# Get performance summaries\n")
     for fold in FOLDS:
         for granularity in GRANULARITIES:
-            o.write("results/%s.%s.csv: " % (fold, granularity))
+            o.write("data/results/%s.%s.csv: " % (fold, granularity))
             all_perfs = []
             for opt in VWOPT:
                 for weight in NEGATIVE_WEIGHTS:

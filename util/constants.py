@@ -17,6 +17,7 @@ STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile('[\W_]+')
 GRANULARITIES = ["sentence"]
 FOLDS = ["dev", "devtest", "test"]
+FOLDS_NON_NAQT = ["dev", "test"]
 
 LABEL = 'label'
 IR = 'ir'

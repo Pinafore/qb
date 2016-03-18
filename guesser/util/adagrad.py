@@ -1,7 +1,7 @@
 from numpy import *
 
-class Adagrad(): 
 
+class Adagrad:
     def __init__(self, dim, lr):
         self.dim = dim
         self.eps = 1e-3
