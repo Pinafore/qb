@@ -1,9 +1,9 @@
 from __future__ import print_function, absolute_import
 from unidecode import unidecode
+import pickle
 from collections import defaultdict, Counter
 from nltk.util import ngrams
 
-from util.imports import pickle
 from util.constants import ALPHANUMERIC
 from extractors.abstract import FeatureExtractor
 

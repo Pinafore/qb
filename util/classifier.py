@@ -3,10 +3,7 @@ import re
 import os
 from util.environment import QB_QUESTION_DB, data_path
 from collections import Counter
-try:
-   import cPickle as pickle
-except:
-   import pickle
+import pickle
 
 import nltk.classify.util
 from nltk.util import ngrams

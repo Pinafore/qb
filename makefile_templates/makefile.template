@@ -53,8 +53,8 @@ data/ir/whoosh_source_{{ MIN_APPEARANCES }}/: util/build_whoosh.py
 
 data/guesses.db: extract_features.py data/deep/params
 	python3 extract_features.py --guesses --ans_limit={{ MIN_APPEARANCES }} --guess_db=data/temp_guesses.db
-
 	cp data/temp_guesses.db $@
+
 
 clm/clm_wrap.cxx: clm/clm.swig
 	swig -c++ -python $<
