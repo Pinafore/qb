@@ -52,9 +52,13 @@ def find_references(sentence, padding=5):
             this_ref_start = -1
 
     for start, stop in references_found:
-        yield (" ".join(x[0] for x in tags[max(0, start - padding):start]),
-               " ".join(x[0] for x in tags[start:stop + 1]),
-               " ".join(x[0] for x in tags[stop + 1:stop + padding + 1]))
+        yield (" ".join(LanguageModelBase.normalize_title(x[0])
+                        for x in tags[max(0, start - padding):start]),
+               " ".join(LanguageModelBase.normalize_title(x[0])
+                        for x in tags[start:stop + 1]),
+               " ".join(LanguageModelBase.normalize_title(x[0])
+                        for x in tags[stop + 1:stop + padding + 1]))
+
 
 def build_lm_data(path="data/wikipedia", output="temp/wiki_sent"):
     import nltk
@@ -130,8 +134,8 @@ class Mentions(FeatureExtractor):
         for mm in self._ment:
             res += " "
             res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
-        assert not res.endswith(":"), "%s %s %s" % (title, str(self._ment), res)
-        assert not ": " in res, "%s %s %s" % (title, str(self._ment), res)
+
+        assert not ":" in res, "%s %s %s" % (title, str(self._ment), res)
         return res
 
     def generate_refexs(self, answer_list):
