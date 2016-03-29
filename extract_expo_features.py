@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import
-
 import argparse
 from csv import DictReader, DictWriter
 from collections import defaultdict

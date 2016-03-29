@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from future.builtins import range, str
-
-from util.imports import pickle
+import pickle
 import numpy as np
 from string import ascii_lowercase, punctuation
 from collections import defaultdict, Counter

@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, absolute_import
-
-from future.builtins import range, str
 import six
 from string import ascii_lowercase, ascii_uppercase, digits
 from collections import defaultdict

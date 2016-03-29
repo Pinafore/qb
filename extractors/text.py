@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from unidecode import unidecode
 from extractors.abstract import FeatureExtractor
 from util.constants import ALPHANUMERIC

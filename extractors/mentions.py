@@ -142,7 +142,7 @@ class Mentions(FeatureExtractor):
         else:
             res = "|%s missing:1" % (self._name)
 
-        norm_title = LanguageModelBase.normalize_title("", unidecode(title))
+        norm_title = LanguageModelBase.normalize_title('', unidecode(title))
         for mm in self._ment:
             res += " "
             res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")

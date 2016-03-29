@@ -17,7 +17,7 @@ def spark():
 def create_spark_context(app_name="Quiz Bowl", lm_memory=False):
     spark_conf = SparkConf()
     if lm_memory:
-        spark_conf = spark_conf.set('spark.max.cores', 4).set('spark.executor.cores', 4)
+        spark_conf = spark_conf.set('spark.max.cores', 12).set('spark.executor.cores', 12)
     return SparkContext(appName=app_name, master=QB_SPARK_MASTER, conf=spark_conf)
 
 

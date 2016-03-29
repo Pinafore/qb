@@ -180,7 +180,6 @@ class LanguageModelReader(LanguageModelBase):
         if vocab_size > 100:
             print("Done reading %i vocab (Python)" % vocab_size)
 
-
         self._corpora = {}
         for ii in range(num_lms):
             line = infile.readline()

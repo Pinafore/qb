@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from future.builtins import chr, range
 from functools import lru_cache
 from collections import OrderedDict
 import re

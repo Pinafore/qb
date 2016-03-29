@@ -75,12 +75,20 @@ data/lm.txt: clm/lm_wrapper.py clm/_clm.so
 {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(COMPUTE_OPT_FEATURES) }}{% endfor %} : extract_features.py {% for feature in COMPUTE_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
 	python3 run_spark.py extract_features {{ COMPUTE_OPT_FEATURES | join(' ')}}
 
+extract_compute_features: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(COMPUTE_OPT_FEATURES) }}{% endfor %}
+
 {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(MEMORY_OPT_FEATURES) }}{% endfor %} : extract_features.py {% for feature in MEMORY_OPT_FEATURES %} extractors/{{ feature | base_feat }}.py {{ feature | get_feature_prereqs }}{% endfor %}
 	python3 run_spark.py extract_features --lm-memory {{ MEMORY_OPT_FEATURES | join(' ') }}
 
+extract_memory_features: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(MEMORY_OPT_FEATURES) }}{% endfor %}
 
-{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/ {% endfor %}: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(FEATURE_NAMES) }}{% endfor %}
+extract_features: extract_compute_features extract_memory_features
+
+
+{% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/_SUCCESS {% endfor %}: {% for granularity in GRANULARITIES %}{{ granularity | feature_targets(FEATURE_NAMES) }}{% endfor %}
 	python3 run_spark.py merge_features
+
+spark_merge_features: {% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/_SUCCESS {% endfor %}
 
 {% for fold, granularity, weight in FOLDS | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
 data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz: data/vw_input/{{ fold }}/{{ granularity }}.{{ weight | int }}.vw_input/_SUCCESS

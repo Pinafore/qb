@@ -1,6 +1,3 @@
-from __future__ import absolute_import, print_function
-from future.builtins import range
-
 from collections import defaultdict
 from xml.etree import ElementTree
 import argparse

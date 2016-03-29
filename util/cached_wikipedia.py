@@ -1,7 +1,5 @@
-from __future__ import print_function, absolute_import
-
 import os
-from util.imports import pickle
+import pickle
 import time
 from time import sleep
 from requests import ConnectionError
@@ -12,6 +10,7 @@ from math import log
 from unidecode import unidecode
 import wikipedia, fileinput
 from wikipedia.exceptions import WikipediaException
+from functional import seq
 
 kCOUNTRY_SUB = ["History of ", "Geography of "]
 
@@ -36,10 +35,10 @@ class LinkResult:
 
 
 class WikipediaPage:
-    def __init__(self, content="", links=[], categories=[]):
+    def __init__(self, content="", links=None, categories=None):
         self.content = content
-        self.links = links
-        self.categories = categories
+        self.links = links if links is not None else []
+        self.categories = categories if categories is not None else []
 
     def weighted_link(self, other_page):
 
@@ -162,14 +161,10 @@ class CachedWikipedia:
             if raw:
                 if len(raw) > 1:
                     print("%i pages for %s" % (len(raw), key))
-                page = WikipediaPage("\n".join(unidecode(x.content) for
-                                               x in raw),
-                                     [y for y in
-                                      x.links
-                                      for x in raw],
-                                     [y for y in
-                                      x.categories
-                                      for x in raw])
+                page = WikipediaPage(
+                    "\n".join(unidecode(x.content) for x in raw),
+                    seq(raw).map(lambda x: x.links).flatten().list(),
+                    seq(raw).map(lambda x: x.categories).flatten().list())
 
                 print("Writing file to %s" % filename)
                 pickle.dump(page, open(filename, 'wb'),

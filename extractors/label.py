@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import numpy as np
 from unidecode import unidecode
 from extractors.abstract import FeatureExtractor

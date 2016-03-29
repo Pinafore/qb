@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import
-
 from collections import defaultdict, namedtuple
 import sys
 import time
@@ -108,14 +106,14 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     return feature
 
 
-def guesses_for_question(question, features_that_guess, guess_list=None,
+def guesses_for_question(question, deep_feature, guess_list=None,
                          word_skip=-1):
-    guesses = {}
+    guesses = defaultdict(dict)
+    feature_name = 'deep'
 
     # Find out the guesses that we need for this question
-    for ff in features_that_guess:
-        if guess_list is None or guess_list.number_guesses(question, ff) == 0:
-            guesses[ff] = defaultdict(dict)
+    if guess_list is None or guess_list.number_guesses(question, feature_name) == 0:
+        guesses[feature_name] = defaultdict(dict)
 
     # Gather all the guesses
     for ss, ww, tt in question.partials(word_skip):
@@ -124,30 +122,27 @@ def guesses_for_question(question, features_that_guess, guess_list=None,
             continue
         for ff in guesses:
             # print("Query from %s, %s" % (type(tt), tt))
-            results = features_that_guess[ff].text_guess(tt)
+            results = deep_feature.text_guess(tt)
             for gg in results:
-                guesses[ff][(ss, ww)][gg] = results[gg]
+                guesses[deep_feature][(ss, ww)][gg] = results[gg]
             # add the correct answer if this is a training document and
             if question.fold == "train" and question.page not in results:
-                guesses[ff][(ss, ww)][question.page] = \
-                  features_that_guess[ff].score_one_guess(question.page, tt)
+                guesses[feature_name][(ss, ww)][question.page] = \
+                  deep_feature.score_one_guess(question.page, tt)
 
             print(".", end="")
             sys.stdout.flush()
 
         # Get all of the guesses
         all_guesses = set()
-        for ff in guesses:
-            for gg in guesses[ff][(ss, ww)]:
-                all_guesses.add(gg)
+        for gg in guesses[feature_name][(ss, ww)]:
+            all_guesses.add(gg)
 
         # Add missing guesses
-        for ff in features_that_guess:
-            missing = 0
-            for gg in [x for x in all_guesses if x not in guesses[ff][(ss, ww)]]:
-                guesses[ff][(ss, ww)][gg] = \
-                    features_that_guess[ff].score_one_guess(gg, tt)
-                missing += 1
+        missing = 0
+        for gg in [x for x in all_guesses if x not in guesses[feature_name][(ss, ww)]]:
+            guesses[feature_name][(ss, ww)][gg] = deep_feature.score_one_guess(gg, tt)
+            missing += 1
     return guesses
 
 
@@ -249,9 +244,8 @@ def main():
     guess_list = GuessList(flags.guess_db)
 
     if flags.guesses:
-        FEATURES["deep"] = instantiate_feature("deep", questions)
-        features_that_guess = {"deep": FEATURES["deep"]}
-        print("Guesses %s" % "\t".join(x for x in features_that_guess))
+        deep_feature = instantiate_feature('deep', questions)
+        print("Guesses deep")
 
         all_questions = questions.questions_with_pages()
 
@@ -270,7 +264,7 @@ def main():
                     if question.fold == "train":
                         continue
                     question_num += 1
-                    guesses = guesses_for_question(question, features_that_guess, guess_list)
+                    guesses = guesses_for_question(question, deep_feature, guess_list)
 
                     # Save the guesses
                     for guesser in guesses:
