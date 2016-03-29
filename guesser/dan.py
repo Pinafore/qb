@@ -202,11 +202,11 @@ if __name__ == '__main__':
             ag.reset_weights()
 
         # check accuracy on validation set
-        if epoch % args['do_val'] == 0 and epoch != 0:
-            print('validating...')
-            params = unroll_params(r, d, len_voc, deep=3)
-            evaluate(train_qs, val_qs, params, d)
-            print('\n\n')
+        #if epoch % args['do_val'] == 0 and epoch != 0:
+        #    print('validating...')
+        #    params = unroll_params(r, d, len_voc, deep=3)
+        #    evaluate(train_qs, val_qs, params, d)
+        #    print('\n\n')
 
     log.close()
 
