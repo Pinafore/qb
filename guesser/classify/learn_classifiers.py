@@ -7,8 +7,11 @@ from scipy import stats
 from collections import Counter
 import cPickle, csv, random, argparse
 
-def check_accuracy_at_1(test_qs, params, d):
-    (W, b, W2, b2, W3, b3, L) = params
+def check_accuracy_at_1():
+    d=300
+    val_qs = cPickle.load(open('data/deep/dev', 'rb'))
+    (W, b, W2, b2, W3, b3, L) = cPickle.load(open('data/deep/params', 'rb'))
+
     test_feats = []
     for qs, ans in test_qs:
 
