@@ -53,11 +53,11 @@ def find_references(sentence, padding=5):
             this_ref_start = -1
 
     for start, stop in references_found:
-        yield (" ".join(LanguageModelBase.normalize_title("", x[0])
+        yield (" ".join(LanguageModelBase.normalize_title('', x[0])
                         for x in tags[max(0, start - padding):start]),
-               " ".join(LanguageModelBase.normalize_title("", x[0])
+               " ".join(LanguageModelBase.normalize_title('', x[0])
                         for x in tags[start:stop + 1]),
-               " ".join(LanguageModelBase.normalize_title("", x[0])
+               " ".join(LanguageModelBase.normalize_title('', x[0])
                         for x in tags[stop + 1:stop + padding + 1]))
 
 

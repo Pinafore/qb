@@ -2,8 +2,11 @@ import numpy as np
 from collections import defaultdict, namedtuple
 import sqlite3
 from typing import Dict, Tuple, Set, Any
+from functional import seq
 
-from util.constants import NEG_INF
+from util.constants import NEG_INF, FOLDS
+from util.environment import QB_QUESTION_DB
+from util import qdb
 
 
 Guess = namedtuple('Guess',
@@ -81,27 +84,40 @@ class GuessList:
                 guesses[(sentence, token)].add(question.page)
         return guesses
 
-    def check_recall(self, question_list, guesser_list, correct_answer):
-        totals = defaultdict(int)
-        correct = defaultdict(int)
+    def check_recall(self):
         c = self._cursor()
+        print("Loading questions and guesses")
+        question_list = qdb.QuestionDatabase(QB_QUESTION_DB).all_questions().values()
+        guesses = list(c.execute('select * from guesses where guesser="deep"'))
 
-        query = 'SELECT count(*) as cnt FROM guesses WHERE guesser=? ' + \
-            'AND page=? AND question=?;'
-        for gg in guesser_list:
-            for qq in question_list:
-                if qq.fold == "train":
-                    continue
+        print("Computing DAN recall")
+        guesses = seq(guesses)\
+            .group_by(lambda x: x[1])\
+            .map(lambda g: (g[0], seq(g[1]).map(lambda x: x[4]).set()))
+        guess_lookup = guesses.to_dict()
 
-                c.execute(query, (gg, correct_answer, qq.qnum,))
-                data = c.fetchone()[0]
-                if data != 0:
-                    correct[gg] += 1
-                totals[gg] += 1
+        questions = seq(question_list)\
+            .filter(lambda q: q.qnum in guess_lookup).cache()
 
-        for gg in guesser_list:
-            if totals[gg] > 0:
-                yield gg, float(correct[gg]) / float(totals[gg])
+        recall = {}
+
+        for fold in FOLDS:
+            fold_questions = questions.filter(lambda q: q.fold == fold).cache()
+            if fold_questions.len() == 0:
+                continue
+            correct = fold_questions.count(lambda q: q.page in guess_lookup[q.qnum])
+            recall[fold] = {
+                'accuracy': correct / fold_questions.len(),
+                'num_questions': fold_questions.len(),
+                'num_correct': correct
+            }
+        results = {
+            'recall': recall,
+            'num_questions_total': len(question_list),
+            'num_questions_with_guesses': questions.len(),
+            'num_guesses': guesses.map(lambda x: len(x[1])).sum()
+        }
+        return results
 
     def guesser_statistics(self, guesser, feature, limit=5000):
         """
