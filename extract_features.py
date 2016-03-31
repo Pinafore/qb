@@ -52,12 +52,7 @@ def feature_lines(question, guess_list, granularity, feature_generator):
             if guesses_cached is not None and guess in guesses_cached[(sentence, token)]:
                 feat = feature_generator.vw_from_score(guesses_cached[(sentence, token)][guess])
             else:
-                try:
-                    feat = feature_generator.vw_from_title(
-                        guess, question.get_text(sentence, token))
-                except ValueError:
-                    print("Value error!")
-                    feat = ""
+                feat = feature_generator.vw_from_title(guess, question.get_text(sentence, token))
             yield sentence, token, guess, feat
 
 

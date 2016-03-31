@@ -1,19 +1,18 @@
-from numpy import *
 import nltk.classify.util
-from util.math_util import *
+from guesser.util.math_util import *
 from nltk.classify.scikitlearn import SklearnClassifier
 from sklearn.linear_model import LogisticRegression
-from scipy import stats
-from collections import Counter
-import pickle, csv, random, argparse
+import pickle
+import random
+
 
 def check_accuracy_at_1():
-    d=300
-    val_qs = cPickle.load(open('data/deep/dev', 'rb'))
-    (W, b, W2, b2, W3, b3, L) = cPickle.load(open('data/deep/params', 'rb'))
+    d = 300
+    val_qs = pickle.load(open('data/deep/dev', 'rb'))
+    (W, b, W2, b2, W3, b3, L) = pickle.load(open('data/deep/params', 'rb'))
 
     test_feats = []
-    for qs, ans in test_qs:
+    for qs, ans in val_qs:
 
         prev_qs = zeros((d, 1))
         prev_sum = zeros((d, 1))
@@ -42,13 +41,14 @@ def check_accuracy_at_1():
             for dim, val in ndenumerate(p3):
                 curr_feats['__' + str(dim)] = val
 
-            test_feats.append( (curr_feats, ans[0]) )
+            test_feats.append((curr_feats, ans[0]))
 
-    print 'total testing instances:', len(test_feats)
+    print('total testing instances:', len(test_feats))
 
     # can modify this classifier / do grid search on regularization parameter using sklearn
-    classifier = cPickle.load(open('data/deep/classifier', 'rb'))
-    print 'accuracy test:', nltk.classify.util.accuracy(classifier, test_feats)
+    classifier = pickle.load(open('data/deep/classifier', 'rb'))
+    print('accuracy test:', nltk.classify.util.accuracy(classifier, test_feats))
+
 
 # trains a classifier, saves it to disk, and evaluates on heldout data
 def evaluate(train_qs, test_qs, params, d):

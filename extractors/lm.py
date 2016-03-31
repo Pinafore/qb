@@ -22,14 +22,16 @@ class LanguageModel(FeatureExtractor):
             self._lm = LanguageModelReader(self.filename)
             self._lm.init()
             self.initialized = True
+            self.add_corpus("qb")
+            self.add_corpus("wiki")
+            self.add_corpus("source")
 
     def add_corpus(self, corpus_name):
         self._corpora.add(corpus_name)
 
     def vw_from_title(self, title, text):
         return "|%s %s" % (self._name,
-                           " ".join(self._lm.feature_line(x, title, text) for
-                                    x in self._corpora))
+                           " ".join(self._lm.feature_line(x, title, text) for x in self._corpora))
 
     def features(self, question, candidate):
         pass

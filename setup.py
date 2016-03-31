@@ -23,7 +23,8 @@ requirements = [
     'flask',
     'requests',
     'click',
-    'future'
+    'future',
+    'pyfunctional'
 ]
 
 
