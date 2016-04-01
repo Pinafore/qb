@@ -1,5 +1,4 @@
 import argparse
-import sys
 from collections import defaultdict
 from csv import DictWriter, DictReader
 import operator
@@ -9,11 +8,9 @@ from unidecode import unidecode
 from util.qdb import QuestionDatabase
 from extract_expo_features import kEXPO_START, add_expo_questions
 
-kBUZZ_OUT = ["question", "sentence", "word", "page", "evidence", "final",
-             "weight"]
-kPERF_OUT = ["question", "sentence", "token", "guess", "answer",
-             "corr", "weight", "present_forward", "present_backward",
-             "vw"]
+kBUZZ_OUT = ["question", "sentence", "word", "page", "evidence", "final", "weight"]
+kPERF_OUT = ["question", "sentence", "token", "guess", "answer", "corr", "weight",
+             "present_forward", "present_backward", "vw"]
 kQUES_OUT = ["id", "answer", "sent", "text"]
 
 
@@ -110,13 +107,12 @@ def final_guess(positions):
 
     last_position = max(positions)
     high_score = max(positions[last_position].values())
-    high_keys = [x for x in positions[last_position] if
-                 positions[last_position][x] == high_score]
+    high_keys = [x for x in positions[last_position] if positions[last_position][x] == high_score]
 
     return high_keys[0]
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--buzzes', type=str, default='',
                         help='Where we write resulting buzzes')
@@ -145,8 +141,7 @@ if __name__ == "__main__":
     buzz = DictWriter(open(flags.buzzes, 'w'), fieldnames=kBUZZ_OUT)
     buzz.writeheader()
 
-    final_out = DictWriter(open(flags.finals, 'w'),
-                           fieldnames=["question", "answer"])
+    final_out = DictWriter(open(flags.finals, 'w'), fieldnames=["question", "answer"])
     final_out.writeheader()
 
     # Check file length
@@ -155,10 +150,11 @@ if __name__ == "__main__":
     with open(flags.pred) as infile:
         pred_lines = sum(1 for line in infile)
     assert meta_lines == pred_lines, "Prediction and meta files mismatch" + \
-        "(%s: %i vs %s: %i)" % (flags.meta, meta_lines, flags.pred, pred_lines)
+                                     "(%s: %i vs %s: %i)" % (
+                                     flags.meta, meta_lines, flags.pred, pred_lines)
 
-    pi = PositionIterator(open(flags.meta), open(flags.pred),
-                          qdb.all_answers())
+    pi = PositionIterator(open(flags.meta), open(flags.pred), qdb.all_answers())
+
     if flags.expo:
         pi.add_expo_answers(flags.expo)
 
@@ -168,33 +164,27 @@ if __name__ == "__main__":
         final_sent, final_char = max(positions)
         presence = answer_presence(positions)
         for ss, tt in sorted(positions):
-            # TODO: Add in evidence
-            for guess, final, weight in \
-                    top_guesses(positions[(ss, tt)]):
-                if (ss == final_sent and tt == final_char and not any_buzz) or\
-                        final == 1:
+            for guess, final, weight in top_guesses(positions[(ss, tt)]):
+                if (ss == final_sent and tt == final_char and not any_buzz) or final == 1:
                     any_buzz = True
 
                     # Add the question so it will be written out in the
                     # performance file
-                    questions_with_buzzes[question_id]["question"] = \
-                        question_id
+                    questions_with_buzzes[question_id]["question"] = question_id
                     questions_with_buzzes[question_id]["guess"] = guess.strip()
                     questions_with_buzzes[question_id]["sentence"] = ss
                     questions_with_buzzes[question_id]["token"] = tt
                     if any(x >= ss for x, y in presence):
-                        questions_with_buzzes[question_id]["present_forward"]\
+                        questions_with_buzzes[question_id]["present_forward"] \
                             = min(x - ss for x, y in presence if x >= ss)
                     else:
-                        questions_with_buzzes[question_id]["present_forward"]\
-                            = -1
+                        questions_with_buzzes[question_id]["present_forward"] = -1
 
                     if any(x <= ss for x, y in presence):
-                        questions_with_buzzes[question_id]["present_backward"]\
+                        questions_with_buzzes[question_id]["present_backward"] \
                             = min(ss - x for x, y in presence if x <= ss)
                     else:
-                        questions_with_buzzes[question_id]["present_backward"]\
-                            = -1
+                        questions_with_buzzes[question_id]["present_backward"] = -1
 
                 d = {"question": question_id, "sentence": ss, "word": tt,
                      "page": guess.strip(), "evidence": "", "final": final,
@@ -234,3 +224,7 @@ if __name__ == "__main__":
                 d["weight"] = flags.neg_weight
                 d["vw"] = flags.vw_config
                 perf_out.writerow(d)
+
+
+if __name__ == "__main__":
+    main()

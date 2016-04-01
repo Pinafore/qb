@@ -61,9 +61,7 @@ def find_references(sentence, padding=5):
                         for x in tags[stop + 1:stop + padding + 1]))
 
 
-
 def build_lm_data(path="data/wikipedia", output="temp/wiki_sent"):
-    import nltk
     cw = CachedWikipedia(path, "")
     o = open(output, 'w')
 
@@ -140,14 +138,15 @@ class Mentions(FeatureExtractor):
         if best_score > float("-inf"):
             res = "|%s score:%f" % (self._name, best_score)
         else:
-            res = "|%s missing:1" % (self._name)
+            res = "|%s missing:1" % self._name
 
         norm_title = LanguageModelBase.normalize_title('', unidecode(title))
+        assert ":" not in norm_title
         for mm in self._ment:
+            assert ":" not in mm
             res += " "
             res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
 
-        assert res.count(":") == 1, "%s %s %s" % (title, str(self._ment), res)
         return res
 
     def generate_refexs(self, answer_list):
@@ -206,27 +205,27 @@ def main():
 
     if flags.build_lm_data:
         build_lm_data()
-    kDEMO_SENT = [
+    DEMO_SENT = [
         "A 2011 play about this character was produced in collaboration between Rokia Traore, Peter Sellars, and Toni Morrison.",
         "The founder of this movement was inspired to develop its style by the stained glass windows he made for the De Lange House.",
         "Calvin Bridges sketched a specific type of these structures that contain diffuse regions called Balbiani rings and puffs.",
         "This group is represented by a dove in the Book of the Three Birds, written by a Welsh member of this group named Morgan Llwyd. A member of this religious group adopted the pseudonym 'Martin Marprelate' to pen a series of attacks against authorities.",
         "This leader spent three days in house arrest during an event masterminded by the 'Gang of Eight.'"]
-    kDEMO_GUESS = ["Desdemona", "De Stijl", "Mikhail Gorbachev", "Chromosome"]
+    DEMO_GUESS = ["Desdemona", "De Stijl", "Mikhail Gorbachev", "Chromosome"]
     if flags.demo:
         answers = set(x for x, y in text_iterator(
             False, "", False, flags.db, False, "", limit=-1, min_pages=flags.min_answers))
         ment = Mentions(answers)
 
         # Show the mentions
-        for ii in kDEMO_GUESS:
+        for ii in DEMO_GUESS:
             print(ii, list(ment.referring_exs(ii)))
 
-        for ii in kDEMO_SENT:
+        for ii in DEMO_SENT:
             print(ii)
             for jj in find_references(ii):
                 print("\t%s\t|%s|\t%s" % jj)
-            for jj in kDEMO_GUESS:
+            for jj in DEMO_GUESS:
                 print(ment.vw_from_title(jj, ii))
 
 

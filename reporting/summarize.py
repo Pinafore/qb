@@ -92,12 +92,12 @@ if __name__ == "__main__":
     flags = parser.parse_args()
     d = defaultdict(ResultCombiner)
 
-    for ii in flags.perf:
-        print(ii)
-        fields = ii.split(".")
+    for perf_file in flags.perf:
+        print(perf_file)
+        fields = perf_file.split(".")
         vw = fields[-2]
         weight = fields[-3]
-        for jj in DictReader(open(ii)):
+        for jj in DictReader(open(perf_file)):
             d[(vw, weight)].add(jj)
 
     o = DictWriter(open(flags.output, 'w'), kSUM_FIELDS)
