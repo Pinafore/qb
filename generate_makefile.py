@@ -1,8 +1,7 @@
 import itertools
 from jinja2 import Environment, FileSystemLoader
 from util.constants import (GRANULARITIES, FEATURE_NAMES, FEATURES, MIN_APPEARANCES,
-                            NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES)
-from util.constants import FOLDS_NON_NAQT as FOLDS
+                            NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES, FOLDS)
 from extractors.classifier import CLASSIFIER_FIELDS
 
 VWOPT = {"full": "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic"}

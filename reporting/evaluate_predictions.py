@@ -39,35 +39,26 @@ class PositionIterator:
                 self._answers[current_id] = ii["answer"]
 
     def __iter__(self):
-        buffer = defaultdict(dict)
-        last_question = -1
-        question = None
-        for mm, pp in zip(self._meta, self._pred):
-            question, sent, token, guess = mm.split("\t")
+        for meta, prediction in zip(self._meta, self._pred):
+            question, sent, token, guess = meta.split("\t")
             question = int(question)
             sent = int(sent)
             token = int(token)
             guess = guess.strip()
 
-            # TODO: Make sure the name matches metadata
-            score = float(pp.split()[0])
-            name = pp.split()[1]
+            pred_split = prediction.split()
+            score = float(pred_split[0])
+            name = pred_split[1]
             name_q, name_s, name_t = name.split("_")
             assert int(name_q) == question
             assert int(name_s) == sent, "%s vs %s" % (mm, name)
             assert int(name_t) == token
 
-            if last_question != question:
-                if last_question >= 0:
-                    yield last_question, buffer
-                buffer = defaultdict(dict)
-                last_question = question
+            buffer = defaultdict(dict)
 
             # Save the score and whether it was correct
             right_answer = (guess == self._answers[question])
-            buffer[(sent, token)][guess] = \
-                (score, right_answer)
-        if not question is None:
+            buffer[(sent, token)][guess] = (score, right_answer)
             yield question, buffer
 
 
