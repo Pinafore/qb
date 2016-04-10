@@ -91,7 +91,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 question_value = 10
             press = interpret_keypress()
 
-            if press:
+            if isinstance(press, int):
                 # Check to see if buzz is valid
                 if human_delta > 0:
                     continue
@@ -105,7 +105,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 response = None
                 while response is None:
                     response = raw_input("Player %i, provide an answer:\t"
-                                         % str(press))
+                                         % press)
                     if '+' in response:
                         if press % 2 == 0:
                             even_delta = question_value
@@ -158,7 +158,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
         show_score(score.human + human_delta,
                    score.computer + computer_delta,
                    "HUMAN", "COMPUTER",
-                   flush=False)        
+                   flush=False)
         print(format_display(display_num, question_text, max(question_text) - 1,
                              1000, current_guesses, answer=correct,
                              points=computer_delta))
@@ -170,7 +170,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
     elif computer_delta > 0 and computer_answers == 0:
         format_display(display_num, question_text, computer_position[0],
                        computer_position[1], current_guesses, answer=correct,
-                       points=computer_delta)        
+                       points=computer_delta)
         answer(computer_guess)
 
     return score.add(Score(even_delta, odd_delta, human_delta, computer_delta))
@@ -250,5 +250,5 @@ if __name__ == "__main__":
                "TEAM A", "TEAM B",
                left_color="RED",
                right_color="YELLOW")
-        
+
     show_score(score.human, score.computer)
