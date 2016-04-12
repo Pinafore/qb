@@ -9,7 +9,7 @@
 
 3. Run the script "python util/install_nltk_data.py", which will download some nltk data.  You should *not* use admin access for this script.
 
-4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
+4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier and put the config directory in data/wikifier/config
 
 ## Environment Variables
 To make running the QB software easier, certain environment variables are used to set data directories. Below are a list of the variables and what they currently work for
@@ -55,9 +55,10 @@ Feature timings:
       *  wikilinks: 62.842486 feature lines per sec
       *  answer_present: 155.469810 feature lines per sec
 
-## Steps for quick test
-If you are interested in getting the qb system running end to end without training the full system,
-you can follow these steps.
+## Output File
+In the directory `data/results/` there are a number of files and folders which are the output of a quiz bowl run. Below is a description of what each file contains:
 
-1. Generate the Makefile like above
-2. Run `make data/deep/glove.840B.300d.txt.gz` to download some data
+* `sentence.X.full.final`: the answer for a question given the full question text
+* `sentence.X.full.buzz`: For each (question, sentence, token), the guess with whether to buzz and the weight
+* `sentence.X.full.perf`: For each (question, sentence, token), performance statistics
+* `sentence.X.full.pred`: Prediction weights from vowpal wabbit

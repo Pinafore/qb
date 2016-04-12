@@ -4,7 +4,8 @@ from guesser.util.gen_util import *
 from guesser.util.math_util import *
 from guesser.classify.learn_classifiers import evaluate
 from guesser.util.adagrad import Adagrad
-import time, argparse
+import time
+import argparse
 import pickle
 
 

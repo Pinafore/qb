@@ -140,7 +140,6 @@ class GuessList:
         query = 'SELECT sentence, token, page, feature, score ' + \
             'FROM guesses WHERE question=? AND guesser=?;'
         c = self._cursor()
-        # print(query, question.qnum, guesser,)
         c.execute(query, (question.qnum, guesser,))
 
         guesses = defaultdict(dict)

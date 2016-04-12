@@ -4,21 +4,23 @@ from nltk.classify.scikitlearn import SklearnClassifier
 from sklearn.linear_model import LogisticRegression
 import pickle
 import random
+from functional import seq
 
 
-def check_accuracy_at_1():
+def compute_recall_accuracy():
     d = 300
-    val_qs = pickle.load(open('data/deep/dev', 'rb'))
+    val_qs = pickle.load(open('data/deep/devtest', 'rb'))
     (W, b, W2, b2, W3, b3, L) = pickle.load(open('data/deep/params', 'rb'))
+    classifier = pickle.load(open('data/deep/classifier', 'rb'))
+    recall = 0
+    accuracy = 0
+    total = 0
 
-    test_feats = []
     for qs, ans in val_qs:
-
-        prev_qs = zeros((d, 1))
+        ans = ans[0]
         prev_sum = zeros((d, 1))
-        count = 0.
         history = []
-
+        sent_position = 0
         for dist in qs:
 
             sent = qs[dist]
@@ -41,13 +43,18 @@ def check_accuracy_at_1():
             for dim, val in ndenumerate(p3):
                 curr_feats['__' + str(dim)] = val
 
-            test_feats.append((curr_feats, ans[0]))
+            if sent_position + 1 == len(qs):
+                p_dist = classifier.prob_classify(curr_feats)
+                accuracy += int(p_dist.max() == ans)
+                recall += int(seq(p_dist.samples())
+                              .map(lambda s: (p_dist.prob(s), s))
+                              .sorted(reverse=True)
+                              .take(200)
+                              .exists(lambda s: ans == s[1]))
+            sent_position += 1
+        total += 1
 
-    print('total testing instances:', len(test_feats))
-
-    # can modify this classifier / do grid search on regularization parameter using sklearn
-    classifier = pickle.load(open('data/deep/classifier', 'rb'))
-    print('accuracy test:', nltk.classify.util.accuracy(classifier, test_feats))
+    return recall / total, accuracy / total
 
 
 # trains a classifier, saves it to disk, and evaluates on heldout data

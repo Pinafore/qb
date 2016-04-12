@@ -133,9 +133,6 @@ class DeepExtractor(FeatureExtractor):
 
         return res
 
-    # return softmax probability of title given text
-    ## to-do (mohit): cache probdist for given text, so if we've already computed
-    ##                it then we can just look it up later
     def score_one_guess(self, title, text):
 
         if isinstance(text, list):
