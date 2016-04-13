@@ -52,6 +52,7 @@ data/ir/whoosh_source_{{ MIN_APPEARANCES }}/: util/build_whoosh.py
 	python3 util/build_whoosh.py --whoosh_index=$@ --min_answers={{ MIN_APPEARANCES }} --use_source
 
 data/guesses.db: extract_features.py data/deep/params
+    rm data/temp_guesses.db
 	python3 extract_features.py --guesses --ans_limit={{ MIN_APPEARANCES }} --guess_db=data/temp_guesses.db
 	cp data/temp_guesses.db $@
 

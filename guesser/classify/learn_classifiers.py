@@ -15,7 +15,7 @@ def compute_recall_accuracy():
     recall = 0
     accuracy = 0
     total = 0
-
+    wrong = []
     for qs, ans in val_qs:
         ans = ans[0]
         prev_sum = zeros((d, 1))
@@ -46,15 +46,18 @@ def compute_recall_accuracy():
             if sent_position + 1 == len(qs):
                 p_dist = classifier.prob_classify(curr_feats)
                 accuracy += int(p_dist.max() == ans)
-                recall += int(seq(p_dist.samples())
+                correct = int(seq(p_dist.samples())
                               .map(lambda s: (p_dist.prob(s), s))
                               .sorted(reverse=True)
                               .take(200)
                               .exists(lambda s: ans == s[1]))
+                recall += correct
+                if not correct:
+                    wrong.append((qs, ans))
             sent_position += 1
         total += 1
 
-    return recall / total, accuracy / total
+    return recall / total, accuracy / total, total, wrong
 
 
 # trains a classifier, saves it to disk, and evaluates on heldout data

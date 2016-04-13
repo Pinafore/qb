@@ -87,37 +87,35 @@ class GuessList:
     def check_recall(self):
         c = self._cursor()
         print("Loading questions and guesses")
-        question_list = qdb.QuestionDatabase(QB_QUESTION_DB).all_questions().values()
-        guesses = list(c.execute('select * from guesses where guesser="deep"'))
+        raw_questions = seq(qdb.QuestionDatabase(QB_QUESTION_DB).all_questions().values())
+        guesses = seq(list(
+            c.execute('select * from guesses where guesser="deep" and fold = "devtest"')))\
+            .map(lambda g: Guess(*g)).cache()
+
+        positions = guesses.map(lambda g: (g.question, g.sentence)) \
+            .reduce_by_key(max).to_dict()
+
+        guess_lookup = guesses.filter(lambda g: g.sentence == positions[g.question]) \
+            .group_by(lambda x: x.question) \
+            .map(lambda g: (g[0], seq(g[1]).map(lambda x: x.page).set())).to_dict()
+
+        questions = raw_questions.\
+            filter(lambda q: q.qnum in guess_lookup and q.fold != 'train').cache()
+
+        question_lookup = questions.map(lambda x: (x.qnum, x)).to_dict()
+
+        correct = 0
+        total = 0
+        wrong = []
 
         print("Computing DAN recall")
-        guesses = seq(guesses)\
-            .group_by(lambda x: x[1])\
-            .map(lambda g: (g[0], seq(g[1]).map(lambda x: x[4]).set()))
-        guess_lookup = guesses.to_dict()
-
-        questions = seq(question_list)\
-            .filter(lambda q: q.qnum in guess_lookup).cache()
-
-        recall = {}
-
-        for fold in FOLDS:
-            fold_questions = questions.filter(lambda q: q.fold == fold).cache()
-            if fold_questions.len() == 0:
-                continue
-            correct = fold_questions.count(lambda q: q.page in guess_lookup[q.qnum])
-            recall[fold] = {
-                'accuracy': correct / fold_questions.len(),
-                'num_questions': fold_questions.len(),
-                'num_correct': correct
-            }
-        results = {
-            'recall': recall,
-            'num_questions_total': len(question_list),
-            'num_questions_with_guesses': questions.len(),
-            'num_guesses': guesses.map(lambda x: len(x[1])).sum()
-        }
-        return results
+        for q in questions:
+            if q.page in guess_lookup[q.qnum]:
+                correct += 1
+            else:
+                wrong.append(q)
+            total += 1
+        return correct / total, total, wrong
 
     def guesser_statistics(self, guesser, feature, limit=5000):
         """
@@ -150,11 +148,7 @@ class GuessList:
         return guesses
 
     def add_guesses(self, guesser, question, fold, guesses):
-        # Remove the old guesses
-        query = 'DELETE FROM guesses WHERE question=? AND guesser=?;'
         c = self._cursor()
-        c.execute(query, (question, guesser,))
-
         # Add in the new guesses
         query = 'INSERT INTO guesses' + \
             '(fold, question, sentence, token, page, guesser, score, feature) ' + \
@@ -162,7 +156,10 @@ class GuessList:
         for ss, tt in guesses:
             for gg in guesses[(ss, tt)]:
                 for feat, val in guesses[(ss, tt)][gg].items():
-                    c.execute(query,
-                              (fold, question, ss, tt, gg,
-                               guesser, val, feat))
+                    c.execute(query, (fold, question, ss, tt, gg, guesser, val, feat))
         self._conn.commit()
+
+    def delete_guesses(self, guesser, question, fold, guesses):
+        query = 'DELETE FROM guesses WHERE question=? AND guesser=?;'
+        c = self._cursor()
+        c.execute(query, (question, guesser,))

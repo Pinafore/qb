@@ -101,44 +101,42 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     return feature
 
 
-def guesses_for_question(question, deep_feature, guess_list=None,
-                         word_skip=-1):
-    guesses = defaultdict(dict)
+def guesses_for_question(question, deep_feature, word_skip=-1):
+    final_guesses = defaultdict(dict)
     feature_name = 'deep'
 
-    # Find out the guesses that we need for this question
-    if guess_list is None or guess_list.number_guesses(question, feature_name) == 0:
-        guesses[feature_name] = defaultdict(dict)
+    final_guesses[feature_name] = defaultdict(dict)
 
     # Gather all the guesses
-    for ss, ww, tt in question.partials(word_skip):
+    for sentence, token, text in question.partials(word_skip):
         # We have problems at the very start
-        if ss == 0 and ww == word_skip:
+        if sentence == 0 and token == word_skip:
             continue
-        for ff in guesses:
-            # print("Query from %s, %s" % (type(tt), tt))
-            results = deep_feature.text_guess(tt)
-            for gg in results:
-                guesses[deep_feature][(ss, ww)][gg] = results[gg]
-            # add the correct answer if this is a training document and
-            if question.fold == "train" and question.page not in results:
-                guesses[feature_name][(ss, ww)][question.page] = \
-                  deep_feature.score_one_guess(question.page, tt)
 
-            print(".", end="")
-            sys.stdout.flush()
+        # Currently there is only one guesser, but code is here in case there are more guessers
+        for feature in final_guesses:
+            guesses = deep_feature.text_guess(text)
+            for guess in guesses:
+                final_guesses[feature_name][(sentence, token)][guess] = guesses[guess]
+            # add the correct answer if this is a training document and
+            if question.fold == "train" and question.page not in guesses:
+                final_guesses[feature_name][(sentence, token)][question.page] = \
+                  deep_feature.score_one_guess(question.page, text)
 
         # Get all of the guesses
         all_guesses = set()
-        for gg in guesses[feature_name][(ss, ww)]:
-            all_guesses.add(gg)
+        for guess in final_guesses[feature_name][(sentence, token)]:
+            all_guesses.add(guess)
 
         # Add missing guesses
         missing = 0
-        for gg in [x for x in all_guesses if x not in guesses[feature_name][(ss, ww)]]:
-            guesses[feature_name][(ss, ww)][gg] = deep_feature.score_one_guess(gg, tt)
+        missing_guesses = [x for x in all_guesses
+                           if x not in final_guesses[feature_name][(sentence, token)]]
+        for guess in missing_guesses:
+            score = deep_feature.score_one_guess(guess, token)
+            final_guesses[feature_name][(sentence, token)][guess] = score
             missing += 1
-    return guesses
+    return final_guesses
 
 
 def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, granularity='sentence'):
@@ -259,7 +257,7 @@ def main():
                     if question.fold == "train":
                         continue
                     question_num += 1
-                    guesses = guesses_for_question(question, deep_feature, guess_list)
+                    guesses = guesses_for_question(question, deep_feature)
 
                     # Save the guesses
                     for guesser in guesses:
