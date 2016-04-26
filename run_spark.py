@@ -1,8 +1,8 @@
 import click
 from pyspark import SparkConf, SparkContext
 
+from qanta.util.constants import FEATURE_NAMES
 from util.environment import QB_QUESTION_DB, QB_GUESS_DB, QB_SPARK_MASTER
-from util.constants import FEATURE_NAMES
 from util import spark_features
 import extract_features as ef
 

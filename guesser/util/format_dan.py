@@ -1,5 +1,4 @@
-from util.qdb import *
-import string
+from qanta.util.qdb import *
 import pickle
 import argparse
 

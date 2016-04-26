@@ -1,11 +1,7 @@
-
-from collections import defaultdict
-
-import pickle
 import time
 
 from page_assignment.active_learning_for_matching import ActiveLearner
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 
 
 if __name__ == "__main__":

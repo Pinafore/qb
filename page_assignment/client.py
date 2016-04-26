@@ -15,10 +15,10 @@ from string import ascii_lowercase
 
 from fuzzywuzzy import process
 from page_assignment.active_learning_for_matching import ActiveLearner, simple_menu
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 from unidecode import unidecode
 
-valid_strings = set(ascii_lowercase) | set(str(x) for x in xrange(10)) | set([' '])
+valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | set([' '])
 paren_expression = re.compile('\s*\([^)]*\)\s*')
 brackets = re.compile(r'\[[^)]*\]')
 

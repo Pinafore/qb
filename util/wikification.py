@@ -2,7 +2,7 @@ from unidecode import unidecode
 import argparse
 from collections import defaultdict
 
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 from extract_expo_features import add_expo_questions
 
 if __name__ == "__main__":

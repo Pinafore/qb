@@ -7,7 +7,7 @@ from pyspark.sql.functions import udf
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 from unidecode import unidecode
 
-from util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
+from qanta.util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
 
 
 SCHEMA = StructType([

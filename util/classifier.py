@@ -11,7 +11,7 @@ from unidecode import unidecode
 from sklearn.linear_model import LogisticRegression
 from nltk.classify.scikitlearn import SklearnClassifier
 
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 
 
 alphanum = re.compile('[\W_]+')

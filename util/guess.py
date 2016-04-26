@@ -4,9 +4,9 @@ import sqlite3
 from typing import Dict, Tuple, Set, Any
 from functional import seq
 
-from util.constants import NEG_INF, FOLDS
+from qanta.util.constants import NEG_INF, FOLDS
 from util.environment import QB_QUESTION_DB
-from util import qdb
+from qanta.util import qdb
 
 
 Guess = namedtuple('Guess',

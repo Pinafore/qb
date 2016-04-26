@@ -1,6 +1,6 @@
 from unidecode import unidecode
 from extractors.abstract import FeatureExtractor
-from util.constants import ALPHANUMERIC
+from qanta.util.constants import ALPHANUMERIC
 
 
 class TextExtractor(FeatureExtractor):

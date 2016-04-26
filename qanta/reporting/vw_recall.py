@@ -1,6 +1,7 @@
+# pylint: disable=too-many-locals
 import sys
 from collections import defaultdict
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 
 
 def process_file(filename):

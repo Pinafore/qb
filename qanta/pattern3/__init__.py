@@ -1,3 +1,4 @@
+# pylint: skip-file
 # Source code below is from https://github.com/clips/pattern
 # Copyright (c) 2011-2013 University of Antwerp, Belgium
 # All rights reserved.

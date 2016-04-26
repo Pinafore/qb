@@ -7,7 +7,7 @@ from nltk import sent_tokenize
 from unidecode import unidecode
 
 from extractors.lm import *
-from util.qdb import QuestionDatabase, Question
+from qanta.util.qdb import QuestionDatabase, Question
 from util.guess import GuessList
 from extract_features import (
     instantiate_feature,

@@ -14,7 +14,7 @@ from whoosh.collectors import TimeLimitCollector, TimeLimit
 from unidecode import unidecode
 
 from extractors.abstract import FeatureExtractor
-from util.constants import (
+from qanta.util.constants import (
     NEG_INF, STOP_WORDS, PAREN_EXPRESSION, get_treebank_tokenizer, get_punctuation_table)
 from util.environment import data_path
 

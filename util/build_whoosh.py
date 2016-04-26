@@ -12,7 +12,7 @@ from whoosh.fields import TEXT, ID, Schema
 from unidecode import unidecode
 
 from util.cached_wikipedia import CachedWikipedia
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 from util.environment import data_path, QB_QUESTION_DB
 
 

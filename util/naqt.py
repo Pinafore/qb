@@ -1,5 +1,5 @@
 from glob import glob
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 
 import codecs
 import os

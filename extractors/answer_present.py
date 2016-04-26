@@ -4,7 +4,7 @@ import time
 
 from fuzzywuzzy import fuzz
 from extractors.abstract import FeatureExtractor
-from util.constants import ENGLISH_STOP_WORDS
+from qanta.util.constants import ENGLISH_STOP_WORDS
 
 
 class AnswerPresent(FeatureExtractor):

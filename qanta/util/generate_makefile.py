@@ -1,7 +1,9 @@
+# pylint: disable=too-many-locals
 import itertools
 from jinja2 import Environment, FileSystemLoader
-from util.constants import (GRANULARITIES, FEATURE_NAMES, FEATURES, MIN_APPEARANCES,
-                            NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES, FOLDS)
+from qanta.util.constants import (
+    GRANULARITIES, FEATURE_NAMES, FEATURES, MIN_APPEARANCES,
+    NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES, FOLDS)
 from extractors.classifier import CLASSIFIER_FIELDS
 
 VWOPT = {"full": "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic"}
@@ -129,7 +131,8 @@ def main():
             all_perfs = []
             for opt in VWOPT:
                 for weight in NEGATIVE_WEIGHTS:
-                    all_perfs.append("data/results/%s/%s.%i.%s" % (fold, granularity, int(weight), opt))
+                    all_perfs.append(
+                        "data/results/%s/%s.%i.%s" % (fold, granularity, int(weight), opt))
             o.write(" ".join("%s.buzz" % x for x in all_perfs))
             o.write(" reporting/summarize.py\n\t")
             o.write("python3 reporting/summarize.py --output $@ -p ")

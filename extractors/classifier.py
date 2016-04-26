@@ -3,7 +3,7 @@ import pickle
 from collections import defaultdict, Counter
 from nltk.util import ngrams
 
-from util.constants import ALPHANUMERIC
+from qanta.util.constants import ALPHANUMERIC
 from extractors.abstract import FeatureExtractor
 
 

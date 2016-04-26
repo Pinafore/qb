@@ -6,7 +6,7 @@ import random
 from csv import DictWriter
 from collections import defaultdict
 from extract_features import instantiate_feature, guesses_for_question
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 
 from unidecode import unidecode
 

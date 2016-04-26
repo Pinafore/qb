@@ -1,12 +1,17 @@
-from typing import List, Dict, Tuple
-
+from typing import List, Dict
 import sqlite3
 import random
-from unidecode import unidecode
+import string
 from collections import defaultdict, OrderedDict, Counter
 import re
+
+from unidecode import unidecode
 from whoosh.collectors import TimeLimitCollector, TimeLimit
-import string
+from qanta.util.constants import MIN_APPEARANCES
+from whoosh import qparser
+from whoosh.qparser import QueryParser
+from fuzzywuzzy import fuzz
+from extractors.ir import IrIndex
 
 
 punc = set(string.punctuation)
@@ -27,9 +32,9 @@ class ClosestQuestion:
 
         self.parser = None
 
-    def add_question(self, id, question):
-        self.writer.add_document(id=id, text=question)
-        self.raw[id] = question.lower()
+    def add_question(self, qid, question):
+        self.writer.add_document(id=qid, text=question)
+        self.raw[qid] = question.lower()
 
     def finalize(self):
         self.writer.commit()
@@ -38,17 +43,12 @@ class ClosestQuestion:
         """
         Returns the best score of similarity
         """
-        from whoosh import qparser
-        from whoosh.qparser import QueryParser
-        from fuzzywuzzy import fuzz
-        from extractors.ir import IrIndex
-
         if self.parser is None:
             og = qparser.OrGroup.factory(0.9)
             self.parser = QueryParser("text", schema=self.schema,
                                       group=og)
 
-        query_text, query_len = IrIndex.prepare_query(raw_query.lower())
+        query_text, _ = IrIndex.prepare_query(raw_query.lower())
         print("Query: %s" % query_text)
         query = self.parser.parse(query_text)
         print("-------------")
@@ -59,7 +59,7 @@ class ClosestQuestion:
             try:
                 s.search_with_collector(query, tlc)
             except TimeLimit:
-                None
+                pass
             try:
                 results = tlc.results()
             except TimeLimit:
@@ -77,7 +77,6 @@ class ClosestQuestion:
                 print("NEW!  %f" % similarity)
         print("-------------")
         return closest_question
-        #return fuzz.ratio(a, b)
 
 
 class Question:
@@ -95,10 +94,6 @@ class Question:
         self.text = {}
         self._last_query = None
         self._cache_query = ""
-
-    @staticmethod
-    def cut_naqt_markup(sentence):
-        return paren.sub("", sentence).replace("}", "").replace("{", "")
 
     def raw_words(self):
         """
@@ -150,18 +145,6 @@ class Question:
             self._cached_query = previous
         return self._cached_query
 
-    def offset_to_partial(self, offset):
-        """
-        Given an offset in terms of words, convert it into sentence and word.
-        """
-        total_text = 0
-        for ii in self.text:
-            for jj in range(len(self.text[ii].split())):
-                total_text += 1
-                if total_text > offset:
-                    return ii, jj
-        return ii, jj
-
     def add_text(self, sent, text):
         self.text[sent] = text
 
@@ -172,26 +155,6 @@ class Question:
 
     def flatten_text(self):
         return unidecode("\t".join(self.text[x] for x in sorted(self.text)))
-
-    @staticmethod
-    def fieldnames():
-        return ["page", "answer", "fold", "id", "category", "naqt",
-                "tournaments", "answer_type", "text"]
-
-    def csv_row(self, random_text=False):
-        yield "id", str(self.qnum)
-        yield "answer", unidecode(self.answer)
-        yield "category", unidecode(self.category)
-        yield "naqt", str(self.naqt)
-        yield "tournaments", unidecode(self.tournaments)
-        yield "page", unidecode(self.page)
-        yield "fold", str(self.fold)
-        yield "answer_type", unidecode(self.ans_type)
-
-        if random_text:
-            yield "text", self.random_text()
-        else:
-            yield "text", self.flatten_text()
 
 
 class QuestionDatabase:
@@ -217,24 +180,16 @@ class QuestionDatabase:
 
         return questions
 
-    def our_id_from_protobowl(self, protobowl_id):
-        c = self._conn.cursor()
-        command = "select id from questions where protobowl='%s'" % \
-            protobowl_id
-        c.execute(command)
-
-        for qq in c:
-            return qq
-
-        return -1
-
     def all_questions(self):
         return self.query("FROM questions", ())
 
-    def unmatched_answers(self, ids_to_exclude=set()):
+    def unmatched_answers(self, ids_to_exclude=None):
         """
         Return a dictionary with the most unmatched pages
         """
+
+        if ids_to_exclude is None:
+            ids_to_exclude = set()
 
         c = self._conn.cursor()
         command = 'select answer, id as cnt from questions ' + \
@@ -242,10 +197,10 @@ class QuestionDatabase:
         c.execute(command)
 
         answers = defaultdict(dict)
-        for aa, id in c:
+        for aa, qid in c:
             normalized = aa.lower()
             normalized = normalized.replace("_", "")
-            if not id in ids_to_exclude:
+            if qid not in ids_to_exclude:
                 answers[normalized][aa] = answers[normalized].get(aa, 0) + 1
         return answers
 
@@ -267,12 +222,6 @@ class QuestionDatabase:
         for ii in questions:
             yield questions[ii]
 
-    def question_by_id(self, id):
-        questions = self.query('from questions where id == ?', (id,))
-
-        for ii in questions:
-            return questions[ii]
-
     def questions_with_pages(self) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
 
@@ -284,71 +233,8 @@ class QuestionDatabase:
             page_map[row.page].append(row)
         return page_map
 
-    def questions_by_category(self, category, sort=None):
-        questions = self.query('from questions where category == ?', (category,))
-
-        if sort == 'decreasing_id':
-            print("Sorting by %s" % sort)
-            for ii in sorted(questions, reverse=True):
-                yield questions[ii]
-        elif sort == 'nopage_decreasing_id':
-            print("Sorting by %s" % sort)
-            for ii in sorted([x for x in questions if not questions[x].page], reverse=True):
-                yield questions[ii]
-            for ii in sorted([x for x in questions if questions[x].page], reverse=True):
-                yield questions[ii]
-        else:
-            print("No sorting")
-            for ii in questions:
-                yield questions[ii]
-
-    def associated(self, fold=None):
-        c = self._conn.cursor()
-        if fold:
-            c.execute('select page, count(*) as cnt from questions where fold == "%s" group by page order by cnt desc' % fold)
-        else:
-            c.execute('select page, count(*) as cnt from questions group by page order by cnt desc')
-
-        for pp, cc in c:
-            yield pp
-
-    def questions_by_page(self, page):
-        # TODO(jbg): This is different usage than question_by_category; should
-        # probably be fixed.
-        return self.query('from questions where page == ?', (page,))
-
     def questions_by_tournament(self, tournament):
         return self.query('from questions where tournament like ?', ('%%%s%%' % tournament, ))
-
-    def column_options(self, column, reduce=True):
-        """
-        Get all of the levels a column can take useful for getting a list of all
-        the categories or types, for example.
-        """
-        c = self._conn.cursor()
-        c.execute('select %s from questions group by %s' % (column, column))
-        levels = set()
-        for cc in c:
-            if reduce:
-                levels.add(cc[0].split(":")[0].lower())
-            else:
-                levels.add(cc)
-        return levels
-
-    def answer_by_count(self, category, min_count=1):
-        """
-        Return all answers that appear at least the specified number
-        of times in a category.
-        """
-        c = self._conn.cursor()
-        command = 'select answer, count(*) as num from questions where ' + \
-                  'category="%s" ' % (category) + \
-                  'group by answer order by num desc'
-        c.execute(command)
-
-        for aa, nn in c:
-            if nn > min_count:
-                yield aa
 
     def prune_text(self):
         """
@@ -392,20 +278,6 @@ class QuestionDatabase:
             else:
                 yield aa
 
-    def text_by_answer(self, answer, category):
-        """
-        Get all the text associated with an answer.
-        """
-
-        query = 'select raw from questions INNER JOIN text on ' + \
-          'id=question where answer=? and category=?;'
-
-        c = self._conn.cursor()
-        c.execute(query, (answer, category))
-
-        for tt in c:
-            yield tt[0]
-
     def get_all_pages(self):
         c = self._conn.cursor()
         c.execute('select page from questions where page != "" group by page')
@@ -448,24 +320,6 @@ class QuestionDatabase:
             d[int(ii)] = pp
         return d
 
-    def set_type_by_page(self, type_assignment, page):
-        query = "UPDATE questions SET type=? WHERE page=?"
-        c = self._conn.cursor()
-        c.execute(query, (page, type_assignment))
-        self._conn.commit()
-
-    def set_all_answer_pages(self, category, answer, page, type):
-        query = "UPDATE questions SET page=?, type=? WHERE category=? and answer=?"
-        c = self._conn.cursor()
-        c.execute(query, (page, type, category, answer))
-        self._conn.commit()
-
-    def set_all_answer_pages(self, category, answer, page, type):
-        query = "UPDATE questions SET page=?, type=? WHERE category=? and answer=?"
-        c = self._conn.cursor()
-        c.execute(query, (page, type, category, answer))
-        self._conn.commit()
-
     def set_answer_page(self, qid, page, ans_type):
         query = "UPDATE questions SET page=?, type=? WHERE id=?"
         c = self._conn.cursor()
@@ -473,10 +327,11 @@ class QuestionDatabase:
         self._conn.commit()
 
 
-if __name__ == "__main__":
-    from unidecode import unidecode
-    from extract_features import kMIN_APPEARANCES
-
+def main():
     db = QuestionDatabase("data/questions.db")
-    for ii in db.page_by_count(kMIN_APPEARANCES):
+    for ii in db.page_by_count(MIN_APPEARANCES):
         print(unidecode(ii))
+
+
+if __name__ == "__main__":
+    main()

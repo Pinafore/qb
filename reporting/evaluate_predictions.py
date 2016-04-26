@@ -5,8 +5,8 @@ import operator
 
 from unidecode import unidecode
 
-from util.qdb import QuestionDatabase
-from extract_expo_features import kEXPO_START, add_expo_questions
+from qanta.util.qdb import QuestionDatabase
+from extract_expo_features import kEXPO_START
 
 kBUZZ_OUT = ["question", "sentence", "word", "page", "evidence", "final", "weight"]
 kPERF_OUT = ["question", "sentence", "token", "guess", "answer", "corr", "weight",

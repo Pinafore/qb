@@ -26,8 +26,10 @@ def load_meta(meta_file):
         return Meta(question, sentence, token, guess)
     return seq.open(meta_file).map(parse_line).cache()
 
-def load_data():
-    pass
+
+def load_data(pred_file, meta_file):
+    pred = load_predictions(pred_file)
+    meta = load_meta(meta_file)
 
 
 @click.command()

@@ -6,8 +6,8 @@ from collections import defaultdict, Counter
 from unidecode import unidecode
 
 from extractors.abstract import FeatureExtractor
-from util.qdb import QuestionDatabase
-from util.constants import PAREN_EXPRESSION, STOP_WORDS
+from qanta.util.qdb import QuestionDatabase
+from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS
 
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}

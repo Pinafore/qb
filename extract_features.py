@@ -6,10 +6,10 @@ from random import shuffle
 from pyspark.sql import SQLContext, Row
 from functional import seq
 
-from util.qdb import QuestionDatabase
+from qanta.util.constants import FOLDS, MIN_APPEARANCES, FEATURES
+from qanta.util.qdb import QuestionDatabase
 from util.guess import GuessList
 from util.environment import data_path
-from util.constants import FOLDS, MIN_APPEARANCES, FEATURES
 from util.build_whoosh import text_iterator
 from util.spark_features import SCHEMA
 
