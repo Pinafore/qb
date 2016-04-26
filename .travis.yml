@@ -1,5 +1,11 @@
 sudo: false
 language: python
+before_install:
+  - pip install codecov
+install:
+  - pip install -q coverage
+  - pip install pylint
 python:
   - 3.5
+script: nosetests --with-coverage
 
