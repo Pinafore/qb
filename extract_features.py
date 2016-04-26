@@ -1,10 +1,10 @@
 from collections import defaultdict, namedtuple
-import sys
 import time
 from unidecode import unidecode
 from random import shuffle
 
 from pyspark.sql import SQLContext, Row
+from functional import seq
 
 from util.qdb import QuestionDatabase
 from util.guess import GuessList
@@ -23,21 +23,17 @@ from extractors.wikilinks import WikiLinks
 from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
 
+
 HAS_GUESSES = set([e.has_guess() for e in [IrExtractor, LanguageModel, TextExtractor, DeepExtractor,
                                            Classifier, AnswerPresent]])
 
-Task = namedtuple('Task', ['page', 'question'])
+Task = namedtuple('Task', ['question', 'guesses', 'cache'])
 
 
-def feature_lines(question, guess_list, granularity, feature_generator):
-    guesses_needed = guess_list.all_guesses(question)
-
+def feature_lines(question, guesses_cached, guesses_needed, granularity, feature_generator):
     # Guess we might have already
     # It has the structure:
     # guesses[(sent, token)][page][feat] = value
-    guesses_cached = None
-    if feature_generator.has_guess():
-        guesses_cached = guess_list.get_guesses(feature_generator.name, question)
 
     for sentence, token in guesses_needed:
         if granularity == "sentence" and token > 0:
@@ -49,8 +45,8 @@ def feature_lines(question, guess_list, granularity, feature_generator):
                                        token, guess_size, question)
 
         for guess in guesses_needed[(sentence, token)]:
-            if guesses_cached is not None and guess in guesses_cached[(sentence, token)]:
-                feat = feature_generator.vw_from_score(guesses_cached[(sentence, token)][guess])
+            if guesses_cached is not None:
+                feat = feature_generator.vw_from_score(guesses_cached[guess][(sentence, token)])
             else:
                 feat = feature_generator.vw_from_title(guess, question.get_text(sentence, token))
             yield sentence, token, guess, feat
@@ -143,33 +139,48 @@ def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, gran
     sql_context = SQLContext(sc)
     question_db = QuestionDatabase(question_db)
 
+    print("Loading Questions")
+    question_pages = question_db.questions_with_pages()
+    pages = seq(question_pages).filter(lambda p: len(question_pages[p]) > answer_limit).set()
+    questions = seq(pages).\
+        flat_map(lambda p: question_pages[p]).filter(lambda p: p.fold != 'train')
+
     print("Loading Guesses")
     guess_list = GuessList(guess_db)
-    b_guess_list = sc.broadcast(guess_list)
+    guess_lookup = guess_list.all_guesses()
 
-    print("Loading Questions")
-    all_questions = question_db.questions_with_pages()
-    pages = list(filter(lambda p: len(all_questions[p]) > answer_limit, all_questions.keys()))
+    if 'deep' in feature_names:
+        guess_cache = guess_list.deep_guess_cache()
+    else:
+        guess_cache = None
 
     print("Loading tasks")
     tasks = []
-    for page in pages:
-        for question in filter(lambda q: q.fold != 'train', all_questions[page]):
-            tasks.append(Task(page, question))
+    for q in questions:
+        if 'deep' in feature_names:
+            cache = {}
+            guess_set = set()
+            for st_guesses in guess_lookup[q.qnum].values():
+                guess_set = guess_set.union(st_guesses)
+            for g in guess_set:
+                cache[g] = guess_cache[q.qnum][g]
+        else:
+            cache = None
+        tasks.append(Task(q, guess_lookup[q.qnum], cache))
     shuffle(tasks)
     print("Number of tasks: {0}".format(len(tasks)))
 
     features = {name: instantiate_feature(name, question_db) for name in feature_names}
 
     b_features = sc.broadcast(features)
-    f_eval = lambda x: evaluate_feature_question(x, b_features, b_guess_list, granularity)
+
+    def f_eval(x):
+        return evaluate_feature_question(x, b_features, granularity)
 
     print("Beginning feature job")
-    tasks_rdd = sc.parallelize(tasks)
-    feature_rdd = sc.parallelize(feature_names)\
-        .cartesian(tasks_rdd).repartition(150 * len(feature_names))\
-        .flatMap(f_eval)\
-        .cache()
+    feature_rdd = sc.parallelize(tasks)\
+        .repartition(150 * len(feature_names))\
+        .flatMap(f_eval)
 
     feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).repartition(32).cache()
     feature_df.count()
@@ -187,25 +198,27 @@ def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, gran
     sc.stop()
 
 
-def evaluate_feature_question(pair, b_features, b_guess_list, granularity):
-    feature_name = pair[0]
-    feature_generator = b_features.value[feature_name]
-    question = pair[1].question
+def evaluate_feature_question(task, b_features, granularity):
+    features = b_features.value
+    question = task.question
     result = []
-    for sentence, token, guess, feat in feature_lines(
-            question, b_guess_list.value, granularity, feature_generator):
-        result.append(
-            Row(
-                feature_name,
-                question.fold,
-                guess,
-                question.qnum,
-                sentence,
-                token,
-                '%i\t%i\t%i\t%s' % (question.qnum, sentence, token, unidecode(guess)),
-                feat
+    for feature_name in features:
+        feature_generator = features[feature_name]
+        cache = task.cache if feature_name == 'deep' else None
+        for sentence, token, guess, feat in feature_lines(
+                question, cache, task.guesses, granularity, feature_generator):
+            result.append(
+                Row(
+                    feature_name,
+                    question.fold,
+                    guess,
+                    question.qnum,
+                    sentence,
+                    token,
+                    '%i\t%i\t%i\t%s' % (question.qnum, sentence, token, unidecode(guess)),
+                    feat
+                )
             )
-        )
     return result
 
 

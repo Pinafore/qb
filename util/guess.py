@@ -66,7 +66,7 @@ class GuessList:
             return count
         return 0
 
-    def all_guesses(self, question) -> Dict[Tuple[int, int], Set[str]]:
+    def guesses_for_question(self, question) -> Dict[Tuple[int, int], Set[str]]:
         """
         Returns a list of guesses for a given question.
         :param question:
@@ -79,9 +79,20 @@ class GuessList:
         guesses = defaultdict(set)
         for sentence, token, page in c:
             guesses[(sentence, token)].add(page)
-        if question.page and question.fold == "train":
-            for (sentence, token) in guesses:
-                guesses[(sentence, token)].add(question.page)
+        return guesses
+
+    def all_guesses(self, allow_train=False) -> Dict[int, Dict[Tuple[int, int], Set[str]]]:
+        if allow_train:
+            query = 'SELECT question, sentence, token, page FROM guesses'
+        else:
+            query = 'SELECT question, sentence, token, page FROM guesses where fold != "train"'
+        c = self._cursor()
+        c.execute(query)
+        guesses = {}
+        for question, sentence, token, page in c:
+            if question not in guesses:
+                guesses[question] = defaultdict(set)
+            guesses[question][(sentence, token)].add(page)
         return guesses
 
     def check_recall(self):
@@ -101,8 +112,6 @@ class GuessList:
 
         questions = raw_questions.\
             filter(lambda q: q.qnum in guess_lookup and q.fold != 'train').cache()
-
-        question_lookup = questions.map(lambda x: (x.qnum, x)).to_dict()
 
         correct = 0
         total = 0
@@ -145,6 +154,20 @@ class GuessList:
             if pp not in guesses[(ss, tt)]:
                 guesses[(ss, tt)][pp] = {}
             guesses[(ss, tt)][pp][ff] = vv
+        return guesses
+
+    def deep_guess_cache(self):
+        query = 'SELECT question, sentence, token, page, feature, score FROM guesses WHERE guesser="deep"'
+        c = self._cursor()
+        c.execute(query)
+        guesses = {}
+
+        for question, sentence, token, page, feature, score in c:
+            if question not in guesses:
+                guesses[question] = defaultdict(dict)
+            if page not in guesses[question][(sentence, token)]:
+                guesses[question][page][(sentence, token)] = {}
+            guesses[question][page][(sentence, token)][feature] = score
         return guesses
 
     def add_guesses(self, guesser, question, fold, guesses):
