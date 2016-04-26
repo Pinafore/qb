@@ -53,7 +53,7 @@ def get_feature_prereqs(feature):
 
 
 def main():
-    environment = Environment(loader=FileSystemLoader('makefile_templates'))
+    environment = Environment(loader=FileSystemLoader('qanta/makefile_templates'))
     environment.filters['feature_targets'] = feature_targets
     environment.filters['base_feat'] = base_feat
     environment.filters['get_feature_prereqs'] = get_feature_prereqs

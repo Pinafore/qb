@@ -1,7 +1,6 @@
 from collections import namedtuple
 import click
 from functional import seq
-from fn import _
 
 
 Prediction = namedtuple('Prediction', ['score', 'question', 'sentence', 'token'])

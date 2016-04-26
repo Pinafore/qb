@@ -6,7 +6,7 @@ from functools import lru_cache
 import kenlm
 import nltk
 from unidecode import unidecode
-from pattern3 import pluralize
+from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
 from extractors.abstract import FeatureExtractor

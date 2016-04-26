@@ -1,10 +1,10 @@
 import unittest
-from ...reporting.generate_buzzes import load_meta, load_predictions, Meta, Prediction
+from qanta.reporting.generate_buzzes import load_meta, load_predictions, Meta, Prediction
 
 
 class TestGenerateBuzzes(unittest.TestCase):
     def test_load_meta(self):
-        meta = load_meta('qb/test/data/test.meta').list()
+        meta = load_meta('qanta/test/data/test.meta').list()
         expect = [
             Meta(171314, 2, 0, 'A Season in Hell'),
             Meta(175857, 3, 0, 'Battle of Poltava'),
@@ -20,7 +20,7 @@ class TestGenerateBuzzes(unittest.TestCase):
         self.assertListEqual(meta, expect)
 
     def test_load_predictions(self):
-        predictions = load_predictions('qb/test/data/test.pred').list()
+        predictions = load_predictions('qanta/test/data/test.pred').list()
         expect = [
             Prediction(score=-11.75036, question=171314, sentence=2, token=0),
             Prediction(score=-10.513688, question=175857, sentence=3, token=0),

@@ -1,7 +1,0 @@
-[package]
-name = "split"
-version = "0.1.0"
-authors = ["Pedro Rodriguez <ski.rodriguez@gmail.com>"]
-
-[dependencies]
-regex = "0.1"
