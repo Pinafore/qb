@@ -16,3 +16,4 @@ requests
 click
 future
 pyfunctional
+fn

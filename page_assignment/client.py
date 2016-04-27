@@ -93,7 +93,7 @@ def get_answer(sentences, answer, page):
             index += 1
 
     word_position = curses.wrapper(incremental_query, words)
-    print " ".join(words[:word_position])
+    print(" ".join(words[:word_position]))
     print()
     guess = raw_input("ANSWER>")
 

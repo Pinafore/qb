@@ -311,14 +311,14 @@ class QuestionDatabase:
         """
         Return a lookup from IDs to pages
         """
-        d = {}
+        answers = {}
         c = self._conn.cursor()
         command = "select id, page from questions where page != ''"
         c.execute(command)
 
-        for ii, pp in c:
-            d[int(ii)] = pp
-        return d
+        for qid, page in c:
+            answers[int(qid)] = page
+        return answers
 
     def set_answer_page(self, qid, page, ans_type):
         query = "UPDATE questions SET page=?, type=? WHERE id=?"
