@@ -5,15 +5,15 @@ import operator
 import random
 from csv import DictWriter
 from collections import defaultdict
-from extract_features import instantiate_feature, guesses_for_question
+from extract_features import instantiate_feature
 from qanta.util.qdb import QuestionDatabase
 
 from unidecode import unidecode
 
-kCOUNT_CUTOFF = 2
-kCHOICEIDS = "ABCDEFGHIJKLMNOP"
+COUNT_CUTOFF = 2
+CHOICEIDS = "ABCDEFGHIJKLMNOP"
 
-kCATEGORIES = set("""Science
+CATEGORIES = set("""Science
 Science:Astronomy
 Science:Biology
 Science:Chemistry
@@ -29,12 +29,14 @@ Chemistry
 Earth Science
 Science:Physics""".split("\n"))
 
+
 class McScience:
     def __init__(self, page, question, fold):
         self.page = page
         self.question = question
         self.choices = []
         self.fold = fold
+        self.text = None
 
     def add_text(self, text):
         self.text = text
@@ -58,6 +60,7 @@ class McScience:
         assert self.page in self.choices, "Correct answer %s not in the set %s" % \
             (self.page, str(self.choices))
         return d
+
 
 def question_top_guesses(text, deep, guess_connection, id, page, num_guesses=4):
     """
@@ -84,6 +87,7 @@ def question_top_guesses(text, deep, guess_connection, id, page, num_guesses=4):
 
     return choices
 
+
 def question_first_sentence(database_connection, question):
     """
     return the id, answer, and first sentence of questions in a set of categories
@@ -95,7 +99,8 @@ def question_first_sentence(database_connection, question):
     for ii, in c:
         return unidecode(ii)
 
-if __name__ == "__main__":
+
+def main():
     import argparse
     parser = argparse.ArgumentParser(description='')
     default_path = 'data/'
@@ -116,7 +121,7 @@ if __name__ == "__main__":
 
     # First get answers of interest and put them in a dictionary where the value is their count
     query = 'select page from questions where page != "" and ('
-    query += " or ".join("category='%s'" % x for x in kCATEGORIES)
+    query += " or ".join("category='%s'" % x for x in CATEGORIES)
     query += ")"
     c = question_database.cursor()
     print(query)
@@ -130,8 +135,8 @@ if __name__ == "__main__":
     c = question_database.cursor()
     c.execute(query)
 
-    print(list(x for x in answer_count if answer_count[x] >= kCOUNT_CUTOFF))
-    print(len(list(x for x in answer_count if answer_count[x] >= kCOUNT_CUTOFF)))
+    print(list(x for x in answer_count if answer_count[x] >= COUNT_CUTOFF))
+    print(len(list(x for x in answer_count if answer_count[x] >= COUNT_CUTOFF)))
 
     # Load the DAN to generate guesses if they're missing from the database
     deep = instantiate_feature("deep", QuestionDatabase(flags.question_db))
@@ -139,7 +144,7 @@ if __name__ == "__main__":
     questions = {}
     question_num = 0
     for pp, ii, nn, ff in c:
-        if nn >= 0 or answer_count[pp] < kCOUNT_CUTOFF:
+        if nn >= 0 or answer_count[pp] < COUNT_CUTOFF:
             continue
         question_num += 1
         question = McScience(pp, ii, ff)
@@ -152,7 +157,7 @@ if __name__ == "__main__":
             print(pp, ii, question_num)
             print(choices)
 
-    answer_choices = ["answer%s" % kCHOICEIDS[x] for x in xrange(flags.num_choices)]
+    answer_choices = ["answer%s" % CHOICEIDS[x] for x in range(flags.num_choices)]
 
     train_out = DictWriter(open(flags.train_out, 'w'), ["id", "question", "correctAnswer"] +
                            answer_choices)
@@ -168,7 +173,11 @@ if __name__ == "__main__":
     for qq in questions.values():
         print(qq.fold)
         if qq.fold == "devtest":
-            test_out.writerow(qq.csv_line(kCHOICEIDS, "test"))
-            key_out.writerow(qq.csv_line(kCHOICEIDS, "key"))
+            test_out.writerow(qq.csv_line(CHOICEIDS, "test"))
+            key_out.writerow(qq.csv_line(CHOICEIDS, "key"))
         else:
-            train_out.writerow(qq.csv_line(kCHOICEIDS, "train"))
+            train_out.writerow(qq.csv_line(CHOICEIDS, "train"))
+
+
+if __name__ == "__main__":
+    main()
