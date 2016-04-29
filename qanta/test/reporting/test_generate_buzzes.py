@@ -1,5 +1,5 @@
 import unittest
-from qanta.reporting.generate_buzzes import load_meta, load_predictions, Meta, Prediction
+from qanta.reporting.performance import load_meta, load_predictions, Meta, Prediction
 
 
 class TestGenerateBuzzes(unittest.TestCase):

@@ -261,7 +261,7 @@ class QuestionDatabase:
                                          len(orphans)))
         self._conn.commit()
 
-    def page_by_count(self, min_count=1):
+    def page_by_count(self, min_count=1, fold=None):
         """
         Return all answers that appear at least the specified number
         of times in a category.

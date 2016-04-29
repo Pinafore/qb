@@ -114,8 +114,8 @@ data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred: data/vw_
 	mkdir -p data/results/{{ fold }}
 	vw --compressed -t -d data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input.gz -i data/models/{{ granularity }}.full.{{ weight | int }}.vw -p $@
 
-data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.buzz: data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred reporting/evaluate_predictions.py
-	python3 reporting/evaluate_predictions.py --buzzes=$@ --qbdb=data/questions.db --finals=data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.final --question_out=data/results/{{ fold }}/questions.csv --meta=data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.meta --perf=data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.perf --neg_weight={{ weight }} --vw_config=full --pred $<
+data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.summary.txt: data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.meta
+	python3 qanta/reporting/performance.py data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.meta > $@
 {% endfor %}
 {% endfor %}
 

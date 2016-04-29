@@ -176,7 +176,7 @@ if __name__ == '__main__':
             update = ag.rescale_update(grad)
             r -= update
             lstring = 'epoch: ' + str(epoch) + ' batch_ind: ' + str(batch_ind) + \
-                    ' error, ' + str(err) + ' time = '+ str(time.time()-now) + ' sec'
+                    ' error, ' + str(err) + ' time = ' + str(time.time()-now) + ' sec'
             print(lstring)
             log.write(lstring + '\n')
             log.flush()

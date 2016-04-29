@@ -71,13 +71,13 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                             answer(computer_guess.split("(")[0])
                             computer_answers += 1
                             question_done = True
-                        os.system("afplay sounds/applause.wav")
+                        os.system("afplay data/sounds/applause.wav")
                         if human_delta <= 0:
                             computer_delta = question_value
                     else:
                         answer(computer_guess.split("(")[0])
                         computer_answers += 1
-                        os.system("afplay sounds/sad_trombone.wav")
+                        os.system("afplay data/sounds/sad_trombone.wav")
                         if human_delta == 0:
                             computer_delta = -5
                 else:

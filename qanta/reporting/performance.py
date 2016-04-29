@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Dict
+from typing import Dict, Set
 from enum import Enum
 import click
 from functional import seq
@@ -14,10 +14,12 @@ class Answer(Enum):
     unanswered_wrong = 2
     unanswered_hopeless_1 = 3
     unanswered_hopeless_all = 4
-    wrong_hopeless_1 = 5
-    wrong_hopeless_all = 6
-    wrong_early = 7
-    wrong_late = 8
+    unanswered_hopeless_dan = 5
+    wrong_hopeless_1 = 6
+    wrong_hopeless_all = 7
+    wrong_hopeless_dan = 8
+    wrong_early = 9
+    wrong_late = 10
 
 
 Prediction = namedtuple('Prediction', ['score', 'question', 'sentence', 'token'])
@@ -47,10 +49,9 @@ def load_meta(meta_file):
     return seq.open(meta_file).map(parse_line)
 
 
-def load_data(pred_file: str, meta_file: str, question_file: str):
+def load_data(pred_file: str, meta_file: str, q_db):
     preds = load_predictions(pred_file)
     metas = load_meta(meta_file)
-    q_db = QuestionDatabase(question_file)
     answers = q_db.all_answers()
 
     def create_line(group):
@@ -73,7 +74,7 @@ def load_data(pred_file: str, meta_file: str, question_file: str):
     return lines
 
 
-def compute_answers(data: Sequence):
+def compute_answers(data: Sequence, dan_answers: Set[str]):
     questions = {}
     for q, lines in data:
         lines = seq(lines)
@@ -82,6 +83,8 @@ def compute_answers(data: Sequence):
         if buzz is None:
             if lines.exists(_.guess == answer):
                 questions[q] = Answer.unanswered_wrong
+            elif answer not in dan_answers:
+                questions[q] = Answer.unanswered_hopeless_dan
             else:
                 questions[q] = Answer.unanswered_hopeless_1
                 if not lines.flat_map(_.all_guesses).exists(_.guess == answer):
@@ -92,8 +95,11 @@ def compute_answers(data: Sequence):
             correct_buzz = lines.find(_.guess == answer)
             if correct_buzz is None:
                 questions[q] = Answer.wrong_hopeless_1
-                if not lines.flat_map(_.all_guesses).exists(_.guess == answer):
-                    questions[q] = Answer.wrong_hopeless_all
+                if answer not in dan_answers:
+                    questions[q] = Answer.wrong_hopeless_dan
+                else:
+                    if not lines.flat_map(_.all_guesses).exists(_.guess == answer):
+                        questions[q] = Answer.wrong_hopeless_all
             elif (correct_buzz.sentence, correct_buzz.token) < (buzz.sentence, buzz.token):
                 questions[q] = Answer.wrong_late
             elif (buzz.sentence, buzz.token) < (correct_buzz.sentence, correct_buzz.token):
@@ -107,13 +113,26 @@ def compute_answers(data: Sequence):
 
 
 def compute_statistics(questions: Dict[int, Answer]):
-    results = seq(questions.values()).map(lambda x: (x, 1)).reduce_by_key(lambda x, y: x + y).dict()
+    n_questions = len(questions)
+    results = seq(questions.values())\
+        .map(lambda x: (x, 1))\
+        .reduce_by_key(lambda x, y: x + y)\
+        .map(lambda kv: (str(kv[0]), (kv[1], kv[1] / n_questions))).dict()
     return results
 
 
 @click.command()
-def cli():
-    pass
+@click.option('--min-count', default=5)
+@click.option('--qdb', default='data/questions.db')
+@click.argument('pred_file')
+@click.argument('meta_file')
+def cli(min_count, qdb, pred_file, meta_file):
+    database = QuestionDatabase(qdb)
+    data = load_data(pred_file, meta_file, database)
+    dan_answers = set(database.page_by_count(min_count=min_count))
+    answers = compute_answers(data, dan_answers)
+    stats = compute_statistics(answers)
+    print(stats)
 
 
 if __name__ == '__main__':
