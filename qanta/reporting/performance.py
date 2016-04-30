@@ -1,3 +1,4 @@
+import pprint
 from collections import namedtuple
 from typing import Dict, Set
 from enum import Enum
@@ -112,27 +113,47 @@ def compute_answers(data: Sequence, dan_answers: Set[str]):
     return questions
 
 
-def compute_statistics(questions: Dict[int, Answer]):
+def compute_statistics(questions: Dict[int, Answer]) -> Sequence:
     n_questions = len(questions)
+    empty_set = [(a, 0) for a in Answer]
     results = seq(questions.values())\
-        .map(lambda x: (x, 1))\
-        .reduce_by_key(lambda x, y: x + y)\
-        .map(lambda kv: (str(kv[0]), (kv[1], kv[1] / n_questions))).dict()
+        .map(lambda x: (x, 1))
+    results = (results + seq(empty_set)).reduce_by_key(lambda x, y: x + y)\
+        .map(lambda kv: (str(kv[0]), kv[1] / n_questions))
     return results
 
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.argument('stats_file')
+def plot(stats_file):
+    import matplotlib.pyplot as plt
+    stats = seq.json(stats_file)
+    sizes = stats.map(lambda kv: kv[1]).list()
+    labels = stats.map(lambda kv: kv[0]).list()
+    plt.pie(sizes, labels=labels)
+    plt.show()
+
+
+@cli.command()
 @click.option('--min-count', default=5)
 @click.option('--qdb', default='data/questions.db')
 @click.argument('pred_file')
 @click.argument('meta_file')
-def cli(min_count, qdb, pred_file, meta_file):
+@click.argument('output')
+def generate(min_count, qdb, pred_file, meta_file, output):
     database = QuestionDatabase(qdb)
     data = load_data(pred_file, meta_file, database)
     dan_answers = set(database.page_by_count(min_count=min_count))
     answers = compute_answers(data, dan_answers)
-    stats = compute_statistics(answers)
-    print(stats)
+    stats = compute_statistics(answers).cache()
+    stats.to_json(output, root_array=False)
+    pp = pprint.PrettyPrinter()
+    pp.pprint(stats)
 
 
 if __name__ == '__main__':

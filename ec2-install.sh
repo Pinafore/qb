@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+
+# Note, this script is not tested, it is a list of commands run in some order to get EC2 to work
 sudo apt-get update
 sudo apt-get install -y git
 sudo apt-get install -y build-essential

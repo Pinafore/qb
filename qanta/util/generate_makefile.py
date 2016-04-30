@@ -12,6 +12,8 @@ VWOPT = {"full": "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function log
 QBDB = "data/questions.db"
 FINAL_MOD = "full"
 
+FEATURE_LETTERS = ['g', 'i', 'l', 'm', 'd', 'a', 't', 'w']
+
 # Path of wikifier input for expo files
 kWIKIFIER_EXPO_IN = "data/wikifier/data/expo_input"
 kWIKIFIER_EXPO_OUT = "data/wikifier/data/expo_output"
@@ -72,7 +74,8 @@ def main():
         'MEMORY_OPT_FEATURES': MEMORY_OPT_FEATURES,
         'COMPUTE_OPT_FEATURES': COMPUTE_OPT_FEATURES,
         'NEGATIVE_WEIGHTS': NEGATIVE_WEIGHTS,
-        'FEATURE_NAMES': FEATURE_NAMES
+        'FEATURE_NAMES': FEATURE_NAMES,
+        'FEATURE_LETTERS': FEATURE_LETTERS
     }
     o = open("Makefile", 'w')
     feature_prereq = set()
@@ -119,8 +122,8 @@ def main():
         for opt in VWOPT:
             for weight in NEGATIVE_WEIGHTS:
                 for fold in FOLDS:
-                    all_buzzes.append("data/results/%s/%s.%i.%s.buzz" %
-                                      (fold, granularity, int(weight), opt))
+                    all_buzzes.append("data/results/%s/%s.%i.summary.json" %
+                                      (fold, granularity, int(weight)))
         o.write("\n\nall_%s_buzz: " % granularity + " ".join(all_buzzes) + "\n\n")
 
     # Target for all performances

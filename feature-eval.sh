@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+#!/usr/bin/env bash
+
+FOLD=test
+WEIGHT=$1
+FEATURE=$2
+
+if [ "$FEATURE" = "t" ]
+then
+    vw --compressed -d data/vw_input/dev.sentence.${WEIGHT}.vw_input.gz --early_terminate 100 -k --keep g --keep t -q gt -b 24 --loss_function logistic -f data/models/sentence.full.${WEIGHT}.t.vw
+    vw --compressed -t --keep g --keep t -q gt -d data/vw_input/test.sentence.${WEIGHT}.vw_input.gz -i data/models/sentence.full.${WEIGHT}.t.vw -p data/results/test/sentence.${WEIGHT}.t.full.pred
+    python3 qanta/reporting/performance.py generate data/results/test/sentence.${WEIGHT}.t.full.pred data/vw_input/test.sentence.${WEIGHT}.meta data/results/test/sentence.${WEIGHT}.t.answer.json
+elif [ "$FEATURE" = "a" ]
+then
+    vw --compressed -d data/vw_input/dev.sentence.${WEIGHT}.vw_input.gz --early_terminate 100 -k --keep g --keep a -q ga -b 24 --loss_function logistic -f data/models/sentence.full.${WEIGHT}.a.vw
+    vw --compressed -t --keep g --keep a -q ga -d data/vw_input/test.sentence.${WEIGHT}.vw_input.gz -i data/models/sentence.full.${WEIGHT}.a.vw -p data/results/test/sentence.${WEIGHT}.a.full.pred
+    python3 qanta/reporting/performance.py generate data/results/test/sentence.${WEIGHT}.a.full.pred data/vw_input/test.sentence.${WEIGHT}.meta data/results/test/sentence.${WEIGHT}.a.answer.json
+else
+    vw --compressed -d data/vw_input/dev.sentence.${WEIGHT}.vw_input.gz --early_terminate 100 -k --keep g --keep ${FEATURE} -q gt -q ga -b 24 --loss_function logistic -f data/models/sentence.full.${WEIGHT}.${FEATURE}.vw
+    vw --compressed -t --keep g --keep ${FEATURE} -q gt -q ga -d data/vw_input/test.sentence.${WEIGHT}.vw_input.gz -i data/models/sentence.full.${WEIGHT}.${FEATURE}.vw -p data/results/test/sentence.${WEIGHT}.${FEATURE}.full.pred
+    python3 qanta/reporting/performance.py generate data/results/test/sentence.${WEIGHT}.${FEATURE}.full.pred data/vw_input/test.sentence.${WEIGHT}.meta data/results/test/sentence.${WEIGHT}.${FEATURE}.answer.json
+fi
