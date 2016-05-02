@@ -1,7 +1,7 @@
 from lm_wrapper import LanguageModelReader
 
 if __name__ == "__main__":
-    lm = LanguageModelReader("lm.txt")
+    lm = LanguageModelReader("data/lm.txt")
     lm.init()
 
     chicago = """ This city houses a {Zaha Hadid} [zah-hah hah-DEED]-designed {pavilion}
@@ -24,7 +24,7 @@ points--name this play by Oscar Wilde.  """
 
     for guess, question in [
             ("The Importance of Being Earnest", earnest),
-            ("Chicago", chicago), 
+            ("Chicago", chicago),
             ('A Good Man Is Hard to Find (short story)', good)]:
         for corpus in ["qb", "wiki", "source"]:
             print(lm.feature_line(corpus, guess, question))

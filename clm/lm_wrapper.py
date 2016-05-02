@@ -98,6 +98,7 @@ class LanguageModelBase:
         for ii in kTOKENIZER(unidecode(sentence)):
             yield self.vocab_lookup(ii.lower())
 
+
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8):
         from clm import intArray
@@ -139,12 +140,13 @@ class LanguageModelReader(LanguageModelBase):
                 self._sentence[ii] = ww
 
         norm_title = self.normalize_title(corpus, guess)
-        if not norm_title in self._corpora or self._sentence_length==0:
+        if not norm_title in self._corpora or self._sentence_length == 0:
             return ""
         else:
             guess_id = self._corpora[norm_title]
             return self._lm.feature(corpus, guess_id, self._sentence,
                                     self._sentence_length)
+
 
 class LanguageModelWriter(LanguageModelBase):
     def __init__(self, vocab_size, comparison_corpora):
@@ -192,10 +194,7 @@ class LanguageModelWriter(LanguageModelBase):
         del self._training_counts
         return self._vocab
 
-    def add_train(self, corpus, sentence):
-        """
-        Add the counts associated with a sentence.
-        """
+    def add_counts(self, corpus, sentence):
 
         if not corpus in self._obs_counts:
             self._obs_counts[corpus] = defaultdict(DistCounter)
@@ -203,6 +202,18 @@ class LanguageModelWriter(LanguageModelBase):
         for context, word in bigrams(self.tokenize_and_censor(sentence)):
             self._obs_counts[corpus][context].inc(word)
             self._unigram[corpus].inc(word)
+
+    def add_train(self, corpus, title, sentence):
+        """
+        Add the counts associated with a sentence.
+        """
+        norm_title = self.normalize_title(corpus, title)
+        comp = self.compare(norm_title)
+
+        self.add_counts(norm_title, sentence)
+        for ii in xrange(self._compare):
+            if comp != ii:
+                self.add_counts("compare_%i" % ii, sentence)
 
     def compare(self, title):
         return hash(title) % self._compare
@@ -307,17 +318,12 @@ if __name__ == "__main__":
                                          source, flags.source_location,
                                          flags.max_pages,
                                          min_pages=min_answers):
-            norm_title = lm.normalize_title(corpus, title)
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
                 print("Adding train doc %i, %s (%s)" %
                       (doc_num, unidecode(title), corpus))
                 start = time.time()
-            lm.add_train(norm_title, text)
-            comp = lm.compare(norm_title)
-            for ii in xrange(flags.global_lms):
-                if comp != ii:
-                    lm.add_train("compare_%i" % ii, text)
+            lm.add_train(corpus, title, text)
 
     print("Done training")
     if flags.lm_out:
