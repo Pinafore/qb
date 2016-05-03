@@ -1,18 +1,9 @@
-import textwrap
-from collections import defaultdict
-import argparse
-from csv import DictReader
 from time import sleep
-from string import lower
-from random import shuffle
-import sys
 import pickle
 import os
 
-from buzzer import kSHOW_RIGHT, kPAUSE, kBIGNUMBERS
-from buzzer import clear_screen, PowerPositions, show_score
-from buzzer import Guess, Buzzes, Questions, format_display
-from buzzer import load_finals, interpret_keypress, answer
+from util.buzzer import clear_screen, show_score
+from util.buzzer import interpret_keypress
 
 kSTATE = ["AB", "EB", "OB", "ES", "OS"]
 kALLOWABLE_TOSSUP = "NPGC"
@@ -132,14 +123,14 @@ def present_question(question, state, events, player=-1):
             present_question(question + 1, "AB", events)
 
 
-if __name__ == "__main__":
+def main():
     clear_screen()
 
     current_players = set()
 
     if True:
         print("Time for a buzzer check")
-        players_needed = range(2, 9, 2) + range(1, 9, 2)
+        players_needed = list(range(2, 9, 2)) + list(range(1, 9, 2))
         while len(current_players) < len(players_needed):
             print("Player %i, please buzz in" %
                   [x for x in players_needed if x not in current_players][0])
@@ -158,3 +149,6 @@ if __name__ == "__main__":
         question = 1
 
     present_question(question, "AB", events)
+
+if __name__ == "__main__":
+    main()

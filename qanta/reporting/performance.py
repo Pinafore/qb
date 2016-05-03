@@ -19,10 +19,10 @@ class Answer(Enum):
     correct = 1
     unanswered_wrong = 2
     unanswered_hopeless_1 = 3
-    unanswered_hopeless_all = 4
+    unanswered_hopeless_classifier = 4
     unanswered_hopeless_dan = 5
     wrong_hopeless_1 = 6
-    wrong_hopeless_all = 7
+    wrong_hopeless_classifier = 7
     wrong_hopeless_dan = 8
     wrong_early = 9
     wrong_late = 10
@@ -97,7 +97,7 @@ def compute_answers(data: Sequence, dan_answers: Set[str]):
             else:
                 questions[q] = Answer.unanswered_hopeless_1
                 if not lines.flat_map(_.all_guesses).exists(_.guess == answer):
-                    questions[q] = Answer.unanswered_hopeless_all
+                    questions[q] = Answer.unanswered_hopeless_classifier
         elif buzz.guess == buzz.answer:
             questions[q] = Answer.correct
         else:
@@ -108,7 +108,7 @@ def compute_answers(data: Sequence, dan_answers: Set[str]):
                     questions[q] = Answer.wrong_hopeless_dan
                 else:
                     if not lines.flat_map(_.all_guesses).exists(_.guess == answer):
-                        questions[q] = Answer.wrong_hopeless_all
+                        questions[q] = Answer.wrong_hopeless_classifier
             elif (correct_buzz.sentence, correct_buzz.token) < (buzz.sentence, buzz.token):
                 questions[q] = Answer.wrong_late
             elif (buzz.sentence, buzz.token) < (correct_buzz.sentence, correct_buzz.token):
@@ -127,7 +127,7 @@ def compute_statistics(questions: Dict[int, Answer]) -> Sequence:
     results = seq(questions.values())\
         .map(lambda x: (x, 1))
     results = (results + seq(empty_set)).reduce_by_key(lambda x, y: x + y)\
-        .map(lambda kv: (str(kv[0]), kv[1] / n_questions))
+        .map(lambda kv: (str(kv[0]), kv[1] / n_questions if kv[1] > 0 else 0))
     return results
 
 
@@ -149,7 +149,11 @@ def parse_data(stats_dir):
         with open(file) as f:
             data = json.load(f)
             return seq(data.items()).map(lambda kv: {
-                'experiment': experiment, 'weight': weight, 'result': kv[0].replace('Answer.', ''), 'score': kv[1]})
+                'experiment': experiment,
+                'weight': weight,
+                'result': kv[0].replace('Answer.', ''),
+                'score': kv[1]
+            })
 
     rows = seq(glob(path.join(stats_dir, 'sentence.*.json'))).flat_map(parse_file).to_pandas()
     return rows
@@ -166,7 +170,7 @@ def plot(stats_dir):
     import seaborn as sns
     rows = parse_data(stats_dir)
     g = sns.factorplot(y='result', x='score', row='experiment', col='weight',
-                       data=rows, kind='bar', orient='h', ci=None)
+                       data=rows, kind='bar', orient='h', ci=None, margin_titles=True)
     g.savefig('/tmp/plot.pdf')
 
 

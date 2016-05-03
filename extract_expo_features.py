@@ -6,14 +6,14 @@ from nltk import sent_tokenize
 
 from unidecode import unidecode
 
-from extractors.lm import *
+from qanta.extractors.lm import *
 from qanta.util.qdb import QuestionDatabase, Question
+from qanta.util.constants import FEATURES
 from util.guess import GuessList
 from extract_features import (
     instantiate_feature,
     feature_lines,
-    guesses_for_question,
-    FEATURES
+    guesses_for_question
 )
 
 kEXPO_START = 700000000

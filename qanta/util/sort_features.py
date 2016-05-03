@@ -15,7 +15,8 @@ def vw_tuple_iterator(filename):
         value = float(value)
         yield (value, feat)
 
-if __name__ == "__main__":
+
+def main():
     top = nlargest(1000, vw_tuple_iterator(sys.argv[1]))
     bottom = nsmallest(1000, vw_tuple_iterator(sys.argv[1]))
 
@@ -27,3 +28,6 @@ if __name__ == "__main__":
     o = open(sys.argv[2], 'w')
     for feat, val in sorted(features.items(), key=operator.itemgetter(1)):
         o.write("%f\t%s\n" % (val, feat))
+
+if __name__ == "__main__":
+    main()

@@ -28,8 +28,8 @@ kNAQT_MAP["FA:"] = "Fine Arts"
 kANSWER_PATTERN = ["\nanswer:", "\nAnswer:", "answer:", "Answer:", "asnwer:",
                    "answr:", "anwer:", "\nanswer"]
 
-# Convienence functions for reading NAQT data
 
+# Convienence functions for reading NAQT data
 def map_naqt(old_category, text, wiki_page):
     val = "Other"
     for ii in kNAQT_MAP:
@@ -41,6 +41,7 @@ def map_naqt(old_category, text, wiki_page):
         val = ""
     return val
 
+
 def add_question(connection, question_id, tournament, category, page,
                  content, answer, ans_type="", naqt=-1, fold="dev"):
     c = connection.cursor()
@@ -51,6 +52,7 @@ def add_question(connection, question_id, tournament, category, page,
     c.execute('INSERT INTO questions VALUES (?, ?, ?, ?, ?, ?, ?, ?, "")',
               (question_id, category, page, answer, tournament, ans_type, naqt, fold))
     connection.commit()
+
 
 def naqt_reader(path):
     if os.path.isdir(path):

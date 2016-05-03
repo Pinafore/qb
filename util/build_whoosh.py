@@ -13,7 +13,7 @@ from unidecode import unidecode
 
 from util.cached_wikipedia import CachedWikipedia
 from qanta.util.qdb import QuestionDatabase
-from util.environment import data_path, QB_QUESTION_DB
+from qanta.util.environment import data_path, QB_QUESTION_DB
 
 
 def text_iterator(use_wiki, wiki_location,

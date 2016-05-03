@@ -1,30 +1,28 @@
 from collections import defaultdict, namedtuple
-import time
 from unidecode import unidecode
 from random import shuffle
 
 from pyspark.sql import SQLContext, Row
 from functional import seq
 
-from qanta.util.constants import FOLDS, MIN_APPEARANCES, FEATURES
+from qanta.util.constants import FOLDS, MIN_APPEARANCES
 from qanta.util.qdb import QuestionDatabase
+from qanta.util.environment import data_path
+from qanta.util.spark_features import SCHEMA
 from util.guess import GuessList
-from util.environment import data_path
 from util.build_whoosh import text_iterator
-from util.spark_features import SCHEMA
 
-from extractors.label import Labeler
-from extractors.ir import IrExtractor
-from extractors.text import TextExtractor
-from extractors.lm import LanguageModel
-from extractors.deep import DeepExtractor
-from extractors.classifier import Classifier
-from extractors.wikilinks import WikiLinks
-from extractors.mentions import Mentions
-from extractors.answer_present import AnswerPresent
+from qanta.extractors.label import Labeler
+from qanta.extractors.ir import IrExtractor
+from qanta.extractors.lm import LanguageModel
+from qanta.extractors.deep import DeepExtractor
+from qanta.extractors.classifier import Classifier
+from qanta.extractors.wikilinks import WikiLinks
+from qanta.extractors.mentions import Mentions
+from qanta.extractors.answer_present import AnswerPresent
 
 
-HAS_GUESSES = set([e.has_guess() for e in [IrExtractor, LanguageModel, TextExtractor, DeepExtractor,
+HAS_GUESSES = set([e.has_guess() for e in [IrExtractor, LanguageModel, DeepExtractor,
                                            Classifier, AnswerPresent]])
 
 Task = namedtuple('Task', ['question', 'guesses', 'cache'])
@@ -62,8 +60,6 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     print("Loading feature %s ..." % feature_name)
     if feature_name == "ir":
         feature = IrExtractor(MIN_APPEARANCES)
-    elif feature_name == "text":
-        feature = TextExtractor()
     elif feature_name == "lm":
         feature = LanguageModel(data_path('data/lm.txt'))
     elif feature_name == "deep":
@@ -141,9 +137,10 @@ def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, gran
 
     print("Loading Questions")
     question_pages = question_db.questions_with_pages()
-    pages = seq(question_pages).filter(lambda p: len(question_pages[p]) > answer_limit).set()
-    questions = seq(pages).\
-        flat_map(lambda p: question_pages[p]).filter(lambda p: p.fold != 'train')
+    questions = seq(question_pages.values())\
+        .map(lambda qs: (qs, len(qs), qs[0].fold))\
+        .filter(lambda x: x[1] >= answer_limit or x[2] == 'test' or x[2] == 'devtest')\
+        .flat_map(lambda x: x[0])
 
     print("Loading Guesses")
     guess_list = GuessList(guess_db)
@@ -220,143 +217,3 @@ def evaluate_feature_question(task, b_features, granularity):
                 )
             )
     return result
-
-
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--guesses', default=False, action='store_true',
-                        help="Write the guesses")
-    parser.add_argument('--label', default=False, action='store_true',
-                        help="Write the labels")
-    parser.add_argument('--gap', type=int, default=100,
-                        help='Gap (in number of tokens) between each guess')
-    parser.add_argument('--guess_db', type=str, default='data/guesses.db',
-                        help='Where we write/read the guesses')
-    parser.add_argument('--question_db', type=str, default='data/questions.db')
-    parser.add_argument('--feature', type=str, default='',
-                        help="Which feature we write out")
-    parser.add_argument("--granularity", type=str,
-                        default="sentence")
-    parser.add_argument("--limit", type=int, default=-1,
-                        help="How many answer to write to feature files")
-    parser.add_argument("--ans_limit", type=int, default=5,
-                        help="minimum answer limit")
-
-    flags = parser.parse_args()
-
-    print("Loading database from %s" % flags.question_db)
-    questions = QuestionDatabase(flags.question_db)
-    guess_list = GuessList(flags.guess_db)
-
-    if flags.guesses:
-        deep_feature = instantiate_feature('deep', questions)
-        print("Guesses deep")
-
-        all_questions = questions.questions_with_pages()
-
-        page_num = 0
-        total_pages = sum(1 for x in all_questions if
-                          len(all_questions[x]) >= flags.ans_limit)
-        for page in all_questions:
-            if len(all_questions[page]) < flags.ans_limit:
-                continue
-            else:
-                print("%s\t%i" % (page, len(all_questions[page])))
-                question_num = 0
-                page_num += 1
-                for question in all_questions[page]:
-                    # We don't need guesses for train questions
-                    if question.fold == "train":
-                        continue
-                    question_num += 1
-                    guesses = guesses_for_question(question, deep_feature)
-
-                    # Save the guesses
-                    for guesser in guesses:
-                        guess_list.add_guesses(guesser, question.qnum, question.fold,
-                                               guesses[guesser])
-                    print("%i/%i" % (question_num, len(all_questions[page])))
-
-                print("%i(%i) of\t%i\t%s\t" %
-                      (page_num, len(all_questions[page]), total_pages, page), end="")
-
-                if 0 < flags.limit < page_num:
-                    break
-
-    if flags.feature or flags.label:
-        feature_files = {}
-        meta = {}
-        count = defaultdict(int)
-
-        if flags.feature:
-            assert flags.feature in FEATURES, "%s not a feature" % flags.feature
-            FEATURES[flags.feature] = instantiate_feature(flags.feature, questions)
-            feature_generator = FEATURES[flags.feature]
-        else:
-            feature_generator = instantiate_feature("label", questions)
-
-        for fold in FOLDS:
-            name = feature_generator.name
-            filename = ("features/%s/%s.%s.feat" % (fold, flags.granularity, name))
-            print("Opening %s for output" % filename)
-
-            feature_files[fold] = open(filename, 'w')
-            if flags.label:
-                filename = ("features/%s/%s.meta" % (fold, flags.granularity))
-            else:
-                filename = ("features/%s/%s.meta" % (fold, flags.feature))
-            meta[fold] = open(filename, 'w')
-
-        all_questions = questions.questions_with_pages()
-
-        totals = defaultdict(int)
-        for page in all_questions:
-            for question in all_questions[page]:
-                totals[question.fold] += 1
-        print("TOTALS")
-        print(totals)
-
-        page_count = 0
-        feat_lines = 0
-        start = time.time()
-        max_relevant = sum(1 for x in all_questions if len(all_questions[x]) >= flags.ans_limit)
-
-        for page in all_questions:
-            if len(all_questions[page]) >= flags.ans_limit:
-                page_count += 1
-                if page_count % 50 == 0:
-                    print(count)
-                    print("Page %i of %i (%s), %f feature lines per sec" %
-                          (page_count, max_relevant,
-                           feature_generator.name,
-                           float(feat_lines) / (time.time() - start)))
-                    print(unidecode(page))
-                    feat_lines = 0
-                    start = time.time()
-
-                for question in all_questions[page]:
-                    if question.fold != 'train':
-                        count[question.fold] += 1
-                        fold_here = question.fold
-                        # All the guesses we need to make (on non-train questions)
-                        for sentence, token, guess, feat in feature_lines(
-                                question, guess_list, flags.granularity, feature_generator):
-                            feat_lines += 1
-                            if meta:
-                                meta[question.fold].write(
-                                    "%i\t%i\t%i\t%s\n" % (question.qnum, sentence, token,
-                                                          unidecode(guess))
-                                )
-                            assert feat is not None
-                            feature_files[question.fold].write("%s\n" % feat)
-                            assert fold_here == question.fold, "%s %s" % (fold_here, question.fold)
-                            # print(ss, tt, pp, feat)
-                        feature_files[question.fold].flush()
-
-                if 0 < flags.limit < page_count:
-                    break
-
-
-if __name__ == "__main__":
-    main()

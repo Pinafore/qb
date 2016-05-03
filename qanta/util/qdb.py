@@ -11,7 +11,7 @@ from qanta.util.constants import MIN_APPEARANCES
 from whoosh import qparser
 from whoosh.qparser import QueryParser
 from fuzzywuzzy import fuzz
-from extractors.ir import IrIndex
+from qanta.extractors.ir import IrIndex
 
 
 punc = set(string.punctuation)

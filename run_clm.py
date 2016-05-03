@@ -4,7 +4,7 @@ from unidecode import unidecode
 from util.build_whoosh import text_iterator
 
 from clm.lm_wrapper import LanguageModelWriter
-from util.environment import QB_QUESTION_DB, data_path
+from qanta.util.environment import QB_QUESTION_DB, data_path
 
 if __name__ == "__main__":
     import argparse

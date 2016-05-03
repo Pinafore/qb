@@ -20,7 +20,7 @@ if __name__ == "__main__":
             else:
                 neg_count = int(neg_count_str)
                 new = feat_line.replace(" %s '" % neg_count_str,
-                                 " %f '" % (weight / float(neg_count)))
+                                        " %f '" % (weight / float(neg_count)))
                 # print(neg_count, ww, ww / float(neg_count), new)
                 o.write(new)
         o.close()

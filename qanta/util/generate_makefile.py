@@ -4,15 +4,17 @@ from jinja2 import Environment, FileSystemLoader
 from qanta.util.constants import (
     GRANULARITIES, FEATURE_NAMES, FEATURES, MIN_APPEARANCES,
     NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES, FOLDS)
-from extractors.classifier import CLASSIFIER_FIELDS
+from qanta.extractors.classifier import CLASSIFIER_FIELDS
 
 
 QBDB = "data/questions.db"
 FEATURE_LETTERS = ['g', 'i', 'l', 'm', 'd', 'a', 't', 'w']
+FEATURE_LETTERS_WITHOUT_LM = ['g', 'i', 'm', 'd', 'a', 't', 'w']
 
 # Path of wikifier input for expo files
 WIKIFIER_EXPO_IN = "data/wikifier/data/expo_input"
 WIKIFIER_EXPO_OUT = "data/wikifier/data/expo_output"
+
 
 
 def base_feat(feat):
@@ -68,7 +70,8 @@ def main():
         'COMPUTE_OPT_FEATURES': COMPUTE_OPT_FEATURES,
         'NEGATIVE_WEIGHTS': NEGATIVE_WEIGHTS,
         'FEATURE_NAMES': FEATURE_NAMES,
-        'FEATURE_LETTERS': FEATURE_LETTERS
+        'FEATURE_LETTERS': FEATURE_LETTERS,
+        'FEATURE_LETTERS_WITHOUT_LM': FEATURE_LETTERS_WITHOUT_LM
     }
     o = open("Makefile", 'w')
     feature_prereq = set()

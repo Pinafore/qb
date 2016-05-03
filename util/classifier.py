@@ -1,7 +1,7 @@
 import argparse
 import re
 import os
-from util.environment import QB_QUESTION_DB, data_path
+from qanta.util.environment import QB_QUESTION_DB, data_path
 from collections import Counter
 import pickle
 

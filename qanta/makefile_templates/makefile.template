@@ -121,20 +121,29 @@ data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.summary.json: data/
 
 {% for weight in NEGATIVE_WEIGHTS %}
 {% for feature in FEATURE_LETTERS %}
-data/results/test/sentence.{{ weight | int }}.-{{ feature }}.summary.json:
+data/results/test/sentence.{{ weight | int }}.-{{ feature }}.answer.json:
 	./feature-ablation.sh {{ weight | int }} {{ feature }}
 {% endfor %}
 {% endfor %}
 
 {% for weight in NEGATIVE_WEIGHTS %}
 {% for feature in FEATURE_LETTERS %}
-data/results/test/sentence.{{ weight | int }}.{{ feature }}.summary.json:
+data/results/test/sentence.{{ weight | int }}.{{ feature }}.answer.json:
 	./feature-eval.sh {{ weight | int }} {{ feature }}
 {% endfor %}
 {% endfor %}
 
-ablation: {% for weight in NEGATIVE_WEIGHTS %}{% for feature in FEATURE_LETTERS %}data/results/test/sentence.{{ weight | int }}.-{{ feature }}.summary.json {% endfor %}{% endfor %}
+{% for weight in NEGATIVE_WEIGHTS %}
+{% for feature in FEATURE_LETTERS_WITHOUT_LM %}
+data/results/test/sentence.{{ weight | int }}.l{{ feature }}.answer.json:
+	./lm-eval.sh {{ weight | int }} {{ feature }}
+{% endfor %}
+{% endfor %}
 
-feature_eval: {% for weight in NEGATIVE_WEIGHTS %}{% for feature in FEATURE_LETTERS %}data/results/test/sentence.{{ weight | int }}.{{ feature }}.summary.json {% endfor %}{% endfor %}
+ablation: {% for weight in NEGATIVE_WEIGHTS %}{% for feature in FEATURE_LETTERS %}data/results/test/sentence.{{ weight | int }}.-{{ feature }}.answer.json {% endfor %}{% endfor %}
+
+feature_eval: {% for weight in NEGATIVE_WEIGHTS %}{% for feature in FEATURE_LETTERS %}data/results/test/sentence.{{ weight | int }}.{{ feature }}.answer.json {% endfor %}{% endfor %}
+
+lm_eval: {% for weight in NEGATIVE_WEIGHTS %}{% for feature in FEATURE_LETTERS_WITHOUT_LM %}data/results/test/sentence.{{ weight | int }}.l{{ feature }}.answer.json {% endfor %}{% endfor %}
 
 

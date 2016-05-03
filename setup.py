@@ -41,6 +41,7 @@ class DownloadCommand(Command):
         import nltk
         nltk.download('stopwords')
         nltk.download('punkt')
+        nltk.download('wordnet')
 
 setup(
     name='qb',
