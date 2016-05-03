@@ -6,19 +6,13 @@ from qanta.util.constants import (
     NEGATIVE_WEIGHTS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES, FOLDS)
 from extractors.classifier import CLASSIFIER_FIELDS
 
-VWOPT = {"full": "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic"}
-
 
 QBDB = "data/questions.db"
-FINAL_MOD = "full"
-
 FEATURE_LETTERS = ['g', 'i', 'l', 'm', 'd', 'a', 't', 'w']
 
 # Path of wikifier input for expo files
-kWIKIFIER_EXPO_IN = "data/wikifier/data/expo_input"
-kWIKIFIER_EXPO_OUT = "data/wikifier/data/expo_output"
-
-assert FINAL_MOD in VWOPT, "Final model (%s) not in the set of VW models" % FINAL_MOD
+WIKIFIER_EXPO_IN = "data/wikifier/data/expo_input"
+WIKIFIER_EXPO_OUT = "data/wikifier/data/expo_output"
 
 
 def base_feat(feat):
@@ -65,7 +59,6 @@ def main():
     environment.filters['vw_input_targets'] = vw_input_targets
     context = {
         'QBDB': QBDB,
-        'VWOPT': VWOPT,
         'MIN_APPEARANCES': MIN_APPEARANCES,
         'CLASSIFIER_FIELDS': CLASSIFIER_FIELDS,
         'GRANULARITIES': GRANULARITIES,
@@ -110,20 +103,18 @@ def main():
     o.write("# Train all of the models")
     for granularity in GRANULARITIES:
         all_vw_models = []
-        for opt in VWOPT:
-            for weight in NEGATIVE_WEIGHTS:
-                all_vw_models.append("data/models/%s.%s.%i.vw" % (granularity, opt, int(weight)))
+        for weight in NEGATIVE_WEIGHTS:
+            all_vw_models.append("data/models/%s.full.%i.vw" % (granularity, int(weight)))
         o.write("\n\nall_%s_models: " % granularity + " ".join(all_vw_models) + "\n\n")
 
     # Target for all buzzes
     o.write("# Buzz predictions for all models")
     for granularity in GRANULARITIES:
         all_buzzes = []
-        for opt in VWOPT:
-            for weight in NEGATIVE_WEIGHTS:
-                for fold in FOLDS:
-                    all_buzzes.append("data/results/%s/%s.%i.summary.json" %
-                                      (fold, granularity, int(weight)))
+        for weight in NEGATIVE_WEIGHTS:
+            for fold in FOLDS:
+                all_buzzes.append("data/results/%s/%s.%i.summary.json" %
+                                  (fold, granularity, int(weight)))
         o.write("\n\nall_%s_buzz: " % granularity + " ".join(all_buzzes) + "\n\n")
 
     # Target for all performances
@@ -132,10 +123,9 @@ def main():
         for granularity in GRANULARITIES:
             o.write("data/results/%s.%s.csv: " % (fold, granularity))
             all_perfs = []
-            for opt in VWOPT:
-                for weight in NEGATIVE_WEIGHTS:
-                    all_perfs.append(
-                        "data/results/%s/%s.%i.%s" % (fold, granularity, int(weight), opt))
+            for weight in NEGATIVE_WEIGHTS:
+                all_perfs.append(
+                    "data/results/%s/%s.%i.full" % (fold, granularity, int(weight)))
             o.write(" ".join("%s.buzz" % x for x in all_perfs))
             o.write(" reporting/summarize.py\n\t")
             o.write("python3 reporting/summarize.py --output $@ -p ")
@@ -172,13 +162,13 @@ def main():
         o.write("\tRscript util/density_plots.R %s\n\n" % granularity)
 
     # Expo wikifier
-    o.write("%s: data/expo.csv util/wikification.py\n" % kWIKIFIER_EXPO_IN)
+    o.write("%s: data/expo.csv util/wikification.py\n" % WIKIFIER_EXPO_IN)
     o.write("\trm -rf $@\n")
     o.write("\tmkdir -p $@\n")
     o.write("\tpython util/wikification.py --output_directory=$@")
     o.write(" --database='' --min_pages=-1 --expo=data/expo.csv\n\n")
 
-    o.write("%s: %s\n" % (kWIKIFIER_EXPO_OUT, kWIKIFIER_EXPO_IN))
+    o.write("%s: %s\n" % (WIKIFIER_EXPO_OUT, WIKIFIER_EXPO_IN))
     o.write("\trm -rf $@\n")
     o.write("\tmkdir -p $@\n")
     o.write("\tcp lib/STAND_ALONE_NO_INFERENCE.xml ")
@@ -186,16 +176,16 @@ def main():
     o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
     o.write("wikifier-3.0-jar-with-dependencies.jar ")
     o.write("-annotateData %s %s " %
-            (kWIKIFIER_EXPO_IN.replace("data/wikifier/", ""),
-             kWIKIFIER_EXPO_OUT.replace("data/wikifier/", "")))
-    o.write("false STAND_ALONE_NO_INFERENCE.xml)\n")
+            (WIKIFIER_EXPO_IN.replace("data/wikifier/", ""),
+             WIKIFIER_EXPO_OUT.replace("data/wikifier/", "")))
+    o.write("false ../../lib/STAND_ALONE_GUROBI.xml)\n")
     o.write("\tcp $@/* data/wikifier/data/output\n\n")
 
     # Expo features
     o.write("features/expo/word.label.feat: ")
     o.write("extract_expo_features.py ")
     o.write(" ".join(sorted(feature_prereq)))
-    o.write(" %s" % kWIKIFIER_EXPO_OUT)
+    o.write(" %s" % WIKIFIER_EXPO_OUT)
     o.write("\n\tmkdir -p features/expo")
     o.write("\n\tmkdir -p results/expo")
     o.write("\n\trm -f data/expo_guess.db")
@@ -220,7 +210,7 @@ def main():
     for weight in NEGATIVE_WEIGHTS:
         # predictions
         input_file = "features/expo/expo.%i.vw_input" % weight
-        model_file = "models/sentence.%s.%i.vw" % (FINAL_MOD, weight)
+        model_file = "models/sentence.full.%i.vw" % weight
         o.write("results/expo/expo.%i.pred: %s" % (weight, input_file))
         o.write(" %s" % model_file)
         o.write("\n")
@@ -237,9 +227,9 @@ def main():
         o.write("--qbdb=%s " % QBDB)
         o.write("--question_out='' ")
         o.write("--meta=features/expo/word.meta ")
-        o.write("--perf=results/expo/word.%i.%s.perf " % (int(weight), FINAL_MOD))
+        o.write("--perf=results/expo/word.%i.full.perf " % (int(weight)))
         o.write("--neg_weight=%f " % weight)
-        o.write("--vw_config=%s " % FINAL_MOD)
+        o.write("--vw_config=full ")
         o.write("--expo=data/expo.csv ")
         o.write("--finals=results/expo/expo.%i.final " % weight)
         o.write("--pred=$<")

@@ -261,15 +261,20 @@ class QuestionDatabase:
                                          len(orphans)))
         self._conn.commit()
 
-    def page_by_count(self, min_count=1, fold=None):
+    def page_by_count(self, min_count=1, exclude_test=False):
         """
         Return all answers that appear at least the specified number
         of times in a category.
         """
         c = self._conn.cursor()
-        command = 'select page, count(*) as num from questions where ' + \
-                  'page != "" ' + \
-                  'group by page order by num desc'
+        if exclude_test:
+            command = 'select page, count(*) as num from questions where ' + \
+                      'page != "" and fold != "test" and fold != "devtest"' + \
+                      'group by page order by num desc'
+        else:
+            command = 'select page, count(*) as num from questions where ' + \
+                      'page != "" ' + \
+                      'group by page order by num desc'
         c.execute(command)
 
         for aa, nn in c:

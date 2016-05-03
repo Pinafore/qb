@@ -1,3 +1,7 @@
+import re
+from glob import glob
+from os import path
+import json
 import pprint
 from collections import namedtuple
 from typing import Dict, Set
@@ -6,6 +10,7 @@ import click
 from functional import seq
 from functional.pipeline import Sequence
 from fn import _
+import pandas as pd
 
 from qanta.util.qdb import QuestionDatabase
 
@@ -28,6 +33,9 @@ Meta = namedtuple('Meta', ['question', 'sentence', 'token', 'guess'])
 Line = namedtuple('Line',
                   ['question', 'sentence', 'token', 'buzz', 'guess', 'answer', 'all_guesses'])
 ScoredGuess = namedtuple('ScoredGuess', ['score', 'guess'])
+
+SUMMARY_REGEX = re.compile(r'sentence\.([0-9]+)\.summary\.json')
+ANSWER_REGEX = re.compile(r'sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
 
 
 def load_predictions(pred_file):
@@ -123,20 +131,43 @@ def compute_statistics(questions: Dict[int, Answer]) -> Sequence:
     return results
 
 
+def parse_data(stats_dir):
+    def parse_file(file):
+        weight = None
+        experiment = None
+        base_file = path.basename(file)
+        m = SUMMARY_REGEX.match(base_file)
+        if m:
+            weight = int(m.group(1))
+            experiment = 'summary'
+        m = ANSWER_REGEX.match(base_file)
+        if m:
+            weight = int(m.group(1))
+            experiment = m.group(2)
+        if weight is None or experiment is None:
+            raise ValueError('Incorrect file name argument')
+        with open(file) as f:
+            data = json.load(f)
+            return seq(data.items()).map(lambda kv: {
+                'experiment': experiment, 'weight': weight, 'result': kv[0].replace('Answer.', ''), 'score': kv[1]})
+
+    rows = seq(glob(path.join(stats_dir, 'sentence.*.json'))).flat_map(parse_file).to_pandas()
+    return rows
+
+
 @click.group()
 def cli():
     pass
 
 
 @cli.command()
-@click.argument('stats_file')
-def plot(stats_file):
-    import matplotlib.pyplot as plt
-    stats = seq.json(stats_file)
-    sizes = stats.map(lambda kv: kv[1]).list()
-    labels = stats.map(lambda kv: kv[0]).list()
-    plt.pie(sizes, labels=labels)
-    plt.show()
+@click.argument('stats_dir')
+def plot(stats_dir):
+    import seaborn as sns
+    rows = parse_data(stats_dir)
+    g = sns.factorplot(y='result', x='score', row='experiment', col='weight',
+                       data=rows, kind='bar', orient='h', ci=None)
+    g.savefig('/tmp/plot.pdf')
 
 
 @cli.command()
@@ -148,7 +179,7 @@ def plot(stats_file):
 def generate(min_count, qdb, pred_file, meta_file, output):
     database = QuestionDatabase(qdb)
     data = load_data(pred_file, meta_file, database)
-    dan_answers = set(database.page_by_count(min_count=min_count))
+    dan_answers = set(database.page_by_count(min_count=min_count, exclude_test=True))
     answers = compute_answers(data, dan_answers)
     stats = compute_statistics(answers).cache()
     stats.to_json(output, root_array=False)

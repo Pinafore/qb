@@ -1,3 +1,5 @@
+seaborn
+matplotlib
 scipy
 numpy
 unidecode

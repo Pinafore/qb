@@ -108,7 +108,7 @@ merge_features:{% for fold, granularity, weight in FOLDS | product(GRANULARITIES
 {% for _, granularity, weight in [''] | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
 data/models/{{ granularity }}.full.{{ weight | int }}.vw: data/vw_input/dev.{{ granularity }}.{{ weight | int }}.vw_input.gz
 	mkdir -p data/models
-	vw --compressed -d $< --early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic -f $@
+	vw --compressed -d $< --early_terminate 100 -k -q gt -q ga -b 28 --loss_function logistic -f $@
 {% for fold in FOLDS %}
 data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred: data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz data/models/{{ granularity }}.full.{{ weight | int }}.vw
 	mkdir -p data/results/{{ fold }}
