@@ -73,38 +73,25 @@ data/lm.txt: clm/lm_wrapper.py clm/_clm.so
 	mkdir -p data/wikipedia
 	python3 run_clm.py --min_answers={{ MIN_APPEARANCES }}
 
-{% for _, granularity, weight in [''] | product(GRANULARITIES, NEGATIVE_WEIGHTS) %}
-data/models/{{ granularity }}.full.{{ weight | int }}.vw: data/vw_input/dev.{{ granularity }}.{{ weight | int }}.vw_input.gz
-	mkdir -p data/models
-	vw --compressed -d $< --early_terminate 100 -k -q gt -q ga -b 28 --loss_function logistic -f $@
-{% for fold in FOLDS %}
-data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred: data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.vw_input.gz data/models/{{ granularity }}.full.{{ weight | int }}.vw
-	mkdir -p data/results/{{ fold }}
-	vw --compressed -t -d data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int}}.vw_input.gz -i data/models/{{ granularity }}.full.{{ weight | int }}.vw -p $@
-
-data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.summary.json: data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.meta
-	python3 qanta/reporting/performance.py generate data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.full.pred data/vw_input/{{ fold }}.{{ granularity }}.{{ weight | int }}.meta data/results/{{ fold }}/{{ granularity }}.{{ weight | int }}.summary.json
-{% endfor %}
-{% endfor %}
 
 {% for weight in NEGATIVE_WEIGHTS %}
 {% for feature in FEATURE_LETTERS %}
 data/results/test/sentence.{{ weight | int }}.-{{ feature }}.answer.json:
-	./feature-ablation.sh {{ weight | int }} {{ feature }}
+	bin/feature-ablation.sh {{ weight | int }} {{ feature }}
 {% endfor %}
 {% endfor %}
 
 {% for weight in NEGATIVE_WEIGHTS %}
 {% for feature in FEATURE_LETTERS %}
 data/results/test/sentence.{{ weight | int }}.{{ feature }}.answer.json:
-	./feature-eval.sh {{ weight | int }} {{ feature }}
+	bin/feature-eval.sh {{ weight | int }} {{ feature }}
 {% endfor %}
 {% endfor %}
 
 {% for weight in NEGATIVE_WEIGHTS %}
 {% for feature in FEATURE_LETTERS_WITHOUT_LM %}
 data/results/test/sentence.{{ weight | int }}.l{{ feature }}.answer.json:
-	./lm-eval.sh {{ weight | int }} {{ feature }}
+	bin/lm-eval.sh {{ weight | int }} {{ feature }}
 {% endfor %}
 {% endfor %}
 

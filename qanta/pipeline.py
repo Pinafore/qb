@@ -83,10 +83,83 @@ class VWMergeFeature(luigi.Task):
                 LocalTarget('data/vw_input/{0}.sentence.{1}.meta'.format(self.fold, self.weight)))
 
     def run(self):
-        call(['bash', 'vw_merge.sh', self.fold, self.weight])
+        call(['bash', 'bin/vw_merge.sh', self.fold, self.weight])
 
 
 class VWMergeAllFeatures(luigi.WrapperTask):
     def requires(self):
         for fold, weight in product(FOLDS, NEGATIVE_WEIGHTS):
             yield VWMergeFeature(fold=fold, weight=str(weight))
+
+
+class VWModel(luigi.Task):
+    weight = luigi.IntParameter()
+
+    def requires(self):
+        return VWMergeFeature(fold='dev', weight=self.weight)
+
+    def output(self):
+        return LocalTarget('data/models/sentence.{0}.vw'.format(self.weight))
+
+    def run(self):
+        call([
+            'vw',
+            '--compressed',
+            '-d', 'data/vw_input/dev.sentence.{0}.vw_input.gz'.format(self.weight),
+            '--early_terminate', '100',
+            '-k',
+            '-q', 'ga',
+            '-b', '28',
+            '--loss_function', 'logistic',
+            '-f', 'data/models/sentence.{0}.vw'.format(self.weight)
+        ])
+
+
+class VWPredictions(luigi.Task):
+    fold = luigi.Parameter()
+    weight = luigi.IntParameter()
+
+    def requires(self):
+        yield VWModel(weight=self.weight)
+        yield VWMergeFeature(fold=self.fold, weight=self.weight)
+
+    def output(self):
+        return LocalTarget('data/predictions/{0}.sentence.{1}.pred'.format(self.fold, self.weight))
+
+    def run(self):
+        call([
+            'vw',
+            '--compressed',
+            '-t',
+            '-d', 'data/vw_input/{0}.sentence.{1}.vw_input.gz'.format(self.fold, self.weight),
+            '-i', 'data/models/sentence.{0}.vw'.format(self.weight),
+            '-p', 'data/predictions/{0}.sentence.{1}.pred'.format(self.fold, self.weight)
+        ])
+
+
+class VWSummary(luigi.Task):
+    fold = luigi.Parameter()
+    weight = luigi.IntParameter()
+
+    def requires(self):
+        yield VWMergeFeature(fold=self.fold, weight=self.weight)
+        yield VWPredictions(fold=self.fold, weight=self.weight)
+
+    def output(self):
+        return LocalTarget('data/summary/{0}.sentence.{1}.json'.format(self.fold, self.weight))
+
+    def run(self):
+        call([
+            'python3',
+            'qanta/reporting/performance.py',
+            'generate',
+            'data/predictions/{0}.sentence.{1}.pred'.format(self.fold, self.weight),
+            'data/vw_input/{0}.sentence.{1}.meta'.format(self.fold, self.weight),
+            'data/summary/{0}.sentence.{1}.json'.format(self.fold, self.weight)
+        ])
+
+
+class AllSummaries(luigi.WrapperTask):
+    def requires(self):
+        for fold, weight in product(FOLDS, NEGATIVE_WEIGHTS):
+            yield VWSummary(fold=fold, weight=str(weight))
