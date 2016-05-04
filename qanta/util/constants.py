@@ -28,7 +28,7 @@ WIKILINKS = 'wikilinks'
 
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, IR, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]
-NEGATIVE_WEIGHTS = [2., 4., 8., 16., 32., 64.]
+NEGATIVE_WEIGHTS = [2, 4, 8, 16, 32, 64]
 MIN_APPEARANCES = 5
 FEATURES = OrderedDict([
     (IR, None),

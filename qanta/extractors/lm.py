@@ -1,4 +1,4 @@
-from extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import FeatureExtractor
 from clm.lm_wrapper import LanguageModelReader
 import requests
 

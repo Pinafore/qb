@@ -9,10 +9,10 @@ from unidecode import unidecode
 from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
-from extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import FeatureExtractor
 from util.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
-from util.environment import data_path
+from qanta.util.environment import data_path
 from util.build_whoosh import text_iterator
 
 from nltk.corpus import wordnet as wn

@@ -16,7 +16,6 @@ WIKIFIER_EXPO_IN = "data/wikifier/data/expo_input"
 WIKIFIER_EXPO_OUT = "data/wikifier/data/expo_output"
 
 
-
 def base_feat(feat):
     if feat.startswith("ir"):
         return "ir"

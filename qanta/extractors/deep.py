@@ -5,7 +5,7 @@ from collections import defaultdict, Counter
 
 from unidecode import unidecode
 
-from extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS
 

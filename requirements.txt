@@ -19,3 +19,4 @@ click
 future
 pyfunctional
 fn
+luigi

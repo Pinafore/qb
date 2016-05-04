@@ -6,12 +6,14 @@ from collections import defaultdict, OrderedDict, Counter
 import re
 
 from unidecode import unidecode
+from functional import seq
 from whoosh.collectors import TimeLimitCollector, TimeLimit
-from qanta.util.constants import MIN_APPEARANCES
 from whoosh import qparser
 from whoosh.qparser import QueryParser
 from fuzzywuzzy import fuzz
+
 from qanta.extractors.ir import IrIndex
+from qanta.util.constants import MIN_APPEARANCES
 
 
 punc = set(string.punctuation)
@@ -181,7 +183,25 @@ class QuestionDatabase:
         return questions
 
     def all_questions(self):
-        return self.query("FROM questions", ())
+        return self.query('FROM questions where page != ""', ())
+
+    def guess_questions(self):
+        question_pages = self.questions_with_pages()
+
+        dev_questions = seq(question_pages.values()) \
+            .flatten() \
+            .filter(lambda q: q.fold == 'train' or q.fold == 'dev') \
+            .group_by(lambda q: q.page) \
+            .filter(lambda pq: len(pq[1]) >= MIN_APPEARANCES) \
+            .flat_map(lambda pq: pq[1]) \
+            .filter(lambda q: q.fold != 'train')
+
+        test_questions = seq(question_pages.values()) \
+            .flatten() \
+            .filter(lambda q: q.fold == 'test' or q.fold == 'devtest') \
+            .filter(lambda q: q.page != '')
+
+        return (dev_questions + test_questions).list()
 
     def unmatched_answers(self, ids_to_exclude=None):
         """

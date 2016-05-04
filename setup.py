@@ -24,7 +24,8 @@ requirements = [
     'requests',
     'click',
     'future',
-    'pyfunctional'
+    'pyfunctional',
+    'luigi'
 ]
 
 

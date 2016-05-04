@@ -4,8 +4,8 @@ import sqlite3
 from typing import Dict, Tuple, Set, Any
 from functional import seq
 
-from qanta.util.constants import NEG_INF, FOLDS
-from util.environment import QB_QUESTION_DB
+from qanta.util.constants import NEG_INF
+from qanta.util.environment import QB_QUESTION_DB
 from qanta.util import qdb
 
 
@@ -181,8 +181,3 @@ class GuessList:
                 for feat, val in guesses[(ss, tt)][gg].items():
                     c.execute(query, (fold, question, ss, tt, gg, guesser, val, feat))
         self._conn.commit()
-
-    def delete_guesses(self, guesser, question, fold, guesses):
-        query = 'DELETE FROM guesses WHERE question=? AND guesser=?;'
-        c = self._cursor()
-        c.execute(query, (question, guesser,))

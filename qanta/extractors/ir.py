@@ -13,10 +13,10 @@ from whoosh.collectors import TimeLimitCollector, TimeLimit
 
 from unidecode import unidecode
 
-from extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.constants import (
     NEG_INF, STOP_WORDS, PAREN_EXPRESSION, get_treebank_tokenizer, get_punctuation_table)
-from util.environment import data_path
+from qanta.util.environment import data_path
 
 QUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
 

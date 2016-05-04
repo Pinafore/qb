@@ -3,7 +3,7 @@ from math import log
 import time
 
 from fuzzywuzzy import fuzz
-from extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.constants import ENGLISH_STOP_WORDS
 
 

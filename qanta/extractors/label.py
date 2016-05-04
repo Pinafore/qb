@@ -1,6 +1,6 @@
 import numpy as np
 from unidecode import unidecode
-from extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import FeatureExtractor
 
 
 class Labeler(FeatureExtractor):

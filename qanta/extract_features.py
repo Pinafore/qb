@@ -3,11 +3,10 @@ from unidecode import unidecode
 from random import shuffle
 
 from pyspark.sql import SQLContext, Row
-from functional import seq
 
 from qanta.util.constants import FOLDS, MIN_APPEARANCES
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.environment import data_path
+from qanta.util.environment import data_path, QB_QUESTION_DB, QB_GUESS_DB
 from qanta.util.spark_features import SCHEMA
 from util.guess import GuessList
 from util.build_whoosh import text_iterator
@@ -131,20 +130,16 @@ def guesses_for_question(question, deep_feature, word_skip=-1):
     return final_guesses
 
 
-def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, granularity='sentence'):
+def spark_execute(sc, feature_names, question_db, guess_db, granularity='sentence'):
     sql_context = SQLContext(sc)
     question_db = QuestionDatabase(question_db)
 
     print("Loading Questions")
-    question_pages = question_db.questions_with_pages()
-    questions = seq(question_pages.values())\
-        .map(lambda qs: (qs, len(qs), qs[0].fold))\
-        .filter(lambda x: x[1] >= answer_limit or x[2] == 'test' or x[2] == 'devtest')\
-        .flat_map(lambda x: x[0])
+    questions = question_db.guess_questions()
 
     print("Loading Guesses")
     guess_list = GuessList(guess_db)
-    guess_lookup = guess_list.all_guesses()
+    guess_lookup = guess_list.all_guesses(allow_train=True)
 
     if 'deep' in feature_names:
         guess_cache = guess_list.deep_guess_cache()
@@ -185,7 +180,7 @@ def spark_execute(sc, feature_names, question_db, guess_db, answer_limit=5, gran
     for fold in FOLDS:
         feature_df_with_fold = feature_df.filter('fold = "{0}"'.format(fold)).cache()
         for name in feature_names:
-            filename = '/home/ubuntu/output/features/{0}/{1}.{2}.parquet'\
+            filename = '/home/ubuntu/qb/data/features/{0}/{1}.{2}.parquet'\
                 .format(fold, granularity, name)
 
             feature_df_with_fold.filter('feature_name = "{0}"'.format(name))\
@@ -217,3 +212,17 @@ def evaluate_feature_question(task, b_features, granularity):
                 )
             )
     return result
+
+
+def create_guesses():
+    q_db = QuestionDatabase(QB_QUESTION_DB)
+    guess_list = GuessList(QB_GUESS_DB)
+
+    deep_feature = instantiate_feature('deep', q_db)
+    questions = q_db.guess_questions()
+
+    for q in questions:
+        guesses = guesses_for_question(q, deep_feature)
+        # Save the guesses
+        for guesser in guesses:
+            guess_list.add_guesses(guesser, q.qnum, q.fold, guesses[guesser])
