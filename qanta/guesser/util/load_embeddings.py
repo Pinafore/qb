@@ -1,10 +1,9 @@
 from numpy import *
-import pickle, gzip, gc, glob, sys, os
-from collections import Counter
+import pickle
+import gzip
 
-# given a vocab (list of words), return a word embedding matrix
-if __name__ == '__main__':
 
+def main():
     vec_file = gzip.open('data/deep/glove.840B.300d.txt.gz', 'rb')
     all_vocab = {}
     print('loading vocab...')
@@ -46,4 +45,8 @@ if __name__ == '__main__':
     print('We shape: ', We.shape)
 
     print('dumping...')
-    pickle.dump( We, open('data/deep/We', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+    pickle.dump(We, open('data/deep/We', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+
+# given a vocab (list of words), return a word embedding matrix
+if __name__ == '__main__':
+    main()

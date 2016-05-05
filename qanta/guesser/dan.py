@@ -1,12 +1,13 @@
-from numpy import *
-from future.builtins import range
-from guesser.util.gen_util import *
-from guesser.util.math_util import *
-from guesser.classify.learn_classifiers import evaluate
-from guesser.util.adagrad import Adagrad
 import time
 import argparse
 import pickle
+
+from numpy import *
+
+from qanta.guesser.util.gen_util import *
+from qanta.guesser.util.math_util import *
+from qanta.guesser.classify.learn_classifiers import evaluate
+from qanta.guesser.util.adagrad import Adagrad
 
 
 # does both forward and backprop
@@ -95,10 +96,8 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
 
     return cost, grad
 
-# train qanta and save model
-if __name__ == '__main__':
 
-    # command line arguments
+def main():
     parser = argparse.ArgumentParser(description='QANTA: a question answering neural network \
                                      with trans-sentential aggregation')
     parser.add_argument('-We', help='location of word embeddings', default='data/deep/We')
@@ -214,3 +213,7 @@ if __name__ == '__main__':
     print('step 2 of 2: training classifier over all answers (takes 10-15 hours depending on number of answers)')
     params = pickle.load(open(param_file, 'rb'))
     evaluate(train_qs, val_qs, params, d)
+
+# train qanta and save model
+if __name__ == '__main__':
+    main()

@@ -1,12 +1,13 @@
-import pickle
 import random
+import pickle
 
 import nltk.classify.util
 from nltk.classify.scikitlearn import SklearnClassifier
 from sklearn.linear_model import LogisticRegression
 
 from functional import seq
-from guesser.util.math_util import *
+
+from qanta.guesser.util.math_util import *
 from qanta.util.constants import N_GUESSES
 
 

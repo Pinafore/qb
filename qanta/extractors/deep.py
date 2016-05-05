@@ -1,12 +1,11 @@
 import pickle
 import numpy as np
 from string import ascii_lowercase, punctuation
-from collections import defaultdict, Counter
+from collections import Counter
 
 from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
-from qanta.util.qdb import QuestionDatabase
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
 
 
@@ -112,10 +111,10 @@ class DeepExtractor(FeatureExtractor):
         for k, v in preds._prob_dict.items():
             c[k] = v
 
-        res = defaultdict(dict)
+        res = {}
         for k, v in c.most_common(N_GUESSES):
             try:
-                res[self.page_dict[self.vocab[k]]][0] = v
+                res[self.page_dict[self.vocab[k]]] = v
             except KeyError:
                 # Workaround for odd unicode issues (Jordan)
                 try:
@@ -128,7 +127,7 @@ class DeepExtractor(FeatureExtractor):
                 if replace_html not in self.page_dict:
                     print("Missing: %s" % replace_html)
                 else:
-                    res[self.page_dict[replace_html]][0] = v
+                    res[self.page_dict[replace_html]] = v
 
         return res
 
@@ -156,7 +155,7 @@ class DeepExtractor(FeatureExtractor):
         return self.vw_from_score(val)
 
     def vw_from_score(self, val):
-        val = val[list(val.keys())[0]]
+        val = val[list(val.keys())]
         res = "|%s" % self.name
         if val == -1:
             res += " deepfound:0 deepscore:0.0"
@@ -164,49 +163,3 @@ class DeepExtractor(FeatureExtractor):
             res += " deepfound:1 deepscore:%f" % val
 
         return res
-
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Demo for deep guesser")
-    parser.add_argument("--classifier", default="data/deep/classifier",
-                        help="Location of classifier pickle")
-    parser.add_argument("--params", default="data/deep/params.pkl",
-                        help="Location of parameter pickle")
-    parser.add_argument("--vocab", default="data/deep/deep_vocab.pkl",
-                        help="Location of vocab pickle")
-    parser.add_argument("--ners", default="data/common/ners.pkl",
-                        help="Location of NER pickle")
-    flags = parser.parse_args()
-
-    import time
-
-    start = time.time()
-
-    questions = questions = QuestionDatabase("data/questions.db")
-    page_dict = {}
-    for page in questions.get_all_pages():
-        page_dict[page.lower().replace(' ', '_')] = page
-    ws = DeepExtractor(flags.classifier, flags.params, flags.vocab, flags.ners,
-                       page_dict)
-
-    print("Startup: %f sec" % (time.time() - start))
-
-    tests = {}
-    tests[u"Tannhäuser (opera)"] = u"""He sought out the pope to
-    seek forgiveness of his sins, only to be told that just as the pope's staff
-    would never (*) blossom, his sins are never be forgiven. Three days later,
-    the pope's staff miraculously bore flowers. For 10 points--identify this
-    German folk hero, the subject of an opera by Wagner [VAHG-ner]."""
-
-    guesses = ["Arkansas", "Australia", u"Tannhäuser (opera)", "William Shakespeare"]
-
-    for ii in tests:
-        print(ii)
-
-        for gg in guesses:
-            start = time.time()
-            score = ws.score_one_guess(gg, tests[ii])
-            end = time.time()
-            print("Score for %s: %f computed in %f seconds" %
-                  (gg, score, end-start))

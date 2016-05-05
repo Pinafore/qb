@@ -2,13 +2,14 @@ from collections import defaultdict, namedtuple
 from unidecode import unidecode
 from random import shuffle
 from typing import Dict
+from multiprocessing import Pool, cpu_count
 
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
 from pyspark.streaming import StreamingContext
 
-from util.guess import GuessList
 from util.build_whoosh import text_iterator
+from qanta.util.guess import GuessList
 from qanta.util.constants import FOLDS, MIN_APPEARANCES, FEATURE_NAMES
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.environment import data_path, QB_QUESTION_DB, QB_GUESS_DB
@@ -95,12 +96,8 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     return feature
 
 
-def guesses_for_question(question, deep_feature, word_skip=-1):
+def create_guesses_for_question(question, deep_feature, word_skip=-1):
     final_guesses = defaultdict(dict)
-    feature_name = 'deep'
-
-    final_guesses[feature_name] = defaultdict(dict)
-    final_guesses = {}
 
     # Gather all the guesses
     for sentence, token, text in question.partials(word_skip):
@@ -108,29 +105,14 @@ def guesses_for_question(question, deep_feature, word_skip=-1):
         if sentence == 0 and token == word_skip:
             continue
 
-        # Currently there is only one guesser, but code is here in case there are more guessers
-        for feature in final_guesses:
-            guesses = deep_feature.text_guess(text)
-            for guess in guesses:
-                final_guesses[feature_name][(sentence, token)][guess] = guesses[guess]
-            # add the correct answer if this is a training document and
-            if question.fold == "train" and question.page not in guesses:
-                final_guesses[feature_name][(sentence, token)][question.page] = \
-                  deep_feature.score_one_guess(question.page, text)
+        guesses = deep_feature.text_guess(text)
+        for guess in guesses:
+            final_guesses[(sentence, token)][guess] = guesses[guess]
+        # add the correct answer if this is a training document and
+        if question.fold == "train" and question.page not in guesses:
+            final_guesses[(sentence, token)][question.page] = deep_feature.score_one_guess(
+                question.page, text)
 
-        # Get all of the guesses
-        all_guesses = set()
-        for guess in final_guesses[feature_name][(sentence, token)]:
-            all_guesses.add(guess)
-
-        # Add missing guesses
-        missing = 0
-        missing_guesses = [x for x in all_guesses
-                           if x not in final_guesses[feature_name][(sentence, token)]]
-        for guess in missing_guesses:
-            score = deep_feature.score_one_guess(guess, token)
-            final_guesses[feature_name][(sentence, token)][guess] = score
-            missing += 1
     return final_guesses
 
 
@@ -233,15 +215,23 @@ def evaluate_feature_question(task, b_features, b_guess_cache, granularity):
     return result
 
 
-def create_guesses():
+def parallel_generate_guesses(task):
+    return task[0].qnum, task[0].fold, create_guesses_for_question(task[0], task[1])
+
+
+def create_guesses(processes=cpu_count()):
     q_db = QuestionDatabase(QB_QUESTION_DB)
     guess_list = GuessList(QB_GUESS_DB)
 
     deep_feature = instantiate_feature('deep', q_db)
     questions = q_db.guess_questions()
-
+    tasks = []
     for q in questions:
-        guesses = guesses_for_question(q, deep_feature)
-        # Save the guesses
-        for guesser in guesses:
-            guess_list.add_guesses(guesser, q.qnum, q.fold, guesses[guesser])
+        tasks.append((q, deep_feature))
+
+    with Pool(processes=processes) as pool:
+        question_guesses = pool.map(parallel_generate_guesses, tasks)
+        for qnum, fold, guesses in question_guesses:
+            guess_list.save_guesses('deep', qnum, fold, guesses)
+
+    guess_list.create_indexes()

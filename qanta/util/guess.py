@@ -1,16 +1,12 @@
-import numpy as np
 from collections import defaultdict, namedtuple
 import sqlite3
-from typing import Dict, Tuple, Set, Any
+from typing import Dict, Tuple, Set
 from functional import seq
 
-from qanta.util.constants import NEG_INF
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util import qdb
 
-
-Guess = namedtuple('Guess',
-                   ['fold', 'question', 'sentence', 'token', 'page', 'guesser', 'feature', 'score'])
+Guess = namedtuple('Guess', ['fold', 'question', 'sentence', 'token', 'page', 'guesser', 'score'])
 
 
 class GuessList:
@@ -52,19 +48,20 @@ class GuessList:
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
         sql = 'CREATE TABLE IF NOT EXISTS guesses (' + \
-            'fold TEXT, question INTEGER, sentence INTEGER, token INTEGER, page TEXT,' + \
-            ' guesser TEXT, feature TEXT, score NUMERIC, PRIMARY KEY ' + \
-            '(fold, question, sentence, token, page, guesser, feature));'
+              'fold TEXT, question INTEGER, sentence INTEGER, token INTEGER, page TEXT,' + \
+              ' guesser TEXT, score NUMERIC, PRIMARY KEY ' + \
+              '(fold, question, sentence, token, page, guesser));'
         c.execute(sql)
         conn.commit()
 
-    def number_guesses(self, question: Any, guesser: str) -> int:
-        query = 'SELECT COUNT(*) FROM guesses WHERE question=? AND guesser=?;'
+    def create_indexes(self):
         c = self._cursor()
-        c.execute(query, (question.qnum, guesser,))
-        for count, in c:
-            return count
-        return 0
+        sql = 'CREATE INDEX Idx1 ON guesses(fold);'
+        c.execute(sql)
+        sql = 'CREATE INDEX Idx2 ON guesses(question);'
+        c.execute(sql)
+        sql = 'CREATE INDEX Idx3 ON guesses(guesser);'
+        c.execute(sql)
 
     def guesses_for_question(self, question) -> Dict[Tuple[int, int], Set[str]]:
         """
@@ -85,7 +82,7 @@ class GuessList:
         if allow_train:
             query = 'SELECT question, sentence, token, page FROM guesses'
         else:
-            query = 'SELECT question, sentence, token, page FROM guesses where fold != "train"'
+            query = 'SELECT question, sentence, token, page FROM guesses WHERE fold != "train"'
         c = self._cursor()
         c.execute(query)
         guesses = {}
@@ -100,7 +97,7 @@ class GuessList:
         print("Loading questions and guesses")
         raw_questions = seq(qdb.QuestionDatabase(QB_QUESTION_DB).all_questions().values())
         guesses = seq(list(
-            c.execute('select * from guesses where guesser="deep" and fold = "devtest"')))\
+            c.execute('SELECT * FROM guesses WHERE guesser="deep" AND fold = "devtest"'))) \
             .map(lambda g: Guess(*g)).cache()
 
         positions = guesses.map(lambda g: (g.question, g.sentence)) \
@@ -110,7 +107,7 @@ class GuessList:
             .group_by(lambda x: x.question) \
             .map(lambda g: (g[0], seq(g[1]).map(lambda x: x.page).set())).to_dict()
 
-        questions = raw_questions.\
+        questions = raw_questions. \
             filter(lambda q: q.qnum in guess_lookup and q.fold != 'train').cache()
 
         correct = 0
@@ -126,58 +123,38 @@ class GuessList:
             total += 1
         return correct / total, total, wrong
 
-    def guesser_statistics(self, guesser, feature, limit=5000):
-        """
-        Return the mean and variance of a guesser's scores.
-        """
-
-        if limit > 0:
-            query = 'SELECT score FROM guesses WHERE guesser=? AND feature=? AND score>0 LIMIT %i;' % limit
-        else:
-            query = 'SELECT score FROM guesses WHERE guesser=? AND feature=? AND score>0;'
-        c = self._cursor()
-        c.execute(query, (guesser, feature,))
-
-        # TODO(jbg): Is there a way of computing this without casting to list?
-        values = list(x[0] for x in c if x[0] > NEG_INF)
-
-        return np.mean(values), np.var(values)
-
     def get_guesses(self, guesser, question):
-        query = 'SELECT sentence, token, page, feature, score ' + \
-            'FROM guesses WHERE question=? AND guesser=?;'
+        query = 'SELECT sentence, token, page, score ' + \
+                'FROM guesses WHERE question=? AND guesser=?;'
         c = self._cursor()
         c.execute(query, (question.qnum, guesser,))
 
         guesses = defaultdict(dict)
-        for ss, tt, pp, ff, vv in c:
-            if pp not in guesses[(ss, tt)]:
-                guesses[(ss, tt)][pp] = {}
-            guesses[(ss, tt)][pp][ff] = vv
+        for sentence, token, page, score in c:
+            guesses[(sentence, token)][page] = score
         return guesses
 
     def deep_guess_cache(self):
-        query = 'SELECT question, sentence, token, page, feature, score FROM guesses WHERE guesser="deep"'
+        query = 'SELECT question, sentence, token, page, score FROM guesses WHERE guesser="deep"'
         c = self._cursor()
         c.execute(query)
         guesses = {}
 
-        for question, sentence, token, page, feature, score in c:
+        for question, sentence, token, page, score in c:
             if question not in guesses:
                 guesses[question] = defaultdict(dict)
-            if page not in guesses[question][(sentence, token)]:
-                guesses[question][page][(sentence, token)] = {}
-            guesses[question][page][(sentence, token)][feature] = score
+            guesses[question][page][(sentence, token)] = score
         return guesses
 
-    def add_guesses(self, guesser, question, fold, guesses):
-        c = self._cursor()
-        # Add in the new guesses
+    def save_guesses(self, guesser, question, fold, guesses):
+        rows = []
+        for sentence, token in guesses:
+            for guess, score in guesses[(sentence, token)].items():
+                rows.append((fold, question, sentence, token, guess, guesser, score))
+
         query = 'INSERT INTO guesses' + \
-            '(fold, question, sentence, token, page, guesser, score, feature) ' + \
-            'VALUES(?, ?, ?, ?, ?, ?, ?, ?);'
-        for ss, tt in guesses:
-            for gg in guesses[(ss, tt)]:
-                for feat, val in guesses[(ss, tt)][gg].items():
-                    c.execute(query, (fold, question, ss, tt, gg, guesser, val, feat))
+                '(fold, question, sentence, token, page, guesser, score) ' + \
+                'VALUES(?, ?, ?, ?, ?, ?, ?);'
+        c = self._cursor()
+        c.executemany(query, rows)
         self._conn.commit()

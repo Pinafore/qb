@@ -1,8 +1,8 @@
-from qanta.util.qdb import *
 import pickle
 import argparse
-
 import regex
+
+from qanta.util.qdb import *
 
 
 class Preprocessor:
@@ -68,7 +68,7 @@ class Preprocessor:
         return words
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument("--database", type=str,
                         default='data/questions.db',
@@ -106,3 +106,7 @@ if __name__ == "__main__":
 
     pickle.dump((pp.vocab, pp.vdict), open('data/deep/vocab', 'wb'), \
                 protocol=pickle.HIGHEST_PROTOCOL)
+
+
+if __name__ == "__main__":
+    main()
