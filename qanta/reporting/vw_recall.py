@@ -2,6 +2,7 @@
 import sys
 from collections import defaultdict
 from qanta.util.qdb import QuestionDatabase
+from qanta.util.constants import N_GUESSES
 
 
 def process_file(filename):
@@ -21,7 +22,7 @@ def process_file(filename):
         recall = 0
         warn = 0
         for ident, guesses in questions.items():
-            if len(guesses) < 200:
+            if len(guesses) < N_GUESSES:
                 print("WARNING LOW GUESSES")
                 print('Question {0} is missing guesses, only has {1}'.format(ident, len(guesses)))
                 warn += 1

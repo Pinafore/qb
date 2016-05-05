@@ -7,7 +7,7 @@ from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS
+from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
 
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
@@ -25,7 +25,7 @@ def normalize(text):
 
 
 class DeepExtractor(FeatureExtractor):
-    def __init__(self, classifier, params, vocab, ners, page_dict, num_results=200):
+    def __init__(self, classifier, params, vocab, ners, page_dict):
         super(DeepExtractor, self).__init__()
         self.classifier = pickle.load(open(classifier, 'rb'), encoding='latin1')
         self.params = pickle.load(open(params, 'rb'), encoding='latin1')
@@ -34,7 +34,6 @@ class DeepExtractor(FeatureExtractor):
         self.ners = pickle.load(open(ners, 'rb'), encoding='latin1')
         self.page_dict = page_dict
         self.name = 'deep'
-        self._limit = num_results
 
     @staticmethod
     def has_guess():
@@ -114,7 +113,7 @@ class DeepExtractor(FeatureExtractor):
             c[k] = v
 
         res = defaultdict(dict)
-        for k, v in c.most_common(self._limit):
+        for k, v in c.most_common(N_GUESSES):
             try:
                 res[self.page_dict[self.vocab[k]]][0] = v
             except KeyError:

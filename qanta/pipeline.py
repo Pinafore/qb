@@ -3,7 +3,8 @@ import subprocess
 import luigi
 from luigi import LocalTarget
 from qanta.spark_execution import extract_features, merge_features
-from qanta.util.constants import FOLDS, COMPUTE_OPT_FEATURES, MEMORY_OPT_FEATURES, NEGATIVE_WEIGHTS
+from qanta.util.constants import (FOLDS, COMPUTE_OPT_FEATURES, DEEP_OPT_FEATURES,
+                                  MEMORY_OPT_FEATURES, NEGATIVE_WEIGHTS)
 from qanta.extract_features import create_guesses
 
 
@@ -19,9 +20,24 @@ class CreateGuesses(luigi.Task):
         create_guesses()
 
 
+class ExtractDeepFeatures(luigi.Task):
+    def requires(self):
+        CreateGuesses()
+
+    def output(self):
+        targets = []
+        for fold, feature in product(FOLDS, DEEP_OPT_FEATURES):
+            targets.append(
+                LocalTarget('data/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+        return targets
+
+    def run(self):
+        extract_features(DEEP_OPT_FEATURES)
+
+
 class ExtractComputeFeatures(luigi.Task):
     def requires(self):
-        return CreateGuesses()
+        return ExtractDeepFeatures()
 
     def output(self):
         targets = []
@@ -51,6 +67,7 @@ class ExtractMemoryFeatures(luigi.Task):
 
 class ExtractFeatures(luigi.WrapperTask):
     def requires(self):
+        yield ExtractDeepFeatures()
         yield ExtractComputeFeatures()
         yield ExtractMemoryFeatures()
 
@@ -83,13 +100,13 @@ class VWMergeFeature(luigi.Task):
                 LocalTarget('data/vw_input/{0}.sentence.{1}.meta'.format(self.fold, self.weight)))
 
     def run(self):
-        call(['bash', 'bin/vw_merge.sh', self.fold, self.weight])
+        call(['bash', 'bin/vw_merge.sh', self.fold, str(self.weight)])
 
 
 class VWMergeAllFeatures(luigi.WrapperTask):
     def requires(self):
         for fold, weight in product(FOLDS, NEGATIVE_WEIGHTS):
-            yield VWMergeFeature(fold=fold, weight=str(weight))
+            yield VWMergeFeature(fold=fold, weight=weight)
 
 
 class VWModel(luigi.Task):
@@ -162,4 +179,13 @@ class VWSummary(luigi.Task):
 class AllSummaries(luigi.WrapperTask):
     def requires(self):
         for fold, weight in product(FOLDS, NEGATIVE_WEIGHTS):
-            yield VWSummary(fold=fold, weight=str(weight))
+            yield VWSummary(fold=fold, weight=weight)
+
+
+class Ablation(luigi.Task):
+    fold = luigi.Parameter()
+    weight = luigi.IntParameter()
+    feature = luigi.Parameter()
+
+    def requires(self):
+        yield VWMergeFeature(fold=self.fold, weight=self.weight)

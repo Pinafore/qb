@@ -20,6 +20,7 @@ def create_spark_context(app_name="Quiz Bowl", lm_memory=False, profile=False):
         spark_conf = spark_conf.set('spark.max.cores', 12).set('spark.executor.cores', 12)
     if profile:
         spark_conf = spark_conf.set('spark.python.profile', True)
+    spark_conf = spark_conf.set('spark.akka.frameSize', 300)
     return SparkContext(appName=app_name, master=QB_SPARK_MASTER, conf=spark_conf)
 
 
@@ -29,7 +30,7 @@ def extract_features(features, lm_memory=False, profile=False):
         lm_memory=lm_memory,
         profile=profile
     )
-    ef.spark_execute(sc, features, QB_QUESTION_DB, QB_GUESS_DB)
+    ef.spark_batch(sc, features, QB_QUESTION_DB, QB_GUESS_DB)
 
 
 @cli.command(name='extract_features')

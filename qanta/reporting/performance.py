@@ -10,7 +10,6 @@ import click
 from functional import seq
 from functional.pipeline import Sequence
 from fn import _
-import pandas as pd
 
 from qanta.util.qdb import QuestionDatabase
 
@@ -27,6 +26,10 @@ class Answer(Enum):
     wrong_early = 9
     wrong_late = 10
 
+ANSWER_PLOT_ORDER = ['correct', 'wrong_late', 'wrong_early', 'unanswered_wrong',
+                     'wrong_hopeless_1', 'unanswered_hopeless_1',
+                     'wrong_hopeless_classifier', 'unanswered_hopeless_classifier',
+                     'wrong_hopeless_dan', 'unanswered_hopeless_dan']
 
 Prediction = namedtuple('Prediction', ['score', 'question', 'sentence', 'token'])
 Meta = namedtuple('Meta', ['question', 'sentence', 'token', 'guess'])
@@ -34,8 +37,8 @@ Line = namedtuple('Line',
                   ['question', 'sentence', 'token', 'buzz', 'guess', 'answer', 'all_guesses'])
 ScoredGuess = namedtuple('ScoredGuess', ['score', 'guess'])
 
-SUMMARY_REGEX = re.compile(r'sentence\.([0-9]+)\.summary\.json')
-ANSWER_REGEX = re.compile(r'sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
+SUMMARY_REGEX = re.compile(r'.*sentence\.([0-9]+)\.json')
+ANSWER_REGEX = re.compile(r'.*sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
 
 
 def load_predictions(pred_file):
@@ -155,7 +158,7 @@ def parse_data(stats_dir):
                 'score': kv[1]
             })
 
-    rows = seq(glob(path.join(stats_dir, 'sentence.*.json'))).flat_map(parse_file).to_pandas()
+    rows = seq(glob(path.join(stats_dir, '*.json'))).flat_map(parse_file).to_pandas()
     return rows
 
 
@@ -166,12 +169,14 @@ def cli():
 
 @cli.command()
 @click.argument('stats_dir')
-def plot(stats_dir):
+@click.argument('output')
+def plot(stats_dir, output):
     import seaborn as sns
     rows = parse_data(stats_dir)
     g = sns.factorplot(y='result', x='score', row='experiment', col='weight',
-                       data=rows, kind='bar', orient='h', ci=None, margin_titles=True)
-    g.savefig('/tmp/plot.pdf')
+                       data=rows, kind='bar', orient='h', ci=None, margin_titles=True,
+                       order=ANSWER_PLOT_ORDER)
+    g.savefig(output)
 
 
 @cli.command()

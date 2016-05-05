@@ -1,5 +1,5 @@
 .git
-.ipyn_checkpoints
+.ipynb_checkpoints
 .idea
 clm/_clm.so
 clm/clm.o

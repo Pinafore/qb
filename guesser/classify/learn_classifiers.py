@@ -1,10 +1,13 @@
-import nltk.classify.util
-from guesser.util.math_util import *
-from nltk.classify.scikitlearn import SklearnClassifier
-from sklearn.linear_model import LogisticRegression
 import pickle
 import random
+
+import nltk.classify.util
+from nltk.classify.scikitlearn import SklearnClassifier
+from sklearn.linear_model import LogisticRegression
+
 from functional import seq
+from guesser.util.math_util import *
+from qanta.util.constants import N_GUESSES
 
 
 def compute_recall_accuracy():
@@ -49,7 +52,7 @@ def compute_recall_accuracy():
                 correct = int(seq(p_dist.samples())
                               .map(lambda s: (p_dist.prob(s), s))
                               .sorted(reverse=True)
-                              .take(200)
+                              .take(N_GUESSES)
                               .exists(lambda s: ans == s[1]))
                 recall += correct
                 if not correct:
