@@ -34,9 +34,8 @@ class DeepExtractor(FeatureExtractor):
         self.page_dict = page_dict
         self.name = 'deep'
 
-    @staticmethod
-    def has_guess():
-        return True
+    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+        pass
 
     # return a vector representation of the question
     def compute_rep(self, text):
@@ -145,17 +144,16 @@ class DeepExtractor(FeatureExtractor):
         try:
             guess_ind = self.vdict[title]
             val = preds.prob(guess_ind)
-        except:
+        except KeyError:
             val = -1
 
-        return {0: val}
+        return val
 
     def vw_from_title(self, title, text):
         val = self.score_one_guess(title, text)
         return self.vw_from_score(val)
 
     def vw_from_score(self, val):
-        val = val[list(val.keys())]
         res = "|%s" % self.name
         if val == -1:
             res += " deepfound:0 deepscore:0.0"

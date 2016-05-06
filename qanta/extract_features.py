@@ -1,7 +1,6 @@
 from collections import defaultdict, namedtuple
 from unidecode import unidecode
 from random import shuffle
-from typing import Dict
 from multiprocessing import Pool, cpu_count
 
 from pyspark import SparkContext
@@ -15,7 +14,6 @@ from qanta.util.qdb import QuestionDatabase
 from qanta.util.environment import data_path, QB_QUESTION_DB, QB_GUESS_DB
 from qanta.util.spark_features import SCHEMA
 
-from qanta.extractors.abstract import FeatureExtractor
 from qanta.extractors.label import Labeler
 from qanta.extractors.ir import IrExtractor
 from qanta.extractors.lm import LanguageModel
@@ -26,13 +24,10 @@ from qanta.extractors.mentions import Mentions
 from qanta.extractors.answer_present import AnswerPresent
 
 
-HAS_GUESSES = set([e.has_guess() for e in [IrExtractor, LanguageModel, DeepExtractor,
-                                           Classifier, AnswerPresent]])
-
 Task = namedtuple('Task', ['question', 'guesses'])
 
 
-def feature_lines(question, guesses_cached, guesses_needed, granularity, feature_generator):
+def feature_lines(question, guesses_needed, granularity, feature_generator):
     # Guess we might have already
     # It has the structure:
     # guesses[(sent, token)][page][feat] = value
@@ -47,10 +42,7 @@ def feature_lines(question, guesses_cached, guesses_needed, granularity, feature
                                        token, guess_size, question)
 
         for guess in guesses_needed[(sentence, token)]:
-            if guesses_cached is not None:
-                feat = feature_generator.vw_from_score(guesses_cached[guess][(sentence, token)])
-            else:
-                feat = feature_generator.vw_from_title(guess, question.get_text(sentence, token))
+            feat = feature_generator.vw_from_title(guess, question.get_text(sentence, token))
             yield sentence, token, guess, feat
 
 
@@ -116,19 +108,29 @@ def create_guesses_for_question(question, deep_feature, word_skip=-1):
     return final_guesses
 
 
-def stream_guesses(text: str, deep_feature: DeepExtractor, features: Dict[str, FeatureExtractor]):
+def stream_guesses(text: str, b_features):
+    features = b_features.value
+    deep_feature = features['deep']
     guesses = deep_feature.text_guess([text])
     output = ''
-    for name in FEATURE_NAMES:
-        if name == 'deep':
-            pass
-        else:
-            pass
+    for name in ['deep', 'label']:
+        for guess in guesses:
+            output += features[name].vw_from_title(guess, text)
+    return output
 
 
 def spark_stream(sc: SparkContext):
+    question_db = QuestionDatabase(QB_QUESTION_DB)
+    features = {name: instantiate_feature(name, question_db) for name in ['deep', 'label']}
+    b_features = sc.broadcast(features)
+
     ssc = StreamingContext(sc, 1)
     questions = ssc.socketTextStream('localhost', 9999)
+    vw_line = questions.map(lambda q: stream_guesses(q, b_features))
+    vw_line.pprint()
+    ssc.start()
+    ssc.awaitTermination()
+    sc.stop()
 
 
 def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granularity='sentence'):
@@ -142,24 +144,8 @@ def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granular
     guess_list = GuessList(guess_db)
     guess_lookup = guess_list.all_guesses(allow_train=True)
 
-    if 'deep' in feature_names:
-        b_guess_cache = sc.broadcast(guess_list.deep_guess_cache())
-    else:
-        b_guess_cache = sc.broadcast(None)
-
     print("Loading tasks")
-    tasks = []
-    for q in questions:
-        #if 'deep' in feature_names:
-        #    cache = {}
-        #    guess_set = set()
-        #    for st_guesses in guess_lookup[q.qnum].values():
-        #        guess_set = guess_set.union(st_guesses)
-        #    for g in guess_set:
-        #        cache[g] = guess_cache[q.qnum][g]
-        #else:
-        #    cache = None
-        tasks.append(Task(q, guess_lookup[q.qnum]))
+    tasks = [Task(q, guess_lookup[q.qnum]) for q in questions]
     shuffle(tasks)
     print("Number of tasks: {0}".format(len(tasks)))
 
@@ -168,7 +154,7 @@ def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granular
     b_features = sc.broadcast(features)
 
     def f_eval(x):
-        return evaluate_feature_question(x, b_features, b_guess_cache, granularity)
+        return evaluate_feature_question(x, b_features, granularity)
 
     print("Beginning feature job")
     feature_rdd = sc.parallelize(tasks)\
@@ -191,15 +177,14 @@ def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granular
     sc.stop()
 
 
-def evaluate_feature_question(task, b_features, b_guess_cache, granularity):
+def evaluate_feature_question(task, b_features, granularity):
     features = b_features.value
     question = task.question
     result = []
     for feature_name in features:
         feature_generator = features[feature_name]
-        cache = b_guess_cache.value[question.qnum]
         for sentence, token, guess, feat in feature_lines(
-                question, cache, task.guesses, granularity, feature_generator):
+                question, task.guesses, granularity, feature_generator):
             result.append(
                 Row(
                     feature_name,

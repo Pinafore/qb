@@ -12,10 +12,6 @@ class AnswerPresent(FeatureExtractor):
         super(AnswerPresent, self).__init__()
         self.name = 'answer_present'
 
-    @staticmethod
-    def has_guess():
-        return False
-
     def score_one_guess(self, title, text):
         d = {}
         if "(" in title:
@@ -40,11 +36,6 @@ class AnswerPresent(FeatureExtractor):
     def vw_from_score(self, results):
         return "|%s %s" % (self.name, " ".join("%s:%f" % (x, results[x]) for x in results))
 
-    def features(self, question, candidate):
-        pass
-
-    def guesses(self, question):
-        pass
 
 if __name__ == "__main__":
     tests = {}

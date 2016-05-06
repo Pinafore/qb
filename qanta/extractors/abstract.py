@@ -7,31 +7,12 @@ class FeatureExtractor(object):
     def __init__(self):
         self._correct = None
         self._num_guesses = None
-        self._qnum = None
-        self._sent = None
-        self._token = None
+        self._qnum = 0
+        self._sent = 1
+        self._token = 0
         self._fold = None
-        self._id = None
+        self._id = '0'
         self.name = None
-
-    @abc.abstractmethod
-    def guesses(self, question):
-        """
-        Returns all of the guesses for a given question.  If this depends on
-        another system for generating guesses, it can return an empty list.
-        """
-        pass
-
-    @staticmethod
-    def has_guess():
-        return False
-
-    @abc.abstractmethod
-    def features(self, question, candidate):
-        """
-        Given a question and a candidate, returns the features
-        """
-        pass
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         self._correct = answer
@@ -53,5 +34,5 @@ class FeatureExtractor(object):
         pass
 
     @abc.abstractmethod
-    def vw_from_title(self, title, text):
+    def vw_from_title(self, title: str, text: str):
         pass

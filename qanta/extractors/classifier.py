@@ -13,14 +13,14 @@ CLASSIFIER_FIELDS = ["category", "ans_type", "gender"]
 class Classifier(FeatureExtractor):
     def __init__(self, bigram_path, question_db):
         super(Classifier, self).__init__()
-        self._qdb = question_db
-        self._bigrams = pickle.load(open(bigram_path, 'rb'))
-        self._majority = {}
-        self._frequencies = defaultdict(dict)
-        self._cache = None
-        self._fv = None
-        self._pd = None
-        self._classifiers = {}
+        self.qdb = question_db
+        self.bigrams = pickle.load(open(bigram_path, 'rb'))
+        self.majority = {}
+        self.frequencies = defaultdict(dict)
+        self.cache = None
+        self.fv = None
+        self.pd = None
+        self.classifiers = {}
         self.name = 'classifier'
         self.add_classifier('data/classifier/category.pkl', 'category')
         self.add_classifier('data/classifier/ans_type.pkl', 'ans_type')
@@ -29,34 +29,37 @@ class Classifier(FeatureExtractor):
         self.cache_majorities('ans_type')
         self.cache_majorities('gender')
 
+    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+        pass
+
     def cache_majorities(self, attribute):
-        self._majority[attribute] = defaultdict(Counter)
-        all_questions = self._qdb.questions_with_pages()
+        self.majority[attribute] = defaultdict(Counter)
+        all_questions = self.qdb.questions_with_pages()
         for page in all_questions:
             for qq in all_questions[page]:
                 if qq.fold == 'train':
-                    self._majority[attribute][qq.page][
+                    self.majority[attribute][qq.page][
                         getattr(qq, attribute, "").split(":")[0].lower()] += 1
 
         # normalize counter
-        for page in self._majority[attribute]:
-            self._majority[attribute][page] = \
-                self._majority[attribute][page].most_common(1)[0][0]
+        for page in self.majority[attribute]:
+            self.majority[attribute][page] = \
+                self.majority[attribute][page].most_common(1)[0][0]
             # total = sum(self._majority[attribute][page].values(), 0.0)
             # for key in self._majority[attribute][page]:
             #     self._majority[attribute][page][key] /= total
 
     def add_classifier(self, classifier_path, column):
-        self._classifiers[column] = pickle.load(open(classifier_path, 'rb'))
+        self.classifiers[column] = pickle.load(open(classifier_path, 'rb'))
 
     def vw_from_title(self, title, text):
         self.featurize(text)
         # majority = self.majority(title)
 
         val = ["|classifier"]
-        for cc in self._classifiers:
-            majority = self._majority[cc][title]
-            pd = self._pd[cc]
+        for cc in self.classifiers:
+            majority = self.majority[cc][title]
+            pd = self.pd[cc]
             # for ii in pd.samples():
             #     val.append("%s_%s:%f" % (cc, ii, pd.prob(ii)))
             try:
@@ -69,33 +72,27 @@ class Classifier(FeatureExtractor):
         return ' '.join(val)
 
     def featurize(self, text):
-        if hash(text) != self._cache:
-            self._cache = hash(text)
+        if hash(text) != self.cache:
+            self.cache = hash(text)
             feats = {}
             total = ALPHANUMERIC.sub(' ', unidecode(text.lower()))
             total = total.split()
             bgs = set(map(str, ngrams(total, 2)))
-            for bg in bgs.intersection(self._bigrams):
+            for bg in bgs.intersection(self.bigrams):
                 feats[bg] = 1.0
             for word in total:
                 feats[word] = 1.0
             # self._fv = feats
-            self._pd = {}
-            for cc in self._classifiers:
-                self._pd[cc] = self._classifiers[cc].prob_classify(feats)
-        return self._pd
+            self.pd = {}
+            for cc in self.classifiers:
+                self.pd[cc] = self.classifiers[cc].prob_classify(feats)
+        return self.pd
 
     def majority(self, guess):
-        if guess not in self._majority:
-            for cc in self._classifiers:
-                self._majority[guess][cc] = self._qdb.majority_frequency(guess, cc)
-        return self._majority[guess]
+        if guess not in self.majority:
+            for cc in self.classifiers:
+                self.majority[guess][cc] = self.qdb.majority_frequency(guess, cc)
+        return self.majority[guess]
 
     def vw_from_score(self, results):
-        pass
-
-    def guesses(self, question):
-        pass
-
-    def features(self, question, candidate):
         pass

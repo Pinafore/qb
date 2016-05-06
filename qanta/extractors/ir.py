@@ -230,8 +230,6 @@ class IrExtractor(FeatureExtractor):
         self.k_min_appearances = k_min_appearances
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        super(IrExtractor, self).set_metadata(answer, category, qnum, sent, token, guesses, fold)
-
         self.add_index("wiki_%i" % self.k_min_appearances,
                        "%s_%i" % (data_path("data/ir/whoosh_wiki"), self.k_min_appearances))
         self.add_index("qb_%i" % self.k_min_appearances,
@@ -246,10 +244,6 @@ class IrExtractor(FeatureExtractor):
                                         self._limit, self._time)
             print("Current set of indices: %s (%f, %f)" %
                   (list(self._index.keys()), mean, variance))
-
-    @staticmethod
-    def has_guess():
-        return False
 
     def score_one_guess(self, title, text):
         val = {}
@@ -293,11 +287,6 @@ class IrExtractor(FeatureExtractor):
                 res[ii][jj] = self._index[jj].score_one_guess(ii, text)
         return res
 
-    def features(self, question, candidate):
-        pass
-
-    def guesses(self, question):
-        pass
 
 if __name__ == "__main__":
     import argparse

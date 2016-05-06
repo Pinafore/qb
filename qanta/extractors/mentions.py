@@ -23,10 +23,10 @@ def get_states():
     states = set()
     for ii in wn.synset("American_state.n.1").instance_hyponyms():
         for jj in ii.lemmas():
-            if len(jj.name()) > 2 and "_" not in jj.name():
-                states.add(jj.name())
-            elif jj.name().startswith("New_"):
-                states.add(jj.name().replace("New_", ""))
+            if len(jj.name) > 2 and "_" not in jj.name:
+                states.add(jj.name)
+            elif jj.name.startswith("New_"):
+                states.add(jj.name.replace("New_", ""))
     return states
 
 
@@ -77,72 +77,63 @@ def build_lm_data(path="data/wikipedia", output="temp/wiki_sent"):
 
 
 class Mentions(FeatureExtractor):
-    @staticmethod
-    def has_guess():
-        return False
-
-    def name(self):
-        return self._name
+    def vw_from_score(self, results):
+        pass
 
     def __init__(self, answers):
         super().__init__()
-        self._name = "mentions"
-        self.name = 'mentions'
-        self._answers = answers
-        self._initialized = False
-        self._refex_count = defaultdict(int)
-        self._refex_lookup = defaultdict(set)
-        self._lm = None
-        self.generate_refexs(self._answers)
-        self._pre = []
-        self._ment = []
-        self._suf = []
-
-        # Get all of the answers
-
-        self._text = ""
+        self.name = "mentions"
+        self.answers = answers
+        self.initialized = False
+        self.refex_count = defaultdict(int)
+        self.refex_lookup = defaultdict(set)
+        self.lm = None
+        self.generate_refexs(self.answers)
+        self.pre = []
+        self.ment = []
+        self.suf = []
+        self.text = ""
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        super(Mentions, self).set_metadata(answer, category, qnum, sent, token, guesses, fold)
-        if not self._initialized:
-            self._lm = kenlm.LanguageModel(data_path('data/kenlm.binary'))
-            self._initialized = True
+        if not self.initialized:
+            self.lm = kenlm.LanguageModel(data_path('data/kenlm.binary'))
+            self.initialized = True
 
     def vw_from_title(self, title, text):
         # Find mentions if the text has changed
         if text != self._text:
-            self._text = text
-            self._pre = []
-            self._ment = []
-            self._suf = []
+            self.text = text
+            self.pre = []
+            self.ment = []
+            self.suf = []
             # Find prefixes, suffixes, and mentions
             for pp, mm, ss in find_references(text):
                 # Exclude too short mentions
                 if len(mm.strip()) > 3:
-                    self._pre.append(unidecode(pp.lower()))
-                    self._suf.append(unidecode(ss.lower()))
-                    self._ment.append(unidecode(mm.lower()))
+                    self.pre.append(unidecode(pp.lower()))
+                    self.suf.append(unidecode(ss.lower()))
+                    self.ment.append(unidecode(mm.lower()))
 
         best_score = float("-inf")
         for ref in self.referring_exs(title):
-            for pp, ss in zip(self._pre, self._suf):
+            for pp, ss in zip(self.pre, self.suf):
                 pre_tokens = kTOKENIZER(pp)
                 ref_tokens = kTOKENIZER(ref)
                 suf_tokens = kTOKENIZER(ss)
 
                 query_len = len(pre_tokens) + len(ref_tokens) + len(suf_tokens)
                 query = " ".join(pre_tokens + ref_tokens + suf_tokens)
-                score = self._lm.score(query)
+                score = self.lm.score(query)
                 if score > best_score:
                     best_score = score / float(query_len)
         if best_score > float("-inf"):
-            res = "|%s score:%f" % (self._name, best_score)
+            res = "|%s score:%f" % (self.name, best_score)
         else:
-            res = "|%s missing:1" % self._name
+            res = "|%s missing:1" % self.name
 
         norm_title = LanguageModelBase.normalize_title('', unidecode(title))
         assert ":" not in norm_title
-        for mm in self._ment:
+        for mm in self.ment:
             assert ":" not in mm
             res += " "
             res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
@@ -161,20 +152,20 @@ class Mentions(FeatureExtractor):
             ans = aa.split("_(")[0]
             for jj in ans.split():
                 # each word and plural form of each word
-                self._refex_lookup[aa].add(jj.lower())
-                self._refex_lookup[aa].add(pluralize(jj).lower())
-                self._refex_count[jj] += 1
-                self._refex_count[pluralize(jj)] += 1
+                self.refex_lookup[aa].add(jj.lower())
+                self.refex_lookup[aa].add(pluralize(jj).lower())
+                self.refex_count[jj] += 1
+                self.refex_count[pluralize(jj)] += 1
 
             # answer and plural form
-            self._refex_count[ans.lower()] += 1
-            self._refex_count[pluralize(ans).lower()] += 1
-            self._refex_lookup[aa].add(ans.lower())
-            self._refex_lookup[aa].add(pluralize(ans).lower())
+            self.refex_count[ans.lower()] += 1
+            self.refex_count[pluralize(ans).lower()] += 1
+            self.refex_lookup[aa].add(ans.lower())
+            self.refex_lookup[aa].add(pluralize(ans).lower())
 
             # THE answer
-            self._refex_count["the %s" % ans.lower()] += 1
-            self._refex_lookup[aa].add("the %s" % ans.lower())
+            self.refex_count["the %s" % ans.lower()] += 1
+            self.refex_lookup[aa].add("the %s" % ans.lower())
 
     def referring_exs(self, answer, max_count=5):
         """
@@ -182,8 +173,8 @@ class Mentions(FeatureExtractor):
         Given a Wikipedia page, generate all of the referring expressions.
         Right now just rule-based, but should be improved.
         """
-        for ii in self._refex_lookup[answer]:
-            if self._refex_count[ii] < max_count:
+        for ii in self.refex_lookup[answer]:
+            if self.refex_count[ii] < max_count:
                 yield ii
 
 

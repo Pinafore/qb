@@ -20,7 +20,7 @@ class WikiLinks(FeatureExtractor):
         super(WikiLinks, self).__init__()
         self.name = "wikilinks"
         self._location = xml_location
-        self._links = defaultdict(dict)
+        self.links = defaultdict(dict)
         self._wiki = CachedWikipedia(wikipedia, country_list)
         self._cache = -1
         self._matches = None
@@ -41,13 +41,14 @@ class WikiLinks(FeatureExtractor):
             for ii in range(self._sent):
                 self._matches = self._matches | \
                     set(x[0] for x in
-                        self._links[self._qnum].get(ii, {}).values())
+                        self.links[self._qnum].get(ii, {}).values())
 
+<<<<<<< aa69439d966259c1d1f0597766376d91c261400c
             # Get links from this sentence if they're before the current
             # position
             for jj in self._links[self._qnum].get(self._sent, []):
                 title, pos, index, score = \
-                    self._links[self._qnum][self._sent][jj]
+                    self.links[self._qnum][self._sent][jj]
                 if self._token > pos:
                     self._matches.add(title)
 
@@ -115,16 +116,10 @@ class WikiLinks(FeatureExtractor):
                 id = entity.find("WikiTitleID").text
                 score = float(entity.find("RankerScore").text)
 
-                if sentence not in self._links[question]:
-                    self._links[question][sentence] = {}
-                self._links[question][sentence][surface] = \
+                if sentence not in self.links[question]:
+                    self.links[question][sentence] = {}
+                self.links[question][sentence][surface] = \
                     (page, start, id, score)
-
-    def features(self, question, candidate):
-        pass
-
-    def guesses(self, question):
-        pass
 
     def vw_from_score(self, results):
         pass
