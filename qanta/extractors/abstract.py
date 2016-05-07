@@ -1,12 +1,14 @@
 import abc
 
+from qanta.util.constants import N_GUESSES
+
 
 class FeatureExtractor(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self._correct = None
-        self._num_guesses = None
+        self._num_guesses = N_GUESSES
         self._qnum = 0
         self._sent = 1
         self._token = 0

@@ -23,10 +23,11 @@ def get_states():
     states = set()
     for ii in wn.synset("American_state.n.1").instance_hyponyms():
         for jj in ii.lemmas():
-            if len(jj.name) > 2 and "_" not in jj.name:
-                states.add(jj.name)
-            elif jj.name.startswith("New_"):
-                states.add(jj.name.replace("New_", ""))
+            name = jj.name()
+            if len(name) > 2 and "_" not in name:
+                states.add(name)
+            elif name.startswith("New_"):
+                states.add(name.replace("New_", ""))
     return states
 
 
@@ -101,7 +102,7 @@ class Mentions(FeatureExtractor):
 
     def vw_from_title(self, title, text):
         # Find mentions if the text has changed
-        if text != self._text:
+        if text != self.text:
             self.text = text
             self.pre = []
             self.ment = []
