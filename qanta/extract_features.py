@@ -2,6 +2,7 @@ from collections import defaultdict, namedtuple
 from unidecode import unidecode
 from random import shuffle
 from multiprocessing import Pool, cpu_count
+import subprocess
 
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
@@ -112,10 +113,16 @@ def stream_guesses(text: str, b_features):
     features = b_features.value
     deep_feature = features['deep']
     guesses = deep_feature.text_guess([text])
-    output = ''
-    for name in ['deep', 'label']:
-        for guess in guesses:
-            output += features[name].vw_from_title(guess, text)
+    output = []
+    for guess in guesses:
+        row = ''
+        for name in ['label', 'deep']:
+            feature_text = features[name].vw_from_title(guess, text)
+            if name == 'label':
+                row = feature_text
+            else:
+                row += '\t' + feature_text
+        output.append(row)
     return output
 
 
@@ -124,10 +131,21 @@ def spark_stream(sc: SparkContext):
     features = {name: instantiate_feature(name, question_db) for name in ['deep', 'label']}
     b_features = sc.broadcast(features)
 
+    def save_guesses(rdd):
+        feat_lines = rdd.collect()
+        score_lines = []
+        for f in feat_lines:
+            out = subprocess.run(
+                ['bash', '/home/ubuntu/qb/bin/vw-line.sh', f], stdout=subprocess.PIPE)
+            score = float(out.stdout.split()[0])
+            score_lines.append((score, f))
+        score_lines = sorted(score_lines)
+        print('Printing Scores')
+        print(''.join(map(str, score_lines)))
+
     ssc = StreamingContext(sc, 1)
     questions = ssc.socketTextStream('localhost', 9999)
-    vw_line = questions.map(lambda q: stream_guesses(q, b_features))
-    vw_line.pprint()
+    vw_line = questions.flatMap(lambda q: stream_guesses(q, b_features)).foreachRDD(save_guesses)
     ssc.start()
     ssc.awaitTermination()
     sc.stop()
