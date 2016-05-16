@@ -5,6 +5,7 @@
 * Python 3.5 (Qanta does not support anything below Python 3.5)
 * Apache Spark 1.6.1
 * Vowpal Wabbit 8.1.1 or newer
+* Docker 1.11.1 or newer
 * All python packages in `requirements.txt`, installable via `pip3 install -r requirements.txt`
 
 ### Installation
@@ -55,6 +56,7 @@ Additionally, you must have Apache Spark running at the url specified in the env
 `QB_SPARK_MASTER`
 
 ### Running Batch Mode
+
 1. Start the Luigi daemon: `luigid --background --address 0.0.0.0`
 2. Run the pipeline: `luigi --module qanta.pipeline AllSummaries --workers 30` (change 30 to number
 of concurrent tasks to run at a time)
@@ -65,7 +67,37 @@ you wish to rerun.
 
 ### Running Streaming Mode
 Again, Apache Spark needs to be running at the url specified in the environment variable
-`QB_SPARK_MASTER`
+`QB_SPARK_MASTER`.
+
+Streaming mode works by coordinating several processes to predict whether or not to buzz given line
+of text (a sentence, partial sentence, paragraph, or anything not containing a new line). The Qanta
+server is responsible for:
+* Creating a socket then waiting until a connection is established
+* The connection is established by starting an Apache Spark streaming job that binds its input to
+that socket
+* Once the connection is established the Qanta server will start streaming questions to Spark until
+its queue is empty.
+* Each question is also stored in a PostgreSQL database with a column reserved for Spark's response
+* The Qanta server will start to poll the database every 100ms to see if Spark completed all the
+questions that were queued.
+
+Spark Streaming will then do the following per input line:
+* Read the input from the socket
+* Extract all features
+* Collect the features, form a Vowpal Wabbit input line, and have VW create predictions. This
+requires that VW is running in daemon mode
+* Save the output to a PostgreSQL database
+
+Once the outputs are saved in the PostgreSQL database
+* The Qanta server reads the results and outputs the desired quantities
+
+With that high-level overview in place, here is how you start the whole system.
+
+1. Start the PostgreSQL database (Docker must be running first): `bin/start-postgres.sh`
+2. Start the Vowpal Wabbit daemon: `bin/start-vw-daemon.sh model-file.vw`
+(eg `data/models/sentence.16.vw`)
+3. Start Qanta server: `python3 cli.py qanta_stream`
+4. Start Spark Streaming job: `python3 cli.py spark_stream`
 
 ## Output File
 In the directory `data/results/` there are a number of files and folders which are the output of a quiz bowl run. Below is a description of what each file contains:
