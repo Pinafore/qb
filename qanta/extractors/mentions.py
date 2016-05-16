@@ -10,10 +10,9 @@ from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
 from qanta.extractors.abstract import FeatureExtractor
-from util.cached_wikipedia import CachedWikipedia
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
 from qanta.util.environment import data_path
-from util.build_whoosh import text_iterator
 
 from nltk.corpus import wordnet as wn
 
@@ -62,7 +61,7 @@ def find_references(sentence, padding=5):
                         for x in tags[stop + 1:stop + padding + 1]))
 
 
-def build_lm_data(path="data/wikipedia", output="temp/wiki_sent"):
+def build_lm_data(path, output):
     cw = CachedWikipedia(path, "")
     o = open(output, 'w')
 
@@ -177,49 +176,3 @@ class Mentions(FeatureExtractor):
         for ii in self.refex_lookup[answer]:
             if self.refex_count[ii] < max_count:
                 yield ii
-
-
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--build_lm_data', default=False, action='store_true',
-                        help="Write current subset of wikipedia to build language model")
-    parser.add_argument('--demo', default=False, action='store_true',
-                        help="Demo mention scoring")
-    parser.add_argument('--lm', default='data/kenlm.arpa', type=str,
-                        help="Wikipedia language model")
-    parser.add_argument("--min_answers", type=int, default=5,
-                        help="Min answers")
-    parser.add_argument("--db", type=str,
-                        default="data/questions.db",
-                        help="Location of questions")
-    flags = parser.parse_args()
-
-    if flags.build_lm_data:
-        build_lm_data()
-    DEMO_SENT = [
-        "A 2011 play about this character was produced in collaboration between Rokia Traore, Peter Sellars, and Toni Morrison.",
-        "The founder of this movement was inspired to develop its style by the stained glass windows he made for the De Lange House.",
-        "Calvin Bridges sketched a specific type of these structures that contain diffuse regions called Balbiani rings and puffs.",
-        "This group is represented by a dove in the Book of the Three Birds, written by a Welsh member of this group named Morgan Llwyd. A member of this religious group adopted the pseudonym 'Martin Marprelate' to pen a series of attacks against authorities.",
-        "This leader spent three days in house arrest during an event masterminded by the 'Gang of Eight.'"]
-    DEMO_GUESS = ["Desdemona", "De Stijl", "Mikhail Gorbachev", "Chromosome"]
-    if flags.demo:
-        answers = set(x for x, y in text_iterator(
-            False, "", False, flags.db, False, "", limit=-1, min_pages=flags.min_answers))
-        ment = Mentions(answers)
-
-        # Show the mentions
-        for ii in DEMO_GUESS:
-            print(ii, list(ment.referring_exs(ii)))
-
-        for ii in DEMO_SENT:
-            print(ii)
-            for jj in find_references(ii):
-                print("\t%s\t|%s|\t%s" % jj)
-            for jj in DEMO_GUESS:
-                print(ment.vw_from_title(jj, ii))
-
-
-if __name__ == "__main__":
-    main()

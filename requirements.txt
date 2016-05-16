@@ -9,14 +9,12 @@ nltk
 scikit-learn
 regex
 fuzzywuzzy
-six
 py4j
 python-Levenshtein
-tornado
-flask
 requests
 click
-future
 pyfunctional
 fn
 luigi
+sqlalchemy
+jinja2

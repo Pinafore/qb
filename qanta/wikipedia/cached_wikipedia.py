@@ -1,6 +1,5 @@
 import os
 import pickle
-import time
 from time import sleep
 from requests import ConnectionError
 from requests.exceptions import ReadTimeout
@@ -12,7 +11,7 @@ import wikipedia
 from wikipedia.exceptions import WikipediaException
 from functional import seq
 
-kCOUNTRY_SUB = ["History of ", "Geography of "]
+COUNTRY_SUB = ["History of ", "Geography of "]
 
 
 class LinkResult:
@@ -73,15 +72,17 @@ class CachedWikipedia:
         is an error accessing a page in Wikipedia.  This will speed up future
         runs.
         """
-        self._path = location
-        self._cache = {}
-        self._write_dummy = write_dummy
+        self.path = location
+        self.cache = {}
+        self.write_dummy = write_dummy
+        self.countries = dict()
         if country_list:
-            self._countries = dict(x.split('\t') for x in open(country_list))
-        else:
-            self._countries = dict()
+            with open(country_list) as f:
+                for line in f:
+                    k, v = line.split('\t')
+                    self.countries[k] = v
 
-    def load_page(self, key):
+    def load_page(self, key: str):
         print("Loading %s" % key)
         try:
             raw = wikipedia.page(key, preload=True)
@@ -123,15 +124,15 @@ class CachedWikipedia:
             return CachedWikipedia.load_page(key)
         return raw
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         key = key.replace("_", " ")
-        if key in self._cache:
-            return self._cache[key]
+        if key in self.cache:
+            return self.cache[key]
 
         if "/" in key:
-            filename = "%s/%s" % (self._path, key.replace("/", "---"))
+            filename = "%s/%s" % (self.path, key.replace("/", "---"))
         else:
-            filename = "%s/%s" % (self._path, key)
+            filename = "%s/%s" % (self.path, key)
         page = None
         if os.path.exists(filename):
             try:
@@ -146,16 +147,14 @@ class CachedWikipedia:
                 page = None
 
         if page is None:
-            if key in self._countries:
-                raw = [CachedWikipedia.load_page("%s%s" %
-                                                 (x, self._countries[key]))
-                                                  for x in kCOUNTRY_SUB]
-                raw.append(CachedWikipedia.load_page(key))
+            if key in self.countries:
+                raw = [self.load_page("%s%s" % (x, self.countries[key])) for x in COUNTRY_SUB]
+                raw.append(self.load_page(key))
                 print("%s is a country!" % key)
             else:
-                raw = [CachedWikipedia.load_page(key)]
+                raw = [self.load_page(key)]
 
-            raw = [x for x in raw if not x is None]
+            raw = [x for x in raw if x is not None]
             sleep(.3)
             if raw:
                 if len(raw) > 1:
@@ -171,25 +170,9 @@ class CachedWikipedia:
             else:
                 print("Dummy page for %s" % key)
                 page = WikipediaPage()
-                if self._write_dummy:
+                if self.write_dummy:
                     pickle.dump(page, open(filename, 'wb'),
                                 protocol=pickle.HIGHEST_PROTOCOL)
 
-        self._cache[key] = page
+        self.cache[key] = page
         return page
-
-
-def main():
-    cw = CachedWikipedia("data/wikipedia", "data/country_list.txt")
-    for ii in ["Camille_Saint-Saens", "Napoleon", "Langston Hughes",
-               "Whigs_(British_political_party)", "Carthage", "Stanwix", "Lango people",
-               "Lango language (Uganda)", "Keokuk", "Burma", "United Kingdom"]:
-        print("~~~~~")
-        print(ii)
-        start = time.time()
-        print(cw[ii].content[:80])
-        print(str(cw[ii].links)[:80])
-        print(time.time() - start)
-
-if __name__ == "__main__":
-    main()

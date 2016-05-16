@@ -16,16 +16,13 @@ requirements = [
     'scikit-learn',
     'regex',
     'fuzzywuzzy',
-    'six',
     'py4j',
     'python-Levenshtein',
-    'tornado',
-    'flask',
     'requests',
     'click',
-    'future',
     'pyfunctional',
-    'luigi'
+    'luigi',
+    'jinja2'
 ]
 
 

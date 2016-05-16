@@ -3,7 +3,6 @@ import gzip
 import zlib
 import os
 import traceback
-import six
 import re
 
 from whoosh.index import create_in
@@ -11,7 +10,7 @@ from whoosh.fields import TEXT, ID, Schema
 
 from unidecode import unidecode
 
-from util.cached_wikipedia import CachedWikipedia
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.environment import data_path, QB_QUESTION_DB
 
@@ -66,15 +65,12 @@ def text_iterator(use_wiki, wiki_location,
         total_text += "\n"
         total_text += question_text
         total_text += "\n"
-        if six.PY2:
-            total_text += unidecode(source_text)
-        elif six.PY3:
-            total_text += unidecode(str(source_text))
+        total_text += unidecode(str(source_text))
 
         yield pp, total_text
         doc_num += 1
 
-        if limit > 0 and doc_num > limit:
+        if 0 < limit < doc_num:
             break
 
 
