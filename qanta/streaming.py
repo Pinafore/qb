@@ -154,7 +154,7 @@ def start_qanta_streaming():
     spark_connection = create_socket_connection()
     print("Connection established")
 
-    questions_text = questions.map(lambda q: q.flatten_text()).take(100).list()
+    questions_text = questions.map(lambda q: q.flatten_text()).take(10).list()
     buzzes = get_buzzes(questions_text, spark_connection, session)
     correct = 0
     print("Calculating accuracy")

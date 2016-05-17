@@ -51,12 +51,5 @@ def merge_features_cli(**kwargs):
     merge_features()
 
 
-def start_streaming():
-    spark_conf = SparkConf()
-    spark_conf = spark_conf.set('spark.max.cores', 2).set('spark.executor.cores', 2)
-    sc = SparkContext(appName='Quiz Bowl Streaming', master=QB_SPARK_MASTER, conf=spark_conf)
-    ef.spark_stream(sc)
-
-
 if __name__ == '__main__':
     cli()

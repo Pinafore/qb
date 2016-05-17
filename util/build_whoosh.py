@@ -13,13 +13,14 @@ from unidecode import unidecode
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.environment import data_path, QB_QUESTION_DB
+from qanta.util.constants import COUNTRY_LIST_PATH
 
 
 def text_iterator(use_wiki, wiki_location,
                   use_qb, qb_location,
                   use_source, source_location,
                   limit=-1,
-                  min_pages=0, country_list='data/country_list.txt'):
+                  min_pages=0, country_list=COUNTRY_LIST_PATH):
     if isinstance(qb_location, str):
         qdb = QuestionDatabase(qb_location)
     else:
@@ -93,7 +94,8 @@ if __name__ == "__main__":
                         help="How many pages to add to the index")
     flags = parser.parse_args()
 
-    schema = Schema(title=TEXT(stored=True), content=TEXT(vector=True), id=ID(stored=True))
+    schema = Schema(
+        title=TEXT(stored=True), content=TEXT(vector=True), id=ID(stored=True, unique=True))
     ix = create_in(flags.whoosh_index, schema)
     writer = ix.writer()  # ix.writer(procs=4, limitmb=1024)
 

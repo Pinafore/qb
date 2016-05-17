@@ -25,6 +25,7 @@ DEEP = 'deep'
 ANSWER_PRESENT = 'answer_present'
 CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
+COUNTRY_LIST_PATH = 'data/country_list.txt'
 
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, IR, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]
