@@ -1,6 +1,8 @@
 import subprocess
 import socket
 import time
+import requests
+from typing import List
 from collections import namedtuple
 
 from qanta.util.environment import QB_QUESTION_DB, QB_SPARK_MASTER, QB_STREAMING_CORES
@@ -23,6 +25,8 @@ engine = create_engine(DB_URL)
 SessionFactory = sessionmaker(bind=engine)
 StreamGuess = namedtuple('StreamGuess', 'id text guess features score')
 
+QBApiQuestion = namedtuple('QBApiQuestion', 'fold id word_count position')
+
 
 class Question(Base):
     __tablename__ = 'questions'
@@ -34,6 +38,39 @@ class Question(Base):
     def __repr__(self):
         return '<Question(id={id}, text={text}, response={response}'.format(
             id=self.id, text=self.text, response=self.response)
+
+
+class QuestionQueue:
+    def __init__(self):
+        self.questions = []
+
+    def empty(self):
+        return len(self.questions) == 0
+
+    def get(self) -> List[str]:
+        questions = self.questions
+        self.questions = []
+        return questions
+
+    def update(self, question_responses: List[Question]) -> None:
+        pass
+
+
+class QBApiQuestionQueue(QuestionQueue):
+    def __init__(self, domain: str, email: str, api_key: str):
+        super().__init__()
+        self.domain = domain
+        self.email = email
+        self.api_key = api_key
+        self.question_list = self.get_initial_question_list()
+
+    def get_initial_question_list(self):
+        url = 'http://{domain}/qb-api/v1/questions'.format(domain=self.domain)
+        response = requests.get(url).json()['questions']
+        return seq(response).map(lambda r: QBApiQuestion(**response, position=0)).list()
+
+    def request_text(self, q_id, position):
+        pass
 
 
 def create_sc():

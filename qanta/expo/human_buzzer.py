@@ -2,8 +2,8 @@ from time import sleep
 import pickle
 import os
 
-from util.buzzer import clear_screen, show_score
-from util.buzzer import interpret_keypress
+from qanta.expo.buzzer import clear_screen, show_score
+from qanta.expo.buzzer import interpret_keypress
 
 kSTATE = ["AB", "EB", "OB", "ES", "OS"]
 kALLOWABLE_TOSSUP = "NPGC"

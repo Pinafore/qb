@@ -3,9 +3,6 @@ from collections import defaultdict
 import argparse
 from csv import DictReader
 from time import sleep
-from string import lower
-from random import shuffle
-import sys
 import os
 
 kSHOW_RIGHT = False
@@ -240,7 +237,7 @@ def write_readable(filename, ids, questions, power):
                                                   power(ii)))
             else:
                 o.write("%s  " % questions[ii][jj])
-        o.write("\nANSWER: %s\n\n" % questions.answer(ii))    
+        o.write("\nANSWER: %s\n\n" % questions.answer(ii))
 
 def clear_screen():
     print("Clearing")
@@ -319,7 +316,7 @@ def show_score(left_score, right_score,
     print("%-30s" % "", end='')
     kCOLORS.print("%-15s\n" % right_header, right_color)
 
-    for line in xrange(1, 15):
+    for line in range(1, 15):
         for num, color in [(left_score, left_color),
                            (right_score, right_color)]:
             for place in [100, 10, 1]:
@@ -339,6 +336,7 @@ class Guess:
         self.evidence = evidence
         self.final = final
         self.weight = weight
+
 
 class Buzzes:
     def __init__(self, buzz_file):
@@ -365,7 +363,7 @@ class Buzzes:
     def __iter__(self):
         for ii in self._buzzes:
             yield ii
-    
+
     def final_guess(self, question):
         for ss, ww in sorted(self._buzzes[question], reverse=True):
             for bb in self._buzzes[question][(ss, ww)]:
@@ -400,7 +398,7 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     sep = "".join(["-"] * 80)
 
     current_text = ""
-    for ss in xrange(sent):
+    for ss in range(sent):
         current_text += "%s " % question_text[ss]
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
@@ -415,6 +413,7 @@ def format_display(display_num, question_text, sent, word, current_guesses,
         else:
             report += "%s\t%f\t%s\n" % (guess.page, guess.weight, guess.evidence[:60])
     return report
+
 
 def load_finals(final_file):
     ff = DictReader(open(final_file))
@@ -465,7 +464,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
     for ss in sorted(question_text):
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
-            if lower(ww).startswith(lower(power)):
+            if str.lower(ww).startswith(str.lower(power)):
                 question_value = 10
             press = interpret_keypress()
             current_guesses = buzzes.current_guesses(question_id, ss, ii - 2)
@@ -475,8 +474,8 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
                 while response is None:
-                    response = raw_input("Player %i, provide an answer:\t"
-                                         % press)
+                    response = input("Player %i, provide an answer:\t"
+                                         %press)
                     if '+' in response:
                         return (human + question_value,
                                 computer + computer_delta,
@@ -505,7 +504,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                             buzz_now[0].page)
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
-                    sleep(1)                    
+                    sleep(1)
                     computer_delta = -5
                     show_score(human + human_delta,
                                computer + computer_delta,
@@ -532,7 +531,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
         response = None
         while response is None:
             os.system("afplay /System/Library/Sounds/Glass.aiff")
-            response = raw_input("Player, take a guess:\t")
+            response = input("Player, take a guess:\t")
             if '+' in response:
                 return (human + 10,
                         computer + computer_delta,
@@ -544,7 +543,6 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 response = None
 
     return (human + human_delta, computer + computer_delta, "")
-
 
 
 if __name__ == "__main__":
@@ -592,7 +590,7 @@ if __name__ == "__main__":
 
     if flags.readable != "":
         write_readable(flags.readable, question_ids, questions, power)
-        
+
     for ii in question_ids:
         question_num += 1
         power_mark = power(ii)
