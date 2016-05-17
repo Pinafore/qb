@@ -9,7 +9,7 @@ from unidecode import unidecode
 from nltk.tokenize import RegexpTokenizer
 from nltk import bigrams
 
-from util.build_whoosh import text_iterator
+from qanta.util.build_whoosh import text_iterator
 
 from clm import clm
 

@@ -6,7 +6,7 @@ from multiprocessing import Pool, cpu_count
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
 
-from util.build_whoosh import text_iterator
+from qanta.util.build_whoosh import text_iterator
 from qanta.util.guess import GuessList
 from qanta.util.constants import FOLDS, MIN_APPEARANCES
 from qanta.util.qdb import QuestionDatabase

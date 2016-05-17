@@ -43,7 +43,6 @@ class WikiLinks(FeatureExtractor):
                     set(x[0] for x in
                         self.links[self._qnum].get(ii, {}).values())
 
-<<<<<<< aa69439d966259c1d1f0597766376d91c261400c
             # Get links from this sentence if they're before the current
             # position
             for jj in self._links[self._qnum].get(self._sent, []):
