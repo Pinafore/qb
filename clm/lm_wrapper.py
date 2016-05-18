@@ -1,6 +1,7 @@
 from collections import defaultdict
 import time
 import re
+import os
 
 from unidecode import unidecode
 
@@ -14,8 +15,35 @@ import clm
 kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
 
 kUNK = "OOV"
+kSTART = "STARTTOKEN"
+kEND = "ENDTOKEN"
 kMAX_TEXT_LENGTH = 5000
 kGOODCHAR = re.compile(r"[a-zA-Z0-9]*")
+
+
+def pretty_debug(name, result, max_width=10):
+    if not result:
+        return ""
+
+    length = max(len(result[x]) for x in result)
+    display = defaultdict(str)
+    display[0] = name
+
+    start_row = 1
+    for ii in xrange(length):
+        if ii % max_width == 0:
+            if ii > 0:
+                start_row += len(result)
+                display[start_row] = ""
+                start_row += 1
+
+            for jj, val in enumerate(sorted(result)):
+                display[start_row + jj] = "%s\t" % val
+
+        for jj, val in enumerate(sorted(result)):
+            display[start_row + jj] += "%s\t" % str(result[val][ii])
+
+    return "\n".join(display[x] for x in sorted(display))
 
 
 class DistCounter:
@@ -81,8 +109,10 @@ class LanguageModelBase:
 
     @staticmethod
     def tokenize_without_censor(sentence):
+        yield kSTART
         for ii in kTOKENIZER(unidecode(sentence)):
             yield ii.lower()
+        yield kEND
 
     def vocab_size(self):
         return len(self._vocab)
@@ -95,31 +125,51 @@ class LanguageModelBase:
         """
         if not isinstance(sentence, basestring):
             sentence = ' '.join(list(sentence))
+        yield self.vocab_lookup(kSTART)
         for ii in kTOKENIZER(unidecode(sentence)):
             yield self.vocab_lookup(ii.lower())
+        yield self.vocab_lookup(kEND)
 
 
 class LanguageModelReader(LanguageModelBase):
-    def __init__(self, lm_file, interp=0.8):
+    def __init__(self, lm_file, interp=0.8, min_span=1, start_rank=200,
+                 smooth=0.001, cutoff=-2, slop=0, give_score=True,
+                 log_length=True, stopwords=["for", "10", "points", "ftp"]):
         from clm import intArray
 
+        self._loaded_lms = set()
         self._datafile = lm_file
         self._lm = clm.JelinekMercerFeature()
-        self._lm.set_interpolation(interp)
         self._sentence = intArray(kMAX_TEXT_LENGTH)
         self._sentence_length = 0
         self._sentence_hash = 0
         self._vocab_final = True
 
+        self.set_params(interp, min_span, start_rank, smooth, cutoff, slop,
+                        give_score, log_length, stopwords)
+
+    def set_params(self, interp, min_span, start_rank, smooth,
+                   cutoff, slop, give_score, log_length, stopwords):
+        self._lm.set_interpolation(interp)
+        self._lm.set_slop(slop)
+        self._lm.set_cutoff(cutoff)
+        self._lm.set_min_span(min_span)
+        self._lm.set_smooth(smooth)
+        self._lm.set_min_start_rank(start_rank)
+        self._lm.set_score(give_score)
+        self._lm.set_log_length(log_length)
+        self._stopwords = stopwords
+
     def init(self):
-        infile = open(self._datafile)
+        infile = open("%s.txt" % self._datafile)
         num_lms = int(infile.readline())
 
         vocab_size = int(infile.readline())
         self._vocab = {}
         for ii in xrange(vocab_size):
             self._vocab[infile.readline().strip()] = ii
-        print("Done reading %i vocab (Python)" % vocab_size)
+        if vocab_size > 100:
+            print("Done reading %i vocab (Python)" % vocab_size)
 
         self._corpora = {}
         for ii in xrange(num_lms):
@@ -127,8 +177,42 @@ class LanguageModelReader(LanguageModelBase):
             corpus, compare = line.split()
             self._corpora[corpus] = ii
 
-        print(self._corpora.keys()[:10])
-        self._lm.read_counts(self._datafile)
+        if len(self._corpora.keys()) > 10:
+            print(self._corpora.keys()[:10])
+
+        self._lm.read_vocab("%s.txt" % self._datafile)
+
+        # Add stop words that are in vocabulary (unknown word is 0)
+        for ii in [self.vocab_lookup(x) for x in self._stopwords
+                   if self.vocab_lookup(x) != 0]:
+            self._lm.add_stop(ii)
+
+        # Load comparisons language model
+        for ii in [x for x in self._corpora if x.startswith("compare")]:
+            self._loaded_lms.add(self._corpora[ii])
+            self._lm.read_counts("%s/%i" % (self._datafile, self._corpora[ii]))
+
+    def verbose_feature(self, corpus, guess, sentence):
+        """
+        Debug what's going on
+        """
+
+        result = defaultdict(list)
+        reverse_vocab = dict((y, x) for x, y in self._vocab.iteritems())
+
+        tokenized = list(self.tokenize_and_censor(sentence))
+        norm_title = self.normalize_title(corpus, guess)
+        if not norm_title in self._corpora:
+            return result
+        guess_id = self._corpora[norm_title]
+
+        # Get the counts of words in unigram and bigram
+        for ii, jj in bigrams(tokenized):
+            result["wrd"].append(reverse_vocab[ii][:7])
+            result["uni_cnt"].append(self._lm.unigram_count(guess_id, ii))
+            result["bi_cnt"].append(self._lm.bigram_count(guess_id, ii, jj))
+
+        return result
 
     def feature_line(self, corpus, guess, sentence):
         if self._sentence_hash != hash(sentence):
@@ -144,6 +228,10 @@ class LanguageModelReader(LanguageModelBase):
             return ""
         else:
             guess_id = self._corpora[norm_title]
+            if not guess_id in self._loaded_lms:
+                self._lm.read_counts("%s/%i" % (self._datafile, guess_id))
+                self._loaded_lms.add(guess_id)
+
             return self._lm.feature(corpus, guess_id, self._sentence,
                                     self._sentence_length)
 
@@ -180,12 +268,17 @@ class LanguageModelWriter(LanguageModelBase):
         if vocab is None:
             self._vocab_size = min(len(self._training_counts),
                                    self._vocab_size)
-            vocab = sorted(self._training_counts,
-                           key=lambda x: self._training_counts[x],
+            vocab = sorted(self._training_counts)
+            vocab = sorted(vocab, key=lambda x: self._training_counts[x],
                            reverse=True)[:self._vocab_size]
             self._vocab = dict((x, y + 1) for y, x in enumerate(vocab))
+
             assert not kUNK in self._vocab, "Vocab already has %s" % kUNK
+            for ii in [kSTART, kEND]:
+                assert ii in self._vocab, \
+                    "%s missing from %s" % (ii, str(self._vocab.keys()))
             self._vocab[kUNK] = 0
+            self._sort_voc = sorted(self._vocab, key=lambda x: self._vocab[x])
         else:
             self._vocab = vocab
 
@@ -199,6 +292,7 @@ class LanguageModelWriter(LanguageModelBase):
         if not corpus in self._obs_counts:
             self._obs_counts[corpus] = defaultdict(DistCounter)
 
+        # TODO: add start/end tokens (perhaps as option)
         for context, word in bigrams(self.tokenize_and_censor(sentence)):
             self._obs_counts[corpus][context].inc(word)
             self._unigram[corpus].inc(word)
@@ -218,7 +312,7 @@ class LanguageModelWriter(LanguageModelBase):
     def compare(self, title):
         return hash(title) % self._compare
 
-    def write_lm(self, outfile):
+    def write_vocab(self, outfile):
         """
         Write the text-based language model to a file
         """
@@ -228,33 +322,47 @@ class LanguageModelWriter(LanguageModelBase):
         outfile.write("%i\n" % len(self._unigram))
         outfile.write("%i\n" % len(self._vocab))
         vocab_size = len(self._vocab)
-        for ii, count in sorted(self._vocab.iteritems(),
-                                key=lambda key_value: key_value[1]):
+        for ii in self._sort_voc:
             outfile.write("%s\n" % ii)
-        print("Done writing vocab")
+        if vocab_size > 100:
+            print("Done writing vocab")
 
         corpus_num = 0
-        for ii in sorted(self._unigram):
-            corpus_num += 1
+        for cc in self.corpora():
+            outfile.write("%s %i\n" % (cc, self.compare(cc)))
+
             if corpus_num % 100 == 0:
-                print("Writing LM for %s (%i of %i)" %
-                      (unidecode(ii), corpus_num, len(self._unigram)))
+                print(cc, self.compare(cc))
 
-            outfile.write("%s %i\n" % (ii, self.compare(ii)))
+            corpus_num += 1
 
+    def corpora(self):
         for ii in sorted(self._unigram):
-            for jj in xrange(vocab_size):
-                if jj in self._obs_counts[ii]:
-                    total = self._obs_counts[ii][jj].N()
-                    contexts = self._obs_counts[ii][jj].B()
-                else:
-                    total = 0
-                    contexts = 0
-                outfile.write("%i %i %i\n" % (jj, total, contexts))
-                if jj in self._obs_counts[ii]:
-                    for kk in self._obs_counts[ii][jj]:
-                        outfile.write("%i %i\n" %
-                                      (kk, self._obs_counts[ii][jj][kk]))
+            yield ii
+
+    def write_corpus(self, corpus, offset, outfile):
+        num_contexts = len(self._obs_counts[corpus].keys())
+        outfile.write("%s %i %i\n" % (corpus, offset, num_contexts))
+
+        for ww in sorted([x for x in self._sort_voc
+                          if self._vocab[x] in self._obs_counts[corpus]],
+                         key=lambda x:
+                         self._obs_counts[corpus][self._vocab[x]].N(),
+                         reverse=True):
+            ii = self._vocab[ww]
+            num_bigrams = self._obs_counts[corpus][ii].B()
+            total = self._obs_counts[corpus][ii].N()
+            outfile.write("%s %i %i %i\n" %
+                          (ww, ii, total, num_bigrams))
+
+            for jj in sorted(self._obs_counts[corpus][ii]):
+                assert isinstance(jj, int), "Not an integer: %s" % str(jj)
+                assert isinstance(self._obs_counts[corpus][ii][jj], int), \
+                    "Got %s for %s %s" % (self._obs_counts[corpus][ii][jj],
+                                          corpus, ii, jj)
+
+                outfile.write("%i %i\n" %
+                              (jj, self._obs_counts[corpus][ii][jj]))
 
 if __name__ == "__main__":
     import argparse
@@ -266,13 +374,13 @@ if __name__ == "__main__":
     parser.add_argument('--global_lms', type=int, default=5,
                         help="The number of background LMs we maintain")
     parser.add_argument('--vocab_size', type=int, default=100000)
-    parser.add_argument("--min_answers", type=int, default=-1,
+    parser.add_argument("--min_answers", type=int, default=1,
                         help="How many answers needed before including in LM")
     parser.add_argument("--max_pages", type=int, default=-1,
                         help="How many pages to add to the index")
     parser.add_argument("--stats_pages", type=int, default=5000,
                         help="How many pages to use for computing stats")
-    parser.add_argument("--lm_out", type=str, default='data/lm.txt')
+    parser.add_argument("--lm_out", type=str, default='data/language_model')
     flags = parser.parse_args()
 
     min_answers = flags.min_answers
@@ -328,5 +436,12 @@ if __name__ == "__main__":
     print("Done training")
     if flags.lm_out:
         # Create the extractor object and write out the pickle
-        o = open(flags.lm_out, 'w')
-        lm.write_lm(o)
+        o = open("%s.txt" % flags.lm_out, 'w')
+        lm.write_vocab(o)
+        o.close()
+
+        os.mkdir("%s" % flags.lm_out)
+        for ii, cc in enumerate(lm.corpora()):
+            o = open("%s/%i" % (flags.lm_out, ii), 'w')
+            lm.write_corpus(cc, ii, o)
+            o.close()
