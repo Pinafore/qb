@@ -139,9 +139,10 @@ if __name__ == "__main__":
     o.write("clm/_clm.so: clm/clm.o clm/clm_wrap.o\n")
     o.write("\tg++ -shared `python-config --ldflags` $^ -o $@\n\n")
 
-    o.write("data/lm.txt: clm/lm_wrapper.py clm/_clm.so\n")
+    o.write("data/language_model.txt: clm/lm_wrapper.py clm/_clm.so\n")
+    o.write("\trm -rf data/language_model\n")
     o.write("\tmkdir -p data/wikipedia\n")
-    o.write("\tpython clm/lm_wrapper.py --min_answers=%i\n\n" % kMIN_APPEARANCES)
+    o.write("\tpython clm/lm_wrapper.py\n\n")
 
     # Generate rules for generating the features
     for gg in kGRANULARITIES:
@@ -176,8 +177,8 @@ if __name__ == "__main__":
 
             if ff == "lm":
                 o.write(" ")
-                o.write("data/lm.txt")
-                feature_prereq.add("data/lm.txt")
+                o.write("data/language_model.txt")
+                feature_prereq.add("data/language_model.txt")
 
             if ff == "classifier":
                 for cc in kCLASSIFIER_FIELDS:
