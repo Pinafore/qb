@@ -41,6 +41,10 @@ kQUERIES = [[kSTART] + x.split() + [kEND] for x in ["the name of the rose",
                                                     "tinted rose",
                                                     "foo foo foo"]]
 
+
+def filter_feat(term):
+    return not ("LEN" in term or "MAX" in term or "PROB" in term)
+
 # TODO(jbg): remove low frequency words
 # Compute bigrams
 kBIGRAM = {}
@@ -72,7 +76,6 @@ def match_slop(matches, slop):
             if not all(matches[x] for x in range(start, end)):
                 num_matches = sum(1 for x in range(start, end) if matches[x])
                 if num_matches > 0 and num_matches + slop >= end - start:
-                    # print("!!!", start, end)
                     for kk in range(start, end):
                         slop_match[kk] = not matches[kk]
     for ii in range(len(matches)):
@@ -100,12 +103,11 @@ def matcher(input, counts, guess, slop=0, always=[], never=[]):
 
 
 def gen_line(input, matches, vocab, guess, corpus,
-             min_span, log_len):
+             min_span, log_len, censor_slop=True):
     max_length = 0
     tokens = input
     result = []
 
-    print("***", input, matches)
     for ii, start in enumerate(matches):
         for jj, end in enumerate(matches):
             if all(matches[x] for x in xrange(ii, jj + 1)):
@@ -115,12 +117,45 @@ def gen_line(input, matches, vocab, guess, corpus,
                 if jj - ii >= min_span:
                     match = guess
                     for kk in xrange(ii, jj + 1):
-                        match += "_%s" % tokens[kk]
+                        if matches[kk] == "SLOP" and censor_slop:
+                            match += "_SLOP"
+                        else:
+                            match += "_%s" % tokens[kk]
                     result.append(match)
     if log_len:
-        result.append("%s_LGLEN:%f" % (corpus, log(1 + max_length)))
+        result.append("%s_LGLEN:%0.2f" % (corpus, log(1 + max_length)))
     result.append("%s_LEN:%i" % (corpus, max_length))
     return result
+
+
+def score_span(lm, corpus, compare, vocab, span):
+    tokens = span.split("_")[1:]
+
+    components = {}
+    components["d-norm"] = lm.unigram_norm(corpus)
+    components["b-norm"] = lm.unigram_norm(compare)
+    components["smooth"] = lm.smooth()
+    components["0-start-%s-d" % tokens[0]] = \
+        lm.score(corpus, -1, kVOCAB.index(tokens[0]))
+    components["0-start-%s-b" % tokens[0]] = \
+        -lm.score(compare, -1, kVOCAB.index(tokens[0]))
+    components["0-start-%s-dc" % tokens[0]] = \
+        lm.unigram_count(corpus, kVOCAB.index(tokens[0]))
+    components["0-start-%s-bc" % tokens[0]] = \
+        lm.unigram_count(compare, kVOCAB.index(tokens[0]))
+
+    index = 0
+    for aa, bb in bigrams(kVOCAB.index(x) for x in tokens):
+        index += 1
+        key = (index, kVOCAB[aa], kVOCAB[bb])
+        components["%i-%s-%s-d" % key] = lm.score(corpus, aa, bb)
+        components["%i-%s-%s-b" % key] = -lm.score(compare, aa, bb)
+        components["%i-%s-%s-dc" % key] = lm.bigram_count(corpus, aa, bb)
+        components["%i-%s-%s-bc" % key] = lm.bigram_count(compare, aa, bb)
+
+    return sum(y for x, y in components.iteritems()
+               if x.endswith("-d") or x.endswith("-b")), \
+        components
 
 
 class StubWriter:
@@ -156,7 +191,6 @@ class TestStringMethods(unittest.TestCase):
 
         for cc, ss in kCORPUS:
             self._writer.add_train("toy", cc.replace("toy", ""), ss)
-            # print(cc, ss, self._writer._unigram.keys())
 
         o = open("temp_toy_lm.txt", 'w')
         self._writer.write_vocab(o)
@@ -165,20 +199,17 @@ class TestStringMethods(unittest.TestCase):
         if not os.path.exists("temp_toy_lm"):
             os.makedirs("temp_toy_lm")
 
-        print(self._writer._obs_counts.keys())
         for ii, cc in enumerate(self.corpora()):
             o = open("temp_toy_lm/%i" % ii, 'w')
             self._writer.write_corpus(cc, ii, o)
             o.close()
 
-        print("Starting read")
         self._lm.read_vocab("temp_toy_lm.txt")
         for ii, cc in enumerate(self.corpora()):
             self._lm.read_counts("temp_toy_lm/%i" % ii)
 
         self._reader = lm_wrapper.LanguageModelReader("temp_toy_lm")
         self._reader.init()
-        print("Done read")
 
     def tearDown(self):
         None
@@ -205,8 +236,6 @@ class TestStringMethods(unittest.TestCase):
             line += 1
 
     def test_corpora_counts(self):
-        print(list(sorted(self._writer._unigram)))
-
         for ii, cc in enumerate(self.corpora()):
             sw = StubWriter()
 
@@ -220,7 +249,6 @@ class TestStringMethods(unittest.TestCase):
             for ww in sorted([x for x in kVOCAB if len(kBIGRAM[cc][x]) > 0],
                              key=lambda x: len(kBIGRAM[cc][x]), reverse=True):
                 jj = kVOCAB.index(ww)
-                print("UNIGRAM", cc, jj, ww, sw[line])
 
                 # Check unigram counts
                 self.assertEqual("%s %i %i %i" %
@@ -230,7 +258,6 @@ class TestStringMethods(unittest.TestCase):
                 # then check bigram counts
                 for kk in sorted(set(kVOCAB.index(x) for x in
                                      kBIGRAM[cc][ww])):
-                    print("BIGRAM", ii, jj, kk, kVOCAB[kk], sw[line])
                     expected = "%i %i" % \
                         (kk, sum(1 for x in
                                  kBIGRAM[cc][ww] if x == kVOCAB[kk]))
@@ -300,7 +327,6 @@ class TestStringMethods(unittest.TestCase):
                                 bi = 0.0
 
                             p = log(mm * uni + (1 - mm) * bi)
-                            print(start, end, ss, mm, uni, bi, p)
 
                             msg = "Bigram %s (%i) -> %s (%i):" % \
                                 (start, ii, end, jj)
@@ -328,14 +354,14 @@ class TestStringMethods(unittest.TestCase):
         corpus = ""
         for span in [1, 2, 3, 5]:
             for slop in [0, 1, 2, 3]:
-                self._reader.set_params(.5, span, 0, 1.0, -1e6, slop, False,
-                                        False, [])
+                self._reader.set_params(.5, span, 0, 1.0, -1e6, slop, True,
+                                        False, True, [])
                 for qq in kQUERIES:
                     for guess in ["toy0", "toy1", "toy2"]:
                         test += 1
                         matches = matcher(qq, kBIGRAM, guess, slop=slop)
                         exp = gen_line(qq, matches, kVOCAB, guess, "", span,
-                                       False)
+                                       True)
                         act = self._reader.feature_line(corpus, guess,
                                                         " ".join(qq[1:-1]))
                         context = {"test": test, "span": span, "query": qq,
@@ -344,12 +370,41 @@ class TestStringMethods(unittest.TestCase):
                                    "actual": act,
                                    "matches": matcher(qq, kBIGRAM, guess),
                                    "slop val": slop}
-                        print("~", context)
                         for ii, jj in zip(sorted(exp), sorted(act.split())):
                             message = "\t%s\t%s\n" % (ii, jj) + \
                                 "\n".join("%s\t%s" % (x, y) for x, y in
                                           context.iteritems())
                             self.assertEqual(ii, jj, message)
+
+    def test_z_span_scores(self):
+        corpora = self.corpora()
+        for ss in kSMOOTH:
+            for mm in kINTERP:
+                for span_length in [1, 2, 3, 5]:
+                    self._reader.set_params(mm, span_length, 0, ss, -1e6,
+                                            1, False, True, False, [])
+                    self._lm.set_smooth(ss)
+                    self._lm.set_interpolation(mm)
+                    for qq in kQUERIES:
+                        for guess in ["toy0", "toy1", "toy2"]:
+                            comp = "compare_%i" % (hash(guess) % kCOMPARE)
+                            val = self._reader.feature_line("", guess,
+                                                            " ".join(qq[1:-1]))
+                            for span, score in [x.split(":") for x in
+                                                val.split() if filter_feat(x)]:
+                                exp, cc = score_span(self._lm,
+                                                     corpora.index(guess),
+                                                     corpora.index(comp),
+                                                     kVOCAB, span)
+                                message = "span:%s\n" % span
+                                message += "exp:%f\n" % exp
+                                message += "act:%f\n" % float(score)
+                                message += "query:%s\n" % " ".join(qq)
+                                for aa, bb in sorted(cc.iteritems()):
+                                    message += "\t%s:%f\n" % (aa, bb)
+
+                                self.assertAlmostEqual(exp, float(score),
+                                                       msg=message, places=1)
 
 
 if __name__ == '__main__':

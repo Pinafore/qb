@@ -22,6 +22,8 @@ class JelinekMercerFeature {
     float interpolation() const;
     void set_interpolation(float lambda);
     void set_slop(int slop);
+    void set_censor_slop(bool censor_slop);
+    bool censor_slop() const;
     int slop() const;
     void set_log_length(bool log_length);
     bool log_length() const;
@@ -54,6 +56,7 @@ class JelinekMercerFeature {
     int _slop;
     int _min_span;
     bool _score;
+    bool _censor_slop;
     bool _log_length;
     float _smooth;
     float _smooth_norm;

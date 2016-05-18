@@ -15,8 +15,8 @@ import clm
 kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
 
 kUNK = "OOV"
-kSTART = "STARTTOKEN"
-kEND = "ENDTOKEN"
+kSTART = "STRT"
+kEND = "END"
 kMAX_TEXT_LENGTH = 5000
 kGOODCHAR = re.compile(r"[a-zA-Z0-9]*")
 
@@ -134,7 +134,8 @@ class LanguageModelBase:
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8, min_span=1, start_rank=200,
                  smooth=0.001, cutoff=-2, slop=0, give_score=True,
-                 log_length=True, stopwords=["for", "10", "points", "ftp"]):
+                 log_length=True, censor_slop=True,
+                 stopwords=["for", "10", "points", "ftp", "ten", "name"]):
         from clm import intArray
 
         self._loaded_lms = set()
@@ -146,10 +147,12 @@ class LanguageModelReader(LanguageModelBase):
         self._vocab_final = True
 
         self.set_params(interp, min_span, start_rank, smooth, cutoff, slop,
-                        give_score, log_length, stopwords)
+                        censor_slop, give_score, log_length, stopwords)
 
     def set_params(self, interp, min_span, start_rank, smooth,
-                   cutoff, slop, give_score, log_length, stopwords):
+                   cutoff, slop, censor_slop, give_score,
+                   log_length, stopwords):
+        assert isinstance(min_span, int), "Got bad span %s" % str(min_span)
         self._lm.set_interpolation(interp)
         self._lm.set_slop(slop)
         self._lm.set_cutoff(cutoff)
@@ -158,6 +161,7 @@ class LanguageModelReader(LanguageModelBase):
         self._lm.set_min_start_rank(start_rank)
         self._lm.set_score(give_score)
         self._lm.set_log_length(log_length)
+        self._lm.set_censor_slop(censor_slop)
         self._stopwords = stopwords
 
     def init(self):

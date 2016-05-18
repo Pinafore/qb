@@ -15,6 +15,14 @@ void JelinekMercerFeature::set_slop(int slop) {
   _slop = slop;
 }
 
+void JelinekMercerFeature::set_censor_slop(bool censor_slop) {
+  _censor_slop = censor_slop;
+}
+
+bool JelinekMercerFeature::censor_slop() const {
+  return _censor_slop;
+}
+
 int JelinekMercerFeature::slop() const {
   return _slop;
 }
@@ -204,7 +212,8 @@ const std::string JelinekMercerFeature::feature(const std::string name,
     if (this->bigram_count(corpus, sent[ii - 1], sent[ii]) > 0) {
       // The current word is only true if the previous word was or it isn't
       // too frequent.
-      _span_mask[ii] = _span_mask[ii - 1] || (sent[ii] >= _min_start_rank);
+      _span_mask[ii] = _span_mask[ii - 1] ||
+          (sent[ii] >= _min_start_rank && _stopwords.find(sent[ii]) == _stopwords.end());
     } else {
       _span_mask[ii] = false;
     }
@@ -215,7 +224,7 @@ const std::string JelinekMercerFeature::feature(const std::string name,
       if (_span_mask[ii]) std::cout << "\t" << "+" << _types[sent[ii]];
       else std::cout << "\t" << "-" << _types[sent[ii]];
     }
-    std::cout << "\t<- mask" << std::endl;
+    std::cout << "\t<- tokens/mask" << std::endl;
   }
 
   // Filter spans that end with high-frequency words
@@ -234,13 +243,11 @@ const std::string JelinekMercerFeature::feature(const std::string name,
       // Could this position expand a run if we had slop?
       if (_span_mask[position - 1] && !_span_mask[position]) {
         int slop_left = _slop;
-        std::cout << "!! Found position=" << position << std::endl;
 
-        for (int ii=position; ii < std::min(position + _slop, length); ++ii) {
-          std::cout << "!! Looking ii=" << ii << std::endl;
+        for (int ii=position; ii < std::min(position + _slop, length - 1); ++ii) {
           // If this is a LM hit, then
           // mark all positions before it as a slop position
-          if (!_span_mask[position + ii]) {
+          if (!_span_mask[ii]) {
             _slop_mask[ii] = true;
             --slop_left;
           }
@@ -264,13 +271,15 @@ const std::string JelinekMercerFeature::feature(const std::string name,
 
   int start = -1;
   for (int ii=0; ii < length; ++ii) {
-    // See if we start a new span
-    if ((_span_mask[ii] || _slop_mask[ii]) && start < 0) {
-      // We'll need the probability later, so go ahead and compute it now.
-      _b_unigram[ii] = this->score(baseline, -1, sent[ii]);
-      start = ii;
-    } else if (!(_span_mask[ii] || _slop_mask[ii])) {
+    // Do we end a span?
+    if (!(_span_mask[ii] || _slop_mask[ii])) {
       start = -1;
+    } else {
+      // Do we start a new one?
+      if (start < 0) start = ii;
+      // If we're in a span, we'll want unigram probabilities
+      _d_unigram[ii] = this->score(corpus, -1, sent[ii]);
+      _b_unigram[ii] = this->score(baseline, -1, sent[ii]);
     }
     _span_start[ii] = start;
 
@@ -285,7 +294,6 @@ const std::string JelinekMercerFeature::feature(const std::string name,
     for (int ii=1; ii < length; ++ii)
       std::cout << "\t" << this->bigram_count(corpus, sent[ii-1], sent[ii]);
     std::cout << std::endl;
-
 
     for (int ii=0; ii < length; ++ii) {
       if (_span_mask[ii]) std::cout << "\t" << "+";
@@ -308,6 +316,12 @@ const std::string JelinekMercerFeature::feature(const std::string name,
     for (int ii=0; ii < length; ++ii) std::cout << "\t" << std::setprecision(3) << _b_bigram[ii];
     std::cout << "\t<- base bigram" << std::endl;
 
+    for (int ii=0; ii < length; ++ii) std::cout << "\t" << this->unigram_count(corpus, sent[ii]);
+    std::cout << "\t<- domain unigram count" << std::endl;
+
+    for (int ii=0; ii < length; ++ii) std::cout << "\t" << this->unigram_norm(corpus);
+    std::cout << "\t<- domain unigram norm" << std::endl;
+
     for (int ii=0; ii < length; ++ii) std::cout << std::setprecision(3) << "\t" << _d_unigram[ii];
     std::cout << "\t<- domain unigram" << std::endl;
 
@@ -317,6 +331,8 @@ const std::string JelinekMercerFeature::feature(const std::string name,
 
   // Now we can output the feature and compute the probability of spans
   std::ostringstream buffer;
+  buffer << std::fixed;
+  buffer << std::setprecision(2);
   int longest_span  = 0;
   float max_prob = 0;
   for (int ii=1; ii < length; ++ii) {
@@ -329,11 +345,13 @@ const std::string JelinekMercerFeature::feature(const std::string name,
 
       for (int start = _span_start[ii]; start <= ii - _min_span; ++start) {
         float span_probability;
+        if (_stopwords.find(sent[start]) != _stopwords.end()) continue;
+
         span_probability = _d_unigram[start] - _b_unigram[start];
 
         // First compute the span probabilities
         for (int jj = start + 1; jj <= ii; ++jj) {
-          span_probability += _d_bigram[ii] - _b_bigram[ii];
+          span_probability += _d_bigram[jj] - _b_bigram[jj];
         }
 
         if (span_probability > _cutoff) {
@@ -341,7 +359,8 @@ const std::string JelinekMercerFeature::feature(const std::string name,
           buffer << _corpus_names[corpus];
           for (int jj = start; jj <= ii; ++jj) {
             buffer << "_";
-            buffer << _types[sent[jj]];
+            if (_censor_slop && _slop_mask[jj]) buffer << "SLOP";
+            else buffer << _types[sent[jj]];
           }
           if (_score) {
             buffer << ":";
@@ -389,8 +408,11 @@ float JelinekMercerFeature::score(int corpus, int first, int second) {
   float unigram_den = this->unigram_norm(corpus);
   float score = unigram_num / unigram_den;
 
+
   if (kDEBUG) {
-    std::cout << "LL for " << first << " " << second << std::endl;
+    std::cout << _corpus_names[corpus] << " LL for " << first;
+    //if (first >= 0) std::cout << "(" << _types[first] << ")";
+    std::cout << " " << second << "(" << _types[second] << ")" << std::endl;
     std::cout << "UNI:" << unigram_num << "/" << unigram_den << "=" << score << std::endl;
   }
 
