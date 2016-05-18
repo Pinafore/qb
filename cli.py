@@ -37,6 +37,11 @@ def makefile():
 
 
 @main.command()
+def train_clm():
+    pass
+
+
+@main.command()
 @click.argument('wikipedia_input')
 @click.argument('output')
 def build_mentions_lm_data(wikipedia_input, output):

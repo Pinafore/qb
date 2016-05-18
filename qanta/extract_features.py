@@ -14,7 +14,6 @@ from qanta.util.environment import data_path, QB_QUESTION_DB, QB_GUESS_DB
 from qanta.util.spark_features import SCHEMA
 
 from qanta.extractors.label import Labeler
-from qanta.extractors.ir import IrExtractor
 from qanta.extractors.lm import LanguageModel
 from qanta.extractors.deep import DeepExtractor
 from qanta.extractors.classifier import Classifier
@@ -53,9 +52,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
 
     feature = None
     print("Loading feature %s ..." % feature_name)
-    if feature_name == "ir":
-        feature = IrExtractor(MIN_APPEARANCES)
-    elif feature_name == "lm":
+    if feature_name == "lm":
         feature = LanguageModel(data_path('data/lm.txt'))
     elif feature_name == "deep":
         print("from %s" % deep_data)

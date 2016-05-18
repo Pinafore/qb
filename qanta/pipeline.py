@@ -12,14 +12,6 @@ def call(args):
     return subprocess.run(args, check=True)
 
 
-class TrainClm(luigi.Task):
-    def output(self):
-        return LocalTarget('data/lm.txt')
-
-    def run(self):
-        pass
-
-
 class CreateGuesses(luigi.Task):
     def output(self):
         return LocalTarget('data/guesses.db')
@@ -61,7 +53,6 @@ class ExtractDeepFeatures(luigi.Task):
 class ExtractLMFeatures(luigi.Task):
     def requires(self):
         yield ExtractDeepFeatures()
-        yield TrainClm()
 
     def output(self):
         targets = []

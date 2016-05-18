@@ -31,7 +31,7 @@ def pretty_debug(name, result, max_width=10):
     display[0] = name
 
     start_row = 1
-    for ii in xrange(length):
+    for ii in range(length):
         if ii % max_width == 0:
             if ii > 0:
                 start_row += len(result)
