@@ -5,6 +5,8 @@ QB_GUESS_DB = os.getenv('QB_GUESS_DB', 'data/guesses.db')
 QB_SPARK_MASTER = os.getenv('QB_SPARK_MASTER')
 QB_ROOT = os.getenv('QB_ROOT')
 QB_STREAMING_CORES = os.getenv('QB_STREAMING_CORES', 12)
+QB_WIKI_LOCATION = os.getenv('QB_WIKI_LOCATION', 'data/wikipedia')
+QB_SOURCE_LOCATION = os.getenv('QB_SOURCE_LOCATION', 'data/source')
 
 ENVIRONMENT = {
     'QB_QUESTION_DB': QB_QUESTION_DB,

@@ -132,14 +132,12 @@ class LanguageModelBase:
         yield self.vocab_lookup(kEND)
 
 
-
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8, min_span=2, start_rank=200,
                  smooth=0.001, cutoff=-2, slop=0, give_score=False,
                  log_length=True, censor_slop=True, hash_names=False,
                  max_span=5,
                  stopwords=["for", "10", "points", "ftp", "ten", "name"]):
-        from clm import intArray
 
         self._loaded_lms = set()
         self._datafile = lm_file
@@ -224,7 +222,6 @@ class LanguageModelReader(LanguageModelBase):
 
         return result
 
-
     def feature_line(self, corpus, guess, sentence):
         if self._sentence_hash != hash(sentence):
             self._sentence_hash = hash(sentence)
@@ -235,11 +232,7 @@ class LanguageModelReader(LanguageModelBase):
                 self._sentence[ii] = ww
 
         norm_title = self.normalize_title(corpus, guess)
-<<<<<<< 9825f7cff35ca2a1c14359caf823907010fa6dca
         if not norm_title in self._corpora or self._sentence_length == 0:
-=======
-        if norm_title not in self._corpora or self._sentence_length == 0:
->>>>>>> Added web api for C LM to improve parallel memory performance
             return ""
         else:
             guess_id = self._corpora[norm_title]
@@ -336,7 +329,7 @@ class LanguageModelWriter(LanguageModelBase):
         comp = self.compare(norm_title)
 
         self.add_counts(norm_title, sentence)
-        for ii in xrange(self._compare):
+        for ii in range(self._compare):
             if comp != ii:
                 self.add_counts("compare_%i" % ii, sentence)
 
@@ -353,12 +346,7 @@ class LanguageModelWriter(LanguageModelBase):
         outfile.write("%i\n" % len(self._unigram))
         outfile.write("%i\n" % len(self._vocab))
         vocab_size = len(self._vocab)
-<<<<<<< 9825f7cff35ca2a1c14359caf823907010fa6dca
         for ii in self._sort_voc:
-=======
-        for ii, count in sorted(self._vocab.items(),
-                                key=lambda key_value: key_value[1]):
->>>>>>> Added web api for C LM to improve parallel memory performance
             outfile.write("%s\n" % ii)
         if vocab_size > 100:
             print("Done writing vocab")
@@ -374,7 +362,6 @@ class LanguageModelWriter(LanguageModelBase):
 
     def corpora(self):
         for ii in sorted(self._unigram):
-<<<<<<< fbe98863d57cf7a703043cab8b41a86fe4a7ffa5
             yield ii
 
     def write_corpus(self, corpus, offset, outfile):
@@ -401,21 +388,6 @@ class LanguageModelWriter(LanguageModelBase):
                 outfile.write("%i %i\n" %
                               (jj, self._obs_counts[corpus][ii][jj]))
 
-=======
-            for jj in range(vocab_size):
-
-                if jj in self._obs_counts[ii]:
-                    total = self._obs_counts[ii][jj].N()
-                    contexts = self._obs_counts[ii][jj].B()
-                else:
-                    total = 0
-                    contexts = 0
-                outfile.write("%i %i %i\n" % (jj, total, contexts))
-                if jj in self._obs_counts[ii]:
-                    for kk in self._obs_counts[ii][jj]:
-                        outfile.write("%i %i\n" %
-                                      (kk, self._obs_counts[ii][jj][kk]))
->>>>>>> Fix issues in python 3 from rebase
 
 if __name__ == "__main__":
     import argparse
@@ -484,15 +456,7 @@ if __name__ == "__main__":
                 print("Adding train doc %i, %s (%s)" %
                       (doc_num, unidecode(title), corpus))
                 start = time.time()
-<<<<<<< fbe98863d57cf7a703043cab8b41a86fe4a7ffa5
             lm.add_train(corpus, title, text)
-=======
-            lm.add_train(norm_title, text)
-            comp = lm.compare(norm_title)
-            for ii in range(flags.global_lms):
-                if comp != ii:
-                    lm.add_train("compare_%i" % ii, text)
->>>>>>> Fix issues in python 3 from rebase
 
     print("Done training")
     if flags.lm_out:
