@@ -87,12 +87,15 @@ if __name__ == "__main__":
     o.write("\tmkdir -p $@\n")
     o.write("\tcp lib/wikifier-3.0-jar-with-dependencies.jar ")
     o.write("data/wikifier/wikifier-3.0-jar-with-dependencies.jar\n")
-    o.write("\tcp lib/STAND_ALONE_GUROBI.xml ")
-    o.write("data/wikifier/STAND_ALONE_GUROBI.xml\n")
+    o.write("\tcp lib/STAND_ALONE_NO_INFERENCE.xml ")
+    o.write("data/wikifier/STAND_ALONE_NO_INFERENCE.xml\n")
+    o.write("\tcp lib/jwnl_properties.xml ")
+    o.write("data/wikifier/jwnl_properties.xml\n")
+
     o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
     o.write("wikifier-3.0-jar-with-dependencies.jar ")
     o.write("-annotateData data/input data/output ")
-    o.write("false STAND_ALONE_GUROBI.xml)\n\n")
+    o.write("false STAND_ALONE_NO_INFERENCE.xml)\n\n")
 
     # Rule for generating IR lookup
     for cc in [kMIN_APPEARANCES]:
@@ -369,7 +372,7 @@ if __name__ == "__main__":
     o.write("-annotateData %s %s " %
             (kWIKIFIER_EXPO_IN.replace("data/wikifier/", ""),
              kWIKIFIER_EXPO_OUT.replace("data/wikifier/", "")))
-    o.write("false ../../lib/STAND_ALONE_GUROBI.xml)\n")
+    o.write("false ../../lib/STAND_ALONE_NO_INFERENCE.xml)\n")
     o.write("\tcp $@/* data/wikifier/data/output\n\n")
 
 
