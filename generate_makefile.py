@@ -90,7 +90,7 @@ if __name__ == "__main__":
     o.write("\tcp lib/STAND_ALONE_NO_INFERENCE.xml ")
     o.write("data/wikifier/STAND_ALONE_NO_INFERENCE.xml\n")
     o.write("\tcp lib/jwnl_properties.xml ")
-    o.write("data/wikifier/configs/jwnl_properties.xml\n")
+    o.write("data/wikifier/data/configs/jwnl_properties.xml\n")
 
     o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
     o.write("wikifier-3.0-jar-with-dependencies.jar ")
@@ -367,12 +367,14 @@ if __name__ == "__main__":
     o.write("%s: %s\n" % (kWIKIFIER_EXPO_OUT, kWIKIFIER_EXPO_IN))
     o.write("\trm -rf $@\n")
     o.write("\tmkdir -p $@\n")
+    o.write("\tcp lib/STAND_ALONE_NO_INFERENCE.xml ")
+    o.write("data/wikifier/STAND_ALONE_NO_INFERENCE.xml\n")
     o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
-    o.write("../../lib/wikifier-3.0-jar-with-dependencies.jar ")
+    o.write("wikifier-3.0-jar-with-dependencies.jar ")
     o.write("-annotateData %s %s " %
             (kWIKIFIER_EXPO_IN.replace("data/wikifier/", ""),
              kWIKIFIER_EXPO_OUT.replace("data/wikifier/", "")))
-    o.write("false ../../lib/STAND_ALONE_NO_INFERENCE.xml)\n")
+    o.write("false STAND_ALONE_NO_INFERENCE.xml)\n")
     o.write("\tcp $@/* data/wikifier/data/output\n\n")
 
 

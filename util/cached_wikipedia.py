@@ -5,6 +5,7 @@ from time import sleep
 from requests import ConnectionError
 from requests.exceptions import ReadTimeout
 from itertools import chain
+from math import log
 
 from unidecode import unidecode
 import wikipedia, fileinput
@@ -13,11 +14,55 @@ from wikipedia.exceptions import WikipediaException
 kCOUNTRY_SUB = ["History of ", "Geography of "]
 
 
+class LinkResult:
+    def __init__(self, text_freq=0, link_freq=0, early=0):
+        self.text_freq = text_freq
+        self.link_freq = link_freq
+        self.early = early
+
+    def componentwise_max(self, lr):
+        self.text_freq = max(self.text_freq, lr.text_freq)
+        self.link_freq = max(self.link_freq, lr.link_freq)
+        self.early = max(self.early, lr.early)
+
+    def any(self):
+        """
+        Did we find anything on any metric
+        """
+        return any(x > 0.0 for x in
+                   [self.text_freq, self.link_freq, self.early])
+
+
 class WikipediaPage:
     def __init__(self, content="", links=[], categories=[]):
         self.content = content
         self.links = links
         self.categories = categories
+
+    def weighted_link(self, other_page):
+
+        # Get the number of times it's mentioned in text
+        no_disambiguation = other_page.split("(")[0].strip()
+        if len(self.content) > 0:
+            text_freq = self.content.count(no_disambiguation)
+            text_freq *= len(no_disambiguation) / float(len(self.content))
+        else:
+            text_freq = 0.0
+
+        # How many total links are there, divide by that number
+        if other_page in self.links:
+            link_freq = 1.0 / float(len(self.links))
+        else:
+            link_freq = 0.0
+
+        # How early is it mentioned in the page
+        early = self.content.find(no_disambiguation)
+        if early > 0:
+            early = 1.0 - early / float(len(self.content))
+        else:
+            0.0
+
+        return LinkResult(text_freq, link_freq, early)
 
 
 class CachedWikipedia:
@@ -57,25 +102,25 @@ class CachedWikipedia:
             print("Connection error, waiting 10 minutes ...")
             sleep(600)
             print("trying again")
-            return self[key]
+            return CachedWikipedia.load_page(key)
         except ConnectionError:
             # Wait a while, see if the network comes back
             print("Connection error, waiting 10 minutes ...")
             sleep(600)
             print("trying again")
-            return self[key]
+            return CachedWikipedia.load_page(key)
         except ValueError:
             # Wait a while, see if the network comes back
             print("Connection error, waiting 10 minutes ...")
             sleep(600)
             print("trying again")
-            return self[key]
+            return CachedWikipedia.load_page(key)
         except WikipediaException:
             # Wait a while, see if the network comes back
             print("Connection error, waiting 10 minutes ...")
             sleep(600)
             print("trying again")
-            return load_page(key)
+            return CachedWikipedia.load_page(key)
         return raw
 
     def __getitem__(self, key):

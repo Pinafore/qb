@@ -16,7 +16,7 @@ from feature_extractor import FeatureExtractor
 from extractors.lm import *
 from extractors.deep import *
 from extractors.classifier import *
-from extractors.wikilinks import *
+from extractors.wikilinks import WikiLinks
 from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
 

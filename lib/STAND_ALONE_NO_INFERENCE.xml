@@ -9,10 +9,10 @@ please make sure you understand what each preset does.-->
         <wikiRelationIndexDir>data/WikiData/Index/WikiRelation/</wikiRelationIndexDir>
         <models>data/Models/TitleMatchPlusLexicalPlusCoherence/</models>
         <titleStringIndex>data/WikiData/Index/TitleAndRedirects/</titleStringIndex>
-        <wordnetConfig>configs/jwnl_properties.xml</wordnetConfig>
+        <wordnetConfig>data/configs/jwnl_properties.xml</wordnetConfig>
         <stopwords>data/OtherData/stopwords_big</stopwords>
         <wordNetDictionaryPath>data/WordNet/</wordNetDictionaryPath>
-        <nerConfig>configs/NER.config</nerConfig>
+        <nerConfig>data/configs/NER.config</nerConfig>
         <neSimPath>data/NESimdata/config.txt</neSimPath>
     </paths>
     <parameters>

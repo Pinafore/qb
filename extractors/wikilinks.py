@@ -4,10 +4,12 @@ import argparse
 from glob import glob
 from math import log
 
-from wikipedia.exceptions import DisambiguationError, PageError
+from numpy import median
+
+from wikipedia.exceptions import PageError
 from feature_extractor import FeatureExtractor
-from util.cached_wikipedia import CachedWikipedia
-from clm.lm_wrapper import kGOODCHAR
+from util.cached_wikipedia import CachedWikipedia, LinkResult
+from clm.lm_wrapper import LanguageModelBase
 
 
 class WikiLinks(FeatureExtractor):
@@ -24,7 +26,7 @@ class WikiLinks(FeatureExtractor):
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         FeatureExtractor.set_metadata\
-          (self, answer, category, qnum, sent, token, guesses, fold)
+            (self, answer, category, qnum, sent, token, guesses, fold)
         # print(qnum, sent, token, answer)
         if not qnum in self._links:
             self.load_xml(qnum)
@@ -34,11 +36,14 @@ class WikiLinks(FeatureExtractor):
             self._cache = hash(text)
             self._matches = set()
 
+            # Get all the links from previous sentences
             for ii in xrange(self._sent):
                 self._matches = self._matches | \
                     set(x[0] for x in
                         self._links[self._qnum].get(ii, {}).values())
 
+            # Get links from this sentence if they're before the current
+            # position
             for jj in self._links[self._qnum].get(self._sent, []):
                 title, pos, index, score = \
                     self._links[self._qnum][self._sent][jj]
@@ -46,24 +51,48 @@ class WikiLinks(FeatureExtractor):
                     self._matches.add(title)
 
         total = 0
+        reciprocal = 0
         matches = ["|%s" % self._name]
-        display_title = "".join(x for x in kGOODCHAR.findall(title) if x)
+        norm_title = LanguageModelBase.normalize_title("", title)
         bad = set()
-        for ii in [x for x in self._matches]:
+
+        best = LinkResult()
+        results = []
+
+        for ii in self._matches:
             try:
                 page = self._wiki[ii]
             except PageError:
                 bad.add(ii)
                 continue
 
-            if title in page.links:
-                norm = "".join(x for x in kGOODCHAR.findall(ii) if x)
-                matches.append("%s_%s" % (norm, display_title))
+            link_result = page.weighted_link(ii)
+            best.componentwise_max(link_result)
+
+            if link_result.any():
+                results.append(link_result)
+                matches.append("%s_%s" %
+                               (norm_title,
+                                LanguageModelBase.normalize_title("", ii)))
+                if ii in self._wiki[title].links:
+                    reciprocal += 1
+
                 total += 1
-        for ii in bad:
-            self._matches.remove(ii)
 
         matches.append("Total:%f" % log(1 + total))
+        matches.append("BestText:%f" % best.text_freq)
+        matches.append("BestLink:%f" % best.link_freq)
+        matches.append("BestEarly:%f" % best.early)
+        matches.append("Reciprocal:%f" % reciprocal)
+
+        if len(results) > 0:
+            matches.append("MedianText:%f" %
+                           median(list(x.text_freq for x in results)))
+            matches.append("MedianLink:%f" %
+                           median(list(x.link_freq for x in results)))
+            matches.append("MedianEarly:%f" %
+                           median(list(x.early for x in results)))
+
         return " ".join(matches)
 
     def load_xml(self, question):
@@ -79,7 +108,6 @@ class WikiLinks(FeatureExtractor):
             for child in root[2].findall('Entity'):
                 surface = child.find("EntitySurfaceForm").text
                 start = int(child.find("EntityTextStart").text)
-                end = int(child.find("EntityTextEnd").text)
 
                 entity = child.find("TopDisambiguation")
                 page = entity.find("WikiTitle").text
@@ -94,15 +122,23 @@ class WikiLinks(FeatureExtractor):
 
 
 if __name__ == "__main__":
+    from extract_expo_features import add_expo_questions
+
     parser = argparse.ArgumentParser(description='')
     parser.add_argument("--xml_location", type=str,
                         default="data/wikifier/data/output",
                         help="Where we write output file")
+    parser.add_argument('--expo', type=str, default="data/expo.csv")
+
     flags = parser.parse_args()
+
+    pages = defaultdict(set)
+    add_expo_questions(flags.expo, pages)
 
     wl = WikiLinks(flags.xml_location)
 
-    wl.load_xml(700000024)
-    wl.set_metadata("", "", 700000024, 10, 0, 50, "expo")
-    print wl._qnum
-    print wl.vw_from_title("Yukio Mishima", "")
+    for pp in pages:
+        for qq in pages[pp]:
+            print(qq.qnum)
+            wl.set_metadata("", "", qq.qnum, 10, 0, 50, "expo")
+            print(wl.vw_from_title(pp, qq.get_text(10, 0)))
