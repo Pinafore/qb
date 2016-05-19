@@ -90,7 +90,7 @@ if __name__ == "__main__":
     o.write("\tcp lib/STAND_ALONE_NO_INFERENCE.xml ")
     o.write("data/wikifier/STAND_ALONE_NO_INFERENCE.xml\n")
     o.write("\tcp lib/jwnl_properties.xml ")
-    o.write("data/wikifier/jwnl_properties.xml\n")
+    o.write("data/wikifier/configs/jwnl_properties.xml\n")
 
     o.write("\t(cd data/wikifier && java -Xmx10G -jar ")
     o.write("wikifier-3.0-jar-with-dependencies.jar ")
