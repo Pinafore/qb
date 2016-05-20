@@ -6,9 +6,8 @@ from math import log
 from numpy import median
 
 from wikipedia.exceptions import PageError
-from util.cached_wikipedia import CachedWikipedia, LinkResult
 from clm.lm_wrapper import LanguageModelBase
-from extractors.abstract import FeatureExtractor
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia, LinkResult
 from qanta.extractors.abstract import FeatureExtractor
 
 
