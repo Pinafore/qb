@@ -22,7 +22,8 @@ requirements = [
     'click',
     'pyfunctional',
     'luigi',
-    'jinja2'
+    'jinja2',
+    'progressbar2'
 ]
 
 

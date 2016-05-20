@@ -1,84 +1,12 @@
 from typing import List, Dict
 import sqlite3
 import random
-import string
 from collections import defaultdict, OrderedDict, Counter
-import re
 
 from unidecode import unidecode
 from functional import seq
-from whoosh.collectors import TimeLimitCollector, TimeLimit
-from whoosh import qparser
-from whoosh.qparser import QueryParser
-from fuzzywuzzy import fuzz
 
-from qanta.extractors.ir import IrIndex
-from qanta.util.constants import MIN_APPEARANCES
-
-
-punc = set(string.punctuation)
-paren = re.compile("\\([^\\)]*\\)")
-
-
-class ClosestQuestion:
-    def __init__(self, index_location):
-        from whoosh.fields import Schema, TEXT, STORED
-        from whoosh.index import create_in, open_dir
-
-        self.schema = Schema(id=STORED, text=TEXT)
-
-        self.index = create_in(index_location, self.schema)
-        self.index = open_dir(index_location)
-        self.writer = self.index.writer()
-        self.raw = {}
-
-        self.parser = None
-
-    def add_question(self, qid, question):
-        self.writer.add_document(id=qid, text=question)
-        self.raw[qid] = question.lower()
-
-    def finalize(self):
-        self.writer.commit()
-
-    def find_closest(self, raw_query, threshold=50):
-        """
-        Returns the best score of similarity
-        """
-        if self.parser is None:
-            og = qparser.OrGroup.factory(0.9)
-            self.parser = QueryParser("text", schema=self.schema,
-                                      group=og)
-
-        query_text, _ = IrIndex.prepare_query(raw_query.lower())
-        print("Query: %s" % query_text)
-        query = self.parser.parse(query_text)
-        print("-------------")
-        closest_question = -1
-        with self.index.searcher() as s:
-            c = s.collector(limit=10)
-            tlc = TimeLimitCollector(c, timelimit=5)
-            try:
-                s.search_with_collector(query, tlc)
-            except TimeLimit:
-                pass
-            try:
-                results = tlc.results()
-            except TimeLimit:
-                print("Time limit reached!")
-                return -1
-
-            print(results[0]['id'],
-                  self.raw[results[0]['id']][:50])
-            similarity = fuzz.ratio(self.raw[results[0]['id']],
-                                    raw_query.lower())
-            if similarity > threshold:
-                closest_question = results[0]['id']
-                print("Old!", closest_question, similarity)
-            else:
-                print("NEW!  %f" % similarity)
-        print("-------------")
-        return closest_question
+from qanta.util.constants import MIN_APPEARANCES, PUNCTUATION
 
 
 class Question:
@@ -109,7 +37,7 @@ class Question:
     @staticmethod
     def split_and_remove_punc(text):
         for ii in text.split():
-            word = "".join(x for x in unidecode(ii.lower()) if x not in punc)
+            word = "".join(x for x in unidecode(ii.lower()) if x not in PUNCTUATION)
             if word:
                 yield word
 
@@ -150,13 +78,8 @@ class Question:
     def add_text(self, sent, text):
         self.text[sent] = text
 
-    def random_text(self):
-        cutoff = random.randint(0, max(self.text))
-        return unidecode("\t".join(self.text[x] for x in sorted(self.text)
-                                   if x <= cutoff))
-
     def flatten_text(self):
-        return unidecode("\t".join(self.text[x] for x in sorted(self.text)))
+        return unidecode(" ".join(self.text[x] for x in sorted(self.text)))
 
 
 class QuestionDatabase:
@@ -303,11 +226,14 @@ class QuestionDatabase:
             else:
                 yield aa
 
-    def get_all_pages(self):
+    def get_all_pages(self, exclude_test=False):
         c = self._conn.cursor()
-        c.execute('select page from questions where page != "" group by page')
-        for cc in c:
-            yield cc[0]
+        if exclude_test:
+            c.execute('select distinct page from questions where page != "" and fold != "devtest" and fold != "test"')
+        else:
+            c.execute('select distinct page from questions where page != ""')
+        for result_tuple in c:
+            yield result_tuple[0]
 
     def majority_frequency(self, page, column):
         """
@@ -350,13 +276,3 @@ class QuestionDatabase:
         c = self._conn.cursor()
         c.execute(query, (page, ans_type, qid))
         self._conn.commit()
-
-
-def main():
-    db = QuestionDatabase("data/questions.db")
-    for ii in db.page_by_count(MIN_APPEARANCES):
-        print(unidecode(ii))
-
-
-if __name__ == "__main__":
-    main()

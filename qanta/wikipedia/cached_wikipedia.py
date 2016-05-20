@@ -155,7 +155,7 @@ class CachedWikipedia:
                 raw = [self.load_page(key)]
 
             raw = [x for x in raw if x is not None]
-            sleep(.3)
+            sleep(.1)
             if raw:
                 if len(raw) > 1:
                     print("%i pages for %s" % (len(raw), key))

@@ -1,18 +1,13 @@
-import argparse
 import gzip
 import zlib
 import os
-import traceback
-import re
 
-from whoosh.index import create_in
-from whoosh.fields import TEXT, ID, Schema
 
 from unidecode import unidecode
 
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.environment import data_path, QB_QUESTION_DB
+from qanta.util.environment import data_path
 from qanta.util.constants import COUNTRY_LIST_PATH
 
 
@@ -73,53 +68,3 @@ def text_iterator(use_wiki, wiki_location,
 
         if 0 < limit < doc_num:
             break
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--question_db', type=str, default=QB_QUESTION_DB)
-    parser.add_argument('--use_qb', default=False, action='store_true', help="Use the QB data")
-    parser.add_argument('--use_source', default=False, action='store_true',
-                        help="Use the source data")
-    parser.add_argument('--use_wiki', default=False, action='store_true', help="Use wikipedia data")
-    parser.add_argument("--whoosh_index", default=data_path("data/ir/whoosh"),
-                        help="Location of IR index")
-    parser.add_argument("--source_location", type=str, default=data_path("data/source"),
-                        help="Location of source documents")
-    parser.add_argument("--wiki_location", type=str, default=data_path("data/wikipedia"),
-                        help="Location of wiki cache")
-    parser.add_argument("--min_answers", type=int, default=0,
-                        help="How many times does an answer need to appear to be included")
-    parser.add_argument("--max_pages", type=int, default=-1,
-                        help="How many pages to add to the index")
-    flags = parser.parse_args()
-
-    schema = Schema(
-        title=TEXT(stored=True), content=TEXT(vector=True), id=ID(stored=True, unique=True))
-    ix = create_in(flags.whoosh_index, schema)
-    writer = ix.writer()  # ix.writer(procs=4, limitmb=1024)
-
-    doc_num = 0
-    docs_added = set()
-    for title, text in text_iterator(flags.use_wiki, flags.wiki_location,
-                                     flags.use_qb, flags.question_db,
-                                     flags.use_source, flags.source_location,
-                                     flags.max_pages, flags.min_answers):
-
-        try:
-            if not re.match('^\s+$', text):
-                writer.add_document(title=title, content=text, id=title)
-        except Exception as e:
-            print("exception")
-            traceback.print_exc()
-
-        if len(text) > 0:
-            doc_num += 1
-
-        if doc_num % 2500 == 1:
-            print("Adding %i %s %i" % (doc_num, title, len(text)))
-            writer.commit()
-            writer = ix.writer()  # ix.writer(procs=4, limitmb=1024)
-    writer.commit()
-    ix.close()
-    print('Whoosh index closed')

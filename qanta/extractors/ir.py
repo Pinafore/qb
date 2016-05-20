@@ -1,42 +1,26 @@
-# -*- coding: utf-8 -*-
-import six
-from string import ascii_lowercase, ascii_uppercase, digits
-from collections import defaultdict
+from abc import ABCMeta, abstractmethod
 
-from numpy import isnan
-
-import whoosh
 from whoosh import index
-from whoosh import qparser
-from whoosh import scoring
-from whoosh.collectors import TimeLimitCollector, TimeLimit
+from whoosh import query
+from whoosh.fields import Schema, TEXT, ID
+from whoosh.qparser import QueryParser
+import progressbar
 
-from unidecode import unidecode
-
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.extractors.abstract import FeatureExtractor
-from qanta.util.constants import (
-    NEG_INF, STOP_WORDS, PAREN_EXPRESSION, get_treebank_tokenizer, get_punctuation_table)
-from qanta.util.environment import data_path
-
-QUERY_CHARS = set(ascii_lowercase + ascii_uppercase + digits)
-
-tokenizer = get_treebank_tokenizer()
-valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | set(' ')
+from qanta.util.constants import WHOOSH_WIKI_INDEX_PATH, COUNTRY_LIST_PATH, N_GUESSES
+from qanta.util.environment import QB_WIKI_LOCATION, QB_QUESTION_DB
+from qanta.util.qdb import QuestionDatabase
 
 
 class IrExtractor(FeatureExtractor):
     def __init__(self):
         super(IrExtractor, self).__init__()
         self.name = "ir"
+        self.wiki_index = WikiIndex()
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         pass
-
-    def score_one_guess(self, title, text):
-        val = {}
-        for ii in self._index:
-            val[ii] = self._index[ii].score_one_guess(title, text)
-        return val
 
     def vw_from_title(self, title, text):
         pass
@@ -45,4 +29,46 @@ class IrExtractor(FeatureExtractor):
         pass
 
     def text_guess(self, text):
+        return dict(self.wiki_index.search(text))
+
+
+class Index(metaclass=ABCMeta):
+    @classmethod
+    @abstractmethod
+    def build(cls):
         pass
+
+
+class WikiIndex(Index):
+    schema = Schema(page=ID(unique=True, stored=True), content=TEXT)
+
+    @classmethod
+    def build(cls):
+        ix = index.create_in(WHOOSH_WIKI_INDEX_PATH, cls.schema)
+        writer = ix.writer()
+        cw = CachedWikipedia(QB_WIKI_LOCATION, COUNTRY_LIST_PATH)
+        qdb = QuestionDatabase(QB_QUESTION_DB)
+        pages = list(qdb.get_all_pages(exclude_test=True))
+        print("Building whoosh wiki index from {0} pages".format(len(pages)))
+        bar = progressbar.ProgressBar()
+        for p in bar(pages):
+            writer.add_document(page=p, content=cw[p].content)
+        writer.commit()
+
+    def __init__(self):
+        self.index = index.open_dir(WHOOSH_WIKI_INDEX_PATH, readonly=True)
+
+    def search(self, text, limit=10):
+        with self.index.searcher() as searcher:
+            parser = QueryParser('content', schema=self.schema)
+            text_query = parser.parse(text)
+            results = searcher.search(text_query, limit=limit)
+            return [(r['page'], r.score) for r in results]
+
+    def score_guess(self, guess, text):
+        with self.index.searcher() as searcher:
+            filter_query = query.Term('page', guess)
+            parser = QueryParser('content', schema=self.schema)
+            text_query = parser.parse(text)
+            results = searcher.search(text_query, filter=filter_query)
+            return results[0].score

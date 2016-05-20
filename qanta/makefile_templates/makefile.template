@@ -38,24 +38,6 @@ data/wikifier/data/output/: data/wikifier/data/input
 	cp lib/STAND_ALONE_GUROBI.xml data/wikifier/STAND_ALONE_GUROBI.xml
 	(cd data/wikifier && java -Xmx10G -jar wikifier-3.0-jar-with-dependencies.jar -annotateData data/input data/output false STAND_ALONE_GUROBI.xml)
 
-data/ir/whoosh_wiki_{{ MIN_APPEARANCES }}.: util/build_whoosh.py
-	rm -rf $@
-	mkdir -p $@
-	mkdir -p data/wikipedia
-	python3 util/build_whoosh.py --min_answers={{ MIN_APPEARANCES }} --whoosh_index=$@ --use_wiki
-
-data/ir/whoosh_qb_{{ MIN_APPEARANCES }}/: util/build_whoosh.py
-	rm -rf $@
-	mkdir -p $@
-	python3 util/build_whoosh.py --whoosh_index=$@ --min_answers={{ MIN_APPEARANCES }} --use_qb
-
-data/ir/whoosh_source_{{ MIN_APPEARANCES }}/: util/build_whoosh.py
-	rm -rf $@
-	mkdir -p $@
-	python3 util/build_whoosh.py --whoosh_index=$@ --min_answers={{ MIN_APPEARANCES }} --use_source
-
-ir: data/ir/whoosh_source_{{ MIN_APPEARANCES }} data/ir/whoosh_qb_{{ MIN_APPEARANCES }} data/ir/whoosh_wiki_{{ MIN_APPEARANCES }}
-
 clm/clm_wrap.cxx: clm/clm.swig
 	swig -c++ -python $<
 
@@ -69,8 +51,7 @@ clm/_clm.so: clm/clm.o clm/clm_wrap.o
 	g++ -shared `python3-config --ldflags` $^ -o $@
 
 data/lm.txt: clm/lm_wrapper.py clm/_clm.so
-	mkdir -p data/wikipedia
 	python3 run_clm.py --min_answers={{ MIN_APPEARANCES }}
 
-prereqs: data/lm.txt ir data/wikifier/data/output data/kenlm.binary data/deep/params classifier
+prereqs: data/lm.txt data/wikifier/data/output data/kenlm.binary data/deep/params classifier
 
