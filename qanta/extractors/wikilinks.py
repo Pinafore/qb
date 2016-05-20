@@ -123,25 +123,3 @@ class WikiLinks(FeatureExtractor):
     def vw_from_score(self, results):
         pass
 
-
-if __name__ == "__main__":
-    from extract_expo_features import add_expo_questions
-
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument("--xml_location", type=str,
-                        default="data/wikifier/data/output",
-                        help="Where we write output file")
-    parser.add_argument('--expo', type=str, default="data/expo.csv")
-
-    flags = parser.parse_args()
-
-    pages = defaultdict(set)
-    add_expo_questions(flags.expo, pages)
-
-    wl = WikiLinks(flags.xml_location)
-
-    for pp in pages:
-        for qq in pages[pp]:
-            print(qq.qnum)
-            wl.set_metadata("", "", qq.qnum, 10, 0, 50, "expo")
-            print(wl.vw_from_title(pp, qq.get_text(10, 0)))
