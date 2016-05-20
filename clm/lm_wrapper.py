@@ -10,6 +10,7 @@ from nltk.tokenize import RegexpTokenizer
 from nltk import bigrams
 
 from qanta.util.build_whoosh import text_iterator
+from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION, QB_SOURCE_LOCATION
 
 from clm import clm
 
@@ -382,44 +383,27 @@ class LanguageModelWriter(LanguageModelBase):
             for jj in sorted(self._obs_counts[corpus][ii]):
                 assert isinstance(jj, int), "Not an integer: %s" % str(jj)
                 assert isinstance(self._obs_counts[corpus][ii][jj], int), \
-                    "Got %s for %s %s" % (self._obs_counts[corpus][ii][jj],
-                                          corpus, ii, jj)
+                    "Got %s for %s %s" % (self._obs_counts[corpus][ii][jj], corpus, ii, jj)
 
                 outfile.write("%i %i\n" %
                               (jj, self._obs_counts[corpus][ii][jj]))
 
 
-if __name__ == "__main__":
-    import argparse
+def build_clm(lm_out='data/language_model',
+              vocab_size=100000,
+              min_answers=1,
+              global_lms=5,
+              max_pages=-1):
+    print("Training language model with pages that appear more than %i times" % min_answers)
 
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--wiki_location', type=str, default='data/wikipedia')
-    parser.add_argument('--question_db', type=str, default='data/questions.db')
-    parser.add_argument('--source_location', type=str, default='data/source')
-    parser.add_argument('--global_lms', type=int, default=5,
-                        help="The number of background LMs we maintain")
-    parser.add_argument('--vocab_size', type=int, default=100000)
-    parser.add_argument("--min_answers", type=int, default=1,
-                        help="How many answers needed before including in LM")
-    parser.add_argument("--max_pages", type=int, default=-1,
-                        help="How many pages to add to the index")
-    parser.add_argument("--stats_pages", type=int, default=5000,
-                        help="How many pages to use for computing stats")
-    parser.add_argument("--lm_out", type=str, default='data/language_model')
-    flags = parser.parse_args()
-
-    min_answers = flags.min_answers
-    print("Training language model with pages that appear more than %i times" %
-          min_answers)
-
-    lm = LanguageModelWriter(flags.vocab_size, flags.global_lms)
+    lm = LanguageModelWriter(vocab_size, global_lms)
     num_docs = 0
     background = defaultdict(int)
     # Initialize language models
-    for title, text in text_iterator(True, flags.wiki_location,
-                                     True, flags.question_db,
-                                     True, flags.source_location,
-                                     flags.max_pages,
+    for title, text in text_iterator(True, QB_WIKI_LOCATION,
+                                     True, QB_QUESTION_DB,
+                                     True, QB_SOURCE_LOCATION,
+                                     max_pages,
                                      min_pages=min_answers):
         num_docs += 1
         if num_docs % 500 == 0:
@@ -446,10 +430,10 @@ if __name__ == "__main__":
                                      ]:
         # Add training data
         start = time.time()
-        for title, text in text_iterator(wiki, flags.wiki_location,
-                                         qb, flags.question_db,
-                                         source, flags.source_location,
-                                         flags.max_pages,
+        for title, text in text_iterator(wiki, QB_WIKI_LOCATION,
+                                         qb, QB_QUESTION_DB,
+                                         source, QB_SOURCE_LOCATION,
+                                         max_pages,
                                          min_pages=min_answers):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
@@ -459,14 +443,14 @@ if __name__ == "__main__":
             lm.add_train(corpus, title, text)
 
     print("Done training")
-    if flags.lm_out:
+    if lm_out:
         # Create the extractor object and write out the pickle
-        o = open("%s.txt" % flags.lm_out, 'w')
+        o = open("%s.txt" % lm_out, 'w')
         lm.write_vocab(o)
         o.close()
 
-        os.mkdir("%s" % flags.lm_out)
+        os.mkdir("%s" % lm_out)
         for ii, cc in enumerate(lm.corpora()):
-            o = open("%s/%i" % (flags.lm_out, ii), 'w')
+            o = open("%s/%i" % (lm_out, ii), 'w')
             lm.write_corpus(cc, ii, o)
             o.close()

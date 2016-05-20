@@ -1,6 +1,5 @@
 *.pyc
 .idea
-/Makefile
 data/questions.db
 data/temp_guesses.db
 data/wikifier

@@ -1,14 +1,9 @@
-# -------------------------------------------------------
-# This Makefile is automatically generated.  If you want to change the
-# system, e.g. to add additional features, then edit the file
-# generate_makefile.py instead.
-# -------------------------------------------------------
 data/deep/glove.840B.300d.txt.gz:
 	mkdir -p data/deep
 	curl http://www-nlp.stanford.edu/data/glove.840B.300d.txt.gz > $@
 
 data/deep/params: data/deep/glove.840B.300d.txt.gz
-	python3 guesser/util/format_dan.py --database={{ QBDB }} --threshold={{ MIN_APPEARANCES }}
+	python3 guesser/util/format_dan.py --database=data/questions.db --threshold=5
 	python3 guesser/util/load_embeddings.py
 	python3 guesser/dan.py
 
@@ -18,13 +13,21 @@ data/kenlm.binary:
 	lmplz -o 5 < temp/wiki_sent > data/kenlm.arpa
 	build_binary data/kenlm.arpa $@
 	rm temp/wiki_sent
-{% for classifier in CLASSIFIER_FIELDS %}
-data/classifier/{{ classifier }}.pkl:
-	mkdir -p data/classifier
-	python3 util/classifier.py --attribute={{ classifier }}
-{% endfor %}
 
-classifier: {% for classifier in CLASSIFIER_FIELDS %}data/classifier/{{ classifier }}.pkl {% endfor %}
+data/classifier/category.pkl:
+	mkdir -p data/classifier
+	python3 util/classifier.py --attribute=category
+
+data/classifier/ans_type.pkl:
+	mkdir -p data/classifier
+	python3 util/classifier.py --attribute=ans_type
+
+data/classifier/gender.pkl:
+	mkdir -p data/classifier
+	python3 util/classifier.py --attribute=gender
+
+
+classifier: data/classifier/category.pkl data/classifier/ans_type.pkl data/classifier/gender.pkl 
 
 data/wikifier/data/input/: util/wikification.py
 	rm -rf $@
@@ -50,8 +53,4 @@ clm/clm.o: clm/clm.cpp clm/clm.h
 clm/_clm.so: clm/clm.o clm/clm_wrap.o
 	g++ -shared `python3-config --ldflags` $^ -o $@
 
-data/lm.txt: clm/lm_wrapper.py clm/_clm.so
-	python3 run_clm.py --min_answers={{ MIN_APPEARANCES }}
-
-prereqs: data/lm.txt data/wikifier/data/output data/kenlm.binary data/deep/params classifier
-
+prereqs: data/wikifier/data/output data/kenlm.binary data/deep/params classifier

@@ -3,7 +3,6 @@ import click
 from qanta.extractors import mentions
 from qanta.streaming import start_qanta_streaming, start_spark_streaming
 from qanta.util.environment import ENVIRONMENT
-from qanta.util.makefile import generate
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -28,12 +27,6 @@ def qanta_stream():
 def env():
     print("Printing QANTA Environment Variables")
     print('\n'.join([str(kv) for kv in ENVIRONMENT.items()]))
-
-
-@main.command()
-def makefile():
-    print("Generating makefile")
-    generate()
 
 
 @main.command()

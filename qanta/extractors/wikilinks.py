@@ -1,6 +1,5 @@
 from collections import defaultdict
 from xml.etree import ElementTree
-import argparse
 from glob import glob
 from math import log
 from numpy import median

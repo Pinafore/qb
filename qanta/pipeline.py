@@ -6,10 +6,19 @@ from qanta.spark_execution import extract_features, merge_features
 from qanta.util.constants import (FOLDS, COMPUTE_OPT_FEATURES, DEEP_OPT_FEATURES,
                                   LM_OPT_FEATURES, MENTIONS_OPT_FEATURES, NEGATIVE_WEIGHTS)
 from qanta.extract_features import create_guesses
+from clm.lm_wrapper import build_clm
 
 
 def call(args):
     return subprocess.run(args, check=True)
+
+
+class BuildClm(luigi.Task):
+    def output(self):
+        return LocalTarget('data/language_model.txt')
+
+    def run(self):
+        build_clm()
 
 
 class CreateGuesses(luigi.Task):
@@ -53,6 +62,7 @@ class ExtractDeepFeatures(luigi.Task):
 class ExtractLMFeatures(luigi.Task):
     def requires(self):
         yield ExtractDeepFeatures()
+        yield BuildClm()
 
     def output(self):
         targets = []

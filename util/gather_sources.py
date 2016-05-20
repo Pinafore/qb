@@ -10,7 +10,7 @@ from collections import defaultdict
 
 from unidecode import unidecode
 
-from util.build_whoosh import text_iterator
+from qanta.util.build_whoosh import text_iterator
 
 kWORK_TYPES = ["poem", "novel", "play", "film"]
 kENCYCLOPEDIAS = [u"1911_Encyclopædia_Britannica",
@@ -23,6 +23,7 @@ kBIBLE_REWRITE = {"Acts": "Acts of the Apostles",
                   "2 John": "Second Epistle of John",
                   "1 John": "First Epistle of John",
                   "Wisdom of Solomon": "Book of Wisdom"}
+
 
 def read_wiki(filename, read_text=True):
     cur_title = None
