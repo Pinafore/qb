@@ -59,6 +59,14 @@ int JelinekMercerFeature::min_span() const {
   return _min_span;
 }
 
+void JelinekMercerFeature::set_max_span(int span) {
+  _max_span = span;
+}
+
+int JelinekMercerFeature::max_span() const {
+  return _max_span;
+}
+
 void JelinekMercerFeature::set_min_start_rank(int rank) {
   _min_start_rank = rank;
 }
@@ -340,8 +348,9 @@ const std::string JelinekMercerFeature::feature(const std::string name,
       if (ii - _span_start[ii] >= longest_span)
 	longest_span = ii - _span_start[ii] + 1;
 
-      // Skip if it's too short
+      // Skip if it's too short or too long
       if (ii - _span_start[ii] < _min_span - 1) continue;
+      if (ii - _span_start[ii] >= _max_span) continue;
 
       for (int start = _span_start[ii]; start <= ii - _min_span; ++start) {
         float span_probability;
@@ -356,11 +365,11 @@ const std::string JelinekMercerFeature::feature(const std::string name,
 
         if (span_probability > _cutoff) {
           if (span_probability > max_prob) max_prob = span_probability;
-          buffer << corpus;
+          buffer << _corpus_names[corpus];
           for (int jj = start; jj <= ii; ++jj) {
             buffer << "_";
             if (_censor_slop && _slop_mask[jj]) buffer << "SLOP";
-            else buffer << sent[jj];
+            else buffer << _types[sent[jj]];
           }
           if (_score) {
             buffer << ":";

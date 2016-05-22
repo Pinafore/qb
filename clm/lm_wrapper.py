@@ -133,9 +133,10 @@ class LanguageModelBase:
 
 
 class LanguageModelReader(LanguageModelBase):
-    def __init__(self, lm_file, interp=0.8, min_span=1, start_rank=200,
+    def __init__(self, lm_file, interp=0.8, min_span=2, start_rank=200,
                  smooth=0.001, cutoff=-2, slop=0, give_score=True,
-                 log_length=True, censor_slop=True, hash_names=True,
+                 log_length=True, censor_slop=True, hash_names=False,
+                 max_span=5,
                  stopwords=["for", "10", "points", "ftp", "ten", "name"]):
         from clm import intArray
 
@@ -148,10 +149,10 @@ class LanguageModelReader(LanguageModelBase):
         self._vocab_final = True
         self._hash_names = hash_names
 
-        self.set_params(interp, min_span, start_rank, smooth, cutoff, slop,
-                        censor_slop, give_score, log_length, stopwords)
+        self.set_params(interp, min_span, max_span, start_rank, smooth, cutoff,
+                        slop, censor_slop, give_score, log_length, stopwords)
 
-    def set_params(self, interp, min_span, start_rank, smooth,
+    def set_params(self, interp, min_span, max_span, start_rank, smooth,
                    cutoff, slop, censor_slop, give_score,
                    log_length, stopwords):
         assert isinstance(min_span, int), "Got bad span %s" % str(min_span)
@@ -159,6 +160,7 @@ class LanguageModelReader(LanguageModelBase):
         self._lm.set_slop(slop)
         self._lm.set_cutoff(cutoff)
         self._lm.set_min_span(min_span)
+        self._lm.set_max_span(max_span)
         self._lm.set_smooth(smooth)
         self._lm.set_min_start_rank(start_rank)
         self._lm.set_score(give_score)
