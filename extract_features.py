@@ -21,9 +21,14 @@ from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
 
 kMIN_APPEARANCES = 5
-kFEATURES = OrderedDict([("ir", None), ("lm", None), ("deep", None),
-    ("answer_present", None), ("text", None),
-    ("classifier", None), ("wikilinks", None),
+kFEATURES = OrderedDict([
+    # ("ir", None),
+    ("lm", None),
+    ("deep", None),
+    ("answer_present", None),
+    ("text", None),
+    ("classifier", None),
+    ("wikilinks", None),
     ("mentions", None),
     ])
 
@@ -118,7 +123,7 @@ def instantiate_feature(feature_name, questions):
     elif feature_name == "text":
         feature = TextExtractor()
     elif feature_name == "lm":
-        feature = LanguageModel("data/lm.txt")
+        feature = LanguageModel("data/language_model")
         feature.add_corpus("qb")
         feature.add_corpus("wiki")
         feature.add_corpus("source")
@@ -481,7 +486,7 @@ if __name__ == "__main__":
                                                               feature_generator):
                             feat_lines += 1
                             if meta:
-                                meta[qq.fold].write("%i\t%i\t%i\t%s\n" %
+                                meta[qq.fold].write("%i %i %i %s\n" %
                                                     (qq.qnum, ss, tt,
                                                      unidecode(pp)))
                             assert feat is not None
