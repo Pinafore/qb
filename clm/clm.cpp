@@ -360,7 +360,7 @@ const std::string JelinekMercerFeature::feature(const std::string name,
           for (int jj = start; jj <= ii; ++jj) {
             buffer << "_";
             if (_censor_slop && _slop_mask[jj]) buffer << "SLOP";
-            else buffer << _types[sent[jj]];
+            else buffer << sent[jj];
           }
           if (_score) {
             buffer << ":";
