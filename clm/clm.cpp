@@ -375,23 +375,23 @@ const std::string JelinekMercerFeature::feature(const std::string name,
   // Output the probability
   if (_score) {
     buffer << name;
-    buffer << "_PROB:";
+    buffer << "-PROB:";
     buffer << complete_prob / ((float)length);
 
     buffer << " ";
     buffer << name;
-    buffer << "_MAX:";
+    buffer << "-MAX:";
     buffer << max_prob;
     buffer << " ";
   }
 
   buffer << name;
-  buffer << "_LEN:";
+  buffer << "-LEN:";
   buffer << longest_span;
 
   if (_log_length) {
     buffer << " " << name;
-    buffer << "_LGLEN:";
+    buffer << "-LGLEN:";
     buffer << log(1 + longest_span);
   }
 

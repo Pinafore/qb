@@ -2,6 +2,7 @@ from collections import defaultdict
 import time
 import re
 import os
+import ctypes
 
 from unidecode import unidecode
 
@@ -134,7 +135,7 @@ class LanguageModelBase:
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8, min_span=1, start_rank=200,
                  smooth=0.001, cutoff=-2, slop=0, give_score=True,
-                 log_length=True, censor_slop=True,
+                 log_length=True, censor_slop=True, hash_names=True,
                  stopwords=["for", "10", "points", "ftp", "ten", "name"]):
         from clm import intArray
 
@@ -145,6 +146,7 @@ class LanguageModelReader(LanguageModelBase):
         self._sentence_length = 0
         self._sentence_hash = 0
         self._vocab_final = True
+        self._hash_names = hash_names
 
         self.set_params(interp, min_span, start_rank, smooth, cutoff, slop,
                         censor_slop, give_score, log_length, stopwords)
@@ -236,8 +238,24 @@ class LanguageModelReader(LanguageModelBase):
                 self._lm.read_counts("%s/%i" % (self._datafile, guess_id))
                 self._loaded_lms.add(guess_id)
 
-            return self._lm.feature(corpus, guess_id, self._sentence,
-                                    self._sentence_length)
+            feat =  self._lm.feature(corpus, guess_id, self._sentence,
+                                     self._sentence_length)
+
+            if self._hash_names:
+                result = []
+                for ii in feat.split():
+                    if "_" in ii:
+                        if ":" in ii:
+                            name, val = ii.split(":")
+                            hashed_name = ctypes.c_uint32(hash(name)).value
+                            result.append("%i:%s" % (hashed_name, val))
+                        else:
+                            result.append("%i" % ctypes.c_uint32(hash(ii)).value)
+                    else:
+                        result.append(ii)
+                return " ".join(result)
+            else:
+                return feat
 
 
 class LanguageModelWriter(LanguageModelBase):
