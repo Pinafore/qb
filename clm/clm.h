@@ -38,6 +38,8 @@ class JelinekMercerFeature {
     float cutoff() const;
     void set_min_span(int span);
     int min_span() const;
+    void set_max_span(int span);
+    int max_span() const;
     void read_vocab(const std::string filename);
     void read_counts(const std::string filename);
     int sum(int *first, int nitems);
@@ -55,6 +57,7 @@ class JelinekMercerFeature {
     float _cutoff;
     int _slop;
     int _min_span;
+    int _max_span;
     bool _score;
     bool _censor_slop;
     bool _log_length;
