@@ -26,11 +26,11 @@ class Labeler(FeatureExtractor):
         # TODO: Incorporate token position here as well to improve
         # position-based features
         if title == self._correct:
-            return "1 '%s |guess %s sent:%0.1f count:%f " % \
+            return "1 '%s |guess %s sent:%0.1f count:%f" % \
                 (self._id, unidecode(title).replace(" ", "_"),
                  self._sent, self.counts.get(title, -2))
         else:
-            return "-1 %i '%s |guess %s sent:%0.1f count:%f " % \
+            return "-1 %i '%s |guess %s sent:%0.1f count:%f" % \
                 (self._num_guesses, self._id,
                  unidecode(title).replace(" ", "_"),
                  self._sent, self.counts.get(title, -2))

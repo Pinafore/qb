@@ -40,10 +40,10 @@ def create_output(sc: SparkContext, path: str, granularity='sentence'):
                         continue
                     named_feature = named_feature_list[0]
                     if meta is None:
-                        meta = '%i\t%i\t%i\t%s' % (
+                        meta = '%i %i %i %s' % (
                             named_feature.qnum, named_feature.sentence, named_feature.token,
                             unidecode(named_feature.guess))
-                    result = result + '\t' + named_feature.feat
+                    result = result + ' ' + named_feature.feat
                 return result + '|||' + meta
 
             output_rdd = grouped_rdd.map(generate_string)

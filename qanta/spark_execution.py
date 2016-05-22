@@ -17,7 +17,7 @@ def cli():
 def create_spark_context(app_name="Quiz Bowl", lm_memory=False, profile=False):
     spark_conf = SparkConf()
     if lm_memory:
-        spark_conf = spark_conf.set('spark.max.cores', 12).set('spark.executor.cores', 12)
+        spark_conf = spark_conf.set('spark.max.cores', 16).set('spark.executor.cores', 16)
     if profile:
         spark_conf = spark_conf.set('spark.python.profile', True)
     spark_conf = spark_conf.set('spark.akka.frameSize', 300)

@@ -8,7 +8,7 @@ import progressbar
 
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.extractors.abstract import FeatureExtractor
-from qanta.util.constants import WHOOSH_WIKI_INDEX_PATH, COUNTRY_LIST_PATH, N_GUESSES
+from qanta.util.constants import WHOOSH_WIKI_INDEX_PATH, COUNTRY_LIST_PATH, MAX_APPEARANCES
 from qanta.util.environment import QB_WIKI_LOCATION, QB_QUESTION_DB
 from qanta.util.qdb import QuestionDatabase
 
@@ -48,6 +48,8 @@ class WikiIndex(Index):
         writer = ix.writer()
         cw = CachedWikipedia(QB_WIKI_LOCATION, COUNTRY_LIST_PATH)
         qdb = QuestionDatabase(QB_QUESTION_DB)
+        questions = qdb.questions_with_pages()
+        pages = [page for page, questions in questions if len(questions) < MAX_APPEARANCES]
         pages = list(qdb.get_all_pages(exclude_test=True))
         print("Building whoosh wiki index from {0} pages".format(len(pages)))
         bar = progressbar.ProgressBar()

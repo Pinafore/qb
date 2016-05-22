@@ -29,7 +29,7 @@ ANSWER_PRESENT = 'answer_present'
 CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
 COUNTRY_LIST_PATH = 'data/country_list.txt'
-CLM_PATH = 'data/lm.txt'
+CLM_PATH = 'data/language_model'
 WHOOSH_WIKI_INDEX_PATH = 'data/whoosh/wiki'
 
 # Do not change order, it matters for writing in correct order
@@ -37,6 +37,7 @@ FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINK
 NEGATIVE_WEIGHTS = [16]
 # NEGATIVE_WEIGHTS = [2, 4, 8, 16, 32, 64]
 MIN_APPEARANCES = 5
+MAX_APPEARANCES = MIN_APPEARANCES
 N_GUESSES = 400
 FEATURES = OrderedDict([
     (LM, None),

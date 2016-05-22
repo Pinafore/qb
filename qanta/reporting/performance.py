@@ -43,16 +43,20 @@ ANSWER_REGEX = re.compile(r'.*sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
 
 def load_predictions(pred_file):
     def parse_line(line):
-        tokens = line.split()
-        score = float(tokens[0])
-        q_tokens = [int(x) for x in tokens[1].split('_')]
-        return Prediction(score, *q_tokens)
+        try:
+            tokens = line.split()
+            score = float(tokens[0])
+            q_tokens = [int(x) for x in tokens[1].split('_')]
+            return Prediction(score, *q_tokens)
+        except Exception:
+            print("Error parsing line: {0}".format(line))
+            raise
     return seq.open(pred_file).map(parse_line)
 
 
 def load_meta(meta_file):
     def parse_line(line):
-        tokens = line.split('\t')
+        tokens = line.split()
         question = int(tokens[0])
         sentence = int(tokens[1])
         token = int(tokens[2])

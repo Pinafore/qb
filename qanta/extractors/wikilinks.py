@@ -24,10 +24,9 @@ class WikiLinks(FeatureExtractor):
         self._matches = None
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        FeatureExtractor.set_metadata\
-            (self, answer, category, qnum, sent, token, guesses, fold)
+        FeatureExtractor.set_metadata(self, answer, category, qnum, sent, token, guesses, fold)
         # print(qnum, sent, token, answer)
-        if qnum not in self._links:
+        if qnum not in self.links:
             self.load_xml(qnum)
 
     def vw_from_title(self, title, text):
@@ -43,7 +42,7 @@ class WikiLinks(FeatureExtractor):
 
             # Get links from this sentence if they're before the current
             # position
-            for jj in self._links[self._qnum].get(self._sent, []):
+            for jj in self.links[self._qnum].get(self._sent, []):
                 title, pos, index, score = \
                     self.links[self._qnum][self._sent][jj]
                 if self._token > pos:
@@ -51,7 +50,7 @@ class WikiLinks(FeatureExtractor):
 
         total = 0
         reciprocal = 0
-        matches = ["|%s" % self._name]
+        matches = ["|%s" % self.name]
         norm_title = LanguageModelBase.normalize_title("", title)
         bad = set()
 

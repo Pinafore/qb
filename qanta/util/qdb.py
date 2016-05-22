@@ -108,14 +108,14 @@ class QuestionDatabase:
     def all_questions(self):
         return self.query('FROM questions where page != ""', ())
 
-    def guess_questions(self):
+    def guess_questions(self, appearance_filter=lambda pq: len(pq[1]) >= MIN_APPEARANCES):
         question_pages = self.questions_with_pages()
 
         dev_questions = seq(question_pages.values()) \
             .flatten() \
             .filter(lambda q: q.fold == 'train' or q.fold == 'dev') \
             .group_by(lambda q: q.page) \
-            .filter(lambda pq: len(pq[1]) >= MIN_APPEARANCES) \
+            .filter(appearance_filter) \
             .flat_map(lambda pq: pq[1]) \
             .filter(lambda q: q.fold != 'train')
 

@@ -178,7 +178,7 @@ def evaluate_features(stream_guess: StreamGuess, b_features):
         if name == 'label':
             row = feature_text
         else:
-            row += '\t' + feature_text
+            row += ' ' + feature_text
     return StreamGuess(stream_guess.id, stream_guess.text, stream_guess.guess, row, None)
 
 

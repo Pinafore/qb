@@ -186,8 +186,9 @@ class LanguageModelReader(LanguageModelBase):
             corpus, compare = line.split()
             self._corpora[corpus] = ii
 
-        if len(self._corpora.keys()) > 10:
-            print(self._corpora.keys()[:10])
+        corpora_keys = list(self._corpora.keys())
+        if len(corpora_keys) > 10:
+            print(corpora_keys[:10])
 
         self._lm.read_vocab("%s.txt" % self._datafile)
 
@@ -207,7 +208,7 @@ class LanguageModelReader(LanguageModelBase):
         """
 
         result = defaultdict(list)
-        reverse_vocab = dict((y, x) for x, y in self._vocab.iteritems())
+        reverse_vocab = dict((y, x) for x, y in self._vocab.items())
 
         tokenized = list(self.tokenize_and_censor(sentence))
         norm_title = self.normalize_title(corpus, guess)

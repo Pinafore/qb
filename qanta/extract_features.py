@@ -8,7 +8,7 @@ from pyspark.sql import SQLContext, Row
 
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.guess import GuessList
-from qanta.util.constants import FOLDS, MIN_APPEARANCES
+from qanta.util.constants import FOLDS, MIN_APPEARANCES, CLM_PATH
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.environment import data_path, QB_QUESTION_DB, QB_GUESS_DB
 from qanta.util.spark_features import SCHEMA
@@ -53,7 +53,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     feature = None
     print("Loading feature %s ..." % feature_name)
     if feature_name == "lm":
-        feature = LanguageModel(data_path('data/lm.txt'))
+        feature = LanguageModel(data_path(CLM_PATH))
     elif feature_name == "deep":
         print("from %s" % deep_data)
         page_dict = {}

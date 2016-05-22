@@ -46,7 +46,7 @@ class ExtractComputeFeatures(luigi.Task):
 
 class ExtractDeepFeatures(luigi.Task):
     def requires(self):
-        ExtractComputeFeatures()
+        yield ExtractComputeFeatures()
 
     def output(self):
         targets = []
@@ -77,7 +77,7 @@ class ExtractLMFeatures(luigi.Task):
 
 class ExtractMentionsFeatures(luigi.Task):
     def requires(self):
-        return ExtractLMFeatures()
+        yield ExtractLMFeatures()
 
     def output(self):
         targets = []
