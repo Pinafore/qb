@@ -356,7 +356,7 @@ const std::string JelinekMercerFeature::feature(const std::string name,
 
         if (span_probability > _cutoff) {
           if (span_probability > max_prob) max_prob = span_probability;
-          buffer << _corpus_names[corpus];
+          buffer << corpus;
           for (int jj = start; jj <= ii; ++jj) {
             buffer << "_";
             if (_censor_slop && _slop_mask[jj]) buffer << "SLOP";
