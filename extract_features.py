@@ -193,6 +193,7 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
                 missing += 1
     return guesses
 
+
 class Labeler(FeatureExtractor):
     def __init__(self, question_db):
         self._correct = None
@@ -224,7 +225,7 @@ class Labeler(FeatureExtractor):
         else:
             return "-1 %i '%s |guess %s sent:%0.1f count:%f " % \
                 (self._num_guesses, self._id,
-                 unidecode(title).replace(" ", "_"), self._sent - 2.0,
+                 unidecode(title).replace(" ", "_"), self._sent,
                  self._counts.get(title, -2))
 
     def name(self):

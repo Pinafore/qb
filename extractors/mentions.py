@@ -52,11 +52,11 @@ def find_references(sentence, padding=5):
             this_ref_start = -1
 
     for start, stop in references_found:
-        yield (" ".join(LanguageModelBase.normalize_title(x[0])
+        yield (" ".join(LanguageModelBase.normalize_title("", x[0])
                         for x in tags[max(0, start - padding):start]),
-               " ".join(LanguageModelBase.normalize_title(x[0])
+               " ".join(LanguageModelBase.normalize_title("", x[0])
                         for x in tags[start:stop + 1]),
-               " ".join(LanguageModelBase.normalize_title(x[0])
+               " ".join(LanguageModelBase.normalize_title("", x[0])
                         for x in tags[stop + 1:stop + padding + 1]))
 
 
@@ -130,12 +130,12 @@ class Mentions(FeatureExtractor):
         else:
             res = "|%s missing:1" % (self._name)
 
-        norm_title = LanguageModelBase.normalize_title(unidecode(title))
+        norm_title = LanguageModelBase.normalize_title("", unidecode(title))
         for mm in self._ment:
             res += " "
             res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
 
-        assert not ":" in res, "%s %s %s" % (title, str(self._ment), res)
+        assert res.count(":") == 1, "%s %s %s" % (title, str(self._ment), res)
         return res
 
     def generate_refexs(self, answer_list):

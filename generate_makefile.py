@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
             if ff == "mentions":
                 o.write(" data/kenlm.arpa")
-                feature_prereq.add("data/kenlm.apra")
+                feature_prereq.add("data/kenlm.arpa")
 
             # All features depend on guesses being generated
             o.write(" data/guesses.db\n")
@@ -221,7 +221,7 @@ if __name__ == "__main__":
                 o.write("features/%s/%s.%i.vw_input: " % (ff, gg, int(ww)))
                 o.write(feature_filenames)
                 o.write(" features/%s/%s.label.%i\n\t" % (ff, gg, int(ww)))
-                o.write("paste features/%s/%s.label.%i " % (ff, gg, int(ww)) +
+                o.write("paste -d' ' features/%s/%s.label.%i " % (ff, gg, int(ww)) +
                         " ".join("features/%s/%s.%s.feat"  % (ff, gg, x)
                                  for x in kFEATURES))
                 if ff == "train":
