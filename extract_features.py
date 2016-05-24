@@ -25,11 +25,11 @@ kFEATURES = OrderedDict([
     # ("ir", None),
     ("lm", None),
     ("deep", None),
-    ("answer_present", None),
-    ("text", None),
-    ("classifier", None),
+    # ("answer_present", None),
+    # ("text", None),
+    # ("classifier", None),
     ("wikilinks", None),
-    ("mentions", None),
+    # ("mentions", None),
     ])
 
 # Add features that actually guess
