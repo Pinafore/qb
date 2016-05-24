@@ -247,6 +247,8 @@ class GuessList:
             ' guesser TEXT, feature TEXT, score NUMERIC, PRIMARY KEY ' + \
             '(fold, question, sentence, token, page, guesser, feature));'
         c.execute(sql)
+        c.execute("CREATE INDEX IF NOT EXISTS guess_index ON " +
+                  "guesses (question, sentence, token, page);")
         conn.commit()
 
     def number_guesses(self, question, guesser):
