@@ -134,7 +134,7 @@ class LanguageModelBase:
 
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8, min_span=2, start_rank=200,
-                 smooth=0.001, cutoff=-2, slop=0, give_score=True,
+                 smooth=0.001, cutoff=-2, slop=0, give_score=False,
                  log_length=True, censor_slop=True, hash_names=False,
                  max_span=5,
                  stopwords=["for", "10", "points", "ftp", "ten", "name"]):
