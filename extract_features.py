@@ -20,17 +20,9 @@ from extractors.wikilinks import WikiLinks
 from extractors.mentions import Mentions
 from extractors.answer_present import AnswerPresent
 
+from feature_config import kFEATURES
+
 kMIN_APPEARANCES = 5
-kFEATURES = OrderedDict([
-    # ("ir", None),
-    ("lm", None),
-    ("deep", None),
-    # ("answer_present", None),
-    # ("text", None),
-    # ("classifier", None),
-    ("wikilinks", None),
-    # ("mentions", None),
-    ])
 
 # Add features that actually guess
 # TODO: Make this less cumbersome
@@ -219,7 +211,7 @@ class Labeler(FeatureExtractor):
         # TODO: Incorporate token position here as well to improve
         # position-based features
         if title == self._correct:
-            return "1 '%s |guess %s sent:%0.1f count:%f " % \
+            return "1 '%s |guess %s |stats sent:%0.1f count:%f " % \
                 (self._id, unidecode(title).replace(" ", "_"), self._sent,
                  self._counts.get(title, -2))
         else:
