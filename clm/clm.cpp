@@ -199,6 +199,7 @@ const std::string JelinekMercerFeature::feature(const std::string name,
   assert(corpus < _corpora);
   int baseline = _compare[corpus];
   int bigram_hits = 0;
+  int bigram_spans = 0;
 
   // Create vectors to hold probabilities and masks
   _slop_mask.resize(length);
@@ -352,9 +353,12 @@ const std::string JelinekMercerFeature::feature(const std::string name,
 
       // Skip if it's too short or too long
       if (ii - _span_start[ii] < _min_span - 1) continue;
-      if (ii - _span_start[ii] >= _max_span) continue;
+      ++bigram_spans;
 
       for (int start = _span_start[ii]; start <= ii - _min_span; ++start) {
+        // Skip if it's too long
+        if (ii - start >= _max_span) continue;
+
         float span_probability;
         if (_stopwords.find(sent[start]) != _stopwords.end()) continue;
 
@@ -399,6 +403,11 @@ const std::string JelinekMercerFeature::feature(const std::string name,
   buffer << name;
   buffer << "-LEN:";
   buffer << longest_span;
+  buffer << " ";
+
+  buffer << name;
+  buffer << "-SPAN:";
+  buffer << (float)bigram_spans / (float)length;
   buffer << " ";
 
   buffer << name;
