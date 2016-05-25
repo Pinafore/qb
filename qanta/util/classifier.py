@@ -155,28 +155,18 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
     print('top@', top, 'accuracy: ', corr / len(probs))
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--question_db', type=str, default=QB_QUESTION_DB)
-    parser.add_argument('--attribute', type=str, default='category')
-    parser.add_argument('--bigram_thresh', type=int, default=1000)
-    parser.add_argument("--output", type=str,
-                        default=data_path("data/classifier/"),
-                        help="Where we write output file")
-
-    flags = parser.parse_args()
-
-    questions = QuestionDatabase(flags.question_db)
-    bigram_filename = "%s/bigrams.pkl" % flags.output
+def build_classifier(attribute, bigram_thresh=1000, output='data/classifier'):
+    questions = QuestionDatabase(QB_QUESTION_DB)
+    bigram_filename = "%s/bigrams.pkl" % output
     if os.path.exists(bigram_filename):
         bgset = pickle.load(open(bigram_filename, 'rb'))
         print("Using previous bigrams")
     else:
         print("computing bigrams...")
-        bgset = compute_frequent_bigrams(flags.bigram_thresh, questions)
+        bgset = compute_frequent_bigrams(bigram_thresh, questions)
         write_bigrams(bgset, bigram_filename)
 
     train_classifier(
-            "%s/%s.pkl" % (flags.output, flags.attribute), bgset, questions, flags.attribute)
-    evaluate("%s/%s.pkl" % (flags.output, flags.attribute), 
-            bgset, questions, flags.attribute)
+        "%s/%s.pkl" % (output, attribute), bgset, questions, attribute)
+    evaluate("%s/%s.pkl" % (output, attribute),
+             bgset, questions, attribute)

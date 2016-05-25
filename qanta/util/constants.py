@@ -31,6 +31,7 @@ WIKILINKS = 'wikilinks'
 COUNTRY_LIST_PATH = 'data/country_list.txt'
 CLM_PATH = 'data/language_model'
 WHOOSH_WIKI_INDEX_PATH = 'data/whoosh/wiki'
+CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]

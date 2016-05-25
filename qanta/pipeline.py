@@ -3,9 +3,10 @@ import subprocess
 import luigi
 from luigi import LocalTarget
 from qanta.spark_execution import extract_features, merge_features
-from qanta.util.constants import (FOLDS, COMPUTE_OPT_FEATURES, DEEP_OPT_FEATURES,
+from qanta.util.constants import (FOLDS, COMPUTE_OPT_FEATURES, DEEP_OPT_FEATURES, CLASSIFIER_TYPES,
                                   LM_OPT_FEATURES, MENTIONS_OPT_FEATURES, NEGATIVE_WEIGHTS)
 from qanta.extract_features import create_guesses
+from qanta.util.classifier import build_classifier
 from clm.lm_wrapper import build_clm
 
 
@@ -21,6 +22,22 @@ class BuildClm(luigi.Task):
         build_clm()
 
 
+class ClassifierPickles(luigi.Task):
+    attribute = luigi.Parameter()
+
+    def output(self):
+        return LocalTarget('data/classifier/{0}.pkl'.format(self.attribute))
+
+    def run(self):
+        build_classifier(self.attribute)
+
+
+class AllClassifierPickles(luigi.WrapperTask):
+    def requires(self):
+        for t in CLASSIFIER_TYPES:
+            yield ClassifierPickles(attribute=t)
+
+
 class CreateGuesses(luigi.Task):
     def output(self):
         return LocalTarget('data/guesses.db')
@@ -31,7 +48,8 @@ class CreateGuesses(luigi.Task):
 
 class ExtractComputeFeatures(luigi.Task):
     def requires(self):
-        return CreateGuesses()
+        yield CreateGuesses()
+        yield AllClassifierPickles()
 
     def output(self):
         targets = []

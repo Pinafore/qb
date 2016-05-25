@@ -2,9 +2,9 @@ import unittest
 from qanta.reporting.performance import load_meta, load_predictions, Meta, Prediction
 
 
-class TestGenerateBuzzes(unittest.TestCase):
+class TestPerformance(unittest.TestCase):
     def test_load_meta(self):
-        meta = load_meta('qanta/test/data/test.meta').list()
+        meta = load_meta('test/data/test.meta').list()
         expect = [
             Meta(171314, 2, 0, 'A Season in Hell'),
             Meta(175857, 3, 0, 'Battle of Poltava'),
@@ -20,17 +20,18 @@ class TestGenerateBuzzes(unittest.TestCase):
         self.assertListEqual(meta, expect)
 
     def test_load_predictions(self):
-        predictions = load_predictions('qanta/test/data/test.pred').list()
+        predictions = load_predictions('test/data/test.pred').list()
         expect = [
             Prediction(score=-11.75036, question=171314, sentence=2, token=0),
             Prediction(score=-10.513688, question=175857, sentence=3, token=0),
             Prediction(score=-2.096656, question=188507, sentence=5, token=0),
-            Prediction(score=-7.034301, question=168558, sentence=4, token=0),
-            Prediction(score=-12.733343, question=177292, sentence=2, token=0),
+            Prediction(score=7.034301, question=168558, sentence=4, token=0),
+            Prediction(score=-12.733343, question=None, sentence=None, token=None),
             Prediction(score=-8.907219, question=166027, sentence=3, token=0),
             Prediction(score=-7.256502, question=146308, sentence=1, token=0),
             Prediction(score=-9.449733, question=163629, sentence=1, token=0),
             Prediction(score=-9.682533, question=176563, sentence=3, token=0),
             Prediction(score=-10.097745, question=179316, sentence=3, token=0)
         ]
-        self.assertListEqual(predictions, expect)
+        for p, e in zip(predictions, expect):
+            self.assertEqual(p, e)

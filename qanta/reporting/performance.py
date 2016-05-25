@@ -46,8 +46,11 @@ def load_predictions(pred_file):
         try:
             tokens = line.split()
             score = float(tokens[0])
-            q_tokens = [int(x) for x in tokens[1].split('_')]
-            return Prediction(score, *q_tokens)
+            if len(tokens) < 2:
+                question, sentence, token = None, None, None
+            else:
+                question, sentence, token = [int(x) for x in tokens[1].split('_')]
+            return Prediction(score, question, sentence, token)
         except Exception:
             print("Error parsing line: {0}".format(line))
             raise
@@ -60,7 +63,7 @@ def load_meta(meta_file):
         question = int(tokens[0])
         sentence = int(tokens[1])
         token = int(tokens[2])
-        guess = tokens[3].strip()
+        guess = ' '.join(tokens[3:])
         return Meta(question, sentence, token, guess)
     return seq.open(meta_file).map(parse_line)
 
@@ -86,7 +89,18 @@ def load_data(pred_file: str, meta_file: str, q_db):
             ))
         return question, st_lines
 
-    lines = preds.zip(metas).group_by(lambda x: x[0].question).map(create_line)
+    def fix_missing_label(pm):
+        prediction = pm[0]
+        meta = pm[1]
+        if prediction.question is None or prediction.token is None or prediction.sentence is None:
+            print("WARNING: Prediction malformed, fixing with meta line: {0}".format(prediction))
+            prediction = Prediction(prediction.score, meta.question, meta.sentence, meta.token)
+        assert meta.question == prediction.question
+        assert meta.sentence == prediction.sentence
+        assert meta.token == prediction.token
+        return prediction, meta
+
+    lines = preds.zip(metas).map(fix_missing_label).group_by(lambda x: x[0].question).map(create_line)
     return lines
 
 

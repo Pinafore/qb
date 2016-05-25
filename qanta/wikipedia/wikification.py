@@ -3,13 +3,11 @@ import argparse
 from collections import defaultdict
 
 from qanta.util.qdb import QuestionDatabase
-from extract_expo_features import add_expo_questions
 
 
 def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--database', type=str, default='data/questions.db')
-    parser.add_argument('--expo', type=str, default='')
     parser.add_argument('--min_pages', type=int, default=4)
     parser.add_argument("--output_directory", type=str,
                         default="data/wikifier/data/input/",
@@ -23,8 +21,6 @@ def main():
         pages = database.questions_with_pages()
     else:
         pages = defaultdict(set)
-    if flags.expo:
-        add_expo_questions(flags.expo, pages)
 
     total = 0
     for pp in pages:
