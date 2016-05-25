@@ -452,12 +452,12 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             current_guesses = buzzes.current_guesses(question_id, ss, ii)
             buzz_now = [x for x in current_guesses.values() if x.final]
             assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
-            if press:
+            if isinstance(press, int):
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
                 while response is None:
                     response = raw_input("Player %i, provide an answer:\t"
-                                         %press)
+                                         % press)
                     if '+' in response:
                         return (human + question_value,
                                 computer + computer_delta,
@@ -480,9 +480,13 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                                      points=question_value))
                 answer(buzz_now[0].page.split('(')[0])
                 if buzz_now[0].page == correct:
+                    print("Computer guesses: %s (correct)" % buzz_now[0].page)
+                    sleep(1)
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
+                    print("Computer guesses: %s (wrong)" % buzz_now[0].page)
+                    sleep(1)                    
                     computer_delta = -5
                     show_score(human + human_delta,
                                computer + computer_delta,
