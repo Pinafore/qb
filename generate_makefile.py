@@ -5,7 +5,7 @@ from extractors.classifier import kCLASSIFIER_FIELDS
 
 kVWOPT = \
     {"full":
-     "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic"}
+     "--early_terminate 100 -k -q gt -q gd -b 28 --loss_function logistic"}
 # ,
 #      "nowiki":
 #      "--early_terminate 100 -k -q gt -q ga -b 24 --loss_function logistic --ignore w",
@@ -134,13 +134,13 @@ if __name__ == "__main__":
     o.write("\tswig -c++ -python $<\n\n")
 
     o.write("clm/clm_wrap.o: clm/clm_wrap.cxx\n")
-    o.write("\tgcc -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
+    o.write("\tgcc -std=c++11 -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
 
     o.write("clm/clm.o: clm/clm.cpp clm/clm.h\n")
-    o.write("\tgcc -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
+    o.write("\tgcc -std=c++11 -O3 `python-config --include` -fPIC -c $< -o $@\n\n")
 
     o.write("clm/_clm.so: clm/clm.o clm/clm_wrap.o\n")
-    o.write("\tg++ -shared `python-config --ldflags` $^ -o $@\n\n")
+    o.write("\tg++ -std=c++11 -shared `python-config --ldflags` $^ -o $@\n\n")
 
     o.write("data/language_model.txt: clm/lm_wrapper.py clm/_clm.so\n")
     o.write("\trm -rf data/language_model\n")
@@ -398,7 +398,7 @@ if __name__ == "__main__":
         o.write("features/expo/expo.%i.vw_input: features/expo/word.label.%i"
                 % (ww, ww))
         o.write("\n\t")
-        o.write("paste features/expo/word.label.%i" % ww)
+        o.write("paste -d' ' features/expo/word.label.%i" % ww)
         for ff in kFEATURES:
             o.write(" features/expo/word.%s.feat" % ff)
         o.write("| gzip > $@\n\n")
