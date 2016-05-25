@@ -17,8 +17,15 @@ stopwords = set(stopwords.words('english'))
 
 
 class TextExtractor(FeatureExtractor):
+    def __init__(self):
+        self._cache = 0
+        self._line = ""
+
     def vw_from_title(self, title, text):
-        return "|text %s" % alphanum.sub(' ', unidecode(text.lower()))
+        if self._cache != hash(text):
+            self._cache = hash(text)
+            self._line = "|text %s" % alphanum.sub(' ', unidecode(text.lower()))
+        return self._line
 
     def name(self):
         return "text"
