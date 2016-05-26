@@ -4,9 +4,9 @@ kFEATURES = OrderedDict([
     # ("ir", None),
     ("lm", None),
     ("deep", None),
-    # ("answer_present", None),
+    ("answer_present", None),
     # ("text", None),
     # ("classifier", None),
-    # ("wikilinks", None),
+    ("wikilinks", None),
     # ("mentions", None),
     ])

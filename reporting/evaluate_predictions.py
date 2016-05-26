@@ -7,7 +7,7 @@ import operator
 from unidecode import unidecode
 
 from util.qdb import QuestionDatabase
-from extract_expo_features import kEXPO_START
+from extract_expo_features import kEXPO_START, add_expo_questions
 
 kBUZZ_OUT = ["question", "sentence", "word", "page", "evidence", "final",
              "weight"]
@@ -57,7 +57,7 @@ class PositionIterator:
             name = pp.split()[1]
             name_q, name_s, name_t = name.split("_")
             assert int(name_q) == question
-            assert int(name_s) == sent
+            assert int(name_s) == sent, "%s vs %s" % (mm, name)
             assert int(name_t) == token
 
             if last_question != question:
@@ -208,7 +208,11 @@ if __name__ == "__main__":
 
     # Write out the questions
 
-    questions = qdb.questions_with_pages()
+    if flags.expo:
+        questions = add_expo_questions(flags.expo)
+    else:
+        questions = qdb.questions_with_pages()
+
     if flags.question_out:
         question_out = DictWriter(open(flags.question_out, 'w'), kQUES_OUT)
         question_out.writeheader()

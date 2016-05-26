@@ -56,7 +56,7 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
         guesses_cached = \
             guess_list.get_guesses(feature_generator.name(), qq)
 
-    for ss, tt in guesses_needed:
+    for ss, tt in sorted(guesses_needed):
         if granularity == "sentence" and tt > 0:
             continue
 
@@ -84,7 +84,7 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
             yield ss, tt, pp, feat
 
 
-def instantiate_feature(feature_name, questions):
+def instantiate_feature(feature_name, questions, deep_data="data/deep"):
     """
     @param feature_name: The feature to instantiate
     @param questions: question database
@@ -120,11 +120,12 @@ def instantiate_feature(feature_name, questions):
         feature.add_corpus("wiki")
         feature.add_corpus("source")
     elif feature_name == "deep":
+        print("from %s" % deep_data)
         page_dict = {}
         for page in questions.get_all_pages():
             page_dict[page.lower().replace(' ', '_')] = page
-        feature = DeepExtractor("data/deep/classifier", \
-            "data/deep/params", "data/deep/vocab", \
+        feature = DeepExtractor("%s/classifier" % deep_data, \
+            "%s/params" % deep_data, "%s/vocab" % deep_data, \
             "data/common/ners", page_dict, 200)
     elif feature_name == "wikilinks":
         feature = WikiLinks()

@@ -412,7 +412,8 @@ if __name__ == "__main__":
         o.write(" %s" % model_file)
         o.write("\n")
         o.write("\tvw --compressed -t -d %s -i %s " %
-                (input_file, model_file) + " -p $@\n\n")
+                (input_file, model_file) + " -p $@ ")
+        o.write("--audit > results/expo/expo.%i.audit\n\n" % ww)
 
         # Buzzes
         o.write("results/expo/expo.%i.buzz: results/expo/expo.%i.pred\n" %
@@ -428,6 +429,7 @@ if __name__ == "__main__":
         o.write("--neg_weight=%f " % ww)
         o.write("--vw_config=%s " % ll)
         o.write("--expo=data/expo.csv ")
+        o.write("--question_out=results/expo/readable.txt ")
         o.write("--finals=results/expo/expo.%i.final " % ww)
         o.write("--pred=$<")
         o.write("\n\n")
