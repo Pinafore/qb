@@ -76,7 +76,7 @@ if __name__ == "__main__":
     guess_list = GuessList(flags.guess_db)
 
     # Generate all of the guess and store them in a guess_list
-    features_that_guess = {"deep": instantiate_feature("deep", qdb)}
+    features_that_guess = {"deep1": instantiate_feature("deep", qdb, deep_data="data/deep_oct"), "deep2": instantiate_feature("deep", qdb)}
 
     for page in questions:
         for qq in questions[page]:
@@ -104,10 +104,12 @@ if __name__ == "__main__":
         print("Opening %s for output" % filename)
         o = open(filename, 'w')
 
+        line_num = 0
         for page in questions:
             for qq in questions[page]:
                 for ss, tt, pp, line in feature_lines(qq, guess_list,
                                                       flags.granularity, feat):
+                    line_num += 1
                     assert ff is not None
                     o.write("%s\n" % line)
 
@@ -116,6 +118,9 @@ if __name__ == "__main__":
                                     (qq.qnum, ss, tt, unidecode(pp)))
 
                 o.flush()
+
+                if line_num % 1000 == 0:
+                    print("%s %s %s" % (page, pp, line))
         o.close()
         print("Done with %s" % ff)
         # now that we're done with it, delete the feature
