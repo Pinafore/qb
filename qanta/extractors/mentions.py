@@ -87,17 +87,19 @@ class Mentions(FeatureExtractor):
         self.initialized = False
         self.refex_count = defaultdict(int)
         self.refex_lookup = defaultdict(set)
-        self.lm = None
+        self._lm = None
         self.generate_refexs(self.answers)
         self.pre = []
         self.ment = []
         self.suf = []
         self.text = ""
 
-    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+    @property
+    def lm(self):
         if not self.initialized:
-            self.lm = kenlm.LanguageModel(data_path('data/kenlm.binary'))
+            self._lm = kenlm.LanguageModel(data_path('data/kenlm.binary'))
             self.initialized = True
+        return self._lm
 
     def vw_from_title(self, title, text):
         # Find mentions if the text has changed

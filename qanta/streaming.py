@@ -6,7 +6,9 @@ import json
 from typing import List, Tuple
 from collections import namedtuple
 
-from qanta.util.environment import QB_QUESTION_DB, QB_SPARK_MASTER, QB_STREAMING_CORES
+from qanta.util.environment import (QB_QUESTION_DB, QB_SPARK_MASTER, QB_STREAMING_CORES,
+                                    QB_API_DOMAIN, QB_API_KEY, QB_API_USER_ID)
+from qanta.util.constants import FEATURE_NAMES
 from qanta.util.qdb import QuestionDatabase
 from qanta.extract_features import instantiate_feature
 
@@ -90,7 +92,11 @@ class QBApiQuestionManager(QuestionManager):
         def update_question_tuple(q: QBApiQuestion):
             position, text = self.request_text(q.id, q.position + 1)
             if q.text != '':
-                text = q.text + text
+                text = q.text + ' ' + text
+            while '.' not in text:
+                position, new_text = self.request_text(q.id, position + 1)
+                text += ' ' + new_text
+            print("Question text: {0}".format(text))
             return QBApiQuestion(q.fold, q.id, q.word_count, position, text, q.guess)
         self.questions = pseq(self.questions).map(update_question_tuple).cache()
 
@@ -110,7 +116,7 @@ class QBApiQuestionManager(QuestionManager):
                 return api_question
             else:
                 buzz, guess = response.get_buzz()
-                print("Recieved buzz: {0}".format(buzz))
+                print("Received buzz: {0}".format(buzz))
                 if buzz or api_question.position + 1 == api_question.word_count:
                     return QBApiQuestion(
                         api_question.fold,
@@ -125,8 +131,9 @@ class QBApiQuestionManager(QuestionManager):
         keyed_responses = seq(question_responses).map(lambda r: (r.external_id, r))
         merged_questions = keyed_questions.left_join(keyed_responses).map(merge).cache()
         print("Length of merged questions: {0}".format(merged_questions.len()))
-        self.questions, self.buzzed_questions = merged_questions.partition(
-            lambda q: q.guess is None)
+        questions, buzzed_questions = merged_questions.partition(lambda q: q.guess is None)
+        self.questions = questions
+        self.buzzed_questions = self.buzzed_questions + buzzed_questions
         print("Length of questions: {0}".format(self.questions.len()))
         print("Length of buzzed questions: {0}".format(self.buzzed_questions.len()))
 
@@ -135,6 +142,19 @@ class QBApiQuestionManager(QuestionManager):
         print(self.buzzed_questions)
         print("Non-buzzed questions (should be empty)")
         print(self.questions)
+        print("Submitting answers")
+        for q in self.buzzed_questions:
+            url = 'http://{domain}/qb-api/v1/answer/{q_id}'.format(
+                domain=self.domain, q_id=q.id)
+            response = requests.post(url, data={
+                'user_id': self.user_id,
+                'api_key': self.api_key,
+                'guess': q.guess
+            })
+            if response.status_code == 200:
+                print("Question submitted")
+            else:
+                print("Error on question submission")
 
 
 def create_sc():
@@ -173,7 +193,7 @@ def generate_guesses(line: str, b_features):
 def evaluate_features(stream_guess: StreamGuess, b_features):
     features = b_features.value
     row = ''
-    for name in ['label', 'deep']:
+    for name in FEATURE_NAMES:
         feature_text = features[name].vw_from_title(stream_guess.guess, stream_guess.text)
         if name == 'label':
             row = feature_text
@@ -195,17 +215,18 @@ def save(stream_guesses):
 
 def score_and_save(rdd):
     stream_guesses = rdd.collect()
-    final_stream_guesses = vw_score(stream_guesses)
-    save(final_stream_guesses)
+    if len(stream_guesses) > 0:
+        final_stream_guesses = vw_score(stream_guesses)
+        save(final_stream_guesses)
 
 
 def start_spark_streaming():
     question_db = QuestionDatabase(QB_QUESTION_DB)
-    features = {name: instantiate_feature(name, question_db) for name in ['deep', 'label']}
+    features = {name: instantiate_feature(name, question_db) for name in FEATURE_NAMES}
 
     sc = create_sc()
     b_features = sc.broadcast(features)
-    ssc = StreamingContext(sc, 1)
+    ssc = StreamingContext(sc, 10)
 
     ssc.socketTextStream('localhost', 9999) \
         .repartition(QB_STREAMING_CORES) \
@@ -227,9 +248,10 @@ def create_socket_connection():
 
 
 def get_buzzes(questions_text, spark_connection, session):
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-
+    print("Clearing sync db")
+    session.query(Question).delete()
+    session.commit()
+    print("Adding new questions")
     for external_id, text in questions_text:
         q = Question(text=text, response=None, external_id=external_id)
         session.add(q)
@@ -258,13 +280,12 @@ def start_qanta_streaming():
     print("Connection established")
 
     session = SessionFactory()
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
     #questions = seq(qdb.all_questions().values()).filter(lambda q: q.fold == 'test')
     #questions_text = questions.map(lambda q: q.flatten_text()).take(10).enumerate().list()
     #manager = QuestionManager(questions_text)
-    manager = QBApiQuestionManager(
-        'ec2-54-153-32-151.us-west-1.compute.amazonaws.com',
-        1,
-        'DtNUllozIVvQkrtNAqWMaYdduKuzzZwFnVotdEAxgFywYZsUsvaZYXyuoXPtfNdV')
+    manager = QBApiQuestionManager(QB_API_DOMAIN, QB_API_USER_ID, QB_API_KEY)
     manager.update([])
 
     current_questions = manager.get()

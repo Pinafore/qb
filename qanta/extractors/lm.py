@@ -7,19 +7,21 @@ class LanguageModel(FeatureExtractor):
         super().__init__()
         self.filename = filename
         self.initialized = False
-        self.lm = None
+        self._lm = None
         self.name = 'lm'
         self.corpora = set()
 
-    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
+    @property
+    def lm(self):
         if not self.initialized:
             print("Starting to read the LM from %s" % self.filename)
-            self.lm = LanguageModelReader(self.filename)
-            self.lm.init()
+            self._lm = LanguageModelReader(self.filename)
+            self._lm.init()
             self.initialized = True
             self.add_corpus("qb")
             self.add_corpus("wiki")
             self.add_corpus("source")
+        return self._lm
 
     def add_corpus(self, corpus_name):
         self.corpora.add(corpus_name)
