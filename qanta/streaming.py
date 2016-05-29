@@ -27,7 +27,7 @@ engine = create_engine(DB_URL)
 SessionFactory = sessionmaker(bind=engine)
 StreamGuess = namedtuple('StreamGuess', 'id text guess features score')
 
-QBApiQuestion = namedtuple('QBApiQuestion', 'fold id word_count position text guess')
+QBApiQuestion = namedtuple('QBApiQuestion', 'fold id word_count position text guess all_guesses')
 
 
 class Question(Base):
@@ -48,6 +48,9 @@ class Question(Base):
         top_guess = guesses[0]
         print("top guess: {0}".format(top_guess))
         return top_guess[0] > 0, top_guess[1]
+
+    def get_all_buzzes(self):
+        return json.loads(self.response)
 
 
 class QuestionManager:
@@ -79,12 +82,15 @@ class QBApiQuestionManager(QuestionManager):
         url = 'http://{domain}/qb-api/v1/questions'.format(domain=self.domain)
         response = seq(requests.get(url).json()['questions'])
         return pseq(response)\
-            .map(lambda r: QBApiQuestion(**r, position=-1, text='', guess=None)).cache()
+            .map(lambda r: QBApiQuestion(**r, position=-1, text='', guess=None, all_guesses=None))\
+            .cache()
 
     def request_text(self, q_id, position) -> str:
         url = 'http://{domain}/qb-api/v1/question/{q_id}/{position}'.format(
             domain=self.domain, q_id=q_id, position=position)
         response = requests.post(url, data={'user_id': self.user_id, 'api_key': self.api_key})
+        if response.status_code != 200:
+            raise RuntimeError('Received a bad response: {0}'.format(response.content))
         data = response.json()['word']
         return data['position'], data['text']
 
@@ -97,7 +103,7 @@ class QBApiQuestionManager(QuestionManager):
                 position, new_text = self.request_text(q.id, position + 1)
                 text += ' ' + new_text
             print("Question text: {0}".format(text))
-            return QBApiQuestion(q.fold, q.id, q.word_count, position, text, q.guess)
+            return QBApiQuestion(q.fold, q.id, q.word_count, position, text, q.guess, None)
         self.questions = pseq(self.questions).map(update_question_tuple).cache()
 
     def get(self) -> List[Tuple[int, str]]:
@@ -116,6 +122,7 @@ class QBApiQuestionManager(QuestionManager):
                 return api_question
             else:
                 buzz, guess = response.get_buzz()
+                all_guesses = response.get_all_buzzes()
                 print("Received buzz: {0}".format(buzz))
                 if buzz or api_question.position + 1 == api_question.word_count:
                     return QBApiQuestion(
@@ -124,7 +131,9 @@ class QBApiQuestionManager(QuestionManager):
                         api_question.word_count,
                         api_question.position,
                         api_question.text,
-                        guess)
+                        guess,
+                        all_guesses
+                    )
                 else:
                     return api_question
         keyed_questions = self.questions.map(lambda q: (q.id, q))
@@ -156,6 +165,20 @@ class QBApiQuestionManager(QuestionManager):
             else:
                 print("Error on question submission")
 
+        print("Printing statistics")
+        guess_set = set()
+        saved_guesses = []
+        for q in self.buzzed_questions:
+            for g in q.all_guesses:
+                guess_set.add(g[1])
+            saved_guesses.append((q.id, q.guess, q.all_guesses))
+            print('qid: {0} guess: {1} position: {2} text: {3} all_guesses: {4}'.format(
+                q.id, q.guess, q.position, q.text, q.all_guesses))
+        print("All guesses")
+        print(len(guess_set))
+        print(guess_set)
+        seq(saved_guesses).to_json('/tmp/stream_results.json')
+
 
 def create_sc():
     spark_conf = SparkConf()
@@ -168,7 +191,7 @@ def create_sc():
 def vw_score(stream_guesses):
     print("Scoring with VW")
     output = []
-    vw_input = '\n'.join(sg.features for sg in stream_guesses).encode('utf-8')
+    vw_input = ('\n'.join(sg.features for sg in stream_guesses) + '\n').encode('utf-8')
     out = subprocess.run(['nc', 'localhost', '26542'], input=vw_input, stdout=subprocess.PIPE)
     if len(out.stdout) != 0:
         out_lines = out.stdout.decode('utf-8').split('\n')
@@ -226,10 +249,10 @@ def start_spark_streaming():
 
     sc = create_sc()
     b_features = sc.broadcast(features)
-    ssc = StreamingContext(sc, 10)
+    ssc = StreamingContext(sc, 5)
 
     ssc.socketTextStream('localhost', 9999) \
-        .repartition(QB_STREAMING_CORES) \
+        .repartition(QB_STREAMING_CORES - 1) \
         .flatMap(lambda line: generate_guesses(line, b_features)) \
         .map(lambda sg: evaluate_features(sg, b_features)) \
         .foreachRDD(score_and_save)
@@ -274,7 +297,7 @@ def get_buzzes(questions_text, spark_connection, session):
 def start_qanta_streaming():
     print("Starting Qanta server")
 
-    #qdb = QuestionDatabase(QB_QUESTION_DB)
+    # qdb = QuestionDatabase(QB_QUESTION_DB)
     print("Waiting for spark to connect...")
     spark_connection = create_socket_connection()
     print("Connection established")
@@ -282,9 +305,9 @@ def start_qanta_streaming():
     session = SessionFactory()
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    #questions = seq(qdb.all_questions().values()).filter(lambda q: q.fold == 'test')
-    #questions_text = questions.map(lambda q: q.flatten_text()).take(10).enumerate().list()
-    #manager = QuestionManager(questions_text)
+    # questions = seq(qdb.all_questions().values()).filter(lambda q: q.fold == 'test')
+    # questions_text = questions.map(lambda q: q.flatten_text()).take(10).enumerate().list()
+    # manager = QuestionManager(questions_text)
     manager = QBApiQuestionManager(QB_API_DOMAIN, QB_API_USER_ID, QB_API_KEY)
     manager.update([])
 

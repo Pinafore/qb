@@ -9,22 +9,30 @@ class LanguageModel(FeatureExtractor):
         self.initialized = False
         self._lm = None
         self.name = 'lm'
-        self.corpora = set()
+        self._corpora = set()
 
-    @property
-    def lm(self):
+    def _init_lm(self):
         if not self.initialized:
             print("Starting to read the LM from %s" % self.filename)
             self._lm = LanguageModelReader(self.filename)
             self._lm.init()
             self.initialized = True
-            self.add_corpus("qb")
-            self.add_corpus("wiki")
-            self.add_corpus("source")
+            self._add_corpus("qb")
+            self._add_corpus("wiki")
+            self._add_corpus("source")
+
+    @property
+    def corpora(self):
+        self._init_lm()
+        return self._corpora
+
+    @property
+    def lm(self):
+        self._init_lm()
         return self._lm
 
-    def add_corpus(self, corpus_name):
-        self.corpora.add(corpus_name)
+    def _add_corpus(self, corpus_name):
+        self._corpora.add(corpus_name)
 
     def vw_from_title(self, title, text):
         return "|%s %s" % (self.name,
