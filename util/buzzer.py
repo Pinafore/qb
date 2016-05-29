@@ -226,6 +226,22 @@ class kCOLORS:
         start = getattr(kCOLORS, color)
         print(start + text + kCOLORS.ENDC, end=end)
 
+def write_readable(filename, ids, questions, power):
+    question_num = 0
+    o = open(flags.readable, 'w')
+    for ii in question_ids:
+        question_num += 1
+        o.write("%i) " % question_num)
+        power_found = False
+        for jj in questions[ii]:
+            if not power_found and power(ii).lower() in questions[ii][jj].lower():
+                power_found = True
+                o.write("%s  " %
+                        questions[ii][jj].replace(power(ii), "(*) %s" %
+                                                  power(ii)))
+            else:
+                o.write("%s  " % questions[ii][jj])
+        o.write("\nANSWER: %s\n\n" % questions.answer(ii))    
 
 def clear_screen():
     print("Clearing")
@@ -340,13 +356,17 @@ class Buzzes:
     def current_guesses(self, question, sent, word):
         try:
             ss, ww = max(x for x in self._buzzes[question] if
-                            x[0] < sent or (x[0] == sent and x[1] <= word))
+                            x[0] < sent or (x[0] == sent and x[1] <= max(0, word)))
         except ValueError:
             return {}
 
         assert (ss, ww) in self._buzzes[question]
         return self._buzzes[question][(ss, ww)]
 
+    def __iter__(self):
+        for ii in self._buzzes:
+            yield ii
+    
     def final_guess(self, question):
         for ss, ww in sorted(self._buzzes[question], reverse=True):
             for bb in self._buzzes[question][(ss, ww)]:
@@ -449,7 +469,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             if lower(ww).startswith(lower(power)):
                 question_value = 10
             press = interpret_keypress()
-            current_guesses = buzzes.current_guesses(question_id, ss, ii)
+            current_guesses = buzzes.current_guesses(question_id, ss, ii - 2)
             buzz_now = [x for x in current_guesses.values() if x.final]
             assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
             if isinstance(press, int):
@@ -512,6 +532,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
     if human_delta == 0:
         response = None
         while response is None:
+            os.system("afplay /System/Library/Sounds/Glass.aiff")
             response = raw_input("Player, take a guess:\t")
             if '+' in response:
                 return (human + 10,
@@ -535,6 +556,7 @@ if __name__ == "__main__":
     parser.add_argument('--finals', type=str, default="finals.csv")
     parser.add_argument('--power', type=str, default="power.csv")
     parser.add_argument('--max_questions', type=int, default=40)
+    parser.add_argument('--readable', type=str, default="readable.txt")
 
     flags = parser.parse_args()
 
@@ -547,24 +569,31 @@ if __name__ == "__main__":
 
     current_players = set()
 
-    print("Time for a buzzer check")
-    players_needed = [1]
-    while len(current_players) < len(players_needed):
-        print("Player %i, please buzz in" % min(x for x in players_needed \
+    if True:
+        print("Time for a buzzer check")
+        players_needed = [1, 2, 3, 4]
+        while len(current_players) < len(players_needed):
+            print("Player %i, please buzz in" % min(x for x in players_needed \
                                                     if x not in current_players))
-        press = interpret_keypress()
-        if press in players_needed:
-            os.system("afplay /System/Library/Sounds/Glass.aiff")
-            print("Thanks for buzzing in, player %i!" % press)
-            current_players.add(press)
+            press = interpret_keypress()
+            if press in players_needed:
+                os.system("afplay /System/Library/Sounds/Glass.aiff")
+                print("Thanks for buzzing in, player %i!" % press)
+                current_players.add(press)
 
-    sleep(1.5)
-    answer("I'm ready too")
+        sleep(1.5)
+        answer("I'm ready too")
 
     human = 0
     computer = 0
     question_num = 0
-    question_ids = sorted(questions._questions.keys(), key=lambda x: x % 11)
+    question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
+
+    question_ids = [x for x in question_ids if x in buzzes]
+
+    if flags.readable != "":
+        write_readable(flags.readable, question_ids, questions, power)
+        
     for ii in question_ids:
         question_num += 1
         power_mark = power(ii)

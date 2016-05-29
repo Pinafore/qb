@@ -55,6 +55,7 @@ def feature_lines(qq, guess_list, granularity, feature_generator):
     if feature_generator.has_guess():
         guesses_cached = \
             guess_list.get_guesses(feature_generator.name(), qq)
+        print("cache", guesses_cached)
 
     for ss, tt in sorted(guesses_needed):
         if granularity == "sentence" and tt > 0:
@@ -144,7 +145,7 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
 
 
 def guesses_for_question(qq, features_that_guess, guess_list=None,
-                         word_skip=-1):
+                         word_skip=-1, sentence_start=0):
     guesses = {}
 
     # Find out the guesses that we need for this question
@@ -154,8 +155,8 @@ def guesses_for_question(qq, features_that_guess, guess_list=None,
 
     # Gather all the guesses
     for ss, ww, tt in qq.partials(word_skip):
-        # We have problems at the very start
-        if ss == 0 and ww == word_skip:
+        # We have problems at the very start, so lets skip
+        if ss < sentence_start or ss == sentence_start and ww <= word_skip:
             continue
         for ff in guesses:
             # print("Query from %s, %s" % (type(tt), tt))

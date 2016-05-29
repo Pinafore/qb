@@ -50,7 +50,7 @@ def write_question_text(questions, output):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
 
-    parser.add_argument('--gap', type=int, default=6,
+    parser.add_argument('--gap', type=int, default=4,
                         help='Gap (in number of tokens) between each guess')
     parser.add_argument('--guess_db', type=str, default='data/expo_guess.db',
                         help='Where we write/read the guesses')
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     guess_list = GuessList(flags.guess_db)
 
     # Generate all of the guess and store them in a guess_list
-    features_that_guess = {"deep1": instantiate_feature("deep", qdb, deep_data="data/deep_oct"), "deep2": instantiate_feature("deep", qdb)}
+    features_that_guess = {"deep": instantiate_feature("deep", qdb)}
 
     for page in questions:
         for qq in questions[page]:
@@ -87,10 +87,11 @@ if __name__ == "__main__":
             for guesser in guesses:
                 guess_list.add_guesses(guesser, qq.qnum, "expo",
                                        guesses[guesser])
+    del features_that_guess
 
     # Generate the features serially
     # for ff in ["label", "wikilinks"]:
-    for ff in ["label"] + kFEATURES.keys():
+    for ff in sorted(["label"] + kFEATURES.keys()):
         print("Loading %s" % ff)
         feat = instantiate_feature(ff, qdb)
         if ff == "label":
@@ -117,10 +118,10 @@ if __name__ == "__main__":
                         meta.write("%i\t%i\t%i\t%s\n" %
                                     (qq.qnum, ss, tt, unidecode(pp)))
 
-                o.flush()
+                    if line_num % 10000 == 0:
+                        print("%s %s %s" % (page, pp, line))
 
-                if line_num % 1000 == 0:
-                    print("%s %s %s" % (page, pp, line))
+                o.flush()
         o.close()
         print("Done with %s" % ff)
         # now that we're done with it, delete the feature

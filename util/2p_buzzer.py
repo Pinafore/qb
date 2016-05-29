@@ -13,6 +13,7 @@ from buzzer import kSHOW_RIGHT, kPAUSE, kBIGNUMBERS
 from buzzer import clear_screen, PowerPositions, show_score
 from buzzer import Guess, Buzzes, Questions, format_display
 from buzzer import load_finals, interpret_keypress, answer
+from buzzer import write_readable
 
 kPADDING = "WAIT"
 kPAD_LEN = 5
@@ -198,7 +199,7 @@ if __name__ == "__main__":
 
     current_players = set()
 
-    if False:
+    if True:
         print("Time for a buzzer check")
         players_needed = [1]
         while len(current_players) < len(players_needed):
@@ -217,14 +218,7 @@ if __name__ == "__main__":
     question_ids = sorted(questions._questions.keys(), key=lambda x: x % 11)
 
     if flags.readable != "":
-        question_num = 0
-        o = open(flags.readable, 'w')
-        for ii in question_ids:
-            question_num += 1
-            o.write("%i) " % question_num)
-            for jj in questions[ii]:
-                o.write("%s  " % questions[ii][jj])
-            o.write("\nANSWER: %s\n\n" % questions.answer(ii))
+        write_readable(flags.readable, question_ids, questions, power)
 
     question_num = 0
     question_ids = list(question_ids)[flags.skip:]
