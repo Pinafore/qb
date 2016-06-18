@@ -14,7 +14,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def main():
-    log.info("QANTA starting with configuration:")
+    log.warn("QANTA starting with configuration:")
     for k, v in ENVIRONMENT.items():
         log.info("{0}={1}".format(k, v))
 
