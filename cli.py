@@ -1,13 +1,12 @@
-import logging
-
 import click
 
+from qanta import logging
 from qanta.extractors import mentions
 from qanta.util.environment import ENVIRONMENT
 from qanta.streaming import start_qanta_streaming, start_spark_streaming
 
 
-log = logging.getLogger(__name__)
+log = logging.get(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
