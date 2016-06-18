@@ -1,6 +1,8 @@
-data/external/deep/glove.840B.300d.zip:
+data/external/deep/glove.840B.300d.txt:
 	mkdir -p data/external/deep
-	curl http://nlp.stanford.edu/data/glove.840B.300d.zip > $@
+	curl http://nlp.stanford.edu/data/glove.840B.300d.zip > /tmp/glove.840B.300d.zip
+	unzip /tmp/glove.840B.300d.zip
+	mv /tmp/glove.840B.300d.txt data/external/deep/glove.840B.300d.txt
 
 output/deep/params: data/external/deep/glove.840B.300d.txt.gz
 	python3 guesser/util/format_dan.py --threshold=5

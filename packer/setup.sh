@@ -5,7 +5,7 @@ set -e
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y build-essential cmake swig
-sudo apt-get install -y git wget vim tmux
+sudo apt-get install -y git wget vim tmux unzip
 sudo apt-get install -y libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
 sudo apt-get install -y liblzma-dev
 sudo apt-get install -y default-jre default-jdk
@@ -20,7 +20,7 @@ sudo apt-get install -y linux-image-extra-$(uname -r) apparmor
 sudo apt-get install -y docker-engine
 sudo usermod -aG docker ubuntu
 
-# Install Python 3.5
+# Install Python 3.5 and the Scipy Stack
 wget http://repo.continuum.io/archive/Anaconda3-4.0.0-Linux-x86_64.sh
 bash Anaconda3-4.0.0-Linux-x86_64.sh -b
 rm Anaconda3-4.0.0-Linux-x86_64.sh
@@ -45,11 +45,3 @@ wget http://d3kbcqa49mib13.cloudfront.net/spark-1.6.1-bin-hadoop2.6.tgz
 tar -xvzf spark-1.6.1-bin-hadoop2.6.tgz
 rm spark-1.6.1-bin-hadoop2.6.tgz
 mv spark-1.6.1-bin-hadoop2.6 ~/dependencies
-
-# Download external data
-mkdir ~/data
-mkdir ~/data/deep
-cd ~/data
-
-cd ~/
-
