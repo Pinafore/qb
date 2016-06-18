@@ -17,4 +17,5 @@ def get(name):
 
         log.addHandler(fh)
         log.addHandler(sh)
+        log.setLevel(logging.INFO)
     return log
