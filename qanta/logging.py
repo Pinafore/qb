@@ -13,7 +13,8 @@ def get(name):
 
         sh = logging.StreamHandler()
         sh.setLevel(logging.INFO)
-        fh.setFormatter(formatter)
+        sh.setFormatter(formatter)
+
         log.addHandler(fh)
         log.addHandler(sh)
     return log
