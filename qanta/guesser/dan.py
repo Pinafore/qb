@@ -1,29 +1,32 @@
 import time
 import argparse
 import pickle
+import numpy as np
 
-from numpy import *
-
-from qanta.guesser.util.gen_util import *
-from qanta.guesser.util.math_util import *
+from qanta.guesser.util import gen_util
 from qanta.guesser.classify.learn_classifiers import evaluate
 from qanta.guesser.util.adagrad import Adagrad
 
 
-# does both forward and backprop
+def relu(x):
+    return x * (x > 0)
+
+
+def drelu(x):
+    return x > 0
+
+
 def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
-    params = unroll_params(params, d, len_voc, deep=3)
+    params = gen_util.unroll_params(params, d, len_voc, deep=3)
     (W, b, W2, b2, W3, b3, L) = params
-    grads = init_grads(d, len_voc, deep=3)
+    grads = gen_util.init_grads(d, len_voc, deep=3)
     error_sum = 0.0
 
     for qs, ans in data:
 
         # answer vector
         comp = L[:, ans[0]].reshape((d, 1))
-        prev_sum = zeros((d, 1))
         history = []
-
         for dist in qs:
 
             sent = qs[dist]
@@ -31,7 +34,7 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
             # compute average of non-dropped words
             history += sent
             curr_hist = []
-            mask = random.rand(len(history)) > word_drop
+            mask = np.random.rand(len(history)) > word_drop
             for index, keep in enumerate(mask):
                 if keep:
                     curr_hist.append(history[index])
@@ -42,7 +45,7 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
             if len(curr_hist) == 0:
                 continue
 
-            av = average(L[:, curr_hist], axis=1).reshape((d, 1))
+            av = np.average(L[:, curr_hist], axis=1).reshape((d, 1))
 
             # apply non-linearity
             p = relu(W.dot(av) + b)
@@ -50,21 +53,21 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
             p3 = relu(W3.dot(p2) + b3)
 
             # compute error
-            delta = zeros((d, 1))
+            delta = np.zeros((d, 1))
 
             # randomly sample 100 wrong answers
-            inds = array([w_ind for w_ind in random.randint(0, L.shape[1], 100)])
+            inds = np.array([w_ind for w_ind in np.random.randint(0, L.shape[1], 100)])
             wrong_ans = L[:, inds]
-            prod = wrong_ans.T.dot(p3)
+            prod = wrong_ans.T @ p3
 
-            base = 1 - comp.T.dot(p3)
+            base = 1 - comp.T @ p3
             delta_base = -1 * comp.ravel()
             a = base + prod
-            pos_inds = where(a>0)[0]
+            pos_inds = np.where(a > 0)[0]
 
             if len(pos_inds) > 0:
-                error_sum += sum(a[pos_inds])
-                dc = delta_base[:, newaxis] + wrong_ans[:, pos_inds]
+                error_sum += np.sum(a[pos_inds])
+                dc = delta_base[:, np.newaxis] + wrong_ans[:, pos_inds]
                 delta += sum(dc, axis=1).reshape((d, 1))
 
                 # update correct / incorrect words w/ small learning rate
@@ -72,17 +75,17 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
 
             # backprop third layer
             delta_3 = drelu(p3) * delta
-            grads[4] += delta_3.dot(p2.T)
+            grads[4] += delta_3 @ p2.T
             grads[5] += delta_3
 
             # backprop second layer
             delta_2 = drelu(p2) * W3.T.dot(delta_3)
-            grads[2] += delta_2.dot(p.T)
+            grads[2] += delta_2 @ p.T
             grads[3] += delta_2
 
             # backprop first layer
             delta_1 = drelu(p) * W2.T.dot(delta_2)
-            grads[0] += delta_1.dot(av.T)
+            grads[0] += delta_1 @ av.T
             grads[1] += delta_1
             grads[6][:, curr_hist] += W.T.dot(delta_1) / len(curr_hist)
 
@@ -92,7 +95,7 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
         grads[index] += rho * params[index]
 
     cost = error_sum / len(data)
-    grad = roll_params(grads) / len(data)
+    grad = gen_util.roll_params(grads) / len(data)
 
     return cost, grad
 
@@ -100,20 +103,18 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
 def main():
     parser = argparse.ArgumentParser(description='QANTA: a question answering neural network \
                                      with trans-sentential aggregation')
-    parser.add_argument('-We', help='location of word embeddings', default='data/deep/We')
+    parser.add_argument('-We', help='location of word embeddings', default='output/deep/We')
     parser.add_argument('-d', help='word embedding dimension', type=int, default=300)
-    parser.add_argument('-b', '--batch_size', help='adagrad minibatch size (ideal: 25 minibatches \
-                        per epoch). for provided datasets, x for history and y for lit', type=int,\
+    parser.add_argument('-b', '--batch_size',
+                        help='adagrad minibatch size (ideal: 25 minibatches per epoch)', type=int,
                         default=150)
-    parser.add_argument('-ep', '--num_epochs', help='number of training epochs, can also determine \
-                         dynamically via validate method', type=int, default=61)
+    parser.add_argument('-ep', '--num_epochs', help='number of training epochs', type=int,
+                        default=61)
     parser.add_argument('-agr', '--adagrad_reset', help='reset sum of squared gradients after this many\
                          epochs', type=int, default=10)
     parser.add_argument('-lr', help='adagrad learning rate', type=float, default=0.01)
-    parser.add_argument('-v', '--do_val', help='check performance on dev set after this many\
-                         epochs', type=int, default=50)
-    parser.add_argument('-o', '--output', help='desired location of output model', \
-                         default='data/deep/params')
+    parser.add_argument('-o', '--output', help='desired location of output model',
+                        default='output/deep/params')
 
     args = vars(parser.parse_args())
     d = args['d']
@@ -121,7 +122,6 @@ def main():
     # load data
     train = pickle.load(open('data/deep/train', 'rb'))
     dev = pickle.load(open('data/deep/dev', 'rb'))
-    vocab, vdict = pickle.load(open('data/deep/vocab', 'rb'))
 
     train_qs = train
     val_qs = dev
@@ -141,11 +141,11 @@ def main():
     log_file = param_file.split('_')[0] + '_log'
 
     # generate params / We
-    params = init_params(d, deep=3)
+    params = gen_util.init_params(d, deep=3)
 
     # add We matrix to params
     params += (orig_We, )
-    r = roll_params(params)
+    r = gen_util.roll_params(params)
 
     dim = r.shape[0]
     print('parameter vector dimensionality:', dim)
@@ -158,11 +158,8 @@ def main():
 
     print('step 1 of 2: training DAN (takes 2-3 hours)')
     for epoch in range(0, args['num_epochs']):
-
-        lstring = ''
-
         # create mini-batches
-        random.shuffle(train_qs)
+        np.random.shuffle(train_qs)
         batches = [train_qs[x: x + args['batch_size']] for x in list(range(0, len(train_qs),
                    args['batch_size']))]
 
@@ -174,8 +171,8 @@ def main():
             err, grad = objective_and_grad(batch, r, d, len_voc)
             update = ag.rescale_update(grad)
             r -= update
-            lstring = 'epoch: ' + str(epoch) + ' batch_ind: ' + str(batch_ind) + \
-                    ' error, ' + str(err) + ' time = ' + str(time.time()-now) + ' sec'
+            lstring = 'epoch: ' + str(epoch) + ' batch_ind: ' + str(batch_ind) + ' error, '\
+                      + str(err) + ' time = ' + str(time.time()-now) + ' sec'
             print(lstring)
             log.write(lstring + '\n')
             log.flush()
@@ -185,8 +182,8 @@ def main():
         # done with epoch
         print(time.time() - ep_t)
         print('done with epoch ', epoch, ' epoch error = ', epoch_error, ' min error = ', min_error)
-        lstring = 'done with epoch ' + str(epoch) + ' epoch error = ' + str(epoch_error) \
-                 + ' min error = ' + str(min_error) + '\n\n'
+        lstring = 'done with epoch ' + str(epoch) + ' epoch error = ' + str(epoch_error) +\
+                  ' min error = ' + str(min_error) + '\n\n'
         log.write(lstring)
         log.flush()
 
@@ -194,23 +191,15 @@ def main():
         if epoch_error < min_error:
             min_error = epoch_error
             print('saving model...')
-            params = unroll_params(r, d, len_voc, deep=3)
+            params = gen_util.unroll_params(r, d, len_voc, deep=3)
             pickle.dump(params, open(param_file, 'wb'))
 
         # reset adagrad weights
         if epoch % args['adagrad_reset'] == 0 and epoch != 0:
             ag.reset_weights()
-
-        # check accuracy on validation set
-        #if epoch % args['do_val'] == 0 and epoch != 0:
-        #    print('validating...')
-        #    params = unroll_params(r, d, len_voc, deep=3)
-        #    evaluate(train_qs, val_qs, params, d)
-        #    print('\n\n')
-
     log.close()
 
-    print('step 2 of 2: training classifier over all answers (takes 10-15 hours depending on number of answers)')
+    print('step 2 of 2: training classifier over all answers (takes 10-15 hours)')
     params = pickle.load(open(param_file, 'rb'))
     evaluate(train_qs, val_qs, params, d)
 

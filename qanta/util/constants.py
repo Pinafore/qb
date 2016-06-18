@@ -28,9 +28,13 @@ DEEP = 'deep'
 ANSWER_PRESENT = 'answer_present'
 CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
-COUNTRY_LIST_PATH = 'data/country_list.txt'
-CLM_PATH = 'data/language_model'
-WHOOSH_WIKI_INDEX_PATH = 'data/whoosh/wiki'
+
+COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
+
+CLM_PATH = 'output/language_model'
+CLM_TARGET = 'output/language_model.txt'
+
+WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 
 # Do not change order, it matters for writing in correct order

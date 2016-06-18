@@ -138,9 +138,7 @@ def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granular
     for fold in FOLDS:
         feature_df_with_fold = feature_df.filter('fold = "{0}"'.format(fold)).cache()
         for name in feature_names:
-            filename = '/home/ubuntu/qb/data/features/{0}/{1}.{2}.parquet'\
-                .format(fold, granularity, name)
-
+            filename = '/home/ubuntu/qb/data/features/{0}/sentence.{1}.parquet'.format(fold, name)
             feature_df_with_fold.filter('feature_name = "{0}"'.format(name))\
                 .write.save(filename, mode='overwrite')
         feature_df_with_fold.unpersist()
@@ -175,9 +173,9 @@ def parallel_generate_guesses(task):
     return task[0].qnum, task[0].fold, create_guesses_for_question(task[0], task[1])
 
 
-def create_guesses(processes=cpu_count()):
+def create_guesses(guess_db_path, processes=cpu_count()):
     q_db = QuestionDatabase(QB_QUESTION_DB)
-    guess_list = GuessList(QB_GUESS_DB)
+    guess_list = GuessList(guess_db_path)
 
     deep_feature = instantiate_feature('deep', q_db)
     questions = q_db.guess_questions()

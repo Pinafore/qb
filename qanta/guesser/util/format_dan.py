@@ -1,8 +1,10 @@
 import pickle
 import argparse
 import regex
+import re
 
-from qanta.util.qdb import *
+from qanta.util import qdb
+from qanta.util.environment import QB_QUESTION_DB
 
 
 class Preprocessor:
@@ -10,8 +12,8 @@ class Preprocessor:
     def __init__(self, ner_file):
 
         self.ners = pickle.load(open(ner_file, 'rb'))
-        self.ftp = ["for 10 points, ", "for 10 points--", "for ten points, ",\
-                    "for 10 points ", "for ten points ", "ftp,", "ftp"]
+        self.ftp = ["for 10 points, ", "for 10 points--", "for ten points, ", "for 10 points ",
+                    "for ten points ", "ftp,", "ftp"]
         # map vocab to word embedding lookup index
         self.vocab = []
         self.vdict = {}
@@ -44,7 +46,7 @@ class Preprocessor:
             q = q.replace(phrase, ' ')
 
         # remove punctuation
-        q = self.remove_punctuation(q)
+        q = regex.sub(r"\p{P}+", " ", q)
 
         # simple ner (replace answers w/ concatenated versions)
         for ner in self.ners:
@@ -52,9 +54,6 @@ class Preprocessor:
 
         words = self.convert_to_indices(q.strip())
         return words
-
-    def remove_punctuation(self, text):
-        return regex.sub(r"\p{P}+", " ", text)
 
     def convert_to_indices(self, text):
         words = []
@@ -70,16 +69,11 @@ class Preprocessor:
 
 def main():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument("--database", type=str,
-                        default='data/questions.db',
-                        help="Question Database")
-    parser.add_argument("--threshold", type=int,
-                        default=5,
-                        help="Number of appearances")
+    parser.add_argument("--threshold", type=int, default=5, help="Number of appearances")
     flags = parser.parse_args()
 
-    pp = Preprocessor('data/common/ners')
-    db = QuestionDatabase('data/questions.db')
+    pp = Preprocessor('data/internal/common/ners')
+    db = qdb.QuestionDatabase(QB_QUESTION_DB)
 
     pages = set(db.page_by_count(min_count=flags.threshold))
     print(len(pages))
@@ -101,10 +95,10 @@ def main():
                 print('done with ', i)
 
         print(fold, len(proc_fold))
-        pickle.dump(proc_fold, open('data/deep/' + fold, 'wb'),
+        pickle.dump(proc_fold, open('output/deep/' + fold, 'wb'),
                     protocol=pickle.HIGHEST_PROTOCOL)
 
-    pickle.dump((pp.vocab, pp.vdict), open('data/deep/vocab', 'wb'), \
+    pickle.dump((pp.vocab, pp.vdict), open('output/deep/vocab', 'wb'), \
                 protocol=pickle.HIGHEST_PROTOCOL)
 
 

@@ -3,6 +3,7 @@
 set -e
 
 sudo apt-get update
+sudo apt-get upgrade -y
 sudo apt-get install -y build-essential cmake swig
 sudo apt-get install -y git wget vim tmux
 sudo apt-get install -y libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
@@ -23,7 +24,7 @@ sudo usermod -aG docker ubuntu
 wget http://repo.continuum.io/archive/Anaconda3-4.0.0-Linux-x86_64.sh
 bash Anaconda3-4.0.0-Linux-x86_64.sh -b
 rm Anaconda3-4.0.0-Linux-x86_64.sh
-echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
+# echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
 
 # Install Python dependencies
 /home/ubuntu/anaconda3/bin/pip install -r  requirements.txt
@@ -47,6 +48,7 @@ mv spark-1.6.1-bin-hadoop2.6 ~/dependencies
 
 # Download external data
 mkdir ~/data
+mkdir ~/data/deep
 cd ~/data
 
 cd ~/

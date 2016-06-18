@@ -155,7 +155,7 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
     print('top@', top, 'accuracy: ', corr / len(probs))
 
 
-def build_classifier(attribute, bigram_thresh=1000, output='data/classifier'):
+def build_classifier(attribute, output: str, bigram_thresh=1000):
     questions = QuestionDatabase(QB_QUESTION_DB)
     bigram_filename = "%s/bigrams.pkl" % output
     if os.path.exists(bigram_filename):

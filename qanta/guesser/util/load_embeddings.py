@@ -4,10 +4,10 @@ import gzip
 
 
 def main():
-    vec_file = gzip.open('data/deep/glove.840B.300d.txt.gz', 'rb')
+    vec_file = gzip.open('data/external/deep/glove.840B.300d.txt.gz', 'rb')
     all_vocab = {}
     print('loading vocab...')
-    vocab, wmap = pickle.load(open('data/deep/vocab', 'rb'))
+    vocab, wmap = pickle.load(open('output/deep/vocab', 'rb'))
 
     for line in vec_file:
         split = line.split()
@@ -45,7 +45,7 @@ def main():
     print('We shape: ', We.shape)
 
     print('dumping...')
-    pickle.dump(We, open('data/deep/We', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+    pickle.dump(We, open('output/deep/We', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
 
 # given a vocab (list of words), return a word embedding matrix
 if __name__ == '__main__':

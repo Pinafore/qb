@@ -11,6 +11,7 @@ from nltk import bigrams
 
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION, QB_SOURCE_LOCATION
+from qanta.util.constants import CLM_PATH
 
 from clm import clm
 
@@ -148,6 +149,7 @@ class LanguageModelReader(LanguageModelBase):
         self._sentence_hash = 0
         self._vocab_final = True
         self._hash_names = hash_names
+        self._stopwords = stopwords
 
         self.set_params(interp, min_span, max_span, start_rank, smooth, cutoff,
                         slop, censor_slop, give_score, log_length, stopwords)
@@ -212,7 +214,7 @@ class LanguageModelReader(LanguageModelBase):
 
         tokenized = list(self.tokenize_and_censor(sentence))
         norm_title = self.normalize_title(corpus, guess)
-        if not norm_title in self._corpora:
+        if norm_title not in self._corpora:
             return result
         guess_id = self._corpora[norm_title]
 
@@ -234,7 +236,7 @@ class LanguageModelReader(LanguageModelBase):
                 self._sentence[ii] = ww
 
         norm_title = self.normalize_title(corpus, guess)
-        if not norm_title in self._corpora or self._sentence_length == 0:
+        if norm_title not in self._corpora or self._sentence_length == 0:
             return ""
         else:
             guess_id = self._corpora[norm_title]
@@ -390,11 +392,7 @@ class LanguageModelWriter(LanguageModelBase):
                               (jj, self._obs_counts[corpus][ii][jj]))
 
 
-def build_clm(lm_out='data/language_model',
-              vocab_size=100000,
-              min_answers=1,
-              global_lms=5,
-              max_pages=-1):
+def build_clm(lm_out=CLM_PATH, vocab_size=100000, min_answers=1, global_lms=5, max_pages=-1):
     print("Training language model with pages that appear more than %i times" % min_answers)
 
     lm = LanguageModelWriter(vocab_size, global_lms)
