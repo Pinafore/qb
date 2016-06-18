@@ -34,6 +34,8 @@ COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 CLM_PATH = 'output/language_model'
 CLM_TARGET = 'output/language_model.txt'
 
+QB_SOURCE_LOCATION = 'data/internal/source'
+
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 

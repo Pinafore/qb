@@ -1,36 +1,36 @@
 # QANTA
 
 ## Setup
+Qanta can be installed and run in one of two ways
+1. Use the included [Packer](https://www.packer.io/) script in `packer/packer.json` to build an
+Amazon Machine Image (AMI). This will get used to run Qanta on Amazon Web Services (AWS) Elastic
+Compute Cloud (EC2). This is the way we use to develop and improve Qanta so it is the most tested
+method. For convenience we also periodically publish new AMIs so you don't have to run the Packer
+scripts.
+2. Use the scripts which Packer runs to install Qanta on your own machine. We include a brief
+overview of where these scripts are and what they do, and welcome any contributions to improving
+them. Since they are not our primary way of developing Qanta we don't actively maintain it.
+
+Latest QANTA AMI ID on US-west-1: `ami-a4ca8fc4`
+
 ### Dependencies
-* Python 3.5 (Qanta does not support anything below Python 3.5)
+* Python 3.5
 * Apache Spark 1.6.1
-* Vowpal Wabbit 8.1.1 or newer
-* Docker 1.11.1 or newer
-* All python packages in `requirements.txt`, installable via `pip3 install -r requirements.txt`
+* Vowpal Wabbit 8.1.1
+* Docker 1.11.1
+* All python packages in `packer/requirements.txt`
 
 ### Installation
-
-1. Either copy non_naqt.db to data/questions.db, simlink it, or copy your own questions.db file.
-
-2. Run the script "python util/install_python_packages.py", which will install several python packages you'll need.  (You may need admin access.)
-
-3. Run the script "python util/install_nltk_data.py", which will download some nltk data.  You should *not* use admin access for this script.
-
 4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier and put the config directory in data/wikifier/config
 
 ## Environment Variables
 The majority of QANTA configuration is done through environment variables. Where possible, these
-have been set to sensible defaults. Below are all the variables and their default settings.
+have been set to sensible defaults.
 
-```python
-$ python cli.py env
-Printing QANTA Environment Variables
-('QB_SPARK_MASTER', 'spark://ec2-52-9-103-244.us-west-1.compute.amazonaws.com:7077')
-('QB_STREAMING_CORES', 12)
-('QB_QUESTION_DB', '/home/ubuntu/qb/data/questions.db')
-('QB_ROOT', '/home/ubuntu/qb')
-('QB_GUESS_DB', '/home/ubuntu/qb/data/guesses.db')
-```
+The simplest way to set this up is to copy the contents of `conf/qb-env.sh.template` and make sure
+that the script is executed. For example, in your `~/.bashrc` inserting a line `source qb-env.sh`.
+
+Documentation for what each of these does is in the configuration template
 
 ## Running QANTA
 QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
