@@ -7,7 +7,7 @@ sudo apt-get upgrade -y
 sudo apt-get install -y build-essential cmake swig
 sudo apt-get install -y git wget vim tmux unzip
 sudo apt-get install -y libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
-sudo apt-get install -y liblzma-dev
+sudo apt-get install -y liblzma-dev libpq-dev
 sudo apt-get install -y default-jre default-jdk
 
 # Install Docker
@@ -24,10 +24,11 @@ sudo usermod -aG docker ubuntu
 wget http://repo.continuum.io/archive/Anaconda3-4.0.0-Linux-x86_64.sh
 bash Anaconda3-4.0.0-Linux-x86_64.sh -b
 rm Anaconda3-4.0.0-Linux-x86_64.sh
-# echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
+echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
+echo "export PYTHONPATH=$PYTHONPATH:/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/python" >> ~/.bashrc
 
 # Install Python dependencies
-/home/ubuntu/anaconda3/bin/pip install -r  requirements.txt
+/home/ubuntu/anaconda3/bin/pip install -r requirements.txt
 
 # Install KenLM
 mkdir ~/dependencies
