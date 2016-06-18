@@ -1,10 +1,10 @@
 data/external/deep/glove.840B.300d.txt:
 	mkdir -p data/external/deep
 	curl http://nlp.stanford.edu/data/glove.840B.300d.zip > /tmp/glove.840B.300d.zip
-	unzip /tmp/glove.840B.300d.zip
-	mv /tmp/glove.840B.300d.txt data/external/deep/glove.840B.300d.txt
+	unzip /tmp/glove.840B.300d.zip -d data/external/deep
+	rm /tmp/glove.840B.300d.zip
 
-output/deep/params: data/external/deep/glove.840B.300d.txt.gz
+output/deep/params: data/external/deep/glove.840B.300d.txt
 	python3 guesser/util/format_dan.py --threshold=5
 	python3 guesser/util/load_embeddings.py
 	python3 guesser/dan.py
@@ -24,7 +24,6 @@ output/wikifier/data/input/:
 output/wikifier/data/output/: output/wikifier/data/input
 	rm -rf $@
 	mkdir -p $@
-	cp lib/wikifier-3.0-jar-with-dependencies.jar output/wikifier/wikifier-3.0-jar-with-dependencies.jar
 	cp lib/STAND_ALONE_NO_INFERENCE.xml output/wikifier/STAND_ALONE_NO_INFERENCE.xml
 	mkdir -p output/wikifier/data/configs
 	cp lib/jwnl_properties.xml output/wikifier/data/configs/jwnl_properties.xml

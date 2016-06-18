@@ -2,20 +2,20 @@ from unidecode import unidecode
 import argparse
 from collections import defaultdict
 
+from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.qdb import QuestionDatabase
 
 
 def main():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--database', type=str, default='data/questions.db')
     parser.add_argument('--min_pages', type=int, default=4)
     parser.add_argument("--output_directory", type=str,
-                        default="data/wikifier/data/input/",
+                        default="output/wikifier/data/input/",
                         help="Where we write output file")
 
     flags = parser.parse_args()
 
-    database = QuestionDatabase(flags.database)
+    database = QuestionDatabase(QB_QUESTION_DB)
 
     if flags.database:
         pages = database.questions_with_pages()

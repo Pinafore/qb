@@ -1,20 +1,16 @@
 from numpy import *
 import pickle
-import gzip
 
 
 def main():
-    vec_file = gzip.open('data/external/deep/glove.840B.300d.txt.gz', 'rb')
+    vec_file = open('data/external/deep/glove.840B.300d.txt')
     all_vocab = {}
     print('loading vocab...')
     vocab, wmap = pickle.load(open('output/deep/vocab', 'rb'))
 
     for line in vec_file:
         split = line.split()
-        try:
-            word = split[0].decode("utf-8")
-        except UnicodeDecodeError:
-            print('Unicode error, skipping word')
+        word = split[0]
         if word not in wmap:
             continue
         x = wmap[word]
