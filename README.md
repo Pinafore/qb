@@ -2,6 +2,7 @@
 
 ## Setup
 Qanta can be installed and run in one of two ways
+
 1. Use the included [Packer](https://www.packer.io/) script in `packer/packer.json` to build an
 Amazon Machine Image (AMI). This will get used to run Qanta on Amazon Web Services (AWS) Elastic
 Compute Cloud (EC2). This is the way we use to develop and improve Qanta so it is the most tested
@@ -14,6 +15,7 @@ them. Since they are not our primary way of developing Qanta we don't actively m
 Latest QANTA AMI ID on US-west-1: `ami-a4ca8fc4`
 
 ### Dependencies
+
 * Python 3.5
 * Apache Spark 1.6.1
 * Vowpal Wabbit 8.1.1
@@ -21,7 +23,7 @@ Latest QANTA AMI ID on US-west-1: `ami-a4ca8fc4`
 * All python packages in `packer/requirements.txt`
 
 ### Installation
-4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier and put the config directory in data/wikifier/config
+1. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier and put the config directory in data/wikifier/config
 
 ## Environment Variables
 The majority of QANTA configuration is done through environment variables. Where possible, these
