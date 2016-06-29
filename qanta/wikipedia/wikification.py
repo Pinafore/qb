@@ -8,14 +8,16 @@ from qanta.util.qdb import QuestionDatabase
 
 def main():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--min_pages', type=int, default=4)
+    parser.add_argument('--min_pages', type=int, default=15)
     parser.add_argument("--output_directory", type=str,
                         default="output/wikifier/data/input/",
                         help="Where we write output file")
+    parser.add_argument("--database", type=int, default=1, help="1 for yes, 0 for no")
 
     flags = parser.parse_args()
 
     database = QuestionDatabase(QB_QUESTION_DB)
+    
 
     if flags.database:
         pages = database.questions_with_pages()

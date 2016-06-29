@@ -13,7 +13,7 @@ from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION
 
-from clm import clm
+import clm
 
 kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
 
