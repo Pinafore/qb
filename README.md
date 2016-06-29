@@ -110,11 +110,3 @@ With that high-level overview in place, here is how you start the whole system.
 (eg `data/models/sentence.16.vw`)
 3. Start Qanta server: `python3 cli.py qanta_stream`
 4. Start Spark Streaming job: `python3 cli.py spark_stream`
-
-## Output File
-In the directory `data/results/` there are a number of files and folders which are the output of a quiz bowl run. Below is a description of what each file contains:
-
-* `sentence.X.full.final`: the answer for a question given the full question text
-* `sentence.X.full.buzz`: For each (question, sentence, token), the guess with whether to buzz and the weight
-* `sentence.X.full.perf`: For each (question, sentence, token), performance statistics
-* `sentence.X.full.pred`: Prediction weights from vowpal wabbit
