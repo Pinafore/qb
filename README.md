@@ -1,5 +1,10 @@
 # QANTA
 
+NOTE: This project is actively maintained, but is going through changes rapidly since it is
+research code. We do our best to make sure the code works after cloning and running installation
+steps, but greatly appreciate any bug reports and encourage you to open a pull request to fix the
+bug or add documentation.
+
 ## Setup
 Qanta can be installed and run in one of two ways
 
@@ -8,9 +13,9 @@ Amazon Machine Image (AMI). This will get used to run Qanta on Amazon Web Servic
 Compute Cloud (EC2). This is the way we use to develop and improve Qanta so it is the most tested
 method. For convenience we also periodically publish new AMIs so you don't have to run the Packer
 scripts.
-2. Use the scripts which Packer runs to install Qanta on your own machine. We include a brief
-overview of where these scripts are and what they do, and welcome any contributions to improving
-them. Since they are not our primary way of developing Qanta we don't actively maintain it.
+2. Use the scripts which Packer runs to install Qanta on your own machine. Since this is not our
+primary method of development we don't have specific instructions, but welcome someone to contribute
+them. The primary installation script is `packer/setup.sh`
 
 Latest QANTA AMI ID on US-west-1: `ami-a4ca8fc4`
 
@@ -47,11 +52,11 @@ the makefile
 Execute the following commands
 
 ```bash
-# Generate the makefile
-$ python3 cli.py makefile
-
 # Run pre-requisites
 $ make prereqs
+
+# Download nltk data
+$ python3 setup.py download
 ```
 
 Additionally, you must have Apache Spark running at the url specified in the environment variable
@@ -59,6 +64,11 @@ Additionally, you must have Apache Spark running at the url specified in the env
 
 ### Running Batch Mode
 
+These instructions are a work in progress. Generally speaking, you need to start the spark cluster,
+start luigi, then submit the `AllSummaries` task. If it is your first time running it, we suggest
+you use more intermediate targets from `qanta/pipline.py`
+
+0. Start the spark cluster by navigating into `$SPARK_HOME` and running `sbin/start-all.sh`
 1. Start the Luigi daemon: `luigid --background --address 0.0.0.0`
 2. Run the pipeline: `luigi --module qanta.pipeline AllSummaries --workers 30` (change 30 to number
 of concurrent tasks to run at a time)

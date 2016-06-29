@@ -26,6 +26,7 @@ bash Anaconda3-4.0.0-Linux-x86_64.sh -b
 rm Anaconda3-4.0.0-Linux-x86_64.sh
 echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
 echo "export PYTHONPATH=$PYTHONPATH:/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/python" >> ~/.bashrc
+echo "export SPARK_HOME=/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6" >> ~/.bashrc
 
 # Install Python dependencies
 /home/ubuntu/anaconda3/bin/pip install -r requirements.txt
