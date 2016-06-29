@@ -23,7 +23,8 @@ output/wikifier/data/output: output/wikifier/data/input
 	cp lib/STAND_ALONE_NO_INFERENCE.xml output/wikifier/STAND_ALONE_NO_INFERENCE.xml
 	mkdir -p output/wikifier/data/configs
 	cp lib/jwnl_properties.xml output/wikifier/data/configs/jwnl_properties.xml
-	(cd output/wikifier && java -Xmx1G -jar wikifier-3.0-jar-with-dependencies.jar -annotateData data/input data/output false STAND_ALONE_NO_INFERENCE.xml)
+	cp lib/wikifier-3.0-jar-with-dependencies.jar output/wikifier/data/configs/wikifier-3.0-jar-with-dependencies.jar
+	(cd output/wikifier && java -Xmx10G -jar data/configs/wikifier-3.0-jar-with-dependencies.jar -annotateData data/input data/output false STAND_ALONE_NO_INFERENCE.xml)
 
 output/kenlm.binary: output/wikifier/data/output
 	mkdir -p temp
