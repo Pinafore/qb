@@ -145,6 +145,9 @@ class CachedWikipedia:
             except ImportError:
                 print("Error importing %s" % key)
                 page = None
+            except ValueError:
+                print("Error importing %s" % key)
+                page = None
 
         if page is None:
             if key in self.countries:
@@ -173,6 +176,5 @@ class CachedWikipedia:
                 if self.write_dummy:
                     pickle.dump(page, open(filename, 'wb'),
                                 protocol=pickle.HIGHEST_PROTOCOL)
-
         self.cache[key] = page
         return page

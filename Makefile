@@ -10,7 +10,12 @@ output/deep/params: data/external/deep/glove.840B.300d.txt
 	python3 qanta/guesser/util/load_embeddings.py
 	python3 qanta/guesser/dan.py
 
-
+output/kenlm.binary:
+	mkdir -p temp
+	python3  cli.py build_mentions_lm_data output/wikifier/data/output /tmp/wiki_sent
+	lmplz -o 5 < /tmp/wiki_sent > output/kenlm.arpa
+	build_binary output/kenlm.arpa $@
+	rm /tmp/wiki_sent
 
 output/wikifier/data/input:
 	rm -rf $@
@@ -26,13 +31,6 @@ output/wikifier/data/output: output/wikifier/data/input
 	cp lib/wikifier-3.0-jar-with-dependencies.jar output/wikifier/data/configs/wikifier-3.0-jar-with-dependencies.jar
 	(cd output/wikifier && java -Xmx10G -jar data/configs/wikifier-3.0-jar-with-dependencies.jar -annotateData data/input data/output false STAND_ALONE_NO_INFERENCE.xml)
 
-output/kenlm.binary: output/wikifier/data/output
-	mkdir -p temp
-	python3 cli.py build_mentions_lm_data data/external/wikipedia /tmp/wiki_sent
-	lmplz -o 5 < /tmp/wiki_sent > output/kenlm.arpa
-	build_binary output/kenlm.arpa $@
-	rm /tmp/wiki_sent
-
 clm/clm_wrap.cxx: clm/clm.swig
 	swig -c++ -python $<
 
@@ -47,4 +45,4 @@ clm/_clm.so: clm/clm.o clm/clm_wrap.o
 
 clm: clm/_clm.so
 
-prereqs: output/kenlm.binary output/deep/params clm
+prereqs: output/wikifier/data/output output/kenlm.binary output/deep/params clm
