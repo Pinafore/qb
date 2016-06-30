@@ -28,7 +28,7 @@ data/external/wikifier/input/:
 data/external/wikifier/output/: data/external/wikifier/input
 	rm -rf $@
 	mkdir -p $@
-	(cd data/external/Wikifier2013 && java -Xmx10G -jar dist/wikifier-3.0-jar-with-dependencies.jar -annotateData ~/qb/output/wikifier/input ~/qb/output/wikifier/output false configs/STAND_ALONE_NO_INFERENCE.xml)
+	(cd data/external/Wikifier2013 && java -Xmx10G -jar dist/wikifier-3.0-jar-with-dependencies.jar -annotateData ../wikifier/input ../wikifier/output false configs/STAND_ALONE_NO_INFERENCE.xml)
 
 clm/clm_wrap.cxx: clm/clm.swig
 	swig -c++ -python $<
