@@ -9,7 +9,10 @@ output/deep/params: data/external/deep/glove.840B.300d.txt
 	python3 guesser/util/load_embeddings.py
 	python3 guesser/dan.py
 
-output/kenlm.binary:
+data/external/wikipedia/:
+    python3 cli.py init_wiki_cache $@
+
+output/kenlm.binary: data/external/wikipedia
 	mkdir -p temp
 	python3 cli.py build_mentions_lm_data data/external/wikipedia /tmp/wiki_sent
 	lmplz -o 5 < /tmp/wiki_sent > output/kenlm.arpa

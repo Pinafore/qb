@@ -3,12 +3,13 @@ import pickle
 from time import sleep
 from requests import ConnectionError
 from requests.exceptions import ReadTimeout
-from itertools import chain
-from math import log
 
 from unidecode import unidecode
 import wikipedia
 from wikipedia.exceptions import WikipediaException
+from qanta.util.constants import COUNTRY_LIST_PATH
+from qanta.util.environment import QB_QUESTION_DB
+from qanta.util.qdb import QuestionDatabase
 from functional import seq
 
 COUNTRY_SUB = ["History of ", "Geography of "]
@@ -66,7 +67,7 @@ class WikipediaPage:
 
 
 class CachedWikipedia:
-    def __init__(self, location, country_list, write_dummy=True):
+    def __init__(self, location, country_list=COUNTRY_LIST_PATH, write_dummy=True):
         """
         @param write_dummy If this is true, it writes an empty pickle if there
         is an error accessing a page in Wikipedia.  This will speed up future
@@ -81,6 +82,19 @@ class CachedWikipedia:
                 for line in f:
                     k, v = line.split('\t')
                     self.countries[k] = v
+
+    @staticmethod
+    def initialize_cache(path):
+        """
+        This function iterates over all pages and accessing them in the cache. This forces a
+        prefetch of all wiki pages
+        """
+        db = QuestionDatabase(QB_QUESTION_DB)
+        pages = db.questions_with_pages()
+        cw = CachedWikipedia(path)
+        for p in pages:
+            cw[p].content
+
 
     def load_page(self, key: str):
         print("Loading %s" % key)
