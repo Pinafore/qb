@@ -9,9 +9,11 @@ from unidecode import unidecode
 from nltk.tokenize import RegexpTokenizer
 from nltk import bigrams
 
-from util.build_whoosh import text_iterator
+from qanta.util.build_whoosh import text_iterator
+from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
+from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION
 
-import clm
+from clm import clm
 
 kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
 
@@ -31,7 +33,7 @@ def pretty_debug(name, result, max_width=10):
     display[0] = name
 
     start_row = 1
-    for ii in xrange(length):
+    for ii in range(length):
         if ii % max_width == 0:
             if ii > 0:
                 start_row += len(result)
@@ -124,7 +126,7 @@ class LanguageModelBase:
         Prefix the sentence with <s>, replace words not in the vocabulary with
         <UNK>, and end the sentence with </s>.
         """
-        if not isinstance(sentence, basestring):
+        if not isinstance(sentence, str):
             sentence = ' '.join(list(sentence))
         yield self.vocab_lookup(kSTART)
         for ii in kTOKENIZER(unidecode(sentence)):
@@ -138,16 +140,16 @@ class LanguageModelReader(LanguageModelBase):
                  log_length=True, censor_slop=True, hash_names=False,
                  max_span=5,
                  stopwords=["for", "10", "points", "ftp", "ten", "name"]):
-        from clm import intArray
 
         self._loaded_lms = set()
         self._datafile = lm_file
         self._lm = clm.JelinekMercerFeature()
-        self._sentence = intArray(kMAX_TEXT_LENGTH)
+        self._sentence = clm.intArray(kMAX_TEXT_LENGTH)
         self._sentence_length = 0
         self._sentence_hash = 0
         self._vocab_final = True
         self._hash_names = hash_names
+        self._stopwords = stopwords
 
         self.set_params(interp, min_span, max_span, start_rank, smooth, cutoff,
                         slop, censor_slop, give_score, log_length, stopwords)
@@ -174,19 +176,21 @@ class LanguageModelReader(LanguageModelBase):
 
         vocab_size = int(infile.readline())
         self._vocab = {}
-        for ii in xrange(vocab_size):
+        for ii in range(vocab_size):
             self._vocab[infile.readline().strip()] = ii
         if vocab_size > 100:
             print("Done reading %i vocab (Python)" % vocab_size)
 
         self._corpora = {}
-        for ii in xrange(num_lms):
+        for ii in range(num_lms):
             line = infile.readline()
+            print("LINE {0}: ".format(ii) + line)
             corpus, compare = line.split()
             self._corpora[corpus] = ii
 
-        if len(self._corpora.keys()) > 10:
-            print(self._corpora.keys()[:10])
+        corpora_keys = list(self._corpora.keys())
+        if len(corpora_keys) > 10:
+            print(corpora_keys[:10])
 
         self._lm.read_vocab("%s.txt" % self._datafile)
 
@@ -206,11 +210,11 @@ class LanguageModelReader(LanguageModelBase):
         """
 
         result = defaultdict(list)
-        reverse_vocab = dict((y, x) for x, y in self._vocab.iteritems())
+        reverse_vocab = dict((y, x) for x, y in self._vocab.items())
 
         tokenized = list(self.tokenize_and_censor(sentence))
         norm_title = self.normalize_title(corpus, guess)
-        if not norm_title in self._corpora:
+        if norm_title not in self._corpora:
             return result
         guess_id = self._corpora[norm_title]
 
@@ -232,7 +236,7 @@ class LanguageModelReader(LanguageModelBase):
                 self._sentence[ii] = ww
 
         norm_title = self.normalize_title(corpus, guess)
-        if not norm_title in self._corpora or self._sentence_length == 0:
+        if norm_title not in self._corpora or self._sentence_length == 0:
             return ""
         else:
             guess_id = self._corpora[norm_title]
@@ -329,7 +333,7 @@ class LanguageModelWriter(LanguageModelBase):
         comp = self.compare(norm_title)
 
         self.add_counts(norm_title, sentence)
-        for ii in xrange(self._compare):
+        for ii in range(self._compare):
             if comp != ii:
                 self.add_counts("compare_%i" % ii, sentence)
 
@@ -382,43 +386,23 @@ class LanguageModelWriter(LanguageModelBase):
             for jj in sorted(self._obs_counts[corpus][ii]):
                 assert isinstance(jj, int), "Not an integer: %s" % str(jj)
                 assert isinstance(self._obs_counts[corpus][ii][jj], int), \
-                    "Got %s for %s %s" % (self._obs_counts[corpus][ii][jj],
-                                          corpus, ii, jj)
+                    "Got %s for %s %s" % (self._obs_counts[corpus][ii][jj], corpus, ii, jj)
 
                 outfile.write("%i %i\n" %
                               (jj, self._obs_counts[corpus][ii][jj]))
 
-if __name__ == "__main__":
-    import argparse
 
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--wiki_location', type=str, default='data/wikipedia')
-    parser.add_argument('--question_db', type=str, default='data/questions.db')
-    parser.add_argument('--source_location', type=str, default='data/source')
-    parser.add_argument('--global_lms', type=int, default=5,
-                        help="The number of background LMs we maintain")
-    parser.add_argument('--vocab_size', type=int, default=100000)
-    parser.add_argument("--min_answers", type=int, default=1,
-                        help="How many answers needed before including in LM")
-    parser.add_argument("--max_pages", type=int, default=-1,
-                        help="How many pages to add to the index")
-    parser.add_argument("--stats_pages", type=int, default=5000,
-                        help="How many pages to use for computing stats")
-    parser.add_argument("--lm_out", type=str, default='data/language_model')
-    flags = parser.parse_args()
+def build_clm(lm_out=CLM_PATH, vocab_size=100000, min_answers=1, global_lms=5, max_pages=-1):
+    print("Training language model with pages that appear more than %i times" % min_answers)
 
-    min_answers = flags.min_answers
-    print("Training language model with pages that appear more than %i times" %
-          min_answers)
-
-    lm = LanguageModelWriter(flags.vocab_size, flags.global_lms)
+    lm = LanguageModelWriter(vocab_size, global_lms)
     num_docs = 0
     background = defaultdict(int)
     # Initialize language models
-    for title, text in text_iterator(True, flags.wiki_location,
-                                     True, flags.question_db,
-                                     True, flags.source_location,
-                                     flags.max_pages,
+    for title, text in text_iterator(True, QB_WIKI_LOCATION,
+                                     True, QB_QUESTION_DB,
+                                     True, QB_SOURCE_LOCATION,
+                                     max_pages,
                                      min_pages=min_answers):
         num_docs += 1
         if num_docs % 500 == 0:
@@ -445,10 +429,10 @@ if __name__ == "__main__":
                                      ]:
         # Add training data
         start = time.time()
-        for title, text in text_iterator(wiki, flags.wiki_location,
-                                         qb, flags.question_db,
-                                         source, flags.source_location,
-                                         flags.max_pages,
+        for title, text in text_iterator(wiki, QB_WIKI_LOCATION,
+                                         qb, QB_QUESTION_DB,
+                                         source, QB_SOURCE_LOCATION,
+                                         max_pages,
                                          min_pages=min_answers):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
@@ -458,14 +442,14 @@ if __name__ == "__main__":
             lm.add_train(corpus, title, text)
 
     print("Done training")
-    if flags.lm_out:
+    if lm_out:
         # Create the extractor object and write out the pickle
-        o = open("%s.txt" % flags.lm_out, 'w')
+        o = open("%s.txt" % lm_out, 'w')
         lm.write_vocab(o)
         o.close()
 
-        os.mkdir("%s" % flags.lm_out)
+        os.mkdir("%s" % lm_out)
         for ii, cc in enumerate(lm.corpora()):
-            o = open("%s/%i" % (flags.lm_out, ii), 'w')
+            o = open("%s/%i" % (lm_out, ii), 'w')
             lm.write_corpus(cc, ii, o)
             o.close()

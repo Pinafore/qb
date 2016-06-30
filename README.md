@@ -1,59 +1,125 @@
 # QANTA
 
-## Setups
-0.  You'll need Python, R, Gorobi, Spark, and Vowpal Wabbit installed and accessible on the
-    path.
+NOTE: This project is actively maintained, but is going through changes rapidly since it is
+research code. We do our best to make sure the code works after cloning and running installation
+steps, but greatly appreciate any bug reports and encourage you to open a pull request to fix the
+bug or add documentation.
 
-1. Either copy non_naqt.db to data/questions.db, simlink it, or copy your own questions.db file.
+## Setup
+Qanta can be installed and run in one of two ways
 
-2.  Run the script "python util/install_python_packages.py", which will install
-several python packages you'll need.  (You may need admin access.)  
+1. Use the included [Packer](https://www.packer.io/) script in `packer/packer.json` to build an
+Amazon Machine Image (AMI). This will get used to run Qanta on Amazon Web Services (AWS) Elastic
+Compute Cloud (EC2). This is the way we use to develop and improve Qanta so it is the most tested
+method. For convenience we also periodically publish new AMIs so you don't have to run the Packer
+scripts.
+2. Use the scripts which Packer runs to install Qanta on your own machine. Since this is not our
+primary method of development we don't have specific instructions, but welcome someone to contribute
+them. The primary installation script is `packer/setup.sh`
 
-3.  Run the script "python util/install_nltk_data.py", which will download
-some nltk data.  You should *not* use admin access for this script.
+Latest QANTA AMI ID on US-west-1: `ami-683b7c08`
 
+### Dependencies
 
-4. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in
-   data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib
-   directory.
+* Python 3.5
+* Apache Spark 1.6.1
+* Vowpal Wabbit 8.1.1
+* Docker 1.11.1
+* All python packages in `packer/requirements.txt`
 
-http://cogcomp.cs.illinois.edu/page/software_view/Wikifier
+### Installation
+1. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier and put the config directory in data/wikifier/config
 
-## Steps
-1.  Generate the Makefile 
+## Environment Variables
+The majority of QANTA configuration is done through environment variables. Where possible, these
+have been set to sensible defaults.
 
-    ``python generate_makefile.py``
+The simplest way to set this up is to copy the contents of `conf/qb-env.sh.template` and make sure
+that the script is executed. For example, in your `~/.bashrc` inserting a line `source qb-env.sh`.
 
-2.  Generate the guess database (this takes a while, depends on DAN---60
-hours---and guesses---40 hours)
+Documentation for what each of these does is in the configuration template
 
-    ``make data/guesses.db``
+## Running QANTA
+QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
+large batches of questions at a time. Running the batch pipeline is managed by
+[Spotify Luigi](https://github.com/spotify/luigi). Luigi is a pure python make-like framework for
+running data pipelines. The QANTA pipeline is specified in `qanta/pipeline.py`. Below are the
+pre-requisites that need to be met before running the pipeline and how to run the pipeline itself.
+Eventually any data related targets will be moved to Luigi and leave only compile-like targets in
+the makefile
 
-3.  Generate the LM pickle (18 hours)
+### Prerequisites
+Before running the system, there are a number of compile-like dependencies and data dependencies to
+download. If you don't mind waiting a while, executing the commands below will get everything you
+need.
 
-    ``make data/lm.pkl``
+However, some of the data dependencies take a while to download. To speed things along, we also
+provide a script to download the files from our Amazon S3 bucket and place them into the correct
+location. The script is in `bin/bootstrap.sh`, needs to be executed from the root of the QB
+repository, and requires you to have already run `aws configure` to setup your AWS credentials.
+You also may need to run `pip install awscli`.
 
-4. generate features, train all models, and get predictions.
+```bash
+# Download Wikifier (S3 Download in script mentioned above is much faster, this is 8GB file compressed)
+wget -O /tmp/Wikifier2013.zip http://cogcomp.cs.illinois.edu/software/Wikifier2013.zip
+unzip /tmp/Wikifier2013.zip -d data/external
+rm /tmp/Wikifier2013.zip
 
-    ``make all_sentence_buzz``
-    
-5. answer the questions found in data/expo.csv and run the demo
+# Run pre-requisites
+$ make prereqs
 
-    ``make demo4`` 
+# Download nltk data
+$ python3 setup.py download
+```
 
-Feature timings:
+Additionally, you must have Apache Spark running at the url specified in the environment variable
+`QB_SPARK_MASTER`
 
-      *  classifier: 216 features lines per sec
-      *  lm: 139.028408 feature lines per sec
-      *  deep: 84.391876 feature lines per sec
-      *  text: 158.384899 feature lines per sec
-      *  wikilinks: 62.842486 feature lines per sec
-      *  answer_present: 155.469810 feature lines per sec
+### Running Batch Mode
 
-## Steps for quick test
-If you are interested in getting the qb system running end to end without training the full system,
-you can follow these steps.
+These instructions are a work in progress. Generally speaking, you need to start the spark cluster,
+start luigi, then submit the `AllSummaries` task. If it is your first time running it, we suggest
+you use more intermediate targets from `qanta/pipline.py`
 
-1. Generate the Makefile like above
-2. Run `make data/deep/glove.840B.300d.txt.gz` to download some data
+0. Start the spark cluster by navigating into `$SPARK_HOME` and running `sbin/start-all.sh`
+1. Start the Luigi daemon: `luigid --background --address 0.0.0.0`
+2. Run the pipeline: `luigi --module qanta.pipeline AllSummaries --workers 30` (change 30 to number
+of concurrent tasks to run at a time)
+3. Observe pipeline progress at [http://hostname:8082](http://hostname:8082)
 
+To rerun any part of the pipeline it is sufficient to delete the target file generated by the task
+you wish to rerun.
+
+### Running Streaming Mode
+Again, Apache Spark needs to be running at the url specified in the environment variable
+`QB_SPARK_MASTER`.
+
+Streaming mode works by coordinating several processes to predict whether or not to buzz given line
+of text (a sentence, partial sentence, paragraph, or anything not containing a new line). The Qanta
+server is responsible for:
+* Creating a socket then waiting until a connection is established
+* The connection is established by starting an Apache Spark streaming job that binds its input to
+that socket
+* Once the connection is established the Qanta server will start streaming questions to Spark until
+its queue is empty.
+* Each question is also stored in a PostgreSQL database with a column reserved for Spark's response
+* The Qanta server will start to poll the database every 100ms to see if Spark completed all the
+questions that were queued.
+
+Spark Streaming will then do the following per input line:
+* Read the input from the socket
+* Extract all features
+* Collect the features, form a Vowpal Wabbit input line, and have VW create predictions. This
+requires that VW is running in daemon mode
+* Save the output to a PostgreSQL database
+
+Once the outputs are saved in the PostgreSQL database
+* The Qanta server reads the results and outputs the desired quantities
+
+With that high-level overview in place, here is how you start the whole system.
+
+1. Start the PostgreSQL database (Docker must be running first): `bin/start-postgres.sh`
+2. Start the Vowpal Wabbit daemon: `bin/start-vw-daemon.sh model-file.vw`
+(eg `data/models/sentence.16.vw`)
+3. Start Qanta server: `python3 cli.py qanta_stream`
+4. Start Spark Streaming job: `python3 cli.py spark_stream`

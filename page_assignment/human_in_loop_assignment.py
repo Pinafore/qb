@@ -1,6 +1,5 @@
 import sys
-print(sys.path)
-from util.qdb import QuestionDatabase
+from qanta.util.qdb import QuestionDatabase
 import argparse
 from page_assignment.active_learning_for_matching import ActiveLearner, simple_menu
 from page_assignment.client import TitleFinder, normalize

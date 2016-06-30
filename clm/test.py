@@ -10,9 +10,9 @@ from math import log, exp
 
 from nltk import bigrams
 
-import clm
-import lm_wrapper
-from lm_wrapper import kUNK, kSTART, kEND
+from clm import clm
+from clm import lm_wrapper
+from clm.lm_wrapper import kUNK, kSTART, kEND
 
 kCORPUS = [("toy1", "the name of the rose"),
            ("toy1", "the name of the father"),
@@ -59,7 +59,7 @@ for cc, ss in kCORPUS:
 
 for ii in set(x[0] for x in kCORPUS):
     comp = "compare_%i" % (hash(ii) % kCOMPARE)
-    for jj in xrange(kCOMPARE):
+    for jj in range(kCOMPARE):
         # warning: only works with single digit corpora
         if not comp.endswith(str(jj)):
             if not "compare_%i" % jj in kBIGRAM:
@@ -110,13 +110,13 @@ def gen_line(input, matches, vocab, guess, corpus,
 
     for ii, start in enumerate(matches):
         for jj, end in enumerate(matches):
-            if all(matches[x] for x in xrange(ii, jj + 1)):
+            if all(matches[x] for x in range(ii, jj + 1)):
                 max_length = max(max_length,
                                  jj - ii + 1 if
                                  (jj > ii or (jj == ii and ii > 0)) else 0)
                 if jj - ii >= min_span:
                     match = guess
-                    for kk in xrange(ii, jj + 1):
+                    for kk in range(ii, jj + 1):
                         if matches[kk] == "SLOP" and censor_slop:
                             match += "_SLOP"
                         else:
@@ -153,7 +153,7 @@ def score_span(lm, corpus, compare, vocab, span):
         components["%i-%s-%s-dc" % key] = lm.bigram_count(corpus, aa, bb)
         components["%i-%s-%s-bc" % key] = lm.bigram_count(compare, aa, bb)
 
-    return sum(y for x, y in components.iteritems()
+    return sum(y for x, y in components.items()
                if x.endswith("-d") or x.endswith("-b")), \
         components
 
@@ -293,7 +293,7 @@ class TestStringMethods(unittest.TestCase):
 
     def corpora(self):
         return ["compare_%i" % x for x in range(self._compare)] + \
-            ["toy%i" % x for x in xrange(3)]
+            ["toy%i" % x for x in range(3)]
 
     def test_bigram_counts(self):
         for ii, start in enumerate(kVOCAB):
@@ -373,7 +373,7 @@ class TestStringMethods(unittest.TestCase):
                         for ii, jj in zip(sorted(exp), sorted(act.split())):
                             message = "\t%s\t%s\n" % (ii, jj) + \
                                 "\n".join("%s\t%s" % (x, y) for x, y in
-                                          context.iteritems())
+                                          context.items())
                             self.assertEqual(ii, jj, message)
 
     def test_z_span_scores(self):
@@ -400,7 +400,7 @@ class TestStringMethods(unittest.TestCase):
                                 message += "exp:%f\n" % exp
                                 message += "act:%f\n" % float(score)
                                 message += "query:%s\n" % " ".join(qq)
-                                for aa, bb in sorted(cc.iteritems()):
+                                for aa, bb in sorted(cc.items()):
                                     message += "\t%s:%f\n" % (aa, bb)
 
                                 self.assertAlmostEqual(exp, float(score),
