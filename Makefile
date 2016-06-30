@@ -12,7 +12,7 @@ output/deep/params: data/external/deep/glove.840B.300d.txt
 
 output/kenlm.binary:
 	mkdir -p temp
-	python3  cli.py build_mentions_lm_data output/wikifier/data/output /tmp/wiki_sent
+	python3  cli.py build_mentions_lm_data data/external/wikipedia /tmp/wiki_sent
 	lmplz -o 5 < /tmp/wiki_sent > output/kenlm.arpa
 	build_binary output/kenlm.arpa $@
 	rm /tmp/wiki_sent

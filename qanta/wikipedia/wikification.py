@@ -17,7 +17,6 @@ def main():
     flags = parser.parse_args()
 
     database = QuestionDatabase(QB_QUESTION_DB)
-    
 
     if flags.database:
         pages = database.questions_with_pages()
