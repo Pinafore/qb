@@ -7,7 +7,7 @@ data/external/deep/glove.840B.300d.txt:
 output/deep/params: data/external/deep/glove.840B.300d.txt
 	python3 guesser/util/format_dan.py --threshold=5
 	python3 guesser/util/load_embeddings.py
-	python3 guesser/dan.py
+	python3 qanta/guesser/dan.py
 
 data/external/wikipedia/:
 	mkdir -p $@
@@ -15,10 +15,11 @@ data/external/wikipedia/:
 
 output/kenlm.binary: data/external/wikipedia
 	mkdir -p temp
+	mkdir -p output
 	python3 cli.py build_mentions_lm_data data/external/wikipedia /tmp/wiki_sent
-	lmplz -o 5 < /tmp/wiki_sent > output/kenlm.arpa
-	build_binary output/kenlm.arpa $@
-	rm /tmp/wiki_sent
+	lmplz -o 5 < /tmp/wiki_sent > temp/kenlm.arpa
+	build_binary temp/kenlm.arpa $@
+	rm /tmp/wiki_sent temp/kenlm.arpa
 
 data/external/wikifier/input/:
 	rm -rf $@

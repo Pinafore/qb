@@ -21,3 +21,5 @@ sqlalchemy
 jinja2
 psycopg2
 awscli
+pyspark
+typing

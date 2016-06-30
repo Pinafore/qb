@@ -1,3 +1,8 @@
+# Script to complete targets as the first argument
+#
+# If run directly, iterates through all the locations on the ENVIRONMENT variable and
+# makes sure they're up-to-date.
+
 import click
 
 from qanta import logging

@@ -44,7 +44,7 @@ def feature_lines(question, guesses_needed, granularity, feature_generator):
             yield sentence, token, guess, feat
 
 
-def instantiate_feature(feature_name, questions, deep_data="data/deep"):
+def instantiate_feature(feature_name, questions, deep_data="output/deep"):
     """
     @param feature_name: The feature to instantiate
     @param questions: question database
@@ -60,10 +60,10 @@ def instantiate_feature(feature_name, questions, deep_data="data/deep"):
         for page in questions.get_all_pages():
             page_dict[page.lower().replace(' ', '_')] = page
         feature = DeepExtractor(
-            "data/deep/classifier",
-            "data/deep/params",
-            "data/deep/vocab",
-            "data/common/ners",
+            "%s/classifier" % deep_data,
+            "%s/params" % deep_data,
+            "%s/vocab" % deep_data,
+            "data/internal/common/ners",
             page_dict
         )
     elif feature_name == "wikilinks":
