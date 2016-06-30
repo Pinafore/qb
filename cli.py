@@ -4,6 +4,7 @@ from qanta import logging
 from qanta.extractors import mentions
 from qanta.util.environment import ENVIRONMENT
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.wikipedia import wikification
 from qanta.streaming import start_qanta_streaming, start_spark_streaming
 
 
@@ -40,6 +41,12 @@ def build_mentions_lm_data(wikipedia_input, output):
 @click.argument('wiki_cache')
 def init_wiki_cache(wiki_cache):
     CachedWikipedia.initialize_cache(wiki_cache)
+
+
+@main.command()
+@click.argument('output')
+def wikify(output):
+    wikification.wikify(output)
 
 if __name__ == '__main__':
     main()
