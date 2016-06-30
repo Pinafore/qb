@@ -20,10 +20,10 @@ output/kenlm.binary: data/external/wikipedia
 	build_binary output/kenlm.arpa $@
 	rm /tmp/wiki_sent
 
-data/external/wikifier/data/input/:
+data/external/wikifier/input/:
 	rm -rf $@
 	mkdir -p $@
-	python3 qanta/wikipedia/wikification.py
+	python3 qanta/wikipedia/wikification.py data/external/wikifier/input/
 
 data/external/wikifier/output/: data/external/wikifier/input
 	rm -rf $@
@@ -44,4 +44,4 @@ clm/_clm.so: clm/clm.o clm/clm_wrap.o
 
 clm: clm/_clm.so
 
-prereqs: output/wikifier/data/output output/kenlm.binary output/deep/params clm
+prereqs: data/external/wikifier/output output/kenlm.binary output/deep/params clm
