@@ -3,6 +3,7 @@ import click
 from qanta import logging
 from qanta.extractors import mentions
 from qanta.util.environment import ENVIRONMENT
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.streaming import start_qanta_streaming, start_spark_streaming
 
 
@@ -33,6 +34,12 @@ def qanta_stream():
 @click.argument('output')
 def build_mentions_lm_data(wikipedia_input, output):
     mentions.build_lm_data(wikipedia_input, output)
+
+
+@main.command()
+@click.argument('wiki_cache')
+def init_wiki_cache(wiki_cache):
+    CachedWikipedia.initialize_cache(wiki_cache)
 
 if __name__ == '__main__':
     main()
