@@ -1,6 +1,5 @@
 from unidecode import unidecode
 import argparse
-from collections import defaultdict
 
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.qdb import QuestionDatabase
@@ -16,11 +15,7 @@ def main():
     flags = parser.parse_args()
 
     database = QuestionDatabase(QB_QUESTION_DB)
-
-    if flags.database:
-        pages = database.questions_with_pages()
-    else:
-        pages = defaultdict(set)
+    pages = database.questions_with_pages()
 
     total = 0
     for pp in pages:
