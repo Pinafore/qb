@@ -20,15 +20,15 @@ output/kenlm.binary: data/external/wikipedia
 	build_binary output/kenlm.arpa $@
 	rm /tmp/wiki_sent
 
-output/wikifier/data/input/:
+data/external/wikifier/data/input/:
 	rm -rf $@
 	mkdir -p $@
 	python3 qanta/wikipedia/wikification.py
 
-output/wikifier/data/output/: output/wikifier/data/input
+data/external/wikifier/output/: data/external/wikifier/input
 	rm -rf $@
 	mkdir -p $@
-	(cd data/external/Wikifier2013 && java -Xmx10G -jar dist/wikifier-3.0-jar-with-dependencies.jar -annotateData ~/qb/output/wikifier/data/input ~/qb/output/wikifier/data/output false configs/STAND_ALONE_NO_INFERENCE.xml)
+	(cd data/external/Wikifier2013 && java -Xmx10G -jar dist/wikifier-3.0-jar-with-dependencies.jar -annotateData ~/qb/output/wikifier/input ~/qb/output/wikifier/output false configs/STAND_ALONE_NO_INFERENCE.xml)
 
 clm/clm_wrap.cxx: clm/clm.swig
 	swig -c++ -python $<

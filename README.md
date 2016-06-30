@@ -17,7 +17,7 @@ scripts.
 primary method of development we don't have specific instructions, but welcome someone to contribute
 them. The primary installation script is `packer/setup.sh`
 
-Latest QANTA AMI ID on US-west-1: `ami-a4ca8fc4`
+Latest QANTA AMI ID on US-west-1: `ami-683b7c08`
 
 ### Dependencies
 
@@ -49,9 +49,22 @@ Eventually any data related targets will be moved to Luigi and leave only compil
 the makefile
 
 ### Prerequisites
-Execute the following commands
+Before running the system, there are a number of compile-like dependencies and data dependencies to
+download. If you don't mind waiting a while, executing the commands below will get everything you
+need.
+
+However, some of the data dependencies take a while to download. To speed things along, we also
+provide a script to download the files from our Amazon S3 bucket and place them into the correct
+location. The script is in `bin/bootstrap.sh`, needs to be executed from the root of the QB
+repository, and requires you to have already run `aws configure` to setup your AWS credentials.
+You also may need to run `pip install awscli`.
 
 ```bash
+# Download Wikifier (S3 Download in script mentioned above is much faster, this is 8GB file compressed)
+wget -O /tmp/Wikifier2013.zip http://cogcomp.cs.illinois.edu/software/Wikifier2013.zip
+unzip /tmp/Wikifier2013.zip -d data/external
+rm /tmp/Wikifier2013.zip
+
 # Run pre-requisites
 $ make prereqs
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# WARNING: This script is deprecated. It is being replaced by `packer/setup.sh` but exists while
+# that is being completed
+
 # Note, this script is not tested, it is a list of commands run in some order to get EC2 to work
 sudo apt-get update
 sudo apt-get install -y git
