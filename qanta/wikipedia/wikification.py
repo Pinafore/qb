@@ -8,9 +8,7 @@ from qanta.util.qdb import QuestionDatabase
 def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--min_pages', type=int, default=4)
-    parser.add_argument("--output_directory", type=str,
-                        default="output/wikifier/data/input/",
-                        help="Where we write output file")
+    parser.add_argument("--output_directory", type=str, help="Where we write output file")
 
     flags = parser.parse_args()
 
