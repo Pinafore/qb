@@ -10,6 +10,7 @@ output/deep/params: data/external/deep/glove.840B.300d.txt
 	python3 guesser/dan.py
 
 data/external/wikipedia/:
+	mkdir -p $@
 	python3 cli.py init_wiki_cache $@
 
 output/kenlm.binary: data/external/wikipedia
