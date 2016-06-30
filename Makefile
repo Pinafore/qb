@@ -23,7 +23,7 @@ output/kenlm.binary: data/external/wikipedia
 data/external/wikifier/input/:
 	rm -rf $@
 	mkdir -p $@
-	python3 qanta/wikipedia/wikification.py data/external/wikifier/input/
+	python3 cli.py wikify data/external/wikifier/input/
 
 data/external/wikifier/output/: data/external/wikifier/input
 	rm -rf $@
