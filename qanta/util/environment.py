@@ -2,7 +2,7 @@ import os
 
 QB_ROOT = os.getenv('QB_ROOT')
 
-QB_QUESTION_DB = os.getenv('QB_QUESTION_DB', 'data/internal/questions.db')
+QB_QUESTION_DB = os.getenv('QB_QUESTION_DB', 'data/internal/non_naqt.db')
 QB_GUESS_DB = os.getenv('QB_GUESS_DB', 'output/guesses.db')
 
 QB_SPARK_MASTER = os.getenv('QB_SPARK_MASTER')
