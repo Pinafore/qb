@@ -7,6 +7,7 @@ import os
 
 kSHOW_RIGHT = False
 kPAUSE = .25
+kSYSTEM = "OUSIA"
 
 kBIGNUMBERS = {-1:
 """
@@ -446,7 +447,7 @@ def interpret_keypress(other_allowable=""):
     return press
 
 
-def answer(ans, print_string="QANTA says:"):
+def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
