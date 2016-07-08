@@ -5,13 +5,64 @@ from luigi import LocalTarget
 from qanta.spark_execution import extract_features, merge_features
 from qanta.util import constants as C
 from qanta.util import environment as E
-from qanta.extract_features import create_guesses
 from qanta.util.classifier import build_classifier
+from qanta.extract_features import create_guesses
+from qanta.guesser.util.format_dan import preprocess
+from qanta.guesser.util import load_embeddings
+from qanta.guesser import dan
 from clm.lm_wrapper import build_clm
 
 
 def call(args):
     return subprocess.run(args, check=True)
+
+
+class GloveData(luigi.ExternalTask):
+    def output(self):
+        return LocalTarget("data/external/deep/glove.840B.300d.txt")
+
+
+class FormatDan(luigi.Task):
+    def requires(self):
+        yield GloveData()
+
+    def run(self):
+        preprocess()
+
+    def output(self):
+        return [
+            LocalTarget(C.DEEP_VOCAB_TARGET),
+            LocalTarget(C.DEEP_TRAIN_TARGET),
+            LocalTarget(C.DEEP_TEST_TARGET),
+            LocalTarget(C.DEEP_DEV_TARGET),
+            LocalTarget(C.DEEP_DEVTEST_TARGET)
+        ]
+
+
+class LoadEmbeddings(luigi.Task):
+    def requires(self):
+        yield FormatDan()
+
+    def run(self):
+        load_embeddings.create()
+
+    def output(self):
+        return LocalTarget(C.DEEP_WE_TARGET)
+
+
+class TrainDAN(luigi.Task):
+    def requires(self):
+        yield FormatDan()
+        yield LoadEmbeddings()
+
+    def run(self):
+        dan.train()
+
+    def output(self):
+        return [
+            LocalTarget(C.DEEP_DAN_PARAMS_TARGET),
+            LocalTarget(C.DEEP_DAN_CLASSIFIER_TARGET)
+        ]
 
 
 class BuildClm(luigi.Task):
@@ -39,6 +90,9 @@ class AllClassifierPickles(luigi.WrapperTask):
 
 
 class CreateGuesses(luigi.Task):
+    def requires(self):
+        yield TrainDAN()
+
     def output(self):
         return LocalTarget(E.QB_GUESS_DB)
 

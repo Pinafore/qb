@@ -1,11 +1,16 @@
 from numpy import *
 import pickle
 
+from qanta import logging
 
-def main():
+
+log = logging.get(__name__)
+
+
+def create():
     vec_file = open('data/external/deep/glove.840B.300d.txt')
     all_vocab = {}
-    print('loading vocab...')
+    log.info('loading vocab...')
     vocab, wmap = pickle.load(open('output/deep/vocab', 'rb'))
 
     for line in vec_file:
@@ -17,32 +22,28 @@ def main():
         all_vocab[word] = array(split[1:])
         all_vocab[word] = all_vocab[word].astype(float)
 
-    print(len(wmap), len(all_vocab))
+    log.info("wmap: {0} all_vocab: {1}".format(len(wmap), len(all_vocab)))
     d = len(all_vocab['the'])
 
     We = empty((d, len(wmap)))
 
-    print('creating We for ', len(wmap), ' words')
+    log.info('creating We for {0} words'.format(len(wmap)))
     unknown = []
 
     offset = len(wmap)
-    print('offset = ', offset)
+    log.info('offset = {0}'.format(offset))
 
     for word in wmap:
         try:
             We[:, wmap[word]] = all_vocab[word]
         except KeyError:
             unknown.append(word)
-            print('unknown: ', word)
+            log.info('unknown: {0}'.format(word))
             # initialize unknown words with unknown token
             We[:, wmap[word]] = all_vocab['unknown']
 
-    print('unknown: ', len(unknown))
-    print('We shape: ', We.shape)
+    log.info('unknown: {0}'.format(len(unknown)))
+    log.info('We shape: {0}'.format(We.shape))
 
-    print('dumping...')
+    log.info('dumping...')
     pickle.dump(We, open('output/deep/We', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
-
-# given a vocab (list of words), return a word embedding matrix
-if __name__ == '__main__':
-    main()
