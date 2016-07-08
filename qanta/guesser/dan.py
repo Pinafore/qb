@@ -1,19 +1,13 @@
 import time
-import argparse
 import pickle
 import numpy as np
 
 from qanta.guesser.util import gen_util
 from qanta.guesser.classify.learn_classifiers import evaluate
 from qanta.guesser.util.adagrad import Adagrad
-
-
-def relu(x):
-    return x * (x > 0)
-
-
-def drelu(x):
-    return x > 0
+from qanta.guesser.util.functions import relu, drelu
+from qanta.util.constants import (DEEP_WE_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_TRAIN_TARGET,
+                                  DEEP_DEV_TARGET)
 
 
 def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
@@ -100,28 +94,10 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
     return cost, grad
 
 
-def main():
-    parser = argparse.ArgumentParser(description='QANTA: a question answering neural network \
-                                     with trans-sentential aggregation')
-    parser.add_argument('-We', help='location of word embeddings', default='output/deep/We')
-    parser.add_argument('-d', help='word embedding dimension', type=int, default=300)
-    parser.add_argument('-b', '--batch_size',
-                        help='adagrad minibatch size (ideal: 25 minibatches per epoch)', type=int,
-                        default=150)
-    parser.add_argument('-ep', '--num_epochs', help='number of training epochs', type=int,
-                        default=61)
-    parser.add_argument('-agr', '--adagrad_reset', help='reset sum of squared gradients after this many\
-                         epochs', type=int, default=10)
-    parser.add_argument('-lr', help='adagrad learning rate', type=float, default=0.01)
-    parser.add_argument('-o', '--output', help='desired location of output model',
-                        default='output/deep/params')
-
-    args = vars(parser.parse_args())
-    d = args['d']
-
+def train(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, adagrad_reset=10):
     # load data
-    train = pickle.load(open('data/deep/train', 'rb'))
-    dev = pickle.load(open('data/deep/dev', 'rb'))
+    train = pickle.load(open(DEEP_TRAIN_TARGET, 'rb'))
+    dev = pickle.load(open(DEEP_DEV_TARGET, 'rb'))
 
     train_qs = train
     val_qs = dev
@@ -131,17 +107,16 @@ def main():
         total += len(qs)
     print('total sentences: ', total)
 
-    orig_We = pickle.load(open(args['We'], 'rb'))
+    orig_We = pickle.load(open(DEEP_WE_TARGET, 'rb'))
 
     len_voc = orig_We.shape[1]
     print('vocab length: ', len_voc, ' We shape: ', orig_We.shape)
 
     # output log and parameter file destinations
-    param_file = args['output']
-    log_file = param_file.split('_')[0] + '_log'
+    log_file = DEEP_DAN_PARAMS_TARGET.split('_')[0] + '_log'
 
     # generate params / We
-    params = gen_util.init_params(d, deep=3)
+    params = gen_util.init_params(we_dimension, deep=3)
 
     # add We matrix to params
     params += (orig_We, )
@@ -153,22 +128,21 @@ def main():
     log = open(log_file, 'w')
 
     # minibatch adagrad training
-    ag = Adagrad(r.shape, args['lr'])
+    ag = Adagrad(r.shape, learning_rate)
     min_error = float('inf')
 
     print('step 1 of 2: training DAN (takes 2-3 hours)')
-    for epoch in range(0, args['num_epochs']):
+    for epoch in range(0, n_epochs):
         # create mini-batches
         np.random.shuffle(train_qs)
-        batches = [train_qs[x: x + args['batch_size']] for x in list(range(0, len(train_qs),
-                   args['batch_size']))]
+        batches = [train_qs[x: x + batch_size] for x in list(range(0, len(train_qs), batch_size))]
 
         epoch_error = 0.0
         ep_t = time.time()
 
         for batch_ind, batch in enumerate(batches):
             now = time.time()
-            err, grad = objective_and_grad(batch, r, d, len_voc)
+            err, grad = objective_and_grad(batch, r, we_dimension, len_voc)
             update = ag.rescale_update(grad)
             r -= update
             lstring = 'epoch: ' + str(epoch) + ' batch_ind: ' + str(batch_ind) + ' error, '\
@@ -191,18 +165,14 @@ def main():
         if epoch_error < min_error:
             min_error = epoch_error
             print('saving model...')
-            params = gen_util.unroll_params(r, d, len_voc, deep=3)
-            pickle.dump(params, open(param_file, 'wb'))
+            params = gen_util.unroll_params(r, we_dimension, len_voc, deep=3)
+            pickle.dump(params, open(DEEP_DAN_PARAMS_TARGET, 'wb'))
 
         # reset adagrad weights
-        if epoch % args['adagrad_reset'] == 0 and epoch != 0:
+        if epoch % adagrad_reset == 0 and epoch != 0:
             ag.reset_weights()
     log.close()
 
     print('step 2 of 2: training classifier over all answers (takes 10-15 hours)')
-    params = pickle.load(open(param_file, 'rb'))
-    evaluate(train_qs, val_qs, params, d)
-
-# train qanta and save model
-if __name__ == '__main__':
-    main()
+    params = pickle.load(open(DEEP_DAN_PARAMS_TARGET, 'rb'))
+    evaluate(train_qs, val_qs, params, we_dimension)

@@ -34,6 +34,15 @@ COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 CLM_PATH = 'output/language_model'
 CLM_TARGET = 'output/language_model.txt'
 
+DEEP_WE_TARGET = 'output/deep/We'
+DEEP_DAN_PARAMS_TARGET = 'output/deep/params'
+DEEP_DAN_CLASSIFIER_TARGET = 'output/deep/classifier'
+DEEP_TRAIN_TARGET = 'output/deep/train'
+DEEP_DEV_TARGET = 'output/deep/dev'
+DEEP_DEVTEST_TARGET = 'output/deep/devtest'
+DEEP_TEST_TARGET = 'output/deep/test'
+DEEP_VOCAB_TARGET = 'output/deep/vocab'
+
 QB_SOURCE_LOCATION = 'data/internal/source'
 
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'

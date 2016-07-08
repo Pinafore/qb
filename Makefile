@@ -4,11 +4,6 @@ data/external/deep/glove.840B.300d.txt:
 	unzip /tmp/glove.840B.300d.zip -d data/external/deep
 	rm /tmp/glove.840B.300d.zip
 
-output/deep/params: data/external/deep/glove.840B.300d.txt
-	python3 guesser/util/format_dan.py --threshold=5
-	python3 guesser/util/load_embeddings.py
-	python3 qanta/guesser/dan.py
-
 data/external/wikipedia/:
 	mkdir -p $@
 	python3 cli.py init_wiki_cache $@
@@ -45,4 +40,4 @@ clm/_clm.so: clm/clm.o clm/clm_wrap.o
 
 clm: clm/_clm.so
 
-prereqs: data/external/wikifier/output output/kenlm.binary output/deep/params clm
+prereqs: data/external/wikifier/output output/kenlm.binary clm

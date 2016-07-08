@@ -1,14 +1,13 @@
 import pickle
-import argparse
 import regex
 import re
 
 from qanta.util import qdb
+from qanta.util.constants import MIN_APPEARANCES, DEEP_VOCAB_TARGET
 from qanta.util.environment import QB_QUESTION_DB
 
 
 class Preprocessor:
-
     def __init__(self, ner_file):
 
         self.ners = pickle.load(open(ner_file, 'rb'))
@@ -67,15 +66,11 @@ class Preprocessor:
         return words
 
 
-def main():
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument("--threshold", type=int, default=5, help="Number of appearances")
-    flags = parser.parse_args()
-
+def preprocess():
     pp = Preprocessor('data/internal/common/ners')
     db = qdb.QuestionDatabase(QB_QUESTION_DB)
 
-    pages = set(db.page_by_count(min_count=flags.threshold))
+    pages = set(db.page_by_count(min_count=MIN_APPEARANCES))
     print(len(pages))
     folds = ['train', 'test', 'devtest', 'dev']
     for fold in folds:
@@ -98,9 +93,8 @@ def main():
         pickle.dump(proc_fold, open('output/deep/' + fold, 'wb'),
                     protocol=pickle.HIGHEST_PROTOCOL)
 
-    pickle.dump((pp.vocab, pp.vdict), open('output/deep/vocab', 'wb'), \
-                protocol=pickle.HIGHEST_PROTOCOL)
-
-
-if __name__ == "__main__":
-    main()
+    pickle.dump(
+        (pp.vocab, pp.vdict),
+        open(DEEP_VOCAB_TARGET, 'wb'),
+        protocol=pickle.HIGHEST_PROTOCOL
+    )
