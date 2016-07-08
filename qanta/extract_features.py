@@ -6,6 +6,7 @@ from multiprocessing import Pool, cpu_count
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
 
+from qanta import logging
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.guess import GuessList
 from qanta.util.constants import FOLDS, MIN_APPEARANCES, CLM_PATH
@@ -22,6 +23,7 @@ from qanta.extractors.mentions import Mentions
 from qanta.extractors.answer_present import AnswerPresent
 
 
+log = logging.get(__name__)
 Task = namedtuple('Task', ['question', 'guesses'])
 
 
@@ -184,8 +186,14 @@ def create_guesses(guess_db_path, processes=cpu_count()):
         tasks.append((q, deep_feature))
 
     with Pool(processes=processes) as pool:
-        question_guesses = pool.map(parallel_generate_guesses, tasks)
+        question_guesses = pool.imap(parallel_generate_guesses, tasks)
+        i, n = 0, len(tasks)
+        log.info("Guess generation starting for {0} questions".format(n))
         for qnum, fold, guesses in question_guesses:
             guess_list.save_guesses('deep', qnum, fold, guesses)
+            log.info("Progress: {0} / {1} questions completed".format(i, n))
+            i += 1
 
+    log.info("Guess generation completed, generating indices")
     guess_list.create_indexes()
+    log.info("Guess generation done")
