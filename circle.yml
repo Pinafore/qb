@@ -14,14 +14,7 @@ dependencies:
     - sudo apt-get install libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
     - sudo apt-get install liblzma-dev libpq-dev
     - sudo apt-get install default-jre default-jdk
-    - conda install -y numpy scipy
-    - conda install -y nltk
-    - conda install -y seaborn matplotlib
-    - conda install -y scikit-learn
-    - pip install py4j
-    - pip install pyfunctional
-    - pip install click
-    - pip install requests
+    - pip install -r requirements.txt
   override:
     - python setup.py download
 
