@@ -18,4 +18,10 @@ dependencies:
     - conda install -y nltk
     - conda install -y seaborn matplotlib
     - conda install -y scikit-learn
+    - pip install py4j
+    - pip install pyfunctional
+    - pip install click
+    - pip install requests
+  override:
+    - python setup.py download
 
