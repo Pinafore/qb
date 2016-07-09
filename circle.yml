@@ -1,6 +1,11 @@
 machine:
   python:
     version: anaconda3-4.0.0
+
+  environment:
+    PATH: /home/ubuntu/virtualenvs/venv-anaconda3-4.0.0/bin:$PATH
+
+
 dependencies:
   pre:
     - sudo apt-get update
