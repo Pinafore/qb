@@ -3,7 +3,7 @@
 NOTE: This project is actively maintained, but is going through changes rapidly since it is
 research code. We do our best to make sure the code works after cloning and running installation
 steps, but greatly appreciate any bug reports and encourage you to open a pull request to fix the
-bug or add documentation.
+bug or add documentation. We will make a note here when we create a stable `2.0` tag.
 
 ## Setup
 Qanta can be installed and run in one of two ways
