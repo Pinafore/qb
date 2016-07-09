@@ -14,8 +14,8 @@ dependencies:
     - sudo apt-get install libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
     - sudo apt-get install liblzma-dev libpq-dev
     - sudo apt-get install default-jre default-jdk
-    - conda install numpy scipy
-    - conda install nltk
-    - conda install seaborn matplotlib
-    - conda install scikit-learn
+    - conda install -y numpy scipy
+    - conda install -y nltk
+    - conda install -y seaborn matplotlib
+    - conda install -y scikit-learn
 
