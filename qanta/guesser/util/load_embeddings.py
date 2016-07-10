@@ -15,7 +15,6 @@ def create():
 
     for line in vec_file:
         split = line.split()
-        # Getting 
         word = " ".join(split[:-300])
         if word not in wmap:
             continue
