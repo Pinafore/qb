@@ -15,11 +15,11 @@ def create():
 
     for line in vec_file:
         split = line.split()
-        word = split[0]
+        word = " ".join(split[:-300])
         if word not in wmap:
             continue
         x = wmap[word]
-        all_vocab[word] = array(split[1:])
+        all_vocab[word] = array(split[-300:])
         all_vocab[word] = all_vocab[word].astype(float)
 
     log.info("wmap: {0} all_vocab: {1}".format(len(wmap), len(all_vocab)))
