@@ -101,15 +101,11 @@ def compute_vectors(train_qs, test_qs, params, d):
                 p2 = relu(W2.dot(p) + b2)
                 p3 = relu(W3.dot(p2) + b3)
 
-                curr_feats = {}
-                for dim, val in np.ndenumerate(p3):
-                    curr_feats['__' + str(dim)] = val
-
                 if tt == 0:
-                    train_vector.append((curr_feats, ans[0]))
+                    train_vector.append((p3.ravel(), ans[0]))
 
                 else:
-                    test_vector.append((curr_feats, ans[0]))
+                    test_vector.append((p3.ravel(), ans[0]))
     return train_vector, test_vector
 
 
@@ -128,10 +124,11 @@ def evaluate(train_qs, test_qs, params, d):
     classifier = OneVsRestClassifier(LogisticRegression(C=10), n_jobs=-1)
     classifier.fit(train_feats, train_labels)
 
-    print('accuracy train:', nltk.classify.util.accuracy(classifier, train_vector))
-    print('accuracy test:', nltk.classify.util.accuracy(classifier, test_vector))
-    print('')
-
-    print('dumping classifier')
     pickle.dump(classifier, open(DEEP_DAN_CLASSIFIER_TARGET, 'wb'),
                 protocol=pickle.HIGHEST_PROTOCOL)
+
+    train_accuracy = nltk.classify.util.accuracy(classifier, train_vector)
+    test_accuracy = nltk.classify.util.accuracy(classifier, test_vector)
+    log.info('accuracy train: {0}'.format(train_accuracy))
+    log.info('accuracy test: {0}'.format(test_accuracy)
+
