@@ -45,6 +45,7 @@ configuration section for a summary of how the Terraform installs scripts treat 
 10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
 and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
 nodes can communicate via SSH
+11. [Install sshuttle](https://github.com/apenwarr/sshuttle/) which is used to create an SSH VPN
 
 #### What do the Packer/Terraform scripts install and configure?
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
@@ -110,10 +111,21 @@ Reference `conf/qb-env.sh.template` for a list of available configuration variab
 
 ## Run QANTA
 ### Pre-requisites
+We recommend that before you work with Qanta that you run
+`sshuttle -N -H --dns -r ubuntu@public-ip 0/0`. By default, the AWS machines are only accessible via
+SSH which makes using the various web servers run on it useless (Spark UI, Luigi UI, Ganglia...).
+Additionally, this gives you to the internal AWS routing tables which lets you access the rest of
+the cluster is if you were on the master node.
+
+The reason for this is that exposing more to the internet (particularly the Spark master at port
+7077 and UI at 8080) is a security vulnerability which might leak your AWS credentials. If security
+through obscurity is sufficient for you, its possible to modify the ingress rules in `aws.tf` to
+allow all traffic through.
+
 Before running the system, there are a number of compile-like dependencies and data dependencies to
 download.
 
-#### non-AWS dependency download
+#### Non-AWS dependency download
 If you are running on AWS, these files are already downloaded. Otherwise you will need to run either
 `terraform/aws-downloads.sh` to get dependencies from Amazon S3 or run the bash commands below.
 
@@ -155,7 +167,7 @@ start luigi, then submit the `AllSummaries` task. If it is your first time runni
 you use more intermediate targets from `qanta/pipline.py`
 
 0. Start the spark cluster by navigating into `$SPARK_HOME` and running `sbin/start-all.sh`
-1. Start the Luigi daemon: `luigid --background --address 0.0.0.0`
+1. Start the Luigi daemon: `luigid --background`
 2. Before you can run any of the features, you need to build the guess database: `luigi --module qanta.pipeline CreateGuesses --workers 30` (change 30 to number of concurrent tasks to run at a time).  You can skip ahead to next step if you want (it will also create the guesses, but seeing the guesses will ensure that the deep guesser worked as expected).
 3. Run the pipeline: `luigi --module qanta.pipeline AllSummaries --workers 30`
 4. Observe pipeline progress at [http://hostname:8082](http://hostname:8082)

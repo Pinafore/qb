@@ -207,6 +207,11 @@ resource "aws_spot_instance_request" "master" {
     ]
   }
 
+  provisioner "file" {
+    source = "terraform/luigi.cfg"
+    destination = "/ssd-c/qanta/luigi.cfg"
+  }
+
   provisioner "remote-exec" {
     script = "terraform/aws-downloads.sh"
   }

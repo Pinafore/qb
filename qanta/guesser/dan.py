@@ -62,7 +62,7 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
             if len(pos_inds) > 0:
                 error_sum += np.sum(a[pos_inds])
                 dc = delta_base[:, np.newaxis] + wrong_ans[:, pos_inds]
-                delta += sum(dc, axis=1).reshape((d, 1))
+                delta += np.sum(dc, axis=1).reshape((d, 1))
 
                 # update correct / incorrect words w/ small learning rate
                 grads[6][:, ans[0]] -= 0.0001 * p3.ravel()
@@ -85,7 +85,7 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
 
     # L2 regularize
     for index in range(0, len(params)):
-        error_sum += 0.5 * rho * sum(params[index] ** 2)
+        error_sum += 0.5 * rho * np.sum(params[index] ** 2)
         grads[index] += rho * params[index]
 
     cost = error_sum / len(data)
