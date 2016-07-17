@@ -2,6 +2,7 @@
 
 python3 setup.py download
 
+mkdir -p data/external
 aws s3 cp s3://pinafore/public/wikipedia.tar.gz /tmp/wikipedia.tar.gz
 tar -xvzf /tmp/wikipedia.tar.gz -C data/external
 rm /tmp/wikipedia.tar.gz

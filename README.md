@@ -50,7 +50,7 @@ nodes can communicate via SSH
 The AWS scripts are split between Packer and Terraform. All these commands are run from the root
 directory.
 
-1. (Optional) Packer: `packer build packer/packer.json`
+1. (Optional) Packer (from `packer/` directory): `packer build packer.json`
 2. Terraform: `terraform apply`
 
 The packer step is optional because we publish the most two recent Qanta AMIs on AWS and keep the

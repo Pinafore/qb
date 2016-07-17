@@ -6,7 +6,7 @@
 
 variable "key_pair" {}
 variable "qanta_ami" {
-  default = "ami-683b7c08"
+  default = "ami-cf0445af"
 }
 variable "access_key" {}
 variable "secret_key" {}
@@ -161,10 +161,14 @@ resource "aws_spot_instance_request" "master" {
   }
   wait_for_fulfillment = true
 
+  connection {
+    user = "ubuntu"
+  }
+
   # Copy SSH keys for Spark to use
   provisioner "file" {
     source = "terraform/ssh-keys"
-    destination = "/home/ubuntu/ssh-keys"
+    destination = "/home/ubuntu"
   }
 
   provisioner "remote-exec" {
@@ -172,30 +176,27 @@ resource "aws_spot_instance_request" "master" {
       "mkdir -p /home/ubuntu/.ssh",
       "cat /home/ubuntu/ssh-keys/*.pub >> /home/ubuntu/.ssh/authorized_keys",
       "mv /home/ubuntu/ssh-keys/spark.master /home/ubuntu/.ssh/id_rsa",
-      "mv /home/ubuntu/ssh-keys/spark.master.pub /home/ubuntu.ssh/id_rsa.pub",
+      "mv /home/ubuntu/ssh-keys/spark.master.pub /home/ubuntu/.ssh/id_rsa.pub",
       "chmod 600 /home/ubuntu/.ssh/id_rsa"
     ]
-    connection {
-      user = "ubuntu"
-    }
   }
 
   provisioner "remote-exec" {
     script = "terraform/configure-drives.sh"
-    connection {
-      user = "ubuntu"
-    }
   }
 
-  # Configure system environment variables
+  # Configure AWS credentials
   provisioner "remote-exec" {
     inline = [
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key} >> ~/.bashrc\"",
-      "echo \"export AWS_SECRET_ACCESS=${var.access_key} >> ~/.bashrc\""
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key} >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh\"",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key} >> /home/ubuntu/.bashrc\"",
+      "echo \"export AWS_SECRET_ACCESS=${var.secret_key} >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh\"",
+      "echo \"export AWS_SECRET_ACCESS=${var.secret_key} >> /home/ubuntu/.bashrc\"",
+      "mkdir -p /home/ubuntu/.aws",
+      "echo \"[default]\" >> /home/ubuntu/.aws/credentials",
+      "echo \"aws_access_key_id = ${var.access_key}\" >> /home/ubuntu/.aws/credentials",
+      "echo \"aws_secret_access_key = ${var.secret_key}\" >> /home/ubuntu/.aws/credentials",
     ]
-    connection {
-      user = "ubuntu"
-    }
   }
 
   provisioner "remote-exec" {
@@ -204,9 +205,10 @@ resource "aws_spot_instance_request" "master" {
       "sudo chown ubuntu /ssd-c/qanta",
       "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb"
     ]
-    connection {
-      user = "ubuntu"
-    }
+  }
+
+  provisioner "remote-exec" {
+    script = "terraform/aws-downloads.sh"
   }
 }
 

@@ -25,6 +25,16 @@
     {
       "type": "shell",
       "script": "setup.sh"
+    },
+    {
+      "type": "file",
+      "source": "conf/spark-defaults.conf",
+      "destination": "/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-defaults.conf"
+    },
+    {
+      "type": "file",
+      "source": "conf/aws-config",
+      "destination": "/home/ubuntu/.aws/config"
     }
   ]
 }
