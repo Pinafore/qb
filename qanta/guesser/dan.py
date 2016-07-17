@@ -96,11 +96,9 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
 
 def train(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, adagrad_reset=10):
     # load data
-    train = pickle.load(open(DEEP_TRAIN_TARGET, 'rb'))
-    dev = pickle.load(open(DEEP_DEV_TARGET, 'rb'))
+    train_qs = pickle.load(open(DEEP_TRAIN_TARGET, 'rb'))
+    val_qs = pickle.load(open(DEEP_DEV_TARGET, 'rb'))
 
-    train_qs = train
-    val_qs = dev
     print('total questions: ', len(train_qs))
     total = 0
     for qs, ans in train_qs:

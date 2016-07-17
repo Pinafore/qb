@@ -8,15 +8,21 @@ from sklearn.multiclass import OneVsRestClassifier
 
 from functional import seq
 
+from qanta import logging
 from qanta.guesser.util.functions import relu
 from qanta.util.constants import N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET
+
+log = logging.get(__name__)
 
 
 def compute_recall_accuracy():
     d = 300
-    val_qs = pickle.load(open('data/deep/devtest', 'rb'))
-    (W, b, W2, b2, W3, b3, L) = pickle.load(open('data/deep/params', 'rb'))
-    classifier = pickle.load(open('data/deep/classifier', 'rb'))
+    with open('data/deep/devtest', 'rb') as f:
+        val_qs = pickle.load(f)
+    with open('data/deep/params', 'rb') as f:
+        (W, b, W2, b2, W3, b3, L) = pickle.load(f)
+    with open('data/deep/classifier', 'rb') as f:
+        classifier = pickle.load(f)
     recall = 0
     accuracy = 0
     total = 0
@@ -65,9 +71,7 @@ def compute_recall_accuracy():
     return recall / total, accuracy / total, total, wrong
 
 
-# trains a classifier, saves it to disk, and evaluates on heldout data
-def evaluate(train_qs, test_qs, params, d):
-
+def compute_vectors(train_qs, test_qs, params, d):
     data = [train_qs, test_qs]
     (W, b, W2, b2, W3, b3, L) = params
 
@@ -106,9 +110,14 @@ def evaluate(train_qs, test_qs, params, d):
 
                 else:
                     test_vector.append((curr_feats, ans[0]))
+    return train_vector, test_vector
 
-    print('total training instances:', len(train_vector))
-    print('total testing instances:', len(test_vector))
+
+# trains a classifier, saves it to disk, and evaluates on heldout data
+def evaluate(train_qs, test_qs, params, d):
+    train_vector, test_vector = compute_vectors(train_qs, test_qs, params, d)
+    log.info('total training instances: {0}'.format(len(train_vector)))
+    log.info('total testing instances: {0}'.format(len(test_vector)))
     random.shuffle(train_vector)
     # can modify this classifier / do grid search on regularization parameter using sklearn
     train_feats = []
