@@ -33,7 +33,7 @@ def compute_recall_accuracy():
             # input is average of all nouns in sentence
             # av = average(L[:, sent], axis=1).reshape((d, 1))
             history += sent
-            prev_sum += sum(L[:, sent], axis=1).reshape((d, 1))
+            prev_sum += np.sum(L[:, sent], axis=1).reshape((d, 1))
             if len(history) == 0:
                 av = np.zeros((d, 1))
             else:
@@ -86,7 +86,7 @@ def evaluate(train_qs, test_qs, params, d):
                 # input is average of all nouns in sentence
                 # av = average(L[:, sent], axis=1).reshape((d, 1))
                 history += sent
-                prev_sum += sum(L[:, sent], axis=1).reshape((d, 1))
+                prev_sum += np.sum(L[:, sent], axis=1).reshape((d, 1))
                 if len(history) == 0:
                     av = np.zeros((d, 1))
                 else:
