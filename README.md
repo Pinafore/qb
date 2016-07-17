@@ -6,20 +6,69 @@ steps, but greatly appreciate any bug reports and encourage you to open a pull r
 bug or add documentation. We will make a note here when we create a stable `2.0` tag.
 
 ## Setup
-Qanta can be installed and run in one of two ways
+The primary way to run Qanta is using our [Packer](https://www.packer.io/) and
+[Terraform](https://www.terraform.io) scripts to run it on
+[Elastic Cloud Compute (EC2)](https://aws.amazon.com/ec2/) which is part of
+[Amazon Web Services (AWS)](https://aws.amazon.com). The alternative is to inspect the bash scripts
+associated with our Packer/Terraform scripts to infer the setup procedure.
 
-1. Use the included [Packer](https://www.packer.io/) script in `packer/packer.json` to build an
-Amazon Machine Image (AMI). This will get used to run Qanta on Amazon Web Services (AWS) Elastic
-Compute Cloud (EC2). This is the way we use to develop and improve Qanta so it is the most tested
-method. For convenience we also periodically publish new AMIs so you don't have to run the Packer
-scripts.
-2. Use the scripts which Packer runs to install Qanta on your own machine. Since this is not our
-primary method of development we don't have specific instructions, but welcome someone to contribute
-them. The primary installation script is `packer/setup.sh`
+Packer installs dependencies that don't need to know about runtime information (eg, it
+installs `apt-get` software, download software distributions, etc). Terraform takes care of
+creating AWS EC2 machines and provisioning them correctly (networking, secrets, dns, SSD drivers,
+etc).
 
-Latest QANTA AMI ID on US-west-1: `ami-683b7c08`
+### AWS Setup
+**WARNING: Running Qanta scripts will create EC2 instances which you will be billed for**
 
-### Dependencies
+Qanta scripts by default use [Spot Instances](https://aws.amazon.com/ec2/spot/) to get machines
+at the lowest price at the expense that they may be terminated at any time if demand increases.
+We find in practice that when using the region `us-west-1` makes terminations rare. Qanta primarily
+uses `r3.8xlarge` machines which have 32 CPU cores, 244GB of RAM, and 640GB of SSD storage, but
+other [EC2 Instance Types](https://aws.amazon.com/ec2/instance-types/) are available.
+
+#### Install and Configure Local Software
+
+To execute the AWS scripts you will need to follow these steps:
+
+1. [Packer Binaries](https://www.packer.io/downloads.html) or via `brew install packer`
+2. [Terraform Binaries](https://www.terraform.io/downloads.html) or via `brew install terraform`
+3. Python 3.5+: If you don't have a preferred distribution,
+[Anaconda Python](https://www.continuum.io/downloads) is a good choice
+4. Install the AWS command line tools via `pip3 install awscli`
+5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-1`
+6. Create an [EC2 key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
+7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
+8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS
+credentials. **WARNING**: These are used to running Terraform and are subsequently copied to the
+instance to provide access to AWS resources such as S3
+9. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
+and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
+nodes can communicate via SSH
+
+#### Execute AWS Scripts
+
+The AWS scripts are split between Packer and Terraform. All these commands are run from the root
+directory.
+
+1. (Optional) Packer: `packer build packer/packer.json`
+2. Terraform: `terraform apply`
+
+The packer step is optional because we publish the most two recent Qanta AMIs on AWS and keep the
+default Terraform base AMI in sync with this. If you update from our repository frequently this
+should not cause issues. Otherwise, we suggest you run the packer script and set the environment
+variable `TF_VAR_qanta_ami` to the AMI id.
+
+### Non-AWS Setup
+Since we do not primarily develop qanta outside of AWS and setups vary widely we don't maintain a
+formal set of procedures to get qanta running not using AWS. Below are a listing of the important
+scripts that Packer and Terraform run to install and configure a running qanta system.
+
+1. `packer/packer.json`: Inventory of commands to setup pre-runtime image
+2. `packer/setup.sh`: Install dependencies which don't require runtime information
+3. `aws.tf`: Terraform configuration
+4. `terraform/`: Bash scripts and configuration scripts
+
+#### Dependencies
 
 * Python 3.5
 * Apache Spark 1.6.1
@@ -29,7 +78,7 @@ Latest QANTA AMI ID on US-west-1: `ami-683b7c08`
 * kenlm 
 * All python packages in `packer/requirements.txt`
 
-### Installation
+#### Installation
 1. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier and put the config directory in data/wikifier/config
 
 ## Environment Variables
