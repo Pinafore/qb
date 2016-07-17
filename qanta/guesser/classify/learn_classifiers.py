@@ -3,8 +3,8 @@ import pickle
 
 import numpy as np
 import nltk.classify.util
-from nltk.classify.scikitlearn import SklearnClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 
 from functional import seq
 
@@ -71,8 +71,8 @@ def evaluate(train_qs, test_qs, params, d):
     data = [train_qs, test_qs]
     (W, b, W2, b2, W3, b3, L) = params
 
-    train_feats = []
-    test_feats = []
+    train_vector = []
+    test_vector = []
 
     for tt, split in enumerate(data):
         for qs, ans in split:
@@ -102,21 +102,25 @@ def evaluate(train_qs, test_qs, params, d):
                     curr_feats['__' + str(dim)] = val
 
                 if tt == 0:
-                    train_feats.append((curr_feats, ans[0]))
+                    train_vector.append((curr_feats, ans[0]))
 
                 else:
-                    test_feats.append((curr_feats, ans[0]))
+                    test_vector.append((curr_feats, ans[0]))
 
-    print('total training instances:', len(train_feats))
-    print('total testing instances:', len(test_feats))
-    random.shuffle(train_feats)
-
+    print('total training instances:', len(train_vector))
+    print('total testing instances:', len(test_vector))
+    random.shuffle(train_vector)
     # can modify this classifier / do grid search on regularization parameter using sklearn
-    classifier = SklearnClassifier(LogisticRegression(C=10))
-    classifier.train(train_feats)
+    train_feats = []
+    train_labels = []
+    for e in train_vector:
+        train_feats.append(e[0])
+        train_labels.append(e[1])
+    classifier = OneVsRestClassifier(LogisticRegression(C=10), n_jobs=-1)
+    classifier.fit(train_feats, train_labels)
 
-    print('accuracy train:', nltk.classify.util.accuracy(classifier, train_feats))
-    print('accuracy test:', nltk.classify.util.accuracy(classifier, test_feats))
+    print('accuracy train:', nltk.classify.util.accuracy(classifier, train_vector))
+    print('accuracy test:', nltk.classify.util.accuracy(classifier, test_vector))
     print('')
 
     print('dumping classifier')
