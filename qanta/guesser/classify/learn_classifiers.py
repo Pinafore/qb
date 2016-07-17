@@ -130,5 +130,5 @@ def evaluate(train_qs, test_qs, params, d):
     train_accuracy = nltk.classify.util.accuracy(classifier, train_vector)
     test_accuracy = nltk.classify.util.accuracy(classifier, test_vector)
     log.info('accuracy train: {0}'.format(train_accuracy))
-    log.info('accuracy test: {0}'.format(test_accuracy)
+    log.info('accuracy test: {0}'.format(test_accuracy))
 
