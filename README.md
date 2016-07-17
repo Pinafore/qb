@@ -14,7 +14,7 @@ associated with our Packer/Terraform scripts to infer the setup procedure.
 
 Packer installs dependencies that don't need to know about runtime information (eg, it
 installs `apt-get` software, download software distributions, etc). Terraform takes care of
-creating AWS EC2 machines and provisioning them correctly (networking, secrets, dns, SSD drivers,
+creating AWS EC2 machines and provisioning them correctly (networking, secrets, dns, SSD drives,
 etc).
 
 ### AWS Setup
@@ -22,16 +22,16 @@ etc).
 
 Qanta scripts by default use [Spot Instances](https://aws.amazon.com/ec2/spot/) to get machines
 at the lowest price at the expense that they may be terminated at any time if demand increases.
-We find in practice that when using the region `us-west-1` makes terminations rare. Qanta primarily
+We find in practice that using the region `us-west-1` makes such terminations rare. Qanta primarily
 uses `r3.8xlarge` machines which have 32 CPU cores, 244GB of RAM, and 640GB of SSD storage, but
 other [EC2 Instance Types](https://aws.amazon.com/ec2/instance-types/) are available.
 
 #### Install and Configure Local Software
 
-To execute the AWS scripts you will need to follow these steps:
+To execute the AWS scripts you will need to follow these steps (`brew` options are for Macs):
 
-1. [Packer Binaries](https://www.packer.io/downloads.html) or via `brew install packer`
-2. [Terraform Binaries](https://www.terraform.io/downloads.html) or via `brew install terraform`
+1. [Install Packer Binaries](https://www.packer.io/downloads.html) or run `brew install packer`
+2. [Install Terraform Binaries](https://www.terraform.io/downloads.html) or run `brew install terraform`
 3. Python 3.5+: If you don't have a preferred distribution,
 [Anaconda Python](https://www.continuum.io/downloads) is a good choice
 4. Install the AWS command line tools via `pip3 install awscli`
@@ -39,21 +39,55 @@ To execute the AWS scripts you will need to follow these steps:
 6. Create an [EC2 key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
 7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
 8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS
-credentials. **WARNING**: These are used to running Terraform and are subsequently copied to the
-instance to provide access to AWS resources such as S3
-9. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
+credentials.
+9. **WARNING**: These are copied by Terraform to the cluster so it has S3 access. See AWS
+configuration section for a summary of how the Terraform installs scripts treat these keys.
+10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
 and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
 nodes can communicate via SSH
 
-#### Execute AWS Scripts
+#### What do the Packer/Terraform scripts install and configure?
+This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
-The AWS scripts are split between Packer and Terraform. All these commands are run from the root
-directory.
+##### Installed Software
+* Python 3.5
+* Apache Spark 1.6.1
+* Vowpal Wabbit 8.1.1
+* Docker 1.11.1
+* Postgres 
+* kenlm 
+* All python packages in `packer/requirements.txt`
 
-1. (Optional) Packer (from `packer/` directory): `packer build packer.json`
+##### AWS Configuration
+* Creates and configures an AWS virtual private cloud, internet gateway, route table, subnet on
+us-west-1b, and security groups that optimize between security and convenience
+* Security Groups: SSH access is enabled to the master, all other master node ports are closed to
+the internet, all other instances can communicate with each other but are not reachable by the
+internet.
+* Spot instance requests for requested number of workers and a master node
+
+#### Configuration
+* SSH keys generated from `bin/generate-ssh-keys.sh` are copied to each instance. Each instance
+receives its own ssh key and all other instances have SSH access to every other instance.
+* AWS keys are copied to `/home/ubuntu/.bashrc`,
+`/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh`, and
+`/home/ubuntu/.aws/credentials`.
+* **Warning**: AWS keys are printed during `terraform apply`, we plan
+on fixing this, but haven't yet.
+* Configure the 2 SSD drives attached to `r3.8xlarge` instances for use
+* Clone the `Pinafore/qb` to `/ssd-c/qanta/qb` and set it as the quiz bowl root
+* Download bootstrap AWS files to get the system running faster
+* TODO: based on variables download data from latest run to continue work on.
+
+#### Run AWS Scripts
+
+The AWS scripts are split between Packer and Terraform. Packer should be run from `packer/` and
+Terraform from the root directory
+
+1. (Optional) Packer: `packer build packer.json`
 2. Terraform: `terraform apply`
 
-The packer step is optional because we publish the most two recent Qanta AMIs on AWS and keep the
+The packer step is optional because we publish the two most recent Qanta AMIs on AWS and keep the
 default Terraform base AMI in sync with this. If you update from our repository frequently this
 should not cause issues. Otherwise, we suggest you run the packer script and set the environment
 variable `TF_VAR_qanta_ami` to the AMI id.
@@ -68,47 +102,20 @@ scripts that Packer and Terraform run to install and configure a running qanta s
 3. `aws.tf`: Terraform configuration
 4. `terraform/`: Bash scripts and configuration scripts
 
-#### Dependencies
-
-* Python 3.5
-* Apache Spark 1.6.1
-* Vowpal Wabbit 8.1.1
-* Docker 1.11.1
-* Postgres 
-* kenlm 
-* All python packages in `packer/requirements.txt`
-
-#### Installation
-1. Download the Illinois Wikifier code (VERSION 2).  Place the data directory in data/wikifier/data and put the wikifier-3.0-jar-with-dependencies.jar in the lib directory http://cogcomp.cs.illinois.edu/page/software_view/Wikifier and put the config directory in data/wikifier/config
-
 ## Environment Variables
-The majority of QANTA configuration is done through environment variables. Where possible, these
-have been set to sensible defaults.
+The majority of QANTA configuration is done through environment variables. These are set
+appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults.
 
-The simplest way to set this up is to copy the contents of `conf/qb-env.sh.template` and make sure
-that the script is executed. For example, in your `~/.bashrc` inserting a line `source qb-env.sh`.
+Reference `conf/qb-env.sh.template` for a list of available configuration variables
 
-Documentation for what each of these does is in the configuration template
-
-## Running QANTA
-QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
-large batches of questions at a time. Running the batch pipeline is managed by
-[Spotify Luigi](https://github.com/spotify/luigi). Luigi is a pure python make-like framework for
-running data pipelines. The QANTA pipeline is specified in `qanta/pipeline.py`. Below are the
-pre-requisites that need to be met before running the pipeline and how to run the pipeline itself.
-Eventually any data related targets will be moved to Luigi and leave only compile-like targets in
-the makefile
-
-### Prerequisites
+## Run QANTA
+### Pre-requisites
 Before running the system, there are a number of compile-like dependencies and data dependencies to
-download. If you don't mind waiting a while, executing the commands below will get everything you
-need.
+download.
 
-However, some of the data dependencies take a while to download. To speed things along, we also
-provide a script to download the files from our Amazon S3 bucket and place them into the correct
-location. The script is in `bin/bootstrap.sh`, needs to be executed from the root of the QB
-repository, and requires you to have already run `aws configure` to setup your AWS credentials.
-You also may need to run `pip install awscli`.
+#### non-AWS dependency download
+If you are running on AWS, these files are already downloaded. Otherwise you will need to run either
+`terraform/aws-downloads.sh` to get dependencies from Amazon S3 or run the bash commands below.
 
 ```bash
 # Download Wikifier (S3 Download in script mentioned above is much faster, this is 8GB file compressed)
@@ -116,15 +123,30 @@ wget -O /tmp/Wikifier2013.zip http://cogcomp.cs.illinois.edu/software/Wikifier20
 unzip /tmp/Wikifier2013.zip -d data/external
 rm /tmp/Wikifier2013.zip
 
-# Run pre-requisites
-$ make prereqs
-
 # Download nltk data
 $ python3 setup.py download
 ```
 
-Additionally, you must have Apache Spark running at the url specified in the environment variable
-`QB_SPARK_MASTER`
+#### Standard Pre-requisites
+These pre-requisitives will:
+* Compile C Language Model
+* Initialize wikipedia cache (already done on AWS or via `terraform/aws-downloads.sh`
+* Run the Illinois Wikifier
+* Train KenLM Language Model
+
+```bash
+# Run pre-requisites
+$ make prereqs
+```
+
+### Qanta Running Summary
+QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
+large batches of questions at a time. Running the batch pipeline is managed by
+[Spotify Luigi](https://github.com/spotify/luigi). Luigi is a pure python make-like framework for
+running data pipelines. The QANTA pipeline is specified in `qanta/pipeline.py`. Below are the
+pre-requisites that need to be met before running the pipeline and how to run the pipeline itself.
+Eventually any data related targets will be moved to Luigi and leave only compile-like targets in
+the makefile
 
 ### Running Batch Mode
 

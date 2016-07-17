@@ -26,4 +26,18 @@ data/external/wikifier/output/: data/external/wikifier/input
 	mkdir -p $@
 	(cd data/external/Wikifier2013 && java -Xmx10G -jar dist/wikifier-3.0-jar-with-dependencies.jar -annotateData ../wikifier/input ../wikifier/output false configs/STAND_ALONE_NO_INFERENCE.xml)
 
-prereqs: data/external/wikifier/output output/kenlm.binary clm
+clm/clm_wrap.cxx: clm/clm.swig
+	swig -c++ -python $<
+
+clm/clm_wrap.o: clm/clm_wrap.cxx
+	gcc -O3 `python3-config --includes` -std=c++11 -fPIC -c $< -o $@
+
+clm/clm.o: clm/clm.cpp clm/clm.h
+	gcc -O3 `python3-config --includes` -std=c++11 -fPIC -c $< -o $@
+
+clm/_clm.so: clm/clm.o clm/clm_wrap.o
+	g++ -shared `python3-config --ldflags` $^ -o $@
+
+clm: clm/_clm.so
+
+prereqs: data/external/wikifier/output output/kenlm.binary
