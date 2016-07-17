@@ -11,3 +11,6 @@ clm/clm.py
 *.log
 lib/*.jar
 .ipynb_checkpoints/
+terraform.tfstate
+terraform.tfstate.backup
+terraform/ssh-keys/
