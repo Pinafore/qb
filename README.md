@@ -54,8 +54,8 @@ This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-s
 * Apache Spark 1.6.1
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
-* Postgres 
-* kenlm 
+* Postgres
+* KenLM
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
