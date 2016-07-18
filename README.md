@@ -86,12 +86,22 @@ The AWS scripts are split between Packer and Terraform. Packer should be run fro
 Terraform from the root directory
 
 1. (Optional) Packer: `packer build packer.json`
-2. Terraform: `terraform apply`
+2. Terraform: `terraform apply` and note the `master_ip` output
+3. SSH into the `master_ip` with `ssh -i mykey.pem ubuntu@ipaddr`
 
 The packer step is optional because we publish the two most recent Qanta AMIs on AWS and keep the
 default Terraform base AMI in sync with this. If you update from our repository frequently this
 should not cause issues. Otherwise, we suggest you run the packer script and set the environment
 variable `TF_VAR_qanta_ami` to the AMI id.
+
+#### Shutting Down EC2
+
+To teardown the cluster, you have two options.
+
+1. `terraform destroy` will destroy all infrastructure created including the VPC/subnets/etc. If you
+want to completely reset the AWS infrastructure this does the job
+2. `terraform destroy -target=aws_spot_instance_request.master` will only destroy the EC2 instance.
+This is the only part of the insfrastructure aside from S3 that AWS charges you for.
 
 ### Non-AWS Setup
 Since we do not primarily develop qanta outside of AWS and setups vary widely we don't maintain a
@@ -111,19 +121,41 @@ Reference `conf/qb-env.sh.template` for a list of available configuration variab
 
 ## Run QANTA
 ### Pre-requisites
-We recommend that before you work with Qanta that you run
-`sshuttle -N -H --dns -r ubuntu@public-ip 0/0`. By default, the AWS machines are only accessible via
-SSH which makes using the various web servers run on it useless (Spark UI, Luigi UI, Ganglia...).
-Additionally, this gives you to the internal AWS routing tables which lets you access the rest of
-the cluster is if you were on the master node.
 
-The reason for this is that exposing more to the internet (particularly the Spark master at port
-7077 and UI at 8080) is a security vulnerability which might leak your AWS credentials. If security
-through obscurity is sufficient for you, its possible to modify the ingress rules in `aws.tf` to
-allow all traffic through.
+#### Accessing Resources on EC2
 
-Before running the system, there are a number of compile-like dependencies and data dependencies to
-download.
+For security reasons, the AWS machines qanta creates are only accessible to the internet via SSH
+to the master node. To gain access to the various web UIs (Spark, Luigi, Ganglia) and other services
+running on the cluster there are three options:
+
+* Provide a whitelist ip address as an environment variable `TF_VAR_whitelist_ip`. This will provide
+full access to all nodes from this address
+* Create an SSH VPN with `sshuttle`. This forwards all traffic from your machine through the master
+node, and gives access to AWS internal routing
+* Create an SSH tunnel to forward specific ports on the master to localhost
+
+The reason for these security precautions is that allowing access to the Spark application master
+or the spark master web UI would in principle expose a way for an attacker to gain access to your
+AWS credentials.
+
+##### SSH VPN
+
+**Warning:** The following steps guide you through creating an SSH VPN to the master node. This
+means **all** traffic will be redirected through the master node while the SSH VPN is running. AWS
+charges for bandwidth which is outgoing from AWS so avoid downloading large files/videos to your
+machine while the VPN is active (AWS does not charge for incoming bandwidth).
+
+We recommend that before you work with Qanta that you run:
+
+`sshuttle -N -H --dns -r ubuntu@public-ip 0/0`
+
+##### SSH Tunnel
+
+The following SSH command will forward all the important UIs running on the master node to
+`localhost`:
+
+`ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 ubuntu@instance-ip`
+
 
 #### Non-AWS dependency download
 If you are running on AWS, these files are already downloaded. Otherwise you will need to run either
@@ -157,25 +189,29 @@ large batches of questions at a time. Running the batch pipeline is managed by
 [Spotify Luigi](https://github.com/spotify/luigi). Luigi is a pure python make-like framework for
 running data pipelines. The QANTA pipeline is specified in `qanta/pipeline.py`. Below are the
 pre-requisites that need to be met before running the pipeline and how to run the pipeline itself.
-Eventually any data related targets will be moved to Luigi and leave only compile-like targets in
-the makefile
 
 ### Running Batch Mode
 
-These instructions are a work in progress. Generally speaking, you need to start the spark cluster,
-start luigi, then submit the `AllSummaries` task. If it is your first time running it, we suggest
-you use more intermediate targets from `qanta/pipline.py`
+These steps will guide you through starting Apache Spark, Luigi, and running the pipeline.
+Where marked steps are marked"(Non-AWS)" indicates a step which is unnecessary to do if running
+qanta from the AWS instance started by Terraform.
 
-0. Start the spark cluster by navigating into `$SPARK_HOME` and running `sbin/start-all.sh`
-1. Start the Luigi daemon: `luigid --background`
-2. Before you can run any of the features, you need to build the guess database: `luigi --module qanta.pipeline CreateGuesses --workers 30` (change 30 to number of concurrent tasks to run at a time).  You can skip ahead to next step if you want (it will also create the guesses, but seeing the guesses will ensure that the deep guesser worked as expected).
-3. Run the pipeline: `luigi --module qanta.pipeline AllSummaries --workers 30`
-4. Observe pipeline progress at [http://hostname:8082](http://hostname:8082)
+1. Start the spark cluster by navigating into `$SPARK_HOME` and running `sbin/start-all.sh`
+2. Start the Luigi daemon: `luigid --background` from `/ssd-c/qanta`
+3. Before you can run any of the features, you need to build the guess database:
+`luigi --module qanta.pipeline CreateGuesses --workers 1`.  You can skip ahead to next step if you
+want (it will also create the guesses, but seeing the guesses will ensure that the deep guesser
+worked as expected).
+4. Run the full pipeline: `luigi --module qanta.pipeline AllSummaries --workers 30`
+5. Observe pipeline progress at [http://hostname:8082](http://hostname:8082)
 
 To rerun any part of the pipeline it is sufficient to delete the target file generated by the task
 you wish to rerun.
 
 ### Running Streaming Mode
+
+**Warning: This mode is highly experimental**
+
 Again, Apache Spark needs to be running at the url specified in the environment variable
 `QB_SPARK_MASTER`.
 

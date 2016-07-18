@@ -53,3 +53,7 @@ mv spark-1.6.1-bin-hadoop2.6 ~/dependencies
 
 # Create aws credentials directory
 mkdir -p /home/ubuntu/.aws
+
+# Create Luigi logging directory
+sudo mkdir /var/log/luigi
+sudo chown ubuntu /var/log/luigi
