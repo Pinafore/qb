@@ -128,11 +128,11 @@ For security reasons, the AWS machines qanta creates are only accessible to the 
 to the master node. To gain access to the various web UIs (Spark, Luigi, Ganglia) and other services
 running on the cluster there are three options:
 
-* Provide a whitelist ip address as an environment variable `TF_VAR_whitelist_ip`. This will provide
-full access to all nodes from this address
 * Create an SSH VPN with `sshuttle`. This forwards all traffic from your machine through the master
 node, and gives access to AWS internal routing
 * Create an SSH tunnel to forward specific ports on the master to localhost
+* In the EC2 Console create a security group which whitelists your IP address and add it to the
+instance
 
 The reason for these security precautions is that allowing access to the Spark application master
 or the spark master web UI would in principle expose a way for an attacker to gain access to your
