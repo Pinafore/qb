@@ -164,7 +164,6 @@ def train(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, ada
         # reset adagrad weights
         if epoch % adagrad_reset == 0 and epoch != 0:
             ag.reset_weights()
-    log.close()
 
     log.info('step 2 of 2: training classifier over all answers (takes 10-15 hours)')
     with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
