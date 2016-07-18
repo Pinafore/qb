@@ -121,14 +121,21 @@ def evaluate(train_qs, test_qs, params, d):
     for e in train_vector:
         train_feats.append(e[0])
         train_labels.append(e[1])
+
+    test_feats = []
+    test_labels = []
+    for e in test_vector:
+         test_feats.append(e[0])
+         test_labels.append(e[1])
+
     classifier = OneVsRestClassifier(LogisticRegression(C=10), n_jobs=-1)
     classifier.fit(train_feats, train_labels)
 
     pickle.dump(classifier, open(DEEP_DAN_CLASSIFIER_TARGET, 'wb'),
                 protocol=pickle.HIGHEST_PROTOCOL)
 
-    train_accuracy = nltk.classify.util.accuracy(classifier, train_vector)
-    test_accuracy = nltk.classify.util.accuracy(classifier, test_vector)
+    train_accuracy = classifier.score(X=train_feats, y=train_labels)
+    test_accuracy = classifier.score(X=test_feats, y=test_labels)
     log.info('accuracy train: {0}'.format(train_accuracy))
     log.info('accuracy test: {0}'.format(test_accuracy))
 
