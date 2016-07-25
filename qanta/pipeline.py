@@ -112,7 +112,7 @@ class AllClassifierPickles(luigi.WrapperTask):
 
 class CreateGuesses(luigi.Task):
     def requires(self):
-        yield TrainDAN()
+        yield TrainClassifier()
 
     def output(self):
         return LocalTarget(E.QB_GUESS_DB)
