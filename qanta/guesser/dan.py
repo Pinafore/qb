@@ -4,11 +4,11 @@ import numpy as np
 
 from qanta import logging
 from qanta.guesser.util import gen_util
-from qanta.guesser.classify.learn_classifiers import evaluate
+from qanta.guesser.classify.learn_classifiers import evaluate, compute_vectors
 from qanta.guesser.util.adagrad import Adagrad
 from qanta.guesser.util.functions import relu, drelu
 from qanta.util.constants import (DEEP_WE_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_TRAIN_TARGET,
-                                  DEEP_DEV_TARGET)
+                                  DEEP_DEV_TARGET, DEEP_DAN_TRAIN_OUTPUT, DEEP_DAN_DEV_OUTPUT)
 
 log = logging.get(__name__)
 
@@ -97,7 +97,7 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
     return cost, grad
 
 
-def train(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, adagrad_reset=10):
+def train_dan(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, adagrad_reset=10):
     with open(DEEP_TRAIN_TARGET, 'rb') as f:
         train_qs = pickle.load(f)
     with open(DEEP_DEV_TARGET, 'rb') as f:
@@ -165,7 +165,50 @@ def train(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, ada
         if epoch % adagrad_reset == 0 and epoch != 0:
             ag.reset_weights()
 
-    log.info('step 2 of 2: training classifier over all answers (takes 10-15 hours)')
+def compute_classifier_input(we_dimensions=300):
+    # Load training data
+    with open(DEEP_TRAIN_TARGET, 'rb') as f:
+        train_qs = pickle.load(f)
+    # Load dev data
+    with open(DEEP_DEV_TARGET, 'rb') as f:
+        val_qs = pickle.load(f)
+    # Load trained_DAN parameters
     with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
         params = pickle.load(f)
-    evaluate(train_qs, val_qs, params, we_dimension)
+    
+    # Compute training, dev classifier vectors using DAN
+    train_vector, test_vector = compute_vectors(train_qs, val_qs, params, we_dimensions)
+    
+    # Format training vector
+    train_feats = []
+    train_labels = []
+    for e in train_vector:
+        train_feats.append(e[0])
+        train_labels.append(e[1])
+    train_formatted = (train_feats, train_labels)
+    
+    # Format dev vector
+    test_feats = []
+    test_labels = []
+    for e in test_vector:
+         test_feats.append(e[0])
+         test_labels.append(e[1])
+    test_formatted = (test_feats, test_labels)
+    
+    # Save
+    with open(DEEP_DAN_TRAIN_OUTPUT, 'wb') as f:
+        pickle.dump(train_formatted, f, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(DEEP_DAN_DEV_OUTPUT, 'wb') as f:
+        pickle.dump(test_formatted, f, protocol=pickle.HIGHEST_PROTOCOL)
+    log.info('Classifier train/dev vectors computed using DAN')
+
+def train_classifier(we_dimension=300):
+    log.info('step 2 of 2: training classifier over all answers (takes 10-15 hours)')
+    with open(DEEP_DAN_TRAIN_OUTPUT, 'rb') as f:
+        train_formatted = pickle.load(f)
+    with open(DEEP_DAN_DEV_OUTPUT, 'rb') as f:
+        dev_formatted = pickle.load(f)
+    with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
+        params = pickle.load(f)
+    evaluate(train_formatted, dev_formatted, params, we_dimension)
+    log.info('finished training and saving classifier')

@@ -56,13 +56,34 @@ class TrainDAN(luigi.Task):
         yield LoadEmbeddings()
 
     def run(self):
-        dan.train()
+        dan.train_dan()
 
     def output(self):
+        return LocalTarget(C.DEEP_DAN_PARAMS_TARGET)
+
+class ComputeDANOutput(luigi.Task):
+    def requires(self):
+        yield TrainDAN()
+    
+    def run(self):
+        dan.compute_classifier_input()
+    
+    def output(self):
         return [
-            LocalTarget(C.DEEP_DAN_PARAMS_TARGET),
-            LocalTarget(C.DEEP_DAN_CLASSIFIER_TARGET)
+            LocalTarget(C.DEEP_DAN_TRAIN_OUTPUT),
+            LocalTarget(C.DEEP_DAN_DEV_OUTPUT)
         ]
+
+class TrainClassifier(luigi.Task):
+    def requires(self):
+        yield TrainDAN()
+        yield ComputeDANOutput()
+
+    def run(self):
+        dan.train_classifier()
+
+    def output(self):
+        return LocalTarget(C.DEEP_DAN_CLASSIFIER_TARGET)
 
 
 class BuildClm(luigi.Task):
