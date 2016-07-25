@@ -10,19 +10,20 @@ from functional import seq
 
 from qanta import logging
 from qanta.guesser.util.functions import relu
-from qanta.util.constants import N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET
+from qanta.util.constants import N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_DEVTEST_TARGET,  DEEP_DEV_TARGET
 
 log = logging.get(__name__)
 
 
 def compute_recall_accuracy():
     d = 300
-    with open('data/deep/devtest', 'rb') as f:
+    with open(DEEP_DEV_TARGET, 'rb') as f:
         val_qs = pickle.load(f)
-    with open('data/deep/params', 'rb') as f:
+    with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
         (W, b, W2, b2, W3, b3, L) = pickle.load(f)
-    with open('data/deep/classifier', 'rb') as f:
+    with open( DEEP_DAN_CLASSIFIER_TARGET, 'rb') as f:
         classifier = pickle.load(f)
+        class_labels = classifier.classes_
     recall = 0
     accuracy = 0
     total = 0
@@ -50,18 +51,12 @@ def compute_recall_accuracy():
             p2 = relu(W2.dot(p) + b2)
             p3 = relu(W3.dot(p2) + b3)
 
-            curr_feats = {}
-            for dim, val in np.ndenumerate(p3):
-                curr_feats['__' + str(dim)] = val
+            curr_feats = p3.ravel().reshape(1,-1)
 
             if sent_position + 1 == len(qs):
-                p_dist = classifier.prob_classify(curr_feats)
-                accuracy += int(p_dist.max() == ans)
-                correct = int(seq(p_dist.samples())
-                              .map(lambda s: (p_dist.prob(s), s))
-                              .sorted(reverse=True)
-                              .take(N_GUESSES)
-                              .exists(lambda s: ans == s[1]))
+                p_dist = classifier.predict_proba(curr_feats)
+                correct = seq(zip(p_dist[0], class_labels)).sorted(reverse=True).take(N_GUESSES).exists(lambda s: ans == s[1])
+                accuracy += int(class_labels[p_dist.argmax()] == ans)
                 recall += correct
                 if not correct:
                     wrong.append((qs, ans))
@@ -110,32 +105,19 @@ def compute_vectors(train_qs, test_qs, params, d):
 
 
 # trains a classifier, saves it to disk, and evaluates on heldout data
-def evaluate(train_qs, test_qs, params, d):
-    train_vector, test_vector = compute_vectors(train_qs, test_qs, params, d)
-    log.info('total training instances: {0}'.format(len(train_vector)))
-    log.info('total testing instances: {0}'.format(len(test_vector)))
-    random.shuffle(train_vector)
+def evaluate(train_vector, test_vector, params, d):
+    log.info('total training instances: {0}'.format(len(train_vector[0])))
+    log.info('total testing instances: {0}'.format(len(test_vector[0])))
+    #random.shuffle(train_vector)
     # can modify this classifier / do grid search on regularization parameter using sklearn
-    train_feats = []
-    train_labels = []
-    for e in train_vector:
-        train_feats.append(e[0])
-        train_labels.append(e[1])
-
-    test_feats = []
-    test_labels = []
-    for e in test_vector:
-         test_feats.append(e[0])
-         test_labels.append(e[1])
 
     classifier = OneVsRestClassifier(LogisticRegression(C=10), n_jobs=-1)
-    classifier.fit(train_feats, train_labels)
+    classifier.fit(train_vector[0], train_vector[1])
 
     pickle.dump(classifier, open(DEEP_DAN_CLASSIFIER_TARGET, 'wb'),
                 protocol=pickle.HIGHEST_PROTOCOL)
 
-    train_accuracy = classifier.score(X=train_feats, y=train_labels)
-    test_accuracy = classifier.score(X=test_feats, y=test_labels)
+    train_accuracy = classifier.score(X=train_vector[0], y=train_vector[1])
+    test_accuracy = classifier.score(X=test_vector[0], y=test_vector[1])
     log.info('accuracy train: {0}'.format(train_accuracy))
     log.info('accuracy test: {0}'.format(test_accuracy))
-
