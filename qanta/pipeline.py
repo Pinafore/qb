@@ -61,6 +61,7 @@ class TrainDAN(luigi.Task):
     def output(self):
         return LocalTarget(C.DEEP_DAN_PARAMS_TARGET)
 
+
 class ComputeDANOutput(luigi.Task):
     def requires(self):
         yield TrainDAN()
@@ -73,6 +74,7 @@ class ComputeDANOutput(luigi.Task):
             LocalTarget(C.DEEP_DAN_TRAIN_OUTPUT),
             LocalTarget(C.DEEP_DAN_DEV_OUTPUT)
         ]
+
 
 class TrainClassifier(luigi.Task):
     def requires(self):

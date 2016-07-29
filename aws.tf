@@ -138,6 +138,8 @@ resource "aws_spot_instance_request" "master" {
   instance_type = "${var.master_instance_type}"
   key_name = "${var.key_pair}"
   spot_price = "${var.spot_price}"
+  spot_type = "one-time"
+  wait_for_fulfillment = true
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
@@ -159,7 +161,6 @@ resource "aws_spot_instance_request" "master" {
     device_name = "/dev/sdc"
     virtual_name = "ephemeral1"
   }
-  wait_for_fulfillment = true
 
   connection {
     user = "ubuntu"

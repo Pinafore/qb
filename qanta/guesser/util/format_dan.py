@@ -3,13 +3,13 @@ import regex
 import re
 
 from qanta.util import qdb
+from qanta.util.io import safe_open
 from qanta.util.constants import MIN_APPEARANCES, DEEP_VOCAB_TARGET
 from qanta.util.environment import QB_QUESTION_DB
 
 
 class Preprocessor:
     def __init__(self, ner_file):
-
         self.ners = pickle.load(open(ner_file, 'rb'))
         self.ftp = ["for 10 points, ", "for 10 points--", "for ten points, ", "for 10 points ",
                     "for ten points ", "ftp,", "ftp"]
@@ -22,7 +22,6 @@ class Preprocessor:
         self.stopset = set()
 
     def preprocess_input(self, q):
-
         q = q.strip().lower()
 
         # remove pronunciation guides and other formatting extras
@@ -57,9 +56,7 @@ class Preprocessor:
     def convert_to_indices(self, text):
         words = []
         for w in text.split():
-            try:
-                self.vdict[w]
-            except:
+            if w not in self.vdict:
                 self.vocab.append(w)
                 self.vdict[w] = len(self.vocab) - 1
             words.append(self.vdict[w])
@@ -90,11 +87,8 @@ def preprocess():
                 print('done with ', i)
 
         print(fold, len(proc_fold))
-        pickle.dump(proc_fold, open('output/deep/' + fold, 'wb'),
-                    protocol=pickle.HIGHEST_PROTOCOL)
+        with safe_open('output/deep/' + fold, 'wb') as f:
+            pickle.dump(proc_fold, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-    pickle.dump(
-        (pp.vocab, pp.vdict),
-        open(DEEP_VOCAB_TARGET, 'wb'),
-        protocol=pickle.HIGHEST_PROTOCOL
-    )
+    with safe_open(DEEP_VOCAB_TARGET, 'wb') as f:
+        pickle.dump((pp.vocab, pp.vdict), f, protocol=pickle.HIGHEST_PROTOCOL)

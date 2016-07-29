@@ -2,6 +2,7 @@ from numpy import *
 import pickle
 
 from qanta import logging
+from qanta.util.io import safe_open
 
 
 log = logging.get(__name__)
@@ -46,4 +47,5 @@ def create():
     log.info('We shape: {0}'.format(We.shape))
 
     log.info('dumping...')
-    pickle.dump(We, open('output/deep/We', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+    with safe_open('output/deep/We', 'wb') as f:
+        pickle.dump(We, f, protocol=pickle.HIGHEST_PROTOCOL)
