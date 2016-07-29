@@ -8,15 +8,16 @@ data/external/wikipedia/:
 	mkdir -p $@
 	python3 cli.py init_wiki_cache $@
 
-output/kenlm.binary: data/external/wikipedia
+output/kenlm.binary: data/external/wikipedia clm
 	mkdir -p temp
 	mkdir -p output
+	python3 setup.py download
 	python3 cli.py build_mentions_lm_data data/external/wikipedia /tmp/wiki_sent
 	lmplz -o 5 < /tmp/wiki_sent > temp/kenlm.arpa
 	build_binary temp/kenlm.arpa $@
 	rm /tmp/wiki_sent temp/kenlm.arpa
 
-data/external/wikifier/input/:
+data/external/wikifier/input/: clm
 	rm -rf $@
 	mkdir -p $@
 	python3 cli.py wikify data/external/wikifier/input/
