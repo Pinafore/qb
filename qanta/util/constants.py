@@ -39,6 +39,8 @@ DEEP_DAN_PARAMS_TARGET = 'output/deep/params'
 DEEP_DAN_CLASSIFIER_TARGET = 'output/deep/classifier'
 DEEP_TRAIN_TARGET = 'output/deep/train'
 DEEP_DEV_TARGET = 'output/deep/dev'
+DEEP_DAN_TRAIN_OUTPUT = 'output/deep/train_dan'
+DEEP_DAN_DEV_OUTPUT = 'output/deep/dev_dan'
 DEEP_DEVTEST_TARGET = 'output/deep/devtest'
 DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
@@ -54,7 +56,7 @@ NEGATIVE_WEIGHTS = [16]
 # NEGATIVE_WEIGHTS = [2, 4, 8, 16, 32, 64]
 MIN_APPEARANCES = 5
 MAX_APPEARANCES = MIN_APPEARANCES
-N_GUESSES = 400
+N_GUESSES = 200
 FEATURES = OrderedDict([
     (LM, None),
     (DEEP, None),
