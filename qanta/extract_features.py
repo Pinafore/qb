@@ -77,7 +77,7 @@ def instantiate_feature(feature_name, questions):
         feature = Labeler(questions)
     elif feature_name == "classifier":
         # TODO: Change this to depend on any given bigrams.pkl, which are atm all the same
-        feature = Classifier(data_path('output/classifier/category/bigrams.pkl'), questions)
+        feature = Classifier(questions)
     elif feature_name == "mentions":
         answers = set(x for x, y in text_iterator(
             False, "", False, questions, False, "", limit=-1, min_pages=MIN_APPEARANCES))
