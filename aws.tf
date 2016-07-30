@@ -218,8 +218,24 @@ resource "aws_spot_instance_request" "master" {
   }
 }
 
-output "master_ip" {
+output "master_public_ip" {
   value = "${aws_spot_instance_request.master.public_ip}"
+}
+
+output "master_public_dns" {
+  value = "${aws_spot_instance_request.master.public_dns}"
+}
+
+output "master_private_ip" {
+  value = "${aws_spot_instance_request.master.private_ip}"
+}
+
+output "master_private_dns" {
+  value = "${aws_spot_instance_request.master.private_dns}"
+}
+
+output "vpc_id" {
+  value = "${aws_vpc.qanta.id}"
 }
 
 # ascii art from http://patorjk.com/software/taag/#p=display&f=Standard&t=EC2%20Instances

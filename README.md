@@ -134,6 +134,10 @@ node, and gives access to AWS internal routing
 * In the EC2 Console create a security group which whitelists your IP address and add it to the
 instance
 
+`sshuttle` gets you working off the ground the fastest but routes all your traffic to AWS. SSH
+tunneling doesn't give access to everything. EC2 Security Groups is the overall most convenient
+solution since it requires only adding your custom group to the instance after it starts
+
 The reason for these security precautions is that allowing access to the Spark application master
 or the spark master web UI would in principle expose a way for an attacker to gain access to your
 AWS credentials.
@@ -155,6 +159,17 @@ The following SSH command will forward all the important UIs running on the mast
 `localhost`:
 
 `ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 ubuntu@instance-ip`
+
+##### Custom Security Group
+1. Go to [console.aws.amazon.com](console.aws.amazon.com)
+2. Under "Network & Security" click "Security Groups"
+3. Click "Create Security Group"
+4. Configure with a name, any relevant inbound rules (eg from a whitelist IP), and be sure to choose
+the VPC created by Terraform. This can be retrieved by using `terraform show` and using the variable
+output from `vpc_id`.
+5. Under "Instance" click "Instances"
+6. Select your instance, click the "Actions" drop down, click "Networking" then
+"Change Security Groups", and finally add your security group
 
 
 #### Non-AWS dependency download
