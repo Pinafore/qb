@@ -136,7 +136,7 @@ def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granular
         .repartition(150 * len(feature_names))\
         .flatMap(f_eval)
 
-    feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).repartition(30).cache()
+    feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).cache()
     feature_df.count()
     log.info("Beginning write job")
     for fold in FOLDS:
