@@ -48,10 +48,10 @@ def feature_lines(question, guesses_needed, granularity, feature_generator):
             yield sentence, token, guess, feat
 
 
-def instantiate_feature(feature_name, questions):
+def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     """
     @param feature_name: The feature to instantiate
-    @param questions: question database
+    @param question_db: question database
     """
 
     feature = None
@@ -60,7 +60,7 @@ def instantiate_feature(feature_name, questions):
         feature = LanguageModel(data_path(CLM_PATH))
     elif feature_name == "deep":
         page_dict = {}
-        for page in questions.get_all_pages():
+        for page in question_db.get_all_pages():
             page_dict[page.lower().replace(' ', '_')] = page
         feature = DeepExtractor(
             C.DEEP_DAN_CLASSIFIER_TARGET,
@@ -74,13 +74,13 @@ def instantiate_feature(feature_name, questions):
     elif feature_name == "answer_present":
         feature = AnswerPresent()
     elif feature_name == "label":
-        feature = Labeler(questions)
+        feature = Labeler(question_db)
     elif feature_name == "classifier":
         # TODO: Change this to depend on any given bigrams.pkl, which are atm all the same
-        feature = Classifier(questions)
+        feature = Classifier(question_db)
     elif feature_name == "mentions":
         answers = set(x for x, y in text_iterator(
-            False, "", False, questions, False, "", limit=-1, min_pages=MIN_APPEARANCES))
+            False, "", False, question_db, False, "", limit=-1, min_pages=MIN_APPEARANCES))
         feature = Mentions(answers)
     else:
         log.info("Don't know what to do with %s" % feature_name)
@@ -108,7 +108,8 @@ def create_guesses_for_question(question, deep_feature, word_skip=-1):
     return final_guesses
 
 
-def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granularity='sentence'):
+def spark_batch(sc: SparkContext, feature_names, question_db: str, guess_db: str,
+                granularity='sentence'):
     sql_context = SQLContext(sc)
     question_db = QuestionDatabase(question_db)
 

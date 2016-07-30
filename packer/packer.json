@@ -24,6 +24,11 @@
       "destination": "/home/ubuntu/requirements.txt"
     },
     {
+      "type": "file",
+      "source": "conf/aws-qb-env.sh",
+      "destination": "/home/ubuntu/aws-qb-env.sh"
+    },
+    {
       "type": "shell",
       "script": "setup.sh"
     },
@@ -41,6 +46,11 @@
       "type": "file",
       "source": "conf/tmux.conf",
       "destination": "/home/ubuntu/.tmux.conf"
-    }
+    },
+    {
+      "type": "file",
+      "source": "conf/limits.conf",
+      "destination": "/etc/security/limits.conf"
+    },
   ]
 }

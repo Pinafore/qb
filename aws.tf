@@ -196,8 +196,9 @@ resource "aws_spot_instance_request" "master" {
     ]
   }
 
+  # Configure qanta environment variables
   provisioner "remote-exec" {
-    inline = [""]
+    inline = ["echo \"export QB_SPARK_MASTER=${aws_spot_instance_request.master.private_dns}\" >> /home/ubuntu/.bashrc"]
   }
 
   provisioner "remote-exec" {
