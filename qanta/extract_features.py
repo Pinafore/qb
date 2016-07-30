@@ -142,7 +142,7 @@ def spark_batch(sc: SparkContext, feature_names, question_db, guess_db, granular
     for fold in FOLDS:
         feature_df_with_fold = feature_df.filter('fold = "{0}"'.format(fold)).cache()
         for name in feature_names:
-            filename = '/home/ubuntu/qb/data/features/{0}/sentence.{1}.parquet'.format(fold, name)
+            filename = 'output/features/{0}/sentence.{1}.parquet'.format(fold, name)
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             feature_df_with_fold.filter('feature_name = "{0}"'.format(name))\
                 .write.save(filename, mode='overwrite')
