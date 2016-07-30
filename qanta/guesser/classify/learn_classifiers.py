@@ -51,7 +51,7 @@ def compute_recall_accuracy():
             p2 = relu(W2.dot(p) + b2)
             p3 = relu(W3.dot(p2) + b3)
 
-            curr_feats = p3.ravel().reshape(1,-1)
+            curr_feats = p3.ravel().reshape(1, -1)
 
             if sent_position + 1 == len(qs):
                 p_dist = classifier.predict_proba(curr_feats)

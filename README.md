@@ -80,7 +80,7 @@ on fixing this, but haven't yet.
 * Download bootstrap AWS files to get the system running faster
 * TODO: based on variables download data from latest run to continue work on.
 
-#### Run AWS Scripts
+#### Run AWS/Terraform/Packer Scripts
 
 The AWS scripts are split between Packer and Terraform. Packer should be run from `packer/` and
 Terraform from the root directory
@@ -93,6 +93,28 @@ The packer step is optional because we publish the two most recent Qanta AMIs on
 default Terraform base AMI in sync with this. If you update from our repository frequently this
 should not cause issues. Otherwise, we suggest you run the packer script and set the environment
 variable `TF_VAR_qanta_ami` to the AMI id.
+
+Additionally, the output from `terraform apply` is documented below and can be shown again with
+`terraform show`
+
+* `master_private_dns`: Address to access when using `sshuttle`
+* `master_private_ip`: Internal AWS ip address
+* `master_public_dns` and `master_public_ip`: Use for access from open web (eg ssh)
+* `vpc_id`: Useful when adding custom security group
+
+##### Terraform Environment Variables
+Below is a list of variables that can change the behavior of Terraform. These can also be
+passed into the CLI via `-var name=value` and dropping the `TF_VAR` portion.
+
+* `TF_VAR_key_pair`: Which EC2 key pair to use
+* `TF_VAR_qanta_ami`: Which AMI to base Terraform creation on
+* `TF_VAR_access_key`: AWS access key
+* `TF_VAR_secret_key`: AWS Secret key
+* `TF_VAR_spot_price`: Max EC2 spot price
+* `TF_VAR_master_instance_type`: Which EC2 instance type to use for master
+* `TF_VAR_worker_instance_type`: Which EC2 instance type to use for workers (TODO: no-op ATM)
+* `TF_VAR_num_workers`: How many workers to use (TODO: no-op ATM)
+* `TF_VAR_clsuter_id`: On multi-user accounts allows separate users to run simultaneous machines
 
 #### Shutting Down EC2
 

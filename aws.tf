@@ -25,6 +25,10 @@ variable "num_workers" {
   default = 0
 }
 
+variable "cluster_id" {
+  default = "default"
+}
+
 provider "aws" {
   region = "us-west-1"
 }
@@ -126,9 +130,6 @@ resource "aws_spot_instance_request" "workers" {
   ]
   subnet_id = "${aws_subnet.qanta_zone_1b.id}"
 
-  tags {
-    SparkRole = "worker"
-  }
   wait_for_fulfillment = true
 }
 
@@ -146,11 +147,6 @@ resource "aws_spot_instance_request" "master" {
     "${aws_security_group.qanta_ssh.id}"
   ]
   subnet_id = "${aws_subnet.qanta_zone_1b.id}"
-
-  tags {
-    IsSparkMaster = "true"
-    SparkRole = "worker"
-  }
 
   ephemeral_block_device {
     device_name = "/dev/sdb"
@@ -189,15 +185,19 @@ resource "aws_spot_instance_request" "master" {
   # Configure AWS credentials
   provisioner "remote-exec" {
     inline = [
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key} >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh\"",
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key} >> /home/ubuntu/.bashrc\"",
-      "echo \"export AWS_SECRET_ACCESS=${var.secret_key} >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh\"",
-      "echo \"export AWS_SECRET_ACCESS=${var.secret_key} >> /home/ubuntu/.bashrc\"",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/.bashrc",
+      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh",
+      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/.bashrc",
       "mkdir -p /home/ubuntu/.aws",
       "echo \"[default]\" >> /home/ubuntu/.aws/credentials",
       "echo \"aws_access_key_id = ${var.access_key}\" >> /home/ubuntu/.aws/credentials",
       "echo \"aws_secret_access_key = ${var.secret_key}\" >> /home/ubuntu/.aws/credentials",
     ]
+  }
+
+  provisioner "remote-exec" {
+    inline = [""]
   }
 
   provisioner "remote-exec" {
