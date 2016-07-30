@@ -66,14 +66,14 @@ def compute_frequent_bigrams(thresh, qbdb):
     return set([k for k, v in bcount.most_common(thresh)])
 
 
-def train_classifier(out, bgset, questions, attribute, limit=-1):
+def train_classifier(out, bgset, questions, class_type, limit=-1):
     all_questions = questions.questions_with_pages()
     c = Counter()
     train = []
     for page in all_questions:
         for qq in all_questions[page]:
             if qq.fold == 'train':
-                label = getattr(qq, attribute, "").split(":")[0].lower()
+                label = getattr(qq, class_type, "").split(":")[0].lower()
                 if not label:
                     continue
                 c[label] += 1
@@ -98,18 +98,19 @@ def train_classifier(out, bgset, questions, attribute, limit=-1):
             if 0 < limit < len(train):
                 break
 
-    log.info(c)
-    log.info(len(train))
-    log.info("training classifier")
+    log.info('{}: {}'.format(class_type, c))
+    log.info('{}: {}'.format(class_type, len(train)))
+    log.info("{} out: training classifier".format(class_type))
     classifier = SklearnClassifier(LogisticRegression(C=10))
     classifier.train(train)
-    with safe_open(out, 'wb') as f:
+    with safe_open(class_type, 'wb') as f:
         pickle.dump(classifier, f)
-    log.info('accuracy@1 train: {}'.format(nltk.classify.util.accuracy(classifier, train)))
+    log.info('{}: accuracy@1 train: {}'.format(
+        class_type, nltk.classify.util.accuracy(classifier, train)))
     return classifier
 
 
-def evaluate(classifier_file, bgset, questions, attribute, top=2):
+def evaluate(classifier_file, bgset, questions, class_type, top=2):
     classifier = pickle.load(open(classifier_file, 'rb'))
 
     all_questions = questions.questions_with_pages()
@@ -120,7 +121,7 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
         page_num += 1
         for qq in all_questions[page]:
             if qq.fold == 'dev':
-                label = getattr(qq, attribute, '').split(":")[0].lower()
+                label = getattr(qq, class_type, '').split(":")[0].lower()
                 if not label:
                     continue
                 c[label] += 1
@@ -141,9 +142,10 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
                         feats[elem] = 1.0
 
                     dev.append((feats, label))
-    log.info(c)
-    log.info(len(dev))
-    log.info('accuracy@1 dev: {}'.format(nltk.classify.util.accuracy(classifier, dev)))
+    log.info('{}: {}'.format(class_type, c))
+    log.info('{}: {}'.format(class_type, len(dev)))
+    log.info('{}: accuracy@1 dev: {}'.format(
+        class_type, nltk.classify.util.accuracy(classifier, dev)))
     probs = classifier.prob_classify_many([f for f, a in dev])
 
     corr = 0.
@@ -156,7 +158,7 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
         if dev[index][1] in topn:
             corr += 1
 
-    log.info('top@{} accuracy: {}'.format(top, corr / len(probs)))
+    log.info('{}: top@{} accuracy: {}'.format(class_type, top, corr / len(probs)))
 
 
 def build_classifier(class_type, output: str, bigram_thresh=1000):
