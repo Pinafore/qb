@@ -11,7 +11,7 @@ variable "qanta_ami" {
 variable "access_key" {}
 variable "secret_key" {}
 variable "spot_price" {
-  default = "1.0"
+  default = "2.5"
 }
 variable "master_instance_type" {
   default = "r3.8xlarge"

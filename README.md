@@ -177,9 +177,11 @@ These pre-requisitives will:
 * Initialize wikipedia cache (already done on AWS or via `terraform/aws-downloads.sh`
 * Run the Illinois Wikifier
 * Train KenLM Language Model
+* Download nltk datasets
 
 ```bash
 # Run pre-requisites
+$ python3 setup.py download
 $ make prereqs
 ```
 
