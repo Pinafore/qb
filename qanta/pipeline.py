@@ -109,7 +109,7 @@ class ClassifierPickles(luigi.Task):
 class AllClassifierPickles(luigi.WrapperTask):
     def requires(self):
         for t in C.CLASSIFIER_TYPES:
-            yield ClassifierPickles(attribute=t)
+            yield ClassifierPickles(class_type=t)
 
 
 class CreateGuesses(luigi.Task):
