@@ -97,13 +97,13 @@ class BuildClm(luigi.Task):
 
 
 class ClassifierPickles(luigi.Task):
-    attribute = luigi.Parameter()
+    class_type = luigi.Parameter()
 
     def output(self):
-        return LocalTarget('output/classifier/{0}.pkl'.format(self.attribute))
+        return LocalTarget('output/classifier/{0}.pkl'.format(self.class_type))
 
     def run(self):
-        build_classifier(self.attribute, 'output/classifier/{0}.pkl'.format(self.attribute))
+        build_classifier(self.class_type, 'output/classifier/{0}.pkl'.format(self.class_type))
 
 
 class AllClassifierPickles(luigi.WrapperTask):

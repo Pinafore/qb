@@ -18,3 +18,8 @@ sudo mkdir /ssd-c
 # Mount the drives to the file system
 sudo mount /dev/xvdb /ssd-b
 sudo mount /dev/xvdc /ssd-c
+
+sudo chmod 777 /ssd-b
+sudo chmod 777 /ssd-c
+sudo chown ubuntu /ssd-b
+sudo chown ubuntu /ssd-c
