@@ -6,15 +6,16 @@ from numpy import median
 
 from wikipedia.exceptions import PageError
 from clm.lm_wrapper import LanguageModelBase
+from qanta.util.constants import COUNTRY_LIST_PATH
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia, LinkResult
 from qanta.extractors.abstract import FeatureExtractor
 
 
 class WikiLinks(FeatureExtractor):
     def __init__(self,
-                 xml_location="data/wikifier/data/output",
-                 wikipedia="data/wikipedia",
-                 country_list='data/country_list.txt'):
+                 xml_location="data/external/wikifier/data/output",
+                 wikipedia="data/external/wikipedia",
+                 country_list=COUNTRY_LIST_PATH):
         super(WikiLinks, self).__init__()
         self.name = "wikilinks"
         self._location = xml_location

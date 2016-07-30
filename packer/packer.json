@@ -36,6 +36,11 @@
       "type": "file",
       "source": "conf/aws-config",
       "destination": "/home/ubuntu/.aws/config"
+    },
+    {
+      "type": "file",
+      "source": "conf/tmux.conf",
+      "destination": "/home/ubuntu/.tmux.conf"
     }
   ]
 }

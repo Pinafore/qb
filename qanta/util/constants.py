@@ -50,6 +50,8 @@ QB_SOURCE_LOCATION = 'data/internal/source'
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 
+KEN_LM = 'output/kenlm.binary'
+
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]
 NEGATIVE_WEIGHTS = [16]
