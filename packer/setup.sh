@@ -60,4 +60,4 @@ sudo mkdir /var/log/luigi
 sudo chown ubuntu /var/log/luigi
 
 # Configure ulimits
-sudo mv limits.conf /etc/security/limits.conf
+sudo mv /home/ubuntu/limits.conf /etc/security/limits.conf

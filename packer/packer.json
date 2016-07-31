@@ -10,7 +10,7 @@
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
-          "volume_size": 20,
+          "volume_size": 15,
           "delete_on_termination": true
         }
       ]
@@ -27,6 +27,11 @@
       "type": "file",
       "source": "conf/aws-qb-env.sh",
       "destination": "/home/ubuntu/aws-qb-env.sh"
+    },
+    {
+      "type": "file",
+      "source": "conf/limits.conf",
+      "destination": "/home/ubuntu/limits.conf"
     },
     {
       "type": "shell",
@@ -46,11 +51,6 @@
       "type": "file",
       "source": "conf/tmux.conf",
       "destination": "/home/ubuntu/.tmux.conf"
-    },
-    {
-      "type": "file",
-      "source": "conf/limits.conf",
-      "destination": "/etc/security/limits.conf"
     }
   ]
 }

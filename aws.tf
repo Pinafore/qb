@@ -6,7 +6,7 @@
 
 variable "key_pair" {}
 variable "qanta_ami" {
-  default = "ami-881756e8"
+  default = "ami-ef76368f"
 }
 variable "access_key" {}
 variable "secret_key" {}
