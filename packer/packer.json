@@ -51,6 +51,6 @@
       "type": "file",
       "source": "conf/limits.conf",
       "destination": "/etc/security/limits.conf"
-    },
+    }
   ]
 }
