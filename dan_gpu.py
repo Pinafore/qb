@@ -42,6 +42,7 @@ def validate(name, val_fn, fold):
     print([(rev_ans_dict[w],count) for (w,count) in c1.most_common(10)])
     return lstring
 
+
 class SumLayer(lasagne.layers.MergeLayer):
     def __init__(self, incomings, **kwargs):
         super(SumLayer, self).__init__(incomings, **kwargs)
@@ -98,7 +99,7 @@ if __name__ == '__main__':
     # command line arguments
     parser = argparse.ArgumentParser(description='QANTA: a question answering neural network \
                                      with trans-sentential aggregation')
-    parser.add_argument('-We', help='location of word embeddings', default='output/deep/We')
+    parser.add_argument('-We', help='location of word embeddings', default='output/deep/We_py2')
     parser.add_argument('-d', help='word embedding dimension', type=int, default=300)
     parser.add_argument('-b', '--batch_size', help='adagrad minibatch size (ideal: 25 minibatches \
                         per epoch). for provided datasets, x for history and y for lit', type=int,\
@@ -117,9 +118,9 @@ if __name__ == '__main__':
     d = args['d']
 
     # load data
-    train = pickle.load(open('output/deep/train', 'rb'))
-    dev = pickle.load(open('output/deep/dev', 'rb'))
-    vocab, vdict = pickle.load(open('output/deep/vocab', 'rb'))
+    train = pickle.load(open('output/deep/train_py2', 'rb'))
+    dev = pickle.load(open('output/deep/dev_py2', 'rb'))
+    vocab, vdict = pickle.load(open('output/deep/vocab_py2', 'rb'))
 
     # make DAN GPU data
     folds = [train, dev]
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     devmask = np.zeros((len(devgpu), max_len)).astype('float32')
     trlabels = np.zeros(len(trgpu)).astype('int32')
     devlabels = np.zeros(len(devgpu)).astype('int32')
-    We = pickle.load(open(args['We'], 'rb')).astype('float64')
+    We = pickle.load(open(args['We'], 'rb')).astype('float32')
 
 
     for i, (q, ans) in enumerate(trgpu):
@@ -217,4 +218,3 @@ if __name__ == '__main__':
         p_dict = dict(zip([str(p) for p in params], p_values))
         pickle.dump(params, open('output/deep/dan_gpu_params.pkl', 'wb'),
             protocol=pickle.HIGHEST_PROTOCOL)
-
