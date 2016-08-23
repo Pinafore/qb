@@ -13,7 +13,10 @@
           "volume_size": 15,
           "delete_on_termination": true
         }
-      ]
+      ],
+      "tags": {
+        "Image": "qanta"
+      }
     }
   ],
 

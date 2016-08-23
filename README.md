@@ -31,7 +31,7 @@ other [EC2 Instance Types](https://aws.amazon.com/ec2/instance-types/) are avail
 To execute the AWS scripts you will need to follow these steps (`brew` options are for Macs):
 
 1. [Install Packer Binaries](https://www.packer.io/downloads.html) or run `brew install packer`
-2. [Install Terraform Binaries](https://www.terraform.io/downloads.html) or run `brew install terraform`
+2. [Install Terraform 0.7.x](https://www.terraform.io/downloads.html) or run `brew install terraform`
 3. Python 3.5+: If you don't have a preferred distribution,
 [Anaconda Python](https://www.continuum.io/downloads) is a good choice
 4. Install the AWS command line tools via `pip3 install awscli`

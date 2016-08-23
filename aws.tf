@@ -5,9 +5,6 @@
 #    \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
 
 variable "key_pair" {}
-variable "qanta_ami" {
-  default = "ami-ef76368f"
-}
 variable "access_key" {}
 variable "secret_key" {}
 variable "spot_price" {
@@ -31,6 +28,22 @@ variable "cluster_id" {
 
 provider "aws" {
   region = "us-west-1"
+}
+
+variable "qanta_ami" {
+  default = "ami-ef76368f"
+}
+
+data "aws_ami" "ami" {
+  most_recent = true
+  filter {
+    name = "tag-key"
+    values = ["Image"]
+  }
+  filter {
+    name = "tag-value"
+    values = ["qanta"]
+  }
 }
 
 #  _   _      _                      _    _
