@@ -3,7 +3,7 @@ from itertools import product
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from clm.lm_wrapper import build_clm
-from qanta.util import constants as C
+from qanta.util import constants as c
 from qanta.spark_execution import extract_features, merge_features
 from qanta.pipeline.preprocess import Preprocess
 from qanta.pipeline.dan import CreateGuesses
@@ -15,7 +15,7 @@ class BuildClm(Task):
         yield Preprocess()
 
     def output(self):
-        return LocalTarget(C.CLM_TARGET)
+        return LocalTarget(c.CLM_TARGET)
 
     def run(self):
         build_clm()
@@ -36,7 +36,7 @@ class ClassifierPickles(Task):
 
 class AllClassifierPickles(WrapperTask):
     def requires(self):
-        for t in C.CLASSIFIER_TYPES:
+        for t in c.CLASSIFIER_TYPES:
             yield ClassifierPickles(class_type=t)
 
 
@@ -49,13 +49,13 @@ class ExtractComputeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(C.FOLDS, C.COMPUTE_OPT_FEATURES):
+        for fold, feature in product(c.FOLDS, c.COMPUTE_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
-        extract_features(C.COMPUTE_OPT_FEATURES)
+        extract_features(c.COMPUTE_OPT_FEATURES)
 
 
 class ExtractDeepFeatures(Task):
@@ -66,13 +66,13 @@ class ExtractDeepFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(C.FOLDS, C.DEEP_OPT_FEATURES):
+        for fold, feature in product(c.FOLDS, c.DEEP_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
-        extract_features(C.DEEP_OPT_FEATURES)
+        extract_features(c.DEEP_OPT_FEATURES)
 
 
 class ExtractLMFeatures(Task):
@@ -84,7 +84,7 @@ class ExtractLMFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(C.FOLDS, C.LM_OPT_FEATURES):
+        for fold, feature in product(c.FOLDS, c.LM_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
@@ -101,13 +101,13 @@ class ExtractMentionsFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(C.FOLDS, C.MENTIONS_OPT_FEATURES):
+        for fold, feature in product(c.FOLDS, c.MENTIONS_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
-        extract_features(C.MENTIONS_OPT_FEATURES, lm_memory=True)
+        extract_features(c.MENTIONS_OPT_FEATURES, lm_memory=True)
 
 
 class ExtractFeatures(WrapperTask):
@@ -126,7 +126,7 @@ class SparkMergeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, weight in product(C.FOLDS, C.NEGATIVE_WEIGHTS):
+        for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
             targets.append(
                 LocalTarget('output/vw_input/{0}/sentence.{1}.vw_input/'.format(fold, weight)))
         return targets

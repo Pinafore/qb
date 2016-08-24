@@ -1,5 +1,5 @@
 from luigi import LocalTarget, Task, WrapperTask
-from qanta.pipeline.util import shell, call
+from qanta.pipeline.util import shell
 
 
 class CompileCLM(Task):

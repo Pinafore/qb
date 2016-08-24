@@ -180,6 +180,22 @@ The following SSH command will forward all the important UIs running on the mast
 
 `ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 ubuntu@instance-ip`
 
+This can be made easier by adding an entry like below in `~/.ssh/config`. Note that the example
+domain `example.com` is mapped to the master ip address outputed by terraform. This can be
+accomplished by modifying `/etc/hosts` or creating a new DNS entry for the domain.
+
+```
+Host qanta
+  HostName example.com
+  StrictHostKeyChecking no
+  UserKnownHostsFile=/dev/null
+  User ubuntu
+  LocalForward 8082 127.0.0.1:8082
+  LocalForward 8080 127.0.0.1:8080
+```
+
+Now you can simply do `ssh qanta` and navigating to `localhost:8082` will access the EC2 instance.
+
 ##### Custom Security Group
 1. Go to [console.aws.amazon.com](console.aws.amazon.com)
 2. Under "Network & Security" click "Security Groups"

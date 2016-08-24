@@ -2,7 +2,7 @@ from itertools import product
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
-from qanta.util import constants as C
+from qanta.util import constants as c
 from qanta.pipeline.util import shell, call
 from qanta.pipeline.vw import VWPredictions
 
@@ -30,5 +30,5 @@ class Summary(Task):
 
 class AllSummaries(WrapperTask):
     def requires(self):
-        for fold, weight in product(C.FOLDS, C.NEGATIVE_WEIGHTS):
+        for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
             yield Summary(fold=fold, weight=weight)

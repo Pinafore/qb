@@ -2,7 +2,7 @@ from itertools import product
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
-from qanta.util import constants as C
+from qanta.util import constants as c
 from qanta.pipeline.util import call
 from qanta.pipeline.spark import SparkMergeFeatures
 
@@ -25,7 +25,7 @@ class VWMergeFeature(Task):
 
 class VWMergeAllFeatures(WrapperTask):
     def requires(self):
-        for fold, weight in product(C.FOLDS, C.NEGATIVE_WEIGHTS):
+        for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
             yield VWMergeFeature(fold=fold, weight=weight)
 
 
