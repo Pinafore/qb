@@ -1,4 +1,6 @@
-from luigi import LocalTarget, Task, WrapperTask
+import os
+import luigi
+from luigi import LocalTarget, Task
 from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as C
 from qanta.util import environment as E
@@ -81,3 +83,8 @@ class CreateGuesses(Task):
 
     def run(self):
         create_guesses(E.QB_GUESS_DB)
+
+
+@CreateGuesses.event_handler(luigi.Event.FAILURE)
+def reset_guess_db(task, exception):
+    os.remove(E.QB_GUESS_DB)
