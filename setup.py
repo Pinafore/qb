@@ -23,7 +23,9 @@ requirements = [
     'pyfunctional',
     'luigi',
     'jinja2',
-    'progressbar2'
+    'progressbar2',
+    'boto3',
+    'sh'
 ]
 
 

@@ -83,16 +83,14 @@ on fixing this, but haven't yet.
 #### Run AWS/Terraform/Packer Scripts
 
 The AWS scripts are split between Packer and Terraform. Packer should be run from `packer/` and
-Terraform from the root directory
+Terraform from the root directory.
 
 1. (Optional) Packer: `packer build packer.json`
 2. Terraform: `terraform apply` and note the `master_ip` output
 3. SSH into the `master_ip` with `ssh -i mykey.pem ubuntu@ipaddr`
 
-The packer step is optional because we publish the two most recent Qanta AMIs on AWS and keep the
-default Terraform base AMI in sync with this. If you update from our repository frequently this
-should not cause issues. Otherwise, we suggest you run the packer script and set the environment
-variable `TF_VAR_qanta_ami` to the AMI id.
+The packer step is optional because we publish the two most recent Qanta AMIs on AWS which Terraform
+uses automatically.
 
 Additionally, the output from `terraform apply` is documented below and can be shown again with
 `terraform show`
@@ -114,9 +112,9 @@ passed into the CLI via `-var name=value` and dropping the `TF_VAR` portion.
 * `TF_VAR_master_instance_type`: Which EC2 instance type to use for master
 * `TF_VAR_worker_instance_type`: Which EC2 instance type to use for workers (TODO: no-op ATM)
 * `TF_VAR_num_workers`: How many workers to use (TODO: no-op ATM)
-* `TF_VAR_clsuter_id`: On multi-user accounts allows separate users to run simultaneous machines
+* `TF_VAR_cluster_id`: On multi-user accounts allows separate users to run simultaneous machines
 
-#### Shutting Down EC2
+#### Shutting Down EC2 Instances
 
 To teardown the cluster, you have two options.
 
@@ -283,6 +281,13 @@ With that high-level overview in place, here is how you start the whole system.
 (eg `data/models/sentence.16.vw`)
 3. Start Qanta server: `python3 cli.py qanta_stream`
 4. Start Spark Streaming job: `python3 cli.py spark_stream`
+
+### AWS S3 Checkpoint/Restore
+
+To provide and easy way to version, checkpoint, and restore runs of qanta we provide a script to
+manage that at `aws_checkpoint.py`. We assume that you set an environment variable
+`QB_AWS_S3_BUCKET` to where you want to checkpoint to and restore from. We assume that we have full
+access to all the contents of the bucket so we suggest creating a dedicated bucket.
 
 ### Problems you may encounter
 

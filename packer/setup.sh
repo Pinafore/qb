@@ -7,7 +7,7 @@ sudo apt-get upgrade -y
 sudo apt-get install -y build-essential cmake swig
 sudo apt-get install -y git wget vim tmux unzip
 sudo apt-get install -y libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
-sudo apt-get install -y liblzma-dev libpq-dev
+sudo apt-get install -y liblzma-dev libpq-dev liblz4-tool
 sudo apt-get install -y default-jre default-jdk
 
 # Install Docker

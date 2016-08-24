@@ -7,34 +7,36 @@
 variable "key_pair" {}
 variable "access_key" {}
 variable "secret_key" {}
+
 variable "spot_price" {
   default = "2.5"
 }
+
 variable "master_instance_type" {
   default = "r3.8xlarge"
+  description = "EC2 Instance type to use for the master node"
 }
 
 variable "worker_instance_type" {
   default = "r3.8xlarge"
+  description = "EC2 Instance type to use for worker nodes"
 }
 
 variable "num_workers" {
   default = 0
+  description = "Number of worker nodes"
 }
 
 variable "cluster_id" {
   default = "default"
+  description = "Cluster identifier to prevent collissions for users on the same AWS account"
 }
 
 provider "aws" {
   region = "us-west-1"
 }
 
-variable "qanta_ami" {
-  default = "ami-ef76368f"
-}
-
-data "aws_ami" "ami" {
+data "aws_ami" "qanta_ami" {
   most_recent = true
   filter {
     name = "tag-key"
@@ -131,7 +133,7 @@ resource "aws_security_group" "qanta_internal" {
 
 # Create Spark workers
 resource "aws_spot_instance_request" "workers" {
-  ami           = "${var.qanta_ami}"
+  ami           = "${data.aws_ami.qanta_ami.id}"
   instance_type = "${var.worker_instance_type}"
   count         = "${var.num_workers}"
   key_name = "${var.key_pair}"
@@ -148,7 +150,7 @@ resource "aws_spot_instance_request" "workers" {
 
 # Create Spark master node
 resource "aws_spot_instance_request" "master" {
-  ami           = "${var.qanta_ami}"
+  ami           = "${data.aws_ami.qanta_ami.id}"
   instance_type = "${var.master_instance_type}"
   key_name = "${var.key_pair}"
   spot_price = "${var.spot_price}"
