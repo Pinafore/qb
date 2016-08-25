@@ -93,6 +93,9 @@ class EvaluateClassifier(luigi.Task):
 
     def run(self)
         dan.print_recall_at_n()
+        
+    def output(self):
+        return LocalTarget(C.EVAL_RES_TARGET)
 
 
 
