@@ -10,7 +10,7 @@ from functional import seq
 
 from qanta import logging
 from qanta.guesser.util.functions import relu
-from qanta.util.constants import N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_DEVTEST_TARGET,  DEEP_DEV_TARGET
+from qanta.util.constants import EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_DEVTEST_TARGET,  DEEP_DEV_TARGET
 
 log = logging.get(__name__)
 
@@ -112,8 +112,10 @@ def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSE
 
     return recall_at_n / total,  total
 
-def print_recall_at_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSES, max_examples=None):
+def print_recall_at_n(fold_target=DEEP_DEV_TARGET, results_target=EVAL_RES_TARGET, n_guesses=N_GUESSES, max_examples=None):
     recall_array, total = compute_recall_accuracy_to_n(fold_target=fold_target, n_guesses=n_guesses, max_examples=max_examples)
+    pickle.dump((recall_array, totla), open(EVAL_RES_TARGET, 'wb'),
+                protocol=pickle.HIGHEST_PROTOCOL)
     print("Total: %s examples" %total)
     for i, recall in enumerate(recall_array):
         print("Recall at %i: %f" %(i+1, recall))
