@@ -96,6 +96,14 @@ resource "aws_security_group" "qanta_ssh" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # MOSH access from anywhere
+  ingress {
+    from_port = 60000
+    to_port = 61000
+    protocol = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # outbound internet access
   egress {
     from_port   = 0
@@ -117,7 +125,7 @@ resource "aws_security_group" "qanta_internal" {
     self = true
   }
 
-  ingress {
+  egress {
     from_port = 0
     to_port = 0
     protocol = "-1"

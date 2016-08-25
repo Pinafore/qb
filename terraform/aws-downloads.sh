@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+set -e
+
 cd /ssd-c/qanta/qb
 
-python3 setup.py download
+/home/ubuntu/anaconda3/bin/python setup.py download
 
 mkdir -p data/external
 /home/ubuntu/anaconda3/bin/aws s3 cp s3://pinafore/public/wikipedia.tar.gz /tmp/wikipedia.tar.gz

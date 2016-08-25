@@ -88,7 +88,7 @@ def compile_targets(targets):
         if t in TARGET_GROUPS:
             compiled_targets |= TARGET_GROUPS[t]
         else:
-            compiled_targets |= t
+            compiled_targets |= {t}
 
     return compiled_targets
 
@@ -166,6 +166,7 @@ def restore(ctx, date, targets):
             namespace=s3.namespace,
             date=date
         ))
+        shell('lz4 -d /tmp/qb/{name}.tar.lz4 | tar -x -C .'.format(name=name))
 
 if __name__ == '__main__':
     cli(obj={})
