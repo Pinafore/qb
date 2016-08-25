@@ -55,6 +55,8 @@ CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 
 KEN_LM = 'output/kenlm.binary'
 
+EVAL_RES_TARGET = 'output/deep/eval_res'
+
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]
 NEGATIVE_WEIGHTS = [16]
