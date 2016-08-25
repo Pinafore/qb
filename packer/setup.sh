@@ -4,7 +4,7 @@ set -e
 
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y build-essential cmake swig
+sudo apt-get install -y build-essential cmake swig python-software-properties
 sudo apt-get install -y git wget vim tmux unzip
 sudo apt-get install -y libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
 sudo apt-get install -y liblzma-dev libpq-dev liblz4-tool
@@ -19,6 +19,10 @@ sudo apt-get purge lxc-docker
 sudo apt-get install -y linux-image-extra-$(uname -r) apparmor
 sudo apt-get install -y docker-engine
 sudo usermod -aG docker ubuntu
+
+sudo add-apt-repository ppa:keithw/mosh
+sudo apt-get update
+sudo apt-get install -y mosh
 
 # Install Python 3.5 and the Scipy Stack
 wget http://repo.continuum.io/archive/Anaconda3-4.0.0-Linux-x86_64.sh
