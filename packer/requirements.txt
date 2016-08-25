@@ -24,3 +24,4 @@ awscli
 setuptools
 typing
 bottle
+boto3

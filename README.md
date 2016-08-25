@@ -105,7 +105,6 @@ Below is a list of variables that can change the behavior of Terraform. These ca
 passed into the CLI via `-var name=value` and dropping the `TF_VAR` portion.
 
 * `TF_VAR_key_pair`: Which EC2 key pair to use
-* `TF_VAR_qanta_ami`: Which AMI to base Terraform creation on
 * `TF_VAR_access_key`: AWS access key
 * `TF_VAR_secret_key`: AWS Secret key
 * `TF_VAR_spot_price`: Max EC2 spot price
@@ -223,17 +222,13 @@ $ python3 setup.py download
 ```
 
 #### Standard Pre-requisites
-These pre-requisitives will:
-* Compile C Language Model
-* Initialize wikipedia cache (already done on AWS or via `terraform/aws-downloads.sh`
-* Run the Illinois Wikifier
-* Train KenLM Language Model
-* Download nltk datasets
+Before running qanta software you will need to compile the C language model and download the nltk
+datasets used by running:
 
 ```bash
 # Run pre-requisites
 $ python3 setup.py download
-$ make prereqs
+$ make clm
 ```
 
 ### Qanta Running Summary

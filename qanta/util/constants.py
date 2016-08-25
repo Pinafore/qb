@@ -45,6 +45,9 @@ DEEP_DEVTEST_TARGET = 'output/deep/devtest'
 DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
 
+WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
+WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
+
 QB_SOURCE_LOCATION = 'data/internal/source'
 
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'

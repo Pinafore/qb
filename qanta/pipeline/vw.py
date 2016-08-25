@@ -3,7 +3,7 @@ from itertools import product
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
-from qanta.pipeline.util import call
+from qanta.util.io import call
 from qanta.pipeline.spark import SparkMergeFeatures
 
 

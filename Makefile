@@ -9,5 +9,6 @@ clm/clm.o: clm/clm.cpp clm/clm.h
 
 clm/_clm.so: clm/clm.o clm/clm_wrap.o
 	g++ -shared `python3-config --ldflags` $^ -o $@
+	touch clm/_SUCCESS
 
 clm: clm/_clm.so

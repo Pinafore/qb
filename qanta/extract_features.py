@@ -179,7 +179,7 @@ def parallel_generate_guesses(task):
     return task[0].qnum, task[0].fold, create_guesses_for_question(task[0], task[1])
 
 
-def create_guesses(guess_db_path, processes=cpu_count()):
+def create_guesses(guess_db_path, processes=8):
     q_db = QuestionDatabase(QB_QUESTION_DB)
     guess_list = GuessList(guess_db_path)
 

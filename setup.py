@@ -43,10 +43,12 @@ class DownloadCommand(Command):
         nltk.download('stopwords')
         nltk.download('punkt')
         nltk.download('wordnet')
+        with open('data/external/nltk_download_SUCCESS', 'w') as f:
+            f.write('Downloaded nltk: stopwords, pinkt, wordnet')
 
 setup(
     name='qb',
-    version='0.0.1',
+    version='2.0.0',
     description='Quiz Bowl AI system named QANTA',
     license='MIT',
     long_description=read('README.md'),

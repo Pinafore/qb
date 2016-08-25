@@ -1,26 +1,16 @@
-from luigi import LocalTarget, Task, WrapperTask
-from qanta.pipeline.util import shell
+from luigi import LocalTarget, Task, WrapperTask, ExternalTask
+from qanta.util.io import shell
+import qanta.util.constants as c
 
 
-class CompileCLM(Task):
-    def run(self):
-        shell('make clm')
-        shell('touch clm/_SUCCESS')
-
-    def output(self):
-        return LocalTarget('clm/_SUCCESS')
-
-
-class NLTKDownload(Task):
-    def requires(self):
-        CompileCLM()
-
-    def run(self):
-        shell('python3 setup.py download')
-        shell('touch data/external/nltk_download_SUCCESS')
-
+class NLTKDownload(ExternalTask):
     def output(self):
         return LocalTarget('data/external/nltk_download_SUCCESS')
+
+
+class CompileCLM(ExternalTask):
+    def output(self):
+        return LocalTarget('clm/_SUCCESS')
 
 
 class GloveData(Task):
@@ -41,10 +31,10 @@ class Wikipedia(Task):
     def run(self):
         shell('mkdir -p data/external/wikipedia')
         shell('python3 cli.py init_wiki_cache data/external/wikipedia')
-        shell('touch data/external/wikipedia/_SUCCESS')
+        shell('touch data/external/wikipedia_SUCCESS')
 
     def output(self):
-        return LocalTarget('data/external/wikipedia/_SUCCESS')
+        return LocalTarget('data/external/wikipedia_SUCCESS')
 
 
 class DownloadData(WrapperTask):
@@ -63,11 +53,11 @@ class KenLM(Task):
         shell('mkdir -p output')
         shell('python3 cli.py build_mentions_lm_data data/external/wikipedia /tmp/wiki_sent')
         shell('lmplz -o 5 < /tmp/wiki_sent > temp/kenlm.arpa')
-        shell('build_binary temp/kenlm.arpa output/kenlm.binary')
+        shell('build_binary temp/kenlm.arpa {}'.format(c.KEN_LM))
         shell('rm /tmp/wiki_sent temp/kenlm.arpa')
 
     def output(self):
-        return LocalTarget('output/kenlm.binary')
+        return LocalTarget(c.KEN_LM)
 
 
 class WikifierInput(Task):
@@ -75,13 +65,13 @@ class WikifierInput(Task):
         yield DownloadData()
 
     def run(self):
-        shell('rm -rf data/external/wikifier/input')
-        shell('mkdir -p data/external/wikifier/input')
-        shell('python3 cli.py wikify data/external/wikifier/input/')
-        shell('touch data/external/wikifier/input/_SUCCESS')
+        shell('rm -rf {}'.format(c.WIKIFIER_INPUT_TARGET))
+        shell('mkdir -p {}'.format(c.WIKIFIER_INPUT_TARGET))
+        shell('python3 cli.py wikify {}/'.format(c.WIKIFIER_INPUT_TARGET))
+        shell('touch {}/_SUCCESS'.format(c.WIKIFIER_INPUT_TARGET))
 
     def output(self):
-        return LocalTarget('data/external/wikifier/input/_SUCCESS')
+        return LocalTarget('{}/_SUCCESS'.format(c.WIKIFIER_INPUT_TARGET))
 
 
 class WikifierOutput(Task):
@@ -89,13 +79,21 @@ class WikifierOutput(Task):
         yield WikifierInput()
 
     def run(self):
-        shell('rm -rf data/external/wikifier/output')
-        shell('mkdir -p data/external/wikifier/output')
-        shell('(cd data/external/Wikifier2013 && java -Xmx10G -jar dist/wikifier-3.0-jar-with-dependencies.jar -annotateData ../wikifier/input ../wikifier/output false configs/STAND_ALONE_NO_INFERENCE.xml)')
-        shell('touch data/external/wikifier/output/_SUCCESS')
+        shell('rm -rf {}'.format(c.WIKIFIER_OUTPUT_TARGET))
+        shell('mkdir -p {}'.format(c.WIKIFIER_OUTPUT_TARGET))
+        command = (
+            '(cd data/external/Wikifier2013 '
+            '&& java -Xmx10G -jar dist/wikifier-3.0-jar-with-dependencies.jar '
+            '-annotateData '
+            '../../../{} '
+            '../../../{} '
+            'false configs/STAND_ALONE_NO_INFERENCE.xml)'
+        )
+        shell(command.format(c.WIKIFIER_INPUT_TARGET, c.WIKIFIER_OUTPUT_TARGET))
+        shell('touch {}/_SUCCESS'.format(c.WIKIFIER_OUTPUT_TARGET))
 
     def output(self):
-        return LocalTarget('data/external/wikifier/output/_SUCCESS')
+        return LocalTarget('{}/_SUCCESS'.format(c.WIKIFIER_OUTPUT_TARGET))
 
 
 class Preprocess(WrapperTask):
