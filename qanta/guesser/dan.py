@@ -164,6 +164,7 @@ def train_dan(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01,
         if epoch % adagrad_reset == 0 and epoch != 0:
             ag.reset_weights()
 
+
 def compute_classifier_input(we_dimensions=300):
     # Load training data
     with open(DEEP_TRAIN_TARGET, 'rb') as f:
@@ -171,8 +172,7 @@ def compute_classifier_input(we_dimensions=300):
     # Load dev data
     with open(DEEP_DEV_TARGET, 'rb') as f:
         val_qs = pickle.load(f)
-    # Load trained_DAN parameters
-    
+    # Load trained_DAN parameters    
     with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
         params = pickle.load(f)
     

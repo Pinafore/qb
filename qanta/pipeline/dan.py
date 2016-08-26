@@ -74,6 +74,18 @@ class TrainClassifier(Task):
         return LocalTarget(c.DEEP_DAN_CLASSIFIER_TARGET)
 
 
+class EvaluateClassifier(luigi.Task):
+    def requires(self):
+        yield TrainDAN()
+        yield ComputeDANOutput()
+        yield TrainClassifier()
+
+    def run(self):
+        dan.print_recall_at_n()
+        
+    def output(self):
+        return LocalTarget(c.EVAL_RES_TARGET)
+
 class CreateGuesses(Task):
     def requires(self):
         yield TrainClassifier()

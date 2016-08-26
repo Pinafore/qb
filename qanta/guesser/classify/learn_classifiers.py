@@ -116,7 +116,7 @@ def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSE
 
 def print_recall_at_n(fold_target=DEEP_DEV_TARGET, results_target=EVAL_RES_TARGET, n_guesses=N_GUESSES, max_examples=None):
     recall_array, total = compute_recall_accuracy_to_n(fold_target=fold_target, n_guesses=n_guesses, max_examples=max_examples)
-    pickle.dump((recall_array, totla), open(EVAL_RES_TARGET, 'wb'),
+    pickle.dump((recall_array, total), open(EVAL_RES_TARGET, 'wb'),
                 protocol=pickle.HIGHEST_PROTOCOL)
     print("Total: %s examples" %total)
     for i, recall in enumerate(recall_array):
