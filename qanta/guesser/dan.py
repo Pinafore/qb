@@ -172,7 +172,7 @@ def compute_classifier_input(we_dimensions=300):
     # Load dev data
     with open(DEEP_DEV_TARGET, 'rb') as f:
         val_qs = pickle.load(f)
-    # Load trained_DAN parameters    
+    # Load trained_DAN parameters 
     with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
         params = pickle.load(f)
     
