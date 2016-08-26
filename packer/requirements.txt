@@ -23,3 +23,5 @@ psycopg2
 awscli
 setuptools
 typing
+bottle
+boto3

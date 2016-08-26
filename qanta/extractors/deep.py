@@ -1,8 +1,8 @@
 import pickle
 import numpy as np
 from string import ascii_lowercase, punctuation
-from collections import Counter
 
+from functional import seq
 from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
@@ -39,38 +39,16 @@ class DeepExtractor(FeatureExtractor):
 
     # return a vector representation of the question
     def compute_rep(self, text):
-        W, b, W2, b2, W3, b3, L = self.params
-
-        # generate word vector lookups given normalized input text
-        text = normalize(' '.join(text))
-        for ner in self.ners:
-            text = text.replace(ner, ner.replace(' ', '_'))
-
-        inds = []
-        for w in text.split():
-            try:
-                inds.append(self.vdict[w])
-            except:
-                pass
-
-        if len(inds) > 0:
-            # compute vector representation for question text
-            av = np.average(L[:, inds], axis=1).reshape((self.d, 1))
-            p = relu(np.dot(W, av) + b)
-            p2 = relu(np.dot(W2, p) + b2)
-            p3 = relu(np.dot(W3, p2) + b3)
-
-        else:
-            p3 = np.zeros((self.d, 1))
-
-        curr_feats = {}
-        for dim, val in np.ndenumerate(p3):
-            curr_feats[str(dim[0])] = val
-
+        text = ' '.join(text)
+        curr_feats = self.compute_features(text)
         return curr_feats, text
 
     # return a distribution over answers for the given question
     def compute_probs(self, text):
+        curr_feats = self.compute_features(text)
+        return self.classifier.predict_proba(curr_feats)[0]
+
+    def compute_features(self, text: str):
         W, b, W2, b2, W3, b3, L = self.params
 
         # generate word vector lookups given normalized input text
@@ -80,10 +58,8 @@ class DeepExtractor(FeatureExtractor):
 
         inds = []
         for w in text.split():
-            try:
+            if w in self.vdict:
                 inds.append(self.vdict[w])
-            except:
-                pass
 
         if len(inds) > 0:
             # compute vector representation for question text
@@ -95,56 +71,32 @@ class DeepExtractor(FeatureExtractor):
         else:
             p3 = np.zeros((self.d, 1))
 
-        curr_feats = {}
-        for dim, val in np.ndenumerate(p3):
-            curr_feats['__' + str(dim)] = val
-
-        preds = self.classifier.prob_classify(curr_feats)
-        return preds
+        return p3.ravel().reshape(1, -1)
 
     # return top n guesses for a given question
     def text_guess(self, text):
         text = ' '.join(text)
         preds = self.compute_probs(text)
-        c = Counter()
-        for k, v in preds._prob_dict.items():
-            c[k] = v
+        class_labels = self.classifier.classes_
+        guesses = seq(preds).zip(class_labels).sorted(reverse=True).take(N_GUESSES)
 
         res = {}
-        for k, v in c.most_common(N_GUESSES):
-            try:
-                res[self.page_dict[self.vocab[k]]] = v
-            except KeyError:
-                # Workaround for odd unicode issues (Jordan)
-                try:
-                    html_parser
-                except NameError:
-                    import HTMLParser
-                    html_parser = HTMLParser.HTMLParser()
-                replace_html = html_parser.unescape(
-                    self.vocab[k].encode('ascii', 'xmlcharrefreplace'))
-                if replace_html not in self.page_dict:
-                    print("Missing: %s" % replace_html)
-                else:
-                    res[self.page_dict[replace_html]] = v
+        for p, word in guesses:
+            res[self.page_dict[self.vocab[word]]] = p
 
         return res
 
     def score_one_guess(self, title, text):
-
         if isinstance(text, list):
             text = ' '.join(text)
-
-        # lowercase and concatenate title words
-        title = title.lower().replace(' ', '_')
 
         preds = self.compute_probs(text)
 
         # return -1 if classifier doesn't recognize the given guess
-        try:
+        if title in self.vdict:
             guess_ind = self.vdict[title]
-            val = preds.prob(guess_ind)
-        except KeyError:
+            val = preds[guess_ind]
+        else:
             val = -1
 
         return val
