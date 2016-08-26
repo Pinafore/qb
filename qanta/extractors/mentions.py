@@ -10,9 +10,9 @@ from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
 from qanta.extractors.abstract import FeatureExtractor
+from qanta.util.constants import KEN_LM
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
-from qanta.util.environment import data_path
 
 from nltk.corpus import wordnet as wn
 
@@ -66,11 +66,11 @@ def build_lm_data(path, output):
     o = open(output, 'w')
 
     count = 0
-    for ii in [x.split("/")[-1] for x in glob("%s/*" % path)]:
+    for i in [x.split("/")[-1] for x in glob("%s/*" % path)]:
         count += 1
         if count % 1000 == 0:
-            print("%i\t%s" % (count, unidecode(ii)))
-        page = cw[ii]
+            print("%i\t%s" % (count, unidecode(i)))
+        page = cw[i]
 
         for ss in nltk.sent_tokenize(page.content):
             o.write("%s\n" % " ".join(kTOKENIZER(unidecode(ss.lower()))))
@@ -97,7 +97,7 @@ class Mentions(FeatureExtractor):
     @property
     def lm(self):
         if not self.initialized:
-            self._lm = kenlm.LanguageModel(data_path('data/kenlm.binary'))
+            self._lm = kenlm.LanguageModel(KEN_LM)
             self.initialized = True
         return self._lm
 

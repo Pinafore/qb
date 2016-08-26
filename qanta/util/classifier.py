@@ -1,4 +1,3 @@
-import argparse
 import re
 import os
 from qanta.util.environment import QB_QUESTION_DB, data_path
@@ -11,7 +10,12 @@ from unidecode import unidecode
 from sklearn.linear_model import LogisticRegression
 from nltk.classify.scikitlearn import SklearnClassifier
 
+from qanta import logging
+from qanta.util.io import safe_open
 from qanta.util.qdb import QuestionDatabase
+
+
+log = logging.get(__name__)
 
 
 alphanum = re.compile('[\W_]+')
@@ -26,8 +30,8 @@ merged = {'Biology': 'Science',
 
 
 def write_bigrams(bigrams, output):
-    o = open(output, 'wb')
-    pickle.dump(bigrams, o, pickle.HIGHEST_PROTOCOL)
+    with safe_open(output, 'wb') as f:
+        pickle.dump(bigrams, f, pickle.HIGHEST_PROTOCOL)
 
 
 def classify_text(classifier, text, all_bigrams):
@@ -48,7 +52,6 @@ def compute_frequent_bigrams(thresh, qbdb):
 
     bcount = Counter()
     all_questions = qbdb.questions_with_pages()
-    train = []
     for page in all_questions:
         for qq in all_questions[page]:
             if qq.fold == 'train':
@@ -63,15 +66,14 @@ def compute_frequent_bigrams(thresh, qbdb):
     return set([k for k, v in bcount.most_common(thresh)])
 
 
-def train_classifier(out, bgset, questions, attribute, limit=-1):
-
+def train_classifier(out, bgset, questions, class_type, limit=-1):
     all_questions = questions.questions_with_pages()
     c = Counter()
     train = []
     for page in all_questions:
         for qq in all_questions[page]:
             if qq.fold == 'train':
-                label = getattr(qq, attribute, "").split(":")[0].lower()
+                label = getattr(qq, class_type, "").split(":")[0].lower()
                 if not label:
                     continue
                 c[label] += 1
@@ -93,19 +95,22 @@ def train_classifier(out, bgset, questions, attribute, limit=-1):
                         feats[elem] = 1.0
 
                     train.append((feats, label))
-            if limit > 0 and len(train) > limit:
+            if 0 < limit < len(train):
                 break
-    print(c)
-    print(len(train))
-    print("training classifier")
+
+    log.info('{}: {}'.format(class_type, c))
+    log.info('{}: {}'.format(class_type, len(train)))
+    log.info("{} out: training classifier".format(class_type))
     classifier = SklearnClassifier(LogisticRegression(C=10))
     classifier.train(train)
-    pickle.dump(classifier, open(out, 'wb'))
-    print('accuracy@1 train:', nltk.classify.util.accuracy(classifier, train))
+    with safe_open(class_type, 'wb') as f:
+        pickle.dump(classifier, f)
+    log.info('{}: accuracy@1 train: {}'.format(
+        class_type, nltk.classify.util.accuracy(classifier, train)))
     return classifier
 
 
-def evaluate(classifier_file, bgset, questions, attribute, top=2):
+def evaluate(classifier_file, bgset, questions, class_type, top=2):
     classifier = pickle.load(open(classifier_file, 'rb'))
 
     all_questions = questions.questions_with_pages()
@@ -116,7 +121,7 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
         page_num += 1
         for qq in all_questions[page]:
             if qq.fold == 'dev':
-                label = getattr(qq, attribute, '').split(":")[0].lower()
+                label = getattr(qq, class_type, '').split(":")[0].lower()
                 if not label:
                     continue
                 c[label] += 1
@@ -137,9 +142,10 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
                         feats[elem] = 1.0
 
                     dev.append((feats, label))
-    print(c)
-    print(len(dev))
-    print('accuracy@1 dev:', nltk.classify.util.accuracy(classifier, dev))
+    log.info('{}: {}'.format(class_type, c))
+    log.info('{}: {}'.format(class_type, len(dev)))
+    log.info('{}: accuracy@1 dev: {}'.format(
+        class_type, nltk.classify.util.accuracy(classifier, dev)))
     probs = classifier.prob_classify_many([f for f, a in dev])
 
     corr = 0.
@@ -152,12 +158,12 @@ def evaluate(classifier_file, bgset, questions, attribute, top=2):
         if dev[index][1] in topn:
             corr += 1
 
-    print('top@', top, 'accuracy: ', corr / len(probs))
+    log.info('{}: top@{} accuracy: {}'.format(class_type, top, corr / len(probs)))
 
 
-def build_classifier(attribute, output: str, bigram_thresh=1000):
+def build_classifier(class_type, output: str, bigram_thresh=1000):
     questions = QuestionDatabase(QB_QUESTION_DB)
-    bigram_filename = "%s/bigrams.pkl" % output
+    bigram_filename = "output/classifier/%s/bigrams.pkl" % class_type
     if os.path.exists(bigram_filename):
         bgset = pickle.load(open(bigram_filename, 'rb'))
         print("Using previous bigrams")
@@ -166,7 +172,5 @@ def build_classifier(attribute, output: str, bigram_thresh=1000):
         bgset = compute_frequent_bigrams(bigram_thresh, questions)
         write_bigrams(bgset, bigram_filename)
 
-    train_classifier(
-        "%s/%s.pkl" % (output, attribute), bgset, questions, attribute)
-    evaluate("%s/%s.pkl" % (output, attribute),
-             bgset, questions, attribute)
+    train_classifier(output, bgset, questions, class_type)
+    evaluate(output, bgset, questions, class_type)

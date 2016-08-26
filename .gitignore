@@ -14,3 +14,4 @@ lib/*.jar
 terraform.tfstate
 terraform.tfstate.backup
 terraform/ssh-keys/
+eip.tf

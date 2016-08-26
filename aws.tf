@@ -5,28 +5,47 @@
 #    \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
 
 variable "key_pair" {}
-variable "qanta_ami" {
-  default = "ami-881756e8"
-}
 variable "access_key" {}
 variable "secret_key" {}
+
 variable "spot_price" {
-  default = "1.0"
+  default = "2.5"
 }
+
 variable "master_instance_type" {
   default = "r3.8xlarge"
+  description = "EC2 Instance type to use for the master node"
 }
 
 variable "worker_instance_type" {
   default = "r3.8xlarge"
+  description = "EC2 Instance type to use for worker nodes"
 }
 
 variable "num_workers" {
   default = 0
+  description = "Number of worker nodes"
+}
+
+variable "cluster_id" {
+  default = "default"
+  description = "Cluster identifier to prevent collissions for users on the same AWS account"
 }
 
 provider "aws" {
   region = "us-west-1"
+}
+
+data "aws_ami" "qanta_ami" {
+  most_recent = true
+  filter {
+    name = "tag-key"
+    values = ["Image"]
+  }
+  filter {
+    name = "tag-value"
+    values = ["qanta"]
+  }
 }
 
 #  _   _      _                      _    _
@@ -77,6 +96,14 @@ resource "aws_security_group" "qanta_ssh" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # MOSH access from anywhere
+  ingress {
+    from_port = 60000
+    to_port = 61000
+    protocol = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # outbound internet access
   egress {
     from_port   = 0
@@ -98,7 +125,7 @@ resource "aws_security_group" "qanta_internal" {
     self = true
   }
 
-  ingress {
+  egress {
     from_port = 0
     to_port = 0
     protocol = "-1"
@@ -114,7 +141,7 @@ resource "aws_security_group" "qanta_internal" {
 
 # Create Spark workers
 resource "aws_spot_instance_request" "workers" {
-  ami           = "${var.qanta_ami}"
+  ami           = "${data.aws_ami.qanta_ami.id}"
   instance_type = "${var.worker_instance_type}"
   count         = "${var.num_workers}"
   key_name = "${var.key_pair}"
@@ -126,29 +153,23 @@ resource "aws_spot_instance_request" "workers" {
   ]
   subnet_id = "${aws_subnet.qanta_zone_1b.id}"
 
-  tags {
-    SparkRole = "worker"
-  }
   wait_for_fulfillment = true
 }
 
 # Create Spark master node
 resource "aws_spot_instance_request" "master" {
-  ami           = "${var.qanta_ami}"
+  ami           = "${data.aws_ami.qanta_ami.id}"
   instance_type = "${var.master_instance_type}"
   key_name = "${var.key_pair}"
   spot_price = "${var.spot_price}"
+  spot_type = "one-time"
+  wait_for_fulfillment = true
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
     "${aws_security_group.qanta_ssh.id}"
   ]
   subnet_id = "${aws_subnet.qanta_zone_1b.id}"
-
-  tags {
-    IsSparkMaster = "true"
-    SparkRole = "worker"
-  }
 
   ephemeral_block_device {
     device_name = "/dev/sdb"
@@ -159,7 +180,6 @@ resource "aws_spot_instance_request" "master" {
     device_name = "/dev/sdc"
     virtual_name = "ephemeral1"
   }
-  wait_for_fulfillment = true
 
   connection {
     user = "ubuntu"
@@ -188,15 +208,20 @@ resource "aws_spot_instance_request" "master" {
   # Configure AWS credentials
   provisioner "remote-exec" {
     inline = [
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key} >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh\"",
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key} >> /home/ubuntu/.bashrc\"",
-      "echo \"export AWS_SECRET_ACCESS=${var.secret_key} >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh\"",
-      "echo \"export AWS_SECRET_ACCESS=${var.secret_key} >> /home/ubuntu/.bashrc\"",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/.bashrc",
+      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh",
+      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/.bashrc",
       "mkdir -p /home/ubuntu/.aws",
       "echo \"[default]\" >> /home/ubuntu/.aws/credentials",
       "echo \"aws_access_key_id = ${var.access_key}\" >> /home/ubuntu/.aws/credentials",
       "echo \"aws_secret_access_key = ${var.secret_key}\" >> /home/ubuntu/.aws/credentials",
     ]
+  }
+
+  # Configure qanta environment variables
+  provisioner "remote-exec" {
+    inline = ["echo \"export QB_SPARK_MASTER=${aws_spot_instance_request.master.private_dns}\" >> /home/ubuntu/.bashrc"]
   }
 
   provisioner "remote-exec" {
@@ -217,8 +242,24 @@ resource "aws_spot_instance_request" "master" {
   }
 }
 
-output "master_ip" {
+output "master_public_ip" {
   value = "${aws_spot_instance_request.master.public_ip}"
+}
+
+output "master_public_dns" {
+  value = "${aws_spot_instance_request.master.public_dns}"
+}
+
+output "master_private_ip" {
+  value = "${aws_spot_instance_request.master.private_ip}"
+}
+
+output "master_private_dns" {
+  value = "${aws_spot_instance_request.master.private_dns}"
+}
+
+output "vpc_id" {
+  value = "${aws_vpc.qanta.id}"
 }
 
 # ascii art from http://patorjk.com/software/taag/#p=display&f=Standard&t=EC2%20Instances

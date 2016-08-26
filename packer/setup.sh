@@ -4,10 +4,10 @@ set -e
 
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y build-essential cmake swig
+sudo apt-get install -y build-essential cmake swig python-software-properties
 sudo apt-get install -y git wget vim tmux unzip
 sudo apt-get install -y libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
-sudo apt-get install -y liblzma-dev libpq-dev
+sudo apt-get install -y liblzma-dev libpq-dev liblz4-tool
 sudo apt-get install -y default-jre default-jdk
 
 # Install Docker
@@ -20,6 +20,10 @@ sudo apt-get install -y linux-image-extra-$(uname -r) apparmor
 sudo apt-get install -y docker-engine
 sudo usermod -aG docker ubuntu
 
+sudo add-apt-repository ppa:keithw/mosh
+sudo apt-get update
+sudo apt-get install -y mosh
+
 # Install Python 3.5 and the Scipy Stack
 wget http://repo.continuum.io/archive/Anaconda3-4.0.0-Linux-x86_64.sh
 bash Anaconda3-4.0.0-Linux-x86_64.sh -b
@@ -27,6 +31,7 @@ rm Anaconda3-4.0.0-Linux-x86_64.sh
 echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
 echo "export PYTHONPATH=$PYTHONPATH:/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/python" >> ~/.bashrc
 echo "export SPARK_HOME=/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6" >> ~/.bashrc
+cat /home/ubuntu/aws-qb-env.sh >> ~/.bashrc
 
 # Install Python dependencies
 /home/ubuntu/anaconda3/bin/pip install -r requirements.txt
@@ -57,3 +62,6 @@ mkdir -p /home/ubuntu/.aws
 # Create Luigi logging directory
 sudo mkdir /var/log/luigi
 sudo chown ubuntu /var/log/luigi
+
+# Configure ulimits
+sudo mv /home/ubuntu/limits.conf /etc/security/limits.conf

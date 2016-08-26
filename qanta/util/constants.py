@@ -46,10 +46,15 @@ DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
 EVAL_RES_TARGET = 'output/deep/eval_res'
 
+WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
+WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
+
 QB_SOURCE_LOCATION = 'data/internal/source'
 
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
+
+KEN_LM = 'output/kenlm.binary'
 
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]

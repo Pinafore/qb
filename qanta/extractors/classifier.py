@@ -7,14 +7,12 @@ from qanta.util.constants import ALPHANUMERIC
 from qanta.extractors.abstract import FeatureExtractor
 
 
-CLASSIFIER_FIELDS = ["category", "ans_type", "gender"]
-
-
 class Classifier(FeatureExtractor):
-    def __init__(self, bigram_path, question_db):
+    def __init__(self, question_db):
         super(Classifier, self).__init__()
         self.qdb = question_db
-        self.bigrams = pickle.load(open(bigram_path, 'rb'))
+        with open('output/classifier/category/bigrams.pkl', 'rb') as f:
+            self.bigrams = pickle.load(f)
         self.majority = {}
         self.frequencies = defaultdict(dict)
         self.cache = None
@@ -22,9 +20,9 @@ class Classifier(FeatureExtractor):
         self.pd = None
         self.classifiers = {}
         self.name = 'classifier'
-        self.add_classifier('data/classifier/category.pkl', 'category')
-        self.add_classifier('data/classifier/ans_type.pkl', 'ans_type')
-        self.add_classifier('data/classifier/gender.pkl', 'gender')
+        self.add_classifier('output/classifier/category.pkl', 'category')
+        self.add_classifier('output/classifier/ans_type.pkl', 'ans_type')
+        self.add_classifier('output/classifier/gender.pkl', 'gender')
         self.cache_majorities('category')
         self.cache_majorities('ans_type')
         self.cache_majorities('gender')
@@ -50,7 +48,8 @@ class Classifier(FeatureExtractor):
             #     self._majority[attribute][page][key] /= total
 
     def add_classifier(self, classifier_path, column):
-        self.classifiers[column] = pickle.load(open(classifier_path, 'rb'))
+        with open(classifier_path, 'rb') as f:
+            self.classifiers[column] = pickle.load(f)
 
     def vw_from_title(self, title, text):
         self.featurize(text)
@@ -60,14 +59,7 @@ class Classifier(FeatureExtractor):
         for cc in self.classifiers:
             majority = self.majority[cc][title]
             pd = self.pd[cc]
-            # for ii in pd.samples():
-            #     val.append("%s_%s:%f" % (cc, ii, pd.prob(ii)))
-            try:
-                val.append("%s_maj:%f" % (cc, pd.prob(majority)))
-            except:
-                pass
-            # val.append("%s_wmaj:%f" % (cc, pd.prob(majority[cc][0]) *
-            #                            pd.prob(majority[cc][1])))
+            val.append("%s_maj:%f" % (cc, pd.prob(majority)))
 
         return ' '.join(val)
 
