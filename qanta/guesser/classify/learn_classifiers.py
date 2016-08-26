@@ -55,7 +55,10 @@ def compute_recall_accuracy():
 
             if sent_position + 1 == len(qs):
                 p_dist = classifier.predict_proba(curr_feats)
-                correct = seq(zip(p_dist[0], class_labels)).sorted(reverse=True).take(N_GUESSES).exists(lambda s: ans == s[1])
+                correct = seq(zip(p_dist[0], class_labels))\
+                    .sorted(reverse=True)\
+                    .take(N_GUESSES)\
+                    .exists(lambda s: ans == s[1])
                 accuracy += int(class_labels[p_dist.argmax()] == ans)
                 recall += correct
                 if not correct:
