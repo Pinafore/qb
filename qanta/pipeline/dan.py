@@ -1,6 +1,6 @@
 import os
 import luigi
-from luigi import LocalTarget, Task
+from luigi import LocalTarget, Task, WrapperTask
 from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
 from qanta.util import environment as e
@@ -74,9 +74,14 @@ class TrainClassifier(Task):
         return LocalTarget(c.DEEP_DAN_CLASSIFIER_TARGET)
 
 
-class CreateGuesses(Task):
+class AllDAN(WrapperTask):
     def requires(self):
         yield TrainClassifier()
+
+
+class CreateGuesses(Task):
+    def requires(self):
+        yield AllDAN()
 
     def output(self):
         return LocalTarget(e.QB_GUESS_DB)

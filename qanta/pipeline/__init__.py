@@ -5,6 +5,8 @@ from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call
 from qanta.pipeline.vw import VWPredictions
+from qanta.pipeline.dan import CreateGuesses, AllDAN
+from qanta.pipeline.preprocess import Preprocess
 
 
 class Summary(Task):

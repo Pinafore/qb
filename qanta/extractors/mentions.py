@@ -10,6 +10,7 @@ from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
 from qanta.extractors.abstract import FeatureExtractor
+from qanta.util.environment import data_path
 from qanta.util.constants import KEN_LM
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase

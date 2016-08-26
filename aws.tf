@@ -221,14 +221,15 @@ resource "aws_spot_instance_request" "master" {
 
   # Configure qanta environment variables
   provisioner "remote-exec" {
-    inline = ["echo \"export QB_SPARK_MASTER=${aws_spot_instance_request.master.private_dns}\" >> /home/ubuntu/.bashrc"]
+    inline = ["echo \"export QB_SPARK_MASTER=spark://${aws_spot_instance_request.master.private_dns}:7077\" >> /home/ubuntu/.bashrc"]
   }
 
   provisioner "remote-exec" {
     inline = [
       "sudo mkdir /ssd-c/qanta",
       "sudo chown ubuntu /ssd-c/qanta",
-      "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb"
+      "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb",
+      "(cd /ssd-c/qanta/qb && /home/ubuntu/anaconda3/bin/python setup.py develop)"
     ]
   }
 
