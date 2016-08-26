@@ -8,8 +8,8 @@ from functional import seq
 
 from qanta import logging
 from qanta.guesser.util.functions import relu
-from qanta.util.constants import (EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET, DEEP_DAN_PARAMS_TARGET,
-                                  DEEP_DEV_TARGET)
+from qanta.util.constants import (EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET,
+                                  DEEP_DAN_PARAMS_TARGET, DEEP_DEV_TARGET)
 from qanta.util.io import safe_open
 
 log = logging.get(__name__)
@@ -68,7 +68,9 @@ def compute_recall_accuracy():
 
     return recall / total, accuracy / total, total, wrong
 
-def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSES, max_examples=None):
+
+def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSES,
+                                 max_examples=None):
     d = 300
     with open(fold_target, 'rb') as f:
         val_qs = pickle.load(f)
@@ -116,6 +118,7 @@ def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSE
         total += 1
 
     return recall_at_n / total,  total
+
 
 def print_recall_at_n(fold_target=DEEP_DEV_TARGET, results_target=EVAL_RES_TARGET, n_guesses=N_GUESSES, max_examples=None):
     recall_array, total = compute_recall_accuracy_to_n(fold_target=fold_target, n_guesses=n_guesses, max_examples=max_examples)

@@ -7,6 +7,7 @@ from qanta.util import environment as e
 from qanta.guesser.util.format_dan import preprocess
 from qanta.guesser.util import load_embeddings
 from qanta.guesser import dan
+from qanta.guesser.classify.learn_classifiers import print_recall_at_n
 from qanta.extract_features import create_guesses
 
 
@@ -79,7 +80,7 @@ class EvaluateClassifier(luigi.Task):
         yield TrainClassifier()
 
     def run(self):
-        dan.print_recall_at_n()
+        print_recall_at_n()
         
     def output(self):
         return LocalTarget(c.EVAL_RES_TARGET)
