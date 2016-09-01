@@ -14,32 +14,25 @@ def cli():
     pass
 
 
-def create_spark_context(app_name="Quiz Bowl", lm_memory=False, profile=False):
-    spark_conf = SparkConf()
-    if lm_memory:
-        pass
-        # spark_conf = spark_conf.set('spark.max.cores', 30).set('spark.executor.cores', 30)
-    if profile:
-        spark_conf = spark_conf.set('spark.python.profile', True)
-    spark_conf = spark_conf.set('spark.akka.frameSize', 300)
-    return SparkContext(appName=app_name, master=QB_SPARK_MASTER, conf=spark_conf)
+def create_spark_context(app_name="Quiz Bowl"):
+    spark_conf = SparkConf()\
+        .set('spark.akka.frameSize', 300)\
+        .setAppName(app_name)\
+        .setMaster(QB_SPARK_MASTER)
+    return SparkContext.getOrCreate(spark_conf)
 
 
-def extract_features(features, lm_memory=False, profile=False):
+def extract_features(features):
     sc = create_spark_context(
-        app_name='Quiz Bowl: ' + ' '.join(features),
-        lm_memory=lm_memory,
-        profile=profile
+        app_name='Quiz Bowl: ' + ' '.join(features)
     )
     ef.spark_batch(sc, features, QB_QUESTION_DB, QB_GUESS_DB)
 
 
 @cli.command(name='extract_features')
 @click.argument('features', nargs=-1, type=click.Choice(FEATURE_NAMES), required=True)
-@click.option('--lm-memory', is_flag=True)
-@click.option('--profile', is_flag=True)
 def extract_features_cli(**kwargs):
-    extract_features(kwargs['features'], lm_memory=kwargs['lm_memory'], profile=kwargs['profile'])
+    extract_features(kwargs['features'])
 
 
 def merge_features():

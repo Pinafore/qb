@@ -85,26 +85,6 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     return feature
 
 
-def create_guesses_for_question(question, deep_feature, word_skip=-1):
-    final_guesses = defaultdict(dict)
-
-    # Gather all the guesses
-    for sentence, token, text in question.partials(word_skip):
-        # We have problems at the very start
-        if sentence == 0 and token == word_skip:
-            continue
-
-        guesses = deep_feature.text_guess(text)
-        for guess in guesses:
-            final_guesses[(sentence, token)][guess] = guesses[guess]
-        # add the correct answer if this is a training document and
-        if question.fold == "train" and question.page not in guesses:
-            final_guesses[(sentence, token)][question.page] = deep_feature.score_one_guess(
-                question.page, text)
-
-    return final_guesses
-
-
 def spark_batch(sc: SparkContext, feature_names, question_db: str, guess_db: str,
                 granularity='sentence'):
     sql_context = SparkSession.builder.getOrCreate()
@@ -146,7 +126,6 @@ def spark_batch(sc: SparkContext, feature_names, question_db: str, guess_db: str
                 .write.save(filename, mode='overwrite')
         feature_df_with_fold.unpersist()
     log.info("Computation Completed, stopping Spark")
-    sc.stop()
 
 
 def evaluate_feature_question(task, b_features, granularity):
@@ -170,6 +149,26 @@ def evaluate_feature_question(task, b_features, granularity):
                 )
             )
     return result
+
+
+def create_guesses_for_question(question, deep_feature, word_skip=-1):
+    final_guesses = defaultdict(dict)
+
+    # Gather all the guesses
+    for sentence, token, text in question.partials(word_skip):
+        # We have problems at the very start
+        if sentence == 0 and token == word_skip:
+            continue
+
+        guesses = deep_feature.text_guess(text)
+        for guess in guesses:
+            final_guesses[(sentence, token)][guess] = guesses[guess]
+        # add the correct answer if this is a training document and
+        if question.fold == "train" and question.page not in guesses:
+            final_guesses[(sentence, token)][question.page] = deep_feature.score_one_guess(
+                question.page, text)
+
+    return final_guesses
 
 
 def parallel_generate_guesses(task):
