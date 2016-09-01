@@ -90,7 +90,7 @@ class ExtractLMFeatures(Task):
         return targets
 
     def run(self):
-        extract_features(c.LM_OPT_FEATURES, lm_memory=True)
+        extract_features(c.LM_OPT_FEATURES)
 
 
 class ExtractMentionsFeatures(Task):
@@ -107,7 +107,7 @@ class ExtractMentionsFeatures(Task):
         return targets
 
     def run(self):
-        extract_features(c.MENTIONS_OPT_FEATURES, lm_memory=True)
+        extract_features(c.MENTIONS_OPT_FEATURES)
 
 
 class ExtractFeatures(WrapperTask):
