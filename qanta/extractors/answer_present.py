@@ -29,11 +29,12 @@ class AnswerPresent(FeatureExtractor):
 
         return d
 
-    def vw_from_title(self, title, text):
-        val = self.score_one_guess(title, text)
-        return self.vw_from_score(val)
+    def score_guesses(self, guesses, text):
+        for guess in guesses:
+            val = self.score_one_guess(guess, text)
+            yield self.format_scores(val), guess
 
-    def vw_from_score(self, results):
+    def format_scores(self, results):
         return "|%s %s" % (self.name, " ".join("%s:%f" % (x, results[x]) for x in results))
 
 

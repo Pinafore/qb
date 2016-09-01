@@ -44,7 +44,7 @@ def extract_features_cli(**kwargs):
 
 def merge_features():
     sc = create_spark_context(app_name='Quiz Bowl Merge')
-    spark_features.create_output(sc, '/home/ubuntu/qb/data/features')
+    spark_features.create_output(sc, 'output/features')
 
 
 @cli.command(name='merge_features')

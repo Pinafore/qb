@@ -1,4 +1,5 @@
 from itertools import product
+import os
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
@@ -20,6 +21,8 @@ class Summary(Task):
         return LocalTarget('output/summary/{0}.sentence.{1}.json'.format(self.fold, self.weight))
 
     def run(self):
+        if not os.path.exists('output/summary'):
+            os.makedirs('output/summary')
         call([
             'python3',
             'qanta/reporting/performance.py',

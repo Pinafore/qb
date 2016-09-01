@@ -11,6 +11,9 @@ from functional import seq
 from functional.pipeline import Sequence
 from fn import _
 
+import matplotlib
+matplotlib.use('Agg')
+
 from qanta.util.qdb import QuestionDatabase
 
 
@@ -193,13 +196,13 @@ def plot(stats_dir, output):
     rows = parse_data(stats_dir)
     g = sns.factorplot(y='result', x='score', row='experiment', col='weight',
                        data=rows, kind='bar', orient='h', ci=None, margin_titles=True,
-                       order=ANSWER_PLOT_ORDER)
-    g.savefig(output)
+                       order=ANSWER_PLOT_ORDER, size=10)
+    g.savefig(output, format='png')
 
 
 @cli.command()
 @click.option('--min-count', default=5)
-@click.option('--qdb', default='data/questions.db')
+@click.option('--qdb', default='data/internal/non_naqt.db')
 @click.argument('pred_file')
 @click.argument('meta_file')
 @click.argument('output')

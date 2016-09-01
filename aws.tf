@@ -221,7 +221,10 @@ resource "aws_spot_instance_request" "master" {
 
   # Configure qanta environment variables
   provisioner "remote-exec" {
-    inline = ["echo \"export QB_SPARK_MASTER=spark://${aws_spot_instance_request.master.private_dns}:7077\" >> /home/ubuntu/.bashrc"]
+    inline = [
+      "echo \"export QB_SPARK_MASTER=spark://${aws_spot_instance_request.master.private_dns}:7077\" >> /home/ubuntu/.bashrc",
+      "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc"
+    ]
   }
 
   provisioner "remote-exec" {

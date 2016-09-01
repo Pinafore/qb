@@ -56,6 +56,14 @@ echo "export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python3" >> ~/.bashrc
 echo "#!/usr/bin/env bash" >> ~/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh
 echo "export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python3" >> ~/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh
 
+# Install Vowpal Wabbit
+cd ~/dependencies
+git clone git://github.com/JohnLangford/vowpal_wabbit.git
+cd vowpal_wabbit
+make
+sudo make install
+cd ~/
+
 # Install Utilities
 /home/ubuntu/anaconda3/bin/pip install glances
 

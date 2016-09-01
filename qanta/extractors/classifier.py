@@ -50,17 +50,18 @@ class Classifier(FeatureExtractor):
         with open(classifier_path, 'rb') as f:
             self.classifiers[classifier_type] = pickle.load(f)
 
-    def vw_from_title(self, title, text):
-        self.featurize(text)
-        # majority = self.majority(title)
+    def score_guesses(self, guesses, text):
+        for guess in guesses:
+            self.featurize(text)
+            # majority = self.majority(title)
 
-        val = ["|classifier"]
-        for cc in self.classifiers:
-            majority = self.majority[cc][title]
-            pd = self.pd[cc]
-            val.append("%s_maj:%f" % (cc, pd.prob(majority)))
+            val = ["|classifier"]
+            for cc in self.classifiers:
+                majority = self.majority[cc][guess]
+                pd = self.pd[cc]
+                val.append("%s_maj:%f" % (cc, pd.prob(majority)))
 
-        return ' '.join(val)
+            yield ' '.join(val), guess
 
     def featurize(self, text):
         if hash(text) != self.cache:
@@ -84,6 +85,3 @@ class Classifier(FeatureExtractor):
             for cc in self.classifiers:
                 self.majority[guess][cc] = self.qdb.majority_frequency(guess, cc)
         return self.majority[guess]
-
-    def vw_from_score(self, results):
-        pass

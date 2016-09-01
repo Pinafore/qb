@@ -1,4 +1,5 @@
 from itertools import product
+import os
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
@@ -15,9 +16,12 @@ class VWMergeFeature(Task):
         return SparkMergeFeatures()
 
     def output(self):
-        return (LocalTarget(
-            'output/vw_input/{0}.sentence.{1}.vw_input.gz'.format(self.fold, self.weight)),
-                LocalTarget('output/vw_input/{0}.sentence.{1}.meta'.format(self.fold, self.weight)))
+        return [
+            LocalTarget(
+                'output/vw_input/{0}.sentence.{1}.vw_input.gz'.format(self.fold, self.weight)
+            ),
+            LocalTarget('output/vw_input/{0}.sentence.{1}.meta'.format(self.fold, self.weight))
+        ]
 
     def run(self):
         call(['bash', 'bin/vw_merge.sh', self.fold, str(self.weight)])
@@ -39,6 +43,8 @@ class VWModel(Task):
         return LocalTarget('output/models/sentence.{0}.vw'.format(self.weight))
 
     def run(self):
+        if not os.path.exists('output/models'):
+            os.makedirs('output/models')
         call([
             'vw',
             '--compressed',
@@ -65,6 +71,8 @@ class VWPredictions(Task):
             'output/predictions/{0}.sentence.{1}.pred'.format(self.fold, self.weight))
 
     def run(self):
+        if not os.path.exists('output/predictions'):
+            os.makedirs('output/predictions')
         call([
             'vw',
             '--compressed',

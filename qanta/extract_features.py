@@ -2,7 +2,7 @@ from collections import defaultdict, namedtuple
 import os
 from unidecode import unidecode
 from random import shuffle
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
@@ -13,7 +13,7 @@ from qanta.util.guess import GuessList
 from qanta.util import constants as C
 from qanta.util.constants import FOLDS, MIN_APPEARANCES, CLM_PATH
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.environment import data_path, QB_QUESTION_DB, QB_GUESS_DB
+from qanta.util.environment import data_path, QB_QUESTION_DB
 from qanta.util.spark_features import SCHEMA
 
 from qanta.extractors.label import Labeler
@@ -30,10 +30,6 @@ Task = namedtuple('Task', ['question', 'guesses'])
 
 
 def feature_lines(question, guesses_needed, granularity, feature_generator):
-    # Guess we might have already
-    # It has the structure:
-    # guesses[(sent, token)][page][feat] = value
-
     for sentence, token in guesses_needed:
         if granularity == "sentence" and token > 0:
             continue
@@ -43,8 +39,9 @@ def feature_lines(question, guesses_needed, granularity, feature_generator):
         feature_generator.set_metadata(question.page, question.category, question.qnum, sentence,
                                        token, guess_size, question)
 
-        for guess in guesses_needed[(sentence, token)]:
-            feat = feature_generator.vw_from_title(guess, question.get_text(sentence, token))
+        for feat, guess in feature_generator.score_guesses(
+                guesses_needed[(sentence, token)],
+                question.get_text(sentence, token)):
             yield sentence, token, guess, feat
 
 

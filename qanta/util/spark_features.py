@@ -7,8 +7,10 @@ from pyspark.sql.functions import udf
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 from unidecode import unidecode
 
+from qanta import logging
 from qanta.util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
 
+log = logging.get(__name__)
 
 SCHEMA = StructType([
     StructField('feature_name', StringType(), True),
@@ -48,7 +50,7 @@ def create_output(sc: SparkContext, path: str, granularity='sentence'):
 
             output_rdd = grouped_rdd.map(generate_string)
             output_rdd.saveAsTextFile(
-                '/home/ubuntu/qb/output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)))
+                'output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)))
         grouped_rdd.unpersist()
 
 
@@ -57,15 +59,15 @@ def read_dfs(sc: SparkContext, path: str, granularity='sentence') -> DataFrame:
     feature_dfs = {}  # type: Dict[Tuple[str, str], DataFrame]
     for fold in FOLDS:
         for name in FEATURE_NAMES:
-            print("Reading {fold} for {feature}".format(fold=fold, feature=name))
+            log.info("Reading {fold} for {feature}".format(fold=fold, feature=name))
             filename = '{granularity}.{name}.parquet'.format(granularity=granularity, name=name)
             file_path = os.path.join(path, fold, filename)
             if not os.path.exists(file_path):
-                print("File {file} does not exist".format(file=file_path))
+                log.info("File {file} does not exist".format(file=file_path))
             else:
                 feature_dfs[(fold, name)] = sql_context.read.load(file_path).cache()
                 count = feature_dfs[(fold, name)].count()
-                print("{count} rows read for {fold} and {name}".format(
+                log.info("{count} rows read for {fold} and {name}".format(
                     count=count, fold=fold, name=name))
 
     reweight_df(feature_dfs)

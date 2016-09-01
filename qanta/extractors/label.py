@@ -20,20 +20,20 @@ class Labeler(FeatureExtractor):
         for ii in all_questions:
             self.counts[ii] = float(self.counts[ii] - count_mean) / count_var
 
-    def vw_from_title(self, title, query):
-        title = title.replace(":", "").replace("|", "")
+    def score_guesses(self, guesses, text):
+        for guess in guesses:
+            formatted_guess = guess.replace(":", "").replace("|", "")
 
-        # TODO: Incorporate token position here as well to improve
-        # position-based features
-        if title == self._correct:
-            return "1 '%s |guess %s sent:%0.1f count:%f" % \
-                (self._id, unidecode(title).replace(" ", "_"),
-                 self._sent, self.counts.get(title, -2))
-        else:
-            return "-1 %i '%s |guess %s sent:%0.1f count:%f" % \
-                (self._num_guesses, self._id,
-                 unidecode(title).replace(" ", "_"),
-                 self._sent, self.counts.get(title, -2))
-
-    def vw_from_score(self, results):
-        pass
+            # TODO: Incorporate token position here as well to improve
+            # position-based features
+            if formatted_guess == self._correct:
+                feature = "1 '%s |guess %s sent:%0.1f count:%f" % \
+                    (self._id, unidecode(formatted_guess).replace(" ", "_"),
+                     self._sent, self.counts.get(formatted_guess, -2))
+                yield feature, guess
+            else:
+                feature = "-1 %i '%s |guess %s sent:%0.1f count:%f" % \
+                    (self._num_guesses, self._id,
+                     unidecode(formatted_guess).replace(" ", "_"),
+                     self._sent, self.counts.get(formatted_guess, -2))
+                yield feature, guess
