@@ -208,9 +208,9 @@ resource "aws_spot_instance_request" "master" {
   # Configure AWS credentials
   provisioner "remote-exec" {
     inline = [
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-env.sh",
       "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/.bashrc",
-      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh",
+      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-env.sh",
       "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/.bashrc",
       "mkdir -p /home/ubuntu/.aws",
       "echo \"[default]\" >> /home/ubuntu/.aws/credentials",

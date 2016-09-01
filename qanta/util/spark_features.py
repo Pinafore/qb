@@ -2,7 +2,7 @@ import os
 from functools import reduce
 from typing import List, Dict, Tuple
 from pyspark import SparkContext, RDD
-from pyspark.sql import SQLContext, Row, DataFrame
+from pyspark.sql import SparkSession, Row, DataFrame
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 from unidecode import unidecode
@@ -24,8 +24,8 @@ SCHEMA = StructType([
 ])
 
 
-def create_output(sc: SparkContext, path: str, granularity='sentence'):
-    df = read_dfs(sc, path, granularity=granularity).cache()
+def create_output(path: str, granularity='sentence'):
+    df = read_dfs(path, granularity=granularity).cache()
     for fold in FOLDS:
         filtered_df = df.filter('fold = "{0}"'.format(fold))
         grouped_rdd = group_features(filtered_df).cache()
@@ -54,8 +54,8 @@ def create_output(sc: SparkContext, path: str, granularity='sentence'):
         grouped_rdd.unpersist()
 
 
-def read_dfs(sc: SparkContext, path: str, granularity='sentence') -> DataFrame:
-    sql_context = SQLContext(sc)
+def read_dfs(path: str, granularity='sentence') -> DataFrame:
+    sql_context = SparkSession.builder.getOrCreate()
     feature_dfs = {}  # type: Dict[Tuple[str, str], DataFrame]
     for fold in FOLDS:
         for name in FEATURE_NAMES:

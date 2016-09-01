@@ -5,7 +5,7 @@ from random import shuffle
 from multiprocessing import Pool
 
 from pyspark import SparkContext
-from pyspark.sql import SQLContext, Row
+from pyspark.sql import SparkSession, Row
 
 from qanta import logging
 from qanta.util.build_whoosh import text_iterator
@@ -107,7 +107,7 @@ def create_guesses_for_question(question, deep_feature, word_skip=-1):
 
 def spark_batch(sc: SparkContext, feature_names, question_db: str, guess_db: str,
                 granularity='sentence'):
-    sql_context = SQLContext(sc)
+    sql_context = SparkSession.builder.getOrCreate()
     question_db = QuestionDatabase(question_db)
 
     log.info("Loading Questions")
