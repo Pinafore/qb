@@ -56,10 +56,27 @@ SPARK_MENTIONS_TARGETS = {
     'output/features/test/sentence.mentions.parquet'
 }
 
-SPARK_FEATURE_TARGETS = SPARK_COMPUTE_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS
+SPARK_DEEP_TARGETS = {
+    'output/features/dev/sentence.deep.parquet',
+    'output/features/devtest/sentence.deep.parquet',
+    'output/features/test/sentence.deep.parquet'
+}
+
+SPARK_FEATURE_TARGETS = SPARK_COMPUTE_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
+                        | SPARK_DEEP_TARGETS
+
+VW_INPUT = {'output/vw_input'}
+
+VW_MODELS = {'output/models'}
+
+PREDICTIONS = {'output/predictions'}
+
+SUMMARIES = {'output/summary'}
+
 
 CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
-                     | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS
+                     | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
+                     | PREDICTIONS | SUMMARIES
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
@@ -71,6 +88,11 @@ TARGET_GROUPS = {
     'spark_compute': SPARK_COMPUTE_TARGETS,
     'spark_lm': SPARK_LM_TARGETS,
     'spark_mentions': SPARK_MENTIONS_TARGETS,
+    'spark_deep': SPARK_DEEP_TARGETS,
+    'vw_input': VW_INPUT,
+    'vw_models': VW_MODELS,
+    'predictions': PREDICTIONS,
+    'summaries': SUMMARIES,
     'all': CHECKPOINT_TARGETS
 }
 
