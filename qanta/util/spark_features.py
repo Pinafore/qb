@@ -2,13 +2,15 @@ import os
 from functools import reduce
 from typing import List, Dict, Tuple
 from pyspark import SparkContext, RDD
-from pyspark.sql import SQLContext, Row, DataFrame
+from pyspark.sql import SparkSession, Row, DataFrame
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 from unidecode import unidecode
 
+from qanta import logging
 from qanta.util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
 
+log = logging.get(__name__)
 
 SCHEMA = StructType([
     StructField('feature_name', StringType(), True),
@@ -22,8 +24,8 @@ SCHEMA = StructType([
 ])
 
 
-def create_output(sc: SparkContext, path: str, granularity='sentence'):
-    df = read_dfs(sc, path, granularity=granularity).cache()
+def create_output(path: str, granularity='sentence'):
+    df = read_dfs(path, granularity=granularity).cache()
     for fold in FOLDS:
         filtered_df = df.filter('fold = "{0}"'.format(fold))
         grouped_rdd = group_features(filtered_df).cache()
@@ -48,24 +50,24 @@ def create_output(sc: SparkContext, path: str, granularity='sentence'):
 
             output_rdd = grouped_rdd.map(generate_string)
             output_rdd.saveAsTextFile(
-                '/home/ubuntu/qb/output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)))
+                'output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)))
         grouped_rdd.unpersist()
 
 
-def read_dfs(sc: SparkContext, path: str, granularity='sentence') -> DataFrame:
-    sql_context = SQLContext(sc)
+def read_dfs(path: str, granularity='sentence') -> DataFrame:
+    sql_context = SparkSession.builder.getOrCreate()
     feature_dfs = {}  # type: Dict[Tuple[str, str], DataFrame]
     for fold in FOLDS:
         for name in FEATURE_NAMES:
-            print("Reading {fold} for {feature}".format(fold=fold, feature=name))
+            log.info("Reading {fold} for {feature}".format(fold=fold, feature=name))
             filename = '{granularity}.{name}.parquet'.format(granularity=granularity, name=name)
             file_path = os.path.join(path, fold, filename)
             if not os.path.exists(file_path):
-                print("File {file} does not exist".format(file=file_path))
+                log.info("File {file} does not exist".format(file=file_path))
             else:
                 feature_dfs[(fold, name)] = sql_context.read.load(file_path).cache()
                 count = feature_dfs[(fold, name)].count()
-                print("{count} rows read for {fold} and {name}".format(
+                log.info("{count} rows read for {fold} and {name}".format(
                     count=count, fold=fold, name=name))
 
     reweight_df(feature_dfs)

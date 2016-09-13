@@ -29,8 +29,8 @@ wget http://repo.continuum.io/archive/Anaconda3-4.0.0-Linux-x86_64.sh
 bash Anaconda3-4.0.0-Linux-x86_64.sh -b
 rm Anaconda3-4.0.0-Linux-x86_64.sh
 echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
-echo "export PYTHONPATH=$PYTHONPATH:/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/python" >> ~/.bashrc
-echo "export SPARK_HOME=/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6" >> ~/.bashrc
+echo "export PYTHONPATH=$PYTHONPATH:/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/python" >> ~/.bashrc
+echo "export SPARK_HOME=/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7" >> ~/.bashrc
 cat /home/ubuntu/aws-qb-env.sh >> ~/.bashrc
 
 # Install Python dependencies
@@ -48,10 +48,19 @@ sudo make install
 cd ~/
 
 # Install Apache Spark
-wget http://d3kbcqa49mib13.cloudfront.net/spark-1.6.1-bin-hadoop2.6.tgz
-tar -xvzf spark-1.6.1-bin-hadoop2.6.tgz
-rm spark-1.6.1-bin-hadoop2.6.tgz
-mv spark-1.6.1-bin-hadoop2.6 ~/dependencies
+wget http://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz
+tar -xvzf spark-2.0.0-bin-hadoop2.7.tgz
+rm spark-2.0.0-bin-hadoop2.7.tgz
+mv spark-2.0.0-bin-hadoop2.7 ~/dependencies
+echo "export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python3" >> ~/.bashrc
+
+# Install Vowpal Wabbit
+cd ~/dependencies
+git clone git://github.com/JohnLangford/vowpal_wabbit.git
+cd vowpal_wabbit
+make
+sudo make install
+cd ~/
 
 # Install Utilities
 /home/ubuntu/anaconda3/bin/pip install glances

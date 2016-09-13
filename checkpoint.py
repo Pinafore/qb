@@ -18,12 +18,81 @@ DEEP_TARGETS = {'output/deep'}
 
 GUESS_TARGETS = {'output/guesses.db'}
 
-CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS
+CLM_TARGETS = {
+    'output/language_model.txt',
+    'output/language_model'
+}
+
+CLASSIFIER_TARGETS = {
+    'output/classifier/gender',
+    'output/classifier/category',
+    'output/classifier/ans_type'
+}
+
+SPARK_COMPUTE_TARGETS = {
+    'output/features/dev/sentence.answer_present.parquet',
+    'output/features/dev/sentence.classifier.parquet',
+    'output/features/dev/sentence.label.parquet',
+    'output/features/dev/sentence.wikilinks.parquet',
+    'output/features/devtest/sentence.answer_present.parquet',
+    'output/features/devtest/sentence.classifier.parquet',
+    'output/features/devtest/sentence.label.parquet',
+    'output/features/devtest/sentence.wikilinks.parquet',
+    'output/features/test/sentence.answer_present.parquet',
+    'output/features/test/sentence.classifier.parquet',
+    'output/features/test/sentence.label.parquet',
+    'output/features/test/sentence.wikilinks.parquet'
+}
+
+SPARK_LM_TARGETS = {
+    'output/features/dev/sentence.lm.parquet',
+    'output/features/devtest/sentence.lm.parquet',
+    'output/features/test/sentence.lm.parquet'
+}
+
+SPARK_MENTIONS_TARGETS = {
+    'output/features/dev/sentence.mentions.parquet',
+    'output/features/devtest/sentence.mentions.parquet',
+    'output/features/test/sentence.mentions.parquet'
+}
+
+SPARK_DEEP_TARGETS = {
+    'output/features/dev/sentence.deep.parquet',
+    'output/features/devtest/sentence.deep.parquet',
+    'output/features/test/sentence.deep.parquet'
+}
+
+SPARK_FEATURE_TARGETS = SPARK_COMPUTE_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
+                        | SPARK_DEEP_TARGETS
+
+VW_INPUT = {'output/vw_input'}
+
+VW_MODELS = {'output/models'}
+
+PREDICTIONS = {'output/predictions'}
+
+SUMMARIES = {'output/summary'}
+
+
+CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
+                     | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
+                     | PREDICTIONS | SUMMARIES
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
     'deep': DEEP_TARGETS,
     'guesses': GUESS_TARGETS,
+    'clm': CLM_TARGETS,
+    'classifiers': CLASSIFIER_TARGETS,
+    'spark': SPARK_FEATURE_TARGETS,
+    'spark_compute': SPARK_COMPUTE_TARGETS,
+    'spark_lm': SPARK_LM_TARGETS,
+    'spark_mentions': SPARK_MENTIONS_TARGETS,
+    'spark_deep': SPARK_DEEP_TARGETS,
+    'vw_input': VW_INPUT,
+    'vw_models': VW_MODELS,
+    'predictions': PREDICTIONS,
+    'summaries': SUMMARIES,
     'all': CHECKPOINT_TARGETS
 }
 

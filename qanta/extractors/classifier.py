@@ -3,7 +3,7 @@ import pickle
 from collections import defaultdict, Counter
 from nltk.util import ngrams
 
-from qanta.util.constants import ALPHANUMERIC
+from qanta.util.constants import ALPHANUMERIC, CLASSIFIER_PICKLE_PATH, CLASSIFIER_TYPES
 from qanta.extractors.abstract import FeatureExtractor
 
 
@@ -11,6 +11,7 @@ class Classifier(FeatureExtractor):
     def __init__(self, question_db):
         super(Classifier, self).__init__()
         self.qdb = question_db
+        # TODO: make this not hard coded
         with open('output/classifier/category/bigrams.pkl', 'rb') as f:
             self.bigrams = pickle.load(f)
         self.majority = {}
@@ -20,12 +21,9 @@ class Classifier(FeatureExtractor):
         self.pd = None
         self.classifiers = {}
         self.name = 'classifier'
-        self.add_classifier('output/classifier/category.pkl', 'category')
-        self.add_classifier('output/classifier/ans_type.pkl', 'ans_type')
-        self.add_classifier('output/classifier/gender.pkl', 'gender')
-        self.cache_majorities('category')
-        self.cache_majorities('ans_type')
-        self.cache_majorities('gender')
+        for c in CLASSIFIER_TYPES:
+            self.add_classifier(c)
+            self.cache_majorities(c)
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         pass
@@ -47,21 +45,23 @@ class Classifier(FeatureExtractor):
             # for key in self._majority[attribute][page]:
             #     self._majority[attribute][page][key] /= total
 
-    def add_classifier(self, classifier_path, column):
+    def add_classifier(self, classifier_type):
+        classifier_path = CLASSIFIER_PICKLE_PATH.format(classifier_type)
         with open(classifier_path, 'rb') as f:
-            self.classifiers[column] = pickle.load(f)
+            self.classifiers[classifier_type] = pickle.load(f)
 
-    def vw_from_title(self, title, text):
-        self.featurize(text)
-        # majority = self.majority(title)
+    def score_guesses(self, guesses, text):
+        for guess in guesses:
+            self.featurize(text)
+            # majority = self.majority(title)
 
-        val = ["|classifier"]
-        for cc in self.classifiers:
-            majority = self.majority[cc][title]
-            pd = self.pd[cc]
-            val.append("%s_maj:%f" % (cc, pd.prob(majority)))
+            val = ["|classifier"]
+            for cc in self.classifiers:
+                majority = self.majority[cc][guess]
+                pd = self.pd[cc]
+                val.append("%s_maj:%f" % (cc, pd.prob(majority)))
 
-        return ' '.join(val)
+            yield ' '.join(val), guess
 
     def featurize(self, text):
         if hash(text) != self.cache:
@@ -85,6 +85,3 @@ class Classifier(FeatureExtractor):
             for cc in self.classifiers:
                 self.majority[guess][cc] = self.qdb.majority_frequency(guess, cc)
         return self.majority[guess]
-
-    def vw_from_score(self, results):
-        pass

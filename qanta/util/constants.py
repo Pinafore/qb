@@ -44,6 +44,7 @@ DEEP_DAN_DEV_OUTPUT = 'output/deep/dev_dan'
 DEEP_DEVTEST_TARGET = 'output/deep/devtest'
 DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
+EVAL_RES_TARGET = 'output/deep/eval_res'
 
 WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
 WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
@@ -52,6 +53,8 @@ QB_SOURCE_LOCATION = 'data/internal/source'
 
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
+CLASSIFIER_PICKLE_PATH = 'output/classifier/{0}/{0}.pkl'
+CLASSIFIER_BIGRAMS_PATH = 'output/classifier/{0}/bigrams.pkl'
 
 KEN_LM = 'output/kenlm.binary'
 

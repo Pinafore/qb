@@ -30,7 +30,11 @@ class WikiLinks(FeatureExtractor):
         if qnum not in self.links:
             self.load_xml(qnum)
 
-    def vw_from_title(self, title, text):
+    def score_guesses(self, guesses, text):
+        for guess in guesses:
+            yield self.score_one_guess(guess, text), guess
+
+    def score_one_guess(self, title, text):
         if hash(text) != self._cache:
             self._cache = hash(text)
             self._matches = set()
@@ -117,7 +121,3 @@ class WikiLinks(FeatureExtractor):
                     self.links[question][sentence] = {}
                 self.links[question][sentence][surface] = \
                     (page, start, id, score)
-
-    def vw_from_score(self, results):
-        pass
-

@@ -1,4 +1,5 @@
 import abc
+from typing import List
 
 from qanta.util.constants import N_GUESSES
 
@@ -29,12 +30,5 @@ class FeatureExtractor(object):
         pass
 
     @abc.abstractmethod
-    def vw_from_score(self, results):
-        """
-        Dictionary of feature key / value pairs
-        """
-        pass
-
-    @abc.abstractmethod
-    def vw_from_title(self, title: str, text: str):
+    def score_guesses(self, guesses: List[str], text: str):
         pass

@@ -40,8 +40,8 @@ To execute the AWS scripts you will need to follow these steps (`brew` options a
 7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
 8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS
 credentials.
-9. **WARNING**: These are copied by Terraform to the cluster so it has S3 access. See AWS
-configuration section for a summary of how the Terraform installs scripts treat these keys.
+9. **WARNING**: These are copied by Terraform to the cluster so that the cluster has S3 access. See AWS the
+configuration section for a summary of how the Terraform install scripts treat these keys.
 10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
 and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
 nodes can communicate via SSH
@@ -83,7 +83,8 @@ on fixing this, but haven't yet.
 #### Run AWS/Terraform/Packer Scripts
 
 The AWS scripts are split between Packer and Terraform. Packer should be run from `packer/` and
-Terraform from the root directory.
+Terraform from the root directory. Running Packer is optional because we publish public AMIs which Terraform uses by default.
+If you are developing new pieces of qanta that require new software it might be helpful to build your own AMIs
 
 1. (Optional) Packer: `packer build packer.json`
 2. Terraform: `terraform apply` and note the `master_ip` output

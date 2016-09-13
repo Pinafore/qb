@@ -25,13 +25,13 @@ class ClassifierPickles(Task):
     class_type = luigi.Parameter()
 
     def requires(self):
-        Preprocess()
+        yield Preprocess()
 
     def output(self):
-        return LocalTarget('output/classifier/{0}.pkl'.format(self.class_type))
+        return LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type))
 
     def run(self):
-        build_classifier(self.class_type, 'output/classifier/{0}.pkl'.format(self.class_type))
+        build_classifier(self.class_type)
 
 
 class AllClassifierPickles(WrapperTask):
@@ -90,7 +90,7 @@ class ExtractLMFeatures(Task):
         return targets
 
     def run(self):
-        extract_features(C.LM_OPT_FEATURES, lm_memory=True)
+        extract_features(c.LM_OPT_FEATURES)
 
 
 class ExtractMentionsFeatures(Task):
@@ -107,7 +107,7 @@ class ExtractMentionsFeatures(Task):
         return targets
 
     def run(self):
-        extract_features(c.MENTIONS_OPT_FEATURES, lm_memory=True)
+        extract_features(c.MENTIONS_OPT_FEATURES)
 
 
 class ExtractFeatures(WrapperTask):

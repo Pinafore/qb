@@ -2,10 +2,10 @@ from collections import defaultdict, namedtuple
 import os
 from unidecode import unidecode
 from random import shuffle
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 from pyspark import SparkContext
-from pyspark.sql import SQLContext, Row
+from pyspark.sql import SparkSession, Row
 
 from qanta import logging
 from qanta.util.build_whoosh import text_iterator
@@ -13,7 +13,7 @@ from qanta.util.guess import GuessList
 from qanta.util import constants as C
 from qanta.util.constants import FOLDS, MIN_APPEARANCES, CLM_PATH
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.environment import data_path, QB_QUESTION_DB, QB_GUESS_DB
+from qanta.util.environment import data_path, QB_QUESTION_DB
 from qanta.util.spark_features import SCHEMA
 
 from qanta.extractors.label import Labeler
@@ -30,10 +30,6 @@ Task = namedtuple('Task', ['question', 'guesses'])
 
 
 def feature_lines(question, guesses_needed, granularity, feature_generator):
-    # Guess we might have already
-    # It has the structure:
-    # guesses[(sent, token)][page][feat] = value
-
     for sentence, token in guesses_needed:
         if granularity == "sentence" and token > 0:
             continue
@@ -43,8 +39,9 @@ def feature_lines(question, guesses_needed, granularity, feature_generator):
         feature_generator.set_metadata(question.page, question.category, question.qnum, sentence,
                                        token, guess_size, question)
 
-        for guess in guesses_needed[(sentence, token)]:
-            feat = feature_generator.vw_from_title(guess, question.get_text(sentence, token))
+        for feat, guess in feature_generator.score_guesses(
+                guesses_needed[(sentence, token)],
+                question.get_text(sentence, token)):
             yield sentence, token, guess, feat
 
 
@@ -88,29 +85,9 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     return feature
 
 
-def create_guesses_for_question(question, deep_feature, word_skip=-1):
-    final_guesses = defaultdict(dict)
-
-    # Gather all the guesses
-    for sentence, token, text in question.partials(word_skip):
-        # We have problems at the very start
-        if sentence == 0 and token == word_skip:
-            continue
-
-        guesses = deep_feature.text_guess(text)
-        for guess in guesses:
-            final_guesses[(sentence, token)][guess] = guesses[guess]
-        # add the correct answer if this is a training document and
-        if question.fold == "train" and question.page not in guesses:
-            final_guesses[(sentence, token)][question.page] = deep_feature.score_one_guess(
-                question.page, text)
-
-    return final_guesses
-
-
 def spark_batch(sc: SparkContext, feature_names, question_db: str, guess_db: str,
                 granularity='sentence'):
-    sql_context = SQLContext(sc)
+    sql_context = SparkSession.builder.getOrCreate()
     question_db = QuestionDatabase(question_db)
 
     log.info("Loading Questions")
@@ -149,7 +126,6 @@ def spark_batch(sc: SparkContext, feature_names, question_db: str, guess_db: str
                 .write.save(filename, mode='overwrite')
         feature_df_with_fold.unpersist()
     log.info("Computation Completed, stopping Spark")
-    sc.stop()
 
 
 def evaluate_feature_question(task, b_features, granularity):
@@ -173,6 +149,26 @@ def evaluate_feature_question(task, b_features, granularity):
                 )
             )
     return result
+
+
+def create_guesses_for_question(question, deep_feature, word_skip=-1):
+    final_guesses = defaultdict(dict)
+
+    # Gather all the guesses
+    for sentence, token, text in question.partials(word_skip):
+        # We have problems at the very start
+        if sentence == 0 and token == word_skip:
+            continue
+
+        guesses = deep_feature.text_guess(text)
+        for guess in guesses:
+            final_guesses[(sentence, token)][guess] = guesses[guess]
+        # add the correct answer if this is a training document and
+        if question.fold == "train" and question.page not in guesses:
+            final_guesses[(sentence, token)][question.page] = deep_feature.score_one_guess(
+                question.page, text)
+
+    return final_guesses
 
 
 def parallel_generate_guesses(task):

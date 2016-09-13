@@ -34,9 +34,9 @@ class LanguageModel(FeatureExtractor):
     def _add_corpus(self, corpus_name):
         self._corpora.add(corpus_name)
 
-    def vw_from_title(self, title, text):
-        return "|%s %s" % (self.name,
-                           " ".join(self.lm.feature_line(x, title, text) for x in self.corpora))
-
-    def vw_from_score(self, results):
-        pass
+    def score_guesses(self, guesses, text):
+        for guess in guesses:
+            feature = "|%s %s" % (
+                self.name,
+                " ".join(self.lm.feature_line(x, guess, text) for x in self.corpora))
+            yield feature, guess

@@ -1,3 +1,4 @@
+import warnings
 import pickle
 import numpy as np
 from string import ascii_lowercase, punctuation
@@ -101,9 +102,22 @@ class DeepExtractor(FeatureExtractor):
 
         return val
 
-    def vw_from_title(self, title, text):
-        val = self.score_one_guess(title, text)
-        return self.vw_from_score(val)
+    def score_guesses(self, guesses, text):
+        if isinstance(text, list):
+            warnings.warn(
+                "use of list or str input text in deep.score_guesses is deprecated",
+                DeprecationWarning
+            )
+            text = ' '.join(text)
+
+        labels = self.classifier.classes_
+        predictions = self.compute_probs(text)
+        lookup = dict(zip(labels, predictions))
+        for guess in guesses:
+            if guess in lookup:
+                yield self.vw_from_score(lookup[guess]), guess
+            else:
+                yield -1, guess
 
     def vw_from_score(self, val):
         res = "|%s" % self.name

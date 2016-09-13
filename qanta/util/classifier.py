@@ -1,6 +1,6 @@
 import re
 import os
-from qanta.util.environment import QB_QUESTION_DB, data_path
+from qanta.util.environment import QB_QUESTION_DB
 from collections import Counter
 import pickle
 
@@ -13,6 +13,7 @@ from nltk.classify.scikitlearn import SklearnClassifier
 from qanta import logging
 from qanta.util.io import safe_open
 from qanta.util.qdb import QuestionDatabase
+from qanta.util.constants import CLASSIFIER_PICKLE_PATH, CLASSIFIER_BIGRAMS_PATH
 
 
 log = logging.get(__name__)
@@ -66,7 +67,7 @@ def compute_frequent_bigrams(thresh, qbdb):
     return set([k for k, v in bcount.most_common(thresh)])
 
 
-def train_classifier(out, bgset, questions, class_type, limit=-1):
+def train_classifier(bgset, questions, class_type, limit=-1):
     all_questions = questions.questions_with_pages()
     c = Counter()
     train = []
@@ -103,14 +104,15 @@ def train_classifier(out, bgset, questions, class_type, limit=-1):
     log.info("{} out: training classifier".format(class_type))
     classifier = SklearnClassifier(LogisticRegression(C=10))
     classifier.train(train)
-    with safe_open(class_type, 'wb') as f:
+    with safe_open(CLASSIFIER_PICKLE_PATH.format(class_type), 'wb') as f:
         pickle.dump(classifier, f)
     log.info('{}: accuracy@1 train: {}'.format(
         class_type, nltk.classify.util.accuracy(classifier, train)))
     return classifier
 
 
-def evaluate(classifier_file, bgset, questions, class_type, top=2):
+def evaluate(bgset, questions, class_type, top=2):
+    classifier_file = CLASSIFIER_PICKLE_PATH.format(class_type)
     classifier = pickle.load(open(classifier_file, 'rb'))
 
     all_questions = questions.questions_with_pages()
@@ -161,9 +163,9 @@ def evaluate(classifier_file, bgset, questions, class_type, top=2):
     log.info('{}: top@{} accuracy: {}'.format(class_type, top, corr / len(probs)))
 
 
-def build_classifier(class_type, output: str, bigram_thresh=1000):
+def build_classifier(class_type, bigram_thresh=1000):
     questions = QuestionDatabase(QB_QUESTION_DB)
-    bigram_filename = "output/classifier/%s/bigrams.pkl" % class_type
+    bigram_filename = CLASSIFIER_BIGRAMS_PATH.format(class_type)
     if os.path.exists(bigram_filename):
         bgset = pickle.load(open(bigram_filename, 'rb'))
         print("Using previous bigrams")
@@ -172,5 +174,5 @@ def build_classifier(class_type, output: str, bigram_thresh=1000):
         bgset = compute_frequent_bigrams(bigram_thresh, questions)
         write_bigrams(bgset, bigram_filename)
 
-    train_classifier(output, bgset, questions, class_type)
-    evaluate(output, bgset, questions, class_type)
+    train_classifier(bgset, questions, class_type)
+    evaluate(bgset, questions, class_type)

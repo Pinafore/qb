@@ -10,6 +10,7 @@ from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
 from qanta.extractors.abstract import FeatureExtractor
+from qanta.util.environment import data_path
 from qanta.util.constants import KEN_LM
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
@@ -77,9 +78,6 @@ def build_lm_data(path, output):
 
 
 class Mentions(FeatureExtractor):
-    def vw_from_score(self, results):
-        pass
-
     def __init__(self, answers):
         super().__init__()
         self.name = "mentions"
@@ -93,54 +91,56 @@ class Mentions(FeatureExtractor):
         self.ment = []
         self.suf = []
         self.text = ""
+        self.kenlm_path = data_path(KEN_LM)
 
     @property
     def lm(self):
         if not self.initialized:
-            self._lm = kenlm.LanguageModel(KEN_LM)
+            self._lm = kenlm.LanguageModel(self.kenlm_path)
             self.initialized = True
         return self._lm
 
-    def vw_from_title(self, title, text):
+    def score_guesses(self, guesses, text):
         # Find mentions if the text has changed
-        if text != self.text:
-            self.text = text
-            self.pre = []
-            self.ment = []
-            self.suf = []
-            # Find prefixes, suffixes, and mentions
-            for pp, mm, ss in find_references(text):
-                # Exclude too short mentions
-                if len(mm.strip()) > 3:
-                    self.pre.append(unidecode(pp.lower()))
-                    self.suf.append(unidecode(ss.lower()))
-                    self.ment.append(unidecode(mm.lower()))
+        for guess in guesses:
+            if text != self.text:
+                self.text = text
+                self.pre = []
+                self.ment = []
+                self.suf = []
+                # Find prefixes, suffixes, and mentions
+                for pp, mm, ss in find_references(text):
+                    # Exclude too short mentions
+                    if len(mm.strip()) > 3:
+                        self.pre.append(unidecode(pp.lower()))
+                        self.suf.append(unidecode(ss.lower()))
+                        self.ment.append(unidecode(mm.lower()))
 
-        best_score = float("-inf")
-        for ref in self.referring_exs(title):
-            for pp, ss in zip(self.pre, self.suf):
-                pre_tokens = kTOKENIZER(pp)
-                ref_tokens = kTOKENIZER(ref)
-                suf_tokens = kTOKENIZER(ss)
+            best_score = float("-inf")
+            for ref in self.referring_exs(guess):
+                for pp, ss in zip(self.pre, self.suf):
+                    pre_tokens = kTOKENIZER(pp)
+                    ref_tokens = kTOKENIZER(ref)
+                    suf_tokens = kTOKENIZER(ss)
 
-                query_len = len(pre_tokens) + len(ref_tokens) + len(suf_tokens)
-                query = " ".join(pre_tokens + ref_tokens + suf_tokens)
-                score = self.lm.score(query)
-                if score > best_score:
-                    best_score = score / float(query_len)
-        if best_score > float("-inf"):
-            res = "|%s score:%f" % (self.name, best_score)
-        else:
-            res = "|%s missing:1" % self.name
+                    query_len = len(pre_tokens) + len(ref_tokens) + len(suf_tokens)
+                    query = " ".join(pre_tokens + ref_tokens + suf_tokens)
+                    score = self.lm.score(query)
+                    if score > best_score:
+                        best_score = score / float(query_len)
+            if best_score > float("-inf"):
+                res = "|%s score:%f" % (self.name, best_score)
+            else:
+                res = "|%s missing:1" % self.name
 
-        norm_title = LanguageModelBase.normalize_title('', unidecode(title))
-        assert ":" not in norm_title
-        for mm in self.ment:
-            assert ":" not in mm
-            res += " "
-            res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
+            norm_title = LanguageModelBase.normalize_title('', unidecode(guess))
+            assert ":" not in norm_title
+            for mm in self.ment:
+                assert ":" not in mm
+                res += " "
+                res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
 
-        return res
+            yield res, guess
 
     def generate_refexs(self, answer_list):
         """

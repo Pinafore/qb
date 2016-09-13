@@ -1,12 +1,13 @@
 import os
 import luigi
-from luigi import LocalTarget, Task
+from luigi import LocalTarget, Task, WrapperTask
 from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
 from qanta.util import environment as e
 from qanta.guesser.util.format_dan import preprocess
 from qanta.guesser.util import load_embeddings
 from qanta.guesser import dan
+from qanta.guesser.classify.learn_classifiers import print_recall_at_n
 from qanta.extract_features import create_guesses
 
 
@@ -85,9 +86,25 @@ class EvaluateClassifier(luigi.Task):
     def output(self):
         return LocalTarget(c.EVAL_RES_TARGET)
 
-class CreateGuesses(Task):
+class EvaluateClassifier(luigi.Task):
     def requires(self):
         yield TrainClassifier()
+
+    def run(self):
+        print_recall_at_n()
+        
+    def output(self):
+        return LocalTarget(c.EVAL_RES_TARGET)
+
+
+class AllDAN(WrapperTask):
+    def requires(self):
+        yield EvaluateClassifier()
+
+
+class CreateGuesses(Task):
+    def requires(self):
+        yield AllDAN()
 
     def output(self):
         return LocalTarget(e.QB_GUESS_DB)

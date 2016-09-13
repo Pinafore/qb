@@ -8,8 +8,13 @@ from functional import seq
 
 from qanta import logging
 from qanta.guesser.util.functions import relu
+<<<<<<< HEAD
 from qanta.util.constants import (EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET, DEEP_DAN_PARAMS_TARGET,
                                   DEEP_DEV_TARGET)
+=======
+from qanta.util.constants import (EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET,
+                                  DEEP_DAN_PARAMS_TARGET, DEEP_DEV_TARGET)
+>>>>>>> 8048c91f10810b6aee28b263ec19f4ff7ae3f991
 from qanta.util.io import safe_open
 
 log = logging.get(__name__)
@@ -112,6 +117,66 @@ def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSE
                    recall_at_n[correct_index:] += 1
             sent_position += 1
         total += 1
+
+def print_recall_at_n(fold_target=DEEP_DEV_TARGET, results_target=EVAL_RES_TARGET, n_guesses=N_GUESSES, max_examples=None):
+    recall_array, total = compute_recall_accuracy_to_n(fold_target=fold_target, n_guesses=n_guesses, max_examples=max_examples)
+    pickle.dump((recall_array, total), open(EVAL_RES_TARGET, 'wb'),
+                protocol=pickle.HIGHEST_PROTOCOL)
+    print("Total: %s examples" %total)
+    for i, recall in enumerate(recall_array):
+        print("Recall at %i: %f" %(i+1, recall))
+
+
+def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSES,
+                                 max_examples=None):
+    d = 300
+    with open(fold_target, 'rb') as f:
+        val_qs = pickle.load(f)
+    with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
+        (W, b, W2, b2, W3, b3, L) = pickle.load(f)
+    with open( DEEP_DAN_CLASSIFIER_TARGET, 'rb') as f:
+        classifier = pickle.load(f)
+        class_labels = classifier.classes_
+    recall_at_n = np.zeros(n_guesses,)
+    total = 0
+    wrong = []
+    if max_examples:
+       val_qs = val_qs[:max_examples]
+    for qs, ans in val_qs:
+        ans = ans[0]
+        prev_sum = np.zeros((d, 1))
+        history = []
+        sent_position = 0
+        for dist in qs:
+            sent = qs[dist]
+            history += sent
+            prev_sum += np.sum(L[:, sent], axis=1).reshape((d, 1))
+            if len(history) == 0:
+                av = np.zeros((d, 1))
+            else:
+                av = prev_sum / len(history)
+
+            # apply non-linearity
+            p = relu(W.dot(av) + b)
+            p2 = relu(W2.dot(p) + b2)
+            p3 = relu(W3.dot(p2) + b3)
+
+            curr_feats = p3.ravel().reshape(1,-1)
+
+            if sent_position + 1 == len(qs):
+                p_dist = classifier.predict_proba(curr_feats)
+                p_dist_sorted = np.sort(p_dist[0])[::-1]
+                if (np.where(class_labels == ans)[0].shape[0] > 0):
+                   correct_prob = p_dist[0,np.where(class_labels == ans)[0][0]]
+                   correct_index = np.where(p_dist_sorted == correct_prob)[0][0]
+                   recall_at_n[correct_index:] += 1
+                if not correct_index > 0:
+                    wrong.append((qs, ans))
+            sent_position += 1
+        total += 1
+
+    return recall_at_n / total,  total
+
 
 def print_recall_at_n(fold_target=DEEP_DEV_TARGET, results_target=EVAL_RES_TARGET, n_guesses=N_GUESSES, max_examples=None):
     recall_array, total = compute_recall_accuracy_to_n(fold_target=fold_target, n_guesses=n_guesses, max_examples=max_examples)

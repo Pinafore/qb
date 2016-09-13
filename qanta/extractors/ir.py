@@ -22,7 +22,7 @@ class IrExtractor(FeatureExtractor):
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         pass
 
-    def vw_from_title(self, title, text):
+    def score_guesses(self, guesses, text):
         pass
 
     def vw_from_score(self, results):
