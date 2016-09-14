@@ -6,11 +6,11 @@ import theano
 from theano import tensor as T
 from string import ascii_lowercase, punctuation
 
-from functional import seq
+#from functional import seq
 from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
-from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
+from qanta.util.constants import DEEP_DAN_PARAMS_TARGET, DEEP_WE_TARGET, PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
 from qanta.guesser import dan
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
@@ -30,32 +30,28 @@ def normalize(text):
 class DeepExtractor(FeatureExtractor):
     def __init__(self, classifier, params, vocab, ners, page_dict):
         super(DeepExtractor, self).__init__()
-        #self.params = pickle.load(open(params, 'rb'), encoding='latin1')
+        self.params = pickle.load(open(params, 'rb'), encoding='latin1')
         self.d = self.params[-1].shape[0]
+        self.we = pickle.load(open(DEEP_WE_TARGET, 'rb'), encoding='latin1')
         self.vocab, self.vdict = pickle.load(open(vocab, 'rb'), encoding='latin1')
         self.ners = pickle.load(open(ners, 'rb'), encoding='latin1')
-        self.page_dict = page_dict
-        self.fit_fn, self.pred_fn, self.debug_fn, self.l_out  = self.load_model(classifier)
+        self.page_dict = page_dict #number of labels is len(self.page_dict)
+        self.fit_fn, self.pred_fn, self.debug_fn, self.l_out  = self.load_model(params)
         self.name = 'deep'
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         pass
 
-    def load_model(self, path= 'output/deep/dan_gpu_param_values.pkl'):
+    def load_model(self, path= DEEP_DAN_PARAMS_TARGET):
         len_voc = len(self.vocab)
-        num_labels = len(self.ans_dict)
-        d_word = 300 
+        num_labels = 2372 #len(self.page_dict)
         sents = T.imatrix(name='sentence')
         masks = T.matrix(name='mask')
         labels = T.ivector('target')
-        train_fn, val_fn, debug_fn, l_out = dan.build_dan(sents, masks, labels, len_voc, num_labels, d_word, We.T)
-        params = pickle.load(open(path, 'rb'), protocol=pickle.HIGHEST_PROTOCOL)
+        train_fn, val_fn, debug_fn, l_out = dan.build_dan(sents, masks, labels, len_voc, num_labels, We=self.we.T)
+        params = pickle.load(open(path, 'rb'), encoding='latin1')
         lasagne.layers.set_all_param_values(l_out, params)
         return train_fn, val_fn, debug_fn, l_out
-
-    def save_model(final_layer, path = 'output/deep/dan_gpu_param_values.pkl'):
-        params = lasagne.layers.get_all_param_values(final_layer)
-        pickle.dump(params, open(path, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
 
     # return a vector representation of the question
     def compute_rep(self, text):
@@ -66,7 +62,8 @@ class DeepExtractor(FeatureExtractor):
     # return a distribution over answers for the given question
     def compute_probs(self, text):
         curr_feats = self.compute_features(text)
-        return self.pred_fn(curr_feats)[0]
+        mask = np.zeros((1, curr_feats.shape[1])).astype('float32')
+        return self.pred_fn(curr_feats.astype('int32'), mask)[0]
 
     def compute_features(self, text: str):
         #W, b, W2, b2, W3, b3, L = self.params
@@ -80,14 +77,15 @@ class DeepExtractor(FeatureExtractor):
         for w in text.split():
             if w in self.vdict:
                 inds.append(self.vdict[w])
-            p3 = inds
+        
+        p3 = np.array(inds)
             #av = np.average(L[:, inds], axis=1).reshape((self.d, 1))
             #p = relu(np.dot(W, av) + b)
             #p2 = relu(np.dot(W2, p) + b2)
             #p3 = relu(np.dot(W3, p2) + b3)
 
-        else:
-            p3 = np.zeros((self.d, 1))
+        #else:
+            #p3 = np.zeros((self.d, 1))
 
         return p3.ravel().reshape(1, -1)
 

@@ -4,17 +4,12 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 
-from functional import seq
+#from functional import seq
 
 from qanta import logging
 from qanta.guesser.util.functions import relu
-<<<<<<< HEAD
-from qanta.util.constants import (EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET, DEEP_DAN_PARAMS_TARGET,
-                                  DEEP_DEV_TARGET)
-=======
 from qanta.util.constants import (EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET,
                                   DEEP_DAN_PARAMS_TARGET, DEEP_DEV_TARGET)
->>>>>>> 8048c91f10810b6aee28b263ec19f4ff7ae3f991
 from qanta.util.io import safe_open
 
 log = logging.get(__name__)
@@ -60,10 +55,10 @@ def compute_recall_accuracy():
 
             if sent_position + 1 == len(qs):
                 p_dist = classifier.predict_proba(curr_feats)
-                correct = seq(zip(p_dist[0], class_labels))\
-                    .sorted(reverse=True)\
-                    .take(N_GUESSES)\
-                    .exists(lambda s: ans == s[1])
+                #correct = seq(zip(p_dist[0], class_labels))\
+                #    .sorted(reverse=True)\
+                #    .take(N_GUESSES)\
+                #    .exists(lambda s: ans == s[1])
                 accuracy += int(class_labels[p_dist.argmax()] == ans)
                 recall += correct
                 if not correct:
