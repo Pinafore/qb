@@ -1,6 +1,8 @@
 import time
 import pickle
 import numpy as np
+import lasagne, theano
+from theano import tensor as T
 
 from qanta import logging
 from qanta.guesser.util import gen_util
@@ -12,6 +14,17 @@ from qanta.util.constants import (DEEP_WE_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_T
                                   DEEP_DEV_TARGET, DEEP_DAN_TRAIN_OUTPUT, DEEP_DAN_DEV_OUTPUT)
 
 log = logging.get(__name__)
+
+class SumLayer(lasagne.layers.MergeLayer):
+    def __init__(self, incomings, **kwargs):
+        super(SumLayer, self).__init__(incomings, **kwargs)
+
+    def get_output_for(self, inputs, **kwargs):
+        return T.sum(inputs[0] * inputs[1][:, :, None], axis=1, dtype=theano.config.floatX) / inputs[1].shape[1]
+
+    # batch_size x d
+    def get_output_shape_for(self, input_shapes):
+        return (input_shapes[0][0], input_shapes[0][2])
 
 
 def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
@@ -97,6 +110,44 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
 
     return cost, grad
 
+def build_dan(sents, masks, labels, len_voc, num_labels, We, d_word=300,
+     max_len=100, freeze=True, eps=1e-6, lr=0.1, rho=1e-5):
+    
+
+    # define network
+    l_in = lasagne.layers.InputLayer(shape=(None, max_len), input_var=sents, )
+    l_mask = lasagne.layers.InputLayer(shape=(None, max_len), input_var=masks)
+    l_emb = lasagne.layers.EmbeddingLayer(l_in, len_voc, d_word, W=We) #Errored with W=We
+
+    # now feed sequences of spans into VAN
+    # l_lstm = lasagne.layers.LSTMLayer(l_emb, d_van, mask_input=l_mask, )
+    l_lstm = SumLayer([l_emb, l_mask])
+    # freeze embeddings
+    if freeze:
+        l_emb.params[l_emb.W].remove('trainable')
+
+    # now predict
+    # l_forward_slice = lasagne.layers.SliceLayer(l_lstm, -1, 1)
+    
+    l_hid1 = lasagne.layers.DenseLayer(l_lstm, num_units=d_word, nonlinearity=lasagne.nonlinearities.rectify)
+
+    l_hid2 = lasagne.layers.DenseLayer(l_hid1, num_units=d_word, nonlinearity=lasagne.nonlinearities.rectify)
+    #l_hid3 = lasagne.layers.DenseLayer(l_hid2, num_units=d_word, nonlinearity=lasagne.nonlinearities.rectify)
+    l_out = lasagne.layers.DenseLayer(l_hid2, num_units=num_labels,\
+        nonlinearity=lasagne.nonlinearities.softmax)
+
+    # objective computation
+    preds = lasagne.layers.get_output(l_out)
+    loss = T.sum(lasagne.objectives.categorical_crossentropy(preds, labels))
+    loss += rho * sum(T.sum(l ** 2) for l in lasagne.layers.get_all_params(l_out))
+    all_params = lasagne.layers.get_all_params(l_out)
+
+    updates = lasagne.updates.adam(loss, all_params, learning_rate=lr)
+
+    train_fn = theano.function([sents, masks, labels], [preds, loss], updates=updates)
+    val_fn = theano.function([sents, masks], preds)
+    debug_fn = theano.function([sents, masks], lasagne.layers.get_output(l_lstm))
+    return train_fn, val_fn, debug_fn, l_out
 
 def train_dan(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, adagrad_reset=10):
     with open(DEEP_TRAIN_TARGET, 'rb') as f:
