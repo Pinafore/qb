@@ -46,10 +46,16 @@ DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
 EVAL_RES_TARGET = 'output/deep/eval_res'
 
+DOMAIN_CLASSIFIER_TARGET_PREFIX = 'output/deep/domain_data'
+DOMAIN_CLASSIFIER_MODEL_FORMAT = 'output/deep/domain_clf{}.vw'
+DOMAIN_CLASSIFIER_PREDICTIONS_PREFIX = 'output/deep/domain_preds'
+DOMAIN_CLASSIFIER_OUTPUT = 'output/deep/filtered_domain_data'
+
 WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
 WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
 
 QB_SOURCE_LOCATION = 'data/internal/source'
+NERS_LOCATION = 'data/internal/common/ners'
 
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
