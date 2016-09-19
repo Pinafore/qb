@@ -62,6 +62,20 @@ make
 sudo make install
 cd ~/
 
+# Install XGBoost
+cd ~/dependencies
+git clone --recursive https://github.com/dmlc/xgboost
+cd xgboost
+git checkout v0.60
+make -j4
+cd python-package
+python setup.py install
+cd ~/
+
+# Install Tensorflow
+export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0-cp35-cp35m-linux_x86_64.whl
+pip install --upgrade $TF_BINARY_URL | true
+
 # Install Utilities
 /home/ubuntu/anaconda3/bin/pip install glances
 
