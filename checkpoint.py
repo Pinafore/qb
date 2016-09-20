@@ -190,6 +190,13 @@ def latest(ctx):
 
 
 @cli.command()
+@click.pass_context
+def keys(ctx):
+    for k in TARGET_GROUPS:
+        print(k)
+
+
+@cli.command()
 @click.option('--date', help='Date to use for run identifier in YYYY-MM-DD format')
 @click.pass_context
 def create(ctx, date):
