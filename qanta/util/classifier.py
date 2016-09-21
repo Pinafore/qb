@@ -13,7 +13,7 @@ from nltk.classify.scikitlearn import SklearnClassifier
 from qanta import logging
 from qanta.util.io import safe_open
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.constants import CLASSIFIER_PICKLE_PATH, CLASSIFIER_BIGRAMS_PATH
+from qanta.util.constants import CLASSIFIER_PICKLE_PATH
 
 
 log = logging.get(__name__)

@@ -7,7 +7,7 @@ from qanta.util import constants as c
 from qanta.spark_execution import extract_features, merge_features
 from qanta.pipeline.preprocess import Preprocess
 from qanta.pipeline.dan import CreateGuesses
-from qanta.util.classifier import build_classifier
+from qanta.learning import classifier
 
 
 class BuildClm(Task):
@@ -28,10 +28,15 @@ class ClassifierPickles(Task):
         yield Preprocess()
 
     def output(self):
-        return LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type))
+        return [
+            LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type)),
+            LocalTarget(c.CLASSIFIER_REPORT_PATH.format(self.class_type))
+        ]
 
     def run(self):
-        build_classifier(self.class_type)
+        model = classifier.train_classifier(self.class_type)
+        classifier.save_classifier(model, self.class_type)
+        classifier.create_report(classifier, self.class_type)
 
 
 class AllClassifierPickles(WrapperTask):
