@@ -46,6 +46,8 @@ DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
 EVAL_RES_TARGET = 'output/deep/eval_res'
 
+CLASS_LABEL_TARGET = 'output/deep/class_labels'
+
 WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
 WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
 

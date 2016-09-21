@@ -262,7 +262,8 @@ def train_dan_gpu(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0
 
     # dump ans_dict for later
     rev_ans_dict = dict((v,k) for (k,v) in ans_dict.items())
-    pickle.dump((ans_dict, rev_ans_dict), open('output/deep/ans_dict.pkl', 'wb'))
+    pickle.dump((ans_dict, rev_ans_dict), open(C.CLASS_LABEL_TARGET, 'wb'))
+
     log_file = 'output/deep/dan_log.txt'
     log = open(log_file, 'w')
 
@@ -305,6 +306,7 @@ def train_dan_gpu(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0
 
         # save params
         save_model(final_layer)
+    
 
 
 def train_dan(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, adagrad_reset=10):

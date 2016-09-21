@@ -28,7 +28,7 @@ def normalize(text):
 
 
 class DeepExtractor(FeatureExtractor):
-    def __init__(self, classifier, params, vocab, ners, page_dict):
+    def __init__(self, class_labels, params, vocab, ners, page_dict):
         super(DeepExtractor, self).__init__()
         self.params = pickle.load(open(params, 'rb'), encoding='latin1')
         self.d = self.params[-1].shape[0]
@@ -36,6 +36,7 @@ class DeepExtractor(FeatureExtractor):
         self.vocab, self.vdict = pickle.load(open(vocab, 'rb'), encoding='latin1')
         self.ners = pickle.load(open(ners, 'rb'), encoding='latin1')
         self.page_dict = page_dict #number of labels is len(self.page_dict)
+        self.class_labels, self.rev_class_labels = pickle.load(open(class_labels, 'rb'), encoding='latin1')
         self.fit_fn, self.pred_fn, self.debug_fn, self.l_out  = self.load_model(params)
         self.name = 'deep'
 
@@ -44,7 +45,7 @@ class DeepExtractor(FeatureExtractor):
 
     def load_model(self, path= DEEP_DAN_PARAMS_TARGET):
         len_voc = len(self.vocab)
-        num_labels = 2372 #len(self.page_dict)
+        num_labels = len(self.class_labels) #2372 #len(self.page_dict)
         sents = T.imatrix(name='sentence')
         masks = T.matrix(name='mask')
         labels = T.ivector('target')
@@ -90,17 +91,17 @@ class DeepExtractor(FeatureExtractor):
         return p3.ravel().reshape(1, -1)
 
     # return top n guesses for a given question
-    def text_guess(self, text):
+    def text_guess(self, text, n_guesses=N_GUESSES):
         text = ' '.join(text)
-        preds = self.compute_pobs(text)
+        preds = self.compute_probs(text)
         preds_prob = np.sort(-preds) * -1
-        preds_prob = preds_prob[:, :N_GUESSES]
+        preds_prob = preds_prob[:n_guesses]
         #guesses = seq(preds).zip(class_labels).sorted(reverse=True).take(N_GUESSES)
-        preds_inds = np.argsort(-preds, axis=1)[:, :N_GUESSES]
+        preds_inds = np.argsort(-preds)[:n_guesses]
         guesses = zip(preds_prob, preds_inds)
         res = {}
         for p, word in guesses:
-            res[self.page_dict[self.vocab[word]]] = p
+            res[self.page_dict[self.rev_class_labels[word]]] = p
 
         return res
 
@@ -111,8 +112,8 @@ class DeepExtractor(FeatureExtractor):
         preds = self.compute_probs(text)
 
         # return -1 if classifier doesn't recognize the given guess
-        if title in self.vdict:
-            guess_ind = self.vdict[title]
+        if title in self.class_labels:
+            guess_ind = self.class_labels[title]
             val = preds[guess_ind]
         else:
             val = -1
@@ -127,7 +128,7 @@ class DeepExtractor(FeatureExtractor):
             )
             text = ' '.join(text)
 
-        labels = self.classifier.classes_
+        labels = self.class_labels
         predictions = self.compute_probs(text)
         lookup = dict(zip(labels, predictions))
         for guess in guesses:

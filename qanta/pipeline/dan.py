@@ -44,10 +44,11 @@ class TrainDAN(Task):
         yield LoadEmbeddings()
 
     def run(self):
-        dan.train_dan()
+        dan.train_dan_gpu()
 
     def output(self):
         return LocalTarget(c.DEEP_DAN_PARAMS_TARGET)
+        return LocalTarget(c.CLASS_LABEL_TARGET)
 
 
 class ComputeDANOutput(Task):
