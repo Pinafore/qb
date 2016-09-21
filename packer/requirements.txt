@@ -25,3 +25,5 @@ setuptools
 typing
 bottle
 boto3
+pypandoc
+slacker

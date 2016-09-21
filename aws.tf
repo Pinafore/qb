@@ -205,6 +205,10 @@ resource "aws_spot_instance_request" "master" {
     script = "terraform/configure-drives.sh"
   }
 
+  provisioner "remote-exec" {
+    script = "terraform/configure-swap.sh"
+  }
+
   # Configure AWS credentials
   provisioner "remote-exec" {
     inline = [
