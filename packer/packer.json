@@ -38,7 +38,43 @@
     },
     {
       "type": "shell",
-      "script": "setup.sh"
+      "script": "bin/install-apt-packages.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-python.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-kenlm.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-spark.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-vw.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-xgboost.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-tensorflow.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-pandoc.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-utilities.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/configure.sh"
     },
     {
       "type": "file",
