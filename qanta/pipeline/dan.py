@@ -1,23 +1,27 @@
 import os
 import luigi
-from luigi import LocalTarget, Task, WrapperTask
+from luigi import BoolParameter, LocalTarget, Task, WrapperTask
 from qanta.extract_features import create_guesses
 from qanta.guesser import dan
 from qanta.guesser.classify.learn_classifiers import print_recall_at_n
 from qanta.guesser.util import load_embeddings
 from qanta.guesser.util.format_dan import preprocess
 from qanta.pipeline.preprocess import Preprocess
+from qanta.pipeline.wiki_questions import SelectWikiQuestions
 from qanta.util import constants as c
 from qanta.util import environment as e
 
 
 class FormatDan(Task):
+    use_wiki_questions = BoolParameter(default=False)
+
     def requires(self):
         yield Preprocess()
-        yield WikiQuestionsVW()
+        if self.use_wiki_questions:
+            yield SelectWikiQuestions()
 
     def run(self):
-        preprocess()
+        preprocess(replace_train_with_wiki=self.use_wiki_questions)
 
     def output(self):
         return [
@@ -82,7 +86,7 @@ class EvaluateClassifier(luigi.Task):
 
     def run(self):
         print_recall_at_n()
-        
+
     def output(self):
         return LocalTarget(c.EVAL_RES_TARGET)
 

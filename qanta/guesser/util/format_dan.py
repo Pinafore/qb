@@ -4,12 +4,12 @@ from qanta.guesser.util import preprocessing
 
 from qanta.util import qdb
 from qanta.util.io import safe_open
-from qanta.util.constants import DEEP_TRAIN_TARGET, DEEP_VOCAB_TARGET, MIN_APPEARANCES, NERS_LOCATION
+from qanta.util.constants import DEEP_TRAIN_TARGET, DEEP_VOCAB_TARGET, DOMAIN_OUTPUT, MIN_APPEARANCES, NERS_LOCATION
 from qanta.util.environment import QB_QUESTION_DB
 
 
 class Preprocessor:
-    def __init__(self, ner_file, vocab, vdict):
+    def __init__(self, ner_file):
         self.ners = pickle.load(open(ner_file, 'rb'))
         self.ftp = ["for 10 points, ", "for 10 points--", "for ten points, ", "for 10 points ",
                     "for ten points ", "ftp,", "ftp"]
@@ -22,7 +22,7 @@ class Preprocessor:
         self.stopset = set()
 
     def preprocess_input(self, q, add_unseen_words=True):
-        q = preprocess.preprocess_text(q, ners=self.ners)
+        q = preprocessing.preprocess_text(q, ners=self.ners)
         words = self.convert_to_indices(q.strip())
         return words
 
@@ -36,13 +36,13 @@ class Preprocessor:
         return words
 
 
-def preprocess():
+def preprocess(replace_train_with_wiki=False):
     pp = Preprocessor(NERS_LOCATION)
     db = qdb.QuestionDatabase(QB_QUESTION_DB)
 
     pages = set(db.page_by_count(min_count=MIN_APPEARANCES))
     print(len(pages))
-    folds = ['train', 'test', 'devtest', 'dev']
+    folds = ['train', 'test', 'devtest', 'dev'][(1 if replace_train_with_wiki else 0):]
     for fold in folds:
         allqs = db.query('from questions where page != "" and fold == ?', (fold,), text=True)
         print(fold, len(allqs))
@@ -62,6 +62,11 @@ def preprocess():
         print(fold, len(proc_fold))
         with safe_open('output/deep/' + fold, 'wb') as f:
             pickle.dump(proc_fold, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    if replace_train_with_wiki:
+        with open(DOMAIN_OUTPUT, 'rb') as f, open(DEEP_TRAIN_TARGET, 'wb') as out:
+            processed = [({0: pp.convert_to_indices(text)}, pp.convert_to_indices(page)) for text, page in pickle.load(f)]
+            pickle.dump(processed, out, protocol=pickle.HIGHEST_PROTOCOL)
 
     with safe_open(DEEP_VOCAB_TARGET, 'wb') as f:
         pickle.dump((pp.vocab, pp.vdict), f, protocol=pickle.HIGHEST_PROTOCOL)

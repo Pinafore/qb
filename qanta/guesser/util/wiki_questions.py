@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 import heapq
 from itertools import chain, repeat
 import nltk
@@ -6,7 +7,7 @@ import random
 
 from qanta.guesser.util.preprocessing import preprocess_text
 from qanta.util import qdb
-from qanta.util.constants import NERS_LOCATION,  DOMAIN_CLASSIFIER_TARGET_PREFIX
+from qanta.util.constants import DOMAIN_TARGET_PREFIX, DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.io import safe_open
 
@@ -21,6 +22,7 @@ def sentences_from_page(wiki_page):
             continue
         yield sent
 
+
 def generate_domain_classifier_data(weight=150):
     """
     Reads all sentences from every wikipedia page corresponding to a known answer and splits them into two vowpal wabbit files,
@@ -30,7 +32,8 @@ def generate_domain_classifier_data(weight=150):
     pages = set(db.page_by_count())
     cw = CachedWikipedia(QB_WIKI_LOCATION)
     qs = db.query('from questions where page != "" and fold == "train"', (), text=True)
-    real_questions = [('1', str(weight), preprocess_text(q.text[index])) for q in qs.values() for index in q.text]
+    # Storing page with real questions doesn't matter
+    real_questions = [('1', str(weight), 'real_question', preprocess_text(q.text[index])) for q in qs.values() for index in q.text]
 
     # Split wikipedia questions into two sets
     wiki_questions = ([], [])
@@ -38,32 +41,48 @@ def generate_domain_classifier_data(weight=150):
     for page in pages:
         for sentence in sentences_from_page(cw[page]):
             q = preprocess_text(sentence)
-            wiki_questions[use_second].append(('-1', '1', q))
+            wiki_questions[use_second].append(('-1', '1', page.strip().lower().replace(' ', '_'), q))
             use_second = not use_second
-            if len(wiki_questions) % 10000 == 0:
-                print("Loaded {} sentences from wikipedia".format(len(data)))
 
-    vw_line = '{} {} |text {}\n'
+    vw_line = '{} {} \'{}|text {}\n'
     for i, wiki_qs in enumerate(wiki_questions):
         # Create list of True/False and shuffle to define ordering of train data
         order = list(chain(repeat(False, len(real_questions)), repeat(True, len(wiki_qs))))
         random.shuffle(order)
         iters = (iter(real_questions), iter(wiki_qs))
-        with open(DOMAIN_CLASSIFIER_TARGET_PREFIX + str(i), 'w') as f:
+        with safe_open(DOMAIN_TARGET_PREFIX + str(i), 'w') as f:
             for choice in order:
                 f.write(vw_line.format(*next(iters[choice])))
 
-def get_best_wiki_questions(file_pairs, n_questions=5*10**5):
+
+def _get_n_best(file_pairs, n_questions):
     best_questions = []
     for (qs, scores) in file_pairs:
-        for text_row, score_row in zip(text_row, score_row):
-            q_id = something(text_row)
-            score = float(score_row.strip())
-            heapq.heappush(best_questions, (score, q_id))
+        for text_row, score_row in zip(qs, scores):
+            label, _, page_and_namespace, text = text_row.split(' ', 3)
+            if label == '1':
+                # Don't add real questions
+                continue
+            # Page now has a leading single quote
+            page, _ = page_and_namespace.split('|')
+            page = page[1:]
+            score = float(score_row.split(' ')[0])
+            text = text.strip()
+            heapq.heappush(best_questions, (score, text, page))
             if len(best_questions) > n_questions:
                 heapq.heappop(best_questions)
 
-    return [i for _, i in best_questions]
+    return [(t, p) for _, t, p in best_questions]
+
+
+def get_best_wiki_questions(n_questions=5 * 10 ** 5):
+    """Writes out a pickle containing a list of pairs of (text, page)"""
+    with ExitStack() as stack:
+        file_pairs = [(stack.enter_context(open(DOMAIN_TARGET_PREFIX + str(i))),
+                       stack.enter_context(open(DOMAIN_PREDICTIONS_PREFIX + str(i))))
+                      for i in (0, 1)]
+        with safe_open(DOMAIN_OUTPUT, 'wb') as f:
+            pickle.dump(_get_n_best(file_pairs, n_questions), f)
 
 if __name__ == '__main__':
-    generate_wikipedia_questions()
+    generate_domain_classifier_data()
