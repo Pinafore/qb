@@ -45,6 +45,16 @@ def create_category_pipeline():
     ])
 
 
+def create_ans_type_pipeline():
+    return Pipeline([
+        ('df_select', DFColumnTransformer(['text'])),
+        ('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=3)),
+        ('select_k', SelectKBest(k=1250)),
+        ('csc', CSCTransformer()),
+        ('xgb', XGBClassifier(max_depth=13))
+    ])
+
+
 def category_preprocess(data: pd.DataFrame):
     def strip_subcategory(category):
         if ':' in category:
@@ -55,7 +65,11 @@ def category_preprocess(data: pd.DataFrame):
     data['label'] = data['label'].map(strip_subcategory)
     return data
 
-pipeline_creators = {'gender': create_gender_pipeline, 'category': create_category_pipeline}
+pipeline_creators = {
+    'gender': create_gender_pipeline,
+    'category': create_category_pipeline,
+    'ans_type': create_ans_type_pipeline
+}
 preprocessors = {'category': category_preprocess}
 
 
@@ -139,9 +153,25 @@ def create_report(classifier, class_type, question_db=None):
     )
     plt.savefig(cf_unnorm, format='png', dpi=200)
 
+    correct_by_position = '/tmp/correct_by_position.png'
+
+    dev['prediction'] = pd.Series(predicted_labels)
+    dev['correct'] = dev['prediction'] == dev['label']
+    pd.pivot_table(
+        dev, values=['text'], index=['sentence', 'correct'], aggfunc=lambda x: len(x)
+    ).unstack(fill_value=0).plot.bar(
+        title='Number of Questions Correct vs Sentence Number'
+    )
+    plt.xlabel('Sentence Number')
+    plt.ylabel('Number Correct')
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.gca().legend(handles, ['Number Incorrect', 'Number Correct'])
+    plt.savefig(correct_by_position, format='png', dpi=200)
+
     report = ReportGenerator({
         'unnormalized_confusion_plot': cf_unnorm,
         'normalized_confusion_plot': cf_norm,
+        'correct_by_position_plot': correct_by_position,
         'train_score': train_score,
         'dev_score': dev_score,
         'class_type': class_type
