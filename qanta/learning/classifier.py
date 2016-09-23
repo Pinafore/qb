@@ -66,7 +66,7 @@ def compute_features(all_questions, fold, class_type):
         for q in all_questions[page]:
             if q.fold == fold:
                 label = getattr(q, class_type)
-                if not label:
+                if not label or label == 'None':
                     continue
                 for s, w, text in q.partials():
                     text = ' '.join(text)
@@ -120,12 +120,15 @@ def create_report(classifier, class_type, question_db=None):
 
     cf_norm = '/tmp/norm_confusion.png'
     plot_confusion(
-        'Normalized Confusion Matrix of {} Classification'.format(class_type),
+        'Row Normalized Confusion Matrix of {} Classification'.format(class_type),
         true_labels,
         predicted_labels,
         normalized=True
     )
     plt.savefig(cf_norm, format='png', dpi=200)
+    plt.clf()
+    plt.cla()
+    plt.close()
 
     cf_unnorm = '/tmp/unnorm_confusion.png'
     plot_confusion(
@@ -146,3 +149,5 @@ def create_report(classifier, class_type, question_db=None):
     output = safe_path(CLASSIFIER_REPORT_PATH.format(class_type))
     report.create(output)
     plt.clf()
+    plt.cla()
+    plt.close()

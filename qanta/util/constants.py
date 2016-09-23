@@ -54,7 +54,7 @@ QB_SOURCE_LOCATION = 'data/internal/source'
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 CLASSIFIER_PICKLE_PATH = 'output/classifier/{0}/{0}.pkl'
-CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pkl'
+CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pdf'
 
 KEN_LM = 'output/kenlm.binary'
 
