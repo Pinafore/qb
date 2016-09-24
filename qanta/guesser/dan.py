@@ -175,10 +175,10 @@ def compute_classifier_input(we_dimensions=300):
     # Load trained_DAN parameters
     with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
         params = pickle.load(f)
-    
+
     # Compute training, dev classifier vectors using DAN
     train_vector, test_vector = compute_vectors(train_qs, val_qs, params, we_dimensions)
-    
+
     # Format training vector
     train_feats = []
     train_labels = []
@@ -186,7 +186,7 @@ def compute_classifier_input(we_dimensions=300):
         train_feats.append(e[0])
         train_labels.append(e[1])
     train_formatted = (train_feats, train_labels)
-    
+
     # Format dev vector
     test_feats = []
     test_labels = []
@@ -194,7 +194,7 @@ def compute_classifier_input(we_dimensions=300):
         test_feats.append(e[0])
         test_labels.append(e[1])
     test_formatted = (test_feats, test_labels)
-    
+
     # Save
     with safe_open(DEEP_DAN_TRAIN_OUTPUT, 'wb') as f:
         pickle.dump(train_formatted, f, protocol=pickle.HIGHEST_PROTOCOL)

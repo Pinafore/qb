@@ -36,6 +36,7 @@ CLM_TARGET = 'output/language_model.txt'
 
 DEEP_WE_TARGET = 'output/deep/We'
 DEEP_DAN_PARAMS_TARGET = 'output/deep/params'
+DEEP_TF_PARAMS_TARGET = 'output/deep/tfparams'
 DEEP_DAN_CLASSIFIER_TARGET = 'output/deep/classifier'
 DEEP_TRAIN_TARGET = 'output/deep/train'
 DEEP_DEV_TARGET = 'output/deep/dev'

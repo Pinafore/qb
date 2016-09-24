@@ -7,7 +7,7 @@ import random
 
 from qanta.guesser.util.preprocessing import preprocess_text
 from qanta.util import qdb
-from qanta.util.constants import DOMAIN_TARGET_PREFIX, DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT
+from qanta.util.constants import DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT, DOMAIN_TARGET_PREFIX, MIN_APPEARANCES
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.io import safe_open
 
@@ -29,7 +29,7 @@ def generate_domain_classifier_data(weight=150):
     interleaving true quiz bowl questions randomly and with higher weight specified by the weight arg.
     """
     db = qdb.QuestionDatabase(QB_QUESTION_DB)
-    pages = set(db.page_by_count())
+    pages = set(db.page_by_count(min_count=MIN_APPEARANCES))
     cw = CachedWikipedia(QB_WIKI_LOCATION)
     qs = db.query('from questions where page != "" and fold == "train"', (), text=True)
     # Storing page with real questions doesn't matter

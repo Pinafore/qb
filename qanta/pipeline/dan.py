@@ -13,7 +13,7 @@ from qanta.util import environment as e
 
 
 class FormatDan(Task):
-    use_wiki_questions = BoolParameter(default=False)
+    use_wiki_questions = BoolParameter(default=True)
 
     def requires(self):
         yield Preprocess()
