@@ -11,7 +11,7 @@ from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.constants import DEEP_DAN_PARAMS_TARGET, DEEP_WE_TARGET, PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
-from qanta.guesser import dan
+from qanta.guesser import dan_gpu as dan
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
 

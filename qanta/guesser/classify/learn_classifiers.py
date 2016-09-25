@@ -8,10 +8,13 @@ from sklearn.multiclass import OneVsRestClassifier
 
 from qanta import logging
 from qanta.guesser.util.functions import relu
-from qanta.util.constants import (EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET,
+#from qanta.extractors.deep import load_model
+from qanta.util.constants import (DEEP_VOCAB_TARGET, DEEP_WE_TARGET, CLASS_LABEL_TARGET, DEEP_DAN_PARAMS_TARGET, EVAL_RES_TARGET, N_GUESSES, DEEP_DAN_CLASSIFIER_TARGET,
                                   DEEP_DAN_PARAMS_TARGET, DEEP_DEV_TARGET)
 from qanta.util.io import safe_open
-
+import lasagne
+from theano import tensor as T
+from qanta.guesser.dan_gpu import build_dan
 log = logging.get(__name__)
 
 
@@ -67,6 +70,61 @@ def compute_recall_accuracy():
         total += 1
 
     return recall / total, accuracy / total, total, wrong
+
+def print_recall_dan_gpu_at_n(fold_target=DEEP_DEV_TARGET, results_target=EVAL_RES_TARGET, n_guesses=N_GUESSES, max_examples=None):
+    recall_array, total = compute_recall_accuracy_dan_gpu_to_n(fold_target=fold_target, n_guesses=n_guesses, max_examples=max_examples)
+    pickle.dump((recall_array, total), open(EVAL_RES_TARGET, 'wb'),
+                protocol=pickle.HIGHEST_PROTOCOL)
+    print("Total: %s examples" %total)
+    for i, recall in enumerate(recall_array):
+        print("Recall at %i: %f" %(i+1, recall))
+
+def compute_recall_accuracy_dan_gpu_to_n(fold_target=DEEP_DEV_TARGET, vocab_target= DEEP_VOCAB_TARGET, class_labels_target= CLASS_LABEL_TARGET, deep_target= DEEP_DAN_PARAMS_TARGET , we_target=DEEP_WE_TARGET, n_guesses=N_GUESSES, max_examples=None):
+    corr = 0
+    wrong = []
+    total = 0
+    recall_at_n =  np.zeros(n_guesses,)
+   #c1 = Counter()
+    with open(fold_target, 'rb') as f:
+        val_qs = pickle.load(f)
+    #fit_fn, pred_fn, debug_fn, l_out  = load_model(deep_target)
+    class_labels, rev_class_labels = pickle.load(open(class_labels_target, 'rb'), encoding='latin1')
+    vocab, vdict = pickle.load(open(vocab_target, 'rb'), encoding='latin1')
+    we = pickle.load(open(we_target, 'rb'))
+    len_voc = len(vocab)
+    num_labels = len(class_labels)
+    sents = T.imatrix(name='sentence')
+    masks = T.matrix(name='mask')
+    labels = T.ivector('target')
+    train_fn, pred_fn, debug_fn, l_out = build_dan(sents, masks, labels, len_voc, num_labels, We=we.T)
+    params = pickle.load(open(deep_target, 'rb'), encoding='latin1')
+    lasagne.layers.set_all_param_values(l_out, params)
+    found_answers = np.array([vdict[x] for x in class_labels.keys()])
+    for qs, ans in val_qs:
+        ans = ans[0]
+        history = []
+        sent_position = 0
+        for dist in qs:
+            sent = qs[dist]
+            history += sent
+            p3 = np.array(history)
+            curr_feats = p3.ravel().reshape(1,-1)
+            mask = np.zeros((1, curr_feats.shape[1])).astype('float32')
+            if sent_position + 1 == len(qs):
+                p_dist = pred_fn(curr_feats.astype('int32'), mask)[0]
+                p_dist_sorted = np.sort(p_dist)[::-1]
+                if (np.where(found_answers == ans)[0].shape[0] > 0):
+                   correct_prob = p_dist[np.where(found_answers == ans)[0][0]]
+                   correct_index = np.where(p_dist_sorted == correct_prob)[0][0]
+                   recall_at_n[correct_index:] += 1
+                if not correct_index > 0:
+                    wrong.append((qs, ans))
+            sent_position += 1
+        total += 1
+
+    return recall_at_n / total,  total
+
+
 
 def compute_recall_accuracy_to_n(fold_target=DEEP_DEV_TARGET, n_guesses=N_GUESSES, max_examples=None):
     d = 300
