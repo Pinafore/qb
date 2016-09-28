@@ -73,8 +73,7 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     elif feature_name == "label":
         feature = Labeler(question_db)
     elif feature_name == "classifier":
-        # TODO: Change this to depend on any given bigrams.pkl, which are atm all the same
-        feature = Classifier(question_db)
+        feature = Classifier()
     elif feature_name == "mentions":
         answers = set(x for x, y in text_iterator(
             False, "", False, question_db, False, "", limit=-1, min_pages=MIN_APPEARANCES))

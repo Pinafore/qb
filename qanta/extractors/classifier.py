@@ -1,34 +1,36 @@
-import pickle
+import pandas as pd
 
-from qanta.util.constants import CLASSIFIER_PICKLE_PATH, CLASSIFIER_TYPES
+from qanta.util.constants import CLASSIFIER_TYPES
 from qanta.extractors.abstract import FeatureExtractor
+from qanta.learning.classifier import load_classifier
 
 
 class Classifier(FeatureExtractor):
-    def __init__(self, question_db):
+    def __init__(self):
         super(Classifier, self).__init__()
-        self.qdb = question_db
         self.classifiers = {}
         self.name = 'classifier'
         for c in CLASSIFIER_TYPES:
-            self.add_classifier(c)
-
-    def add_classifier(self, classifier_type):
-        classifier_path = CLASSIFIER_PICKLE_PATH.format(classifier_type)
-        with open(classifier_path, 'rb') as f:
-            self.classifiers[classifier_type] = pickle.load(f)
+            self.classifiers[c] = load_classifier(c)
 
     def score_guesses(self, guesses, text):
+        df = pd.DataFrame({'text': pd.Series([text])})
+
+        features = ['|classifier']
+        for class_type, classifier in self.classifiers.items():
+            probabilities = classifier.predict_proba(df)
+            if len(probabilities) == 0:
+                for label in classifier.classes_:
+                    features.append(
+                        '{class_type}_{label}:{p}'.format(class_type=class_type, label=label, p=-1)
+                    )
+            else:
+                for label, p in zip(classifier.classes_, classifier.predict_proba(df)[0]):
+                    features.append(
+                        '{class_type}_{label}:{p}'.format(class_type=class_type, label=label, p=p)
+                    )
+
+        feature_string = ' '.join(features)
+
         for guess in guesses:
-            self.featurize(text)
-            # majority = self.majority(title)
-
-            val = ["|classifier"]
-            for class_type, classifier in self.classifiers.items():
-                val.append("{class_type}_maj:{prob}".format(
-                    class_type=class_type, prob=0))
-
-            yield ' '.join(val), guess
-
-    def featurize(self, text):
-        pass
+            yield feature_string, guess

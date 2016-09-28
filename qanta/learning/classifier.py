@@ -2,6 +2,8 @@ import pickle
 
 import pandas as pd
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer

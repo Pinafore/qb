@@ -36,7 +36,7 @@ class ClassifierPickles(Task):
     def run(self):
         model = classifier.train_classifier(self.class_type)
         classifier.save_classifier(model, self.class_type)
-        classifier.create_report(classifier, self.class_type)
+        classifier.create_report(model, self.class_type)
 
 
 class AllClassifierPickles(WrapperTask):
