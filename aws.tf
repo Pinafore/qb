@@ -32,6 +32,16 @@ variable "cluster_id" {
   description = "Cluster identifier to prevent collissions for users on the same AWS account"
 }
 
+variable "qb_aws_s3_bucket" {
+  default = ""
+  description = "Stores variable for QB_AWS_S3_BUCKET used in checkpoint script"
+}
+
+variable "qb_aws_s3_namespace" {
+  default = ""
+  description = "Stores variable for QB_AWS_S3_NAMESPACED used in checkpoint script"
+}
+
 provider "aws" {
   region = "us-west-1"
 }
@@ -227,7 +237,9 @@ resource "aws_spot_instance_request" "master" {
   provisioner "remote-exec" {
     inline = [
       "echo \"export QB_SPARK_MASTER=spark://${aws_spot_instance_request.master.private_dns}:7077\" >> /home/ubuntu/.bashrc",
-      "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc"
+      "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
+      "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
+      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc"
     ]
   }
 
