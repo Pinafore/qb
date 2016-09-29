@@ -236,8 +236,7 @@ resource "aws_spot_instance_request" "master" {
       "sudo mkdir /ssd-c/qanta",
       "sudo chown ubuntu /ssd-c/qanta",
       "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb",
-      "(cd /ssd-c/qanta/qb && /home/ubuntu/anaconda3/bin/python setup.py develop)",
-      "(cd /ssd-c/qanta/qb && make clm)"
+      "(cd /ssd-c/qanta/qb && /home/ubuntu/anaconda3/bin/python setup.py develop)"
     ]
   }
 

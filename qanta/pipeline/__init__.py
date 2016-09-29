@@ -5,7 +5,7 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call
-from qanta.pipeline.vw import VWPredictions
+from qanta.pipeline.vw import VWPredictions, VWMergeFeature
 from qanta.pipeline.dan import CreateGuesses, AllDAN
 from qanta.pipeline.preprocess import Preprocess
 
@@ -37,3 +37,12 @@ class AllSummaries(WrapperTask):
     def requires(self):
         for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
             yield Summary(fold=fold, weight=weight)
+
+
+class AblationRun(Task):
+    fold = luigi.Parameter()
+    weight = luigi.IntParameter()
+    feature = luigi.Parameter()
+
+    def requires(self):
+        yield VWMergeFeature(fold=self.fold, weight=self.weight)
