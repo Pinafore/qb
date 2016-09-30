@@ -4,7 +4,7 @@ from qanta.guesser.util import preprocessing
 
 from qanta.util import qdb
 from qanta.util.io import safe_open
-from qanta.util.constants import DEEP_TRAIN_TARGET, DEEP_VOCAB_TARGET, DOMAIN_OUTPUT, MIN_APPEARANCES, NERS_LOCATION
+from qanta.util.constants import DEEP_VOCAB_TARGET, DEEP_WIKI_TARGET, DOMAIN_OUTPUT, MIN_APPEARANCES, NERS_LOCATION
 from qanta.util.environment import QB_QUESTION_DB
 
 
@@ -36,13 +36,13 @@ class Preprocessor:
         return words
 
 
-def preprocess(replace_train_with_wiki=False):
+def preprocess():
     pp = Preprocessor(NERS_LOCATION)
     db = qdb.QuestionDatabase(QB_QUESTION_DB)
 
     pages = set(db.page_by_count(min_count=MIN_APPEARANCES))
     print(len(pages))
-    folds = ['train', 'test', 'devtest', 'dev'][(1 if replace_train_with_wiki else 0):]
+    folds = ['train', 'test', 'devtest', 'dev']
     for fold in folds:
         allqs = db.query('from questions where page != "" and fold == ?', (fold,), text=True)
         print(fold, len(allqs))
@@ -63,10 +63,9 @@ def preprocess(replace_train_with_wiki=False):
         with safe_open('output/deep/' + fold, 'wb') as f:
             pickle.dump(proc_fold, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-    if replace_train_with_wiki:
-        with open(DOMAIN_OUTPUT, 'rb') as f, open(DEEP_TRAIN_TARGET, 'wb') as out:
-            processed = [({0: pp.convert_to_indices(text)}, pp.convert_to_indices(page)) for text, page in pickle.load(f)]
-            pickle.dump(processed, out, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(DOMAIN_OUTPUT, 'rb') as f, open(DEEP_WIKI_TARGET, 'wb') as out:
+        processed = [({0: pp.convert_to_indices(text)}, pp.convert_to_indices(page)) for text, page in pickle.load(f)]
+        pickle.dump(processed, out, protocol=pickle.HIGHEST_PROTOCOL)
 
     with safe_open(DEEP_VOCAB_TARGET, 'wb') as f:
         pickle.dump((pp.vocab, pp.vdict), f, protocol=pickle.HIGHEST_PROTOCOL)

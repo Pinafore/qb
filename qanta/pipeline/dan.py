@@ -1,6 +1,6 @@
 import os
 import luigi
-from luigi import BoolParameter, LocalTarget, Task, WrapperTask
+from luigi import LocalTarget, Task, WrapperTask
 from qanta.extract_features import create_guesses
 from qanta.guesser import dan
 from qanta.guesser.classify.learn_classifiers import print_recall_at_n
@@ -13,15 +13,12 @@ from qanta.util import environment as e
 
 
 class FormatDan(Task):
-    use_wiki_questions = BoolParameter(default=True)
-
     def requires(self):
         yield Preprocess()
-        if self.use_wiki_questions:
-            yield SelectWikiQuestions()
+        yield SelectWikiQuestions()
 
     def run(self):
-        preprocess(replace_train_with_wiki=self.use_wiki_questions)
+        preprocess()
 
     def output(self):
         return [

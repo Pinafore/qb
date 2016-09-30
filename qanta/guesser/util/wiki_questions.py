@@ -75,7 +75,7 @@ def _get_n_best(file_pairs, n_questions):
     return [(t, p) for _, t, p in best_questions]
 
 
-def get_best_wiki_questions(n_questions=5 * 10 ** 5):
+def get_best_wiki_questions(n_questions=5 * 10 ** 6):
     """Writes out a pickle containing a list of pairs of (text, page)"""
     with ExitStack() as stack:
         file_pairs = [(stack.enter_context(open(DOMAIN_TARGET_PREFIX + str(i))),
