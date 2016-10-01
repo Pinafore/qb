@@ -113,6 +113,8 @@ passed into the CLI via `-var name=value` and dropping the `TF_VAR` portion.
 * `TF_VAR_worker_instance_type`: Which EC2 instance type to use for workers (TODO: no-op ATM)
 * `TF_VAR_num_workers`: How many workers to use (TODO: no-op ATM)
 * `TF_VAR_cluster_id`: On multi-user accounts allows separate users to run simultaneous machines
+* `TF_VAR_qb_aws_s3_bucket`: Used to set `QB_AWS_S3_BUCKET` for checkpoint script
+* `TF_VAR_qb_aws_s3_namespace`: Used to set `QB_AWS_S3_NAMESPACE` for checkpoint script
 
 #### Shutting Down EC2 Instances
 

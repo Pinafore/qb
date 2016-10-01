@@ -138,8 +138,9 @@ class S3:
 
 def fetch(variable, environment_variable):
     if variable is None:
-        if os.environ.get(environment_variable) is not None:
-            return os.environ.get(environment_variable)
+        env_variable = os.environ.get(environment_variable)
+        if env_variable is not None and env_variable != "":
+            return env_variable
         else:
             raise ValueError('You must set {} or pass the variable as an option'.format(
                 environment_variable))

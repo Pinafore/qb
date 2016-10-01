@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-#!/usr/bin/env bash
-
 FOLD=test
 WEIGHT=$1
 FEATURE=$2

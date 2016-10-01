@@ -64,7 +64,7 @@ NERS_LOCATION = 'data/internal/common/ners'
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 CLASSIFIER_PICKLE_PATH = 'output/classifier/{0}/{0}.pkl'
-CLASSIFIER_BIGRAMS_PATH = 'output/classifier/{0}/bigrams.pkl'
+CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pdf'
 
 KEN_LM = 'output/kenlm.binary'
 
