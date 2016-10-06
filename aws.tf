@@ -13,12 +13,12 @@ variable "spot_price" {
 }
 
 variable "master_instance_type" {
-  default = "r3.8xlarge"
+  default = "p2.xlarge"
   description = "EC2 Instance type to use for the master node"
 }
 
 variable "worker_instance_type" {
-  default = "r3.8xlarge"
+  default = "p2.xlarge"
   description = "EC2 Instance type to use for worker nodes"
 }
 
@@ -42,8 +42,13 @@ variable "qb_aws_s3_namespace" {
   description = "Stores variable for QB_AWS_S3_NAMESPACED used in checkpoint script"
 }
 
+variable "num_experiments" {
+  default = "2"
+  description = "Number of masters to bring up"
+}
+
 provider "aws" {
-  region = "us-west-1"
+  region = "us-west-2"
 }
 
 data "aws_ami" "qanta_ami" {
@@ -89,7 +94,7 @@ resource "aws_subnet" "qanta_zone_1b" {
   vpc_id                  = "${aws_vpc.qanta.id}"
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-1b"
+  availability_zone = "us-west-2b"
 }
 
 # A security group for SSH access from anywhere
@@ -168,7 +173,9 @@ resource "aws_spot_instance_request" "workers" {
 
 # Create Spark master node
 resource "aws_spot_instance_request" "master" {
-  ami           = "${data.aws_ami.qanta_ami.id}"
+  count = "${var.num_experiments}"
+  # ami           = "${data.aws_ami.qanta_ami.id}"
+  ami           = "ami-2b7ea04b"
   instance_type = "${var.master_instance_type}"
   key_name = "${var.key_pair}"
   spot_price = "${var.spot_price}"
@@ -181,16 +188,27 @@ resource "aws_spot_instance_request" "master" {
   ]
   subnet_id = "${aws_subnet.qanta_zone_1b.id}"
 
-  ephemeral_block_device {
+  # ephemeral_block_device {
+  #   device_name = "/dev/sdb"
+  #   virtual_name = "ephemeral0"
+  # }
+
+  # ephemeral_block_device {
+  #   device_name = "/dev/sdc"
+  #   virtual_name = "ephemeral1"
+  # }
+
+  ebs_block_device {
     device_name = "/dev/sdb"
-    virtual_name = "ephemeral0"
+    volume_type = "gp2"
+    volume_size = 80
   }
 
-  ephemeral_block_device {
+  ebs_block_device {
     device_name = "/dev/sdc"
-    virtual_name = "ephemeral1"
+    volume_type = "gp2"
+    volume_size = 80
   }
-
   connection {
     user = "ubuntu"
   }
@@ -236,10 +254,11 @@ resource "aws_spot_instance_request" "master" {
   # Configure qanta environment variables
   provisioner "remote-exec" {
     inline = [
-      "echo \"export QB_SPARK_MASTER=spark://${aws_spot_instance_request.master.private_dns}:7077\" >> /home/ubuntu/.bashrc",
+      "echo \"export QB_SPARK_MASTER=spark://${self.private_dns}:7077\" >> /home/ubuntu/.bashrc",
       "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
-      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc"
+      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc",
+      "echo \"export QB_TF_EXPERIMENT_ID=${count.index}\" >> /home/ubuntu/.bashrc"
     ]
   }
 
@@ -260,26 +279,47 @@ resource "aws_spot_instance_request" "master" {
   provisioner "remote-exec" {
     script = "terraform/aws-downloads.sh"
   }
+
+  provisioner "file" {
+    source = "terraform/setup-experiment.sh"
+    destination = "/tmp/setup-experiment.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+        "bash setup-experiment.sh"
+    ]
+  }
+
+provisioner "file" {
+    source = "qanta/guesser/tf/experiments.py"
+    destination = "/ssd-c/qanta/qb/guesser/tf/experiments.py"
+}
+
+provisioner "remote-exec" {
+    inline = [
+        "(cd /ssd-c/qanta/qb && luigi --background --module qanta.pipeline.dan RunTFDanExperiment)"
+    ]
 }
 
 output "master_public_ip" {
-  value = "${aws_spot_instance_request.master.public_ip}"
+  value = "${join(",",aws_spot_instance_request.master.*.public_ip)}"
 }
 
 output "master_public_dns" {
-  value = "${aws_spot_instance_request.master.public_dns}"
+  value = "${join(",",aws_spot_instance_request.master.*.public_dns)}"
 }
 
 output "master_private_ip" {
-  value = "${aws_spot_instance_request.master.private_ip}"
+  value = "${join(",",aws_spot_instance_request.master.*.private_ip)}"
 }
 
 output "master_private_dns" {
-  value = "${aws_spot_instance_request.master.private_dns}"
+  value = "${join(",",aws_spot_instance_request.master.*.private_dns)}"
 }
 
 output "master_instance_id" {
-  value = "${aws_spot_instance_request.master.id}"
+  value = "${join(",",aws_spot_instance_request.master.*.id)}"
 }
 
 output "vpc_id" {

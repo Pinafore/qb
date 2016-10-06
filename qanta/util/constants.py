@@ -50,6 +50,10 @@ EVAL_RES_TARGET = 'output/deep/eval_res'
 REPRESENTATION_RES_TARGET = 'output/deep/representations'
 REPRESENTATION_TSNE_TARGET = 'output/deep/tsne'
 
+DEEP_EXPERIMENT_FLAG = 'output/deep/experiment_done'
+DEEP_EXPERIMENT_S3_BUCKET = 's3://tfexperiments'
+
+
 DOMAIN_TARGET_PREFIX = 'output/deep/domain_data'
 DOMAIN_MODEL_FORMAT = 'output/deep/domain_clf{}.vw'
 DOMAIN_PREDICTIONS_PREFIX = 'output/deep/domain_preds'

@@ -2,12 +2,17 @@ from collections import defaultdict
 import heapq
 from itertools import repeat
 import numpy as np
+import os
 import pickle
 from qanta import logging
-from qanta.util.constants import (DEEP_DAN_PARAMS_TARGET, DEEP_TF_PARAMS_TARGET, DEEP_TRAIN_TARGET,
-                                  DEEP_DEV_TARGET, DEEP_WE_TARGET, DEEP_WIKI_TARGET,
-                                  EVAL_RES_TARGET, N_GUESSES, REPRESENTATION_RES_TARGET)
+from qanta.util.constants import (DEEP_DAN_PARAMS_TARGET, DEEP_EXPERIMENT_S3_BUCKET,
+                                  DEEP_EXPERIMENT_FLAG, DEEP_TF_PARAMS_TARGET,
+                                  DEEP_TRAIN_TARGET, DEEP_DEV_TARGET, DEEP_WE_TARGET,
+                                  DEEP_WIKI_TARGET, EVAL_RES_TARGET, N_GUESSES)
+from qanta.util.environment import QB_TF_EXPERIMENT_ID
+from qanta.util.io import shell
 import random
+import tempfile
 import tensorflow as tf
 import time
 
@@ -163,6 +168,7 @@ class TFDan:
 
         preds = tf.to_int32(tf.argmax(logits, 1))
         # correct_labels = tf.to_int32(tf.argmax(self._label_placeholder, 1))
+        self._batch_accuracy = tf.contrib.metrics.accuracy(preds, self._label_placeholder)
         self._accuracy, self._accuracy_update = tf.contrib.metrics.streaming_accuracy(preds, self._label_placeholder)
         if not self._is_train:
             return
@@ -172,12 +178,14 @@ class TFDan:
         self._train_op = optimizer.minimize(self._loss)
 
     def _build_domain_classifier(self, input_layer, hidden_units, domain_classifier_weight, n_layers=2):
-        @tf.RegisterGradient('GradientReversal')
+        grad_name = 'GradientReversal' + str(id(self))
+
+        @tf.RegisterGradient(grad_name)
         def gradient_reversal(op, grads):
             return -grads * domain_classifier_weight * self._domain_gate_placeholder
 
         with tf.variable_scope('domain_classifier'):
-            with tf.get_default_graph().gradient_override_map({'Identity': 'GradientReversal'}):
+            with tf.get_default_graph().gradient_override_map({'Identity': grad_name}):
                 # batch_size, num_units
                 reversal_layer = tf.identity(input_layer)
             layer_out = reversal_layer
@@ -188,10 +196,11 @@ class TFDan:
 
             logits, w = _make_layer(n_layers - 1, layer_out, n_out=1, op=None)
             weights.append(w)
-            domain_preds = tf.to_int32(tf.sign(logits))
+            domain_preds = tf.squeeze(tf.to_int32(tf.nn.sigmoid(logits)), (1,))
+            self._batch_domain_accuracy = tf.contrib.metrics.accuracy(domain_preds, tf.to_int32(self._domain_placeholder))
 
             self._domain_accuracy, self._domain_accuracy_update = tf.contrib.metrics.streaming_accuracy(
-                tf.squeeze(domain_preds), 2 * tf.to_int32(self._domain_placeholder) - 1)
+                domain_preds, tf.to_int32(self._domain_placeholder))
             loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits, self._domain_placeholder))
 
             return loss, weights
@@ -271,28 +280,51 @@ class TFDan:
         self._max_len = max_len
         self._label_map = dict(label_map)
         if self._is_train:
-            indices = len(self._data)
+            indices = list(range(len(self._data)))
             random.shuffle(indices)
             split_point = int(0.95 * len(indices))
-            self._train_indices, self._val_indices = indices[:split_point], indices[split_point]
+            self._train_indices, self._val_indices = indices[:split_point], indices[split_point:]
 
     def _batches(self, train=True):
         order = [i for i in (self._train_indices if train else self._val_indices)]
         np.random.shuffle(order)
-        for indices in (order[i:(i + self._batch_size)] for i in range(0, len(self._data), self._batch_size)):
+        for indices in (order[i:(i + self._batch_size)] for i in range(0, len(order), self._batch_size)):
             if len(indices) == self._batch_size:
                 yield self._data[indices, :], self._lens[indices], self._labels[indices], self._weights[indices], self._domains[indices]
+
+    def _representation_batches(self, n):
+        source_count = 0
+        target_count = 0
+        order = []
+        for i, (complete, domain) in enumerate(zip(self._complete, self._domains)):
+            if not complete:
+                continue
+            if domain and target_count < n:
+                order.append(i)
+                target_count += 1
+            elif not domain and source_count < n:
+                order.append(i)
+                source_count += 1
+            elif source_count == n and target_count == n:
+                break
+
+        for indices in (order[i:(i + self._batch_size)] for i in range(0, len(order), self._batch_size)):
+            if len(indices) == self._batch_size:
+                yield self._data[indices, :], self._lens[indices], self._domains[indices]
 
     def _run_epoch(self, session, epoch_num, train=True):
         total_loss = 0
         # Reset accuracy accumulators
-        session.run(tf.initialize_local_variables())
         start_time = time.time()
-        for i, (inputs, lens, labels, weights, domains) in enumerate(self._batches()):
+        accuracies = []
+        losses = []
+        if self._adversarial:
+            domain_accuracies = []
+        for i, (inputs, lens, labels, weights, domains) in enumerate(self._batches(train=train)):
             batch_start = time.time()
-            fetches = ((self._loss, self._accuracy_update, self._train_op)
+            fetches = ((self._loss, self._batch_accuracy, self._train_op)
                        if train else
-                       (self._loss, self._accuracy_update))
+                       (self._loss, self._batch_accuracy))
             feed_dict = {self._input_placeholder: inputs,
                          self._len_placeholder: lens,
                          self._label_placeholder: labels}
@@ -301,25 +333,27 @@ class TFDan:
             if self._adversarial:
                 feed_dict[self._domain_gate_placeholder] = int(not i % self._adversarial_interval)
                 feed_dict[self._domain_placeholder] = domains
-                fetches += (self._domain_accuracy_update,)
+                fetches += (self._batch_domain_accuracy,)
 
             # run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             # run_metadata = tf.RunMetadata()
             # loss, *_ = session.run(fetches, feed_dict=feed_dict, options=run_options, run_metadata=run_metadata)
-            loss, *_ = session.run(fetches, feed_dict=feed_dict)
+            loss, accuracy, *others = session.run(fetches, feed_dict=feed_dict)
+            accuracies.append(accuracy)
+            if self._adversarial:
+                domain_accuracy = others[-1]
+                domain_accuracies.append(domain_accuracy)
 
             # summary_writer.add_run_metadata(run_metadata, 'step{}'.format(i))
             total_loss += loss
+            losses.append(loss)
             batch_duration = time.time() - batch_start
-            log.info('{} Epoch: {} Batch: {} Loss: {} Duration: {}'.format('Train' if train else 'Val', epoch_num, i, loss, batch_duration))
+            log.info('{} Epoch: {} Batch: {} Accuracy: {:.4f} Loss: {:.4f} Duration: {:.4f}'.format(
+                'Train' if train else 'Val', epoch_num, i, accuracy, loss, batch_duration))
 
-        accuracy = session.run(self._accuracy)
-        avg_loss = total_loss / (i + 1)
         duration = time.time() - start_time
-        if self._adversarial:
-            domain_accuracy = session.run(self._domain_accuracy)
 
-        return (accuracy, avg_loss, duration) + ((domain_accuracy,) if self._adversarial else ())
+        return (accuracies, losses, duration) + ((domain_accuracies,) if self._adversarial else ())
 
     def _recall_at_n(self, probs, n_max=N_GUESSES):
         """Compute recall@N for all N up to n_max"""
@@ -349,24 +383,62 @@ class TFDan:
         if self._lstm_representation:
             session.run(self._lstm_max_len.assign(self._max_len))
         max_accuracy = -1
-        for i in range(n_epochs):
-            accuracy, avg_loss, duration, *others = self._run_epoch(session, i)
-            log.info('Train Epoch: {} Avg loss: {} Accuracy: {}. Ran in {} seconds.'.format(i, avg_loss, accuracy, duration))
-            if self._adversarial:
-                domain_accuracy = others[0]
-                log.info('Domain Accuracy: {}'.format(domain_accuracy))
 
-            val_accuracy, val_loss, val_duration, *others = self._run_epoch(session, i, train=False)
-            log.info('Val Epoch: {} Avg loss: {} Accuracy: {}. Ran in {} seconds.'.format(i, val_loss, val_accuracy, val_duration))
+        train_accuracies = []
+        train_losses = []
+
+        holdout_accuracies = []
+        holdout_losses = []
+
+        if self._adversarial:
+            train_domain_accuracies = []
+            holdout_domain_accuracies = []
+
+        max_patience = 4
+        patience = 4
+        for i in range(n_epochs):
+            accuracies, losses, duration, *others = self._run_epoch(session, i)
+            log.info('Train Epoch: {} Avg loss: {} Accuracy: {}. Ran in {} seconds.'.format(
+                i, np.average(losses), np.average(accuracies), duration))
+            train_accuracies.append(accuracies)
+            train_losses.append(losses)
+
+            if self._adversarial:
+                domain_accuracies = others[0]
+                log.info('Domain Accuracy: {}'.format(np.average(domain_accuracies)))
+                train_domain_accuracies.append(domain_accuracies)
+
+            val_accuracies, val_losses, val_duration, *others = self._run_epoch(session, i, train=False)
+            val_accuracy = np.average(val_accuracies)
+            log.info('Val Epoch: {} Avg loss: {} Accuracy: {}. Ran in {} seconds.'.format(
+                i, np.average(val_losses), val_accuracy, val_duration))
+
+            holdout_accuracies.append(val_accuracies)
+            holdout_losses.append(val_losses)
+            if self._adversarial:
+                holdout_domain_accuracies.append(others[0])
+
+            patience -= 1
             if val_accuracy > max_accuracy:
                 max_accuracy = val_accuracy
                 log.info('New best accuracy. Saving model')
+                patience = max_patience
                 self._saver.save(session, DEEP_DAN_PARAMS_TARGET)
                 with open(DEEP_TF_PARAMS_TARGET, 'wb') as f:
                     save_vals = {'n_classes': self._n_classes,
                                  'embedding_shape': self._embedding.get_shape(),
                                  'label_map': self._label_map}
                     pickle.dump(save_vals, f)
+
+            if patience == 0:
+                break
+
+        return (train_losses,
+                train_accuracies,
+                train_domain_accuracies if self._adversarial else None,
+                holdout_losses,
+                holdout_accuracies,
+                holdout_domain_accuracies if self._adversarial else None)
 
     def evaluate(self, session):
         """Generate softmax output for all examples in dataset"""
@@ -391,35 +463,45 @@ class TFDan:
         recalls = self._recall_at_n(results)
         return accuracy, recalls
 
-    def get_representations(self, session):
+    def get_representations(self, session, n=5000):
         self._saver.restore(session, DEEP_DAN_PARAMS_TARGET)
-        representations = [[], []]
-        count = 0
-        for i, (in_array, length, label, complete, domain) in enumerate(
-                zip(self._data, self._lens, self._labels, self._complete, self._domains)):
-            if i % 10000 == 0:
-                log.info('Selected {}/{} representations'.format(count, i))
+        saved_representations = [[], []]
+        log.info('Computing representations')
+        for i, (in_arrays, lengths, domains) in enumerate(self._representation_batches(n), 1):
             # Skip most examples to save time
-            if random.random() > (0.02 if domain else 0.001):
-                continue
             fetches = (self._representation_layer,)
-            feed_dict = {self._input_placeholder: in_array,
-                         self._len_placeholder: length}
-            feed_dict = {k: np.expand_dims(v, 0) for k, v in feed_dict.items()}
-            representations[domain].append(session.run(fetches, feed_dict=feed_dict))
-            count += 1
+            feed_dict = {self._input_placeholder: in_arrays,
+                         self._len_placeholder: lengths}
+            representations, = session.run(fetches, feed_dict=feed_dict)
+            for rep, domain in zip(representations, domains):
+                saved_representations[domain].append(rep.tolist())
+            log.info('Computed representations for {} batches'.format(i))
 
-        log.info('Got {} representations'.format(count))
-        with open(REPRESENTATION_RES_TARGET, 'wb') as f:
-            pickle.dump(representations, f)
+        return representations
+
+    @property
+    def n_classes(self):
+        return self._n_classes
+
+    @property
+    def embedding_shape(self):
+        return self._embedding.get_shape()
+
+    @property
+    def label_map(self):
+        return self._label_map
 
 
-def train_dan(n_epochs):
+def _load_embeddings():
     with open(DEEP_WE_TARGET, 'rb') as f:
         embed = pickle.load(f)
         # For some reason embeddings are stored in column-major order
         embed = embed.T
+    return embed
 
+
+def train_dan(n_epochs):
+    embed = _load_embeddings()
     with tf.Graph().as_default(), tf.Session() as session:
         scale = 0.08
         with tf.variable_scope('dan',
@@ -433,6 +515,68 @@ def train_dan(n_epochs):
         log.info('Training model')
 
         train_model.train(session, n_epochs)
+
+
+def run_experiment(params, outfile):
+    embed = _load_embeddings()
+    scale = params['init_scale']
+    use_qb = params['use_qb']
+    use_wiki = params['use_wiki']
+    max_epochs = params['max_epochs']
+    exclude_keys = {'init_scale', 'use_qb', 'use_wiki', 'max_epochs'}
+    model_params = {k: v for k, v in params.items() if k not in exclude_keys}
+    with tf.Graph().as_default(), tf.Session() as session:
+        with tf.variable_scope('dan',
+                               reuse=None,
+                               initializer=tf.random_uniform_initializer(minval=-scale, maxval=scale)):
+            data_files = []
+            if use_qb:
+                data_files.append((DEEP_TRAIN_TARGET, True, 1))
+            if use_wiki:
+                data_files.append((DEEP_WIKI_TARGET, False, 1))
+            train_model = TFDan(data_files=data_files, is_train=True, initial_embed=embed, **model_params)
+        with tf.variable_scope('dan', reuse=True):
+            dev_model = TFDan(data_files=((DEEP_DEV_TARGET, True, 1),),
+                              is_train=False,
+                              initial_embed=None,
+                              n_classes=train_model.n_classes,
+                              embedding_shape=train_model.embedding_shape,
+                              label_map=train_model.label_map,
+                              **model_params)
+
+        (train_losses,
+         train_accuracies,
+         train_domain_accuracies,
+         holdout_losses,
+         holdout_accuracies,
+         holdout_domain_accuracies) = train_model.train(session, max_epochs)
+        train_model._saver.restore(session, DEEP_DAN_PARAMS_TARGET)
+        representations = train_model.get_representations(session) if params['adversarial'] else None
+
+        dev_accuracy, dev_recalls = dev_model.evaluate(session)
+        log.info('Accuracy on dev: {}'.format(dev_accuracy))
+    result = {'params': params,
+              'train_losses': train_losses,
+              'train_accuracies': train_accuracies,
+              'train_domain_accuracies': train_domain_accuracies,
+              'holdout_losses': holdout_losses,
+              'holdout_accuracies': holdout_accuracies,
+              'holdout_domain_accuracies': holdout_accuracies,
+              'recalls': dev_recalls,
+              'representations': representations
+              }
+
+    _write_result_to_s3(result)
+    # Touch flag file to let luigi know experiment is done
+    open(DEEP_EXPERIMENT_FLAG, 'w').close()
+
+
+def _write_result_to_s3(result):
+    _, f_name = tempfile.mkstemp()
+    with open(f_name, 'wb') as f:
+        pickle.dump(result, f)
+    shell('aws s3 cp {} {}/{}'.format(f_name, DEEP_EXPERIMENT_S3_BUCKET, QB_TF_EXPERIMENT_ID))
+    os.remove(f_name)
 
 
 def _load_params():
@@ -478,4 +622,11 @@ def get_representations():
             model.get_representations(session)
 
 if __name__ == '__main__':
-    train_dan(50)
+    run_experiment({'init_scale': 0.08,
+                    'use_qb': True,
+                    'use_wiki': True,
+                    'adversarial': True,
+                    'max_epochs': 50,
+                    'lstm_representation': True,
+                    'domain_classifier_weight': 0.1,
+                    'batch_size': 128}, outfile='/tmp/exp_output')
