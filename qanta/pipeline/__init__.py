@@ -27,8 +27,8 @@ class Summary(Task):
             'python3',
             'qanta/reporting/performance.py',
             'generate',
-            'output/predictions/{0}.sentence.{1}.pred'.format(self.fold, self.weight),
-            'output/vw_input/{0}.sentence.{1}.meta'.format(self.fold, self.weight),
+            c.PRED_TARGET.format(self.fold, self.weight),
+            c.META_TARGET.format(self.fold, self.weight),
             'output/summary/{0}.sentence.{1}.json'.format(self.fold, self.weight)
         ])
 

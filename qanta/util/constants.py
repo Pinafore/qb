@@ -56,6 +56,12 @@ CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 CLASSIFIER_PICKLE_PATH = 'output/classifier/{0}/{0}.pkl'
 CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pdf'
 
+PRED_TARGET = 'output/predictions/{0}.sentence.{1}.pred'
+META_TARGET = 'output/vw_input/{0}.sentence.{1}.meta'
+
+EXPO_BUZZ = 'output/expo/{}.{}.buzz'
+EXPO_FINAL = 'output/expo/{}.{}.final'
+
 KEN_LM = 'output/kenlm.binary'
 
 # Do not change order, it matters for writing in correct order

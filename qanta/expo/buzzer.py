@@ -344,12 +344,12 @@ class Buzzes:
         buzzfile = DictReader(open(buzz_file, 'r'))
 
         self._buzzes = defaultdict(dict)
-        for ii in buzzfile:
-            question, sent, word = int(ii["question"]), int(ii["sentence"]), int(ii["word"])
+        for r in buzzfile:
+            question, sent, word = int(r["question"]), int(r["sentence"]), int(r["word"])
             if not (sent, word) in self._buzzes[question]:
                 self._buzzes[question][(sent, word)] = {}
-            self._buzzes[question][(sent, word)][ii["page"]] = \
-              Guess(ii["page"], ii["evidence"], int(ii["final"]), float(ii["weight"]))
+            self._buzzes[question][(sent, word)][r["page"]] = \
+                Guess(r["page"], r["evidence"], int(r["final"]), float(r["weight"]))
 
     def current_guesses(self, question, sent, word):
         try:
@@ -379,13 +379,13 @@ class Questions:
 
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
-        for ii in qfile:
-            self._questions[int(ii["id"])][int(ii["sent"])] = ii["text"]
-            self._answers[int(ii["id"])] = ii["answer"].strip()
+        for r in qfile:
+            self._questions[int(r["id"])][int(r["sent"])] = r["text"]
+            self._answers[int(r["id"])] = r["answer"].strip()
 
     def __iter__(self):
-        for ii in self._questions:
-            yield ii
+        for qnum in self._questions:
+            yield qnum
 
     def __getitem__(self, val):
         return self._questions[val]
@@ -451,7 +451,7 @@ def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
+    os.system("say %s" % ans.replace("'", "").split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
