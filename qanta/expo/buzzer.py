@@ -309,8 +309,12 @@ def show_score(left_score, right_score,
                left_header="HUMAN", right_header="COMPUTER",
                left_color="GREEN", right_color="BLUE",
                flush=True):
+    assert isinstance(left_score, int)
+    assert isinstance(right_score, int)
     if flush:
         clear_screen()
+    print(left_score)
+    print(right_score)
     # Print the header
     print("%-15s" % "", end='')
     kCOLORS.print("%-15s" % left_header, left_color, end='')
@@ -324,7 +328,7 @@ def show_score(left_score, right_score,
                 if place == 100 and num < 0:
                     val = -1
                 else:
-                    val = (abs(num) % (place * 10)) / place
+                    val = (abs(num) % (place * 10)) // place
                 kCOLORS.print("%-15s" % kBIGNUMBERS[val].split("\n")[line],
                               color=color, end=' ')
             print("|", end=" ")
