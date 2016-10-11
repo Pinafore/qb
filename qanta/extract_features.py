@@ -23,6 +23,7 @@ from qanta.extractors.classifier import Classifier
 from qanta.extractors.wikilinks import WikiLinks
 from qanta.extractors.mentions import Mentions
 from qanta.extractors.answer_present import AnswerPresent
+from qanta.extractors.text import TextExtractor
 
 
 log = logging.get(__name__)
@@ -78,8 +79,11 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
         answers = set(x for x, y in text_iterator(
             False, "", False, question_db, False, "", limit=-1, min_pages=MIN_APPEARANCES))
         feature = Mentions(answers)
+    elif feature_name == 'text':
+        feature = TextExtractor()
     else:
         log.info("Don't know what to do with %s" % feature_name)
+        raise ValueError("Wrong feature type")
     log.info("done")
     return feature
 

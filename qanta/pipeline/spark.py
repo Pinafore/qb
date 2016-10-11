@@ -45,6 +45,23 @@ class AllClassifierPickles(WrapperTask):
             yield ClassifierPickles(class_type=t)
 
 
+class ExtractFastFeatures(Task):
+    resources = {'spark': 1}
+
+    def requires(self):
+        yield CreateGuesses()
+
+    def output(self):
+        targets = []
+        for fold, feature in product(c.FOLDS, c.FAST_FEATURES):
+            targets.append(
+                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+        return targets
+
+    def run(self):
+        extract_features(c.FAST_FEATURES)
+
+
 class ExtractComputeFeatures(Task):
     resources = {'spark': 1}
 
@@ -117,6 +134,7 @@ class ExtractMentionsFeatures(Task):
 
 class ExtractFeatures(WrapperTask):
     def requires(self):
+        yield ExtractFastFeatures()
         yield ExtractDeepFeatures()
         yield ExtractComputeFeatures()
         yield ExtractLMFeatures()
