@@ -46,6 +46,8 @@ DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
 EVAL_RES_TARGET = 'output/deep/eval_res'
 
+CLASS_LABEL_TARGET = 'output/deep/class_labels'
+
 WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
 WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
 
@@ -63,6 +65,8 @@ EXPO_BUZZ = 'output/expo/{}.{}.buzz'
 EXPO_FINAL = 'output/expo/{}.{}.final'
 
 KEN_LM = 'output/kenlm.binary'
+
+EVAL_RES_TARGET = 'output/deep/eval_res'
 
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]

@@ -1,6 +1,9 @@
 import time
 import pickle
 import numpy as np
+import lasagne, theano
+from theano import tensor as T
+from collections import OrderedDict, Counter
 
 from qanta import logging
 from qanta.guesser.util import gen_util
@@ -8,10 +11,11 @@ from qanta.util.io import safe_open
 from qanta.guesser.classify.learn_classifiers import evaluate, compute_vectors
 from qanta.guesser.util.adagrad import Adagrad
 from qanta.guesser.util.functions import relu, drelu
-from qanta.util.constants import (DEEP_WE_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_TRAIN_TARGET,
+from qanta.util.constants import (CLASS_LABEL_TARGET, DEEP_VOCAB_TARGET, DEEP_WE_TARGET, DEEP_DAN_PARAMS_TARGET, DEEP_TRAIN_TARGET,
                                   DEEP_DEV_TARGET, DEEP_DAN_TRAIN_OUTPUT, DEEP_DAN_DEV_OUTPUT)
 
 log = logging.get(__name__)
+
 
 
 def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
@@ -96,6 +100,8 @@ def objective_and_grad(data, params, d, len_voc, word_drop=0.3, rho=1e-5):
     grad = gen_util.roll_params(grads) / len(data)
 
     return cost, grad
+
+    
 
 
 def train_dan(batch_size=150, we_dimension=300, n_epochs=61, learning_rate=0.01, adagrad_reset=10):

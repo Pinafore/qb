@@ -1,14 +1,17 @@
 import warnings
 import pickle
 import numpy as np
+import lasagne
+import theano
+from theano import tensor as T
 from string import ascii_lowercase, punctuation
 
-from functional import seq
+#from functional import seq
 from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
-from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
-
+from qanta.util.constants import DEEP_DAN_PARAMS_TARGET, DEEP_WE_TARGET, PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
+from qanta.guesser import dan_gpu as dan
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
 
@@ -25,18 +28,31 @@ def normalize(text):
 
 
 class DeepExtractor(FeatureExtractor):
-    def __init__(self, classifier, params, vocab, ners, page_dict):
+    def __init__(self, class_labels, params, vocab, ners, page_dict):
         super(DeepExtractor, self).__init__()
-        self.classifier = pickle.load(open(classifier, 'rb'), encoding='latin1')
         self.params = pickle.load(open(params, 'rb'), encoding='latin1')
         self.d = self.params[-1].shape[0]
+        self.we = pickle.load(open(DEEP_WE_TARGET, 'rb'), encoding='latin1')
         self.vocab, self.vdict = pickle.load(open(vocab, 'rb'), encoding='latin1')
         self.ners = pickle.load(open(ners, 'rb'), encoding='latin1')
-        self.page_dict = page_dict
+        self.page_dict = page_dict #number of labels is len(self.page_dict)
+        self.class_labels, self.rev_class_labels = pickle.load(open(class_labels, 'rb'), encoding='latin1')
+        self.fit_fn, self.pred_fn, self.debug_fn, self.l_out  = self.load_model(params)
         self.name = 'deep'
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
         pass
+
+    def load_model(self, path= DEEP_DAN_PARAMS_TARGET):
+        len_voc = len(self.vocab)
+        num_labels = len(self.class_labels) #2372 #len(self.page_dict)
+        sents = T.imatrix(name='sentence')
+        masks = T.matrix(name='mask')
+        labels = T.ivector('target')
+        train_fn, val_fn, debug_fn, l_out = dan.build_dan(sents, masks, labels, len_voc, num_labels, We=self.we.T)
+        params = pickle.load(open(path, 'rb'), encoding='latin1')
+        lasagne.layers.set_all_param_values(l_out, params)
+        return train_fn, val_fn, debug_fn, l_out
 
     # return a vector representation of the question
     def compute_rep(self, text):
@@ -47,10 +63,11 @@ class DeepExtractor(FeatureExtractor):
     # return a distribution over answers for the given question
     def compute_probs(self, text):
         curr_feats = self.compute_features(text)
-        return self.classifier.predict_proba(curr_feats)[0]
+        mask = np.zeros((1, curr_feats.shape[1])).astype('float32')
+        return self.pred_fn(curr_feats.astype('int32'), mask)[0]
 
     def compute_features(self, text: str):
-        W, b, W2, b2, W3, b3, L = self.params
+        #W, b, W2, b2, W3, b3, L = self.params
 
         # generate word vector lookups given normalized input text
         text = normalize(text)
@@ -61,29 +78,30 @@ class DeepExtractor(FeatureExtractor):
         for w in text.split():
             if w in self.vdict:
                 inds.append(self.vdict[w])
+        
+        p3 = np.array(inds)
+            #av = np.average(L[:, inds], axis=1).reshape((self.d, 1))
+            #p = relu(np.dot(W, av) + b)
+            #p2 = relu(np.dot(W2, p) + b2)
+            #p3 = relu(np.dot(W3, p2) + b3)
 
-        if len(inds) > 0:
-            # compute vector representation for question text
-            av = np.average(L[:, inds], axis=1).reshape((self.d, 1))
-            p = relu(np.dot(W, av) + b)
-            p2 = relu(np.dot(W2, p) + b2)
-            p3 = relu(np.dot(W3, p2) + b3)
-
-        else:
-            p3 = np.zeros((self.d, 1))
+        #else:
+            #p3 = np.zeros((self.d, 1))
 
         return p3.ravel().reshape(1, -1)
 
     # return top n guesses for a given question
-    def text_guess(self, text):
+    def text_guess(self, text, n_guesses=N_GUESSES):
         text = ' '.join(text)
         preds = self.compute_probs(text)
-        class_labels = self.classifier.classes_
-        guesses = seq(preds).zip(class_labels).sorted(reverse=True).take(N_GUESSES)
-
+        preds_prob = np.sort(-preds) * -1
+        preds_prob = preds_prob[:n_guesses]
+        #guesses = seq(preds).zip(class_labels).sorted(reverse=True).take(N_GUESSES)
+        preds_inds = np.argsort(-preds)[:n_guesses]
+        guesses = zip(preds_prob, preds_inds)
         res = {}
         for p, word in guesses:
-            res[self.page_dict[self.vocab[word]]] = p
+            res[self.page_dict[self.rev_class_labels[word]]] = p
 
         return res
 
@@ -94,8 +112,8 @@ class DeepExtractor(FeatureExtractor):
         preds = self.compute_probs(text)
 
         # return -1 if classifier doesn't recognize the given guess
-        if title in self.vdict:
-            guess_ind = self.vdict[title]
+        if title in self.class_labels:
+            guess_ind = self.class_labels[title]
             val = preds[guess_ind]
         else:
             val = -1
@@ -110,7 +128,7 @@ class DeepExtractor(FeatureExtractor):
             )
             text = ' '.join(text)
 
-        labels = self.classifier.classes_
+        labels = self.class_labels
         predictions = self.compute_probs(text)
         lookup = dict(zip(labels, predictions))
         for guess in guesses:

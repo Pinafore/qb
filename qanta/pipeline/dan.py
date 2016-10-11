@@ -7,7 +7,7 @@ from qanta.util import environment as e
 from qanta.guesser.util.format_dan import preprocess
 from qanta.guesser.util import load_embeddings
 from qanta.guesser import dan
-from qanta.guesser.classify.learn_classifiers import print_recall_at_n
+from qanta.guesser.classify.learn_classifiers import print_recall_at_n, print_recall_dan_gpu_at_n
 from qanta.extract_features import create_guesses
 
 
@@ -44,10 +44,11 @@ class TrainDAN(Task):
         yield LoadEmbeddings()
 
     def run(self):
-        dan.train_dan()
+        dan.train_dan_gpu()
 
     def output(self):
         return LocalTarget(c.DEEP_DAN_PARAMS_TARGET)
+        return LocalTarget(c.CLASS_LABEL_TARGET)
 
 
 class ComputeDANOutput(Task):
@@ -74,13 +75,24 @@ class TrainClassifier(Task):
     def output(self):
         return LocalTarget(c.DEEP_DAN_CLASSIFIER_TARGET)
 
-
 class EvaluateClassifier(luigi.Task):
     def requires(self):
+        yield TrainDAN()
+        yield ComputeDANOutput()
         yield TrainClassifier()
 
     def run(self):
-        print_recall_at_n()
+        dan.print_recall_at_n()
+
+    def output(self):
+        return LocalTarget(c.EVAL_RES_TARGET)
+
+class EvaluateDAN(luigi.Task):
+    def requires(self):
+        yield TrainDAN()
+
+    def run(self):
+        print_recall_dan_gpu_at_n()
         
     def output(self):
         return LocalTarget(c.EVAL_RES_TARGET)
