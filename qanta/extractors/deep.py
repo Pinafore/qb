@@ -117,7 +117,7 @@ class DeepExtractor(FeatureExtractor):
             if guess in lookup:
                 yield self.vw_from_score(lookup[guess]), guess
             else:
-                yield -1, guess
+                yield self.vw_from_score(-1), guess
 
     def vw_from_score(self, val):
         res = "|%s" % self.name

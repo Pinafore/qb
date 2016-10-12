@@ -39,7 +39,8 @@ def create_output(path: str, granularity='sentence'):
                         name = 'label{0}'.format(weight)
                     named_feature_list = list(filter(lambda r: r.feature_name == name, rows))
                     if len(named_feature_list) != 1:
-                        continue
+                        raise ValueError(
+                            'Encountered more than one row when there should be exactly one row')
                     named_feature = named_feature_list[0]
                     if meta is None:
                         meta = '%i %i %i %s' % (

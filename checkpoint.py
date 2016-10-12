@@ -34,14 +34,17 @@ SPARK_COMPUTE_TARGETS = {
     'output/features/dev/sentence.classifier.parquet',
     'output/features/dev/sentence.label.parquet',
     'output/features/dev/sentence.wikilinks.parquet',
+    'output/features/dev/sentence.text.parquet',
     'output/features/devtest/sentence.answer_present.parquet',
     'output/features/devtest/sentence.classifier.parquet',
     'output/features/devtest/sentence.label.parquet',
     'output/features/devtest/sentence.wikilinks.parquet',
+    'output/features/devtest/sentence.text.parquet',
     'output/features/test/sentence.answer_present.parquet',
     'output/features/test/sentence.classifier.parquet',
     'output/features/test/sentence.label.parquet',
     'output/features/test/sentence.wikilinks.parquet'
+    'output/features/test/sentence.text.parquet',
 }
 
 SPARK_LM_TARGETS = {
@@ -224,6 +227,7 @@ def save(ctx, date, targets):
             namespace=s3.namespace,
             date=date
         ))
+        shell('rm /tmp/qb/{name}.tar.lz4'.format(name=name))
 
 
 @cli.command()
