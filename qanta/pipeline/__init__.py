@@ -4,7 +4,7 @@ import os
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
-from qanta.util.io import call
+from qanta.util.io import call, shell
 from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor
 from qanta.pipeline.dan import CreateGuesses, AllDAN
 from qanta.pipeline.preprocess import Preprocess
@@ -33,12 +33,28 @@ class Summary(Task):
         ])
 
 
+class Reports(Task):
+    fold = luigi.Parameter()
+    weight = luigi.IntParameter()
+
+    resources = {'report_write': 1}
+
+    def requires(self):
+        yield VWAuditRegressor(weight=self.weight)
+        yield Summary(fold=self.fold, weight=self.weight)
+
+    def output(self):
+        return LocalTarget('output/reporting/report.{}.pdf'.format(self.weight))
+
+    def run(self):
+        shell('pdftk output/reporting/*.pdf cat output /tmp/report.{}.pdf'.format(self.weight))
+        shell('mv /tmp/report.{0}.pdf output/reporting/report.{0}.pdf'.format(self.weight))
+
+
 class AllSummaries(WrapperTask):
     def requires(self):
-        for weight in c.NEGATIVE_WEIGHTS:
-            yield VWAuditRegressor(weight=weight)
         for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
-            yield Summary(fold=fold, weight=weight)
+            yield Reports(fold=fold, weight=weight)
 
 
 class AblationRun(Task):

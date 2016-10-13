@@ -26,3 +26,4 @@ sudo apt-get install -y mosh
 
 # Install LaTeX for reporting
 sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-extra texlive-fonts-recommended
+sudo apt-get install -y pdftk

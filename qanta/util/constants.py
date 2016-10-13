@@ -70,6 +70,8 @@ VW_MODEL = 'output/models/sentence.{0}.vw'
 VW_PREDICTIONS = 'output/predictions/{0}.sentence.{1}.pred'
 VW_META = 'output/vw_input/{0}.sentence.{1}.meta'
 VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.{}.txt'
+VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.{}.csv'
+VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.{}.pdf'
 
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS, TEXT]

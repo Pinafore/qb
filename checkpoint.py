@@ -251,6 +251,7 @@ def restore(ctx, date, targets):
             date=date
         ))
         shell('lz4 -d /tmp/qb/{name}.tar.lz4 | tar -x -C .'.format(name=name))
+        shell('rm /tmp/qb/{name}.tar.lz4'.format(name=name))
 
 if __name__ == '__main__':
     cli(obj={})

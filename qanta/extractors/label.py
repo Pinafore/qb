@@ -1,6 +1,8 @@
 import numpy as np
 from unidecode import unidecode
+from functional import seq
 from qanta.extractors.abstract import FeatureExtractor
+from qanta.util.qdb import QuestionDatabase
 
 
 class Labeler(FeatureExtractor):
@@ -36,3 +38,10 @@ class Labeler(FeatureExtractor):
                      unidecode(formatted_guess).replace(" ", "_"),
                      self._sent, self.counts.get(formatted_guess, -2), n_words)
                 yield feature, guess
+
+
+def compute_question_stats(question_db: QuestionDatabase):
+    questions = [q for q in question_db.guess_questions() if q.fold == 'train' or q.fold == 'dev']
+    sentence_lengths = seq(questions)\
+        .flat_map(lambda q: q.text.values()).map(lambda q: len(q.split())).list()
+    mean_sentence = np.mean(sentence_lengths)

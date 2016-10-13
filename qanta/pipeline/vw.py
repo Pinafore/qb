@@ -4,6 +4,7 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call, make_dirs
+from qanta.reporting.vw_audit import parse_audit, audit_report
 from qanta.pipeline.spark import SparkMergeFeatures
 
 
@@ -81,16 +82,18 @@ class VWPredictions(Task):
 
 
 class VWAuditRegressor(Task):
-    weight = luigi.Parameter()
+    weight = luigi.IntParameter()
 
     def requires(self):
         yield VWModel(weight=self.weight)
 
     def output(self):
-        return LocalTarget(c.VW_AUDIT_REGRESSOR.format(self.weight))
+        return [
+            LocalTarget(c.VW_AUDIT_REGRESSOR.format(self.weight)),
+            LocalTarget(c.VW_AUDIT_REGRESSOR_REPORT.format(self.weight))
+        ]
 
     def run(self):
-        make_dirs('output/reporting')
         call([
             'vw',
             '--compressed',
@@ -99,3 +102,5 @@ class VWAuditRegressor(Task):
             '-i', c.VW_MODEL.format(self.weight),
             '--audit_regressor', c.VW_AUDIT_REGRESSOR.format(self.weight)
         ])
+        df = parse_audit(c.VW_AUDIT_REGRESSOR.format(self.weight))
+        audit_report(df, c.VW_AUDIT_REGRESSOR_REPORT.format(self.weight), self.weight)

@@ -19,5 +19,6 @@ def safe_path(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     return path
 
+
 def make_dirs(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
