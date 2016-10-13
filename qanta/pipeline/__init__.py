@@ -5,7 +5,7 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call
-from qanta.pipeline.vw import VWPredictions, VWMergeFeature
+from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor
 from qanta.pipeline.dan import CreateGuesses, AllDAN
 from qanta.pipeline.preprocess import Preprocess
 
@@ -35,6 +35,8 @@ class Summary(Task):
 
 class AllSummaries(WrapperTask):
     def requires(self):
+        for weight in c.NEGATIVE_WEIGHTS:
+            yield VWAuditRegressor(weight=weight)
         for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
             yield Summary(fold=fold, weight=weight)
 

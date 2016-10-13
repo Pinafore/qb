@@ -1,10 +1,9 @@
 from itertools import product
-import os
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
-from qanta.util.io import call
+from qanta.util.io import call, make_dirs
 from qanta.pipeline.spark import SparkMergeFeatures
 
 
@@ -18,9 +17,9 @@ class VWMergeFeature(Task):
     def output(self):
         return [
             LocalTarget(
-                'output/vw_input/{0}.sentence.{1}.vw_input.gz'.format(self.fold, self.weight)
+                c.VW_INPUT.format(self.fold, self.weight)
             ),
-            LocalTarget('output/vw_input/{0}.sentence.{1}.meta'.format(self.fold, self.weight))
+            LocalTarget(c.VW_META.format(self.fold, self.weight))
         ]
 
     def run(self):
@@ -40,21 +39,20 @@ class VWModel(Task):
         return VWMergeFeature(fold='dev', weight=self.weight)
 
     def output(self):
-        return LocalTarget('output/models/sentence.{0}.vw'.format(self.weight))
+        return LocalTarget(c.VW_MODEL.format(self.weight))
 
     def run(self):
-        if not os.path.exists('output/models'):
-            os.makedirs('output/models')
+        make_dirs('output/models')
         call([
             'vw',
             '--compressed',
-            '-d', 'output/vw_input/dev.sentence.{0}.vw_input.gz'.format(self.weight),
+            '-d', c.VW_INPUT.format(self.weight),
             '--early_terminate', '100',
             '-k',
             '-q', 'ga',
             '-b', '28',
             '--loss_function', 'logistic',
-            '-f', 'output/models/sentence.{0}.vw'.format(self.weight)
+            '-f', c.VW_MODEL.format(self.weight)
         ])
 
 
@@ -68,16 +66,36 @@ class VWPredictions(Task):
 
     def output(self):
         return LocalTarget(
-            'output/predictions/{0}.sentence.{1}.pred'.format(self.fold, self.weight))
+            c.VW_PREDICTIONS.format(self.fold, self.weight))
 
     def run(self):
-        if not os.path.exists('output/predictions'):
-            os.makedirs('output/predictions')
+        make_dirs('output/predictions')
         call([
             'vw',
             '--compressed',
             '-t',
-            '-d', 'output/vw_input/{0}.sentence.{1}.vw_input.gz'.format(self.fold, self.weight),
-            '-i', 'output/models/sentence.{0}.vw'.format(self.weight),
-            '-p', 'output/predictions/{0}.sentence.{1}.pred'.format(self.fold, self.weight)
+            '-d', c.VW_INPUT.format(self.fold, self.weight),
+            '-i', c.VW_MODEL.format(self.weight),
+            '-p', c.VW_PREDICTIONS.format(self.fold, self.weight)
+        ])
+
+
+class VWAuditRegressor(Task):
+    weight = luigi.Parameter()
+
+    def requires(self):
+        yield VWModel(weight=self.weight)
+
+    def output(self):
+        return LocalTarget(c.VW_AUDIT_REGRESSOR.format(self.weight))
+
+    def run(self):
+        make_dirs('output/reporting')
+        call([
+            'vw',
+            '--compressed',
+            '-t',
+            '-d', c.VW_INPUT.format('dev', self.weight),
+            '-i', c.VW_MODEL.format(self.weight),
+            '--audit_regressor', c.VW_AUDIT_REGRESSOR.format(self.weight)
         ])

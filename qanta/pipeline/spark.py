@@ -21,28 +21,50 @@ class BuildClm(Task):
         build_clm()
 
 
-class ClassifierPickles(Task):
+class ClassifierPickle(Task):
     class_type = luigi.Parameter()
 
     def requires(self):
         yield Preprocess()
 
     def output(self):
-        return [
-            LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type)),
-            LocalTarget(c.CLASSIFIER_REPORT_PATH.format(self.class_type))
-        ]
+        return LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type))
 
     def run(self):
         model = classifier.train_classifier(self.class_type)
         classifier.save_classifier(model, self.class_type)
+
+
+class ClassifierReport(Task):
+    class_type = luigi.Parameter()
+
+    def requires(self):
+        yield ClassifierPickle(class_type=self.class_type)
+
+    def output(self):
+        return LocalTarget(c.CLASSIFIER_REPORT_PATH.format(self.class_type))
+
+    def run(self):
+        model = classifier.load_classifier(self.class_type)
         classifier.create_report(model, self.class_type)
 
 
-class AllClassifierPickles(WrapperTask):
+class AllClassifierPickles(Task):
     def requires(self):
         for t in c.CLASSIFIER_TYPES:
-            yield ClassifierPickles(class_type=t)
+            yield ClassifierPickle(class_type=t)
+
+
+class AllClassifierReports(Task):
+    def requires(self):
+        for t in c.CLASSIFIER_TYPES:
+            yield ClassifierReport(class_type=t)
+
+
+class AllClassifiers(WrapperTask):
+    def requires(self):
+        yield AllClassifierPickles()
+        yield AllClassifierReports()
 
 
 class ExtractFastFeatures(Task):

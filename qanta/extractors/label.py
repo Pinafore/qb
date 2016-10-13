@@ -21,19 +21,18 @@ class Labeler(FeatureExtractor):
             self.counts[ii] = float(self.counts[ii] - count_mean) / count_var
 
     def score_guesses(self, guesses, text):
+        n_words = len(text.split())
         for guess in guesses:
             formatted_guess = guess.replace(":", "").replace("|", "")
 
-            # TODO: Incorporate token position here as well to improve
-            # position-based features
             if formatted_guess == self._correct:
-                feature = "1 '%s |guess %s sent:%0.1f count:%f" % \
+                feature = "1 '%s |guess %s sent:%0.1f count:%f words_seen:%i" % \
                     (self._id, unidecode(formatted_guess).replace(" ", "_"),
-                     self._sent, self.counts.get(formatted_guess, -2))
+                     self._sent, self.counts.get(formatted_guess, -2), n_words)
                 yield feature, guess
             else:
-                feature = "-1 %i '%s |guess %s sent:%0.1f count:%f" % \
+                feature = "-1 %i '%s |guess %s sent:%0.1f count:%f words_seen:%i" % \
                     (self._num_guesses, self._id,
                      unidecode(formatted_guess).replace(" ", "_"),
-                     self._sent, self.counts.get(formatted_guess, -2))
+                     self._sent, self.counts.get(formatted_guess, -2), n_words)
                 yield feature, guess

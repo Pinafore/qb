@@ -8,6 +8,7 @@ from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
+from qanta.guesser.util.format_dan import format_guess
 
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
@@ -114,8 +115,10 @@ class DeepExtractor(FeatureExtractor):
         predictions = self.compute_probs(text)
         lookup = dict(zip(labels, predictions))
         for guess in guesses:
-            if guess in lookup:
-                yield self.vw_from_score(lookup[guess]), guess
+            formatted_guess = format_guess(guess)
+            guess_id = self.vdict[formatted_guess]
+            if guess_id in lookup:
+                yield self.vw_from_score(lookup[guess_id]), guess
             else:
                 yield self.vw_from_score(-1), guess
 

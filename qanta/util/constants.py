@@ -65,6 +65,12 @@ EXPO_FINAL = 'output/expo/{}.{}.final'
 
 KEN_LM = 'output/kenlm.binary'
 
+VW_INPUT = 'output/vw_input/{0}.sentence.{1}.vw_input.gz'
+VW_MODEL = 'output/models/sentence.{0}.vw'
+VW_PREDICTIONS = 'output/predictions/{0}.sentence.{1}.pred'
+VW_META = 'output/vw_input/{0}.sentence.{1}.meta'
+VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.{}.txt'
+
 # Do not change order, it matters for writing in correct order
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS, TEXT]
 NEGATIVE_WEIGHTS = [16]

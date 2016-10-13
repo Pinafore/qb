@@ -63,6 +63,10 @@ class Preprocessor:
         return words
 
 
+def format_guess(guess):
+    return guess.strip().lower().replace(' ', '_')
+
+
 def preprocess():
     pp = Preprocessor('data/internal/common/ners')
     db = qdb.QuestionDatabase(QB_QUESTION_DB)
@@ -80,7 +84,7 @@ def preprocess():
                 qs = {}
                 for index in q.text:
                     qs[index] = pp.preprocess_input(q.text[index])
-                ans = q.page.strip().lower().replace(' ', '_')
+                ans = format_guess(q.page)
                 answer = pp.convert_to_indices(ans)
                 proc_fold.append((qs, answer))
             if i % 5000 == 0:
