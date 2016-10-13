@@ -24,7 +24,8 @@ requirements = [
     'luigi',
     'jinja2',
     'progressbar2',
-    'boto3'
+    'boto3',
+    'pyhcl'
 ]
 
 
