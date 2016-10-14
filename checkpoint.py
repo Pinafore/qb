@@ -80,6 +80,13 @@ REPORTING = {'output/reporting'}
 
 GUESSER = {'output/guesser'}
 
+fold = os.environ.get('QB_FOLD', 'test')
+weight = os.environ.get('QB_WEIGHT', 16)
+EXPO_REQS = {
+    'output/vw_input/{}.sentence.{}.meta'.format(fold, weight),
+    'output/predictions/{}.sentence.{}.pred'.format(fold, weight)
+}
+
 
 CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
                      | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
@@ -102,6 +109,7 @@ TARGET_GROUPS = {
     'summaries': SUMMARIES,
     'reporting': REPORTING,
     'guesser': GUESSER,
+    'expo_reqs': EXPO_REQS,
     'all': CHECKPOINT_TARGETS
 }
 

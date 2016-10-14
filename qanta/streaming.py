@@ -82,7 +82,7 @@ class QBApiQuestionManager(QuestionManager):
         url = 'http://{domain}/qb-api/v1/questions'.format(domain=self.domain)
         response = seq(requests.get(url).json()['questions'])
         return pseq(response)\
-            .map(lambda r: QBApiQuestion(**r, position=-1, text='', guess=None, all_guesses=None))\
+            .map(lambda r: QBApiQuestion(fold=r['fold'], id=r['id'], word_count=r['word_count'], position=-1, text='', guess=None, all_guesses=None))\
             .cache()
 
     def request_text(self, q_id, position) -> str:

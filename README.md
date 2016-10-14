@@ -323,3 +323,14 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
 > No module named 'pyspark'
+
+### Expo Instructions
+
+Make sure that the prediction and meta files exist. This can be done by restoring from a prior
+checkpoint
+
+```
+./checkpoint restore predictions
+```
+
+Then 
