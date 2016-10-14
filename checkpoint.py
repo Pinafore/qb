@@ -78,10 +78,12 @@ SUMMARIES = {'output/summary'}
 
 REPORTING = {'output/reporting'}
 
+GUESSER = {'output/guesser'}
+
 
 CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
                      | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
-                     | PREDICTIONS | SUMMARIES | REPORTING
+                     | PREDICTIONS | SUMMARIES | REPORTING | GUESSER
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
@@ -99,6 +101,7 @@ TARGET_GROUPS = {
     'predictions': PREDICTIONS,
     'summaries': SUMMARIES,
     'reporting': REPORTING,
+    'guesser': GUESSER,
     'all': CHECKPOINT_TARGETS
 }
 

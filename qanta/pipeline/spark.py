@@ -8,6 +8,9 @@ from qanta.spark_execution import extract_features, merge_features
 from qanta.pipeline.preprocess import Preprocess
 from qanta.pipeline.dan import CreateGuesses
 from qanta.learning import classifier
+from qanta.extractors.label import compute_question_stats
+from qanta.util.environment import QB_QUESTION_DB
+from qanta.util.qdb import QuestionDatabase
 
 
 class BuildClm(Task):
@@ -67,11 +70,21 @@ class AllClassifiers(WrapperTask):
         yield AllClassifierReports()
 
 
+class ComputeParagraphStats(Task):
+    def output(self):
+        return LocalTarget(c.SENTENCE_STATS)
+
+    def run(self):
+        db = QuestionDatabase(QB_QUESTION_DB)
+        compute_question_stats(db)
+
+
 class ExtractFastFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
         yield CreateGuesses()
+        yield ComputeParagraphStats()
 
     def output(self):
         targets = []

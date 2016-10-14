@@ -47,7 +47,7 @@ class VWModel(Task):
         call([
             'vw',
             '--compressed',
-            '-d', c.VW_INPUT.format(self.weight),
+            '-d', c.VW_INPUT.format('dev', self.weight),
             '--early_terminate', '100',
             '-k',
             '-q', 'ga',
