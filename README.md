@@ -329,8 +329,20 @@ export LANG=en_US.UTF-8
 Make sure that the prediction and meta files exist. This can be done by restoring from a prior
 checkpoint
 
-```
-./checkpoint restore predictions
+```bash
+./checkpoint restore expo_reqs
 ```
 
-Then 
+Then to generate the expo files
+
+```bash
+luigi --local-scheduler --module qanta.expo.pipeline --workers 1 GenerateExpo --fold test --weight 16
+luigi --local-scheduler --module qanta.expo.pipeline --workers 1 CreateTestQuestions
+```
+
+Then to finally run the expo
+
+```bash
+python3 qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.16.buzz --output=output/expo/competition.csv --finals=output/
+. expo/test.16.final
+```
