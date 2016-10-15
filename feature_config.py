@@ -6,9 +6,9 @@ kFEATURES = OrderedDict([
     ("deep", None),
     ("answer_present", None),
     ("text", None),
-    # ("classifier", None),
+    ("classifier", None),
     ("wikilinks", None),
-    # ("mentions", None),
+    ("mentions", None),
     ])
 
 if __name__ == "__main__":
