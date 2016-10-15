@@ -552,6 +552,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--questions', type=str, default='questions.csv')
     parser.add_argument('--buzzes', type=str, default="ir_buzz.csv")
+    parser.add_argument('--skip', type=int, default=0)
     parser.add_argument('--output', type=str, default="competition.csv")
     parser.add_argument('--finals', type=str, default="finals.csv")
     parser.add_argument('--power', type=str, default="power.csv")
@@ -594,12 +595,18 @@ if __name__ == "__main__":
     if flags.readable != "":
         write_readable(flags.readable, question_ids, questions, power)
 
+    skipped = 0
     for ii in question_ids:
+        if skipped < flags.skip:
+            skipped += 1
+            continue
+        
         question_num += 1
         power_mark = power(ii)
         if power_mark == "10":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
+
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),
