@@ -313,8 +313,6 @@ def show_score(left_score, right_score,
     assert isinstance(right_score, int)
     if flush:
         clear_screen()
-    print(left_score)
-    print(right_score)
     # Print the header
     print("%-15s" % "", end='')
     kCOLORS.print("%-15s" % left_header, left_color, end='')
