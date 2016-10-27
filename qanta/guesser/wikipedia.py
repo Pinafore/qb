@@ -35,10 +35,12 @@ class WikiNetworkGuesser:
     def generate_guesses(self, text, answer, qnum):
         words = text.lower().replace(',', '').replace('.', '').split()
         v_indexes = set()
+        seed_vertexes = set()
         for w in words:
             if w in self.page_map:
                 v = self.page_map[w]
                 v_indexes.add(v)
+                seed_vertexes.add(v)
                 v_indexes = v_indexes | set(self.g.neighbors(v))
 
         sub_graph = self.g.subgraph(v_indexes)
@@ -59,7 +61,7 @@ class WikiNetworkGuesser:
             columns['answer'].append(answer)
             columns['qnum'].append(qnum)
 
-        return pd.DataFrame(columns)
+        return pd.DataFrame(columns), max_g, seed_vertexes
 
 
 def evaluate():

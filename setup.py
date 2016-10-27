@@ -25,7 +25,9 @@ requirements = [
     'jinja2',
     'progressbar2',
     'boto3',
-    'pyhcl'
+    'pyhcl',
+    'fn',
+    'matplotlib'
 ]
 
 

@@ -260,10 +260,6 @@ resource "aws_spot_instance_request" "master" {
   provisioner "remote-exec" {
     script = "terraform/aws-downloads.sh"
   }
-
-  provisioner "local-exec" {
-    command = "./security_groups.py"
-  }
 }
 
 output "master_public_ip" {
