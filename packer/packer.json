@@ -2,8 +2,8 @@
   "builders": [
     {
       "type": "amazon-ebs",
-      "region": "us-west-1",
-      "source_ami": "ami-06116566",
+      "region": "us-west-2",
+      "source_ami": "ami-746aba14",
       "instance_type": "m4.xlarge",
       "ssh_username": "ubuntu",
       "ami_name": "qanta {{timestamp}}",
