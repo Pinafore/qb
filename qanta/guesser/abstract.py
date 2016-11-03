@@ -24,7 +24,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         AbstractGuesser.train
         """
         self.parallel = True
-        self.requested_datasets = [DataSet.QUIZ_BOWL]
+        self.requested_datasets = [Dataset.QUIZ_BOWL]
 
     @abstractmethod
     def train(self, training_data: Dict[str, Tuple[List[QuestionText], List[Answer]]]) -> None:
