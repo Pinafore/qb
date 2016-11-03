@@ -29,7 +29,7 @@ variable "qb_aws_s3_bucket" {
 
 variable "qb_aws_s3_namespace" {
   default = ""
-  description = "Stores variable for QB_AWS_S3_NAMESPACED used in checkpoint script"
+  description = "Stores variable for QB_AWS_S3_NAMESPACE used in checkpoint script"
 }
 
 provider "aws" {
