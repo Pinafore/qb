@@ -152,7 +152,7 @@ resource "aws_spot_instance_request" "master" {
     "${aws_security_group.qanta_internal.id}",
     "${aws_security_group.qanta_ssh.id}"
   ]
-  subnet_id = "${aws_subnet.qanta_zone_1b.id}"
+  subnet_id = "${aws_subnet.qanta_zone_2a.id}"
 
   ephemeral_block_device {
     device_name = "/dev/sdb"
