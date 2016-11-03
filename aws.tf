@@ -33,7 +33,7 @@ variable "qb_aws_s3_namespace" {
 }
 
 provider "aws" {
-  region = "us-west-1"
+  region = "us-west-2"
 }
 
 data "aws_ami" "qanta_ami" {
