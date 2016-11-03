@@ -17,16 +17,6 @@ variable "master_instance_type" {
   description = "EC2 Instance type to use for the master node"
 }
 
-variable "worker_instance_type" {
-  default = "r3.8xlarge"
-  description = "EC2 Instance type to use for worker nodes"
-}
-
-variable "num_workers" {
-  default = 0
-  description = "Number of worker nodes"
-}
-
 variable "cluster_id" {
   default = "default"
   description = "Cluster identifier to prevent collissions for users on the same AWS account"
@@ -84,12 +74,13 @@ resource "aws_route" "internet_access" {
   gateway_id             = "${aws_internet_gateway.qanta.id}"
 }
 
-# We use us-west-1b since r3.8xlarge are cheaper in this availability zone
-resource "aws_subnet" "qanta_zone_1b" {
+# We use us-west-2a since r3.8xlarge are cheaper in this availability zone
+# p2 Instances are cheaper on us-west-2c however
+resource "aws_subnet" "qanta_zone_2a" {
   vpc_id                  = "${aws_vpc.qanta.id}"
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-1b"
+  availability_zone = "us-west-2a"
 }
 
 # A security group for SSH access from anywhere
@@ -149,24 +140,6 @@ resource "aws_security_group" "qanta_internal" {
 # | |__| |___ / __/   | || | | \__ \ || (_| | | | | (_|  __/\__ \
 # |_____\____|_____| |___|_| |_|___/\__\__,_|_| |_|\___\___||___/
 
-# Create Spark workers
-resource "aws_spot_instance_request" "workers" {
-  ami           = "${data.aws_ami.qanta_ami.id}"
-  instance_type = "${var.worker_instance_type}"
-  count         = "${var.num_workers}"
-  key_name = "${var.key_pair}"
-  spot_price = "${var.spot_price}"
-
-  vpc_security_group_ids = [
-    "${aws_security_group.qanta_internal.id}",
-    "${aws_security_group.qanta_ssh.id}"
-  ]
-  subnet_id = "${aws_subnet.qanta_zone_1b.id}"
-
-  wait_for_fulfillment = true
-}
-
-# Create Spark master node
 resource "aws_spot_instance_request" "master" {
   ami           = "${data.aws_ami.qanta_ami.id}"
   instance_type = "${var.master_instance_type}"
