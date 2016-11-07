@@ -147,7 +147,6 @@ resource "aws_spot_instance_request" "master" {
   spot_price = "${var.spot_price}"
   spot_type = "one-time"
   wait_for_fulfillment = true
-  ebs_optimized = true
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
