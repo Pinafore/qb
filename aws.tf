@@ -147,12 +147,19 @@ resource "aws_spot_instance_request" "master" {
   spot_price = "${var.spot_price}"
   spot_type = "one-time"
   wait_for_fulfillment = true
+  ebs_optimized = true
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
     "${aws_security_group.qanta_ssh.id}"
   ]
   subnet_id = "${aws_subnet.qanta_zone_2a.id}"
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = "25"
+    delete_on_termination = true
+  }
 
   ephemeral_block_device {
     device_name = "/dev/sdb"

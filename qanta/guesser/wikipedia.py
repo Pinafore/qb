@@ -3,19 +3,21 @@ import random
 import os
 import networkx as nx
 import pandas as pd
+from nltk.corpus import stopwords
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.qdb import QuestionDatabase
 
 
 class WikiNetworkGuesser:
     def __init__(self):
-        g = nx.Graph()
+        self.stop_words = set(stopwords.words('english'))
+        g = nx.DiGraph()
         vertex_set = set()
         page_map = dict()
         with open('/ssd-c/qanta/titles-sorted.txt') as f:
             for i, line in enumerate(f, 1):
                 page = line.strip().lower()
-                if re.match("^[a-zA-Z\_']+$", page):
+                if re.match("^[a-zA-Z\_']+$", page) and page not in self.stop_words:
                     g.add_node(i, page=page)
                     vertex_set.add(i)
                     page_map[page] = i
@@ -34,7 +36,8 @@ class WikiNetworkGuesser:
         self.page_map = page_map
 
     def tokenize(self, text):
-        return text.lower().replace(',', '').replace('.', '').split()
+        raw_words = text.lower().replace(',', '').replace('.', '').split()
+        return [w for w in raw_words if w not in self.stop_words]
 
     def build_subgraph(self, words):
         v_indexes = set()
@@ -50,7 +53,7 @@ class WikiNetworkGuesser:
         sub_graph = self.g.subgraph(v_indexes)
         size = 0
         max_size_subgraph = None
-        for comp in nx.connected_component_subgraphs(sub_graph):
+        for comp in nx.weakly_connected_component_subgraphs(sub_graph):
             if max_size_subgraph is None or len(comp) > size:
                 max_size_subgraph = comp
                 size = len(comp)
