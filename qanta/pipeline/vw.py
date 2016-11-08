@@ -1,10 +1,9 @@
 from itertools import product
-import sys
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
-from qanta.util.io import call, shell, make_dirs
+from qanta.util.io import call, shell, make_dirs, safe_path
 from qanta.reporting.vw_audit import parse_audit, audit_report
 from qanta.pipeline.spark import SparkMergeFeatures
 
@@ -115,8 +114,8 @@ class VWAuditRegressor(Task):
 
     def output(self):
         return [
-            LocalTarget(c.VW_AUDIT_REGRESSOR.format(self.weight)),
-            LocalTarget(c.VW_AUDIT_REGRESSOR_REPORT.format(self.weight))
+            LocalTarget(safe_path(c.VW_AUDIT_REGRESSOR.format(self.weight))),
+            LocalTarget(safe_path(c.VW_AUDIT_REGRESSOR_REPORT.format(self.weight)))
         ]
 
     def run(self):
