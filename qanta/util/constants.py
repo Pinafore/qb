@@ -64,12 +64,14 @@ META_TARGET = 'output/vw_input/{0}.sentence.{1}.meta'
 
 EXPO_BUZZ = 'output/expo/{}.{}.buzz'
 EXPO_FINAL = 'output/expo/{}.{}.final'
+EXPO_QUESTIONS = 'output/expo/test.questions.csv'
 
 KEN_LM = 'output/kenlm.binary'
 
 VW_INPUT = 'output/vw_input/{0}.sentence.{1}.vw_input.gz'
 VW_MODEL = 'output/models/sentence.{0}.vw'
 VW_PREDICTIONS = 'output/predictions/{0}.sentence.{1}.pred'
+VW_AUDIT = 'output/predictions/{0}.sentence.{1}.audit'
 VW_META = 'output/vw_input/{0}.sentence.{1}.meta'
 VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.{}.txt'
 VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.{}.csv'

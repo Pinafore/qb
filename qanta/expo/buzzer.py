@@ -223,6 +223,7 @@ class kCOLORS:
         start = getattr(kCOLORS, color)
         print(start + text + kCOLORS.ENDC, end=end)
 
+
 def write_readable(filename, ids, questions, power):
     question_num = 0
     o = open(flags.readable, 'w')
@@ -239,6 +240,7 @@ def write_readable(filename, ids, questions, power):
             else:
                 o.write("%s  " % questions[ii][jj])
         o.write("\nANSWER: %s\n\n" % questions.answer(ii))
+
 
 def clear_screen():
     print("Clearing")
@@ -412,9 +414,9 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     for gg in sorted(current_guesses, key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]:
         guess = current_guesses[gg]
         if guess.page == answer:
-            report += "%s\t%f\t%s\n" % ("***CORRECT***", guess.weight, guess.evidence[:60])
+            report += "%s\t%f\t%s\n" % ("***CORRECT***", guess.weight, guess.evidence[:100])
         else:
-            report += "%s\t%f\t%s\n" % (guess.page, guess.weight, guess.evidence[:60])
+            report += "%s\t%f\t%s\n" % (guess.page, guess.weight, guess.evidence[:100])
     return report
 
 

@@ -44,8 +44,8 @@ SUMMARY_REGEX = re.compile(r'.*sentence\.([0-9]+)\.json')
 ANSWER_REGEX = re.compile(r'.*sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
 
 
-def load_predictions(pred_file):
-    def parse_line(line):
+def load_predictions(pred_file: str) -> Sequence:
+    def parse_line(line: str) -> Prediction:
         try:
             tokens = line.split()
             score = float(tokens[0])
@@ -60,8 +60,8 @@ def load_predictions(pred_file):
     return seq.open(pred_file).map(parse_line)
 
 
-def load_meta(meta_file):
-    def parse_line(line):
+def load_meta(meta_file: str) -> Sequence:
+    def parse_line(line: str) -> Meta:
         tokens = line.split()
         question = int(tokens[0])
         sentence = int(tokens[1])
@@ -71,7 +71,7 @@ def load_meta(meta_file):
     return seq.open(meta_file).map(parse_line)
 
 
-def load_data(pred_file: str, meta_file: str, q_db):
+def load_data(pred_file: str, meta_file: str, q_db: QuestionDatabase) -> Sequence:
     preds = load_predictions(pred_file)
     metas = load_meta(meta_file)
     answers = q_db.all_answers()
@@ -103,8 +103,20 @@ def load_data(pred_file: str, meta_file: str, q_db):
         assert meta.token == prediction.token
         return prediction, meta
 
-    lines = preds.zip(metas).map(fix_missing_label).group_by(lambda x: x[0].question).map(create_line)
-    return lines
+    return preds\
+        .zip(metas)\
+        .map(fix_missing_label)\
+        .group_by(lambda x: x[0].question)\
+        .map(create_line)
+
+
+def load_audit(audit_file: str):
+    audit_data = {}
+    with open(audit_file) as f:
+        for line in f:
+            qid, evidence = line.split('\t')
+            audit_data[qid.strip()] = evidence.strip()
+        return audit_data
 
 
 def compute_answers(data: Sequence, dan_answers: Set[str]):

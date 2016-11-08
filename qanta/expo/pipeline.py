@@ -1,13 +1,14 @@
 import csv
 
 import luigi
-from luigi import LocalTarget, Task, ExternalTask
+from luigi import LocalTarget, Task, ExternalTask, WrapperTask
 
-from qanta.reporting.performance import load_data
+from qanta.reporting.performance import load_data, load_audit
 from qanta.util.io import safe_path
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.environment import QB_QUESTION_DB
-from qanta.util.constants import PRED_TARGET, META_TARGET, EXPO_BUZZ, EXPO_FINAL
+from qanta.util.constants import (PRED_TARGET, META_TARGET, EXPO_BUZZ, EXPO_FINAL, VW_AUDIT,
+                                  EXPO_QUESTIONS)
 
 
 def find_final(lines):
@@ -19,12 +20,12 @@ def find_final(lines):
 
 class CreateTestQuestions(Task):
     def output(self):
-        return LocalTarget('output/expo/test.questions.csv')
+        return LocalTarget(safe_path(EXPO_QUESTIONS))
 
     def run(self):
         db = QuestionDatabase(QB_QUESTION_DB)
         questions = db.all_questions()
-        with open('output/expo/test.questions.csv', 'w', newline='') as f:
+        with open(safe_path(EXPO_QUESTIONS), 'w', newline='') as f:
             f.write('id,answer,sent,text\n')
             writer = csv.writer(f, delimiter=',')
             for q in questions.values():
@@ -59,6 +60,7 @@ class GenerateExpo(Task):
         db = QuestionDatabase(QB_QUESTION_DB)
         data = load_data(PRED_TARGET.format(self.fold, self.weight),
                          META_TARGET.format(self.fold, self.weight), db)
+        audit_data = load_audit(VW_AUDIT.format(self.fold, self.weight))
         buzz_file = open(safe_path(EXPO_BUZZ.format(self.fold, self.weight)), 'w', newline='')
         buzz_file.write('question,sentence,word,page,evidence,final,weight\n')
         buzz_writer = csv.writer(buzz_file, delimiter=',')
@@ -66,6 +68,15 @@ class GenerateExpo(Task):
         final_file = open(safe_path(EXPO_FINAL.format(self.fold, self.weight)), 'w', newline='')
         final_file.write('question,answer\n')
         final_writer = csv.writer(final_file, delimiter=',')
+
+        def format_audit_line(line):
+            features = line.split()
+            audit_features = []
+            for f in features:
+                name, fid, value, weight = f.split(':')
+                product = float(value) * float(weight)
+                audit_features.append('{}:{}'.format(name, product))
+            return ' '.join(audit_features)
 
         for qnum, lines in data:
             final_sentence, final_token, final_guess = find_final(lines)
@@ -80,8 +91,10 @@ class GenerateExpo(Task):
                     is_final = True
 
                 for g in l.all_guesses:
+                    evidence = format_audit_line(
+                        audit_data['{}_{}_{}'.format(l.question, l.sentence, l.token)])
                     buzz_writer.writerow([
-                        l.question, l.sentence, l.token, g.guess, '',
+                        l.question, l.sentence, l.token, g.guess, evidence,
                         int(is_final and g.guess == l.guess), g.score
                     ])
                     i += 1
@@ -89,3 +102,9 @@ class GenerateExpo(Task):
                         break
         buzz_file.close()
         final_file.close()
+
+
+class AllExpo(WrapperTask):
+    def requires(self):
+        yield GenerateExpo(fold='test', weight=16)
+        yield CreateTestQuestions()

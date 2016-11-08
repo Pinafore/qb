@@ -5,7 +5,7 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call, shell
-from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor
+from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor, VWAudit
 from qanta.pipeline.dan import CreateGuesses, AllDAN
 from qanta.pipeline.preprocess import Preprocess
 
@@ -16,6 +16,7 @@ class Summary(Task):
 
     def requires(self):
         yield VWPredictions(fold=self.fold, weight=self.weight)
+        yield VWAudit(weight=self.weight)
 
     def output(self):
         return LocalTarget('output/summary/{0}.sentence.{1}.json'.format(self.fold, self.weight))
