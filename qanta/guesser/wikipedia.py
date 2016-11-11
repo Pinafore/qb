@@ -62,7 +62,7 @@ class WikiNetworkGuesser:
 
         return max_size_subgraph, seed_vertexes
 
-    def node2vec_input(self, answer: str, sub_graph: nx.Graph, output_directory):
+    def node2vec_input(self, answer: str, sub_graph: nx.Graph, seed_vertexes, output_directory):
         if answer not in self.page_map:
             print('No wiki entry for:', answer)
             return
@@ -78,9 +78,9 @@ class WikiNetworkGuesser:
             for n in sub_graph.node:
                 page = sub_graph.node[n]['page']
                 if n == answer_id:
-                    f.write('{} {} {}\n'.format(1, n, page))
+                    f.write('{} {} {} {}\n'.format(1, n, page, int(n in seed_vertexes)))
                 else:
-                    f.write('{} {} {}\n'.format(0, n, page))
+                    f.write('{} {} {} {}\n'.format(0, n, page, int(n in seed_vertexes)))
 
     def generate_guesses(self, text, answer, qnum):
         words = self.tokenize(text)
