@@ -3,6 +3,7 @@ import click
 from qanta import logging
 from qanta.extractors import mentions
 from qanta.util.environment import ENVIRONMENT
+from qanta.util.vw import format_audit
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.wikipedia import wikification
 from qanta.streaming import start_qanta_streaming, start_spark_streaming
@@ -47,6 +48,12 @@ def init_wiki_cache(wiki_cache):
 @click.argument('output')
 def wikify(output):
     wikification.wikify(output)
+
+
+@main.command()
+@click.option('--n_features', type=int, default=10)
+def format_vw_audit(n_features):
+    format_audit(n_features)
 
 if __name__ == '__main__':
     main()

@@ -82,15 +82,16 @@ GUESSER = {'output/guesser'}
 
 fold = os.environ.get('QB_FOLD', 'test')
 weight = os.environ.get('QB_WEIGHT', 16)
-EXPO_REQS = {
-    'output/vw_input/{}.sentence.{}.meta'.format(fold, weight),
-    'output/predictions/{}.sentence.{}.pred'.format(fold, weight)
+EXPO = {
+    'output/expo/test.questions.csv',
+    'output/expo/{}.{}.buzz'.format(fold, weight),
+    'output/expo/{}.{}.final'.format(fold, weight)
 }
 
 
 CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
                      | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
-                     | PREDICTIONS | SUMMARIES | REPORTING | GUESSER
+                     | PREDICTIONS | SUMMARIES | REPORTING | GUESSER | EXPO
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
@@ -109,7 +110,7 @@ TARGET_GROUPS = {
     'summaries': SUMMARIES,
     'reporting': REPORTING,
     'guesser': GUESSER,
-    'expo_reqs': EXPO_REQS,
+    'expo': EXPO,
     'all': CHECKPOINT_TARGETS
 }
 

@@ -326,23 +326,21 @@ export LANG=en_US.UTF-8
 
 ### Expo Instructions
 
-Make sure that the prediction and meta files exist. This can be done by restoring from a prior
-checkpoint
+The expo files can be generated from a completed qanta run by calling
 
 ```bash
-./checkpoint restore expo_reqs
+luigi --module qanta.expo.pipeline --workers 2 AllExpo
 ```
 
-Then to generate the expo files
+If that has already been done you can restore the expo files from a backup instead of running the
+pipeline
 
 ```bash
-luigi --local-scheduler --module qanta.expo.pipeline --workers 1 GenerateExpo --fold test --weight 16
-luigi --local-scheduler --module qanta.expo.pipeline --workers 1 CreateTestQuestions
+./checkpoint restore expo
 ```
 
 Then to finally run the expo
 
 ```bash
-python3 qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.16.buzz --output=output/expo/competition.csv --finals=output/
-. expo/test.16.final
+python3 qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.16.buzz --output=output/expo/competition.csv --finals=output/expo/test.16.final
 ```
