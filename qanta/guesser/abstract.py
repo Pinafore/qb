@@ -27,7 +27,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         self.requested_datasets = [Dataset.QUIZ_BOWL]
 
     @abstractmethod
-    def train(self, training_data: Dict[str, Tuple[List[QuestionText], List[Answer]]]) -> None:
+    def train(self,
+              training_data: Dict[str, Tuple[List[List[QuestionText]], List[Answer]]]) -> None:
         """
         Given training data, train this guesser so that it can produce guesses.
 
@@ -36,10 +37,11 @@ class AbstractGuesser(metaclass=ABCMeta):
         self.requested_datasets.
 
         The values of these keys is a tuple of two elements which can be seen as (train_x, train_y).
-        In this case train_x is a list of questions to generate guesses for and train_y is a list of
-        true labels. The questions are strings and the true labels are strings. Labels are in
-        canonical form. Questions are not preprocessed in any way. To implement common preprocessing
-        refer to the qanta/guesser/preprocessing module.
+        In this case train_x is a list of question runs. For example, if the answer for a question
+        is "Albert Einstein" the runs might be ["This", "This German", "This German physicist", ...]
+        train_y is a list of true labels. The questions are strings and the true labels are strings.
+        Labels are in canonical form. Questions are not preprocessed in any way. To implement common
+        pre-processing refer to the qanta/guesser/preprocessing module.
 
         :param training_data: training data in the format described above
         :return: This function does not return anything
