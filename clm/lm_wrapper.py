@@ -160,8 +160,12 @@ class LanguageModelReader(LanguageModelBase):
         self._corpora = {}
         self._sort_voc = None
 
-        self.set_params(interp, min_span, max_span, start_rank, smooth, cutoff,
-                        slop, censor_slop, give_score, log_length, stopwords)
+        assert(max_span >= min_span), "Max span %i must be greater than min %i" % \
+            (max_span, min_span)
+            
+        self.set_params(interp, min(min_span, max_span), max(min_span, max_span),
+                        start_rank, smooth, cutoff, slop, censor_slop, give_score,
+                        log_length, stopwords)
 
     def set_params(self, interp, min_span, max_span, start_rank, smooth,
                    cutoff, slop, censor_slop, give_score,
