@@ -8,7 +8,7 @@ from unidecode import unidecode
 
 from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
-from qanta.guesser.util.format_dan import format_guess
+from qanta.preprocess import format_guess
 
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
