@@ -6,7 +6,7 @@ from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call, shell
 from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor, VWAudit
-from qanta.pipeline.dan import CreateGuesses, AllDAN
+from qanta.pipeline.guesser import CreateGuesses, AllDAN
 from qanta.pipeline.preprocess import Preprocess
 
 

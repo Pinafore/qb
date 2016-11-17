@@ -1,14 +1,21 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
 
+import luigi
+
 
 QuestionText = str
 Answer = str
 
 
 class Dataset:
-    QUIZ_BOWL = 'QUIZ_BOWL'
+    QUIZ_BOWL = 'QUIZ_BOWL:MIN_ANSWERS=5'
     WIKI = 'WIKI'
+
+
+class EmptyTask(luigi.ExternalTask):
+    def requires(self):
+        return []
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -77,13 +84,29 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         pass
 
+    @staticmethod
+    @abstractmethod
+    def load(directory: str):
+        """
+        Given the directory used for saving this guesser, create a new instance of the guesser, and
+        load it for guessing or scoring.
+
+        :param directory: training data for guesser
+        :return: Instance of AbstractGuesser ready for calling guess/score
+        """
+        pass
+
     @abstractmethod
     def save(self, directory: str) -> None:
         pass
 
-    @abstractmethod
-    def load(self, directory: str) -> None:
-        pass
+    @staticmethod
+    def luigi_dependency(self) -> luigi.Task:
+        """
+        This "wrapper" luigi Task will be added as a prerequisite to training this guesser
+        :return:
+        """
+        return EmptyTask()
 
     @property
     @abstractmethod
