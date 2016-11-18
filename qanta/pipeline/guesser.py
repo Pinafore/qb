@@ -1,6 +1,9 @@
 import os
+import importlib
+
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
+
 from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
 from qanta.util import environment as e
@@ -9,6 +12,37 @@ from qanta.guesser.util import load_embeddings
 from qanta.guesser import dan
 from qanta.guesser.classify.learn_classifiers import print_recall_at_n
 from qanta.extract_features import create_guesses
+
+
+class TrainGuesser(Task):
+    guesser_module = luigi.Parameter()
+    guesser_class = luigi.Parameter()
+
+    def requires(self):
+        module = importlib.import_module(self.guesser_module)
+        module_class = getattr(module, self.guesser_class)
+        return module_class.luigi_dependency()
+
+    def run(self):
+        module = importlib.import_module(self.guesser_module)
+        module_class = getattr(module, self.guesser_class)
+        guesser_instance = module_class()
+        guesser_instance.train()
+        guesser_path = '{}.{}'.format(self.guesser_module, self.guesser_class)
+        guesser_instance.save(guesser_path)
+
+    def output(self):
+        guesser_path = '{}.{}'.format(self.guesser_module, self.guesser_class)
+        return LocalTarget(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path))
+
+
+class AllGuessers(WrapperTask):
+    def requires(self):
+        for guesser in c.GUESSER_LIST:
+            parts = guesser.split('.')
+            guesser_module = '.'.join(parts[:-1])
+            guesser_class = parts[-1]
+            yield TrainGuesser(guesser_module=guesser_module, guesser_class=guesser_class)
 
 
 class FormatDan(Task):

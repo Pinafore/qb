@@ -30,9 +30,13 @@ CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
 TEXT = 'text'
 
+GUESSER_LIST = ['qanta.guesser.random.RandomGuesser']
+
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 
 SENTENCE_STATS = 'output/guesser/sentence_stats.pickle'
+
+NERS_PATH = 'data/internal/common/ners'
 
 CLM_PATH = 'output/language_model'
 CLM_TARGET = 'output/language_model.txt'
@@ -48,6 +52,8 @@ DEEP_DEVTEST_TARGET = 'output/deep/devtest'
 DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
 EVAL_RES_TARGET = 'output/deep/eval_res'
+
+GUESSER_TARGET_PREFIX = 'output/guesser'
 
 WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
 WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
