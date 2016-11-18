@@ -50,6 +50,13 @@ class Parameters:
                       give_score = self._vals["give_score"],
                       log_score = self._vals["log_score"])
 
+def build_dataset(lm, db, min_appearances, restrict_frequent=True, seed=1701):
+    # Get page names
+    pages = db.page_by_count(min_appearances)
+    
+    # random train / test split
+    
+        
 def score(lm, train, test):
     # generate features from the dataset
 
