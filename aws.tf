@@ -9,11 +9,11 @@ variable "access_key" {}
 variable "secret_key" {}
 
 variable "spot_price" {
-  default = "2.5"
+  default = "1.0"
 }
 
 variable "master_instance_type" {
-  default = "r3.8xlarge"
+  default = "r3.2xlarge"
   description = "EC2 Instance type to use for the master node"
 }
 
@@ -165,10 +165,6 @@ resource "aws_spot_instance_request" "master" {
     virtual_name = "ephemeral0"
   }
 
-  ephemeral_block_device {
-    device_name = "/dev/sdc"
-    virtual_name = "ephemeral1"
-  }
 
   connection {
     user = "ubuntu"
@@ -194,9 +190,6 @@ resource "aws_spot_instance_request" "master" {
     script = "terraform/configure-drives.sh"
   }
 
-  provisioner "remote-exec" {
-    script = "terraform/configure-swap.sh"
-  }
 
   # Configure AWS credentials
   provisioner "remote-exec" {
@@ -234,10 +227,6 @@ resource "aws_spot_instance_request" "master" {
   provisioner "file" {
     source = "terraform/luigi.cfg"
     destination = "/ssd-c/qanta/luigi.cfg"
-  }
-
-  provisioner "remote-exec" {
-    script = "terraform/aws-downloads.sh"
   }
 }
 

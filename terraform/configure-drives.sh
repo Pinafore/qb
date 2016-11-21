@@ -9,17 +9,12 @@
 
 # Create a file system on ephemeral SSDs
 sudo mkfs -t ext4 /dev/xvdb
-sudo mkfs -t ext4 /dev/xvdc
 
 # Create mount location
-sudo mkdir /ssd-b
 sudo mkdir /ssd-c
 
 # Mount the drives to the file system
-sudo mount /dev/xvdb /ssd-b
-sudo mount /dev/xvdc /ssd-c
+sudo mount /dev/xvdb /ssd-c
 
-sudo chmod 777 /ssd-b
 sudo chmod 777 /ssd-c
-sudo chown ubuntu /ssd-b
 sudo chown ubuntu /ssd-c
