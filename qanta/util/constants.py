@@ -30,7 +30,7 @@ CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
 TEXT = 'text'
 
-GUESSER_LIST = ['qanta.guesser.random.RandomGuesser']
+GUESSER_LIST = [('qanta.guesser.random.RandomGuesser', 'qanta.pipeline.guesser.random.EmptyTask')]
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 

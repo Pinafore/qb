@@ -1,21 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
 
-import luigi
-
-
-QuestionText = str
-Answer = str
-
-
-class Dataset:
-    QUIZ_BOWL = 'QUIZ_BOWL:MIN_ANSWERS=5'
-    WIKI = 'WIKI'
-
-
-class EmptyTask(luigi.ExternalTask):
-    def requires(self):
-        return []
+from qanta.datasets import TrainingDataset, QuestionText, Answer, Datasets
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -31,15 +17,14 @@ class AbstractGuesser(metaclass=ABCMeta):
         AbstractGuesser.train
         """
         self.parallel = True
-        self.requested_datasets = [Dataset.QUIZ_BOWL]
+        self.requested_datasets = [Datasets.QUIZ_BOWL]
 
     @abstractmethod
-    def train(self,
-              training_data: Dict[str, Tuple[List[List[QuestionText]], List[Answer]]]) -> None:
+    def train(self, training_data: Dict[str, TrainingDataset]) -> None:
         """
         Given training data, train this guesser so that it can produce guesses.
 
-        The training_data dictionary is keyed by constants from DataSet such as DataSet.QUIZ_BOWL.
+        The training_data dictionary is keyed by constants from Datasets such as Datasets.QUIZ_BOWL.
         The provided data to this method is based on the requested list of datasets from
         self.requested_datasets.
 
@@ -99,14 +84,6 @@ class AbstractGuesser(metaclass=ABCMeta):
     @abstractmethod
     def save(self, directory: str) -> None:
         pass
-
-    @staticmethod
-    def luigi_dependency(self) -> luigi.Task:
-        """
-        This "wrapper" luigi Task will be added as a prerequisite to training this guesser
-        :return:
-        """
-        return EmptyTask()
 
     @property
     @abstractmethod
