@@ -8,6 +8,8 @@ import numpy as np
 import luigi
 
 from qanta.guesser.abstract import AbstractGuesser
+from qanta.datasets.abstract import AbstractDataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 
 class RandomGuesser(AbstractGuesser):
@@ -24,6 +26,12 @@ class RandomGuesser(AbstractGuesser):
         self.answer_lookup = {}
         self.answer_pdf = []
         self.answer_set = set()
+
+    @property
+    def requested_datasets(self) -> Dict[str, AbstractDataset]:
+        return {
+            'qb': QuizBowlDataset(5)
+        }
 
     @property
     def display_name(self) -> str:

@@ -34,8 +34,8 @@ To execute the AWS scripts you will need to follow these steps (`brew` options a
 2. [Install Terraform 0.7.x](https://www.terraform.io/downloads.html) or run `brew install terraform`
 3. Python 3.5+: If you don't have a preferred distribution,
 [Anaconda Python](https://www.continuum.io/downloads) is a good choice
-4. Install the AWS command line tools via `pip3 install awscli`
-5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-1`
+4. Install the AWS command line tools via `pip3 install awscli`. Run `pip3 install pyhcl`
+5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-2`
 6. Create an [EC2 key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
 7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
 8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS

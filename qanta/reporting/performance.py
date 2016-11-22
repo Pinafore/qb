@@ -221,7 +221,7 @@ def plot(stats_dir, output):
 def generate(min_count, qdb, pred_file, meta_file, output):
     database = QuestionDatabase(qdb)
     data = load_data(pred_file, meta_file, database)
-    dan_answers = set(database.page_by_count(min_count=min_count, exclude_test=True))
+    dan_answers = set(database.page_by_count(min_count, True))
     answers = compute_answers(data, dan_answers)
     stats = compute_statistics(answers).cache()
     stats.to_json(output, root_array=False)

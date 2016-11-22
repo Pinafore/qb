@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
 
-from qanta.datasets import TrainingDataset, QuestionText, Answer, Datasets
+from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -13,14 +13,22 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         self.parallel tells qanta whether or not this guesser should be parallelized.
 
-        self.requested_datasets determines the source of training data given to
-        AbstractGuesser.train
         """
-        self.parallel = True
-        self.requested_datasets = [Datasets.QUIZ_BOWL]
+        self.parallel = False
+
+    @property
+    @abstractmethod
+    def requested_datasets(self) -> Dict[str, AbstractDataset]:
+        """
+        Return a mapping of requested datasets. For each entry in the dictionary
+        AbstractDataset.training_data will be called and its result stored using the str key for use
+        in AbstractGuesser.train
+        :return:
+        """
+        pass
 
     @abstractmethod
-    def train(self, training_data: Dict[str, TrainingDataset]) -> None:
+    def train(self, training_data: Dict[str, TrainingData]) -> None:
         """
         Given training data, train this guesser so that it can produce guesses.
 

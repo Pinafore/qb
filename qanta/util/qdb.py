@@ -1,12 +1,12 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import sqlite3
-import random
 from collections import defaultdict, OrderedDict, Counter
 
 from unidecode import unidecode
 from functional import seq
 
 from qanta.util.constants import MIN_APPEARANCES, PUNCTUATION
+from qanta.datasets.abstract import QuestionText, Answer
 
 
 class Question:
@@ -23,6 +23,13 @@ class Question:
         self.gender = gender
         self.text = {}
         self._last_query = None
+
+    def __repr__(self):
+        return '<Question qnum={} page="{}" text="{}...">'.format(
+            self.qnum,
+            self.page,
+            self.flatten_text()[0:20]
+        )
 
     def raw_words(self):
         """
@@ -80,12 +87,16 @@ class Question:
     def flatten_text(self):
         return unidecode(" ".join(self.text[x] for x in sorted(self.text)))
 
+    def to_example(self) -> Tuple[List[QuestionText], Answer]:
+        sentence_list = [self.text[i] for i in range(len(self.text))]
+        return sentence_list, self.page
+
 
 class QuestionDatabase:
     def __init__(self, location):
         self._conn = sqlite3.connect(location)
 
-    def query(self, command, arguments, text=True):
+    def query(self, command: str, arguments) -> Dict[str, Question]:
         questions = {}
         c = self._conn.cursor()
         command = 'select id, page, category, answer, ' + \
@@ -95,12 +106,11 @@ class QuestionDatabase:
         for qq, pp, cc, aa, tt, kk, nn, ff, gg in c:
             questions[qq] = Question(qq, aa, cc, nn, tt, pp, kk, ff, gg)
 
-        if text:
-            for ii in questions:
-                command = 'select sent, raw from text where question=? order by sent asc'
-                c.execute(command, (ii, ))
-                for ss, rr in c:
-                    questions[ii].add_text(ss, rr)
+        for ii in questions:
+            command = 'select sent, raw from text where question=? order by sent asc'
+            c.execute(command, (ii, ))
+            for ss, rr in c:
+                questions[ii].add_text(ss, rr)
 
         return questions
 
@@ -148,6 +158,13 @@ class QuestionDatabase:
             page_map[row.page].append(row)
         return page_map
 
+    def questions_in_fold(self, fold: str, min_class_examples: int):
+        questions = self.query('FROM questions WHERE page != "" AND fold == ?', (fold,)).values()
+        return seq(questions)\
+            .group_by(lambda q: q.page)\
+            .filter(lambda t: len(t[1]) >= min_class_examples)\
+            .list()
+
     def prune_text(self):
         """
         Remove sentences that do not have an entry in the database
@@ -173,7 +190,7 @@ class QuestionDatabase:
                                          len(orphans)))
         self._conn.commit()
 
-    def page_by_count(self, min_count=1, exclude_test=False):
+    def page_by_count(self, min_count: int, exclude_test: bool):
         """
         Return all answers that appear at least the specified number
         of times in a category.

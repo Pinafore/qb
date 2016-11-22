@@ -6,6 +6,7 @@ from luigi import LocalTarget, Task, WrapperTask
 
 from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
+from qanta.guesser.abstract import AbstractGuesser
 
 
 class TrainGuesser(Task):
@@ -23,8 +24,12 @@ class TrainGuesser(Task):
     def run(self):
         module = importlib.import_module(self.guesser_module)
         module_class = getattr(module, self.guesser_class)
-        guesser_instance = module_class()
-        guesser_instance.train()
+        guesser_instance = module_class()  # type: AbstractGuesser
+        datasets = guesser_instance.requested_datasets
+        data = {}
+        for name, dataset_instance in datasets.items():
+            data[name] = dataset_instance.training_data()
+        guesser_instance.train(data)
         guesser_path = '{}.{}'.format(self.guesser_module, self.guesser_class)
         guesser_instance.save(guesser_path)
 

@@ -38,11 +38,11 @@ def preprocess():
     pp = Preprocessor()
     db = qdb.QuestionDatabase(QB_QUESTION_DB)
 
-    pages = set(db.page_by_count(min_count=MIN_APPEARANCES))
+    pages = set(db.page_by_count(MIN_APPEARANCES, True))
     print(len(pages))
     folds = ['train', 'test', 'devtest', 'dev']
     for fold in folds:
-        allqs = db.query('from questions where page != "" and fold == ?', (fold,), text=True)
+        allqs = db.query('from questions where page != "" and fold == ?', (fold,))
         print(fold, len(allqs))
         proc_fold = []
         for i, key in enumerate(allqs):
