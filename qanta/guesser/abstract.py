@@ -79,6 +79,17 @@ class AbstractGuesser(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
+    def files(directory: str) -> List[str]:
+        """
+        List of files located in directory that are produced by the train method and loaded by the
+        save method.
+        :param directory: directory reserved for output files
+        :return: list of written files
+        """
+        pass
+
+    @staticmethod
+    @abstractmethod
     def load(directory: str):
         """
         Given the directory used for saving this guesser, create a new instance of the guesser, and

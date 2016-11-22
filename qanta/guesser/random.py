@@ -41,7 +41,8 @@ class RandomGuesser(AbstractGuesser):
               training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
         answer_counts = defaultdict(int)
         for dataset in training_data:
-            for _, answer in training_data[dataset]:
+            examples, labels = training_data[dataset]
+            for answer in labels:
                 answer_counts[answer] += 1
 
         for i, answer in enumerate(answer_counts):
@@ -72,6 +73,15 @@ class RandomGuesser(AbstractGuesser):
 
         return scores
 
+    @staticmethod
+    def files(directory: str) -> None:
+        output_files = [
+            RandomGuesser.ANSWER_LOOKUP_FILE,
+            RandomGuesser.ANSWER_PDF_FILE,
+            RandomGuesser.ANSWER_SET_FILE
+        ]
+        return [os.path.join(directory, file) for file in output_files]
+
     def save(self, directory: str) -> None:
         with open(os.path.join(directory, RandomGuesser.ANSWER_LOOKUP_FILE), 'wb') as f:
             pickle.dump(self.answer_lookup, f)
@@ -96,6 +106,3 @@ class RandomGuesser(AbstractGuesser):
             guesser.answer_set = pickle.load(f)
 
         return guesser
-
-    def luigi_dependency(self) -> luigi.Task:
-        pass

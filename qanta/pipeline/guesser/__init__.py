@@ -7,6 +7,13 @@ from luigi import LocalTarget, Task, WrapperTask
 from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
 from qanta.guesser.abstract import AbstractGuesser
+from qanta.util.io import safe_path
+
+
+def get_class(instance_module: str, instance_class: str):
+    py_instance_module = importlib.import_module(instance_module)
+    py_instance_class = getattr(py_instance_module, instance_class)
+    return py_instance_class
 
 
 class TrainGuesser(Task):
@@ -16,26 +23,33 @@ class TrainGuesser(Task):
     dependency_class = luigi.Parameter()
 
     def requires(self):
-        module = importlib.import_module(self.dependency_module)
-        module_class = getattr(module, self.dependency_class)
+        dependency_class = get_class(self.dependency_module, self.dependency_class)
         yield Preprocess()
-        yield module_class()
+        yield dependency_class()
 
     def run(self):
-        module = importlib.import_module(self.guesser_module)
-        module_class = getattr(module, self.guesser_class)
-        guesser_instance = module_class()  # type: AbstractGuesser
+        guesser_class = get_class(self.guesser_module, self.guesser_class)
+        guesser_instance = guesser_class()  # type: AbstractGuesser
         datasets = guesser_instance.requested_datasets
         data = {}
         for name, dataset_instance in datasets.items():
             data[name] = dataset_instance.training_data()
         guesser_instance.train(data)
-        guesser_path = '{}.{}'.format(self.guesser_module, self.guesser_class)
-        guesser_instance.save(guesser_path)
+        guesser_instance.save(self._output_path(''))
 
     def output(self):
+        guesser_class = get_class(self.guesser_module, self.guesser_class)
+        guesser_targets = [
+            LocalTarget(file)
+            for file in guesser_class.files(self._output_path(''))]
+
+        return [
+            LocalTarget(self._output_path(''))
+        ] + guesser_targets
+
+    def _output_path(self, file):
         guesser_path = '{}.{}'.format(self.guesser_module, self.guesser_class)
-        return LocalTarget(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path))
+        return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
 
 
 class AllGuessers(WrapperTask):

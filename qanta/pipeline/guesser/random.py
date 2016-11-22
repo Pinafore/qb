@@ -1,6 +1,6 @@
 import luigi
 
 
-class EmptyTask(luigi.ExternalTask):
-    def requires(self):
-        return []
+class EmptyTask(luigi.Task):
+    def complete(self):
+        return True
