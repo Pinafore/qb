@@ -63,3 +63,8 @@ class QuizBowlDataset(AbstractDataset):
             questions += by_fold[fold]
 
         return questions
+
+
+class QuizBowlEvaluationDataset(QuizBowlDataset):
+    def __init__(self):
+        super().__init__(5)

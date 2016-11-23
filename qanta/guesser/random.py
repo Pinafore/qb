@@ -5,11 +5,10 @@ import os
 import random
 
 import numpy as np
-import luigi
 
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 
 
 class RandomGuesser(AbstractGuesser):
@@ -30,7 +29,7 @@ class RandomGuesser(AbstractGuesser):
     @property
     def requested_datasets(self) -> Dict[str, AbstractDataset]:
         return {
-            'qb': QuizBowlDataset(5)
+            'qb': QuizBowlEvaluationDataset()
         }
 
     @property

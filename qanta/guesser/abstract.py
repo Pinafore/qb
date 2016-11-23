@@ -5,7 +5,7 @@ from typing import List, Dict, Tuple
 import pandas as pd
 
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -54,7 +54,8 @@ class AbstractGuesser(metaclass=ABCMeta):
 
     @abstractmethod
     def guess(self,
-              questions: List[QuestionText], max_n_guesses: int) -> List[List[Tuple[Answer, float]]]:
+              questions: List[QuestionText],
+              max_n_guesses: int) -> List[List[Tuple[Answer, float]]]:
         """
         Given a list of questions as text, return n_guesses number of guesses per question. Guesses
         must be returned in canonical form, are returned with a score in which higher is better, and
@@ -65,7 +66,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         AbstractGuesser.train is called or AbstractGuesser.load is called.
 
         :param questions: Questions to guess on
-        :param n_guesses: Number of guesses to produce per question
+        :param max_n_guesses: Number of guesses to produce per question
         :return: List of top guesses per question
         """
         pass
@@ -133,7 +134,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         :param folds: which folds to generate guesses for
         :return: dataframe of guesses
         """
-        dataset = QuizBowlDataset(5)
+        dataset = QuizBowlEvaluationDataset()
         questions_by_fold = dataset.questions_by_fold()
 
         q_folds = []
@@ -192,9 +193,27 @@ class AbstractGuesser(metaclass=ABCMeta):
         })
 
     @staticmethod
+    def guess_path(directory: str, fold: str) -> str:
+        return os.path.join(directory, 'guesses_{}.pickle'.format(fold))
+
+    @staticmethod
     def save_guesses(guess_df: pd.DataFrame, directory: str):
         folds = ['train', 'dev', 'test', 'devtest']
         for fold in folds:
             fold_df = guess_df[guess_df.fold == fold]
-            output_path = os.path.join(directory, 'guesses_{}.pickle'.format(fold))
+            output_path = AbstractGuesser.guess_path(directory, fold)
             fold_df.to_pickle(output_path)
+
+    @staticmethod
+    def load_guesses(folds: List[str], directory: str) -> pd.DataFrame:
+        assert len(folds) > 0
+        guess_df = None
+        for fold in folds:
+            input_path = AbstractGuesser.guess_path(directory, fold)
+            if guess_df is None:
+                guess_df = pd.read_pickle(input_path)
+            else:
+                new_guesses_df = pd.read_pickle(input_path)
+                guess_df = pd.concat([guess_df, new_guesses_df])
+
+        return guess_df

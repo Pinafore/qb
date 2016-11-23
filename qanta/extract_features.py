@@ -10,9 +10,8 @@ from qanta import logging
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.guess import GuessList
 from qanta.util import constants as C
-from qanta.util.constants import FOLDS, MIN_APPEARANCES, CLM_PATH
+from qanta.util.constants import FOLDS, MIN_APPEARANCES
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.environment import data_path
 from qanta.util.spark_features import SCHEMA
 
 from qanta.datasets.quiz_bowl import QuizBowlDataset
@@ -56,7 +55,7 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     feature = None
     print("Loading feature %s ..." % feature_name)
     if feature_name == "lm":
-        feature = LanguageModel(data_path(CLM_PATH))
+        feature = LanguageModel()
     elif feature_name == "deep":
         page_dict = {}
         for page in question_db.get_all_pages():
@@ -65,7 +64,7 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
             C.DEEP_DAN_CLASSIFIER_TARGET,
             C.DEEP_DAN_PARAMS_TARGET,
             C.DEEP_VOCAB_TARGET,
-            "data/internal/common/ners",
+            C.NERS_PATH,
             page_dict
         )
     elif feature_name == "wikilinks":
