@@ -1,10 +1,6 @@
 from collections import defaultdict, namedtuple
 import sqlite3
 from typing import Dict, Tuple, Set
-from functional import seq
-
-from qanta.util.environment import QB_QUESTION_DB
-from qanta.util import qdb
 
 Guess = namedtuple('Guess', ['fold', 'question', 'sentence', 'token', 'page', 'guesser', 'score'])
 
@@ -54,15 +50,6 @@ class GuessList:
         c.execute(sql)
         conn.commit()
 
-    def create_indexes(self):
-        c = self._cursor()
-        sql = 'CREATE INDEX Idx1 ON guesses(fold);'
-        c.execute(sql)
-        sql = 'CREATE INDEX Idx2 ON guesses(question);'
-        c.execute(sql)
-        sql = 'CREATE INDEX Idx3 ON guesses(guesser);'
-        c.execute(sql)
-
     def all_guesses(self, allow_train=False) -> Dict[int, Dict[Tuple[int, int], Set[str]]]:
         if allow_train:
             query = 'SELECT question, sentence, token, page FROM guesses'
@@ -76,47 +63,3 @@ class GuessList:
                 guesses[question] = defaultdict(set)
             guesses[question][(sentence, token)].add(page)
         return guesses
-
-    def check_recall(self):
-        c = self._cursor()
-        print("Loading questions and guesses")
-        raw_questions = seq(qdb.QuestionDatabase(QB_QUESTION_DB).all_questions().values())
-        guesses = seq(list(
-            c.execute('SELECT * FROM guesses WHERE guesser="deep" AND fold = "devtest"'))) \
-            .map(lambda g: Guess(*g)).cache()
-
-        positions = guesses.map(lambda g: (g.question, g.sentence)) \
-            .reduce_by_key(max).to_dict()
-
-        guess_lookup = guesses.filter(lambda g: g.sentence == positions[g.question]) \
-            .group_by(lambda x: x.question) \
-            .map(lambda g: (g[0], seq(g[1]).map(lambda x: x.page).set())).to_dict()
-
-        questions = raw_questions. \
-            filter(lambda q: q.qnum in guess_lookup and q.fold != 'train').cache()
-
-        correct = 0
-        total = 0
-        wrong = []
-
-        print("Computing DAN recall")
-        for q in questions:
-            if q.page in guess_lookup[q.qnum]:
-                correct += 1
-            else:
-                wrong.append(q)
-            total += 1
-        return correct / total, total, wrong
-
-    def save_guesses(self, guesser, question, fold, guesses):
-        rows = []
-        for sentence, token in guesses:
-            for guess, score in guesses[(sentence, token)].items():
-                rows.append((fold, question, sentence, token, guess, guesser, score))
-
-        query = 'INSERT INTO guesses' + \
-                '(fold, question, sentence, token, page, guesser, score) ' + \
-                'VALUES(?, ?, ?, ?, ?, ?, ?);'
-        c = self._cursor()
-        c.executemany(query, rows)
-        self._conn.commit()
