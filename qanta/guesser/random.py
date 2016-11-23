@@ -35,7 +35,7 @@ class RandomGuesser(AbstractGuesser):
 
     @property
     def display_name(self) -> str:
-        return 'Random'
+        return 'random'
 
     def train(self,
               training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
@@ -52,12 +52,12 @@ class RandomGuesser(AbstractGuesser):
         self.answer_pdf = np.array(self.answer_pdf) / np.sum(self.answer_pdf)
         self.answer_set = set(self.answer_lookup)
 
-    def guess(self, questions: List[str], n_guesses: int) -> List[List[Tuple[str, float]]]:
+    def guess(self, questions: List[str], max_n_guesses: int) -> List[List[Tuple[str, float]]]:
         guesses = []
         for q in questions:
             random.seed(hash(q))
             q_guesses = []
-            for guess in random.sample(self.answer_set, n_guesses):
+            for guess in random.sample(self.answer_set, max_n_guesses):
                 q_guesses.append((guess, self.answer_pdf[self.answer_lookup[guess]]))
             guesses.append(q_guesses)
 
@@ -73,36 +73,35 @@ class RandomGuesser(AbstractGuesser):
 
         return scores
 
-    @staticmethod
-    def files(directory: str) -> None:
-        output_files = [
-            RandomGuesser.ANSWER_LOOKUP_FILE,
-            RandomGuesser.ANSWER_PDF_FILE,
-            RandomGuesser.ANSWER_SET_FILE
+    @classmethod
+    def targets(cls) -> List[str]:
+        return [
+            cls.ANSWER_LOOKUP_FILE,
+            cls.ANSWER_PDF_FILE,
+            cls.ANSWER_SET_FILE
         ]
-        return [os.path.join(directory, file) for file in output_files]
 
     def save(self, directory: str) -> None:
-        with open(os.path.join(directory, RandomGuesser.ANSWER_LOOKUP_FILE), 'wb') as f:
+        with open(os.path.join(directory, self.ANSWER_LOOKUP_FILE), 'wb') as f:
             pickle.dump(self.answer_lookup, f)
 
-        with open(os.path.join(directory, RandomGuesser.ANSWER_PDF_FILE), 'wb') as f:
+        with open(os.path.join(directory, self.ANSWER_PDF_FILE), 'wb') as f:
             pickle.dump(self.answer_pdf, f)
 
-        with open(os.path.join(directory, RandomGuesser.ANSWER_SET_FILE), 'wb') as f:
+        with open(os.path.join(directory, self.ANSWER_SET_FILE), 'wb') as f:
             pickle.dump(self.answer_set, f)
 
-    @staticmethod
-    def load(directory: str):
+    @classmethod
+    def load(cls, directory: str):
         guesser = RandomGuesser()
 
-        with open(os.path.join(directory, RandomGuesser.ANSWER_LOOKUP_FILE), 'rb') as f:
+        with open(os.path.join(directory, cls.ANSWER_LOOKUP_FILE), 'rb') as f:
             guesser.answer_lookup = pickle.load(f)
 
-        with open(os.path.join(directory, RandomGuesser.ANSWER_PDF_FILE), 'rb') as f:
+        with open(os.path.join(directory, cls.ANSWER_PDF_FILE), 'rb') as f:
             guesser.answer_pdf = pickle.load(f)
 
-        with open(os.path.join(directory, RandomGuesser.ANSWER_SET_FILE), 'rb') as f:
+        with open(os.path.join(directory, cls.ANSWER_SET_FILE), 'rb') as f:
             guesser.answer_set = pickle.load(f)
 
         return guesser

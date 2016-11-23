@@ -16,9 +16,10 @@ QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "`
 STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile(r'[\W_]+')
 PUNCTUATION = string.punctuation
-GRANULARITIES = ["sentence"]
-FOLDS = ["dev", "devtest", "test"]
-FOLDS_NON_NAQT = ["dev", "test"]
+GRANULARITIES = ['sentence']
+FOLDS = ['dev', 'devtest', 'test']
+FOLDS_NON_NAQT = ['dev', 'test']
+ALL_FOLDS = ['train', 'dev', 'test', 'devtest']
 
 LABEL = 'label'
 IR = 'ir'
@@ -30,7 +31,9 @@ CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
 TEXT = 'text'
 
-GUESSER_LIST = [('qanta.guesser.random.RandomGuesser', 'qanta.pipeline.guesser.random.EmptyTask')]
+GUESSER_LIST = [
+    ('qanta.guesser.random.RandomGuesser', 'qanta.pipeline.guesser.random.EmptyTask')
+]
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 

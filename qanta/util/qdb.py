@@ -3,9 +3,8 @@ import sqlite3
 from collections import defaultdict, OrderedDict, Counter
 
 from unidecode import unidecode
-from functional import seq
 
-from qanta.util.constants import MIN_APPEARANCES, PUNCTUATION
+from qanta.util.constants import PUNCTUATION
 from qanta.datasets.abstract import QuestionText, Answer
 
 
@@ -36,19 +35,18 @@ class Question:
         Return a list of all words, removing all punctuation and normalizing
         words
         """
-        for ii in sorted(self.text):
-            for jj in self.split_and_remove_punc(self.text[ii]):
-                yield jj
+        for i in sorted(self.text):
+            for j in self.split_and_remove_punc(self.text[i]):
+                yield j
 
     @staticmethod
     def split_and_remove_punc(text):
-        for ii in text.split():
-            word = "".join(x for x in unidecode(ii.lower()) if x not in PUNCTUATION)
+        for i in text.split():
+            word = "".join(x for x in unidecode(i.lower()) if x not in PUNCTUATION)
             if word:
                 yield word
 
     def partials(self, word_skip=-1):
-        assert(isinstance(word_skip, int)), "Needs an integer %i" % word_skip
         for i in sorted(self.text):
             previous = [self.text[x] for x in sorted(self.text) if x < i]
 
@@ -117,24 +115,6 @@ class QuestionDatabase:
     def all_questions(self):
         return self.query('FROM questions where page != ""', ())
 
-    def guess_questions(self, appearance_filter=lambda pq: len(pq[1]) >= MIN_APPEARANCES):
-        question_pages = self.questions_with_pages()
-
-        dev_questions = seq(question_pages.values()) \
-            .flatten() \
-            .filter(lambda q: q.fold == 'train' or q.fold == 'dev') \
-            .group_by(lambda q: q.page) \
-            .filter(appearance_filter) \
-            .flat_map(lambda pq: pq[1]) \
-            .filter(lambda q: q.fold != 'train')
-
-        test_questions = seq(question_pages.values()) \
-            .flatten() \
-            .filter(lambda q: q.fold == 'test' or q.fold == 'devtest') \
-            .filter(lambda q: q.page != '')
-
-        return (dev_questions + test_questions).list()
-
     def answer_map(self, normalization=lambda x: x):
         c = self._conn.cursor()
         command = 'select answer, page from questions ' + \
@@ -157,13 +137,6 @@ class QuestionDatabase:
                 page_map[row.page] = []
             page_map[row.page].append(row)
         return page_map
-
-    def questions_in_fold(self, fold: str, min_class_examples: int):
-        questions = self.query('FROM questions WHERE page != "" AND fold == ?', (fold,)).values()
-        return seq(questions)\
-            .group_by(lambda q: q.page)\
-            .filter(lambda t: len(t[1]) >= min_class_examples)\
-            .list()
 
     def prune_text(self):
         """

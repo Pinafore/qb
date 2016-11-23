@@ -1,8 +1,7 @@
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 import os
 from unidecode import unidecode
 from random import shuffle
-from multiprocessing import Pool
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, Row
@@ -13,8 +12,10 @@ from qanta.util.guess import GuessList
 from qanta.util import constants as C
 from qanta.util.constants import FOLDS, MIN_APPEARANCES, CLM_PATH
 from qanta.util.qdb import QuestionDatabase
-from qanta.util.environment import data_path, QB_QUESTION_DB
+from qanta.util.environment import data_path
 from qanta.util.spark_features import SCHEMA
+
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 from qanta.extractors.label import Labeler
 from qanta.extractors.lm import LanguageModel
@@ -88,13 +89,14 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     return feature
 
 
-def spark_batch(sc: SparkContext, feature_names, question_db: str, guess_db: str,
+def spark_batch(sc: SparkContext, feature_names, question_db_path: str, guess_db: str,
                 granularity='sentence'):
     sql_context = SparkSession.builder.getOrCreate()
-    question_db = QuestionDatabase(question_db)
+    question_db = QuestionDatabase(question_db_path)
 
     log.info("Loading Questions")
-    questions = question_db.guess_questions()
+    qb_dataset = QuizBowlDataset(5, question_db_path)
+    questions = qb_dataset.questions_in_folds(['dev', 'devtest', 'test'])
 
     log.info("Loading Guesses")
     guess_list = GuessList(guess_db)
@@ -152,51 +154,3 @@ def evaluate_feature_question(task, b_features, granularity):
                 )
             )
     return result
-
-
-def create_guesses_for_question(question, deep_feature, word_skip=-1):
-    final_guesses = defaultdict(dict)
-
-    # Gather all the guesses
-    for sentence, token, text in question.partials(word_skip):
-        # We have problems at the very start
-        if sentence == 0 and token == word_skip:
-            continue
-
-        guesses = deep_feature.text_guess(text)
-        for guess in guesses:
-            final_guesses[(sentence, token)][guess] = guesses[guess]
-        # add the correct answer if this is a training document and
-        if question.fold == "train" and question.page not in guesses:
-            final_guesses[(sentence, token)][question.page] = deep_feature.score_one_guess(
-                question.page, text)
-
-    return final_guesses
-
-
-def parallel_generate_guesses(task):
-    return task[0].qnum, task[0].fold, create_guesses_for_question(task[0], task[1])
-
-
-def create_guesses(guess_db_path, processes=8):
-    q_db = QuestionDatabase(QB_QUESTION_DB)
-    guess_list = GuessList(guess_db_path)
-
-    deep_feature = instantiate_feature('deep', q_db)
-    questions = q_db.guess_questions()
-    tasks = []
-    for q in questions:
-        tasks.append((q, deep_feature))
-
-    with Pool(processes=processes) as pool:
-        question_guesses = pool.imap(parallel_generate_guesses, tasks)
-        i, n = 0, len(tasks)
-        log.info("Guess generation starting for {0} questions".format(n))
-        for qnum, fold, guesses in question_guesses:
-            guess_list.save_guesses('deep', qnum, fold, guesses)
-            log.info("Progress: {0} / {1} questions completed".format(i, n))
-            i += 1
-
-    log.info("Guess generation completed, generating indices")
-    guess_list.create_indexes()
-    log.info("Guess generation done")

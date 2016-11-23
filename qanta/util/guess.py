@@ -63,21 +63,6 @@ class GuessList:
         sql = 'CREATE INDEX Idx3 ON guesses(guesser);'
         c.execute(sql)
 
-    def guesses_for_question(self, question) -> Dict[Tuple[int, int], Set[str]]:
-        """
-        Returns a list of guesses for a given question.
-        :param question:
-        :return:
-        """
-        query = 'SELECT sentence, token, page FROM guesses WHERE question=?;'
-        c = self._cursor()
-        c.execute(query, (question.qnum,))
-
-        guesses = defaultdict(set)
-        for sentence, token, page in c:
-            guesses[(sentence, token)].add(page)
-        return guesses
-
     def all_guesses(self, allow_train=False) -> Dict[int, Dict[Tuple[int, int], Set[str]]]:
         if allow_train:
             query = 'SELECT question, sentence, token, page FROM guesses'
@@ -122,29 +107,6 @@ class GuessList:
                 wrong.append(q)
             total += 1
         return correct / total, total, wrong
-
-    def get_guesses(self, guesser, question):
-        query = 'SELECT sentence, token, page, score ' + \
-                'FROM guesses WHERE question=? AND guesser=?;'
-        c = self._cursor()
-        c.execute(query, (question.qnum, guesser,))
-
-        guesses = defaultdict(dict)
-        for sentence, token, page, score in c:
-            guesses[(sentence, token)][page] = score
-        return guesses
-
-    def deep_guess_cache(self):
-        query = 'SELECT question, sentence, token, page, score FROM guesses WHERE guesser="deep"'
-        c = self._cursor()
-        c.execute(query)
-        guesses = {}
-
-        for question, sentence, token, page, score in c:
-            if question not in guesses:
-                guesses[question] = defaultdict(dict)
-            guesses[question][page][(sentence, token)] = score
-        return guesses
 
     def save_guesses(self, guesser, question, fold, guesses):
         rows = []

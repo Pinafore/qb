@@ -1,7 +1,11 @@
+import os
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
 
+import pandas as pd
+
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -50,7 +54,7 @@ class AbstractGuesser(metaclass=ABCMeta):
 
     @abstractmethod
     def guess(self,
-              questions: List[QuestionText], n_guesses: int) -> List[List[Tuple[Answer, float]]]:
+              questions: List[QuestionText], max_n_guesses: int) -> List[List[Tuple[Answer, float]]]:
         """
         Given a list of questions as text, return n_guesses number of guesses per question. Guesses
         must be returned in canonical form, are returned with a score in which higher is better, and
@@ -77,9 +81,9 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def files(directory: str) -> List[str]:
+    def targets(cls) -> List[str]:
         """
         List of files located in directory that are produced by the train method and loaded by the
         save method.
@@ -88,9 +92,13 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         pass
 
-    @staticmethod
+    @classmethod
+    def files(cls, directory: str) -> None:
+        return [os.path.join(directory, file) for file in cls.targets()]
+
+    @classmethod
     @abstractmethod
-    def load(directory: str):
+    def load(cls, directory: str):
         """
         Given the directory used for saving this guesser, create a new instance of the guesser, and
         load it for guessing or scoring.
@@ -114,3 +122,79 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         pass
 
+    def generate_guesses(self, max_n_guesses: int, folds: List[str]) -> pd.DataFrame:
+        """
+        Generates guesses for this guesser for all questions in specified folds and returns it as a
+        DataFrame
+
+        WARNING: this method assumes that the guesser has been loaded with load or trained with
+        train. Unexpected behavior may occur if that is not the case.
+        :param max_n_guesses: generate at most this many guesses per question, sentence, and token
+        :param folds: which folds to generate guesses for
+        :return: dataframe of guesses
+        """
+        dataset = QuizBowlDataset(5)
+        questions_by_fold = dataset.questions_by_fold()
+
+        q_folds = []
+        q_qnums = []
+        q_sentences = []
+        q_tokens = []
+        question_texts = []
+
+        for fold in folds:
+            questions = questions_by_fold[fold]
+            for q in questions:
+                for sent, token, text_list in q.partials():
+                    text = ' '.join(text_list)
+                    question_texts.append(text)
+                    q_folds.append(fold)
+                    q_qnums.append(q.qnum)
+                    q_sentences.append(sent)
+                    q_tokens.append(token)
+
+        guesses_per_question = self.guess(question_texts, max_n_guesses)
+
+        assert len(guesses_per_question) == len(question_texts)
+
+        df_qnums = []
+        df_sentences = []
+        df_tokens = []
+        df_guesses = []
+        df_scores = []
+        df_folds = []
+        df_guessers = []
+        guesser_name = self.display_name
+
+        for i in range(len(question_texts)):
+            guesses_with_scores = guesses_per_question[i]
+            fold = q_folds[i]
+            qnum = q_qnums[i]
+            sentence = q_sentences[i]
+            token = q_tokens[i]
+            for guess, score in guesses_with_scores:
+                df_qnums.append(qnum)
+                df_sentences.append(sentence)
+                df_tokens.append(token)
+                df_guesses.append(guess)
+                df_scores.append(score)
+                df_folds.append(fold)
+                df_guessers.append(guesser_name)
+
+        return pd.DataFrame({
+            'qnum': df_qnums,
+            'sentence': df_sentences,
+            'token': df_tokens,
+            'guess': df_guesses,
+            'score': df_scores,
+            'fold': df_folds,
+            'guesser': df_guessers
+        })
+
+    @staticmethod
+    def save_guesses(guess_df: pd.DataFrame, directory: str):
+        folds = ['train', 'dev', 'test', 'devtest']
+        for fold in folds:
+            fold_df = guess_df[guess_df.fold == fold]
+            output_path = os.path.join(directory, 'guesses_{}.pickle'.format(fold))
+            fold_df.to_pickle(output_path)

@@ -5,6 +5,7 @@ from qanta.extractors.abstract import FeatureExtractor
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.constants import SENTENCE_STATS
 from qanta.util.io import safe_open
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 
 class Labeler(FeatureExtractor):
@@ -45,9 +46,10 @@ class Labeler(FeatureExtractor):
 
 
 def compute_question_stats(question_db: QuestionDatabase):
+    dataset = QuizBowlDataset(5, qb_question_db=question_db)
+    train_dev_questions = dataset.questions_in_folds(('train', 'dev'))
     question_lengths = [len(q.flatten_text().split())
-                        for q in question_db.guess_questions()
-                        if q.fold == 'train' or q.fold == 'dev']
+                        for q in train_dev_questions]
 
     mean = np.mean(question_lengths)
     std = np.std(question_lengths)

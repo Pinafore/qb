@@ -16,11 +16,16 @@ def get_class(instance_module: str, instance_class: str):
     return py_instance_class
 
 
+def output_path(guesser_module: str, guesser_class: str, file):
+    guesser_path = '{}.{}'.format(guesser_module, guesser_class)
+    return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
+
+
 class TrainGuesser(Task):
-    guesser_module = luigi.Parameter()
-    guesser_class = luigi.Parameter()
-    dependency_module = luigi.Parameter()
-    dependency_class = luigi.Parameter()
+    guesser_module = luigi.Parameter()  # type: str
+    guesser_class = luigi.Parameter()  # type: str
+    dependency_module = luigi.Parameter()  # type: str
+    dependency_class = luigi.Parameter()  # type: str
 
     def requires(self):
         dependency_class = get_class(self.dependency_module, self.dependency_class)
@@ -35,21 +40,54 @@ class TrainGuesser(Task):
         for name, dataset_instance in datasets.items():
             data[name] = dataset_instance.training_data()
         guesser_instance.train(data)
-        guesser_instance.save(self._output_path(''))
+        guesser_instance.save(output_path(self.guesser_module, self.guesser_class, ''))
 
     def output(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_targets = [
             LocalTarget(file)
-            for file in guesser_class.files(self._output_path(''))]
+            for file in guesser_class.files(
+                output_path(self.guesser_module, self.guesser_class, '')
+            )]
 
         return [
-            LocalTarget(self._output_path(''))
+            LocalTarget(output_path(self.guesser_module, self.guesser_class, ''))
         ] + guesser_targets
 
-    def _output_path(self, file):
-        guesser_path = '{}.{}'.format(self.guesser_module, self.guesser_class)
-        return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
+
+class GenerateGuesses(Task):
+    guesser_module = luigi.Parameter()  # type: str
+    guesser_class = luigi.Parameter()  # type: str
+    dependency_module = luigi.Parameter()  # type: str
+    dependency_class = luigi.Parameter()  # type: str
+
+    def requires(self):
+        yield TrainGuesser(
+            guesser_module=self.guesser_module,
+            guesser_class=self.guesser_class,
+            dependency_module=self.dependency_module,
+            dependency_class=self.dependency_class
+        )
+
+    def run(self):
+        guesser_class = get_class(self.guesser_module, self.guesser_class)
+        guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
+        guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
+
+        guess_df = guesser_instance.generate_guesses(c.N_GUESSES, c.ALL_FOLDS)
+        guesser_class.save_guesses(guess_df, guesser_directory)
+
+    def output(self):
+        return [
+            LocalTarget(output_path(
+                self.guesser_module, self.guesser_class, 'guesses_train.pickle')),
+            LocalTarget(output_path(
+                self.guesser_module, self.guesser_class, 'guesses_dev.pickle')),
+            LocalTarget(output_path(
+                self.guesser_module, self.guesser_class, 'guesses_test.pickle')),
+            LocalTarget(output_path(
+                self.guesser_module, self.guesser_class, 'guesses_devtest.pickle')),
+        ]
 
 
 class AllGuessers(WrapperTask):
@@ -63,7 +101,7 @@ class AllGuessers(WrapperTask):
             dependency_module = '.'.join(parts[:-1])
             dependency_class = parts[-1]
 
-            yield TrainGuesser(
+            yield GenerateGuesses(
                 guesser_module=guesser_module,
                 guesser_class=guesser_class,
                 dependency_module=dependency_module,
