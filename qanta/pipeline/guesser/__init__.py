@@ -28,9 +28,10 @@ class TrainGuesser(Task):
     dependency_class = luigi.Parameter()  # type: str
 
     def requires(self):
-        dependency_class = get_class(self.dependency_module, self.dependency_class)
         yield Preprocess()
-        yield dependency_class()
+        if self.dependency_class is not None and self.dependency_module is not None:
+            dependency_class = get_class(self.dependency_module, self.dependency_class)
+            yield dependency_class()
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
@@ -97,9 +98,13 @@ class AllGuessers(WrapperTask):
             guesser_module = '.'.join(parts[:-1])
             guesser_class = parts[-1]
 
-            parts = dependency.split('.')
-            dependency_module = '.'.join(parts[:-1])
-            dependency_class = parts[-1]
+            if dependency is None:
+                dependency_module = None
+                dependency_class = None
+            else:
+                parts = dependency.split('.')
+                dependency_module = '.'.join(parts[:-1])
+                dependency_class = parts[-1]
 
             yield GenerateGuesses(
                 guesser_module=guesser_module,
