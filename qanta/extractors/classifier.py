@@ -1,11 +1,11 @@
 import pandas as pd
 
 from qanta.util.constants import CLASSIFIER_TYPES
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.learning.classifier import load_classifier
 
 
-class Classifier(FeatureExtractor):
+class Classifier(AbstractFeatureExtractor):
     def __init__(self):
         super(Classifier, self).__init__()
         self.classifiers = {}
@@ -32,5 +32,5 @@ class Classifier(FeatureExtractor):
 
         feature_string = ' '.join(features)
 
-        for guess in guesses:
-            yield feature_string, guess
+        for _ in guesses:
+            yield feature_string

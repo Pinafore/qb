@@ -6,7 +6,7 @@ from string import ascii_lowercase, punctuation
 from functional import seq
 from unidecode import unidecode
 
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
 from qanta.preprocess import format_guess
 
@@ -25,7 +25,7 @@ def normalize(text):
     return ''.join(x for x in text if x in valid_strings)
 
 
-class DeepExtractor(FeatureExtractor):
+class DeepExtractor(AbstractFeatureExtractor):
     def __init__(self, classifier, params, vocab, ners, page_dict):
         super(DeepExtractor, self).__init__()
         self.classifier = pickle.load(open(classifier, 'rb'), encoding='latin1')
@@ -118,9 +118,9 @@ class DeepExtractor(FeatureExtractor):
             formatted_guess = format_guess(guess)
             guess_id = self.vdict[formatted_guess]
             if guess_id in lookup:
-                yield self.vw_from_score(lookup[guess_id]), guess
+                yield self.vw_from_score(lookup[guess_id])
             else:
-                yield self.vw_from_score(-1), guess
+                yield self.vw_from_score(-1)
 
     def vw_from_score(self, val):
         res = "|%s" % self.name

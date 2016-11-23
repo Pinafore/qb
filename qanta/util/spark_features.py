@@ -13,14 +13,15 @@ from qanta.util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
 log = logging.get(__name__)
 
 SCHEMA = StructType([
-    StructField('feature_name', StringType(), True),
-    StructField('fold', StringType(), True),
-    StructField('guess', StringType(), True),
-    StructField('qnum', IntegerType(), True),
-    StructField('sentence', IntegerType(), True),
-    StructField('token', IntegerType(), True),
-    StructField('meta', StringType(), True),
-    StructField('feat', StringType(), True)
+    StructField('guesser', StringType(), False),
+    StructField('fold', StringType(), False),
+    StructField('qnum', IntegerType(), False),
+    StructField('sentence', IntegerType(), False),
+    StructField('token', IntegerType(), False),
+    StructField('guess', StringType(), False),
+    StructField('feature_name', StringType(), False),
+    StructField('feature_value', StringType(), False),
+    StructField('meta', StringType(), False)
 ])
 
 

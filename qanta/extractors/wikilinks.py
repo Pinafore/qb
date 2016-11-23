@@ -8,10 +8,10 @@ from wikipedia.exceptions import PageError
 from clm.lm_wrapper import LanguageModelBase
 from qanta.util.constants import COUNTRY_LIST_PATH, WIKIFIER_OUTPUT_TARGET
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia, LinkResult
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
 
 
-class WikiLinks(FeatureExtractor):
+class WikiLinks(AbstractFeatureExtractor):
     def __init__(self,
                  xml_location=WIKIFIER_OUTPUT_TARGET,
                  wikipedia="data/external/wikipedia",
@@ -25,14 +25,15 @@ class WikiLinks(FeatureExtractor):
         self._matches = None
 
     def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        FeatureExtractor.set_metadata(self, answer, category, qnum, sent, token, guesses, fold)
+        super(WikiLinks, self).set_metadata(
+            self, answer, category, qnum, sent, token, guesses, fold)
         # print(qnum, sent, token, answer)
         if qnum not in self.links:
             self.load_xml(qnum)
 
     def score_guesses(self, guesses, text):
         for guess in guesses:
-            yield self.score_one_guess(guess, text), guess
+            yield self.score_one_guess(guess, text)
 
     def score_one_guess(self, title, text):
         if hash(text) != self._cache:

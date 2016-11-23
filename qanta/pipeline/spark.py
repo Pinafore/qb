@@ -52,13 +52,13 @@ class ClassifierReport(Task):
         classifier.create_report(model, self.class_type)
 
 
-class AllClassifierPickles(Task):
+class AllClassifierPickles(WrapperTask):
     def requires(self):
         for t in c.CLASSIFIER_TYPES:
             yield ClassifierPickle(class_type=t)
 
 
-class AllClassifierReports(Task):
+class AllClassifierReports(WrapperTask):
     def requires(self):
         for t in c.CLASSIFIER_TYPES:
             yield ClassifierReport(class_type=t)
@@ -75,8 +75,7 @@ class ComputeParagraphStats(Task):
         return LocalTarget(c.SENTENCE_STATS)
 
     def run(self):
-        db = QuestionDatabase(QB_QUESTION_DB)
-        compute_question_stats(db)
+        compute_question_stats(QB_QUESTION_DB)
 
 
 class ExtractFastFeatures(Task):
@@ -88,7 +87,7 @@ class ExtractFastFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.FAST_FEATURES):
+        for fold, feature in product(c.ALL_FOLDS, c.FAST_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
@@ -106,7 +105,7 @@ class ExtractComputeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.COMPUTE_OPT_FEATURES):
+        for fold, feature in product(c.ALL_FOLDS, c.COMPUTE_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
@@ -123,7 +122,7 @@ class ExtractDeepFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.DEEP_OPT_FEATURES):
+        for fold, feature in product(c.ALL_FOLDS, c.DEEP_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
@@ -141,7 +140,7 @@ class ExtractLMFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.LM_OPT_FEATURES):
+        for fold, feature in product(c.ALL_FOLDS, c.LM_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets
@@ -158,7 +157,7 @@ class ExtractMentionsFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.MENTIONS_OPT_FEATURES):
+        for fold, feature in product(c.ALL_FOLDS, c.MENTIONS_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
         return targets

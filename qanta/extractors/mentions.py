@@ -9,7 +9,7 @@ from unidecode import unidecode
 from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.util.environment import data_path
 from qanta.util.constants import KEN_LM
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
@@ -77,7 +77,7 @@ def build_lm_data(path, output):
             o.write("%s\n" % " ".join(kTOKENIZER(unidecode(ss.lower()))))
 
 
-class Mentions(FeatureExtractor):
+class Mentions(AbstractFeatureExtractor):
     def __init__(self, answers):
         super().__init__()
         self.name = "mentions"
@@ -140,7 +140,7 @@ class Mentions(FeatureExtractor):
                 res += " "
                 res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
 
-            yield res, guess
+            yield res
 
     def generate_refexs(self, answer_list):
         """

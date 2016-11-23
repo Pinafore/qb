@@ -43,7 +43,7 @@ def create_category_pipeline():
         ('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=3)),
         ('select_k', SelectKBest(k=1300)),
         ('csc', CSCTransformer()),
-        ('xgb', XGBClassifier(max_depth=12, n_estimators=400))
+        ('xgb', XGBClassifier(max_depth=12))
     ])
 
 

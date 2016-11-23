@@ -1,20 +1,21 @@
-from collections import namedtuple
+from typing import List, NamedTuple
 import os
-from unidecode import unidecode
-from random import shuffle
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, Row
 
+import pandas as pd
+
 from qanta import logging
+from qanta.guesser.abstract import AbstractGuesser
+
+from qanta.util.qdb import Question
+from qanta.util.io import safe_path
 from qanta.util.build_whoosh import text_iterator
-from qanta.util.guess import GuessList
-from qanta.util import constants as C
-from qanta.util.constants import FOLDS, MIN_APPEARANCES
+from qanta.util import constants as c
+from qanta.util.constants import MIN_APPEARANCES
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.spark_features import SCHEMA
-
-from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 from qanta.extractors.label import Labeler
 from qanta.extractors.lm import LanguageModel
@@ -27,23 +28,7 @@ from qanta.extractors.text import TextExtractor
 
 
 log = logging.get(__name__)
-Task = namedtuple('Task', ['question', 'guesses'])
-
-
-def feature_lines(question, guesses_needed, granularity, feature_generator):
-    for sentence, token in guesses_needed:
-        if granularity == "sentence" and token > 0:
-            continue
-
-        # Set metadata so the labeler can create ids and weights
-        guess_size = len(guesses_needed[(sentence, token)])
-        feature_generator.set_metadata(question.page, question.category, question.qnum, sentence,
-                                       token, guess_size, question)
-
-        for feat, guess in feature_generator.score_guesses(
-                guesses_needed[(sentence, token)],
-                question.get_text(sentence, token)):
-            yield sentence, token, guess, feat
+Task = NamedTuple('Task', [('question', Question), ('guess_df', pd.DataFrame)])
 
 
 def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
@@ -53,7 +38,7 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     """
 
     feature = None
-    print("Loading feature %s ..." % feature_name)
+    log.info('Loading feature {} ...'.format(feature_name))
     if feature_name == "lm":
         feature = LanguageModel()
     elif feature_name == "deep":
@@ -61,10 +46,10 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
         for page in question_db.get_all_pages():
             page_dict[page.lower().replace(' ', '_')] = page
         feature = DeepExtractor(
-            C.DEEP_DAN_CLASSIFIER_TARGET,
-            C.DEEP_DAN_PARAMS_TARGET,
-            C.DEEP_VOCAB_TARGET,
-            C.NERS_PATH,
+            c.DEEP_DAN_CLASSIFIER_TARGET,
+            c.DEEP_DAN_PARAMS_TARGET,
+            c.DEEP_VOCAB_TARGET,
+            c.NERS_PATH,
             page_dict
         )
     elif feature_name == "wikilinks":
@@ -88,68 +73,97 @@ def instantiate_feature(feature_name: str, question_db: QuestionDatabase):
     return feature
 
 
-def spark_batch(sc: SparkContext, feature_names, question_db_path: str, guess_db: str,
-                granularity='sentence'):
+def spark_batch(sc: SparkContext, feature_names: List[str]):
     sql_context = SparkSession.builder.getOrCreate()
-    question_db = QuestionDatabase(question_db_path)
 
     log.info("Loading Questions")
-    qb_dataset = QuizBowlDataset(5, question_db_path)
-    questions = qb_dataset.questions_in_folds(['dev', 'devtest', 'test'])
+    question_db = QuestionDatabase()
+    question_map = question_db.all_questions()
 
     log.info("Loading Guesses")
-    guess_list = GuessList(guess_db)
-    guess_lookup = guess_list.all_guesses(allow_train=True)
+    guess_df = None
+    for guesser_class, _ in c.GUESSER_LIST:
+        input_path = os.path.join(c.GUESSER_TARGET_PREFIX, guesser_class)
+        if guess_df is None:
+            guess_df = AbstractGuesser.load_guesses(input_path)
+        else:
+            new_guess_df = AbstractGuesser.load_guesses(input_path)
+            guess_df = pd.concat([guess_df, new_guess_df])
 
-    log.info("Loading tasks")
-    tasks = [Task(q, guess_lookup[q.qnum]) for q in questions]
-    shuffle(tasks)
-    log.info("Number of tasks: {0}".format(len(tasks)))
+    log.info("Number of guesses for feature extraction: {0}".format(len(guess_df)))
 
+    tasks = []  # type: List[Task]
+    for name, group in guess_df.groupby(['qnum', 'sentence', 'token', 'guesser']):
+        qnum = int(name[0])
+        question = question_map[qnum]
+        tasks.append(Task(question, group))
+
+    log.info('Number of tasks (unique qnum/sentence/token triplets): {}'.format(len(tasks)))
+
+    log.info('Loading features: {}'.format(feature_names))
     features = {name: instantiate_feature(name, question_db) for name in feature_names}
-
     b_features = sc.broadcast(features)
 
-    def f_eval(x):
-        return evaluate_feature_question(x, b_features, granularity)
+    def f_eval(x: Task) -> List[Row]:
+        return evaluate_feature_question(x, b_features)
 
     log.info("Beginning feature job")
-    feature_rdd = sc.parallelize(tasks)\
-        .repartition(150 * len(feature_names))\
-        .flatMap(f_eval)
+    # Hand tuned value of 5000 to keep the task size below recommended 100KB
+    feature_rdd = sc.parallelize(tasks, 5000 * len(feature_names)).flatMap(f_eval)
 
     feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).cache()
-    feature_df.count()
+
     log.info("Beginning write job")
-    for fold in FOLDS:
+    for fold in c.ALL_FOLDS:
         feature_df_with_fold = feature_df.filter('fold = "{0}"'.format(fold)).cache()
         for name in feature_names:
-            filename = 'output/features/{0}/sentence.{1}.parquet'.format(fold, name)
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            feature_df_with_fold.filter('feature_name = "{0}"'.format(name))\
-                .write.save(filename, mode='overwrite')
+            filename = safe_path('output/features/{0}/sentence.{1}.parquet'.format(fold, name))
+            feature_df_with_fold\
+                .filter('feature_name = "{0}"'.format(name))\
+                .write\
+                .partitionBy('qnum')\
+                .parquet(filename, mode='overwrite')
         feature_df_with_fold.unpersist()
     log.info("Computation Completed, stopping Spark")
 
 
-def evaluate_feature_question(task, b_features, granularity):
+def evaluate_feature_question(task: Task, b_features) -> List[Row]:
     features = b_features.value
     question = task.question
+    guess_df = task.guess_df
     result = []
-    for feature_name in features:
-        feature_generator = features[feature_name]
-        for sentence, token, guess, feat in feature_lines(
-                question, task.guesses, granularity, feature_generator):
-            result.append(
-                Row(
-                    feature_name,
-                    question.fold,
-                    guess,
-                    question.qnum,
+    if len(guess_df) > 0:
+        for feature_name in features:
+            feature_generator = features[feature_name]
+            # guess_df is dataframe that contains values that are explicitly unique by
+            # (qnum, sentence, token, guesser).
+            #
+            # This means that it is guaranteed that qnum, sentence, and token are all the same in
+            # guess_df so it is safe and efficient to compute the text before iterating over guesses
+            # as long as there is at least one guess. Additionally since a question is only ever
+            # in one fold getting the fold is safe as well.
+            first_row = guess_df.iloc[0]
+
+            # Must cast numpy int64 to int for spark
+            qnum = int(question.qnum)
+            sentence = int(first_row.sentence)
+            token = int(first_row.token)
+            fold = first_row.fold
+            guesser = first_row.guesser
+            text = question.get_text(sentence, token)
+            feature_values = feature_generator.score_guesses(guess_df.guess, text)
+
+            for f_value, guess in zip(feature_values, guess_df.guess):
+                row = Row(
+                    guesser,
+                    fold,
+                    qnum,
                     sentence,
                     token,
-                    '%i\t%i\t%i\t%s' % (question.qnum, sentence, token, unidecode(guess)),
-                    feat
+                    guess,
+                    feature_name,
+                    f_value,
+                    '{}\t{}\t{}\t{}'.format(question.qnum, sentence, token, guess)
                 )
-            )
+                result.append(row)
     return result

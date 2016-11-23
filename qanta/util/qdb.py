@@ -5,6 +5,7 @@ from collections import defaultdict, OrderedDict, Counter
 from unidecode import unidecode
 
 from qanta.util.constants import PUNCTUATION
+from qanta.util.environment import QB_QUESTION_DB
 from qanta.datasets.abstract import QuestionText, Answer
 
 
@@ -91,7 +92,7 @@ class Question:
 
 
 class QuestionDatabase:
-    def __init__(self, location):
+    def __init__(self, location=QB_QUESTION_DB):
         self._conn = sqlite3.connect(location)
 
     def query(self, command: str, arguments) -> Dict[str, Question]:

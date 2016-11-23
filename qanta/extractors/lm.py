@@ -1,10 +1,10 @@
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.util.environment import data_path
 from qanta.util.constants import CLM_PATH
 from clm.lm_wrapper import LanguageModelReader
 
 
-class LanguageModel(FeatureExtractor):
+class LanguageModel(AbstractFeatureExtractor):
     def __init__(self):
         super().__init__()
         self.filename = data_path(CLM_PATH)
@@ -41,4 +41,4 @@ class LanguageModel(FeatureExtractor):
             feature = "|%s %s" % (
                 self.name,
                 " ".join(self.lm.feature_line(x, guess, text) for x in self.corpora))
-            yield feature, guess
+            yield feature

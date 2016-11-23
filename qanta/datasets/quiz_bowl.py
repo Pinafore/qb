@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Iterable
 
 from functional import seq
 
@@ -56,7 +56,7 @@ class QuizBowlDataset(AbstractDataset):
             'devtest': devtest_questions
         }
 
-    def questions_in_folds(self, folds: List[str]) -> List[Question]:
+    def questions_in_folds(self, folds: Iterable[str]) -> List[Question]:
         by_fold = self.questions_by_fold()
         questions = []
         for fold in folds:

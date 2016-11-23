@@ -6,6 +6,7 @@ import pandas as pd
 
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
+from qanta.util.constants import ALL_FOLDS
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -205,7 +206,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             fold_df.to_pickle(output_path)
 
     @staticmethod
-    def load_guesses(folds: List[str], directory: str) -> pd.DataFrame:
+    def load_guesses(directory: str, folds=ALL_FOLDS) -> pd.DataFrame:
         assert len(folds) > 0
         guess_df = None
         for fold in folds:

@@ -2,7 +2,7 @@ import click
 from pyspark import SparkConf, SparkContext
 
 from qanta.util.constants import FEATURE_NAMES
-from qanta.util.environment import QB_QUESTION_DB, QB_GUESS_DB, QB_SPARK_MASTER
+from qanta.util.environment import QB_SPARK_MASTER
 from qanta.util import spark_features
 import qanta.extract_features as ef
 
@@ -26,7 +26,7 @@ def extract_features(features):
     sc = create_spark_context(
         app_name='Quiz Bowl: ' + ' '.join(features)
     )
-    ef.spark_batch(sc, features, QB_QUESTION_DB, QB_GUESS_DB)
+    ef.spark_batch(sc, features)
     sc.stop()
 
 

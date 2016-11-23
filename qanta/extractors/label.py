@@ -1,14 +1,14 @@
 import numpy as np
 import pickle
 from unidecode import unidecode
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.constants import SENTENCE_STATS
 from qanta.util.io import safe_open
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 
-class Labeler(FeatureExtractor):
+class Labeler(AbstractFeatureExtractor):
     def __init__(self, question_db: QuestionDatabase):
         super(Labeler, self).__init__()
         self.name = 'label'
@@ -36,17 +36,17 @@ class Labeler(FeatureExtractor):
                 feature = "1 '%s |guess %s sent:%0.1f count:%f words_seen:%i norm_words_seen:%f" % \
                     (self._id, unidecode(formatted_guess).replace(" ", "_"),
                      self._sent, self.counts.get(formatted_guess, -2), n_words, normalized_count)
-                yield feature, guess
+                yield feature
             else:
                 feature = "-1 %i '%s |guess %s sent:%0.1f count:%f words_seen:%i norm_words_seen:%f" % \
                     (self._num_guesses, self._id,
                      unidecode(formatted_guess).replace(" ", "_"),
                      self._sent, self.counts.get(formatted_guess, -2), n_words, normalized_count)
-                yield feature, guess
+                yield feature
 
 
-def compute_question_stats(question_db: QuestionDatabase):
-    dataset = QuizBowlDataset(5, qb_question_db=question_db)
+def compute_question_stats(question_db_path: str):
+    dataset = QuizBowlDataset(5, qb_question_db=question_db_path)
     train_dev_questions = dataset.questions_in_folds(('train', 'dev'))
     question_lengths = [len(q.flatten_text().split())
                         for q in train_dev_questions]

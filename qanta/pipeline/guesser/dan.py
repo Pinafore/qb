@@ -1,5 +1,3 @@
-import os
-
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 
@@ -10,7 +8,6 @@ from qanta.guesser.util.format_dan import preprocess
 from qanta.guesser.util import load_embeddings
 from qanta.guesser import dan
 from qanta.guesser.classify.learn_classifiers import print_recall_at_n
-from qanta.extract_features import create_guesses
 
 
 class FormatDan(Task):
@@ -101,9 +98,4 @@ class CreateGuesses(Task):
         return LocalTarget(e.QB_GUESS_DB)
 
     def run(self):
-        create_guesses(e.QB_GUESS_DB)
-
-
-@CreateGuesses.event_handler(luigi.Event.FAILURE)
-def reset_guess_db(task, exception):
-    os.remove(e.QB_GUESS_DB)
+        pass
