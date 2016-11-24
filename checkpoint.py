@@ -16,7 +16,10 @@ PRE_PROCESS_TARGETS = {
 
 DEEP_TARGETS = {'output/deep'}
 
-GUESS_TARGETS = {'output/guesses.db'}
+GUESS_TARGETS = {
+    'output/guesser',
+    'output/guesser/sentence_stats.pickle'
+}
 
 CLM_TARGETS = {
     'output/language_model.txt',
@@ -30,6 +33,11 @@ CLASSIFIER_TARGETS = {
 }
 
 SPARK_COMPUTE_TARGETS = {
+    'output/features/train/sentence.answer_present.parquet',
+    'output/features/train/sentence.classifier.parquet',
+    'output/features/train/sentence.label.parquet',
+    'output/features/train/sentence.wikilinks.parquet',
+    'output/features/train/sentence.text.parquet',
     'output/features/dev/sentence.answer_present.parquet',
     'output/features/dev/sentence.classifier.parquet',
     'output/features/dev/sentence.label.parquet',
@@ -48,18 +56,21 @@ SPARK_COMPUTE_TARGETS = {
 }
 
 SPARK_LM_TARGETS = {
+    'output/features/train/sentence.lm.parquet',
     'output/features/dev/sentence.lm.parquet',
     'output/features/devtest/sentence.lm.parquet',
     'output/features/test/sentence.lm.parquet'
 }
 
 SPARK_MENTIONS_TARGETS = {
+    'output/features/train/sentence.mentions.parquet',
     'output/features/dev/sentence.mentions.parquet',
     'output/features/devtest/sentence.mentions.parquet',
     'output/features/test/sentence.mentions.parquet'
 }
 
 SPARK_DEEP_TARGETS = {
+    'output/features/train/sentence.deep.parquet',
     'output/features/dev/sentence.deep.parquet',
     'output/features/devtest/sentence.deep.parquet',
     'output/features/test/sentence.deep.parquet'
