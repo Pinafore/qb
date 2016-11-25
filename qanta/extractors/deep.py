@@ -7,6 +7,9 @@ from functional import seq
 from unidecode import unidecode
 
 from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.util import constants as c
+from qanta.util.qdb import QuestionDatabase
+from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
 from qanta.preprocess import format_guess
 
@@ -26,13 +29,17 @@ def normalize(text):
 
 
 class DeepExtractor(AbstractFeatureExtractor):
-    def __init__(self, classifier, params, vocab, ners, page_dict):
+    def __init__(self):
         super(DeepExtractor, self).__init__()
-        self.classifier = pickle.load(open(classifier, 'rb'), encoding='latin1')
-        self.params = pickle.load(open(params, 'rb'), encoding='latin1')
+        self.classifier = pickle.load(open(c.DEEP_DAN_CLASSIFIER_TARGET, 'rb'), encoding='latin1')
+        self.params = pickle.load(open(c.DEEP_DAN_PARAMS_TARGET, 'rb'), encoding='latin1')
         self.d = self.params[-1].shape[0]
-        self.vocab, self.vdict = pickle.load(open(vocab, 'rb'), encoding='latin1')
-        self.ners = pickle.load(open(ners, 'rb'), encoding='latin1')
+        self.vocab, self.vdict = pickle.load(open(c.DEEP_VOCAB_TARGET, 'rb'), encoding='latin1')
+        self.ners = pickle.load(open(c.NERS_PATH, 'rb'), encoding='latin1')
+        question_db = QuestionDatabase(QB_QUESTION_DB)
+        page_dict = {}
+        for page in question_db.get_all_pages():
+            page_dict[page.lower().replace(' ', '_')] = page
         self.page_dict = page_dict
         self.name = 'deep'
 

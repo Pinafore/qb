@@ -17,8 +17,7 @@ STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile(r'[\W_]+')
 PUNCTUATION = string.punctuation
 GRANULARITIES = ['sentence']
-FOLDS = ['dev', 'devtest', 'test']
-FOLDS_NON_NAQT = ['dev', 'test']
+VW_FOLDS = ['dev', 'devtest', 'test']
 ALL_FOLDS = ['train', 'dev', 'test', 'devtest']
 
 LABEL = 'label'
@@ -30,6 +29,9 @@ ANSWER_PRESENT = 'answer_present'
 CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
 TEXT = 'text'
+
+# Do not change order, it matters for writing in correct order
+FEATURE_NAMES = [LABEL, LM, MENTIONS, ANSWER_PRESENT, CLASSIFIER, WIKILINKS, TEXT]
 
 GUESSER_LIST = [
     ('qanta.guesser.random.RandomGuesser', 'qanta.pipeline.guesser.random.EmptyTask')
@@ -86,22 +88,11 @@ VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.{}.txt'
 VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.{}.csv'
 VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.{}.pdf'
 
-# Do not change order, it matters for writing in correct order
-FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS, TEXT]
 NEGATIVE_WEIGHTS = [16]
 # NEGATIVE_WEIGHTS = [2, 4, 8, 16, 32, 64]
 MIN_APPEARANCES = 5
-MAX_APPEARANCES = MIN_APPEARANCES
+MAX_APPEARANCES = 5
 N_GUESSES = 200
-FEATURES = OrderedDict([
-    (LM, None),
-    (DEEP, None),
-    (ANSWER_PRESENT, None),
-    (CLASSIFIER, None),
-    (WIKILINKS, None),
-    (MENTIONS, None),
-    (TEXT, None)
-])
 
 FAST_FEATURES = [ANSWER_PRESENT, WIKILINKS, LABEL, TEXT]
 COMPUTE_OPT_FEATURES = [CLASSIFIER]

@@ -87,9 +87,9 @@ class ExtractFastFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.ALL_FOLDS, c.FAST_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.FAST_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -105,9 +105,9 @@ class ExtractComputeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.ALL_FOLDS, c.COMPUTE_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.COMPUTE_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -122,9 +122,9 @@ class ExtractDeepFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.ALL_FOLDS, c.DEEP_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.DEEP_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -140,9 +140,9 @@ class ExtractLMFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.ALL_FOLDS, c.LM_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.LM_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -157,9 +157,9 @@ class ExtractMentionsFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.ALL_FOLDS, c.MENTIONS_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.MENTIONS_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -183,9 +183,8 @@ class SparkMergeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
-            targets.append(
-                LocalTarget('output/vw_input/{0}/sentence.{1}.vw_input/'.format(fold, weight)))
+        for fold in c.VW_FOLDS:
+            targets.append(LocalTarget('output/vw_input/{0}.vw/'.format(fold)))
         return targets
 
     def run(self):

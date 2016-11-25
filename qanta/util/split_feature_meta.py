@@ -7,7 +7,7 @@ import re
 @click.argument('feat_destination', type=click.Path())
 @click.argument('meta_destination', type=click.Path())
 def main(feat_destination, meta_destination):
-    delimiter = re.compile('\|\|\|')
+    delimiter = re.compile('@')
     feat_file = open(feat_destination, 'a')
     meta_file = open(meta_destination, 'a')
     for line in sys.stdin:

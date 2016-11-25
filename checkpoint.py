@@ -89,8 +89,6 @@ SUMMARIES = {'output/summary'}
 
 REPORTING = {'output/reporting'}
 
-GUESSER = {'output/guesser'}
-
 fold = os.environ.get('QB_FOLD', 'test')
 weight = os.environ.get('QB_WEIGHT', 16)
 EXPO = {
@@ -102,7 +100,7 @@ EXPO = {
 
 CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
                      | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
-                     | PREDICTIONS | SUMMARIES | REPORTING | GUESSER | EXPO
+                     | PREDICTIONS | SUMMARIES | REPORTING | EXPO
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
@@ -120,7 +118,6 @@ TARGET_GROUPS = {
     'predictions': PREDICTIONS,
     'summaries': SUMMARIES,
     'reporting': REPORTING,
-    'guesser': GUESSER,
     'expo': EXPO,
     'all': CHECKPOINT_TARGETS
 }
@@ -209,7 +206,7 @@ def cli(ctx, bucket, namespace):
 @cli.command(name='list')
 @click.pass_context
 def list_runs(ctx):
-    for key in ctx.obj['s3'].list_runs():
+    for key in sorted(ctx.obj['s3'].list_runs()):
         print(key)
 
 
@@ -222,7 +219,7 @@ def latest(ctx):
 @cli.command()
 @click.pass_context
 def keys(ctx):
-    for k in TARGET_GROUPS:
+    for k in sorted(TARGET_GROUPS):
         print(k)
 
 

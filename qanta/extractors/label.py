@@ -4,13 +4,15 @@ from unidecode import unidecode
 from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.util.qdb import QuestionDatabase
 from qanta.util.constants import SENTENCE_STATS
+from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.io import safe_open
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 
 class Labeler(AbstractFeatureExtractor):
-    def __init__(self, question_db: QuestionDatabase):
+    def __init__(self):
         super(Labeler, self).__init__()
+        question_db = QuestionDatabase(QB_QUESTION_DB)
         self.name = 'label'
         self.counts = {}
         all_questions = question_db.questions_with_pages()
@@ -33,12 +35,12 @@ class Labeler(AbstractFeatureExtractor):
             formatted_guess = guess.replace(":", "").replace("|", "")
 
             if formatted_guess == self._correct:
-                feature = "1 '%s |guess %s sent:%0.1f count:%f words_seen:%i norm_words_seen:%f" % \
+                feature = "1 '%s |stats %s sent:%0.1f count:%f words_seen:%i norm_words_seen:%f" % \
                     (self._id, unidecode(formatted_guess).replace(" ", "_"),
                      self._sent, self.counts.get(formatted_guess, -2), n_words, normalized_count)
                 yield feature
             else:
-                feature = "-1 %i '%s |guess %s sent:%0.1f count:%f words_seen:%i norm_words_seen:%f" % \
+                feature = "-1 %i '%s |stats %s sent:%0.1f count:%f words_seen:%i norm_words_seen:%f" % \
                     (self._num_guesses, self._id,
                      unidecode(formatted_guess).replace(" ", "_"),
                      self._sent, self.counts.get(formatted_guess, -2), n_words, normalized_count)
