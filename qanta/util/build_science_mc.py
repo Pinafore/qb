@@ -5,10 +5,11 @@ import operator
 import random
 from csv import DictWriter
 from collections import defaultdict
-from extract_features import instantiate_feature
-from qanta.util.qdb import QuestionDatabase
+from qanta import logging
+from qanta.extract_features import instantiate_feature
+from qanta.datasets.quiz_bowl import QuestionDatabase
 
-from unidecode import unidecode
+log = logging.get(__name__)
 
 COUNT_CUTOFF = 2
 CHOICEIDS = "ABCDEFGHIJKLMNOP"
@@ -53,7 +54,7 @@ class McScience:
 
         for ii, cc in enumerate(self.choices):
             if destination != "key":
-                d["answer%s" % choice_strings[ii]] = unidecode(cc)
+                d["answer%s" % choice_strings[ii]] = cc
             if cc == self.page and (destination == "train" or destination == "key"):
                 d["correctAnswer"] = choice_strings[ii]
 
@@ -97,7 +98,7 @@ def question_first_sentence(database_connection, question):
     c.execute(command)
 
     for ii, in c:
-        return unidecode(ii)
+        return ii
 
 
 def main():
@@ -115,7 +116,7 @@ def main():
     flags = parser.parse_args()
 
     # Create database connections
-    print("Opening %s" % flags.question_db)
+    log.info("Opening %s" % flags.question_db)
     question_database = sqlite3.connect(flags.question_db)
     guess_database = sqlite3.connect(flags.guess_db)
 
@@ -124,7 +125,7 @@ def main():
     query += " or ".join("category='%s'" % x for x in CATEGORIES)
     query += ")"
     c = question_database.cursor()
-    print(query)
+    log.info(query)
     c.execute(query)
 
     answer_count = defaultdict(int)
@@ -135,8 +136,8 @@ def main():
     c = question_database.cursor()
     c.execute(query)
 
-    print(list(x for x in answer_count if answer_count[x] >= COUNT_CUTOFF))
-    print(len(list(x for x in answer_count if answer_count[x] >= COUNT_CUTOFF)))
+    log.info(str(list(x for x in answer_count if answer_count[x] >= COUNT_CUTOFF)))
+    log.info(str(len(list(x for x in answer_count if answer_count[x] >= COUNT_CUTOFF))))
 
     # Load the DAN to generate guesses if they're missing from the database
     deep = instantiate_feature("deep", QuestionDatabase(flags.question_db))
@@ -154,8 +155,8 @@ def main():
         question.add_choices(choices)
         questions[ii] = question
         if question_num % 100 == 0:
-            print(pp, ii, question_num)
-            print(choices)
+            log.info('{} {} {}'.format(pp, ii, question_num))
+            log.info(str(choices))
 
     answer_choices = ["answer%s" % CHOICEIDS[x] for x in range(flags.num_choices)]
 
@@ -171,7 +172,7 @@ def main():
 
     # Now write the questions out
     for qq in questions.values():
-        print(qq.fold)
+        log.info(qq.fold)
         if qq.fold == "devtest":
             test_out.writerow(qq.csv_line(CHOICEIDS, "test"))
             key_out.writerow(qq.csv_line(CHOICEIDS, "key"))

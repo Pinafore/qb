@@ -1,4 +1,3 @@
-from unidecode import unidecode
 from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.util.constants import ALPHANUMERIC
 
@@ -9,6 +8,6 @@ class TextExtractor(AbstractFeatureExtractor):
         self.name = 'text'
 
     def score_guesses(self, guesses, text):
-        line = "|text %s" % ALPHANUMERIC.sub(' ', unidecode(text.lower()))
+        line = "|text %s" % ALPHANUMERIC.sub(' ', text.lower())
         for _ in guesses:
             yield line

@@ -124,9 +124,9 @@ def print_recall_at_n(fold_target=DEEP_DEV_TARGET, results_target=EVAL_RES_TARGE
     recall_array, total = compute_recall_accuracy_to_n(fold_target=fold_target, n_guesses=n_guesses, max_examples=max_examples)
     pickle.dump((recall_array, total), open(EVAL_RES_TARGET, 'wb'),
                 protocol=pickle.HIGHEST_PROTOCOL)
-    print("Total: %s examples" %total)
+    log.info("Total: %s examples" % total)
     for i, recall in enumerate(recall_array):
-        print("Recall at %i: %f" %(i+1, recall))
+        log.info("Recall at %i: %f" %(i+1, recall))
 
 
 def compute_vectors(train_qs, test_qs, params, d):

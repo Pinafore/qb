@@ -7,9 +7,8 @@ from typing import List, Dict, Tuple, NamedTuple
 import pandas as pd
 
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
+from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset, Question, QuestionDatabase
 from qanta.util import constants as c
-from qanta.util.qdb import Question, QuestionDatabase
 
 
 Task = NamedTuple('Task', [('question', Question), ('guess_df', pd.DataFrame)])

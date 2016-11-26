@@ -14,7 +14,10 @@ from fn import _
 import matplotlib
 matplotlib.use('Agg')
 
-from qanta.util.qdb import QuestionDatabase
+from qanta import logging
+from qanta.datasets.quiz_bowl import QuestionDatabase
+
+log = logging.get(__name__)
 
 
 class Answer(Enum):
@@ -55,7 +58,7 @@ def load_predictions(pred_file: str) -> Sequence:
                 question, sentence, token = [int(x) for x in tokens[1].split('_')]
             return Prediction(score, question, sentence, token)
         except Exception:
-            print("Error parsing line: {0}".format(line))
+            log.info("Error parsing line: {0}".format(line))
             raise
     return seq.open(pred_file).map(parse_line)
 
@@ -96,7 +99,7 @@ def load_data(pred_file: str, meta_file: str, q_db: QuestionDatabase) -> Sequenc
         prediction = pm[0]
         meta = pm[1]
         if prediction.question is None or prediction.token is None or prediction.sentence is None:
-            print("WARNING: Prediction malformed, fixing with meta line: {0}".format(prediction))
+            log.info("WARNING: Prediction malformed, fixing with meta line: {0}".format(prediction))
             prediction = Prediction(prediction.score, meta.question, meta.sentence, meta.token)
         assert meta.question == prediction.question
         assert meta.sentence == prediction.sentence

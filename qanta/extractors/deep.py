@@ -4,13 +4,12 @@ import numpy as np
 from string import ascii_lowercase, punctuation
 
 from functional import seq
-from unidecode import unidecode
 
 from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.util import constants as c
-from qanta.util.qdb import QuestionDatabase
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.preprocess import format_guess
 
 
@@ -22,7 +21,7 @@ def relu(x):
 
 
 def normalize(text):
-    text = unidecode(text).lower().translate(str.maketrans(punctuation, ' ' * len(punctuation)))
+    text = text.lower().translate(str.maketrans(punctuation, ' ' * len(punctuation)))
     text = PAREN_EXPRESSION.sub("", text)
     text = " ".join(x for x in text.split() if x not in STOP_WORDS)
     return ''.join(x for x in text if x in valid_strings)

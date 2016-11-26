@@ -1,10 +1,7 @@
 from collections import defaultdict
 import time
 import re
-import os
 import ctypes
-
-from unidecode import unidecode
 
 from nltk.tokenize import RegexpTokenizer
 from nltk import bigrams
@@ -120,7 +117,7 @@ class LanguageModelBase:
     @staticmethod
     def tokenize_without_censor(sentence):
         yield kSTART
-        for ii in kTOKENIZER(unidecode(sentence)):
+        for ii in kTOKENIZER(sentence):
             yield ii.lower()
         yield kEND
 
@@ -136,7 +133,7 @@ class LanguageModelBase:
         if not isinstance(sentence, str):
             sentence = ' '.join(list(sentence))
         yield self.vocab_lookup(kSTART)
-        for ii in kTOKENIZER(unidecode(sentence)):
+        for ii in kTOKENIZER(sentence):
             yield self.vocab_lookup(ii.lower())
         yield self.vocab_lookup(kEND)
 
@@ -415,7 +412,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                      min_pages=MIN_APPEARANCES):
         num_docs += 1
         if num_docs % 500 == 0:
-            log.info("{} {}".format(unidecode(title), num_docs))
+            log.info("{} {}".format(title, num_docs))
             log.info(str(list(lm.tokenize_without_censor(text[100:200]))))
 
         for tt in lm.tokenize_without_censor(text):
@@ -444,7 +441,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                          min_pages=MIN_APPEARANCES):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
-                log.info("Adding train doc %i, %s (%s)" % (doc_num, unidecode(title), corpus))
+                log.info("Adding train doc %i, %s (%s)" % (doc_num, title, corpus))
                 start = time.time()
             lm.add_train(corpus, title, text)
 

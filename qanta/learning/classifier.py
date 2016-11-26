@@ -14,10 +14,10 @@ from xgboost import XGBClassifier
 
 from qanta import logging
 from qanta.util.io import safe_open, safe_path
-from qanta.util.qdb import QuestionDatabase
 from qanta.util.constants import CLASSIFIER_PICKLE_PATH, CLASSIFIER_REPORT_PATH
 from qanta.util.sklearn import DFColumnTransformer, CSCTransformer
 from qanta.util.environment import QB_QUESTION_DB
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.reporting.report_generator import ReportGenerator
 from qanta.reporting.plotting import plot_confusion
 

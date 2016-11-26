@@ -5,7 +5,7 @@ import networkx as nx
 import pandas as pd
 from nltk.corpus import stopwords
 from qanta.util.environment import QB_QUESTION_DB
-from qanta.util.qdb import QuestionDatabase
+from qanta.datasets.quiz_bowl import QuestionDatabase
 
 
 class WikiNetworkGuesser:

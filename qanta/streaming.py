@@ -9,8 +9,8 @@ from collections import namedtuple
 from qanta.util.environment import (QB_QUESTION_DB, QB_SPARK_MASTER, QB_STREAMING_CORES,
                                     QB_API_DOMAIN, QB_API_KEY, QB_API_USER_ID)
 from qanta.util.constants import FEATURE_NAMES
-from qanta.util.qdb import QuestionDatabase
 from qanta.extract_features import instantiate_feature
+from qanta.datasets.quiz_bowl import QuestionDatabase
 
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker
