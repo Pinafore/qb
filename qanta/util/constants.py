@@ -37,7 +37,7 @@ GUESSER_LIST = [
     ('qanta.guesser.random.RandomGuesser', 'qanta.pipeline.guesser.random.EmptyTask')
 ]
 
-GUESSER_INDEX = 'output/guesser/guess_index.pickle'
+GUESS_SCORES = 'output/guesser/guess_scores.pickle'
 GUESS_TASKS = 'output/guesser/guess_tasks.pickle'
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'

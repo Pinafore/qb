@@ -237,23 +237,26 @@ class AbstractGuesser(metaclass=ABCMeta):
                 new_guess_df = AbstractGuesser.load_guesses(input_path)
                 guess_df = pd.concat([guess_df, new_guess_df])
 
-        guess_map = defaultdict(set)
+        guess_score_map = defaultdict(dict)
         tasks = []
         for name, group in guess_df.groupby(['qnum', 'sentence', 'token']):
             qnum = int(name[0])
             sentence = int(name[1])
             token = int(name[2])
-            for guess_guesser, _ in group.groupby(['guess', 'guesser']):
+            for guess_guesser, gg_group in group.groupby(['guess', 'guesser']):
+                assert len(gg_group) == 1
+                row = gg_group.iloc[0]
                 guess = guess_guesser[0]
                 guesser = guess_guesser[1]
-                guess_map[guesser].add((qnum, sentence, token, guess))
+                score = row.score
+                guess_score_map[guesser][(qnum, sentence, token, guess)] = score
 
             question = question_map[qnum]
             guesses = group.drop('guesser', axis=1).drop_duplicates()
             tasks.append(Task(question, guesses))
 
-        with open(c.GUESSER_INDEX, 'wb') as f:
-            pickle.dump(guess_map, f)
+        with open(c.GUESS_SCORES, 'wb') as f:
+            pickle.dump(guess_score_map, f)
 
         with open(c.GUESS_TASKS, 'wb') as f:
             pickle.dump(tasks, f)
