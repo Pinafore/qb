@@ -1,17 +1,20 @@
-from typing import List
-import pickle
+from typing import List, NamedTuple
+
+import pandas as pd
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, Row
 
 from qanta import logging
-from qanta.guesser.abstract import Task
+
+from qanta.datasets.quiz_bowl import Question, QuestionDatabase
+from qanta.guesser.abstract import AbstractGuesser
 
 from qanta.util.io import safe_path
 from qanta.util import constants as c
 from qanta.util.spark_features import SCHEMA
 
-from qanta.extractors.label import Labeler
+from qanta.extractors.stats import StatsExtractor
 from qanta.extractors.lm import LanguageModel
 from qanta.extractors.deep import DeepExtractor
 from qanta.extractors.classifier import Classifier
@@ -22,6 +25,7 @@ from qanta.extractors.text import TextExtractor
 
 
 log = logging.get(__name__)
+Task = NamedTuple('Task', [('question', Question), ('guess_df', pd.DataFrame)])
 
 
 def instantiate_feature(feature_name: str):
@@ -39,8 +43,8 @@ def instantiate_feature(feature_name: str):
         feature = WikiLinks()
     elif feature_name == 'answer_present':
         feature = AnswerPresent()
-    elif feature_name == 'label':
-        feature = Labeler()
+    elif feature_name == 'stats':
+        feature = StatsExtractor()
     elif feature_name == 'classifier':
         feature = Classifier()
     elif feature_name == 'mentions':
@@ -57,8 +61,16 @@ def instantiate_feature(feature_name: str):
 def spark_batch(sc: SparkContext, feature_names: List[str]):
     sql_context = SparkSession.builder.getOrCreate()
     log.info('Loading list of guess tasks')
-    with open(c.GUESS_TASKS, 'rb') as f:
-        tasks = pickle.load(f)  # type: List[Task]
+    guess_df = AbstractGuesser.load_all_guesses()
+    question_db = QuestionDatabase()
+    question_map = question_db.all_questions()
+    tasks = []
+    guess_df = guess_df[['qnum', 'sentence', 'token', 'guess', 'fold']].drop_duplicates(
+        ['qnum', 'sentence', 'token', 'guess'])
+    for name, guesses in guess_df.groupby(['qnum', 'sentence', 'token']):
+        qnum = name[0]
+        question = question_map[qnum]
+        tasks.append(Task(question, guesses))
 
     log.info('Number of tasks (unique qnum/sentence/token triplets): {}'.format(len(tasks)))
 

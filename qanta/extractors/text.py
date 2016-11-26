@@ -3,9 +3,9 @@ from qanta.util.constants import ALPHANUMERIC
 
 
 class TextExtractor(AbstractFeatureExtractor):
-    def __init__(self):
-        super(TextExtractor, self).__init__()
-        self.name = 'text'
+    @property
+    def name(self):
+        return 'text'
 
     def score_guesses(self, guesses, text):
         line = "|text %s" % ALPHANUMERIC.sub(' ', text.lower())

@@ -16,11 +16,11 @@ from qanta.util.environment import QB_WIKI_LOCATION, QB_QUESTION_DB
 class IrExtractor(AbstractFeatureExtractor):
     def __init__(self):
         super(IrExtractor, self).__init__()
-        self.name = "ir"
         self.wiki_index = WikiIndex()
 
-    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        pass
+    @property
+    def name(self):
+        return 'ir'
 
     def score_guesses(self, guesses, text):
         pass

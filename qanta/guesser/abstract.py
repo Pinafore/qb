@@ -1,17 +1,13 @@
 import os
-import pickle
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
-from typing import List, Dict, Tuple, NamedTuple
+from typing import List, Dict, Tuple
 
 import pandas as pd
 
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset, Question, QuestionDatabase
+from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 from qanta.util import constants as c
-
-
-Task = NamedTuple('Task', [('question', Question), ('guess_df', pd.DataFrame)])
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -94,13 +90,12 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         List of files located in directory that are produced by the train method and loaded by the
         save method.
-        :param directory: directory reserved for output files
         :return: list of written files
         """
         pass
 
     @classmethod
-    def files(cls, directory: str) -> None:
+    def files(cls, directory: str) -> List[str]:
         return [os.path.join(directory, file) for file in cls.targets()]
 
     @classmethod
@@ -212,6 +207,12 @@ class AbstractGuesser(metaclass=ABCMeta):
 
     @staticmethod
     def load_guesses(directory: str, folds=c.ALL_FOLDS) -> pd.DataFrame:
+        """
+        Loads all the guesses pertaining to a guesser inferred from directory
+        :param directory: where to load guesses from
+        :param folds: folds to load, by default all of them
+        :return: guesses across all folds for given directory
+        """
         assert len(folds) > 0
         guess_df = None
         for fold in folds:
@@ -225,9 +226,11 @@ class AbstractGuesser(metaclass=ABCMeta):
         return guess_df
 
     @staticmethod
-    def preprocess_all_guesses():
-        question_db = QuestionDatabase()
-        question_map = question_db.all_questions()
+    def load_all_guesses() -> pd.DataFrame:
+        """
+        Loads all guesses from all guessers and folds
+        :return:
+        """
         guess_df = None
         for guesser_class, _ in c.GUESSER_LIST:
             input_path = os.path.join(c.GUESSER_TARGET_PREFIX, guesser_class)
@@ -237,26 +240,12 @@ class AbstractGuesser(metaclass=ABCMeta):
                 new_guess_df = AbstractGuesser.load_guesses(input_path)
                 guess_df = pd.concat([guess_df, new_guess_df])
 
+        return guess_df
+
+    @staticmethod
+    def load_guess_score_map(guess_df: pd.DataFrame) -> defaultdict:
         guess_score_map = defaultdict(dict)
-        tasks = []
-        for name, group in guess_df.groupby(['qnum', 'sentence', 'token']):
-            qnum = int(name[0])
-            sentence = int(name[1])
-            token = int(name[2])
-            for guess_guesser, gg_group in group.groupby(['guess', 'guesser']):
-                assert len(gg_group) == 1
-                row = gg_group.iloc[0]
-                guess = guess_guesser[0]
-                guesser = guess_guesser[1]
-                score = row.score
-                guess_score_map[guesser][(qnum, sentence, token, guess)] = score
+        for row in guess_df.itertuples():
+            guess_score_map[row.guesser][(row.qnum, row.sentence, row.token, row.guess)] = row.score
 
-            question = question_map[qnum]
-            guesses = group.drop('guesser', axis=1).drop_duplicates()
-            tasks.append(Task(question, guesses))
-
-        with open(c.GUESS_SCORES, 'wb') as f:
-            pickle.dump(guess_score_map, f)
-
-        with open(c.GUESS_TASKS, 'wb') as f:
-            pickle.dump(tasks, f)
+        return guess_score_map

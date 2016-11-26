@@ -6,11 +6,12 @@ from qanta.util.constants import ENGLISH_STOP_WORDS
 
 
 class AnswerPresent(AbstractFeatureExtractor):
-    def __init__(self):
-        super(AnswerPresent, self).__init__()
-        self.name = 'answer_present'
+    @property
+    def name(self):
+        return 'answer_present'
 
-    def score_one_guess(self, title, text):
+    @staticmethod
+    def score_one_guess(title, text):
         d = {}
         if "(" in title:
             title = title[:title.find("(")].strip()

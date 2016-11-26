@@ -1,7 +1,7 @@
 import pickle
 
 from qanta.preprocess import clean_question, replace_named_entities, format_guess
-from qanta.util import qdb
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.io import safe_open
 from qanta.util.constants import MIN_APPEARANCES, DEEP_VOCAB_TARGET
 from qanta.util.environment import QB_QUESTION_DB
@@ -36,7 +36,7 @@ class Preprocessor:
 
 def preprocess():
     pp = Preprocessor()
-    db = qdb.QuestionDatabase(QB_QUESTION_DB)
+    db = QuestionDatabase(QB_QUESTION_DB)
 
     pages = set(db.page_by_count(MIN_APPEARANCES, True))
     print(len(pages))

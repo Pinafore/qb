@@ -9,9 +9,12 @@ class Classifier(AbstractFeatureExtractor):
     def __init__(self):
         super(Classifier, self).__init__()
         self.classifiers = {}
-        self.name = 'classifier'
         for c in CLASSIFIER_TYPES:
             self.classifiers[c] = load_classifier(c)
+
+    @property
+    def name(self):
+        return 'classifier'
 
     def score_guesses(self, guesses, text):
         df = pd.DataFrame({'text': pd.Series([text])})

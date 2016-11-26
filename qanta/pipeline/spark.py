@@ -6,9 +6,9 @@ from clm.lm_wrapper import build_clm
 from qanta.util import constants as c
 from qanta.spark_execution import extract_features, merge_features
 from qanta.pipeline.preprocess import Preprocess
-from qanta.pipeline.guesser import ProcessGuesses
+from qanta.pipeline.guesser import AllGuessers
 from qanta.learning import classifier
-from qanta.extractors.label import compute_question_stats
+from qanta.extractors.stats import compute_question_stats
 from qanta.util.environment import QB_QUESTION_DB
 
 
@@ -81,7 +81,7 @@ class ExtractFastFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield ProcessGuesses()
+        yield AllGuessers()
         yield ComputeParagraphStats()
 
     def output(self):
@@ -99,7 +99,7 @@ class ExtractComputeFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield ProcessGuesses()
+        yield AllGuessers()
         yield AllClassifierPickles()
 
     def output(self):
@@ -117,7 +117,7 @@ class ExtractDeepFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield ProcessGuesses()
+        yield AllGuessers()
 
     def output(self):
         targets = []
@@ -134,7 +134,7 @@ class ExtractLMFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield ProcessGuesses()
+        yield AllGuessers()
         yield BuildClm()
 
     def output(self):
@@ -152,7 +152,7 @@ class ExtractMentionsFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield ProcessGuesses()
+        yield AllGuessers()
 
     def output(self):
         targets = []

@@ -81,7 +81,6 @@ def build_lm_data(path, output):
 class Mentions(AbstractFeatureExtractor):
     def __init__(self):
         super().__init__()
-        self.name = "mentions"
         question_db = QuestionDatabase(QB_QUESTION_DB)
         answers = set(x for x, y in text_iterator(
             False, "", False, question_db, False, "", limit=-1, min_pages=MIN_APPEARANCES))
@@ -96,6 +95,10 @@ class Mentions(AbstractFeatureExtractor):
         self.suf = []
         self.text = ""
         self.kenlm_path = data_path(KEN_LM)
+
+    @property
+    def name(self):
+        return 'mentions'
 
     @property
     def lm(self):

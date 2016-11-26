@@ -17,19 +17,15 @@ class WikiLinks(AbstractFeatureExtractor):
                  wikipedia="data/external/wikipedia",
                  country_list=COUNTRY_LIST_PATH):
         super(WikiLinks, self).__init__()
-        self.name = "wikilinks"
         self._location = xml_location
         self.links = defaultdict(dict)
         self._wiki = CachedWikipedia(wikipedia, country_list)
         self._cache = -1
         self._matches = None
 
-    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        super(WikiLinks, self).set_metadata(
-            self, answer, category, qnum, sent, token, guesses, fold)
-        # print(qnum, sent, token, answer)
-        if qnum not in self.links:
-            self.load_xml(qnum)
+    @property
+    def name(self):
+        return 'wikilinks'
 
     def score_guesses(self, guesses, text):
         for guess in guesses:

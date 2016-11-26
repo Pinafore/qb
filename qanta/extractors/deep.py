@@ -40,19 +40,27 @@ class DeepExtractor(AbstractFeatureExtractor):
         for page in question_db.get_all_pages():
             page_dict[page.lower().replace(' ', '_')] = page
         self.page_dict = page_dict
-        self.name = 'deep'
 
-    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        pass
+    @property
+    def name(self):
+        return 'deep'
 
-    # return a vector representation of the question
     def compute_rep(self, text):
+        """
+        return a vector representation of the question
+        :param text:
+        :return:
+        """
         text = ' '.join(text)
         curr_feats = self.compute_features(text)
         return curr_feats, text
 
-    # return a distribution over answers for the given question
     def compute_probs(self, text):
+        """
+        return a distribution over answers for the given question
+        :param text:
+        :return:
+        """
         curr_feats = self.compute_features(text)
         return self.classifier.predict_proba(curr_feats)[0]
 
@@ -81,8 +89,12 @@ class DeepExtractor(AbstractFeatureExtractor):
 
         return p3.ravel().reshape(1, -1)
 
-    # return top n guesses for a given question
     def text_guess(self, text):
+        """
+        return top n guesses for a given question
+        :param text:
+        :return:
+        """
         text = ' '.join(text)
         preds = self.compute_probs(text)
         class_labels = self.classifier.classes_

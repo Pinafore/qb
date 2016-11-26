@@ -10,7 +10,6 @@ class LanguageModel(AbstractFeatureExtractor):
         self.filename = data_path(CLM_PATH)
         self.initialized = False
         self._lm = None
-        self.name = 'lm'
         self._corpora = set()
 
     def _init_lm(self):
@@ -22,6 +21,10 @@ class LanguageModel(AbstractFeatureExtractor):
             self._add_corpus("qb")
             self._add_corpus("wiki")
             self._add_corpus("source")
+
+    @property
+    def name(self):
+        return 'lm'
 
     @property
     def corpora(self):

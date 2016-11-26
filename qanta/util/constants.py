@@ -1,5 +1,4 @@
 from functools import lru_cache
-from collections import OrderedDict
 import re
 import sys
 import unicodedata
@@ -20,7 +19,7 @@ GRANULARITIES = ['sentence']
 VW_FOLDS = ['dev', 'devtest', 'test']
 ALL_FOLDS = ['train', 'dev', 'test', 'devtest']
 
-LABEL = 'label'
+STATS = 'stats'
 IR = 'ir'
 LM = 'lm'
 MENTIONS = 'mentions'
@@ -30,15 +29,17 @@ CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
 TEXT = 'text'
 
-# Do not change order, it matters for writing in correct order
-FEATURE_NAMES = [LABEL, LM, MENTIONS, ANSWER_PRESENT, CLASSIFIER, WIKILINKS, TEXT]
+FEATURE_NAMES = [STATS, LM, ANSWER_PRESENT, CLASSIFIER, WIKILINKS, TEXT]
+
+FAST_FEATURES = [ANSWER_PRESENT, STATS, TEXT]
+COMPUTE_OPT_FEATURES = [CLASSIFIER]
+DEEP_OPT_FEATURES = [DEEP]
+LM_OPT_FEATURES = [LM]
+MENTIONS_OPT_FEATURES = [MENTIONS]
 
 GUESSER_LIST = [
     ('qanta.guesser.random.RandomGuesser', 'qanta.pipeline.guesser.random.EmptyTask')
 ]
-
-GUESS_SCORES = 'output/guesser/guess_scores.pickle'
-GUESS_TASKS = 'output/guesser/guess_tasks.pickle'
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 
@@ -92,16 +93,9 @@ VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.{}.csv'
 VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.{}.pdf'
 
 NEGATIVE_WEIGHTS = [16]
-# NEGATIVE_WEIGHTS = [2, 4, 8, 16, 32, 64]
 MIN_APPEARANCES = 5
 MAX_APPEARANCES = 5
 N_GUESSES = 200
-
-FAST_FEATURES = [ANSWER_PRESENT, WIKILINKS, LABEL, TEXT]
-COMPUTE_OPT_FEATURES = [CLASSIFIER]
-DEEP_OPT_FEATURES = [DEEP]
-LM_OPT_FEATURES = [LM]
-MENTIONS_OPT_FEATURES = [MENTIONS]
 
 
 @lru_cache(maxsize=None)
