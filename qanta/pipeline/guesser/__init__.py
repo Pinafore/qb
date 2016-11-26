@@ -112,3 +112,17 @@ class AllGuessers(WrapperTask):
                 dependency_module=dependency_module,
                 dependency_class=dependency_class
             )
+
+
+class ProcessGuesses(Task):
+    def requires(self):
+        yield AllGuessers()
+
+    def run(self):
+        AbstractGuesser.preprocess_all_guesses()
+
+    def output(self):
+        return [
+            LocalTarget(c.GUESS_TASKS),
+            LocalTarget(c.GUESSER_INDEX)
+        ]

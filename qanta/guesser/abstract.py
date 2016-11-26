@@ -1,12 +1,18 @@
 import os
+import pickle
+from collections import defaultdict
 from abc import ABCMeta, abstractmethod
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, NamedTuple
 
 import pandas as pd
 
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
-from qanta.util.constants import ALL_FOLDS
+from qanta.util import constants as c
+from qanta.util.qdb import Question, QuestionDatabase
+
+
+Task = NamedTuple('Task', [('question', Question), ('guess_df', pd.DataFrame)])
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -206,7 +212,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             fold_df.to_pickle(output_path)
 
     @staticmethod
-    def load_guesses(directory: str, folds=ALL_FOLDS) -> pd.DataFrame:
+    def load_guesses(directory: str, folds=c.ALL_FOLDS) -> pd.DataFrame:
         assert len(folds) > 0
         guess_df = None
         for fold in folds:
@@ -218,3 +224,37 @@ class AbstractGuesser(metaclass=ABCMeta):
                 guess_df = pd.concat([guess_df, new_guesses_df])
 
         return guess_df
+
+    @staticmethod
+    def preprocess_all_guesses():
+        question_db = QuestionDatabase()
+        question_map = question_db.all_questions()
+        guess_df = None
+        for guesser_class, _ in c.GUESSER_LIST:
+            input_path = os.path.join(c.GUESSER_TARGET_PREFIX, guesser_class)
+            if guess_df is None:
+                guess_df = AbstractGuesser.load_guesses(input_path)
+            else:
+                new_guess_df = AbstractGuesser.load_guesses(input_path)
+                guess_df = pd.concat([guess_df, new_guess_df])
+
+        guess_map = defaultdict(set)
+        tasks = []
+        for name, group in guess_df.groupby(['qnum', 'sentence', 'token']):
+            qnum = int(name[0])
+            sentence = int(name[1])
+            token = int(name[2])
+            for guess_guesser, _ in group.groupby(['guess', 'guesser']):
+                guess = guess_guesser[0]
+                guesser = guess_guesser[1]
+                guess_map[guesser].add((qnum, sentence, token, guess))
+
+            question = question_map[qnum]
+            guesses = group.drop('guesser', axis=1).drop_duplicates()
+            tasks.append(Task(question, guesses))
+
+        with open(c.GUESSER_INDEX, 'wb') as f:
+            pickle.dump(guess_map, f)
+
+        with open(c.GUESS_TASKS, 'wb') as f:
+            pickle.dump(tasks, f)
