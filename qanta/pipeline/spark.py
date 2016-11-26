@@ -168,7 +168,6 @@ class ExtractMentionsFeatures(Task):
 class ExtractFeatures(WrapperTask):
     def requires(self):
         yield ExtractFastFeatures()
-        yield ExtractDeepFeatures()
         yield ExtractComputeFeatures()
         yield ExtractLMFeatures()
         yield ExtractMentionsFeatures()

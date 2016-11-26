@@ -1,4 +1,5 @@
-import sys, errno
+import sys
+import errno
 
 
 def format_audit(n_features):
