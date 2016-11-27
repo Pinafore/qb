@@ -100,7 +100,7 @@ class ExtractComputeFeatures(Task):
 
     def requires(self):
         yield AllGuessers()
-        yield AllClassifierPickles()
+        yield AllClassifiers()
 
     def output(self):
         targets = []

@@ -17,18 +17,16 @@ class Classifier(AbstractFeatureExtractor):
         return 'classifier'
 
     def score_guesses(self, guesses, text):
-        df = pd.DataFrame({'text': pd.Series([text])})
-
         features = ['|classifier']
         for class_type, classifier in self.classifiers.items():
-            probabilities = classifier.predict_proba(df)
+            probabilities = classifier.predict_proba(text)
             if len(probabilities) == 0:
                 for label in classifier.classes_:
                     features.append(
                         '{class_type}_{label}:{p}'.format(class_type=class_type, label=label, p=-1)
                     )
             else:
-                for label, p in zip(classifier.classes_, classifier.predict_proba(df)[0]):
+                for label, p in zip(classifier.classes_, probabilities[0]):
                     features.append(
                         '{class_type}_{label}:{p}'.format(class_type=class_type, label=label, p=p)
                     )

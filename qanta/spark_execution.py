@@ -27,7 +27,6 @@ def extract_features(features):
         app_name='Quiz Bowl: ' + ' '.join(features)
     )
     ef.spark_batch(sc, features)
-    sc.stop()
 
 
 @cli.command(name='extract_features')
@@ -37,9 +36,8 @@ def extract_features_cli(**kwargs):
 
 
 def merge_features():
-    sc = create_spark_context(app_name='Quiz Bowl Merge')
+    create_spark_context(app_name='Quiz Bowl Merge')
     spark_features.create_output('output/features')
-    sc.stop()
 
 
 @cli.command(name='merge_features')
