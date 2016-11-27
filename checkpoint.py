@@ -33,47 +33,39 @@ CLASSIFIER_TARGETS = {
 }
 
 SPARK_COMPUTE_TARGETS = {
-    'output/features/train/sentence.answer_present.parquet',
-    'output/features/train/sentence.classifier.parquet',
-    'output/features/train/sentence.label.parquet',
-    'output/features/train/sentence.wikilinks.parquet',
-    'output/features/train/sentence.text.parquet',
-    'output/features/dev/sentence.answer_present.parquet',
-    'output/features/dev/sentence.classifier.parquet',
-    'output/features/dev/sentence.label.parquet',
-    'output/features/dev/sentence.wikilinks.parquet',
-    'output/features/dev/sentence.text.parquet',
-    'output/features/devtest/sentence.answer_present.parquet',
-    'output/features/devtest/sentence.classifier.parquet',
-    'output/features/devtest/sentence.label.parquet',
-    'output/features/devtest/sentence.wikilinks.parquet',
-    'output/features/devtest/sentence.text.parquet',
-    'output/features/test/sentence.answer_present.parquet',
-    'output/features/test/sentence.classifier.parquet',
-    'output/features/test/sentence.label.parquet',
-    'output/features/test/sentence.wikilinks.parquet'
-    'output/features/test/sentence.text.parquet',
+    'output/features/dev/answer_present.parquet',
+    'output/features/dev/classifier.parquet',
+    'output/features/dev/label.parquet',
+    'output/features/dev/wikilinks.parquet',
+    'output/features/dev/text.parquet',
+    'output/features/devtest/answer_present.parquet',
+    'output/features/devtest/classifier.parquet',
+    'output/features/devtest/label.parquet',
+    'output/features/devtest/wikilinks.parquet',
+    'output/features/devtest/text.parquet',
+    'output/features/test/answer_present.parquet',
+    'output/features/test/classifier.parquet',
+    'output/features/test/label.parquet',
+    'output/features/test/wikilinks.parquet'
+    'output/features/test/text.parquet',
 }
 
 SPARK_LM_TARGETS = {
-    'output/features/train/sentence.lm.parquet',
-    'output/features/dev/sentence.lm.parquet',
-    'output/features/devtest/sentence.lm.parquet',
-    'output/features/test/sentence.lm.parquet'
+    'output/features/dev/lm.parquet',
+    'output/features/devtest/lm.parquet',
+    'output/features/test/lm.parquet'
 }
 
 SPARK_MENTIONS_TARGETS = {
-    'output/features/train/sentence.mentions.parquet',
-    'output/features/dev/sentence.mentions.parquet',
-    'output/features/devtest/sentence.mentions.parquet',
-    'output/features/test/sentence.mentions.parquet'
+    'output/features/dev/mentions.parquet',
+    'output/features/devtest/mentions.parquet',
+    'output/features/test/mentions.parquet'
 }
 
 SPARK_DEEP_TARGETS = {
-    'output/features/train/sentence.deep.parquet',
-    'output/features/dev/sentence.deep.parquet',
-    'output/features/devtest/sentence.deep.parquet',
-    'output/features/test/sentence.deep.parquet'
+    'output/features/dev/deep.parquet',
+    'output/features/devtest/deep.parquet',
+    'output/features/test/deep.parquet'
 }
 
 SPARK_FEATURE_TARGETS = SPARK_COMPUTE_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
