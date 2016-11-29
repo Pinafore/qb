@@ -58,9 +58,7 @@ def instantiate_feature(feature_name: str):
     return feature
 
 
-def spark_batch(sc: SparkContext, feature_names: List[str]):
-    sql_context = SparkSession.builder.getOrCreate()
-    log.info('Loading list of guess tasks')
+def task_list():
     guess_df = AbstractGuesser.load_all_guesses()
     question_db = QuestionDatabase()
     question_map = question_db.all_questions()
@@ -72,6 +70,28 @@ def spark_batch(sc: SparkContext, feature_names: List[str]):
         question = question_map[qnum]
         tasks.append(Task(question, guesses))
 
+    return tasks
+
+
+def generate_guesser_feature():
+    sc = SparkContext.getOrCreate()  # type: SparkContext
+    sql_context = SparkSession.builder.getOrCreate()
+    tasks = task_list()
+    guess_df = AbstractGuesser.load_all_guesses()
+    guess_score_map = AbstractGuesser.load_guess_score_map(guess_df)
+    b_guess_score_map = sc.broadcast(guess_score_map)
+
+    def f_eval(task: Task) -> List[Row]:
+        pass
+
+    feature_rdd = sc.parallelize(tasks, 5000).flatMap()
+
+
+def spark_batch(feature_names: List[str]):
+    sc = SparkContext.getOrCreate()
+    sql_context = SparkSession.builder.getOrCreate()
+    log.info('Loading list of guess tasks')
+    tasks = task_list()
     log.info('Number of tasks (unique qnum/sentence/token triplets): {}'.format(len(tasks)))
 
     log.info('Loading features: {}'.format(feature_names))

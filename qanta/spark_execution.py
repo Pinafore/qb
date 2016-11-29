@@ -23,10 +23,10 @@ def create_spark_context(app_name="Quiz Bowl"):
 
 
 def extract_features(features):
-    sc = create_spark_context(
+    create_spark_context(
         app_name='Quiz Bowl: ' + ' '.join(features)
     )
-    ef.spark_batch(sc, features)
+    ef.spark_batch(features)
 
 
 @cli.command(name='extract_features')
