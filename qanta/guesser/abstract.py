@@ -8,6 +8,7 @@ import pandas as pd
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 from qanta.util import constants as c
+from qanta.util.environment import data_path
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -226,14 +227,14 @@ class AbstractGuesser(metaclass=ABCMeta):
         return guess_df
 
     @staticmethod
-    def load_all_guesses() -> pd.DataFrame:
+    def load_all_guesses(directory_prefix='') -> pd.DataFrame:
         """
         Loads all guesses from all guessers and folds
         :return:
         """
         guess_df = None
         for guesser_class, _ in c.GUESSER_LIST:
-            input_path = os.path.join(c.GUESSER_TARGET_PREFIX, guesser_class)
+            input_path = os.path.join(directory_prefix, c.GUESSER_TARGET_PREFIX, guesser_class)
             if guess_df is None:
                 guess_df = AbstractGuesser.load_guesses(input_path)
             else:

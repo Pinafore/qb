@@ -68,8 +68,14 @@ SPARK_DEEP_TARGETS = {
     'output/features/test/deep.parquet'
 }
 
+SPARK_GUESSERS_TARGETS = {
+    'output/features/dev/guessers.parquet',
+    'output/features/devtest/guessers.parquet',
+    'output/features/test/guessers.parquet'
+}
+
 SPARK_FEATURE_TARGETS = SPARK_COMPUTE_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
-                        | SPARK_DEEP_TARGETS
+                        | SPARK_GUESSERS_TARGETS
 
 VW_INPUT = {'output/vw_input'}
 
@@ -105,6 +111,7 @@ TARGET_GROUPS = {
     'spark_lm': SPARK_LM_TARGETS,
     'spark_mentions': SPARK_MENTIONS_TARGETS,
     'spark_deep': SPARK_DEEP_TARGETS,
+    'spark_guessers': SPARK_GUESSERS_TARGETS,
     'vw_input': VW_INPUT,
     'vw_models': VW_MODELS,
     'predictions': PREDICTIONS,

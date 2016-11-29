@@ -12,6 +12,7 @@ from qanta.guesser.abstract import AbstractGuesser
 
 from qanta.util.io import safe_path
 from qanta.util import constants as c
+from qanta.util.environment import QB_ROOT
 from qanta.util.spark_features import SCHEMA
 
 from qanta.extractors.stats import StatsExtractor
@@ -73,23 +74,37 @@ def task_list():
     return tasks
 
 
+class GuesserScoreMap:
+    def __init__(self, directory_prefix=''):
+        self.initialized = False
+        self.map = None
+        self.directory_prefix = directory_prefix
+
+    def scores(self):
+        if not self.initialized:
+            guess_df = AbstractGuesser.load_all_guesses(directory_prefix=self.directory_prefix)
+            self.map = AbstractGuesser.load_guess_score_map(guess_df)
+            self.initialized = True
+        return self.map
+
+
 def generate_guesser_feature():
     sc = SparkContext.getOrCreate()  # type: SparkContext
     sql_context = SparkSession.builder.getOrCreate()
     log.info('Loading list of guess tasks')
     tasks = task_list()
-    guess_df = AbstractGuesser.load_all_guesses()
-    guess_score_map = AbstractGuesser.load_guess_score_map(guess_df)
-    b_guess_score_map = sc.broadcast(guess_score_map)
+    log.info('Using guesser directory prefix: {}'.format(QB_ROOT))
+    guesser_score_map = GuesserScoreMap(directory_prefix=QB_ROOT)
+    b_guesser_score_map = sc.broadcast(guesser_score_map)
 
     def f_eval(task: Task) -> List[Row]:
-        score_map = b_guess_score_map.value
+        score_map = b_guesser_score_map.value.scores()
         df = task.guess_df
         result = []
         if len(df) > 0:
             # Refer to code in evaluate_feature_question for explanation why this is safe
             first_row = df.iloc[0]
-            qnum = int(first_row.row)
+            qnum = int(first_row.qnum)
             sentence = int(first_row.sentence)
             token = int(first_row.token)
             fold = first_row.fold
