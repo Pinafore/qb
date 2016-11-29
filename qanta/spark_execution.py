@@ -29,6 +29,13 @@ def extract_features(features):
     ef.spark_batch(features)
 
 
+def extract_guess_features():
+    create_spark_context(
+        app_name='Quiz Bowl: guessers'
+    )
+    ef.generate_guesser_feature()
+
+
 @cli.command(name='extract_features')
 @click.argument('features', nargs=-1, type=click.Choice(FEATURE_NAMES), required=True)
 def extract_features_cli(**kwargs):

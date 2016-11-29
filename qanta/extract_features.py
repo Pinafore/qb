@@ -76,15 +76,52 @@ def task_list():
 def generate_guesser_feature():
     sc = SparkContext.getOrCreate()  # type: SparkContext
     sql_context = SparkSession.builder.getOrCreate()
+    log.info('Loading list of guess tasks')
     tasks = task_list()
     guess_df = AbstractGuesser.load_all_guesses()
     guess_score_map = AbstractGuesser.load_guess_score_map(guess_df)
     b_guess_score_map = sc.broadcast(guess_score_map)
 
     def f_eval(task: Task) -> List[Row]:
-        pass
+        score_map = b_guess_score_map.value
+        df = task.guess_df
+        result = []
+        if len(df) > 0:
+            # Refer to code in evaluate_feature_question for explanation why this is safe
+            first_row = df.iloc[0]
+            qnum = int(first_row.row)
+            sentence = int(first_row.sentence)
+            token = int(first_row.token)
+            fold = first_row.fold
+            for guess in df.guess:
+                vw_features = []
+                key = (qnum, sentence, token, guess)
+                for guesser in score_map:
+                    if key in score_map[guesser]:
+                        score = score_map[guesser][key]
+                        feature = '{guesser}_score:{score} {guesser}_found:1'.format(
+                            guesser=guesser, score=score)
+                        vw_features.append(feature)
+                    else:
+                        vw_features.append('{}_found:-1'.format(guesser))
+                f_value = '|guessers ' + ' '.join(vw_features)
+                row = Row(
+                    fold,
+                    qnum,
+                    sentence,
+                    token,
+                    guess,
+                    'guessers',
+                    f_value
+                )
+                result.append(row)
 
-    feature_rdd = sc.parallelize(tasks, 5000).flatMap()
+        return result
+
+    log.info('Beginning feature job')
+    feature_rdd = sc.parallelize(tasks, 5000).flatMap(f_eval)
+    feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).cache()
+    write_feature_df(feature_df, ['guessers'])
 
 
 def spark_batch(feature_names: List[str]):
@@ -104,9 +141,11 @@ def spark_batch(feature_names: List[str]):
     log.info('Beginning feature job')
     # Hand tuned value of 5000 to keep the task size below recommended 100KB
     feature_rdd = sc.parallelize(tasks, 5000 * len(feature_names)).flatMap(f_eval)
-
     feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).cache()
+    write_feature_df(feature_df, feature_names)
 
+
+def write_feature_df(feature_df, feature_names: list):
     log.info('Beginning write job')
     for fold in c.VW_FOLDS:
         feature_df_with_fold = feature_df.filter(feature_df.fold == fold).cache()

@@ -4,7 +4,7 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from clm.lm_wrapper import build_clm
 from qanta.util import constants as c
-from qanta.spark_execution import extract_features, merge_features
+from qanta.spark_execution import extract_features, extract_guess_features, merge_features
 from qanta.pipeline.preprocess import Preprocess
 from qanta.pipeline.guesser import AllGuessers
 from qanta.learning import classifier
@@ -165,12 +165,31 @@ class ExtractMentionsFeatures(Task):
         extract_features(c.MENTIONS_OPT_FEATURES)
 
 
+class ExtractGuesserFeatures(Task):
+    resources = {'spark': 1}
+
+    def requires(self):
+        yield AllGuessers()
+
+    def output(self):
+        targets = []
+        for fold in c.VW_FOLDS:
+            targets.append(
+                LocalTarget('output/features/{0}/guessers.parquet'.format(fold))
+            )
+        return targets
+
+    def run(self):
+        extract_guess_features()
+
+
 class ExtractFeatures(WrapperTask):
     def requires(self):
         yield ExtractFastFeatures()
         yield ExtractComputeFeatures()
         yield ExtractLMFeatures()
         yield ExtractMentionsFeatures()
+        yield ExtractGuesserFeatures()
 
 
 class SparkMergeFeatures(Task):
