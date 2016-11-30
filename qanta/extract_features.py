@@ -14,6 +14,7 @@ from qanta.util.io import safe_path
 from qanta.util import constants as c
 from qanta.util.environment import QB_ROOT
 from qanta.util.spark_features import SCHEMA
+from qanta.preprocess import format_guess
 
 from qanta.extractors.stats import StatsExtractor
 from qanta.extractors.lm import LanguageModel
@@ -111,6 +112,7 @@ def generate_guesser_feature():
             for guess in df.guess:
                 vw_features = []
                 key = (qnum, sentence, token, guess)
+                vw_features.append(format_guess(guess))
                 for guesser in score_map:
                     if key in score_map[guesser]:
                         score = score_map[guesser][key]

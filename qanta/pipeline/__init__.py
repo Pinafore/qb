@@ -1,10 +1,7 @@
-from itertools import product
-import os
-
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
-from qanta.util.io import call, shell
+from qanta.util.io import call, shell, make_dirs
 from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor, VWAudit
 from qanta.pipeline.guesser.dan import CreateGuesses, AllDAN
 from qanta.pipeline.preprocess import Preprocess
@@ -12,56 +9,51 @@ from qanta.pipeline.preprocess import Preprocess
 
 class Summary(Task):
     fold = luigi.Parameter()
-    weight = luigi.IntParameter()
 
     def requires(self):
-        yield VWPredictions(fold=self.fold, weight=self.weight)
-        yield VWAudit(weight=self.weight)
+        yield VWPredictions(fold=self.fold)
+        yield VWAudit()
 
     def output(self):
-        return LocalTarget('output/summary/{0}.sentence.{1}.json'.format(self.fold, self.weight))
+        return LocalTarget('output/summary/{0}.json'.format(self.fold))
 
     def run(self):
-        if not os.path.exists('output/summary'):
-            os.makedirs('output/summary')
+        make_dirs('output/summary/')
         call([
             'python3',
             'qanta/reporting/performance.py',
             'generate',
-            c.PRED_TARGET.format(self.fold, self.weight),
-            c.META_TARGET.format(self.fold, self.weight),
-            'output/summary/{0}.sentence.{1}.json'.format(self.fold, self.weight)
+            c.PRED_TARGET.format(self.fold),
+            c.META_TARGET.format(self.fold),
+            'output/summary/{0}.json'.format(self.fold)
         ])
 
 
 class Reports(Task):
     fold = luigi.Parameter()
-    weight = luigi.IntParameter()
-
     resources = {'report_write': 1}
 
     def requires(self):
-        yield VWAuditRegressor(weight=self.weight)
-        yield Summary(fold=self.fold, weight=self.weight)
+        yield VWAuditRegressor()
+        yield Summary(fold=self.fold)
 
     def output(self):
-        return LocalTarget('output/reporting/report.{}.pdf'.format(self.weight))
+        return LocalTarget('output/reporting/report.pdf')
 
     def run(self):
-        shell('pdftk output/reporting/*.pdf cat output /tmp/report.{}.pdf'.format(self.weight))
-        shell('mv /tmp/report.{0}.pdf output/reporting/report.{0}.pdf'.format(self.weight))
+        shell('pdftk output/reporting/*.pdf cat output /tmp/report.pdf')
+        shell('mv /tmp/report.pdf output/reporting/report.pdf')
 
 
 class AllSummaries(WrapperTask):
     def requires(self):
-        for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
-            yield Reports(fold=fold, weight=weight)
+        for fold in c.VW_FOLDS:
+            yield Reports(fold=fold)
 
 
 class AblationRun(Task):
     fold = luigi.Parameter()
-    weight = luigi.IntParameter()
     feature = luigi.Parameter()
 
     def requires(self):
-        yield VWMergeFeature(fold=self.fold, weight=self.weight)
+        yield VWMergeFeature(fold=self.fold)

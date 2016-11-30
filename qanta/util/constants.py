@@ -15,9 +15,8 @@ QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "`
 STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile(r'[\W_]+')
 PUNCTUATION = string.punctuation
-GRANULARITIES = ['sentence']
-VW_FOLDS = ['dev', 'devtest', 'test']
-ALL_FOLDS = ['train', 'dev', 'test', 'devtest']
+VW_FOLDS = ['dev', 'test']
+ALL_FOLDS = ['train', 'dev', 'test']
 
 STATS = 'stats'
 IR = 'ir'
@@ -28,8 +27,9 @@ ANSWER_PRESENT = 'answer_present'
 CLASSIFIER = 'classifier'
 WIKILINKS = 'wikilinks'
 TEXT = 'text'
+GUESSERS = 'guessers'
 
-FEATURE_NAMES = [STATS, LM, ANSWER_PRESENT, CLASSIFIER, WIKILINKS, TEXT]
+FEATURE_NAMES = [STATS, LM, ANSWER_PRESENT, CLASSIFIER, TEXT, GUESSERS]
 
 FAST_FEATURES = [ANSWER_PRESENT, STATS, TEXT]
 COMPUTE_OPT_FEATURES = [CLASSIFIER]
@@ -74,8 +74,8 @@ CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 CLASSIFIER_PICKLE_PATH = 'output/classifier/{0}/{0}.pkl'
 CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pdf'
 
-PRED_TARGET = 'output/predictions/{0}.sentence.{1}.pred'
-META_TARGET = 'output/vw_input/{0}.sentence.{1}.meta'
+PRED_TARGET = 'output/predictions/{0}.pred'
+META_TARGET = 'output/vw_input/{0}.meta'
 
 EXPO_BUZZ = 'output/expo/{}.{}.buzz'
 EXPO_FINAL = 'output/expo/{}.{}.final'
@@ -83,14 +83,14 @@ EXPO_QUESTIONS = 'output/expo/test.questions.csv'
 
 KEN_LM = 'output/kenlm.binary'
 
-VW_INPUT = 'output/vw_input/{0}.sentence.{1}.vw_input.gz'
-VW_MODEL = 'output/models/sentence.{0}.vw'
-VW_PREDICTIONS = 'output/predictions/{0}.sentence.{1}.pred'
-VW_AUDIT = 'output/predictions/{0}.sentence.{1}.audit'
-VW_META = 'output/vw_input/{0}.sentence.{1}.meta'
-VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.{}.txt'
-VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.{}.csv'
-VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.{}.pdf'
+VW_INPUT = 'output/vw_input/{0}.vw.gz'
+VW_MODEL = 'output/models/model.vw'
+VW_PREDICTIONS = 'output/predictions/{0}.pred'
+VW_AUDIT = 'output/predictions/{0}.audit'
+VW_META = 'output/vw_input/{0}.meta'
+VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.txt'
+VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.csv'
+VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.pdf'
 
 NEGATIVE_WEIGHTS = [16]
 MIN_APPEARANCES = 5

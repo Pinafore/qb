@@ -1,5 +1,3 @@
-from itertools import product
-
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
@@ -10,7 +8,6 @@ from qanta.pipeline.spark import SparkMergeFeatures
 
 class VWMergeFeature(Task):
     fold = luigi.Parameter()
-    weight = luigi.IntParameter()
 
     def requires(self):
         return SparkMergeFeatures()
@@ -18,56 +15,54 @@ class VWMergeFeature(Task):
     def output(self):
         return [
             LocalTarget(
-                c.VW_INPUT.format(self.fold, self.weight)
+                c.VW_INPUT.format(self.fold)
             ),
-            LocalTarget(c.VW_META.format(self.fold, self.weight))
+            LocalTarget(c.VW_META.format(self.fold))
         ]
 
     def run(self):
-        call(['bash', 'bin/vw_merge.sh', self.fold, str(self.weight)])
+        call(['bash', 'bin/vw_merge.sh', self.fold])
 
 
 class VWMergeAllFeatures(WrapperTask):
     def requires(self):
-        for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
-            yield VWMergeFeature(fold=fold, weight=weight)
+        for fold in c.VW_FOLDS:
+            yield VWMergeFeature(fold=fold)
 
 
 class VWModel(Task):
-    weight = luigi.IntParameter()
-
     def requires(self):
-        return VWMergeFeature(fold='dev', weight=self.weight)
+        return VWMergeFeature(fold='dev')
 
     def output(self):
-        return LocalTarget(c.VW_MODEL.format(self.weight))
+        return LocalTarget(c.VW_MODEL)
 
     def run(self):
-        make_dirs('output/models')
+        make_dirs('output/models/')
         call([
             'vw',
             '--compressed',
-            '-d', c.VW_INPUT.format('dev', self.weight),
+            '-d', c.VW_INPUT.format('dev'),
             '--early_terminate', '100',
             '-k',
             '-q', 'ga',
+            '-q', 'gg',
             '-b', '28',
             '--loss_function', 'logistic',
-            '-f', c.VW_MODEL.format(self.weight)
+            '-f', c.VW_MODEL
         ])
 
 
 class VWPredictions(Task):
     fold = luigi.Parameter()
-    weight = luigi.IntParameter()
 
     def requires(self):
-        yield VWModel(weight=self.weight)
-        yield VWMergeFeature(fold=self.fold, weight=self.weight)
+        yield VWModel()
+        yield VWMergeFeature(fold=self.fold)
 
     def output(self):
         return LocalTarget(
-            c.VW_PREDICTIONS.format(self.fold, self.weight))
+            c.VW_PREDICTIONS.format(self.fold))
 
     def run(self):
         make_dirs('output/predictions')
@@ -76,46 +71,42 @@ class VWPredictions(Task):
             '--compressed',
             '-t',
             '--loss_function', 'logistic',
-            '-d', c.VW_INPUT.format(self.fold, self.weight),
-            '-i', c.VW_MODEL.format(self.weight),
-            '-p', c.VW_PREDICTIONS.format(self.fold, self.weight)
+            '-d', c.VW_INPUT.format(self.fold),
+            '-i', c.VW_MODEL,
+            '-p', c.VW_PREDICTIONS.format(self.fold)
         ])
 
 
 class VWAudit(Task):
-    weight = luigi.IntParameter()
-
     def requires(self):
-        yield VWModel(weight=self.weight)
-        yield VWMergeFeature(fold='test', weight=self.weight)
+        yield VWModel()
+        yield VWMergeFeature(fold='test')
 
     def output(self):
         return LocalTarget(
-            c.VW_AUDIT.format('test', self.weight)
+            c.VW_AUDIT.format('test')
         )
 
     def run(self):
-        make_dirs('output/predictions')
+        make_dirs('output/predictions/')
         shell(
             ('vw --compressed -t '
-             '-d output/vw_input/{fold}.sentence.{weight}.vw_input.gz '
-             '-i output/models/sentence.{weight}.vw --audit '
+             '-d output/vw_input/{fold}.vw_input.gz '
+             '--loss_function logistic '
+             '-i {vw_model} --audit '
              '| python cli.py format_vw_audit '
-             '> output/predictions/{fold}.sentence.{weight}.audit').format(
-                fold='test', weight=self.weight)
+             '> output/predictions/{fold}.audit').format(fold='test', vw_model=c.VW_MODEL)
         )
 
 
 class VWAuditRegressor(Task):
-    weight = luigi.IntParameter()
-
     def requires(self):
-        yield VWModel(weight=self.weight)
+        yield VWModel()
 
     def output(self):
         return [
-            LocalTarget(safe_path(c.VW_AUDIT_REGRESSOR.format(self.weight))),
-            LocalTarget(safe_path(c.VW_AUDIT_REGRESSOR_REPORT.format(self.weight)))
+            LocalTarget(safe_path(c.VW_AUDIT_REGRESSOR)),
+            LocalTarget(safe_path(c.VW_AUDIT_REGRESSOR_REPORT))
         ]
 
     def run(self):
@@ -124,9 +115,9 @@ class VWAuditRegressor(Task):
             '--compressed',
             '-t',
             '--loss_function', 'logistic',
-            '-d', c.VW_INPUT.format('dev', self.weight),
-            '-i', c.VW_MODEL.format(self.weight),
-            '--audit_regressor', c.VW_AUDIT_REGRESSOR.format(self.weight)
+            '-d', c.VW_INPUT.format('dev'),
+            '-i', c.VW_MODEL,
+            '--audit_regressor', c.VW_AUDIT_REGRESSOR
         ])
-        df = parse_audit(c.VW_AUDIT_REGRESSOR.format(self.weight))
-        audit_report(df, c.VW_AUDIT_REGRESSOR_REPORT.format(self.weight), self.weight)
+        df = parse_audit(c.VW_AUDIT_REGRESSOR)
+        audit_report(df, c.VW_AUDIT_REGRESSOR_REPORT)

@@ -1,12 +1,15 @@
 import os
 from functools import reduce
 from typing import List, Dict, Tuple
-from pyspark import RDD
+
+from pyspark import RDD, SparkContext
 from pyspark.sql import SparkSession, Row, DataFrame
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 
 from qanta import logging
 from qanta.util.constants import VW_FOLDS, FEATURE_NAMES
+from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.preprocess import format_guess
 
 log = logging.get(__name__)
 
@@ -23,6 +26,48 @@ SCHEMA = StructType([
 
 def create_output(path: str):
     df = read_dfs(path).cache()
+    question_db = QuestionDatabase()
+    answers = question_db.all_answers()
+    for qnum in answers:
+        answers[qnum] = format_guess(answers[qnum])
+
+    sc = SparkContext.getOrCreate()  # type: SparkContext
+    b_answers = sc.broadcast(answers)
+
+    def generate_string(group):
+        rows = group[1]
+        result = ""
+        feature_values = []
+        meta = None
+        qnum = None
+        guess = None
+        for name in FEATURE_NAMES:
+            named_feature_list = list(filter(lambda r: r.feature_name == name, rows))
+            if len(named_feature_list) != 1:
+                raise ValueError(
+                    'Encountered more than one row when there should be exactly one row')
+            named_feature = named_feature_list[0]
+            if meta is None:
+                qnum = named_feature.qnum
+                guess = named_feature.guess
+                meta = '{} {} {} {}'.format(
+                    qnum,
+                    named_feature.sentence,
+                    named_feature.token,
+                    guess
+                )
+            feature_values.append(named_feature.feature_value)
+        assert '@' not in result, \
+            '@ is a special character that is split on and not allowed in the feature line'
+
+        vw_features = ' '.join(feature_values)
+        if guess == b_answers.value[qnum]:
+            vw_label = "1 '{} ".format(qnum)
+        else:
+            vw_label = "-1 '{} ".format(qnum)
+
+        return vw_label + vw_features + '@' + meta
+
     for fold in VW_FOLDS:
         group_features(df.filter(df.fold == fold))\
             .map(generate_string)\
@@ -44,7 +89,7 @@ def read_dfs(path: str) -> DataFrame:
             else:
                 feature_dfs[(fold, name)] = sql_context.read.load(file_path)
 
-    return reduce(lambda x, y: x.union(y), feature_dfs.values()).cache()
+    return reduce(lambda x, y: x.union(y), feature_dfs.values())
 
 
 def group_features(df: DataFrame) -> RDD:
@@ -70,27 +115,3 @@ def group_features(df: DataFrame) -> RDD:
         .map(lambda r: ((r.qnum, r.sentence, r.token, r.guess), r))\
         .aggregateByKey(None, seq_op, comb_op)
     return grouped_rdd
-
-
-def generate_string(group):
-    rows = group[1]
-    result = ""
-    feature_values = []
-    meta = None
-    for name in FEATURE_NAMES:
-        named_feature_list = list(filter(lambda r: r.feature_name == name, rows))
-        if len(named_feature_list) != 1:
-            raise ValueError(
-                'Encountered more than one row when there should be exactly one row')
-        named_feature = named_feature_list[0]
-        if meta is None:
-            meta = '{} {} {} {}'.format(
-                named_feature.qnum,
-                named_feature.sentence,
-                named_feature.token,
-                named_feature.guess
-            )
-        feature_values.append(named_feature.feature_value)
-    assert '@' not in result, \
-        '@ is a special character that is split on and not allowed in the feature line'
-    return ' '.join(feature_values) + '@' + meta

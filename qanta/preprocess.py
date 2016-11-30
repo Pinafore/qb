@@ -49,4 +49,4 @@ def replace_named_entities(question):
 
 
 def format_guess(guess):
-    return guess.strip().lower().replace(' ', '_')
+    return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')

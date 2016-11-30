@@ -32,21 +32,21 @@ CLASSIFIER_TARGETS = {
     'output/classifier/ans_type'
 }
 
-SPARK_COMPUTE_TARGETS = {
-    'output/features/dev/answer_present.parquet',
+SPARK_CLASSIFIER_TARGETS = {
     'output/features/dev/classifier.parquet',
-    'output/features/dev/label.parquet',
-    'output/features/dev/wikilinks.parquet',
+    'output/features/devtest/classifier.parquet',
+    'output/features/test/classifier.parquet',
+}
+
+SPARK_FAST_TARGETS = {
+    'output/features/dev/answer_present.parquet',
+    'output/features/dev/stats.parquet',
     'output/features/dev/text.parquet',
     'output/features/devtest/answer_present.parquet',
-    'output/features/devtest/classifier.parquet',
-    'output/features/devtest/label.parquet',
-    'output/features/devtest/wikilinks.parquet',
+    'output/features/devtest/stats.parquet',
     'output/features/devtest/text.parquet',
     'output/features/test/answer_present.parquet',
-    'output/features/test/classifier.parquet',
-    'output/features/test/label.parquet',
-    'output/features/test/wikilinks.parquet'
+    'output/features/test/stats.parquet',
     'output/features/test/text.parquet',
 }
 
@@ -74,8 +74,8 @@ SPARK_GUESSERS_TARGETS = {
     'output/features/test/guessers.parquet'
 }
 
-SPARK_FEATURE_TARGETS = SPARK_COMPUTE_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
-                        | SPARK_GUESSERS_TARGETS
+SPARK_FEATURE_TARGETS = SPARK_FAST_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
+                        | SPARK_GUESSERS_TARGETS | SPARK_CLASSIFIER_TARGETS
 
 VW_INPUT = {'output/vw_input'}
 
@@ -88,11 +88,10 @@ SUMMARIES = {'output/summary'}
 REPORTING = {'output/reporting'}
 
 fold = os.environ.get('QB_FOLD', 'test')
-weight = os.environ.get('QB_WEIGHT', 16)
 EXPO = {
     'output/expo/test.questions.csv',
-    'output/expo/{}.{}.buzz'.format(fold, weight),
-    'output/expo/{}.{}.final'.format(fold, weight)
+    'output/expo/{}.buzz'.format(fold),
+    'output/expo/{}.final'.format(fold)
 }
 
 
@@ -107,7 +106,8 @@ TARGET_GROUPS = {
     'clm': CLM_TARGETS,
     'classifiers': CLASSIFIER_TARGETS,
     'spark': SPARK_FEATURE_TARGETS,
-    'spark_compute': SPARK_COMPUTE_TARGETS,
+    'spark_fast': SPARK_FAST_TARGETS,
+    'spark_classifier': SPARK_CLASSIFIER_TARGETS,
     'spark_lm': SPARK_LM_TARGETS,
     'spark_mentions': SPARK_MENTIONS_TARGETS,
     'spark_deep': SPARK_DEEP_TARGETS,
