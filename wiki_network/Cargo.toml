@@ -1,0 +1,6 @@
+[package]
+name = "wiki_network"
+version = "0.1.0"
+authors = ["EntilZha <ski.rodriguez@gmail.com>"]
+
+[dependencies]
