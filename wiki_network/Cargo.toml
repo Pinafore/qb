@@ -4,3 +4,9 @@ version = "0.1.0"
 authors = ["EntilZha <ski.rodriguez@gmail.com>"]
 
 [dependencies]
+regex = "0.1"
+itertools = "0.5.6"
+
+[profile.release]
+debug = true
+

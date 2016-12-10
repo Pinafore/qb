@@ -17,7 +17,7 @@ class WikiNetworkGuesser:
         with open('/ssd-c/qanta/titles-sorted.txt') as f:
             for i, line in enumerate(f, 1):
                 page = line.strip().lower()
-                if re.match("^[a-zA-Z\_']+$", page) and page not in self.stop_words:
+                if re.match("^[a-zA-Z_']+$", page) and page not in self.stop_words:
                     g.add_node(i, page=page)
                     vertex_set.add(i)
                     page_map[page] = i
