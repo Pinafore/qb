@@ -6,6 +6,7 @@ authors = ["EntilZha <ski.rodriguez@gmail.com>"]
 [dependencies]
 regex = "0.1"
 itertools = "0.5.6"
+time = "0.1"
 
 [profile.release]
 debug = true

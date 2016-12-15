@@ -3,17 +3,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::collections::{HashMap, HashSet};
 
-use regex::Regex;
-
-
-pub struct WikiGraph {
-    pub adjacency_list: Vec<Vec<usize>>,
-    rev_adjacency_list: Vec<Vec<usize>>,
-    pub page_map: HashMap<String, usize>,
-    vertex_set: HashSet<usize>,
-    pub new_vertex_map: HashMap<usize, usize>,
-    pub vertex_page_map: HashMap<usize, String>
-}
 
 pub fn load_stopwords() -> HashSet<String> {
     let f = File::open("data/stopwords.txt").unwrap();
@@ -45,44 +34,60 @@ pub fn load_questions() -> Vec<String> {
     questions
 }
 
+pub struct WikiGraph {
+    pub adjacency_list: Vec<Vec<usize>>,
+    rev_adjacency_list: Vec<Vec<usize>>,
+    pub page_map: HashMap<String, Vec<usize>>,
+    pub new_vertex_map: HashMap<usize, usize>,
+    pub vertex_page_map: HashMap<usize, String>,
+    pub new_page_map: HashMap<String, usize>
+}
+
 impl WikiGraph {
     pub fn new() -> WikiGraph {
         println!("Running...");
-        let stop_words = load_stopwords();
-
-        let titles_file = File::open("data/titles-sorted.txt").unwrap();
+        let titles_file = File::open("data/processed-titles-sorted.txt").unwrap();
         let titles_reader = BufReader::new(&titles_file);
-        let page_regex = Regex::new(r"^[a-zA-Z0-9_\(\)']+$").unwrap();
-        let mut page_map: HashMap<String, usize> = HashMap::new();
+        let mut page_map: HashMap<String, Vec<usize>> = HashMap::new();
         let mut vertex_set: HashSet<usize> = HashSet::new();
         let mut i = 1;
+        let mut n_vertexes = 0;
         for raw_line in titles_reader.lines() {
             let page = raw_line.unwrap();
-            if page_regex.is_match(&page) {
-                let low_page = page.to_lowercase();
-                if !stop_words.contains(&low_page) {
-                    page_map.insert(low_page, i);
-                    vertex_set.insert(i);
+            if page != "@" {
+                if !page_map.contains_key(&page) {
+                    page_map.insert(page.clone(), Vec::new());
+
                 }
+                page_map.get_mut(&page).unwrap().push(i);
+                vertex_set.insert(i);
+                n_vertexes += 1;
             }
             i += 1;
         }
         page_map.shrink_to_fit();
-
-        let mut new_vertex_map: HashMap<usize, usize> = HashMap::new();
-        for (i, vid) in vertex_set.iter().enumerate() {
-            new_vertex_map.insert(*vid, i);
-        }
-
-        let mut vertex_page_map: HashMap<usize, String> = HashMap::new();
-        for (page, vid) in &page_map {
-            let new_vid = new_vertex_map[vid];
-            vertex_page_map.insert(new_vid, page.to_string());
-        }
-
-        let n_vertexes = new_vertex_map.len();
-
         println!("Found {} vertexes", n_vertexes);
+        println!("Found {} pages", page_map.len());
+        println!("Found {} distinct vertexes", vertex_set.len());
+
+        let mut new_vertex_map: HashMap<usize, usize> = HashMap::with_capacity(n_vertexes);
+        let mut vertex_page_map: HashMap<usize, String> = HashMap::with_capacity(n_vertexes);
+        for (i, (page, vids)) in page_map.iter().enumerate() {
+            for v in vids {
+                new_vertex_map.insert(*v, i);
+                vertex_page_map.insert(i, page.clone());
+            }
+        }
+
+        let mut new_page_map: HashMap<String, usize> = HashMap::with_capacity(n_vertexes);
+        for (vid, page) in &vertex_page_map {
+            new_page_map.insert(page.clone(), *vid);
+        }
+
+        println!("Done creating the new vertex maps");
+
+
+        println!("Creating adjacency lists");
         let mut adjacency_list: Vec<Vec<usize>> = Vec::with_capacity(n_vertexes);
         let mut rev_adjacency_list: Vec<Vec<usize>> = Vec::with_capacity(n_vertexes);
         for _ in 0..n_vertexes {
@@ -105,10 +110,12 @@ impl WikiGraph {
                 for e in edges {
                     if vertex_set.contains(&e) {
                         let new_v = new_vertex_map[&e];
-                        source_list.push(new_v);
-                        let ref mut rev_source_list = rev_adjacency_list[new_v];
-                        rev_source_list.push(new_u);
-                        n += 1
+                        if new_u != new_v {
+                            source_list.push(new_v);
+                            let ref mut rev_source_list = rev_adjacency_list[new_v];
+                            rev_source_list.push(new_u);
+                            n += 1
+                        }
                     }
                     source_list.shrink_to_fit();
                 }
@@ -122,13 +129,13 @@ impl WikiGraph {
             adjacency_list: adjacency_list,
             rev_adjacency_list: rev_adjacency_list,
             page_map: page_map,
-            vertex_set: vertex_set,
             new_vertex_map: new_vertex_map,
-            vertex_page_map: vertex_page_map
+            vertex_page_map: vertex_page_map,
+            new_page_map: new_page_map
         }
     }
-
 }
+
 
 pub fn path_lengths(wiki_graph: &WikiGraph,
                     sources: &Vec<usize>,
@@ -142,6 +149,7 @@ pub fn path_lengths(wiki_graph: &WikiGraph,
     let mut visited: HashSet<usize> = HashSet::new();
     let ref adjacency_list = wiki_graph.adjacency_list;
     let ref rev_adjacency_list = wiki_graph.rev_adjacency_list;
+    println!("Starting bidirectional bfs");
     for s in sources {
         forward_fringe.clear();
         forward_fringe.push(*s);
@@ -193,7 +201,6 @@ pub fn path_lengths(wiki_graph: &WikiGraph,
             final_distances.push((*s, *d, distance.unwrap_or(usize::max_value())));
         }
     }
-
     final_distances
 }
 
