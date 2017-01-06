@@ -1,3 +1,6 @@
+clean:
+	rm clm/clm_wrap.cxx
+
 clm/clm_wrap.cxx: clm/clm.swig
 	swig -c++ -python $<
 
