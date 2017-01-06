@@ -10,9 +10,9 @@ from math import log, exp
 
 from nltk import bigrams
 
-from clm import clm
-from clm import lm_wrapper
-from clm.lm_wrapper import kUNK, kSTART, kEND
+import clm
+import lm_wrapper
+from lm_wrapper import kUNK, kSTART, kEND
 
 kCORPUS = [("toy1", "the name of the rose"),
            ("toy1", "the name of the father"),
@@ -27,7 +27,7 @@ kCORPUS = [("toy1", "the name of the rose"),
            ("toy2", "tinted father"),
            ("toy2", "rose tinted glasses"),
            ("toy2", "rose tinted glasses")]
-kCOMPARE = 2
+kCOMPARE = 1
 
 kVOCAB = ["OOV", kEND, kSTART, "the", "name", "of", "father", "rose", "tinted",
           "glasses", "god", "water"]
@@ -292,7 +292,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(self._reader.vocab_lookup(lm_wrapper.kUNK), 0)
 
     def corpora(self):
-        return ["compare_%i" % x for x in range(self._compare)] + \
+        return ["compare_%i" % (x) for x in range(self._compare)] + \
             ["toy%i" % x for x in range(3)]
 
     def test_bigram_counts(self):
@@ -354,7 +354,7 @@ class TestStringMethods(unittest.TestCase):
         corpus = ""
         for span in [1, 2, 3, 5]:
             for slop in [0, 1, 2, 3]:
-                self._reader.set_params(.5, span, 0, 1.0, -1e6, slop, True,
+                self._reader.set_params(.5, 0, span, 0, 1.0, -1e6, slop, True,
                                         False, True, [])
                 for qq in kQUERIES:
                     for guess in ["toy0", "toy1", "toy2"]:
@@ -381,7 +381,7 @@ class TestStringMethods(unittest.TestCase):
         for ss in kSMOOTH:
             for mm in kINTERP:
                 for span_length in [1, 2, 3, 5]:
-                    self._reader.set_params(mm, span_length, 0, ss, -1e6,
+                    self._reader.set_params(mm, 0, span_length, 0, ss, -1e6,
                                             1, False, True, False, [])
                     self._lm.set_smooth(ss)
                     self._lm.set_interpolation(mm)
