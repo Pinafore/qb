@@ -1,6 +1,6 @@
 import re
 import random
-import os
+from collections import defaultdict
 import networkx as nx
 import pandas as pd
 from nltk.corpus import stopwords
@@ -39,64 +39,34 @@ class WikiNetworkGuesser:
         raw_words = text.lower().replace(',', '').replace('.', '').split()
         return [w for w in raw_words if w not in self.stop_words]
 
-    def build_subgraph(self, words):
-        v_indexes = set()
-        seed_vertexes = set()
-
-        for w in words:
-            if w in self.page_map:
-                v = self.page_map[w]
-                v_indexes.add(v)
-                seed_vertexes.add(v)
-                v_indexes |= set(self.g.neighbors(v))
-
-        sub_graph = self.g.subgraph(v_indexes)
-        size = 0
-        max_size_subgraph = None
-        for comp in nx.weakly_connected_component_subgraphs(sub_graph):
-            if max_size_subgraph is None or len(comp) > size:
-                max_size_subgraph = comp
-                size = len(comp)
-
-        seed_vertexes = {v for v in seed_vertexes if v in sub_graph.node}
-
-        return max_size_subgraph, seed_vertexes
-
-    def node2vec_input(self, answer: str, sub_graph: nx.Graph, seed_vertexes, output_directory):
-        if answer not in self.page_map:
-            print('No wiki entry for:', answer)
-            return
-        answer_id = self.page_map[answer]
-        g_id = random.randint(0, 1000000)
-        n2v_output = os.path.join(output_directory, '{}_edges.txt'.format(g_id))
-        with open(n2v_output, 'w') as f:
-            for u, v in sub_graph.edges_iter():
-                f.write('{} {}\n'.format(u, v))
-
-        meta_output = os.path.join(output_directory, '{}_meta.txt'.format(g_id))
-        with open(meta_output, 'w') as f:
-            for n in sub_graph.node:
-                page = sub_graph.node[n]['page']
-                if n == answer_id:
-                    f.write('{} {} {} {}\n'.format(1, n, page, int(n in seed_vertexes)))
-                else:
-                    f.write('{} {} {} {}\n'.format(0, n, page, int(n in seed_vertexes)))
-
     def generate_guesses(self, text, answer, qnum):
         words = self.tokenize(text)
-        sub_graph, seed_vertexes = self.build_subgraph(words)
+        seed_vertexes = {self.page_map[w] for w in words if w in self.page_map}
+        candidate_vertexes = set()
 
-        columns = {'vid': [], 'degree': [], 'page': [], 'answer': [], 'qnum': []}
-        degree_dist = nx.degree(sub_graph)
+        for seed_v in seed_vertexes:
+            for v in self.g.neighbors(seed_v):
+                if v not in seed_vertexes:
+                    candidate_vertexes.add(v)
 
-        for vid in sub_graph.nodes():
+        seed_distances = defaultdict(int)
+        for u in candidate_vertexes:
+            for v in seed_vertexes:
+                try:
+                    seed_distances[u] += 1 / nx.shortest_path_length(self.g, source=u, target=v)
+                except nx.NetworkXNoPath:
+                    seed_distances[u] += 0
+
+        columns = {'vid': [], 'distance': [], 'page': [], 'answer': [], 'qnum': []}
+
+        for vid in candidate_vertexes:
             columns['vid'].append(vid)
             columns['page'].append(self.g.node[vid]['page'])
-            columns['degree'].append(degree_dist[vid])
+            columns['distance'].append(seed_distances[vid])
             columns['answer'].append(answer)
             columns['qnum'].append(qnum)
 
-        return pd.DataFrame(columns), sub_graph, seed_vertexes
+        return pd.DataFrame(columns), seed_vertexes
 
 
 def evaluate():

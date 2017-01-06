@@ -23,7 +23,6 @@ class Question:
         self.gender = gender
         self.text = {}
         self._last_query = None
-        self._cache_query = ""
 
     def raw_words(self):
         """
@@ -126,27 +125,6 @@ class QuestionDatabase:
 
         return (dev_questions + test_questions).list()
 
-    def unmatched_answers(self, ids_to_exclude=None):
-        """
-        Return a dictionary with the most unmatched pages
-        """
-
-        if ids_to_exclude is None:
-            ids_to_exclude = set()
-
-        c = self._conn.cursor()
-        command = 'select answer, id as cnt from questions ' + \
-            'where page == ""'
-        c.execute(command)
-
-        answers = defaultdict(dict)
-        for aa, qid in c:
-            normalized = aa.lower()
-            normalized = normalized.replace("_", "")
-            if qid not in ids_to_exclude:
-                answers[normalized][aa] = answers[normalized].get(aa, 0) + 1
-        return answers
-
     def answer_map(self, normalization=lambda x: x):
         c = self._conn.cursor()
         command = 'select answer, page from questions ' + \
@@ -159,12 +137,6 @@ class QuestionDatabase:
 
         return d
 
-    def questions_by_answer(self, answer):
-        questions = self.query('from questions where answer == ?', (answer,))
-
-        for ii in questions:
-            yield questions[ii]
-
     def questions_with_pages(self) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
 
@@ -175,9 +147,6 @@ class QuestionDatabase:
                 page_map[row.page] = []
             page_map[row.page].append(row)
         return page_map
-
-    def questions_by_tournament(self, tournament):
-        return self.query('from questions where tournament like ?', ('%%%s%%' % tournament, ))
 
     def prune_text(self):
         """
@@ -235,29 +204,6 @@ class QuestionDatabase:
         for result_tuple in c:
             yield result_tuple[0]
 
-    def majority_frequency(self, page, column):
-        """
-        Given a page, look up the majority value for a column and its frequency
-        """
-
-        c = self._conn.cursor()
-        c.execute('SELECT ?, count(*) AS cnt FROM questions WHERE page=? ' +
-                  'GROUP BY ? ORDER BY cnt DESC', (column, page, column, ))
-        total = 0
-        majority = None
-        majority_count = 0
-        for pp, cc in c:
-            print(pp, cc)
-            if majority is None:
-                majority = pp
-                majority_count = cc
-            total += cc
-
-        if total > 0:
-            return majority, float(majority_count) / float(total)
-        else:
-            return majority, -1
-
     def all_answers(self):
         """
         Return a lookup from IDs to pages
@@ -270,9 +216,3 @@ class QuestionDatabase:
         for qid, page in c:
             answers[int(qid)] = page
         return answers
-
-    def set_answer_page(self, qid, page, ans_type):
-        query = "UPDATE questions SET page=?, type=? WHERE id=?"
-        c = self._conn.cursor()
-        c.execute(query, (page, ans_type, qid))
-        self._conn.commit()

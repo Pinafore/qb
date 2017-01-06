@@ -6,7 +6,7 @@ from clm.lm_wrapper import build_clm
 from qanta.util import constants as c
 from qanta.spark_execution import extract_features, merge_features
 from qanta.pipeline.preprocess import Preprocess
-from qanta.pipeline.dan import CreateGuesses
+from qanta.pipeline.guesser import CreateGuesses
 from qanta.learning import classifier
 from qanta.extractors.label import compute_question_stats
 from qanta.util.environment import QB_QUESTION_DB
