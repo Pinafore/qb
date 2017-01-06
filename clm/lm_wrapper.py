@@ -14,7 +14,7 @@ from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, MIN_APPEARANCES
 
-from clm import clm
+import clm
 from qanta.util.io import safe_open
 
 log = logging.get(__name__)
@@ -236,7 +236,7 @@ class LanguageModelReader(LanguageModelBase):
 
         return result
 
-    def preprocess_and_cache(self, sentece):
+    def preprocess_and_cache(self, sentence):
         if self._sentence_hash != hash(sentence):
             self._sentence_hash = hash(sentence)
             tokenized = list(self.tokenize_and_censor(sentence))
@@ -405,6 +405,8 @@ class LanguageModelWriter(LanguageModelBase):
             yield ii
 
     def write_corpus(self, corpus, offset, outfile):
+        assert(corpus in self._obs_counts), "%s not in corpora %s" % \
+            (str(corpus), str(self._obs_counts.keys())[:80])
         num_contexts = len(self._obs_counts[corpus].keys())
         outfile.write("%s %i %i\n" % (corpus, offset, num_contexts))
 
