@@ -1,37 +1,10 @@
 import pickle
 
-from qanta.preprocess import clean_question, replace_named_entities, format_guess
+from qanta.preprocess import format_guess, Preprocessor
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.io import safe_open
 from qanta.util.constants import MIN_APPEARANCES, DEEP_VOCAB_TARGET
 from qanta.util.environment import QB_QUESTION_DB
-
-
-class Preprocessor:
-    def __init__(self):
-        # map vocab to word embedding lookup index
-        self.vocab = []
-        self.vdict = {}
-
-        # map stopwords to word embedding lookup index
-        # todo: add "s" to stopwords
-        self.stopset = set()
-
-    def preprocess_input(self, q):
-        q = clean_question(q)
-        q = replace_named_entities(q)
-
-        words = self.convert_to_indices(q.strip())
-        return words
-
-    def convert_to_indices(self, text):
-        words = []
-        for w in text.split():
-            if w not in self.vdict:
-                self.vocab.append(w)
-                self.vdict[w] = len(self.vocab) - 1
-            words.append(self.vdict[w])
-        return words
 
 
 def preprocess():
@@ -50,7 +23,7 @@ def preprocess():
             if q.page in pages:
                 qs = {}
                 for index in q.text:
-                    qs[index] = pp.preprocess_input(q.text[index])
+                    qs[index] = pp.preprocess_question(q.text[index])
                 ans = format_guess(q.page)
                 answer = pp.convert_to_indices(ans)
                 proc_fold.append((qs, answer))

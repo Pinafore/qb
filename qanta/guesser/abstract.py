@@ -8,7 +8,6 @@ import pandas as pd
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 from qanta.util import constants as c
-from qanta.util.environment import data_path
 
 
 class AbstractGuesser(metaclass=ABCMeta):
