@@ -9,7 +9,7 @@ variable "access_key" {}
 variable "secret_key" {}
 
 variable "spot_price" {
-  default = "2.5"
+  default = "1.0"
 }
 
 variable "master_instance_type" {
@@ -237,13 +237,20 @@ resource "aws_spot_instance_request" "master" {
     script = "terraform/configure-swap.sh"
   }
 
+  # Add a line to bashrc to source all our environment
+  provisioner "remote-exec" {
+    inline = [
+        "echo source /home/ubuntu/qbenv >> /home/ubuntu/.bashrc"
+    ]
+  }
+
   # Configure AWS credentials
   provisioner "remote-exec" {
     inline = [
       "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-env.sh",
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/.bashrc",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/qbenv",
       "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-env.sh",
-      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/.bashrc",
+      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/qbenv",
       "mkdir -p /home/ubuntu/.aws",
       "echo \"[default]\" >> /home/ubuntu/.aws/credentials",
       "echo \"aws_access_key_id = ${var.access_key}\" >> /home/ubuntu/.aws/credentials",
@@ -254,11 +261,22 @@ resource "aws_spot_instance_request" "master" {
   # Configure qanta environment variables
   provisioner "remote-exec" {
     inline = [
-      "echo \"export QB_SPARK_MASTER=spark://${self.private_dns}:7077\" >> /home/ubuntu/.bashrc",
-      "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
-      "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
-      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc",
-      "echo \"export QB_TF_EXPERIMENT_ID=${count.index}\" >> /home/ubuntu/.bashrc"
+      "echo 'export PATH=/home/ubuntu/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games' >> /home/ubuntu/qbenv",
+      "echo 'export QB_ROOT=/ssd-c/qanta/qb' >> /home/ubuntu/qbenv",
+      "echo 'export QB_QUESTION_DB=$${QB_ROOT}/data/internal/non_naqt.db' >> /home/ubuntu/qbenv",
+      "echo 'export QB_GUESS_DB=$${QB_ROOT}/output/guesses.db' >> /home/ubuntu/qbenv",
+      "echo 'export PYTHONPATH=:/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/python' >> /home/ubuntu/qbenv",
+      "echo 'export QB_SPARK_MASTER=spark://${self.private_dns}:7077' >> /home/ubuntu/qbenv",
+      "echo 'export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python' >> /home/ubuntu/qbenv",
+      "echo 'export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python' >> /home/ubuntu/qbenv",
+      "echo 'export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}' >> /home/ubuntu/qbenv",
+      "echo 'export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}' >> /home/ubuntu/qbenv",
+      "echo 'export QB_TF_EXPERIMENT_ID=${count.index + 2}' >> /home/ubuntu/qbenv",
+      "echo 'export CUDA_HOME=/usr/local/cuda' >> /home/ubuntu/qbenv",
+      "echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64' >> /home/ubuntu/qbenv",
+      "echo 'export PATH=/home/ubuntu/anaconda3/bin:$PATH' >> /home/ubuntu/qbenv",
+      "echo 'export SPARK_HOME=/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7' >> /home/ubuntu/qbenv",
+      "echo 'export PYTHONPATH=$PYTHONPATH:/ssd-c/qanta/qb' >> /home/ubuntu/qbenv"
     ]
   }
 
@@ -287,19 +305,24 @@ resource "aws_spot_instance_request" "master" {
 
   provisioner "remote-exec" {
     inline = [
-        "bash setup-experiment.sh"
+        "bash /tmp/setup-experiment.sh"
     ]
   }
 
-provisioner "file" {
-    source = "qanta/guesser/tf/experiments.py"
-    destination = "/ssd-c/qanta/qb/guesser/tf/experiments.py"
-}
+  provisioner "file" {
+      source = "qanta/guesser/tf/experiments.py"
+      destination = "/ssd-c/qanta/qb/qanta/guesser/tf/experiments.py"
+  }
 
-provisioner "remote-exec" {
-    inline = [
-        "(cd /ssd-c/qanta/qb && luigi --background --module qanta.pipeline.dan RunTFDanExperiment)"
-    ]
+  provisioner "file" {
+      source = "terraform/launch-experiment.sh"
+      destination = "/tmp/launch-experiment.sh"
+  }
+  provisioner "remote-exec" {
+        inline = [
+          "bash /tmp/launch-experiment.sh"
+        ]
+  }
 }
 
 output "master_public_ip" {

@@ -5,10 +5,10 @@ import os
 
 from unidecode import unidecode
 
-from qanta.wikipedia.cached_wikipedia import CachedWikipedia
-from qanta.util.qdb import QuestionDatabase
-from qanta.util.environment import data_path
 from qanta.util.constants import COUNTRY_LIST_PATH
+from qanta.util.environment import data_path
+from qanta.util.qdb import QuestionDatabase
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 
 
 def text_iterator(use_wiki, wiki_location,

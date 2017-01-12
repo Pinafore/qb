@@ -53,7 +53,7 @@ def preprocess():
                 qs = {}
                 for index in q.text:
                     qs[index] = pp.preprocess_input(q.text[index])
-                ans = q.page.strip().lower().replace(' ', '_')
+                ans = preprocessing.preprocess_answer(q.page.strip().lower().replace(' ', '_'))
                 answer = pp.convert_to_indices(ans)
                 proc_fold.append((qs, answer))
             if i % 5000 == 0:

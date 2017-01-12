@@ -39,3 +39,7 @@ def preprocess_text(q, ners=None):
         q = q.replace(ner, ner.replace(' ', '_'))
 
     return q
+
+
+def preprocess_answer(a):
+    return a.strip().lower().replace(' ', '_')

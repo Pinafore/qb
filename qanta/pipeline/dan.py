@@ -3,7 +3,6 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.extract_features import create_guesses
 from qanta.guesser import dan
-from qanta.guesser.tf.dan import run_experiment
 from qanta.guesser.tf.experiments import experiments
 from qanta.guesser.classify.learn_classifiers import print_recall_at_n
 from qanta.guesser.util import load_embeddings
@@ -115,8 +114,10 @@ class RunTFDanExperiment(Task):
         return LocalTarget(c.DEEP_EXPERIMENT_FLAG)
 
     def run(self):
+        # Do import here so if we don't want to run this task we don't need to import tensorflow
+        from qanta.guesser.tf.dan import run_experiment
         params = experiments[e.QB_TF_EXPERIMENT_ID]
-        run_experiment(params)
+        run_experiment(params, outfile='/tmp/exp_output')
 
 
 @CreateGuesses.event_handler(luigi.Event.FAILURE)

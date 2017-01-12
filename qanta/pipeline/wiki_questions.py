@@ -1,8 +1,10 @@
 import luigi
 from luigi import LocalTarget, Task
+from qanta.guesser.tf.experiments import experiments
 from qanta.guesser.util.wiki_questions import generate_domain_classifier_data, get_best_wiki_questions
 from qanta.util import constants as c
 from qanta.util.io import call
+from qanta.util import environment as e
 
 
 class WikiQuestionsVW(Task):
@@ -67,7 +69,7 @@ class SelectWikiQuestions(Task):
             yield LabelWikiQuestionsVW(data_num=group, model_num=1-group)
 
     def run(self):
-        get_best_wiki_questions()
+        get_best_wiki_questions(frac_questions=experiments[e.QB_TF_EXPERIMENT_ID])
 
     def output(self):
         return LocalTarget(c.DOMAIN_OUTPUT)

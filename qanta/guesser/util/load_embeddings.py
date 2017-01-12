@@ -2,6 +2,7 @@ from numpy import *
 import pickle
 
 from qanta import logging
+from qanta.guesser.util.dataset import Dataset, get_or_make_id_map
 from qanta.util.io import safe_open
 
 
@@ -12,7 +13,8 @@ def create():
     vec_file = open('data/external/deep/glove.840B.300d.txt')
     all_vocab = {}
     log.info('loading vocab...')
-    vocab, wmap = pickle.load(open('output/deep/vocab', 'rb'))
+    # TODO: Fix this hack
+    wmap = get_or_make_id_map([Dataset.QUIZ_BOWL, Dataset.WIKI])
 
     for line in vec_file:
         split = line.split()
