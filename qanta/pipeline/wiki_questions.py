@@ -69,7 +69,7 @@ class SelectWikiQuestions(Task):
             yield LabelWikiQuestionsVW(data_num=group, model_num=1-group)
 
     def run(self):
-        get_best_wiki_questions(frac_questions=experiments[e.QB_TF_EXPERIMENT_ID])
+        get_best_wiki_questions(frac_questions=experiments[e.QB_TF_EXPERIMENT_ID]['wiki_data_frac'])
 
     def output(self):
         return LocalTarget(c.DOMAIN_OUTPUT)
