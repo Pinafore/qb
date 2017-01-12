@@ -1,30 +1,11 @@
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 
-from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
 from qanta.util import environment as e
-from qanta.guesser.util.format_dan import preprocess
 from qanta.guesser.util import load_embeddings
 from qanta.guesser import dan
 from qanta.guesser.classify.learn_classifiers import print_recall_at_n
-
-
-class FormatDan(Task):
-    def requires(self):
-        yield Preprocess()
-
-    def run(self):
-        preprocess()
-
-    def output(self):
-        return [
-            LocalTarget(c.DEEP_VOCAB_TARGET),
-            LocalTarget(c.DEEP_TRAIN_TARGET),
-            LocalTarget(c.DEEP_TEST_TARGET),
-            LocalTarget(c.DEEP_DEV_TARGET),
-            LocalTarget(c.DEEP_DEVTEST_TARGET)
-        ]
 
 
 class LoadEmbeddings(Task):

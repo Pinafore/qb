@@ -1,11 +1,16 @@
 import pickle
+import os
 from typing import Dict, List, Tuple
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
-from qanta.util.constants import DEEP_WE_TARGET
+from qanta.preprocess import preprocess_dataset, create_embeddings
+from qanta import logging
 
 import tensorflow as tf
+
+log = logging.get(__name__)
+TF_DAN_WE = 'output/deep/tf_dan_we.pickle'
 
 
 def _make_layer(i: int, in_tensor, n_out, op, n_in=None):
@@ -16,56 +21,50 @@ def _make_layer(i: int, in_tensor, n_out, op, n_in=None):
     return (out if op is None else op(out)), W
 
 
-def _load_embeddings():
-    with open(DEEP_WE_TARGET, 'rb') as f:
-        embed = pickle.load(f)
-        # For some reason embeddings are stored in column-major order
-        embed = embed.T
-    return embed
+def _load_embeddings(vocab=None):
+    if os.path.exists(TF_DAN_WE):
+        log.info('Loading word embeddings from cache')
+        with open(TF_DAN_WE, 'rb') as f:
+            return pickle.load(f)
+    else:
+        if vocab is None:
+            raise ValueError('To create fresh embeddings a vocab is needed')
+        with open(TF_DAN_WE, 'wb') as f:
+            log.info('Creating word embeddings and saving to cache')
+            embed_and_lookup = create_embeddings(vocab)
+            pickle.dump(embed_and_lookup, f)
+            return embed_and_lookup
+
+
+def _convert_text_to_embeddings(text: List[str], embeddings, embedding_lookup):
+    w_indices = []
+    for w in text:
+        if w in embedding_lookup:
+            w_indices.append(embeddings[embedding_lookup[w]])
+    return w_indices
 
 
 def _compute_n_classes(labels: List[str]):
     return len(set(labels))
 
 
-def _compute_max_len(questions: List[List[str]]):
-    max_len = 0
-    for q in questions:
-        length = sum(len(sentence) for sentence in q)
-    return
+def _compute_max_len(x_data: List[List[int]]):
+    return max(len(x) for x in x_data)
 
 
-class DANGuesser(AbstractGuesser):
-    @classmethod
-    def targets(cls) -> List[str]:
-        return []
+class TFDanModel:
+    def __init__(self, dan_params: Dict, max_len: int, n_classes: int):
+        self.max_len = max_len
+        self.n_classes = n_classes
+        self.n_hidden_units = dan_params['n_hidden_units']
+        self.n_hidden_layers = dan_params['n_hidden_layers']
+        self.word_dropout = dan_params['word_dropout']
+        self.batch_size = dan_params['batch_size']
+        self.init_scale = dan_params['init_scale']
+        self.learning_rate = dan_params['learning_rate']
+        self.max_epochs = dan_params['max_epochs']
 
-    def __init__(self, n_hidden_units=300, n_hidden_layers=2, word_dropout=.3, batch_size=128,
-                 learning_rate=.0001, init_scale=.08):
-        super().__init__()
-        self.n_hidden_units = n_hidden_units
-        self.n_hidden_layers = n_hidden_layers
-        self.word_dropout = word_dropout
-        self.batch_size = batch_size
-        self.init_scale = init_scale
-        self.learning_rate = learning_rate
-
-    @property
-    def requested_datasets(self) -> Dict[str, AbstractDataset]:
-        return {
-            'qb': QuizBowlEvaluationDataset()
-        }
-
-    def train(self,
-              training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
-        with tf.Graph().as_default(), tf.Session as session:
-            n_classes = _compute_n_classes(training_data['qb'][1])
-            self._build_model(50, n_classes)
-
-    def _preprocess_train(self, data: Tuple[List[List[str]], List[str]]):
-        pass
-
-    def _build_model(self, max_len, n_classes):
+    def build_tf_model(self):
         with tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(
                 minval=-self.init_scale, maxval=self.init_scale)):
             initial_embed = tf.get_variable(
@@ -84,14 +83,14 @@ class DANGuesser(AbstractGuesser):
 
             # Apply word level dropout
             drop_filter = tf.nn.dropout(
-                tf.ones((max_len, 1)), keep_prob=1 - self.word_dropout)
+                tf.ones((self.max_len, 1)), keep_prob=1 - self.word_dropout)
             in_dim = embed_and_zero.get_shape()[1]
             layer_out = tf.reduce_sum(sent_vecs, 1) / tf.expand_dims(len_placeholder, 1)
             for i in range(self.n_hidden_layers):
                 layer_out, w = _make_layer(i, layer_out, n_in=in_dim, n_out=self.n_hidden_units,
                                            op=tf.nn.relu)
                 in_dim = None
-            logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=n_classes, op=None)
+            logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
             representation_layer = layer_out
             loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                 logits, tf.to_int64(label_placeholder))
@@ -104,6 +103,52 @@ class DANGuesser(AbstractGuesser):
             optimizer = tf.train.AdamOptimizer()
             train_op = optimizer.minimize(loss)
 
+    def train(self, x_train, y_train):
+        with tf.Graph().as_default(), tf.Session() as session:
+            self.build_tf_model()
+            self._train(session, self.max_epochs)
+
+    def _train(self, session: tf.Session, n_epochs: int):
+        session.run(tf.initialize_all_variables())
+
+        train_accuracies = []
+        train_losses = []
+
+        holdout_accuracies = []
+        holdout_losses = []
+
+DEFAULT_DAN_PARAMS = dict(
+    n_hidden_units=200, n_hidden_layers=2, word_dropout=.3, batch_size=128,
+                 learning_rate=.0001, init_scale=.08, max_epochs=50
+)
+
+
+class DANGuesser(AbstractGuesser):
+    @classmethod
+    def targets(cls) -> List[str]:
+        return []
+
+    def __init__(self, dan_params=DEFAULT_DAN_PARAMS):
+        super().__init__()
+        self.dan_params = dan_params
+
+    @property
+    def requested_datasets(self) -> Dict[str, AbstractDataset]:
+        return {
+            'qb': QuizBowlEvaluationDataset()
+        }
+
+    def train(self,
+              training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
+        qb_data = training_data['qb']
+        x_train, y_train, vocab = preprocess_dataset(qb_data)
+        embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
+        x_train = [_convert_text_to_embeddings(q, embeddings, embedding_lookup) for q in x_train]
+
+        n_classes = _compute_n_classes(qb_data[1])
+        max_len = _compute_max_len(x_train)
+        model = TFDanModel(self.dan_params, max_len, n_classes)
+        model.train(x_train, y_train)
 
     def load(self, directory: str) -> None:
         pass
