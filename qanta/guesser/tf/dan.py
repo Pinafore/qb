@@ -671,7 +671,7 @@ def run_experiment(params, outfile):
     embed = _load_embeddings()
     use_qb = params['use_qb']
     use_wiki = params['use_wiki']
-    exclude_keys = {'use_qb', 'use_wiki'}
+    exclude_keys = {'use_qb', 'use_wiki', 'wiki_data_frac'}
     model_params = {k: v for k, v in params.items() if k not in exclude_keys}
     dataset_weights = {Dataset.QUIZ_BOWL: int(use_qb), Dataset.WIKI: int(use_wiki)}
 
