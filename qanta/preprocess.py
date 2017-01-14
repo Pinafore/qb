@@ -54,19 +54,27 @@ def format_guess(guess):
 
 
 def preprocess_dataset(data: Tuple[List[List[str]], List[str]]):
+    for i in range(len(data[1])):
+        data[1][i] = format_guess(data[1][i])
+    classes = set(data[1])
+    class_to_i = {}
+    i_to_class = []
+    for i, ans_class in enumerate(classes):
+        class_to_i[ans_class] = i
+        i_to_class.append(ans_class)
+
     x_data = []
     y_data = []
     vocab = set()
+
     for q, ans in zip(data[0], data[1]):
         for run in q:
             q_text = word_tokenize(replace_named_entities(clean_question(run)))
             vocab |= set(q_text)
             x_data.append(q_text)
+            y_data.append(class_to_i[ans])
 
-            guess = format_guess(ans)
-            y_data.append(guess)
-
-    return x_data, y_data, vocab
+    return x_data, y_data, vocab, class_to_i, i_to_class
 
 
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'

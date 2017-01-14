@@ -1,4 +1,5 @@
 import pickle
+import time
 import os
 from typing import Dict, List, Tuple
 from qanta.guesser.abstract import AbstractGuesser
@@ -8,6 +9,8 @@ from qanta.preprocess import preprocess_dataset, create_embeddings
 from qanta import logging
 
 import tensorflow as tf
+from sklearn.cross_validation import train_test_split
+import numpy as np
 
 log = logging.get(__name__)
 TF_DAN_WE = 'output/deep/tf_dan_we.pickle'
@@ -52,6 +55,18 @@ def _compute_max_len(x_data: List[List[int]]):
     return max(len(x) for x in x_data)
 
 
+def _create_batches(batch_size, x_data: np.ndarray, y_data: np.ndarray):
+    if type(x_data) != np.ndarray or type(y_data) != np.ndarray:
+        raise ValueError('x and y must be numpy arrays')
+    if len(x_data) != len(y_data):
+        raise ValueError('x and y must have the same dimension')
+    n = len(x_data)
+    order = list(range(n))
+    np.random.shuffle(order)
+    for i in range(0, n, batch_size):
+        yield x_data[order[i:i + batch_size]], y_data[order[i:i + batch_size]]
+
+
 class TFDanModel:
     def __init__(self, dan_params: Dict, max_len: int, n_classes: int):
         self.max_len = max_len
@@ -64,6 +79,14 @@ class TFDanModel:
         self.learning_rate = dan_params['learning_rate']
         self.max_epochs = dan_params['max_epochs']
 
+        # These are set by build_tf_model
+        self.input_placeholder = None
+        self.len_placeholder = None
+        self.label_placeholder = None
+        self.loss = None
+        self.batch_accuracy = None
+        self.train_op = None
+
     def build_tf_model(self):
         with tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(
                 minval=-self.init_scale, maxval=self.init_scale)):
@@ -72,50 +95,89 @@ class TFDanModel:
                 initializer=tf.constant(_load_embeddings(), dtype=tf.float32)
             )
             embed_and_zero = tf.pad(initial_embed, [[1, 0], [0, 0]], mode='CONSTANT')
-            input_placeholder = tf.placeholder(
+            self.input_placeholder = tf.placeholder(
                 tf.int32, shape=(self.batch_size, None), name='input_placeholder')
-            len_placeholder = tf.placeholder(
+            self.len_placeholder = tf.placeholder(
                 tf.float32, shape=self.batch_size, name='len_placeholder')
-            label_placeholder = tf.placeholder(
+            self.label_placeholder = tf.placeholder(
                 tf.int32, shape=self.batch_size, name='label_placeholder')
             # (batch_size, max_len, embedding_dim)
-            sent_vecs = tf.nn.embedding_lookup(embed_and_zero, input_placeholder)
+            sent_vecs = tf.nn.embedding_lookup(embed_and_zero, self.input_placeholder)
 
             # Apply word level dropout
             drop_filter = tf.nn.dropout(
                 tf.ones((self.max_len, 1)), keep_prob=1 - self.word_dropout)
             in_dim = embed_and_zero.get_shape()[1]
-            layer_out = tf.reduce_sum(sent_vecs, 1) / tf.expand_dims(len_placeholder, 1)
+            layer_out = tf.reduce_sum(sent_vecs, 1) / tf.expand_dims(self.len_placeholder, 1)
             for i in range(self.n_hidden_layers):
                 layer_out, w = _make_layer(i, layer_out, n_in=in_dim, n_out=self.n_hidden_units,
                                            op=tf.nn.relu)
                 in_dim = None
             logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
             representation_layer = layer_out
-            loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits, tf.to_int64(label_placeholder))
-            loss = tf.reduce_mean(loss)
+            self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                logits, tf.to_int64(self.label_placeholder))
+            self.loss = tf.reduce_mean(self.loss)
             softmax_output = tf.nn.softmax(logits)
             preds = tf.to_int32(tf.argmax(logits, 1))
-            batch_accuracy = tf.contrib.metrics.accuracy(preds, label_placeholder)
+            self.batch_accuracy = tf.contrib.metrics.accuracy(preds, self.label_placeholder)
             accuracy, accuracy_update = tf.contrib.metrics.streaming_accuracy(
-                preds, label_placeholder)
+                preds, self.label_placeholder)
             optimizer = tf.train.AdamOptimizer()
-            train_op = optimizer.minimize(loss)
+            self.train_op = optimizer.minimize(self.loss)
 
-    def train(self, x_train, y_train):
+    def train(self, x_data, y_data):
         with tf.Graph().as_default(), tf.Session() as session:
             self.build_tf_model()
-            self._train(session, self.max_epochs)
+            self._train(x_data, y_data, session, self.max_epochs)
 
-    def _train(self, session: tf.Session, n_epochs: int):
+    def run_epoch(self, session: tf.Session, epoch_num, x_data, y_data, train=True):
+        total_loss = 0
+        start_time = time.time()
+        accuracies = []
+        losses = []
+        if train:
+            fetches = self.loss, self.batch_accuracy, self.train_op
+        else:
+            fetches = self.loss, self.batch_accuracy
+
+        batch_i = 0
+        for x_batch, y_batch in _create_batches(self.batch_size, x_data, y_data):
+            lengths = [len(x) for x in x_batch]
+            batch_start = time.time()
+            feed_dict = {
+                self.input_placeholder: x_batch,
+                self.len_placeholder: lengths,
+                self.label_placeholder: y_batch
+            }
+            loss, accuracy = session.run(fetches, feed_dict=feed_dict)
+            accuracies.append(accuracy)
+            total_loss += loss
+            losses.append(loss)
+            batch_duration = time.time() - batch_start
+            log.info('{} Epoch: {} Batch: {} Accuracy: {:.4f} Loss: {:.4f} Duration: {:.4f}'.format(
+                'Train' if train else 'Val', epoch_num, batch_i, accuracy, loss, batch_duration))
+            batch_i += 1
+        duration = time.time() - start_time
+        return accuracies, losses, duration
+
+    def _train(self, x_data, y_data, session: tf.Session, n_epochs: int):
         session.run(tf.initialize_all_variables())
+
+        max_accuracy = -1
+        max_patience = 4
+        patience = 4
 
         train_accuracies = []
         train_losses = []
 
         holdout_accuracies = []
         holdout_losses = []
+
+        x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, train_size=.95)
+
+        for i in range(n_epochs):
+            accuracies, losses, duration = self.run_epoch(session, i, x_train, y_train)
 
 DEFAULT_DAN_PARAMS = dict(
     n_hidden_units=200, n_hidden_layers=2, word_dropout=.3, batch_size=128,
@@ -141,13 +203,15 @@ class DANGuesser(AbstractGuesser):
     def train(self,
               training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
         qb_data = training_data['qb']
-        x_train, y_train, vocab = preprocess_dataset(qb_data)
+        x_train, y_train, vocab, class_to_i, i_to_class = preprocess_dataset(qb_data)
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
         x_train = [_convert_text_to_embeddings(q, embeddings, embedding_lookup) for q in x_train]
 
         n_classes = _compute_n_classes(qb_data[1])
         max_len = _compute_max_len(x_train)
         model = TFDanModel(self.dan_params, max_len, n_classes)
+        x_train = np.array(x_train)
+        y_train = np.array(y_train)
         model.train(x_train, y_train)
 
     def load(self, directory: str) -> None:
