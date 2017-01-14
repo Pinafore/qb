@@ -6,6 +6,7 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 from qanta.preprocess import preprocess_dataset, create_embeddings
+from qanta.util.constants import DEEP_DAN_MODEL_TARGET
 from qanta import logging
 
 import tensorflow as tf
@@ -86,6 +87,7 @@ class TFDanModel:
         self.loss = None
         self.batch_accuracy = None
         self.train_op = None
+        self.saver = None
 
     def build_tf_model(self):
         with tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(
@@ -125,6 +127,7 @@ class TFDanModel:
                 preds, self.label_placeholder)
             optimizer = tf.train.AdamOptimizer()
             self.train_op = optimizer.minimize(self.loss)
+            self.saver = tf.train.Saver()
 
     def train(self, x_data, y_data):
         with tf.Graph().as_default(), tf.Session() as session:
@@ -178,10 +181,34 @@ class TFDanModel:
 
         for i in range(n_epochs):
             accuracies, losses, duration = self.run_epoch(session, i, x_train, y_train)
+            log.info('Train Epoch: {} Avg loss: {} Accuracy: {}. Ran in {} seconds.'.format(
+                i, np.average(losses), np.average(accuracies), duration))
+            train_accuracies.append(accuracies)
+            train_losses.append(losses)
+
+            val_accuracies, val_losses, val_duration = self.run_epoch(session, i, x_test, y_test,
+                                                                      train=False)
+            val_accuracy = np.average(val_accuracies)
+            log.info('Val Epoch: {} Avg loss: {} Accuracy: {}. Ran in {} seconds.'.format(
+                i, np.average(val_losses), val_accuracy, val_duration))
+            holdout_accuracies.append(val_accuracies)
+            holdout_losses.append(val_losses)
+
+            patience -= 1
+            if val_accuracy > max_accuracy:
+                max_accuracy = val_accuracy
+                log.info('New best accuracy, saving model')
+                patience = max_patience
+                self.saver.save(session, DEEP_DAN_MODEL_TARGET)
+
+            if patience == 0:
+                break
+
+        return train_losses, train_accuracies, holdout_losses, holdout_accuracies
 
 DEFAULT_DAN_PARAMS = dict(
     n_hidden_units=200, n_hidden_layers=2, word_dropout=.3, batch_size=128,
-                 learning_rate=.0001, init_scale=.08, max_epochs=50
+    learning_rate=.0001, init_scale=.08, max_epochs=50
 )
 
 

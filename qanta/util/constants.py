@@ -60,6 +60,7 @@ DEEP_DAN_DEV_OUTPUT = 'output/deep/dev_dan'
 DEEP_DEVTEST_TARGET = 'output/deep/devtest'
 DEEP_TEST_TARGET = 'output/deep/test'
 DEEP_VOCAB_TARGET = 'output/deep/vocab'
+DEEP_DAN_MODEL_TARGET = 'output/deep/tfdan'
 EVAL_RES_TARGET = 'output/deep/eval_res'
 
 GUESSER_TARGET_PREFIX = 'output/guesser'
