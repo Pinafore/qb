@@ -3,80 +3,9 @@ from luigi import LocalTarget, Task, WrapperTask
 
 from qanta.util import constants as c
 from qanta.util import environment as e
-from qanta.guesser.util import load_embeddings
 from qanta.guesser import dan
 from qanta.guesser.classify.learn_classifiers import print_recall_at_n
 
 
-class LoadEmbeddings(Task):
-    def requires(self):
-        yield FormatDan()
-
-    def run(self):
-        load_embeddings.create()
-
-    def output(self):
-        return LocalTarget(c.DEEP_WE_TARGET)
 
 
-class TrainDAN(Task):
-    def requires(self):
-        yield LoadEmbeddings()
-
-    def run(self):
-        dan.train_dan()
-
-    def output(self):
-        return LocalTarget(c.DEEP_DAN_PARAMS_TARGET)
-
-
-class ComputeDANOutput(Task):
-    def requires(self):
-        yield TrainDAN()
-
-    def run(self):
-        dan.compute_classifier_input()
-
-    def output(self):
-        return [
-            LocalTarget(c.DEEP_DAN_TRAIN_OUTPUT),
-            LocalTarget(c.DEEP_DAN_DEV_OUTPUT)
-        ]
-
-
-class TrainClassifier(Task):
-    def requires(self):
-        yield ComputeDANOutput()
-
-    def run(self):
-        dan.train_classifier()
-
-    def output(self):
-        return LocalTarget(c.DEEP_DAN_CLASSIFIER_TARGET)
-
-
-class EvaluateClassifier(luigi.Task):
-    def requires(self):
-        yield TrainClassifier()
-
-    def run(self):
-        print_recall_at_n()
-
-    def output(self):
-        return LocalTarget(c.EVAL_RES_TARGET)
-
-
-class AllDAN(WrapperTask):
-    def requires(self):
-        yield EvaluateClassifier()
-
-
-class CreateGuesses(Task):
-    def requires(self):
-        yield AllDAN()
-
-    def output(self):
-        return LocalTarget(e.QB_GUESS_DB)
-
-    def run(self):
-        pass

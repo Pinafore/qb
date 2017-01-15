@@ -5,8 +5,12 @@ from typing import Tuple, List, Set
 import string
 
 from qanta.util.constants import NERS_PATH
+from qanta import logging
 from nltk import word_tokenize
 import numpy as np
+
+
+log = logging.get(__name__)
 
 
 def clean_question(question: str):
@@ -39,11 +43,12 @@ def clean_question(question: str):
 
 @lru_cache(maxsize=None)
 def load_ners():
+    log.info('Loading ners file...')
     with open(NERS_PATH, 'rb') as f:
         return pickle.load(f)
 
 
-def replace_named_entities(question):
+def replace_named_entities(question: str):
     for ner in load_ners():
         question = question.replace(ner, ner.replace(' ', '_'))
     return question
@@ -69,8 +74,9 @@ def preprocess_dataset(data: Tuple[List[List[str]], List[str]]):
 
     for q, ans in zip(data[0], data[1]):
         for run in q:
-            q_text = word_tokenize(replace_named_entities(clean_question(run)))
-            vocab |= set(q_text)
+            q_text = word_tokenize(clean_question(run))
+            for w in q_text:
+                vocab.add(w)
             x_data.append(q_text)
             y_data.append(class_to_i[ans])
 
