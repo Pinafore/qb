@@ -1,11 +1,7 @@
-from functools import lru_cache
 import re
-import sys
-import unicodedata
 import string
 
 from nltk.corpus import stopwords
-from nltk.tokenize.treebank import TreebankWordTokenizer
 
 NEG_INF = float('-inf')
 PAREN_EXPRESSION = re.compile(r'\s*\([^)]*\)\s*')
