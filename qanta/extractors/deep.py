@@ -1,12 +1,10 @@
 import warnings
-import pickle
 import numpy as np
 from string import ascii_lowercase, punctuation
 
 from functional import seq
 
 from qanta.extractors.abstract import AbstractFeatureExtractor
-from qanta.util import constants as c
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
 from qanta.datasets.quiz_bowl import QuestionDatabase
@@ -30,11 +28,6 @@ def normalize(text):
 class DeepExtractor(AbstractFeatureExtractor):
     def __init__(self):
         super(DeepExtractor, self).__init__()
-        self.classifier = pickle.load(open(c.DEEP_DAN_CLASSIFIER_TARGET, 'rb'), encoding='latin1')
-        self.params = pickle.load(open(c.DEEP_DAN_PARAMS_TARGET, 'rb'), encoding='latin1')
-        self.d = self.params[-1].shape[0]
-        self.vocab, self.vdict = pickle.load(open(c.DEEP_VOCAB_TARGET, 'rb'), encoding='latin1')
-        self.ners = pickle.load(open(c.NERS_PATH, 'rb'), encoding='latin1')
         question_db = QuestionDatabase(QB_QUESTION_DB)
         page_dict = {}
         for page in question_db.get_all_pages():
