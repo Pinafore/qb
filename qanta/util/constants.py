@@ -45,8 +45,6 @@ COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 
 SENTENCE_STATS = 'output/guesser/sentence_stats.pickle'
 
-NERS_PATH = 'data/internal/common/ners'
-
 CLM_PATH = 'output/language_model'
 CLM_TARGET = 'output/language_model.txt'
 

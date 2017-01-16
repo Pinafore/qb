@@ -4,7 +4,6 @@ from functools import lru_cache
 from typing import Tuple, List, Set
 import string
 
-from qanta.util.constants import NERS_PATH
 from qanta import logging
 from nltk import word_tokenize
 import numpy as np
@@ -39,19 +38,6 @@ def clean_question(question: str):
     regex_pattern += r'|\[.*?\]|\(.*?\)'
 
     return re.sub(regex_pattern, '', question.strip().lower())
-
-
-@lru_cache(maxsize=None)
-def load_ners():
-    log.info('Loading ners file...')
-    with open(NERS_PATH, 'rb') as f:
-        return pickle.load(f)
-
-
-def replace_named_entities(question: str):
-    for ner in load_ners():
-        question = question.replace(ner, ner.replace(' ', '_'))
-    return question
 
 
 def format_guess(guess):
