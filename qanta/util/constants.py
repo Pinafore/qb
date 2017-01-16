@@ -95,14 +95,3 @@ NEGATIVE_WEIGHTS = [16]
 MIN_APPEARANCES = 5
 MAX_APPEARANCES = 5
 N_GUESSES = 200
-
-
-@lru_cache(maxsize=None)
-def get_treebank_tokenizer():
-    return TreebankWordTokenizer().tokenize
-
-
-@lru_cache(maxsize=None)
-def get_punctuation_table():
-    return dict.fromkeys(
-        i for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith('P'))
