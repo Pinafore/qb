@@ -19,9 +19,11 @@ TF_DAN_WE = 'output/deep/tf_dan_we.pickle'
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 
-def _make_layer(i: int, in_tensor, n_out, op, n_in=None):
+def _make_layer(i: int, in_tensor, n_out, op, n_in=None, dropout_prob=None):
     w = tf.get_variable('W' + str(i), (in_tensor.get_shape()[1] if n_in is None else n_in, n_out),
                         dtype=tf.float32)
+    if dropout_prob is not None:
+        w = tf.nn.dropout(w, keep_prob=1 - dropout_prob)
     b = tf.get_variable('b' + str(i), n_out, dtype=tf.float32)
     out = tf.matmul(in_tensor, w) + b
     return (out if op is None else op(out)), w
@@ -82,13 +84,10 @@ def _tf_format(x_data: List[List[int]], max_len: int):
     :param max_len:
     :return:
     """
-    for row in x_data:
-        for i in range(len(row)):
-            row[i] += 1
     for i in range(len(x_data)):
         row = x_data[i]
         while len(row) < max_len:
-            row.append(0)
+            row.append(max_len)
         x_data[i] = x_data[i][:max_len]
     return x_data
 
@@ -123,6 +122,7 @@ class TFDanModel:
         self.n_hidden_units = dan_params['n_hidden_units']
         self.n_hidden_layers = dan_params['n_hidden_layers']
         self.word_dropout = dan_params['word_dropout']
+        self.nn_dropout = dan_params['nn_dropout']
         self.batch_size = dan_params['batch_size']
         self.init_scale = dan_params['init_scale']
         self.learning_rate = dan_params['learning_rate']
@@ -138,19 +138,23 @@ class TFDanModel:
         self.softmax_output = None
         self.saver = None
         self.file_writer = None
+        self.sent_vecs = None
+        self.avg_embeddings = None
+        self.word_dropout_var = None
+        self.nn_dropout_var = None
 
         # Set at runtime
         self.session = None
 
     def build_tf_model(self):
-        with tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(
-                minval=-self.init_scale, maxval=self.init_scale)):
+        with tf.variable_scope(
+                'dan', reuse=None, initializer=tf.contrib.layers.xavier_initializer()):
             embedding, embedding_word_lookup = _load_embeddings()
             initial_embed = tf.get_variable(
                 'embedding',
                 initializer=tf.constant(embedding, dtype=tf.float32)
             )
-            embed_and_zero = tf.pad(initial_embed, [[1, 0], [0, 0]], mode='CONSTANT')
+            embed_and_zero = tf.pad(initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
             self.input_placeholder = tf.placeholder(
                 tf.int32, shape=(self.batch_size, self.max_len), name='input_placeholder')
             self.len_placeholder = tf.placeholder(
@@ -162,13 +166,22 @@ class TFDanModel:
             self.sent_vecs = tf.nn.embedding_lookup(embed_and_zero, self.input_placeholder)
 
             # Apply word level dropout
+            self.word_dropout_var = tf.get_variable('word_dropout', (), dtype=tf.float32,
+                                                    trainable=False)
+            self.nn_dropout_var = tf.get_variable('nn_dropout', (), dtype=tf.float32,
+                                                  trainable=False)
             drop_filter = tf.nn.dropout(
-                tf.ones((self.max_len, 1)), keep_prob=1 - self.word_dropout)
+                tf.ones((self.max_len, 1)), keep_prob=1 - self.word_dropout_var)
+            self.sent_vecs = self.sent_vecs * drop_filter
             in_dim = embed_and_zero.get_shape()[1]
-            layer_out = tf.reduce_sum(self.sent_vecs, 1) / tf.expand_dims(self.len_placeholder, 1)
+            self.avg_embeddings = tf.reduce_sum(self.sent_vecs, 1) / tf.expand_dims(
+                self.len_placeholder, 1)
+            layer_out = self.avg_embeddings
             for i in range(self.n_hidden_layers):
-                layer_out, w = _make_layer(i, layer_out, n_in=in_dim, n_out=self.n_hidden_units,
-                                           op=tf.nn.relu)
+                layer_out, w = _make_layer(
+                    i, layer_out, n_in=in_dim, n_out=self.n_hidden_units, op=tf.nn.relu,
+                    dropout_prob=self.nn_dropout_var
+                )
                 in_dim = None
             logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
             representation_layer = layer_out
@@ -190,7 +203,9 @@ class TFDanModel:
             self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
             self.session = session
             train_losses, train_accuracies, holdout_losses, holdout_accuracies = self._train(
-                x_data, y_data, x_lengths, self.max_epochs)
+                x_data, y_data, x_lengths, self.max_epochs
+            )
+
             return train_losses, train_accuracies, holdout_losses, holdout_accuracies
 
     def _train(self, x_data, y_data, x_lengths, n_epochs: int):
@@ -207,12 +222,14 @@ class TFDanModel:
         holdout_losses = []
 
         x_train, x_test, y_train, y_test, x_lengths_train, x_lengths_test = train_test_split(
-            x_data, y_data, x_lengths, train_size=.90)
+            x_data, y_data, x_lengths, train_size=.90
+        )
 
         for i in range(n_epochs):
             # Training Epoch
             accuracies, losses, duration = self.run_epoch(
-                x_train, y_train, x_lengths_train)
+                x_train, y_train, x_lengths_train
+            )
             log.info(
                 'Train Epoch: {} Avg loss: {:.4f} Accuracy: {:.4f}. Ran in {:.4f} seconds.'.format(
                     i, np.average(losses), np.average(accuracies), duration))
@@ -221,7 +238,8 @@ class TFDanModel:
 
             # Validation Epoch
             val_accuracies, val_losses, val_duration = self.run_epoch(
-                x_test, y_test, x_lengths_test, train=False)
+                x_test, y_test, x_lengths_test, train=False
+            )
             val_accuracy = np.average(val_accuracies)
             log.info(
                 'Val Epoch: {} Avg loss: {:.4f} Accuracy: {:.4f}. Ran in {:.4f} seconds.'.format(
@@ -229,21 +247,22 @@ class TFDanModel:
             holdout_accuracies.append(val_accuracies)
             holdout_losses.append(val_losses)
 
-            # Early Stopping and Model Saving
-            patience -= 1
+            # Save the model if its better
+            if i > 10:
+                patience -= 1
             if val_accuracy > max_accuracy:
                 max_accuracy = val_accuracy
                 log.info('New best accuracy, saving model')
                 patience = max_patience
                 self.saver.save(self.session, DEEP_DAN_MODEL_TARGET)
 
-            if patience == 0:
+            # Early stopping after some burn in
+            if patience == 0 and i > 10:
                 break
 
         return train_losses, train_accuracies, holdout_losses, holdout_accuracies
 
     def run_epoch(self, x_data, y_data, x_lengths, train=True):
-        total_loss = 0
         start_time = time.time()
         accuracies = []
         losses = []
@@ -257,15 +276,16 @@ class TFDanModel:
                 self.batch_size, x_data, y_data, x_lengths):
             feed_dict = {
                 self.input_placeholder: x_batch,
+                self.label_placeholder: y_batch,
                 self.len_placeholder: x_len_batch,
-                self.label_placeholder: y_batch
             }
+            self.session.run(self.word_dropout_var.assign(self.word_dropout if train else 0))
+            self.session.run(self.nn_dropout_var.assign(self.nn_dropout if train else 0))
             returned = self.session.run(fetches, feed_dict=feed_dict)
             loss = returned[0]
             accuracy = returned[1]
 
             accuracies.append(accuracy)
-            total_loss += loss
             losses.append(loss)
             batch_i += 1
         duration = time.time() - start_time
@@ -280,9 +300,10 @@ class TFDanModel:
     def load(self):
         pass
 
+
 DEFAULT_DAN_PARAMS = dict(
     n_hidden_units=200, n_hidden_layers=2, word_dropout=.3, batch_size=128,
-    learning_rate=.0001, init_scale=.08, max_epochs=50
+    learning_rate=.0001, init_scale=.08, max_epochs=50, nn_dropout=.3
 )
 
 
@@ -357,4 +378,3 @@ class DANGuesser(AbstractGuesser):
 
     def score(self, question: str, guesses: List[str]) -> List[float]:
         pass
-
