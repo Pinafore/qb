@@ -3,10 +3,10 @@
     {
       "type": "amazon-ebs",
       "region": "us-west-2",
-      "source_ami": "ami-746aba14",
+      "source_ami": "ami-b7a114d7",
       "instance_type": "p2.xlarge",
       "ssh_username": "ubuntu",
-      "ami_name": "qanta {{timestamp}}",
+      "ami_name": "qanta-gpu {{timestamp}}",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
@@ -35,6 +35,11 @@
       "type": "file",
       "source": "conf/limits.conf",
       "destination": "/home/ubuntu/limits.conf"
+    },
+    {
+      "type": "file",
+      "source": "conf/cuda-dnn-env.sh",
+      "destination": "/home/ubuntu/cuda-dnn-env.sh"
     },
     {
       "type": "shell",
