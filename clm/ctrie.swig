@@ -1,4 +1,4 @@
-%module clm
+%module ctrie
 %include "std_string.i"
 %include "carrays.i"
 %array_class(int, intArray);
