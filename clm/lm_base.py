@@ -1,3 +1,14 @@
+import re
+
+from unidecode import unidecode
+from nltk.tokenize import RegexpTokenizer
+
+from qanta.util.constants import CLM_START_TOK, CLM_END_TOK, CLM_UNK_TOK
+
+kGOODCHAR = re.compile(r"[a-zA-Z0-9]*")
+kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
+
+
 class LanguageModelBase:
     def __init__(self):
         self._vocab_final = None
@@ -18,7 +29,7 @@ class LanguageModelBase:
         if word in self._vocab:
             return self._vocab[word]
         else:
-            return self._vocab[kUNK]
+            return self._vocab[CLM_UNK_TOK]
 
     @staticmethod
     def normalize_title(corpus, title):
@@ -41,7 +52,7 @@ class LanguageModelBase:
         """
         if not isinstance(sentence, str):
             sentence = ' '.join(list(sentence))
-        yield self.vocab_lookup(kSTART)
+        yield self.vocab_lookup(CLM_START_TOK)
         for ii in kTOKENIZER(unidecode(sentence)):
             yield self.vocab_lookup(ii.lower())
-        yield self.vocab_lookup(kEND)
+        yield self.vocab_lookup(CLM_END_TOK)

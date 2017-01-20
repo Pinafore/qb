@@ -48,16 +48,16 @@ class TrieLanguageModel(LanguageModelBase):
     def mle(self, ngram):
         return self.count(ngram) / self.total(ngram)
 
-    def write_lm(self, outfile):
+    def write_lm(self, id, outfile):
         """
         Write the LM to a text file
         """
 
         number_contexts = len(self._contexts)
-        outfile.write("%i\n" % number_contexts)
+        outfile.write("%i %i\n" % (id, number_contexts))
 
-        for context, count in sorted(self._contexts.iteritems(),
-                                     key=lambda x: x[1]):
+        for context, count in sorted(self._subtotals.items(), reverse=True,
+                                     key=lambda x: (x[1], len(x[0]))):
             num_tokens = len(context)
             context_string = " ".join(str(x) for x in context)
             outfile.write("%i %i\t%s\n" % (count, num_tokens, context_string))

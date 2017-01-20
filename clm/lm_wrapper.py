@@ -4,17 +4,14 @@
 # Add in training for a guesser
 # Add in demo for guessing
 # C++ implementation
+# KN scoring
 # Implement guesser interface
 
 from collections import defaultdict
 import time
-import re
-import os
 import ctypes
 
 from unidecode import unidecode
-
-from nltk.tokenize import RegexpTokenizer
 from nltk import ngrams
 
 from qanta import logging
@@ -33,10 +30,9 @@ from qanta.util.io import safe_open
 
 log = logging.get(__name__)
 
-kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
 kLEFT_PAD = '<s>'
 
-kGOODCHAR = re.compile(r"[a-zA-Z0-9]*")
+
 
 
 def pretty_debug(name, result, max_width=10):
@@ -293,12 +289,14 @@ class LanguageModelWriter(LanguageModelBase):
 
     def add_counts(self, corpus, sentence):
 
-        if corpus not in self._obs_counts:
+        if corpus not in self._lms:
             self._lms[corpus] = TrieLanguageModel(self._order, 1)
 
         # TODO: add start/end tokens (perhaps as option)
-        for ii in ngrams(self.tokenize_and_censor(sentence)):
-            self._lms
+        for ii in ngrams(self.tokenize_and_censor(sentence), self._order,
+                         pad_left=True, left_pad_symbol=CLM_START_TOK,
+                         pad_right=True, right_pad_symbol=CLM_END_TOK):
+            self._lms[corpus].add_count(ii)
 
     def add_train(self, corpus, title, sentence):
         """
@@ -334,9 +332,12 @@ class LanguageModelWriter(LanguageModelBase):
             outfile.write("%s %i\n" % (cc, self.compare(cc)))
 
             if corpus_num % 100 == 0:
-                log.info("{} {}".format(cc, self.compare(cc)))
+                log.info("Corpus compare {} {}".format(cc, self.compare(cc)))
 
             corpus_num += 1
+
+    def write_corpus(self, corpus_name, id, file):
+        self._lms[corpus_name].write_lm(id, file)
 
     def corpora(self):
         for ii in sorted(self._lms):
@@ -387,7 +388,8 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
                                          min_pages=MIN_APPEARANCES):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
-                log.info("Adding train doc %i, %s (%s)" % (doc_num, unidecode(title), corpus))
+                log.info("Adding train doc %i, %s (%s)" %
+                         (doc_num, unidecode(title), corpus))
                 start = time.time()
             lm.add_train(corpus, title, text)
 
@@ -399,8 +401,11 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
 
         for ii, cc in enumerate(lm.corpora()):
             with safe_open("%s/%i" % (lm_out, ii), 'w') as f:
-                lm.write_corpus(cc, ii, f)
+                        if ii % 100 == 0:
+                            log.info("Write LM corpus %s to %s" %
+                                     (cc, "%s/%i" % (lm_out, ii)))
+                            lm.write_corpus(cc, ii, f)
 
 
 if __name__ == "__main__":
-    build_clm(max_pages=100)
+    build_clm(max_pages=15)
