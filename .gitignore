@@ -16,3 +16,5 @@ terraform.tfstate.backup
 terraform/ssh-keys/
 eip.tf
 readable.txt
+aws_gpu_override.tf
+aws_small_override.tf

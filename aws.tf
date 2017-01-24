@@ -44,7 +44,7 @@ data "aws_ami" "qanta_ami" {
   }
   filter {
     name = "tag-value"
-    values = ["qanta"]
+    values = ["qanta-cpu"]
   }
 }
 

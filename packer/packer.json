@@ -6,7 +6,7 @@
       "source_ami": "ami-746aba14",
       "instance_type": "m4.xlarge",
       "ssh_username": "ubuntu",
-      "ami_name": "qanta {{timestamp}}",
+      "ami_name": "qanta-cpu {{timestamp}}",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
@@ -15,7 +15,7 @@
         }
       ],
       "tags": {
-        "Image": "qanta"
+        "Image": "qanta-cpu"
       }
     }
   ],

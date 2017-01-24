@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
 
-set -e
-
 source ~/.bashrc
-/home/ubuntu/anaconda3/bin/pip install --upgrade tensorflow-gpu
+/home/ubuntu/anaconda3/bin/pip install --upgrade tensorflow-gpu | true
