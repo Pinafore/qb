@@ -148,13 +148,19 @@ class TFDanModel:
         self.avg_embeddings = None
         self.word_dropout_var = None
         self.nn_dropout_var = None
+        self.initial_embed = None
+        self.mean_embeddings = None
 
         # Set at runtime
         self.session = None
 
     def build_tf_model(self):
         with tf.variable_scope(
-                'dan', reuse=None, initializer=tf.contrib.layers.xavier_initializer()):
+                'dan',
+                reuse=None,
+                initializer=tf.random_uniform_initializer(
+                    minval=-self.init_scale, maxval=self.init_scale)
+        ):
             embedding, embedding_word_lookup = _load_embeddings()
             self.initial_embed = tf.get_variable(
                 'embedding',
@@ -201,7 +207,7 @@ class TFDanModel:
             self.batch_accuracy = tf.contrib.metrics.accuracy(preds, self.label_placeholder)
             accuracy, accuracy_update = tf.contrib.metrics.streaming_accuracy(
                 preds, self.label_placeholder)
-            optimizer = tf.train.AdamOptimizer()
+            optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
             self.train_op = optimizer.minimize(self.loss)
             self.saver = tf.train.Saver()
 
@@ -314,7 +320,7 @@ class TFDanModel:
 
 DEFAULT_DAN_PARAMS = dict(
     n_hidden_units=200, n_hidden_layers=2, word_dropout=.3, batch_size=128,
-    learning_rate=.0001, init_scale=.08, max_epochs=50, nn_dropout=.3
+    learning_rate=.001, init_scale=.08, max_epochs=50, nn_dropout=.3
 )
 
 
