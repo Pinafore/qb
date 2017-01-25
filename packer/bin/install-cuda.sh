@@ -11,6 +11,10 @@ rm cuda_8.0.44_linux-run
 # Install DNN 5
 wget https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/cudnn-8.0-linux-x64-v5.1.tgz
 tar zxvf cudnn-8.0-linux-x64-v5.1.tgz
+sudo cp -P cuda/include/cudnn.h /usr/local/cuda/include
+sudo cp -P cuda/lib64/libcudnn* /usr/local/cuda/lib64
+sudo chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
+sudo apt-get install -y libcupti-dev
 rm cudnn-8.0-linux-x64-v5.1.tgz
 cat cuda-dnn-env.sh >> ~/.bashrc
 source ~/.bashrc
