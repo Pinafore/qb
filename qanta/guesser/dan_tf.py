@@ -158,8 +158,7 @@ class TFDanModel:
         with tf.variable_scope(
                 'dan',
                 reuse=None,
-                initializer=tf.random_uniform_initializer(
-                    minval=-self.init_scale, maxval=self.init_scale)
+                initializer=tf.random_normal_initializer(mean=0, stddev=.04)
         ):
             embedding, embedding_word_lookup = _load_embeddings()
             self.initial_embed = tf.get_variable(
