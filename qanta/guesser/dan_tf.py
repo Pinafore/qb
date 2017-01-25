@@ -42,7 +42,11 @@ def _create_embeddings(vocab: Set[str]):
                 embeddings.append(emb)
                 embedding_lookup[word] = i
                 i += 1
-        return np.array(embeddings), embedding_lookup
+        embeddings = np.array(embeddings)
+        mean_embedding = embeddings.mean(axis=0)
+        embed_with_unk = np.vstack([embeddings, mean_embedding])
+        embedding_lookup['UNK'] = i
+        return embed_with_unk, embedding_lookup
 
 
 def _load_embeddings(vocab=None):
@@ -65,6 +69,8 @@ def _convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict
     for w in words:
         if w in embedding_lookup:
             w_indices.append(embedding_lookup[w])
+        else:
+            w_indices.append(embedding_lookup['UNK'])
     return w_indices
 
 
@@ -76,10 +82,10 @@ def _compute_max_len(x_data: List[List[int]]):
     return max(len(x) for x in x_data)
 
 
-def _tf_format(x_data: List[List[int]], max_len: int):
+def _tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
     """
-    Pad with zeros if needed to max_len. Trim to max_len if needed. Convert all indices i to i + 1
-    since the 0th index is the UNK otken
+    Pad with elements until it has max_len or shorten it until it has max_len. When padding insert
+    the zero index so it doesn't contribute anything
     :param x_data:
     :param max_len:
     :return:
@@ -87,7 +93,7 @@ def _tf_format(x_data: List[List[int]], max_len: int):
     for i in range(len(x_data)):
         row = x_data[i]
         while len(row) < max_len:
-            row.append(max_len)
+            row.append(zero_index)
         x_data[i] = x_data[i][:max_len]
     return x_data
 
@@ -150,11 +156,11 @@ class TFDanModel:
         with tf.variable_scope(
                 'dan', reuse=None, initializer=tf.contrib.layers.xavier_initializer()):
             embedding, embedding_word_lookup = _load_embeddings()
-            initial_embed = tf.get_variable(
+            self.initial_embed = tf.get_variable(
                 'embedding',
                 initializer=tf.constant(embedding, dtype=tf.float32)
             )
-            embed_and_zero = tf.pad(initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
+            embed_and_zero = tf.pad(self.initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
             self.input_placeholder = tf.placeholder(
                 tf.int32, shape=(self.batch_size, self.max_len), name='input_placeholder')
             self.len_placeholder = tf.placeholder(
@@ -174,8 +180,10 @@ class TFDanModel:
                 tf.ones((self.max_len, 1)), keep_prob=1 - self.word_dropout_var)
             self.sent_vecs = self.sent_vecs * drop_filter
             in_dim = embed_and_zero.get_shape()[1]
+            #self.avg_embeddings = tf.reduce_mean(self.sent_vecs, 1)
             self.avg_embeddings = tf.reduce_sum(self.sent_vecs, 1) / tf.expand_dims(
                 self.len_placeholder, 1)
+            self.mean_embeddings = tf.reduce_mean(self.sent_vecs, 1)
             layer_out = self.avg_embeddings
             for i in range(self.n_hidden_layers):
                 layer_out, w = _make_layer(
@@ -197,23 +205,23 @@ class TFDanModel:
             self.train_op = optimizer.minimize(self.loss)
             self.saver = tf.train.Saver()
 
-    def train(self, x_data, y_data, x_lengths):
+    def train(self, x_data, y_data, x_lengths, save=True):
         with tf.Graph().as_default(), tf.Session() as session:
             self.build_tf_model()
             self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
             self.session = session
             train_losses, train_accuracies, holdout_losses, holdout_accuracies = self._train(
-                x_data, y_data, x_lengths, self.max_epochs
+                x_data, y_data, x_lengths, self.max_epochs, save=save
             )
 
             return train_losses, train_accuracies, holdout_losses, holdout_accuracies
 
-    def _train(self, x_data, y_data, x_lengths, n_epochs: int):
+    def _train(self, x_data, y_data, x_lengths, n_epochs: int, save=True):
         self.session.run(tf.global_variables_initializer())
 
         max_accuracy = -1
-        max_patience = 4
-        patience = 4
+        max_patience = 50
+        patience = 50
 
         train_accuracies = []
         train_losses = []
@@ -252,9 +260,12 @@ class TFDanModel:
                 patience -= 1
             if val_accuracy > max_accuracy:
                 max_accuracy = val_accuracy
-                log.info('New best accuracy, saving model')
                 patience = max_patience
-                self.saver.save(self.session, DEEP_DAN_MODEL_TARGET)
+                if save:
+                    log.info('New best accuracy, saving model')
+                    self.saver.save(self.session, DEEP_DAN_MODEL_TARGET)
+                else:
+                    log.info('New best accuracy, model saving turned off')
 
             # Early stopping after some burn in
             if patience == 0 and i > 10:
@@ -272,6 +283,8 @@ class TFDanModel:
             fetches = self.loss, self.batch_accuracy
 
         batch_i = 0
+        self.session.run(self.word_dropout_var.assign(self.word_dropout if train else 0))
+        self.session.run(self.nn_dropout_var.assign(self.nn_dropout if train else 0))
         for x_batch, y_batch, x_len_batch in _create_batches(
                 self.batch_size, x_data, y_data, x_lengths):
             feed_dict = {
@@ -279,8 +292,6 @@ class TFDanModel:
                 self.label_placeholder: y_batch,
                 self.len_placeholder: x_len_batch,
             }
-            self.session.run(self.word_dropout_var.assign(self.word_dropout if train else 0))
-            self.session.run(self.nn_dropout_var.assign(self.nn_dropout if train else 0))
             returned = self.session.run(fetches, feed_dict=feed_dict)
             loss = returned[0]
             accuracy = returned[1]
@@ -333,7 +344,7 @@ class DANGuesser(AbstractGuesser):
         x_train, y_train, vocab, class_to_i, i_to_class = preprocess_dataset(qb_data)
 
         log.info('Creating embeddings...')
-        _, embedding_lookup = _load_embeddings(vocab=vocab)
+        embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
         self.embedding_lookup = self.embedding_lookup
 
         log.info('Converting dataset to embeddings...')
@@ -343,7 +354,7 @@ class DANGuesser(AbstractGuesser):
         log.info('Computing number of classes and max paragraph length in words')
         n_classes = _compute_n_classes(qb_data[1])
         self.max_len = _compute_max_len(x_train)
-        x_train = _tf_format(x_train, self.max_len)
+        x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
 
         log.info('Training deep model...')
         self.model = TFDanModel(self.dan_params, self.max_len, n_classes)
