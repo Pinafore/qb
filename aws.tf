@@ -32,6 +32,11 @@ variable "qb_aws_s3_namespace" {
   description = "Stores variable for QB_AWS_S3_NAMESPACE used in checkpoint script"
 }
 
+variable "qb_branch" {
+  default = "master"
+  description = "Which git branch to checkout when cloning Pinafore/qb"
+}
+
 provider "aws" {
   region = "us-west-2"
 }
@@ -227,7 +232,7 @@ resource "aws_spot_instance_request" "master" {
       "sudo mkdir /ssd-c/qanta",
       "sudo chown ubuntu /ssd-c/qanta",
       "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb",
-      "(cd /ssd-c/qanta/qb && /home/ubuntu/anaconda3/bin/python setup.py develop)"
+      "(cd /ssd-c/qanta/qb && git checkout ${var.qb_branch} && /home/ubuntu/anaconda3/bin/python setup.py develop)"
     ]
   }
 
