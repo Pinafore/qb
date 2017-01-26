@@ -118,7 +118,7 @@ def _create_batches(batch_size, x_data: np.ndarray, y_data: np.ndarray, x_length
 
 
 def _compute_lengths(x_data):
-    return np.array([len(x) for x in x_data])
+    return np.array([max(1, len(x)) for x in x_data])
 
 
 class TFDanModel:
@@ -150,6 +150,7 @@ class TFDanModel:
         self.nn_dropout_var = None
         self.initial_embed = None
         self.mean_embeddings = None
+        self.embed_and_zero = None
 
         # Set at runtime
         self.session = None
@@ -158,14 +159,13 @@ class TFDanModel:
         with tf.variable_scope(
                 'dan',
                 reuse=None,
-                initializer=tf.random_normal_initializer(mean=0, stddev=.04)
-        ):
+                initializer=tf.contrib.layers.xavier_initializer()):
             embedding, embedding_word_lookup = _load_embeddings()
             self.initial_embed = tf.get_variable(
                 'embedding',
                 initializer=tf.constant(embedding, dtype=tf.float32)
             )
-            embed_and_zero = tf.pad(self.initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
+            self.embed_and_zero = tf.pad(self.initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
             self.input_placeholder = tf.placeholder(
                 tf.int32, shape=(self.batch_size, self.max_len), name='input_placeholder')
             self.len_placeholder = tf.placeholder(
@@ -174,7 +174,7 @@ class TFDanModel:
                 tf.int32, shape=self.batch_size, name='label_placeholder')
 
             # (batch_size, max_len, embedding_dim)
-            self.sent_vecs = tf.nn.embedding_lookup(embed_and_zero, self.input_placeholder)
+            self.sent_vecs = tf.nn.embedding_lookup(self.embed_and_zero, self.input_placeholder)
 
             # Apply word level dropout
             self.word_dropout_var = tf.get_variable('word_dropout', (), dtype=tf.float32,
@@ -184,11 +184,10 @@ class TFDanModel:
             drop_filter = tf.nn.dropout(
                 tf.ones((self.max_len, 1)), keep_prob=1 - self.word_dropout_var)
             self.sent_vecs = self.sent_vecs * drop_filter
-            in_dim = embed_and_zero.get_shape()[1]
-            #self.avg_embeddings = tf.reduce_mean(self.sent_vecs, 1)
+            in_dim = self.embed_and_zero.get_shape()[1]
             self.avg_embeddings = tf.reduce_sum(self.sent_vecs, 1) / tf.expand_dims(
                 self.len_placeholder, 1)
-            self.mean_embeddings = tf.reduce_mean(self.sent_vecs, 1)
+
             layer_out = self.avg_embeddings
             for i in range(self.n_hidden_layers):
                 layer_out, w = _make_layer(
@@ -225,8 +224,8 @@ class TFDanModel:
         self.session.run(tf.global_variables_initializer())
 
         max_accuracy = -1
-        max_patience = 50
-        patience = 50
+        max_patience = 200
+        patience = 200
 
         train_accuracies = []
         train_losses = []
