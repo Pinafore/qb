@@ -4,6 +4,7 @@ import string
 
 from qanta import logging
 from nltk import word_tokenize
+from sklearn.cross_validation import train_test_split
 
 
 log = logging.get(__name__)
@@ -45,7 +46,7 @@ def format_guess(guess):
     return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
 
 
-def preprocess_dataset(data: Tuple[List[List[str]], List[str]]):
+def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9):
     for i in range(len(data[1])):
         data[1][i] = format_guess(data[1][i])
     classes = set(data[1])
@@ -55,16 +56,27 @@ def preprocess_dataset(data: Tuple[List[List[str]], List[str]]):
         class_to_i[ans_class] = i
         i_to_class.append(ans_class)
 
-    x_data = []
-    y_data = []
+    x_train = []
+    y_train = []
+    x_test = []
+    y_test = []
     vocab = set()
 
-    for q, ans in zip(data[0], data[1]):
+    question_runs_with_answer = list(zip(data[0], data[1]))
+    train, test = train_test_split(question_runs_with_answer, train_size=train_size)
+
+    for q, ans in train:
         for run in q:
             q_text = tokenize_question(run)
             for w in q_text:
                 vocab.add(w)
-            x_data.append(q_text)
-            y_data.append(class_to_i[ans])
+            x_train.append(q_text)
+            y_train.append(class_to_i[ans])
 
-    return x_data, y_data, vocab, class_to_i, i_to_class
+    for q, ans in test:
+        for run in q:
+            q_text = tokenize_question(run)
+            x_test.append(q_text)
+            y_test.append(class_to_i[ans])
+
+    return x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class

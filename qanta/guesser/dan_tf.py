@@ -19,13 +19,19 @@ TF_DAN_WE = 'output/deep/tf_dan_we.pickle'
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 
-def _make_layer(i: int, in_tensor, n_out, op, n_in=None, dropout_prob=None):
+def _make_layer(i: int, in_tensor, n_out, op,
+                n_in=None, dropout_prob=None, batch_norm=False, batch_is_training=None):
+    if batch_norm and batch_is_training is None:
+        raise ValueError('if using batch norm then passing a training placeholder is required')
     w = tf.get_variable('W' + str(i), (in_tensor.get_shape()[1] if n_in is None else n_in, n_out),
                         dtype=tf.float32)
     if dropout_prob is not None:
         w = tf.nn.dropout(w, keep_prob=1 - dropout_prob)
     b = tf.get_variable('b' + str(i), n_out, dtype=tf.float32)
     out = tf.matmul(in_tensor, w) + b
+    if batch_norm:
+        out = tf.contrib.layers.batch_norm(
+            out, center=True, scale=True, is_training=batch_is_training, scope='bn' + str(i))
     return (out if op is None else op(out)), w
 
 
@@ -189,10 +195,13 @@ class TFDanModel:
                 self.len_placeholder, 1)
 
             layer_out = self.avg_embeddings
+            self.training_phase = tf.placeholder(tf.bool, name='phase')
             for i in range(self.n_hidden_layers):
                 layer_out, w = _make_layer(
-                    i, layer_out, n_in=in_dim, n_out=self.n_hidden_units, op=tf.nn.relu,
-                    dropout_prob=self.nn_dropout_var
+                    i, layer_out,
+                    n_in=in_dim, n_out=self.n_hidden_units,
+                    op=tf.nn.relu, dropout_prob=self.nn_dropout_var,
+                    batch_norm=True, batch_is_training=self.training_phase
                 )
                 in_dim = None
             logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
@@ -205,22 +214,29 @@ class TFDanModel:
             self.batch_accuracy = tf.contrib.metrics.accuracy(preds, self.label_placeholder)
             accuracy, accuracy_update = tf.contrib.metrics.streaming_accuracy(
                 preds, self.label_placeholder)
-            optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
-            self.train_op = optimizer.minimize(self.loss)
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+                self.train_op = optimizer.minimize(self.loss)
             self.saver = tf.train.Saver()
 
-    def train(self, x_data, y_data, x_lengths, save=True):
+    def train(self, x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths, save=True):
         with tf.Graph().as_default(), tf.Session() as session:
             self.build_tf_model()
             self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
             self.session = session
             train_losses, train_accuracies, holdout_losses, holdout_accuracies = self._train(
-                x_data, y_data, x_lengths, self.max_epochs, save=save
+                x_train, y_train, x_train_lengths,
+                x_test, y_test, x_test_lengths,
+                self.max_epochs, save=save
             )
 
             return train_losses, train_accuracies, holdout_losses, holdout_accuracies
 
-    def _train(self, x_data, y_data, x_lengths, n_epochs: int, save=True):
+    def _train(self,
+               x_train, y_train, x_train_lengths,
+               x_test, y_test, x_test_lengths,
+               n_epochs: int, save=True):
         self.session.run(tf.global_variables_initializer())
 
         max_accuracy = -1
@@ -233,14 +249,10 @@ class TFDanModel:
         holdout_accuracies = []
         holdout_losses = []
 
-        x_train, x_test, y_train, y_test, x_lengths_train, x_lengths_test = train_test_split(
-            x_data, y_data, x_lengths, train_size=.90
-        )
-
         for i in range(n_epochs):
             # Training Epoch
             accuracies, losses, duration = self.run_epoch(
-                x_train, y_train, x_lengths_train
+                x_train, y_train, x_train_lengths
             )
             log.info(
                 'Train Epoch: {} Avg loss: {:.4f} Accuracy: {:.4f}. Ran in {:.4f} seconds.'.format(
@@ -250,7 +262,7 @@ class TFDanModel:
 
             # Validation Epoch
             val_accuracies, val_losses, val_duration = self.run_epoch(
-                x_test, y_test, x_lengths_test, train=False
+                x_test, y_test, x_test_lengths, train=False
             )
             val_accuracy = np.average(val_accuracies)
             log.info(
@@ -295,6 +307,7 @@ class TFDanModel:
                 self.input_placeholder: x_batch,
                 self.label_placeholder: y_batch,
                 self.len_placeholder: x_len_batch,
+                self.training_phase: int(train)
             }
             returned = self.session.run(fetches, feed_dict=feed_dict)
             loss = returned[0]
@@ -345,7 +358,8 @@ class DANGuesser(AbstractGuesser):
         qb_data = training_data['qb']
 
         log.info('Preprocessing training data...')
-        x_train, y_train, vocab, class_to_i, i_to_class = preprocess_dataset(qb_data)
+        x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
+            qb_data)
 
         log.info('Creating embeddings...')
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
@@ -353,19 +367,25 @@ class DANGuesser(AbstractGuesser):
 
         log.info('Converting dataset to embeddings...')
         x_train = [_convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train]
-        x_lengths = _compute_lengths(x_train)
+        x_train_lengths = _compute_lengths(x_train)
+
+        x_test = [_convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test]
+        x_test_lengths = _compute_lengths(x_test)
 
         log.info('Computing number of classes and max paragraph length in words')
         n_classes = _compute_n_classes(qb_data[1])
         self.max_len = _compute_max_len(x_train)
         x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
+        x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])
 
         log.info('Training deep model...')
         self.model = TFDanModel(self.dan_params, self.max_len, n_classes)
         x_train = np.array(x_train)
         y_train = np.array(y_train)
+        x_test = np.array(x_test)
+        y_test = np.array(y_test)
         train_losses, train_accuracies, holdout_losses, holdout_accuracies = self.model.train(
-            x_train, y_train, x_lengths)
+            x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths)
 
     def load(self, directory: str) -> None:
         self.model.load()
