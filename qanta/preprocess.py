@@ -68,10 +68,11 @@ def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9):
     for q, ans in train:
         for run in q:
             q_text = tokenize_question(run)
-            for w in q_text:
-                vocab.add(w)
-            x_train.append(q_text)
-            y_train.append(class_to_i[ans])
+            if len(q_text) > 0:
+                for w in q_text:
+                    vocab.add(w)
+                x_train.append(q_text)
+                y_train.append(class_to_i[ans])
 
     for q, ans in test:
         for run in q:

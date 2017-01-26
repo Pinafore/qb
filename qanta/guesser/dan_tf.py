@@ -11,7 +11,6 @@ from qanta.util.io import safe_open
 from qanta import logging
 
 import tensorflow as tf
-from sklearn.cross_validation import train_test_split
 import numpy as np
 
 log = logging.get(__name__)
@@ -319,7 +318,7 @@ class TFDanModel:
         duration = time.time() - start_time
         return accuracies, losses, duration
 
-    def test(self, x_test):
+    def guess(self, x_test):
         fetches = (self.softmax_output,)
 
     def save(self):
@@ -363,6 +362,7 @@ class DANGuesser(AbstractGuesser):
 
         log.info('Creating embeddings...')
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
+        self.embeddings = embeddings
         self.embedding_lookup = self.embedding_lookup
 
         log.info('Converting dataset to embeddings...')
@@ -389,7 +389,8 @@ class DANGuesser(AbstractGuesser):
 
     def load(self, directory: str) -> None:
         self.model.load()
-        _, embedding_lookup = _load_embeddings()
+        embeddings, embedding_lookup = _load_embeddings()
+        self.embeddings = embeddings
         self.embedding_lookup = embedding_lookup
         with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
             params = pickle.load(f)
@@ -398,9 +399,9 @@ class DANGuesser(AbstractGuesser):
     def guess(self, questions: List[str], n_guesses: int) -> List[List[Tuple[str, float]]]:
         x_test = [_convert_text_to_embeddings_indices(
             tokenize_question(q), self.embedding_lookup) for q in questions]
-        x_test = _tf_format(x_test, self.max_len)
+        x_test = _tf_format(x_test, self.max_len, self.embeddings.shape[0])
         x_test = np.array(x_test)
-        y_test = self.model.test(x_test)
+        question_guesses = self.model.guess(x_test)
 
     @property
     def display_name(self) -> str:

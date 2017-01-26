@@ -161,7 +161,7 @@ resource "aws_spot_instance_request" "master" {
 
   root_block_device {
     volume_type = "gp2"
-    volume_size = "25"
+    volume_size = "80"
     delete_on_termination = true
   }
 
