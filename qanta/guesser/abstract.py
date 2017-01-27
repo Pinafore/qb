@@ -157,7 +157,8 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         guesses_per_question = self.guess(question_texts, max_n_guesses)
 
-        assert len(guesses_per_question) == len(question_texts)
+        if len(guesses_per_question) != len(question_texts):
+            raise ValueError('Guesser not returning the right number of answers')
 
         df_qnums = []
         df_sentences = []

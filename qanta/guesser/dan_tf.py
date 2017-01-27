@@ -103,21 +103,38 @@ def _tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
     return x_data
 
 
-def _create_batches(batch_size, x_data: np.ndarray, y_data: np.ndarray, x_lengths: np.ndarray):
+def _create_batches(batch_size,
+                    x_data: np.ndarray, y_data: np.ndarray, x_lengths: np.ndarray,
+                    pad=False, shuffle=True):
     if type(x_data) != np.ndarray or type(y_data) != np.ndarray:
         raise ValueError('x and y must be numpy arrays')
     if len(x_data) != len(y_data):
         raise ValueError('x and y must have the same dimension')
     n = len(x_data)
     order = list(range(n))
-    np.random.shuffle(order)
+    if shuffle:
+        np.random.shuffle(order)
     for i in range(0, n, batch_size):
         if len(order[i:i + batch_size]) == batch_size:
-            yield (
+            x_batch = x_data[order[i:i + batch_size]]
+            y_batch = y_data[order[i:i + batch_size]]
+            x_batch_lengths = x_lengths[order[i:i + batch_size]]
+            yield x_batch, y_batch, x_batch_lengths
+        elif pad:
+            size = len(order[i:i + batch_size])
+            x_batch = np.vstack((
                 x_data[order[i:i + batch_size]],
-                y_data[order[i:i + batch_size]],
-                x_lengths[order[i:i + batch_size]]
+                np.zeros((batch_size - size, x_data.shape[1])))
             )
+            y_batch = np.vstack((
+                y_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size, y_data.shape[1])))
+            )
+            x_batch_lengths = np.vstack((
+                x_lengths[order[i:i + batch_size]],
+                np.zeros((batch_size - size, x_data.shape[1])))
+            )
+            yield x_batch, y_batch, x_batch_lengths
         else:
             break
 
@@ -278,9 +295,10 @@ class TFDanModel:
                 patience = max_patience
                 if save:
                     log.info('New best accuracy, saving model')
-                    self.saver.save(self.session, DEEP_DAN_MODEL_TARGET)
+                    self.save()
                 else:
                     log.info('New best accuracy, model saving turned off')
+            self.save()
 
             # Early stopping after some burn in
             if patience == 0 and i > 10:
@@ -318,14 +336,33 @@ class TFDanModel:
         duration = time.time() - start_time
         return accuracies, losses, duration
 
-    def guess(self, x_test):
-        fetches = (self.softmax_output,)
+    def guess(self, x_test, x_test_lengths):
+        with tf.Graph().as_default(), tf.Session() as session:
+            self.build_tf_model()
+            self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
+            self.session = session
+            y_test = np.zeros((x_test.shape[0]))
+            self.session.run(self.word_dropout_var.assign(0))
+            self.session.run(self.nn_dropout_var.assign(0))
+            predictions = []
+            for x_batch, y_batch, x_len_batch in _create_batches(
+                    self.batch_size, x_test, y_test, x_test_lengths, pad=True, shuffle=False):
+                feed_dict = {
+                    self.input_placeholder: x_batch,
+                    self.label_placeholder: y_batch,
+                    self.len_placeholder: x_len_batch,
+                    self.training_phase: 0
+                }
+                batch_predictions = self.session.run(self.softmax_output, feed_dict=feed_dict)
+                predictions.append(batch_predictions)
+            return np.vstack(predictions)[:len(x_test)]
+
 
     def save(self):
         self.saver.save(self.session, DEEP_DAN_MODEL_TARGET)
 
     def load(self):
-        pass
+        self.saver.restore(self.session, DEEP_DAN_MODEL_TARGET)
 
 
 DEFAULT_DAN_PARAMS = dict(
@@ -341,6 +378,9 @@ class DANGuesser(AbstractGuesser):
         self.model = None  # type: Union[None, TFDanModel]
         self.embedding_lookup = None
         self.max_len = None  # type: Union[None, int]
+        self.embeddings = None
+        self.i_to_class = None
+        self.class_to_i = None
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -359,6 +399,8 @@ class DANGuesser(AbstractGuesser):
         log.info('Preprocessing training data...')
         x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             qb_data)
+        self.class_to_i = class_to_i
+        self.i_to_class = i_to_class
 
         log.info('Creating embeddings...')
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
@@ -395,22 +437,29 @@ class DANGuesser(AbstractGuesser):
         with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
             params = pickle.load(f)
             self.max_len = params['max_len']
+            self.class_to_i = params['class_to_i']
+            self.i_to_class = params['i_to_class']
 
     def guess(self, questions: List[str], n_guesses: int) -> List[List[Tuple[str, float]]]:
         x_test = [_convert_text_to_embeddings_indices(
             tokenize_question(q), self.embedding_lookup) for q in questions]
+        x_test_lengths = _compute_lengths(x_test)
         x_test = _tf_format(x_test, self.max_len, self.embeddings.shape[0])
         x_test = np.array(x_test)
-        question_guesses = self.model.guess(x_test)
+        question_guesses = self.model.guess(x_test, x_test_lengths)
+        return question_guesses
 
     @property
     def display_name(self) -> str:
         return 'DAN'
 
     def save(self, directory: str) -> None:
-        self.model.save()
         with safe_open(DEEP_DAN_PARAMS_TARGET, 'wb') as f:
-            pickle.dump({'max_len': self.max_len}, f)
+            pickle.dump({
+                'max_len': self.max_len,
+                'class_to_i': self.class_to_i,
+                'i_to_class': self.i_to_class
+            }, f)
 
     def score(self, question: str, guesses: List[str]) -> List[float]:
         pass
