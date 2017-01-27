@@ -1,5 +1,12 @@
 import luigi
-from luigi import LocalTarget, Task, WrapperTask
+from qanta.util.constants import GLOVE_WE
 
-from qanta.util import constants as c
-from qanta.util import environment as e
+
+class GloveEmbeddings(luigi.ExternalTask):
+    def output(self):
+        return luigi.LocalTarget(GLOVE_WE)
+
+
+class DANDependencies(luigi.WrapperTask):
+    def requires(self):
+        yield GloveEmbeddings()

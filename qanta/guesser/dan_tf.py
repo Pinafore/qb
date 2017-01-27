@@ -1,21 +1,26 @@
 import pickle
 import time
 import os
+import shutil
 from typing import Dict, List, Tuple, Union, Set
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
-from qanta.util.constants import DEEP_DAN_MODEL_TARGET, DEEP_DAN_PARAMS_TARGET
-from qanta.util.io import safe_open
+from qanta.util.io import safe_open, safe_path, shell
 from qanta import logging
 
 import tensorflow as tf
 import numpy as np
 
 log = logging.get(__name__)
-TF_DAN_WE = 'output/deep/tf_dan_we.pickle'
+TF_DAN_WE_TMP = '/tmp/qanta/deep/tf_dan_we.pickle'
+TF_DAN_WE = 'tf_dan_we.pickle'
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
+DEEP_DAN_MODEL_TMP_PREFIX = '/tmp/qanta/deep/tfdan'
+DEEP_DAN_MODEL_TMP_DIR = '/tmp/qanta/deep'
+DEEP_DAN_MODEL_TARGET = 'tfdan_dir'
+DEEP_DAN_PARAMS_TARGET = 'dan_params.pickle'
 
 
 def _make_layer(i: int, in_tensor, n_out, op,
@@ -55,14 +60,14 @@ def _create_embeddings(vocab: Set[str]):
 
 
 def _load_embeddings(vocab=None):
-    if os.path.exists(TF_DAN_WE):
+    if os.path.exists(TF_DAN_WE_TMP):
         log.info('Loading word embeddings from cache')
-        with safe_open(TF_DAN_WE, 'rb') as f:
+        with safe_open(TF_DAN_WE_TMP, 'rb') as f:
             return pickle.load(f)
     else:
         if vocab is None:
             raise ValueError('To create fresh embeddings a vocab is needed')
-        with safe_open(TF_DAN_WE, 'wb') as f:
+        with safe_open(TF_DAN_WE_TMP, 'wb') as f:
             log.info('Creating word embeddings and saving to cache')
             embed_and_lookup = _create_embeddings(vocab)
             pickle.dump(embed_and_lookup, f)
@@ -256,8 +261,8 @@ class TFDanModel:
         self.session.run(tf.global_variables_initializer())
 
         max_accuracy = -1
-        max_patience = 200
-        patience = 200
+        max_patience = 5
+        patience = 5
 
         train_accuracies = []
         train_losses = []
@@ -288,8 +293,7 @@ class TFDanModel:
             holdout_losses.append(val_losses)
 
             # Save the model if its better
-            if i > 10:
-                patience -= 1
+            patience -= 1
             if val_accuracy > max_accuracy:
                 max_accuracy = val_accuracy
                 patience = max_patience
@@ -300,10 +304,9 @@ class TFDanModel:
                     log.info('New best accuracy, model saving turned off')
 
             # Early stopping after some burn in
-            if patience == 0 and i > 10:
+            if patience == 0:
                 break
 
-        self.save()
         return train_losses, train_accuracies, holdout_losses, holdout_accuracies
 
     def run_epoch(self, x_data, y_data, x_lengths, train=True):
@@ -360,15 +363,15 @@ class TFDanModel:
             return np.vstack(predictions)[:len(x_test)]
 
     def save(self):
-        self.saver.save(self.session, DEEP_DAN_MODEL_TARGET)
+        self.saver.save(self.session, safe_path(DEEP_DAN_MODEL_TMP_PREFIX))
 
     def load(self):
-        self.saver.restore(self.session, DEEP_DAN_MODEL_TARGET)
+        self.saver.restore(self.session, DEEP_DAN_MODEL_TMP_PREFIX)
 
 
 DEFAULT_DAN_PARAMS = dict(
-    n_hidden_units=200, n_hidden_layers=2, word_dropout=.3, batch_size=128,
-    learning_rate=.001, init_scale=.08, max_epochs=50, nn_dropout=.3
+    n_hidden_units=200, n_hidden_layers=2, word_dropout=.6, batch_size=256,
+    learning_rate=.001, init_scale=.08, max_epochs=50, nn_dropout=0
 )
 
 
@@ -387,7 +390,7 @@ class DANGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls) -> List[str]:
-        return []
+        return [DEEP_DAN_PARAMS_TARGET]
 
     @property
     def requested_datasets(self) -> Dict[str, AbstractDataset]:
@@ -433,25 +436,8 @@ class DANGuesser(AbstractGuesser):
         train_losses, train_accuracies, holdout_losses, holdout_accuracies = self.model.train(
             x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths)
 
-    def load(self, directory: str) -> None:
-        embeddings, embedding_lookup = _load_embeddings()
-        self.embeddings = embeddings
-        self.embedding_lookup = embedding_lookup
-        with open(DEEP_DAN_PARAMS_TARGET, 'rb') as f:
-            params = pickle.load(f)
-            self.max_len = params['max_len']
-            self.class_to_i = params['class_to_i']
-            self.i_to_class = params['i_to_class']
-            self.vocab = params['vocab']
-            self.n_classes = params['n_classes']
-            if (self.max_len is None
-                    or self.class_to_i is None
-                    or self.i_to_class is None
-                    or self.vocab is None
-                    or self.n_classes is None):
-                raise ValueError('Attempting to load uninitialized model parameters')
-
     def guess(self, questions: List[str], n_guesses: int) -> List[List[Tuple[str, float]]]:
+        log.info('Generating {} for each of {} questions'.format(n_guesses, len(questions)))
         x_test = [_convert_text_to_embeddings_indices(
             tokenize_question(q), self.embedding_lookup) for q in questions]
         x_test_lengths = _compute_lengths(x_test)
@@ -475,8 +461,37 @@ class DANGuesser(AbstractGuesser):
     def display_name(self) -> str:
         return 'DAN'
 
+    @classmethod
+    def load(cls, directory: str) -> AbstractGuesser:
+        guesser = DANGuesser()
+        embeddings, embedding_lookup = _load_embeddings()
+        guesser.embeddings = embeddings
+        guesser.embedding_lookup = embedding_lookup
+        params_path = os.path.join(directory, DEEP_DAN_PARAMS_TARGET)
+        with open(params_path, 'rb') as f:
+            params = pickle.load(f)
+            guesser.max_len = params['max_len']
+            guesser.class_to_i = params['class_to_i']
+            guesser.i_to_class = params['i_to_class']
+            guesser.vocab = params['vocab']
+            guesser.n_classes = params['n_classes']
+            if (guesser.max_len is None
+                    or guesser.class_to_i is None
+                    or guesser.i_to_class is None
+                    or guesser.vocab is None
+                    or guesser.n_classes is None):
+                raise ValueError('Attempting to load uninitialized model parameters')
+        model_path = os.path.join(directory, DEEP_DAN_MODEL_TARGET)
+        shell('cp -r {} {}'.format(model_path, DEEP_DAN_MODEL_TMP_DIR))
+
+        we_path = os.path.join(directory, TF_DAN_WE)
+        shutil.copyfile(TF_DAN_WE_TMP, we_path)
+
+        return guesser
+
     def save(self, directory: str) -> None:
-        with safe_open(DEEP_DAN_PARAMS_TARGET, 'wb') as f:
+        params_path = os.path.join(directory, DEEP_DAN_PARAMS_TARGET)
+        with safe_open(params_path, 'wb') as f:
             if (self.max_len is None
                     or self.class_to_i is None
                     or self.i_to_class is None
@@ -490,3 +505,7 @@ class DANGuesser(AbstractGuesser):
                 'vocab': self.vocab,
                 'n_classes': self.n_classes
             }, f)
+        model_path = os.path.join(directory, DEEP_DAN_MODEL_TARGET)
+        shell('cp -r {} {}'.format(DEEP_DAN_MODEL_TMP_DIR, safe_path(model_path)))
+        we_path = os.path.join(directory, TF_DAN_WE)
+        shutil.copyfile(TF_DAN_WE_TMP, safe_path(we_path))

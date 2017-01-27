@@ -3,7 +3,6 @@ from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call, shell, make_dirs
 from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor, VWAudit
-from qanta.pipeline.guesser.dan import CreateGuesses, AllDAN
 from qanta.pipeline.preprocess import Preprocess
 
 

@@ -34,7 +34,7 @@ LM_OPT_FEATURES = [LM]
 MENTIONS_OPT_FEATURES = [MENTIONS]
 
 GUESSER_LIST = [
-    ('qanta.guesser.random.RandomGuesser', 'qanta.pipeline.guesser.random.EmptyTask')
+    ('qanta.guesser.dan_tf.DANGuesser', 'qanta.pipeline.guesser.dan.DANDependencies')
 ]
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
@@ -44,8 +44,7 @@ SENTENCE_STATS = 'output/guesser/sentence_stats.pickle'
 CLM_PATH = 'output/language_model'
 CLM_TARGET = 'output/language_model.txt'
 
-DEEP_DAN_MODEL_TARGET = 'output/deep/tfdan'
-DEEP_DAN_PARAMS_TARGET = 'output/deep/dan_params.pickle'
+GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 GUESSER_TARGET_PREFIX = 'output/guesser'
 
