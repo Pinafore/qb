@@ -14,11 +14,8 @@ PRE_PROCESS_TARGETS = {
     'output/kenlm.binary'
 }
 
-DEEP_TARGETS = {'output/deep'}
-
 GUESS_TARGETS = {
-    'output/guesser',
-    'output/guesser/sentence_stats.pickle'
+    'output/guesser'
 }
 
 CLM_TARGETS = {
@@ -95,13 +92,12 @@ EXPO = {
 }
 
 
-CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
+CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | GUESS_TARGETS | CLM_TARGETS \
                      | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
                      | PREDICTIONS | SUMMARIES | REPORTING | EXPO
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
-    'deep': DEEP_TARGETS,
     'guesses': GUESS_TARGETS,
     'clm': CLM_TARGETS,
     'classifiers': CLASSIFIER_TARGETS,
