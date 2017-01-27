@@ -490,6 +490,3 @@ class DANGuesser(AbstractGuesser):
                 'vocab': self.vocab,
                 'n_classes': self.n_classes
             }, f)
-
-    def score(self, question: str, guesses: List[str]) -> List[float]:
-        pass

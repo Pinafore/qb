@@ -73,17 +73,6 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
-    def score(self, question: str, guesses: List[Answer]) -> List[float]:
-        """
-        Given a question and a set of guesses, return the score for each guess
-
-        :param question: question to score guesses with
-        :param guesses: list of guesses to score
-        :return: list of scores corresponding to each guess, in order
-        """
-        pass
-
     @classmethod
     @abstractmethod
     def targets(cls) -> List[str]:
