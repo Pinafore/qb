@@ -126,13 +126,13 @@ def _create_batches(batch_size,
                 x_data[order[i:i + batch_size]],
                 np.zeros((batch_size - size, x_data.shape[1])))
             )
-            y_batch = np.vstack((
+            y_batch = np.hstack((
                 y_data[order[i:i + batch_size]],
-                np.zeros((batch_size - size, y_data.shape[1])))
+                np.zeros((batch_size - size,)))
             )
-            x_batch_lengths = np.vstack((
+            x_batch_lengths = np.hstack((
                 x_lengths[order[i:i + batch_size]],
-                np.zeros((batch_size - size, x_data.shape[1])))
+                np.zeros((batch_size - size,)))
             )
             yield x_batch, y_batch, x_batch_lengths
         else:
@@ -298,12 +298,12 @@ class TFDanModel:
                     self.save()
                 else:
                     log.info('New best accuracy, model saving turned off')
-            self.save()
 
             # Early stopping after some burn in
             if patience == 0 and i > 10:
                 break
 
+        self.save()
         return train_losses, train_accuracies, holdout_losses, holdout_accuracies
 
     def run_epoch(self, x_data, y_data, x_lengths, train=True):
@@ -339,8 +339,10 @@ class TFDanModel:
     def guess(self, x_test, x_test_lengths):
         with tf.Graph().as_default(), tf.Session() as session:
             self.build_tf_model()
-            self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
             self.session = session
+            self.session.run(tf.global_variables_initializer())
+            self.load()
+            self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
             y_test = np.zeros((x_test.shape[0]))
             self.session.run(self.word_dropout_var.assign(0))
             self.session.run(self.nn_dropout_var.assign(0))
@@ -356,7 +358,6 @@ class TFDanModel:
                 batch_predictions = self.session.run(self.softmax_output, feed_dict=feed_dict)
                 predictions.append(batch_predictions)
             return np.vstack(predictions)[:len(x_test)]
-
 
     def save(self):
         self.saver.save(self.session, DEEP_DAN_MODEL_TARGET)
@@ -381,6 +382,8 @@ class DANGuesser(AbstractGuesser):
         self.embeddings = None
         self.i_to_class = None
         self.class_to_i = None
+        self.vocab = None
+        self.n_classes = None
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -401,6 +404,7 @@ class DANGuesser(AbstractGuesser):
             qb_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
+        self.vocab = vocab
 
         log.info('Creating embeddings...')
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
@@ -415,13 +419,13 @@ class DANGuesser(AbstractGuesser):
         x_test_lengths = _compute_lengths(x_test)
 
         log.info('Computing number of classes and max paragraph length in words')
-        n_classes = _compute_n_classes(qb_data[1])
+        self.n_classes = _compute_n_classes(qb_data[1])
         self.max_len = _compute_max_len(x_train)
         x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
         x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])
 
         log.info('Training deep model...')
-        self.model = TFDanModel(self.dan_params, self.max_len, n_classes)
+        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
         x_train = np.array(x_train)
         y_train = np.array(y_train)
         x_test = np.array(x_test)
@@ -430,7 +434,6 @@ class DANGuesser(AbstractGuesser):
             x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths)
 
     def load(self, directory: str) -> None:
-        self.model.load()
         embeddings, embedding_lookup = _load_embeddings()
         self.embeddings = embeddings
         self.embedding_lookup = embedding_lookup
@@ -439,6 +442,14 @@ class DANGuesser(AbstractGuesser):
             self.max_len = params['max_len']
             self.class_to_i = params['class_to_i']
             self.i_to_class = params['i_to_class']
+            self.vocab = params['vocab']
+            self.n_classes = params['n_classes']
+            if (self.max_len is None
+                    or self.class_to_i is None
+                    or self.i_to_class is None
+                    or self.vocab is None
+                    or self.n_classes is None):
+                raise ValueError('Attempting to load uninitialized model parameters')
 
     def guess(self, questions: List[str], n_guesses: int) -> List[List[Tuple[str, float]]]:
         x_test = [_convert_text_to_embeddings_indices(
@@ -446,8 +457,19 @@ class DANGuesser(AbstractGuesser):
         x_test_lengths = _compute_lengths(x_test)
         x_test = _tf_format(x_test, self.max_len, self.embeddings.shape[0])
         x_test = np.array(x_test)
+        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
         question_guesses = self.model.guess(x_test, x_test_lengths)
-        return question_guesses
+        ans_order = np.argsort(-question_guesses, axis=1)
+        all_guesses = []
+        for i_row, score_row in zip(ans_order, question_guesses):
+            guesses = []
+            for i, a_index in enumerate(i_row):
+                if i < n_guesses:
+                    guesses.append((self.i_to_class[a_index], score_row[a_index]))
+                else:
+                    break
+            all_guesses.append(guesses)
+        return all_guesses
 
     @property
     def display_name(self) -> str:
@@ -455,10 +477,18 @@ class DANGuesser(AbstractGuesser):
 
     def save(self, directory: str) -> None:
         with safe_open(DEEP_DAN_PARAMS_TARGET, 'wb') as f:
+            if (self.max_len is None
+                    or self.class_to_i is None
+                    or self.i_to_class is None
+                    or self.vocab is None
+                    or self.n_classes is None):
+                raise ValueError('Attempting to save uninitialized model parameters')
             pickle.dump({
                 'max_len': self.max_len,
                 'class_to_i': self.class_to_i,
-                'i_to_class': self.i_to_class
+                'i_to_class': self.i_to_class,
+                'vocab': self.vocab,
+                'n_classes': self.n_classes
             }, f)
 
     def score(self, question: str, guesses: List[str]) -> List[float]:
