@@ -40,6 +40,8 @@ def create_output(path: str):
         feature_values = []
         meta = None
         qnum = None
+        sentence = None
+        token = None
         guess = None
         for name in FEATURE_NAMES:
             named_feature_list = list(filter(lambda r: r.feature_name == name, rows))
@@ -49,6 +51,8 @@ def create_output(path: str):
             named_feature = named_feature_list[0]
             if meta is None:
                 qnum = named_feature.qnum
+                sentence = named_feature.sentence
+                token = named_feature.token
                 guess = named_feature.guess
                 meta = '{} {} {} {}'.format(
                     qnum,
@@ -62,9 +66,9 @@ def create_output(path: str):
 
         vw_features = ' '.join(feature_values)
         if guess == b_answers.value[qnum]:
-            vw_label = "1 '{} ".format(qnum)
+            vw_label = "1 '{}_{}_{} ".format(qnum, sentence, token)
         else:
-            vw_label = "-1 '{} ".format(qnum)
+            vw_label = "-1 '{}_{}_{} ".format(qnum, sentence, token)
 
         return vw_label + vw_features + '@' + meta
 

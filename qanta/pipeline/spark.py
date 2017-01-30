@@ -95,6 +95,24 @@ class ExtractFastFeatures(Task):
         extract_features(c.FAST_FEATURES)
 
 
+class ExtractTextFeatures(Task):
+    resources = {'spark': 1}
+
+    def requires(self):
+        yield AllGuessers()
+        yield ComputeParagraphStats()
+
+    def output(self):
+        targets = []
+        for fold, feature in product(c.VW_FOLDS, c.TEXT_FEATURES):
+            targets.append(
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
+        return targets
+
+    def run(self):
+        extract_features(c.TEXT_FEATURES)
+
+
 class ExtractComputeFeatures(Task):
     resources = {'spark': 1}
 
@@ -190,6 +208,7 @@ class ExtractFeatures(WrapperTask):
         yield ExtractLMFeatures()
         yield ExtractMentionsFeatures()
         yield ExtractGuesserFeatures()
+        yield ExtractTextFeatures()
 
 
 class SparkMergeFeatures(Task):
