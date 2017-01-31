@@ -1,6 +1,5 @@
 from collections import defaultdict
 import time
-import re
 import ctypes
 
 from nltk.tokenize import RegexpTokenizer
@@ -10,6 +9,7 @@ from qanta import logging
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, MIN_APPEARANCES
+from qanta.preprocess import format_guess
 
 from clm import clm
 from qanta.util.io import safe_open
@@ -22,7 +22,6 @@ kUNK = "OOV"
 kSTART = "STRT"
 kEND = "END"
 kMAX_TEXT_LENGTH = 5000
-kGOODCHAR = re.compile(r"[a-zA-Z0-9]*")
 
 
 def pretty_debug(name, result, max_width=10):
@@ -111,7 +110,7 @@ class LanguageModelBase:
 
     @staticmethod
     def normalize_title(corpus, title):
-        norm_title = corpus + "".join(x for x in kGOODCHAR.findall(title) if x)
+        norm_title = corpus + format_guess(title)
         return norm_title
 
     @staticmethod
@@ -207,9 +206,9 @@ class LanguageModelReader(LanguageModelBase):
             self._lm.add_stop(i)
 
         # Load comparisons language model
-        for i in [x for x in self._corpora if x.startswith("compare")]:
-            self._loaded_lms.add(self._corpora[i])
-            self._lm.read_counts("%s/%i" % (self._datafile, self._corpora[i]))
+        for file_name in [x for x in self._corpora if x.startswith("compare")]:
+            self._loaded_lms.add(self._corpora[file_name])
+            self._lm.read_counts("%s/%i" % (self._datafile, self._corpora[file_name]))
 
     def verbose_feature(self, corpus, guess, sentence):
         """
