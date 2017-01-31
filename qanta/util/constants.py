@@ -68,7 +68,7 @@ EXPO_QUESTIONS = 'output/expo/test.questions.csv'
 
 KEN_LM = 'output/kenlm.binary'
 
-VW_INPUT = 'output/vw_input/{0}.vw.gz'
+VW_INPUT = 'output/vw_input/{0}.vw.txt'
 VW_MODEL = 'output/models/model.vw'
 VW_PREDICTIONS = 'output/predictions/{0}.pred'
 VW_AUDIT = 'output/predictions/{0}.audit'

@@ -31,7 +31,6 @@ CLASSIFIER_TARGETS = {
 
 SPARK_CLASSIFIER_TARGETS = {
     'output/features/dev/classifier.parquet',
-    'output/features/devtest/classifier.parquet',
     'output/features/test/classifier.parquet',
 }
 
@@ -39,9 +38,6 @@ SPARK_FAST_TARGETS = {
     'output/features/dev/answer_present.parquet',
     'output/features/dev/stats.parquet',
     'output/features/dev/text.parquet',
-    'output/features/devtest/answer_present.parquet',
-    'output/features/devtest/stats.parquet',
-    'output/features/devtest/text.parquet',
     'output/features/test/answer_present.parquet',
     'output/features/test/stats.parquet',
     'output/features/test/text.parquet',
@@ -55,19 +51,16 @@ SPARK_LM_TARGETS = {
 
 SPARK_MENTIONS_TARGETS = {
     'output/features/dev/mentions.parquet',
-    'output/features/devtest/mentions.parquet',
     'output/features/test/mentions.parquet'
 }
 
 SPARK_DEEP_TARGETS = {
     'output/features/dev/deep.parquet',
-    'output/features/devtest/deep.parquet',
     'output/features/test/deep.parquet'
 }
 
 SPARK_GUESSERS_TARGETS = {
     'output/features/dev/guessers.parquet',
-    'output/features/devtest/guessers.parquet',
     'output/features/test/guessers.parquet'
 }
 

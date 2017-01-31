@@ -41,13 +41,8 @@ class VWModel(Task):
         make_dirs('output/models/')
         call([
             'vw',
-            '--compressed',
             '-d', c.VW_INPUT.format('dev'),
-            '--early_terminate', '100',
-            '-k',
-            '-q', 'ga',
-            '-q', 'gg',
-            '-b', '28',
+            '-b', '30',
             '--loss_function', 'logistic',
             '-f', c.VW_MODEL
         ])
@@ -61,14 +56,14 @@ class VWPredictions(Task):
         yield VWMergeFeature(fold=self.fold)
 
     def output(self):
+        make_dirs('output/predictions/')
         return LocalTarget(
             c.VW_PREDICTIONS.format(self.fold))
 
     def run(self):
-        make_dirs('output/predictions')
+        make_dirs('output/predictions/')
         call([
             'vw',
-            '--compressed',
             '-t',
             '--loss_function', 'logistic',
             '-d', c.VW_INPUT.format(self.fold),
@@ -90,8 +85,8 @@ class VWAudit(Task):
     def run(self):
         make_dirs('output/predictions/')
         shell(
-            ('vw --compressed -t '
-             '-d output/vw_input/{fold}.vw_input.gz '
+            ('vw -t '
+             '-d output/vw_input/{fold}.vw.txt '
              '--loss_function logistic '
              '-i {vw_model} --audit '
              '| python cli.py format_vw_audit '
@@ -112,7 +107,6 @@ class VWAuditRegressor(Task):
     def run(self):
         call([
             'vw',
-            '--compressed',
             '-t',
             '--loss_function', 'logistic',
             '-d', c.VW_INPUT.format('dev'),

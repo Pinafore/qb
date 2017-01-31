@@ -11,7 +11,6 @@ class Summary(Task):
 
     def requires(self):
         yield VWPredictions(fold=self.fold)
-        yield VWAudit()
 
     def output(self):
         return LocalTarget('output/summary/{0}.json'.format(self.fold))
@@ -28,13 +27,19 @@ class Summary(Task):
         ])
 
 
+class AllSummaries(WrapperTask):
+    def requires(self):
+        for fold in c.VW_FOLDS:
+            yield Summary(fold=fold)
+
+
 class Reports(Task):
     fold = luigi.Parameter()
     resources = {'report_write': 1}
 
     def requires(self):
         yield VWAuditRegressor()
-        yield Summary(fold=self.fold)
+        yield AllSummaries()
 
     def output(self):
         return LocalTarget('output/reporting/report.pdf')
@@ -44,7 +49,7 @@ class Reports(Task):
         shell('mv /tmp/report.pdf output/reporting/report.pdf')
 
 
-class AllSummaries(WrapperTask):
+class AllReports(WrapperTask):
     def requires(self):
         for fold in c.VW_FOLDS:
             yield Reports(fold=fold)
