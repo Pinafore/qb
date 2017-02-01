@@ -1,4 +1,5 @@
 from functools import lru_cache
+
 from collections import OrderedDict
 import re
 import sys
@@ -76,7 +77,7 @@ KEN_LM = 'output/kenlm.binary'
 FEATURE_NAMES = [LABEL, LM, MENTIONS, DEEP, ANSWER_PRESENT, CLASSIFIER, WIKILINKS]
 NEGATIVE_WEIGHTS = [16]
 # NEGATIVE_WEIGHTS = [2, 4, 8, 16, 32, 64]
-MIN_APPEARANCES = 5
+MIN_APPEARANCES = 1
 MAX_APPEARANCES = MIN_APPEARANCES
 N_GUESSES = 200
 FEATURES = OrderedDict([
