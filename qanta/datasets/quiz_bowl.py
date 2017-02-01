@@ -224,11 +224,10 @@ class QuizBowlDataset(AbstractDataset):
     def training_data(self) -> TrainingData:
         all_questions = seq(self.db.all_questions().values())
         filtered_questions = all_questions\
-            .filter(lambda q: q.fold != 'test' and q.fold != 'devtest')\
+            .filter(lambda q: q.fold == 'train')\
             .group_by(lambda q: q.page)\
             .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\
-            .filter(lambda q: q.fold == 'train')\
             .map(lambda q: q.to_example())
         training_examples = []
         training_answers = []
@@ -241,11 +240,10 @@ class QuizBowlDataset(AbstractDataset):
     def questions_by_fold(self) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())
         train_questions = all_questions\
-            .filter(lambda q: q.fold == 'train' or q.fold == 'dev')\
+            .filter(lambda q: q.fold == 'train')\
             .group_by(lambda q: q.page)\
             .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\
-            .filter(lambda q: q.fold == 'train')\
             .list()
 
         dev_questions = all_questions.filter(lambda q: q.fold == 'dev').list()
