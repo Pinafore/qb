@@ -62,8 +62,8 @@ CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pdf'
 PRED_TARGET = 'output/predictions/{0}.pred'
 META_TARGET = 'output/vw_input/{0}.meta'
 
-EXPO_BUZZ = 'output/expo/{}.{}.buzz'
-EXPO_FINAL = 'output/expo/{}.{}.final'
+EXPO_BUZZ = 'output/expo/{}.buzz'
+EXPO_FINAL = 'output/expo/{}.final'
 EXPO_QUESTIONS = 'output/expo/test.questions.csv'
 
 KEN_LM = 'output/kenlm.binary'

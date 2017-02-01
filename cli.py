@@ -51,7 +51,7 @@ def wikify(output):
 
 
 @main.command()
-@click.option('--n_features', type=int, default=10)
+@click.option('--n_features', type=int, default=20)
 def format_vw_audit(n_features):
     format_audit(n_features)
 

@@ -40,6 +40,7 @@ class Reports(Task):
     def requires(self):
         yield VWAuditRegressor()
         yield AllSummaries()
+        yield VWAudit()
 
     def output(self):
         return LocalTarget('output/reporting/report.pdf')

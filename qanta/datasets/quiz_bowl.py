@@ -240,16 +240,15 @@ class QuizBowlDataset(AbstractDataset):
 
     def questions_by_fold(self) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())
-        train_dev_questions = all_questions\
+        train_questions = all_questions\
             .filter(lambda q: q.fold == 'train' or q.fold == 'dev')\
             .group_by(lambda q: q.page)\
             .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\
-            .cache()
+            .filter(lambda q: q.fold == 'train')\
+            .list()
 
-        train_questions = train_dev_questions.filter(lambda q: q.fold == 'train').list()
-        dev_questions = train_dev_questions.filter(lambda q: q.fold == 'dev').list()
-
+        dev_questions = all_questions.filter(lambda q: q.fold == 'dev').list()
         test_questions = all_questions.filter(lambda q: q.fold == 'test').list()
         devtest_questions = all_questions.filter(lambda q: q.fold == 'devtest').list()
 
