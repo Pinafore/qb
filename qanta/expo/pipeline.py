@@ -72,8 +72,7 @@ class GenerateExpo(Task):
             features = line.split()
             audit_features = []
             for f in features:
-                name, fid, value, weight = f.split(':')
-                product = float(value) * float(weight)
+                name, product = f.split(':')
                 audit_features.append('{}:{}'.format(name, product))
             return ' '.join(audit_features)
 
