@@ -1,5 +1,5 @@
 import os
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
 
@@ -8,6 +8,9 @@ import pandas as pd
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
 from qanta.util import constants as c
+
+
+Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -239,3 +242,10 @@ class AbstractGuesser(metaclass=ABCMeta):
             guess_score_map[row.guesser][(row.qnum, row.sentence, row.token, row.guess)] = row.score
 
         return guess_score_map
+
+    @staticmethod
+    def create_report(directory: str):
+        all_guesses = AbstractGuesser.load_guesses(directory)
+        train_guesses = all_guesses[all_guesses.fold == 'train']
+        dev_guesses = all_guesses[all_guesses.fold == 'dev']
+        test_guesses = all_guesses[all_guesses.fold == 'test']
