@@ -54,9 +54,6 @@ def sentences_from_page(wiki_page):
 
 def _qb_generator(db, pages, fold):
     for i, q in db.query('from questions where page != "" and fold == ?', (fold,), text=True).items():
-        if q.page not in pages:
-            continue
-
         yield {i: preprocess_text(text) for i, text in q.text.items()}, preprocess_answer(q.page)
 
 
