@@ -32,8 +32,8 @@ class RandomGuesser(AbstractGuesser):
             'qb': QuizBowlEvaluationDataset()
         }
 
-    @property
-    def display_name(self) -> str:
+    @classmethod
+    def display_name(cls) -> str:
         return 'random'
 
     def train(self,

@@ -231,7 +231,6 @@ resource "aws_spot_instance_request" "master" {
     inline = [
       "sudo mkdir /ssd-c/qanta",
       "sudo chown ubuntu /ssd-c/qanta",
-      "/home/ubuntu/anaconda3/bin/pip install --upgrade pyfunctional",
       "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb",
       "(cd /ssd-c/qanta/qb && git checkout ${var.qb_branch} && /home/ubuntu/anaconda3/bin/python setup.py develop)"
     ]

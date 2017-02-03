@@ -51,7 +51,7 @@ nodes can communicate via SSH
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
 ##### Installed Software
-* Python 3.5
+* Python 3.6
 * Apache Spark 1.6.1
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
