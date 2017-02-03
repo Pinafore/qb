@@ -3,6 +3,8 @@ from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sb
@@ -113,9 +115,9 @@ class AbstractGuesser(metaclass=ABCMeta):
     def save(self, directory: str) -> None:
         pass
 
-    @property
+    @classmethod
     @abstractmethod
-    def display_name(self) -> str:
+    def display_name(cls) -> str:
         """
         Return the display name of this guesser which is used in reporting scripts to identify this
         particular guesser
@@ -166,7 +168,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         df_scores = []
         df_folds = []
         df_guessers = []
-        guesser_name = self.display_name
+        guesser_name = self.display_name()
 
         for i in range(len(question_texts)):
             guesses_with_scores = guesses_per_question[i]
@@ -275,15 +277,19 @@ class AbstractGuesser(metaclass=ABCMeta):
         dev_summary_recall = compute_summary_recall(dev_questions, dev_recall_stats)
         test_summary_recall = compute_summary_recall(test_questions, test_recall_stats)
 
+        accuracy_plot('/tmp/dev_accuracy.png', dev_summary_accuracy, 'Dev')
+        accuracy_plot('/tmp/test_accuracy.png', test_summary_accuracy, 'Test')
         recall_plot('/tmp/dev_recall.png', dev_questions, dev_summary_recall, 'Dev')
         recall_plot('/tmp/test_recall.png', test_questions, test_summary_recall, 'Test')
 
         report = ReportGenerator({
             'dev_recall_plot': '/tmp/dev_recall.png',
             'test_recall_plot': '/tmp/test_recall.png',
-            'dev_accuracy': str(dev_summary_accuracy),
-            'test_accuracy': str(test_summary_accuracy),
-            'guesser_name': cls.display_name
+            'dev_accuracy_plot': '/tmp/dev_accuracy.png',
+            'test_accuracy_plot': '/tmp/test_accuracy.png',
+            'dev_accuracy': dev_summary_accuracy,
+            'test_accuracy': test_summary_accuracy,
+            'guesser_name': cls.display_name()
         }, 'guesser.md')
         output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
         report.create(output)
@@ -420,6 +426,21 @@ def recall_plot(output, questions, summary_recall, fold_name):
     plt.ylabel('Recall')
     plt.subplots_adjust(top=.9)
     g.fig.suptitle('Guesser Recall Through Question on {}'.format(fold_name))
+    plt.savefig(output, dpi=200, format='png')
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+
+def accuracy_plot(output, summary_accuracy, fold_name):
+    pd.DataFrame([
+        ('start', summary_accuracy['start']),
+        ('25%', summary_accuracy['p_25']),
+        ('50%', summary_accuracy['p_50']),
+        ('75%', summary_accuracy['p_75']),
+        ('end', summary_accuracy['end'])],
+        columns=['Position', 'Accuracy']
+    ).plot.bar('Position', 'Accuracy', title='Accuracy by Position on {}'.format(fold_name))
     plt.savefig(output, dpi=200, format='png')
     plt.clf()
     plt.cla()

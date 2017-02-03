@@ -458,8 +458,8 @@ class DANGuesser(AbstractGuesser):
             all_guesses.append(guesses)
         return all_guesses
 
-    @property
-    def display_name(self) -> str:
+    @classmethod
+    def display_name(cls) -> str:
         return 'DAN'
 
     @classmethod

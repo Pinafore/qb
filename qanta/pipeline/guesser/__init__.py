@@ -108,9 +108,14 @@ class GuesserReport(Task):
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
+        guesser_class.create_report(guesser_directory)
 
     def output(self):
-        pass
+        return LocalTarget(output_path(
+            self.guesser_module,
+            self.guesser_class,
+            'guesser_report.pdf')
+        )
 
 
 class AllGuessers(WrapperTask):
@@ -128,7 +133,7 @@ class AllGuessers(WrapperTask):
                 dependency_module = '.'.join(parts[:-1])
                 dependency_class = parts[-1]
 
-            yield GenerateGuesses(
+            yield GuesserReport(
                 guesser_module=guesser_module,
                 guesser_class=guesser_class,
                 dependency_module=dependency_module,
