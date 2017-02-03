@@ -3,11 +3,18 @@ from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
 
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sb
+import numpy as np
+from functional import seq
 
+from qanta.preprocess import format_guess
+from qanta.reporting.report_generator import ReportGenerator
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
+from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset, QuestionDatabase
 from qanta.util import constants as c
+from qanta.util.io import safe_path
 
 
 Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
@@ -243,9 +250,178 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         return guess_score_map
 
-    @staticmethod
-    def create_report(directory: str):
+    @classmethod
+    def create_report(cls, directory: str):
         all_guesses = AbstractGuesser.load_guesses(directory)
         train_guesses = all_guesses[all_guesses.fold == 'train']
         dev_guesses = all_guesses[all_guesses.fold == 'dev']
         test_guesses = all_guesses[all_guesses.fold == 'test']
+
+        qdb = QuestionDatabase()
+        questions = qdb.all_questions()
+
+        dev_recall = compute_fold_recall(dev_guesses, questions)
+        test_recall = compute_fold_recall(test_guesses, questions)
+
+        dev_questions = {qnum: q for qnum, q in questions.items() if q.fold == 'dev'}
+        test_questions = {qnum: q for qnum, q in questions.items() if q.fold == 'test'}
+
+        dev_recall_stats = compute_recall_at_positions(dev_recall)
+        test_recall_stats = compute_recall_at_positions(test_recall)
+
+        dev_summary_accuracy = compute_summary_accuracy(dev_questions, dev_recall_stats)
+        test_summary_accuracy = compute_summary_accuracy(test_questions, test_recall_stats)
+
+        dev_summary_recall = compute_summary_recall(dev_questions, dev_recall_stats)
+        test_summary_recall = compute_summary_recall(test_questions, test_recall_stats)
+
+        recall_plot('/tmp/dev_recall.png', dev_questions, dev_summary_recall, 'Dev')
+        recall_plot('/tmp/test_recall.png', test_questions, test_summary_recall, 'Test')
+
+        report = ReportGenerator({
+            'dev_recall_plot': '/tmp/dev_recall.png',
+            'test_recall_plot': '/tmp/test_recall.png',
+            'dev_accuracy': str(dev_summary_accuracy),
+            'test_accuracy': str(test_summary_accuracy),
+            'guesser_name': cls.display_name
+        }, 'guesser.md')
+        output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
+        report.create(output)
+
+QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
+
+
+def question_recall(guesses, qst, question_lookup):
+    qnum, sentence, token = qst
+    answer = format_guess(question_lookup[qnum].page)
+    sorted_guesses = sorted(guesses, reverse=True, key=lambda g: g.score)
+    for i, guess_row in enumerate(sorted_guesses, 1):
+        if answer == guess_row.guess:
+            return qnum, sentence, token, i
+    return qnum, sentence, token, None
+
+
+def compute_fold_recall(guess_df, questions):
+    return seq(guess_df)\
+        .smap(Guess)\
+        .group_by(lambda g: (g.qnum, g.sentence, g.token))\
+        .smap(lambda qst, guesses: question_recall(guesses, qst, questions))\
+        .group_by(lambda x: x[0])\
+        .dict()
+
+
+def start_of_question(group):
+    return seq(group).min_by(lambda g: g[1])[3]
+
+
+def make_percent_of_question(percent):
+    def percent_of_question(group):
+        n_sentences = len(group)
+        middle = max(1, round(n_sentences * percent))
+        return seq(group).filter(lambda g: g[1] == middle).first()[3]
+    return percent_of_question
+
+
+def end_of_question(group):
+    return seq(group).max_by(lambda g: g[1])[3]
+
+percent_25_of_question = make_percent_of_question(.25)
+percent_50_of_question = make_percent_of_question(.5)
+percent_75_of_question = make_percent_of_question(.75)
+
+
+def compute_recall_at_positions(recall_lookup):
+    recall_stats = {}
+    for q in recall_lookup:
+        g = recall_lookup[q]
+        start = start_of_question(g)
+        p_25 = percent_25_of_question(g)
+        p_50 = percent_50_of_question(g)
+        p_75 = percent_75_of_question(g)
+        end = end_of_question(g)
+        recall_stats[q] = QuestionRecall(start, p_25, p_50, p_75, end)
+    return recall_stats
+
+
+def compute_summary_accuracy(questions, recall_stats):
+    accuracy_stats = {
+        'start': 0,
+        'p_25': 0,
+        'p_50': 0,
+        'p_75': 0,
+        'end': 0
+    }
+    n_questions = len(questions)
+    for q in questions:
+        if q in recall_stats:
+            if recall_stats[q].start == 1:
+                accuracy_stats['start'] += 1
+            if recall_stats[q].p_25 == 1:
+                accuracy_stats['p_25'] += 1
+            if recall_stats[q].p_50 == 1:
+                accuracy_stats['p_50'] += 1
+            if recall_stats[q].p_75 == 1:
+                accuracy_stats['p_75'] += 1
+            if recall_stats[q].end == 1:
+                accuracy_stats['end'] += 1
+
+    accuracy_stats['start'] /= n_questions
+    accuracy_stats['p_25'] /= n_questions
+    accuracy_stats['p_50'] /= n_questions
+    accuracy_stats['p_75'] /= n_questions
+    accuracy_stats['end'] /= n_questions
+    return accuracy_stats
+
+
+def compute_summary_recall(questions, recall_stats):
+    recall_numbers = {
+        'start': [],
+        'p_25': [],
+        'p_50': [],
+        'p_75': [],
+        'end': []
+    }
+    for q in questions:
+        if q in recall_stats:
+            if recall_stats[q].start is not None:
+                recall_numbers['start'].append(recall_stats[q].start)
+            if recall_stats[q].p_25 is not None:
+                recall_numbers['p_25'].append(recall_stats[q].p_25)
+            if recall_stats[q].p_50 is not None:
+                recall_numbers['p_50'].append(recall_stats[q].p_50)
+            if recall_stats[q].p_75 is not None:
+                recall_numbers['p_75'].append(recall_stats[q].p_75)
+            if recall_stats[q].end is not None:
+                recall_numbers['end'].append(recall_stats[q].end)
+
+    return recall_numbers
+
+
+def compute_recall_plot_data(recall_positions, n_questions, max_recall=200):
+    x = list(range(1, max_recall + 1))
+    y = [0] * max_recall
+    for r in recall_positions:
+        y[r - 1] += 1
+    y = np.cumsum(y) / n_questions
+    return x, y
+
+
+def recall_plot(output, questions, summary_recall, fold_name):
+    data = []
+    for position, recall_positions in summary_recall.items():
+        x_data, y_data = compute_recall_plot_data(recall_positions, len(questions))
+        for x, y in zip(x_data, y_data):
+            data.append({'x': x, 'y': y, 'position': position})
+    data = pd.DataFrame(data)
+    g = sb.FacetGrid(data=data, hue='position', size=5, aspect=1.5)
+    g.map(plt.plot, 'x', 'y')
+    g.add_legend()
+    plt.xlabel('Number of Guesses')
+    plt.ylabel('Recall')
+    plt.subplots_adjust(top=.9)
+    g.fig.suptitle('Guesser Recall Through Question on {}'.format(fold_name))
+    plt.savefig(output, dpi=200, format='png')
+    plt.clf()
+    plt.cla()
+    plt.close()
+

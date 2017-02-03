@@ -3,6 +3,7 @@ import time
 import os
 import shutil
 from typing import Dict, List, Tuple, Union, Set
+
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import AbstractDataset
 from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
