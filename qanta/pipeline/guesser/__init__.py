@@ -91,6 +91,28 @@ class GenerateGuesses(Task):
         ]
 
 
+class GuesserReport(Task):
+    guesser_module = luigi.Parameter()  # type: str
+    guesser_class = luigi.Parameter()  # type: str
+    dependency_module = luigi.Parameter()  # type: str
+    dependency_class = luigi.Parameter()  # type: str
+
+    def requires(self):
+        yield GenerateGuesses(
+            guesser_module=self.guesser_module,
+            guesser_class=self.guesser_class,
+            dependency_module=self.dependency_module,
+            dependency_class=self.dependency_class
+        )
+
+    def run(self):
+        guesser_class = get_class(self.guesser_module, self.guesser_class)
+        guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
+
+    def output(self):
+        pass
+
+
 class AllGuessers(WrapperTask):
     def requires(self):
         for guesser, dependency in c.GUESSER_LIST:
