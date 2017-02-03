@@ -2,4 +2,4 @@
 
 set -e
 source ~/.bashrc
-/home/ubuntu/anaconda3/bin/pip install tensorflow
+/home/ubuntu/anaconda3/bin/pip install tensorflow-gpu
