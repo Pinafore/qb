@@ -255,7 +255,6 @@ class AbstractGuesser(metaclass=ABCMeta):
     @classmethod
     def create_report(cls, directory: str):
         all_guesses = AbstractGuesser.load_guesses(directory)
-        train_guesses = all_guesses[all_guesses.fold == 'train']
         dev_guesses = all_guesses[all_guesses.fold == 'dev']
         test_guesses = all_guesses[all_guesses.fold == 'test']
 
