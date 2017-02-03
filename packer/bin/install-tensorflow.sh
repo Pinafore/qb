@@ -2,4 +2,4 @@
 
 set -e
 
-/home/ubuntu/anaconda3/bin/pip install --upgrade tensorflow
+/home/ubuntu/anaconda3/bin/pip install tensorflow

@@ -80,7 +80,7 @@
     {
       "type": "file",
       "source": "conf/spark-defaults.conf",
-      "destination": "/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-defaults.conf"
+      "destination": "/home/ubuntu/dependencies/spark-2.1.0-bin-hadoop2.7/conf/spark-defaults.conf"
     },
     {
       "type": "file",
