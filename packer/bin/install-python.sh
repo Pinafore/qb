@@ -3,7 +3,7 @@
 set -e
 
 # Install Python 3.5 and the Scipy Stack
-wget https://repo.continuum.io/archive/Anaconda3-4.3.0-Linux-x86_64.sh
+wget https://repo.continuum.io/archive/Anaconda3-4.1.1-Linux-x86_64.sh
 bash Anaconda3-4.1.1-Linux-x86_64.sh -b
 rm Anaconda3-4.1.1-Linux-x86_64.sh
 echo "export PATH=/home/ubuntu/anaconda3/bin:$PATH" >> ~/.bashrc
