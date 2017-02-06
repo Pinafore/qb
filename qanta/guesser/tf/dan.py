@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 import heapq
 from itertools import chain, repeat
 import numpy as np
@@ -69,7 +69,7 @@ class TFDan:
         self._hidden_units = hidden_units
         self._adversarial_units = adversarial_units
         self._n_prediction_layers = n_prediction_layers
-        self._domain_classifier_weight = domain_classifier_weight
+        # self._domain_classifier_weight = domain_classifier_weight
         self._n_representation_layers = n_representation_layers
         self._learning_rate = learning_rate
         self._l2_rho = rho
@@ -117,6 +117,7 @@ class TFDan:
              self._max_len,
              self._label_map,
              self._word_ids,
+             self._answer_counts,
              self._train_indices,
              self._val_indices,
              self._wiki_holdout_indices) = result
@@ -131,7 +132,8 @@ class TFDan:
              self._complete,
              self._max_len,
              self._label_map,
-             self._word_ids) = result
+             self._word_ids,
+             self._answer_counts) = result
 
         log.info('Building model')
         self._build_model(initial_embed=initial_embed,
@@ -169,6 +171,7 @@ class TFDan:
             self._weight_placeholder = tf.placeholder(tf.float32, shape=None, name='weight_placeholder')
         if self._adversarial:
             self._domain_gate_placeholder = tf.placeholder(tf.float32, shape=(), name='domain_gate_placeholder')
+            self._domain_classifier_weight_placeholder = tf.placeholder(tf.float32, shape=batch_dim, name='domain_weight_placeholder')
             self._domain_placeholder = tf.placeholder(tf.float32, shape=None, name='domain_placeholder')
             self._unlabeled_placeholder = tf.placeholder(tf.int32, shape=(batch_dim, None), name='unlabeled_placeholder')
             self._unlabeled_len_placeholder = tf.placeholder(tf.float32, shape=batch_dim, name='unlabeled_len_placeholder')
@@ -264,7 +267,8 @@ class TFDan:
 
         @tf.RegisterGradient(grad_name)
         def gradient_reversal(op, grads):
-            return -grads * self._domain_classifier_weight * self._domain_gate_placeholder
+            print(grads.get_shape())
+            return -grads * self._domain_classifier_weight_placeholder * self._domain_gate_placeholder
 
         first_loop = True
         weights = []
@@ -326,6 +330,7 @@ class TFDan:
         complete = []
         weights = []
         domains = []
+        example_counts = Counter()
         max_len = 0
         for dataset_name, data in datasets.items():
             print('Loading', dataset_name)
@@ -342,6 +347,7 @@ class TFDan:
 
                 q_count += 1
                 q = [start_token_index]
+                example_counts[label] += 1
 
                 for i, sent in sentences.items():
                     q.extend(word_ids.get(w, len(word_ids)) for w in preprocess_text(sent).split())
@@ -398,8 +404,9 @@ class TFDan:
             random.shuffle(wiki_index_groups)
 
             n_qb_examples = sum(domains)
-            n_val_examples = int(0.1 * n_qb_examples)
+            n_val_examples = int(0.1 * n_qb_examples) if index_groups else int(0.1 * len(labels))
             val_indices = []
+            train_indices = []
             for i, g in enumerate(index_groups):
                 val_indices.extend(g)
                 if len(val_indices) >= n_val_examples:
@@ -413,11 +420,14 @@ class TFDan:
                     train_indices.extend(chain.from_iterable(wiki_index_groups[i + 1:]))
                     break
 
+            if not index_groups:
+                val_indices = wiki_holdout_indices
+
         # Convert from defaultdict to allow pickling as well as avoiding adding any new fields on accident
         label_map = dict(label_map)
 
         log.info('Done loading data')
-        return ((data, labels, lens, weights, domains, domain_indices, n_classes, complete, max_len, label_map, word_ids) +
+        return ((data, labels, lens, weights, domains, domain_indices, n_classes, complete, max_len, label_map, word_ids, example_counts) +
                 ((train_indices, val_indices, wiki_holdout_indices) if self._is_train else ()))
 
     def _batches(self, train=True):
@@ -673,7 +683,7 @@ def run_experiment(params, outfile):
     use_wiki = params['use_wiki']
     exclude_keys = {'use_qb', 'use_wiki', 'wiki_data_frac'}
     model_params = {k: v for k, v in params.items() if k not in exclude_keys}
-    dataset_weights = {Dataset.QUIZ_BOWL: int(use_qb), Dataset.WIKI: int(use_wiki)}
+    dataset_weights = {Dataset.QUIZ_BOWL: 1, Dataset.WIKI: int(use_wiki)}
 
     with tf.Graph().as_default():
         with TFDan(is_train=True, dataset_weights=dataset_weights, initial_embed=embed, **model_params) as train_model:
@@ -699,6 +709,9 @@ def run_experiment(params, outfile):
 
             print('Loading val data')
             val_data = get_all_questions([Dataset.QUIZ_BOWL], folds=['dev'])
+            val_list = list(val_data[Dataset.QUIZ_BOWL])
+            val_data[Dataset.QUIZ_BOWL] = val_list
+            print('Got {} val examples'.format(len(val_list)))
             print('Evaluating')
             dev_accuracy, dev_recalls = dev_model.evaluate(
                 val_data,

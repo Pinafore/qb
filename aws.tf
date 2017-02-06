@@ -59,7 +59,7 @@ data "aws_ami" "qanta_ami" {
   }
   filter {
     name = "tag-value"
-    values = ["qanta"]
+    values = ["davis-qanta"]
   }
 }
 
@@ -271,7 +271,7 @@ resource "aws_spot_instance_request" "master" {
       "echo 'export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python' >> /home/ubuntu/qbenv",
       "echo 'export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}' >> /home/ubuntu/qbenv",
       "echo 'export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}' >> /home/ubuntu/qbenv",
-      "echo 'export QB_TF_EXPERIMENT_ID=${count.index + 2}' >> /home/ubuntu/qbenv",
+      "echo 'export QB_TF_EXPERIMENT_ID=${count.index}' >> /home/ubuntu/qbenv",
       "echo 'export CUDA_HOME=/usr/local/cuda' >> /home/ubuntu/qbenv",
       "echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64' >> /home/ubuntu/qbenv",
       "echo 'export PATH=/home/ubuntu/anaconda3/bin:$PATH' >> /home/ubuntu/qbenv",

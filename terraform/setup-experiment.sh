@@ -8,7 +8,7 @@ fi
 cd $QB_ROOT
 make clm
 python3 setup.py download
-export QB_AWS_S3_BUCKET=dyoshida-checkpoint
+export QB_AWS_S3_BUCKET=dyoshida-checkpoint-us-west-2
 export QB_AWS_S3_NAMESPACE=checkpoint
 ./checkpoint.py restore preprocess
 cd ..
