@@ -4,10 +4,12 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from clm.lm_wrapper import build_clm
 from qanta.util import constants as c
-from qanta.spark_execution import extract_features, merge_features
+from qanta.spark_execution import extract_features, extract_guess_features, merge_features
 from qanta.pipeline.preprocess import Preprocess
-from qanta.pipeline.dan import CreateGuesses
-from qanta.util.classifier import build_classifier
+from qanta.pipeline.guesser import AllGuessers
+from qanta.learning import classifier
+from qanta.extractors.stats import compute_question_stats
+from qanta.util.environment import QB_QUESTION_DB
 
 
 class BuildClm(Task):
@@ -21,7 +23,7 @@ class BuildClm(Task):
         build_clm()
 
 
-class ClassifierPickles(Task):
+class ClassifierPickle(Task):
     class_type = luigi.Parameter()
 
     def requires(self):
@@ -31,27 +33,98 @@ class ClassifierPickles(Task):
         return LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type))
 
     def run(self):
-        build_classifier(self.class_type)
+        model = classifier.train_classifier(self.class_type)
+        classifier.save_classifier(model, self.class_type)
+
+
+class ClassifierReport(Task):
+    class_type = luigi.Parameter()
+
+    def requires(self):
+        yield ClassifierPickle(class_type=self.class_type)
+
+    def output(self):
+        return LocalTarget(c.CLASSIFIER_REPORT_PATH.format(self.class_type))
+
+    def run(self):
+        model = classifier.load_classifier(self.class_type)
+        classifier.create_report(model, self.class_type)
 
 
 class AllClassifierPickles(WrapperTask):
     def requires(self):
         for t in c.CLASSIFIER_TYPES:
-            yield ClassifierPickles(class_type=t)
+            yield ClassifierPickle(class_type=t)
+
+
+class AllClassifierReports(WrapperTask):
+    def requires(self):
+        for t in c.CLASSIFIER_TYPES:
+            yield ClassifierReport(class_type=t)
+
+
+class AllClassifiers(WrapperTask):
+    def requires(self):
+        yield AllClassifierPickles()
+        yield AllClassifierReports()
+
+
+class ComputeParagraphStats(Task):
+    def output(self):
+        return LocalTarget(c.SENTENCE_STATS)
+
+    def run(self):
+        compute_question_stats(QB_QUESTION_DB)
+
+
+class ExtractFastFeatures(Task):
+    resources = {'spark': 1}
+
+    def requires(self):
+        yield AllGuessers()
+        yield ComputeParagraphStats()
+
+    def output(self):
+        targets = []
+        for fold, feature in product(c.VW_FOLDS, c.FAST_FEATURES):
+            targets.append(
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
+        return targets
+
+    def run(self):
+        extract_features(c.FAST_FEATURES)
+
+
+class ExtractTextFeatures(Task):
+    resources = {'spark': 1}
+
+    def requires(self):
+        yield AllGuessers()
+        yield ComputeParagraphStats()
+
+    def output(self):
+        targets = []
+        for fold, feature in product(c.VW_FOLDS, c.TEXT_FEATURES):
+            targets.append(
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
+        return targets
+
+    def run(self):
+        extract_features(c.TEXT_FEATURES)
 
 
 class ExtractComputeFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield CreateGuesses()
-        yield AllClassifierPickles()
+        yield AllGuessers()
+        yield AllClassifiers()
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.COMPUTE_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.COMPUTE_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -62,13 +135,13 @@ class ExtractDeepFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield CreateGuesses()
+        yield AllGuessers()
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.DEEP_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.DEEP_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -79,14 +152,14 @@ class ExtractLMFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield CreateGuesses()
+        yield AllGuessers()
         yield BuildClm()
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.LM_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.LM_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
@@ -97,25 +170,45 @@ class ExtractMentionsFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
-        yield CreateGuesses()
+        yield AllGuessers()
 
     def output(self):
         targets = []
-        for fold, feature in product(c.FOLDS, c.MENTIONS_OPT_FEATURES):
+        for fold, feature in product(c.VW_FOLDS, c.MENTIONS_OPT_FEATURES):
             targets.append(
-                LocalTarget('output/features/{0}/sentence.{1}.parquet/'.format(fold, feature)))
+                LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
 
     def run(self):
         extract_features(c.MENTIONS_OPT_FEATURES)
 
 
+class ExtractGuesserFeatures(Task):
+    resources = {'spark': 1}
+
+    def requires(self):
+        yield AllGuessers()
+
+    def output(self):
+        targets = []
+        for fold in c.VW_FOLDS:
+            targets.append(
+                LocalTarget('output/features/{0}/guessers.parquet'.format(fold))
+            )
+        return targets
+
+    def run(self):
+        extract_guess_features()
+
+
 class ExtractFeatures(WrapperTask):
     def requires(self):
-        yield ExtractDeepFeatures()
+        yield ExtractFastFeatures()
         yield ExtractComputeFeatures()
         yield ExtractLMFeatures()
         yield ExtractMentionsFeatures()
+        yield ExtractGuesserFeatures()
+        yield ExtractTextFeatures()
 
 
 class SparkMergeFeatures(Task):
@@ -126,9 +219,8 @@ class SparkMergeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, weight in product(c.FOLDS, c.NEGATIVE_WEIGHTS):
-            targets.append(
-                LocalTarget('output/vw_input/{0}/sentence.{1}.vw_input/'.format(fold, weight)))
+        for fold in c.VW_FOLDS:
+            targets.append(LocalTarget('output/vw_input/{0}.vw/'.format(fold)))
         return targets
 
     def run(self):

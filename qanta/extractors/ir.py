@@ -7,20 +7,20 @@ from whoosh.qparser import QueryParser
 import progressbar
 
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import WHOOSH_WIKI_INDEX_PATH, COUNTRY_LIST_PATH, MAX_APPEARANCES
 from qanta.util.environment import QB_WIKI_LOCATION, QB_QUESTION_DB
-from qanta.util.qdb import QuestionDatabase
 
 
-class IrExtractor(FeatureExtractor):
+class IrExtractor(AbstractFeatureExtractor):
     def __init__(self):
         super(IrExtractor, self).__init__()
-        self.name = "ir"
         self.wiki_index = WikiIndex()
 
-    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        pass
+    @property
+    def name(self):
+        return 'ir'
 
     def score_guesses(self, guesses, text):
         pass

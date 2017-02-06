@@ -34,8 +34,8 @@ To execute the AWS scripts you will need to follow these steps (`brew` options a
 2. [Install Terraform 0.7.x](https://www.terraform.io/downloads.html) or run `brew install terraform`
 3. Python 3.5+: If you don't have a preferred distribution,
 [Anaconda Python](https://www.continuum.io/downloads) is a good choice
-4. Install the AWS command line tools via `pip3 install awscli`
-5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-1`
+4. Install the AWS command line tools via `pip3 install awscli`. Run `pip3 install pyhcl`
+5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-2`
 6. Create an [EC2 key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
 7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
 8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS
@@ -51,7 +51,7 @@ nodes can communicate via SSH
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
 ##### Installed Software
-* Python 3.5
+* Python 3.6
 * Apache Spark 1.6.1
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
@@ -113,6 +113,8 @@ passed into the CLI via `-var name=value` and dropping the `TF_VAR` portion.
 * `TF_VAR_worker_instance_type`: Which EC2 instance type to use for workers (TODO: no-op ATM)
 * `TF_VAR_num_workers`: How many workers to use (TODO: no-op ATM)
 * `TF_VAR_cluster_id`: On multi-user accounts allows separate users to run simultaneous machines
+* `TF_VAR_qb_aws_s3_bucket`: Used to set `QB_AWS_S3_BUCKET` for checkpoint script
+* `TF_VAR_qb_aws_s3_namespace`: Used to set `QB_AWS_S3_NAMESPACE` for checkpoint script
 
 #### Shutting Down EC2 Instances
 
@@ -321,3 +323,24 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
 > No module named 'pyspark'
+
+### Expo Instructions
+
+The expo files can be generated from a completed qanta run by calling
+
+```bash
+luigi --module qanta.expo.pipeline --workers 2 AllExpo
+```
+
+If that has already been done you can restore the expo files from a backup instead of running the
+pipeline
+
+```bash
+./checkpoint restore expo
+```
+
+Then to finally run the expo
+
+```bash
+python3 qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.16.buzz --output=output/expo/competition.csv --finals=output/expo/test.16.final
+```

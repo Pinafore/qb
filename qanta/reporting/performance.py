@@ -14,7 +14,11 @@ from fn import _
 import matplotlib
 matplotlib.use('Agg')
 
-from qanta.util.qdb import QuestionDatabase
+from qanta import logging
+from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.preprocess import format_guess
+
+log = logging.get(__name__)
 
 
 class Answer(Enum):
@@ -44,8 +48,8 @@ SUMMARY_REGEX = re.compile(r'.*sentence\.([0-9]+)\.json')
 ANSWER_REGEX = re.compile(r'.*sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
 
 
-def load_predictions(pred_file):
-    def parse_line(line):
+def load_predictions(pred_file: str) -> Sequence:
+    def parse_line(line: str) -> Prediction:
         try:
             tokens = line.split()
             score = float(tokens[0])
@@ -55,13 +59,13 @@ def load_predictions(pred_file):
                 question, sentence, token = [int(x) for x in tokens[1].split('_')]
             return Prediction(score, question, sentence, token)
         except Exception:
-            print("Error parsing line: {0}".format(line))
+            log.info("Error parsing line: {0}".format(line))
             raise
     return seq.open(pred_file).map(parse_line)
 
 
-def load_meta(meta_file):
-    def parse_line(line):
+def load_meta(meta_file: str) -> Sequence:
+    def parse_line(line: str) -> Meta:
         tokens = line.split()
         question = int(tokens[0])
         sentence = int(tokens[1])
@@ -71,7 +75,7 @@ def load_meta(meta_file):
     return seq.open(meta_file).map(parse_line)
 
 
-def load_data(pred_file: str, meta_file: str, q_db):
+def load_data(pred_file: str, meta_file: str, q_db: QuestionDatabase) -> Sequence:
     preds = load_predictions(pred_file)
     metas = load_meta(meta_file)
     answers = q_db.all_answers()
@@ -87,7 +91,7 @@ def load_data(pred_file: str, meta_file: str, q_db):
             st_lines.append(Line(
                 question, st[0], st[1],
                 scored_guesses[0].score > 0,
-                scored_guesses[0].guess, answers[question],
+                scored_guesses[0].guess, format_guess(answers[question]),
                 scored_guesses
             ))
         return question, st_lines
@@ -96,15 +100,27 @@ def load_data(pred_file: str, meta_file: str, q_db):
         prediction = pm[0]
         meta = pm[1]
         if prediction.question is None or prediction.token is None or prediction.sentence is None:
-            print("WARNING: Prediction malformed, fixing with meta line: {0}".format(prediction))
+            log.info("WARNING: Prediction malformed, fixing with meta line: {0}".format(prediction))
             prediction = Prediction(prediction.score, meta.question, meta.sentence, meta.token)
         assert meta.question == prediction.question
         assert meta.sentence == prediction.sentence
         assert meta.token == prediction.token
         return prediction, meta
 
-    lines = preds.zip(metas).map(fix_missing_label).group_by(lambda x: x[0].question).map(create_line)
-    return lines
+    return preds\
+        .zip(metas)\
+        .map(fix_missing_label)\
+        .group_by(lambda x: x[0].question)\
+        .map(create_line)
+
+
+def load_audit(audit_file: str):
+    audit_data = {}
+    with open(audit_file) as f:
+        for line in f:
+            qid, evidence = line.split('\t')
+            audit_data[qid.strip()] = evidence.strip()
+        return audit_data
 
 
 def compute_answers(data: Sequence, dan_answers: Set[str]):
@@ -209,7 +225,7 @@ def plot(stats_dir, output):
 def generate(min_count, qdb, pred_file, meta_file, output):
     database = QuestionDatabase(qdb)
     data = load_data(pred_file, meta_file, database)
-    dan_answers = set(database.page_by_count(min_count=min_count, exclude_test=True))
+    dan_answers = set(database.page_by_count(min_count, True))
     answers = compute_answers(data, dan_answers)
     stats = compute_statistics(answers).cache()
     stats.to_json(output, root_array=False)

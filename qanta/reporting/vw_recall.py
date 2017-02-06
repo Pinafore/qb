@@ -1,8 +1,11 @@
 # pylint: disable=too-many-locals
 import sys
 from collections import defaultdict
-from qanta.util.qdb import QuestionDatabase
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import N_GUESSES
+from qanta import logging
+
+log = logging.get(__name__)
 
 
 def process_file(filename):
@@ -23,13 +26,13 @@ def process_file(filename):
         warn = 0
         for ident, guesses in questions.items():
             if len(guesses) < N_GUESSES:
-                print("WARNING LOW GUESSES")
-                print('Question {0} is missing guesses, only has {1}'.format(ident, len(guesses)))
+                log.info("WARNING LOW GUESSES")
+                log.info('Question {0} is missing guesses, only has {1}'.format(ident, len(guesses)))
                 warn += 1
             correct = answers[ident[0]].replace(' ', '_') in guesses
             recall += correct
-        print('Recall: {0} Total: {1}'.format(recall / len(questions), len(questions)))
-        print('Warned lines: {0}'.format(warn))
+        log.info('Recall: {0} Total: {1}'.format(recall / len(questions), len(questions)))
+        log.info('Warned lines: {0}'.format(warn))
 
 
 if __name__ == '__main__':

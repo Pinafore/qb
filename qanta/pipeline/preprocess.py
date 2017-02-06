@@ -13,17 +13,6 @@ class CompileCLM(ExternalTask):
         return LocalTarget('clm/_SUCCESS')
 
 
-class GloveData(Task):
-    def run(self):
-        shell('mkdir -p data/external/deep')
-        shell('curl http://nlp.stanford.edu/data/glove.840B.300d.zip > /tmp/glove.840B.300d.zip')
-        shell('unzip /tmp/glove.840B.300d.zip -d data/external/deep')
-        shell('rm /tmp/glove.840B.300d.zip')
-
-    def output(self):
-        return LocalTarget('data/external/deep/glove.840B.300d.txt')
-
-
 class Wikipedia(Task):
     def requires(self):
         CompileCLM()
@@ -40,7 +29,6 @@ class Wikipedia(Task):
 class DownloadData(WrapperTask):
     def requires(self):
         yield NLTKDownload()
-        yield GloveData()
         yield Wikipedia()
 
 

@@ -1,14 +1,15 @@
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.util.environment import data_path
+from qanta.util.constants import CLM_PATH
 from clm.lm_wrapper import LanguageModelReader
 
 
-class LanguageModel(FeatureExtractor):
-    def __init__(self, filename):
+class LanguageModel(AbstractFeatureExtractor):
+    def __init__(self):
         super().__init__()
-        self.filename = filename
+        self.filename = data_path(CLM_PATH)
         self.initialized = False
         self._lm = None
-        self.name = 'lm'
         self._corpora = set()
 
     def _init_lm(self):
@@ -20,6 +21,10 @@ class LanguageModel(FeatureExtractor):
             self._add_corpus("qb")
             self._add_corpus("wiki")
             self._add_corpus("source")
+
+    @property
+    def name(self):
+        return 'lm'
 
     @property
     def corpora(self):
@@ -39,4 +44,4 @@ class LanguageModel(FeatureExtractor):
             feature = "|%s %s" % (
                 self.name,
                 " ".join(self.lm.feature_line(x, guess, text) for x in self.corpora))
-            yield feature, guess
+            yield feature

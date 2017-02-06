@@ -1,13 +1,14 @@
 import warnings
-import pickle
 import numpy as np
 from string import ascii_lowercase, punctuation
 
 from functional import seq
-from unidecode import unidecode
 
-from qanta.extractors.abstract import FeatureExtractor
+from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PAREN_EXPRESSION, STOP_WORDS, N_GUESSES
+from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.preprocess import format_guess
 
 
 valid_strings = set(ascii_lowercase) | set(str(x) for x in range(10)) | {' '}
@@ -18,34 +19,41 @@ def relu(x):
 
 
 def normalize(text):
-    text = unidecode(text).lower().translate(str.maketrans(punctuation, ' ' * len(punctuation)))
+    text = text.lower().translate(str.maketrans(punctuation, ' ' * len(punctuation)))
     text = PAREN_EXPRESSION.sub("", text)
     text = " ".join(x for x in text.split() if x not in STOP_WORDS)
     return ''.join(x for x in text if x in valid_strings)
 
 
-class DeepExtractor(FeatureExtractor):
-    def __init__(self, classifier, params, vocab, ners, page_dict):
+class DeepExtractor(AbstractFeatureExtractor):
+    def __init__(self):
         super(DeepExtractor, self).__init__()
-        self.classifier = pickle.load(open(classifier, 'rb'), encoding='latin1')
-        self.params = pickle.load(open(params, 'rb'), encoding='latin1')
-        self.d = self.params[-1].shape[0]
-        self.vocab, self.vdict = pickle.load(open(vocab, 'rb'), encoding='latin1')
-        self.ners = pickle.load(open(ners, 'rb'), encoding='latin1')
+        question_db = QuestionDatabase(QB_QUESTION_DB)
+        page_dict = {}
+        for page in question_db.get_all_pages():
+            page_dict[page.lower().replace(' ', '_')] = page
         self.page_dict = page_dict
-        self.name = 'deep'
 
-    def set_metadata(self, answer, category, qnum, sent, token, guesses, fold):
-        pass
+    @property
+    def name(self):
+        return 'deep'
 
-    # return a vector representation of the question
     def compute_rep(self, text):
+        """
+        return a vector representation of the question
+        :param text:
+        :return:
+        """
         text = ' '.join(text)
         curr_feats = self.compute_features(text)
         return curr_feats, text
 
-    # return a distribution over answers for the given question
     def compute_probs(self, text):
+        """
+        return a distribution over answers for the given question
+        :param text:
+        :return:
+        """
         curr_feats = self.compute_features(text)
         return self.classifier.predict_proba(curr_feats)[0]
 
@@ -74,8 +82,12 @@ class DeepExtractor(FeatureExtractor):
 
         return p3.ravel().reshape(1, -1)
 
-    # return top n guesses for a given question
     def text_guess(self, text):
+        """
+        return top n guesses for a given question
+        :param text:
+        :return:
+        """
         text = ' '.join(text)
         preds = self.compute_probs(text)
         class_labels = self.classifier.classes_
@@ -114,10 +126,12 @@ class DeepExtractor(FeatureExtractor):
         predictions = self.compute_probs(text)
         lookup = dict(zip(labels, predictions))
         for guess in guesses:
-            if guess in lookup:
-                yield self.vw_from_score(lookup[guess]), guess
+            formatted_guess = format_guess(guess)
+            guess_id = self.vdict[formatted_guess]
+            if guess_id in lookup:
+                yield self.vw_from_score(lookup[guess_id])
             else:
-                yield -1, guess
+                yield self.vw_from_score(-1)
 
     def vw_from_score(self, val):
         res = "|%s" % self.name

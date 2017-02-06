@@ -9,7 +9,6 @@ def read(fname):
 requirements = [
     'scipy',
     'numpy',
-    'unidecode',
     'wikipedia',
     'whoosh',
     'nltk',
@@ -24,7 +23,10 @@ requirements = [
     'luigi',
     'jinja2',
     'progressbar2',
-    'boto3'
+    'boto3',
+    'pyhcl',
+    'fn',
+    'matplotlib'
 ]
 
 
