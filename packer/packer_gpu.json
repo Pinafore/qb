@@ -1,0 +1,107 @@
+{
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "region": "us-west-2",
+      "source_ami": "ami-b7a114d7",
+      "instance_type": "p2.xlarge",
+      "ssh_username": "ubuntu",
+      "ami_name": "qanta-gpu {{timestamp}}",
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_size": 50,
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        }
+      ],
+      "tags": {
+        "Image": "qanta-gpu"
+      },
+      "ebs_optimized": true,
+      "spot_price": 1.0
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "requirements.txt",
+      "destination": "/home/ubuntu/requirements.txt"
+    },
+    {
+      "type": "file",
+      "source": "conf/aws-qb-env.sh",
+      "destination": "/home/ubuntu/aws-qb-env.sh"
+    },
+    {
+      "type": "file",
+      "source": "conf/limits.conf",
+      "destination": "/home/ubuntu/limits.conf"
+    },
+    {
+      "type": "file",
+      "source": "conf/cuda-dnn-env.sh",
+      "destination": "/home/ubuntu/cuda-dnn-env.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-apt-packages.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-python.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-kenlm.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-spark.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-vw.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-xgboost.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-cuda.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-tensorflow-gpu.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-pandoc.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-utilities.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/configure.sh"
+    },
+    {
+      "type": "file",
+      "source": "conf/spark-defaults.conf",
+      "destination": "/home/ubuntu/dependencies/spark-2.1.0-bin-hadoop2.7/conf/spark-defaults.conf"
+    },
+    {
+      "type": "file",
+      "source": "conf/aws-config",
+      "destination": "/home/ubuntu/.aws/config"
+    },
+    {
+      "type": "file",
+      "source": "conf/tmux.conf",
+      "destination": "/home/ubuntu/.tmux.conf"
+    }
+  ]
+}

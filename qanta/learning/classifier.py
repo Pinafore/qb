@@ -8,16 +8,13 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
-from sklearn.feature_selection import SelectKBest
-
-from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
 
 from qanta import logging
 from qanta.util.io import safe_open, safe_path
-from qanta.util.qdb import QuestionDatabase
 from qanta.util.constants import CLASSIFIER_PICKLE_PATH, CLASSIFIER_REPORT_PATH
-from qanta.util.sklearn import DFColumnTransformer, CSCTransformer
 from qanta.util.environment import QB_QUESTION_DB
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.reporting.report_generator import ReportGenerator
 from qanta.reporting.plotting import plot_confusion
 
@@ -28,32 +25,23 @@ log = logging.get(__name__)
 # Parameters were hand tuned
 def create_gender_pipeline():
     return Pipeline([
-        ('df_select', DFColumnTransformer(['text'])),
         ('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=3)),
-        ('select_k', SelectKBest(k=750)),
-        ('csc', CSCTransformer()),
-        ('xgb', XGBClassifier(max_depth=8))
+        ('lr', LogisticRegression(C=1000))
     ])
 
 
 # Parameters were hand tuned
 def create_category_pipeline():
     return Pipeline([
-        ('df_select', DFColumnTransformer(['text'])),
         ('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=3)),
-        ('select_k', SelectKBest(k=1300)),
-        ('csc', CSCTransformer()),
-        ('xgb', XGBClassifier(max_depth=12, n_estimators=400))
+        ('lr', LogisticRegression(C=1000))
     ])
 
 
 def create_ans_type_pipeline():
     return Pipeline([
-        ('df_select', DFColumnTransformer(['text'])),
         ('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=3)),
-        ('select_k', SelectKBest(k=1250)),
-        ('csc', CSCTransformer()),
-        ('xgb', XGBClassifier(max_depth=13))
+        ('lr', LogisticRegression(C=1000))
     ])
 
 
@@ -106,7 +94,9 @@ def train_classifier(class_type, question_db=None):
     log.info("Training classifier: {}".format(class_type))
     all_questions = question_db.questions_with_pages()
     train = compute_features(all_questions, 'train', class_type)
-    classifier = pipeline_creators[class_type]().fit(train, train['label'])
+    train_x = train['text']
+    train_y = train['label']
+    classifier = pipeline_creators[class_type]().fit(train_x, train_y)
     return classifier
 
 
@@ -127,12 +117,16 @@ def create_report(classifier, class_type, question_db=None):
 
     all_questions = question_db.questions_with_pages()
     train = compute_features(all_questions, 'train', class_type)
+    train_x = train['text']
+    train_y = train['label']
     dev = compute_features(all_questions, 'dev', class_type)
-    train_score = classifier.score(train, train['label'])
-    dev_score = classifier.score(dev, dev['label'])
+    dev_x = dev['text']
+    dev_y = dev['label']
+    train_score = classifier.score(train_x, train_y)
+    dev_score = classifier.score(dev_x, dev_y)
 
     true_labels = dev['label'].values
-    predicted_labels = classifier.predict(dev)
+    predicted_labels = classifier.predict(dev_x)
 
     cf_norm = '/tmp/norm_confusion.png'
     plot_confusion(

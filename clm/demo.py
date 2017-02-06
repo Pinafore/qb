@@ -1,4 +1,4 @@
-from lm_wrapper import LanguageModelReader, LanguageModelBase, pretty_debug
+from clm.lm_wrapper import LanguageModelReader, LanguageModelBase, pretty_debug
 from csv import DictReader
 from collections import defaultdict
 

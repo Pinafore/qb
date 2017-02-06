@@ -1,5 +1,5 @@
 import textwrap
-from collections import defaultdict
+from collections import defaultdict, Counter
 import argparse
 from csv import DictReader
 from time import sleep
@@ -7,7 +7,7 @@ import os
 
 kSHOW_RIGHT = False
 kPAUSE = .25
-kSYSTEM = "OUSIA"
+kSYSTEM = "QANTA"
 
 kBIGNUMBERS = {-1:
 """
@@ -223,6 +223,7 @@ class kCOLORS:
         start = getattr(kCOLORS, color)
         print(start + text + kCOLORS.ENDC, end=end)
 
+
 def write_readable(filename, ids, questions, power):
     question_num = 0
     o = open(flags.readable, 'w')
@@ -240,6 +241,7 @@ def write_readable(filename, ids, questions, power):
                 o.write("%s  " % questions[ii][jj])
         o.write("\nANSWER: %s\n\n" % questions.answer(ii))
 
+
 def clear_screen():
     print("Clearing")
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -253,10 +255,11 @@ class PowerPositions:
             for ii in infile:
                 question = int(ii['question'])
                 self._power_marks[question] = ii['word']
-        except:
-            print("Couldn't load from %s" % filename)
-        print("Read power marks from %s: %s ..." %
-              (filename, str(self._power_marks.keys())[1:69]))
+            print("Read power marks from %s: %s ..." %
+                  (filename, str(self._power_marks.keys())[1:69]))
+        except FileNotFoundError:
+            pass
+
     def __call__(self, question):
         if question in self._power_marks:
             return self._power_marks[question]
@@ -309,6 +312,8 @@ def show_score(left_score, right_score,
                left_header="HUMAN", right_header="COMPUTER",
                left_color="GREEN", right_color="BLUE",
                flush=True):
+    assert isinstance(left_score, int)
+    assert isinstance(right_score, int)
     if flush:
         clear_screen()
     # Print the header
@@ -324,7 +329,7 @@ def show_score(left_score, right_score,
                 if place == 100 and num < 0:
                     val = -1
                 else:
-                    val = (abs(num) % (place * 10)) / place
+                    val = (abs(num) % (place * 10)) // place
                 kCOLORS.print("%-15s" % kBIGNUMBERS[val].split("\n")[line],
                               color=color, end=' ')
             print("|", end=" ")
@@ -344,12 +349,12 @@ class Buzzes:
         buzzfile = DictReader(open(buzz_file, 'r'))
 
         self._buzzes = defaultdict(dict)
-        for ii in buzzfile:
-            question, sent, word = int(ii["question"]), int(ii["sentence"]), int(ii["word"])
+        for r in buzzfile:
+            question, sent, word = int(r["question"]), int(r["sentence"]), int(r["word"])
             if not (sent, word) in self._buzzes[question]:
                 self._buzzes[question][(sent, word)] = {}
-            self._buzzes[question][(sent, word)][ii["page"]] = \
-              Guess(ii["page"], ii["evidence"], int(ii["final"]), float(ii["weight"]))
+            self._buzzes[question][(sent, word)][r["page"]] = \
+                Guess(r["page"], r["evidence"], int(r["final"]), float(r["weight"]))
 
     def current_guesses(self, question, sent, word):
         try:
@@ -379,19 +384,25 @@ class Questions:
 
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
-        for ii in qfile:
-            self._questions[int(ii["id"])][int(ii["sent"])] = ii["text"]
-            self._answers[int(ii["id"])] = ii["answer"].strip()
+        for r in qfile:
+            self._questions[int(r["id"])][int(r["sent"])] = r["text"]
+            self._answers[int(r["id"])] = r["answer"].strip()
 
     def __iter__(self):
-        for ii in self._questions:
-            yield ii
+        for qnum in self._questions:
+            yield qnum
 
     def __getitem__(self, val):
         return self._questions[val]
 
     def answer(self, val):
         return self._answers[val]
+
+
+def select_features(evidence_str, allowed_features):
+    features = evidence_str.split()
+    included_features = [f for f in features if f in allowed_features]
+    return ' '.join(included_features)
 
 
 def format_display(display_num, question_text, sent, word, current_guesses,
@@ -407,24 +418,50 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     report = "Question %i: %i points\n%s\n%s\n%s\n\n" % \
         (display_num, points, sep, current_text, sep)
 
-    for gg in sorted(current_guesses, key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]:
+    top_guesses = sorted(current_guesses,
+                         key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]
+    duplicated_feature_counter = Counter()
+    for g in top_guesses:
+        evidence = current_guesses[g].evidence.split()
+        for f in evidence:
+            duplicated_feature_counter[f] += 1
+
+    allowed_features = set()
+    for k, v in duplicated_feature_counter.items():
+        if v == 1:
+            allowed_features.add(k)
+
+    if False and len(top_guesses) > 0:
+        print(top_guesses)
+        print(allowed_features)
+        print(duplicated_feature_counter)
+        raise Exception()
+    for gg in top_guesses:
         guess = current_guesses[gg]
         if guess.page == answer:
-            report += "%s\t%f\t%s\n" % ("***CORRECT***", guess.weight, guess.evidence[:60])
+            report += "%s\t%f\t%s\n" % (
+                "***CORRECT***",
+                guess.weight,
+                select_features(guess.evidence, allowed_features)[:100]
+            )
         else:
-            report += "%s\t%f\t%s\n" % (guess.page, guess.weight, guess.evidence[:60])
+            report += "%s\t%f\t%s\n" % (
+                guess.page,
+                guess.weight,
+                select_features(guess.evidence, allowed_features)[:100]
+            )
     return report
 
 
 def load_finals(final_file):
-    ff = DictReader(open(final_file))
+    f = DictReader(open(final_file))
     d = {}
-    for ii in ff:
-        d[int(ii['question'])] = ii['answer']
+    for i in f:
+        d[int(i['question'])] = i['answer']
     return d
 
 
-def interpret_keypress(other_allowable=""):
+def interpret_keypress():
     """
     See whether a number was pressed (give terminal bell if so) and return
     value.  Otherwise returns none.  Tries to handle arrows as a single
@@ -436,8 +473,8 @@ def interpret_keypress(other_allowable=""):
         getch()
         press = "direction"
 
-    if press.upper() in other_allowable:
-        return press.upper()
+    if press == 'Q':
+        raise Exception('Exiting expo by user request from pressing Q')
 
     if press != "direction" and press != " ":
         try:
@@ -451,14 +488,13 @@ def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
+    os.system("say %s" % ans.replace("'", "").split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
 
 def present_question(display_num, question_id, question_text, buzzes, final,
                      correct, human=0, computer=0, power="10"):
-
     human_delta = 0
     computer_delta = 0
     question_value = 15
@@ -475,16 +511,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
                 while response is None:
-                    response = input("Player %i, provide an answer:\t"
-                                         %press)
+                    response = input("Player %i, provide an answer:\t" % press)
                     if '+' in response:
                         return (human + question_value,
                                 computer + computer_delta,
                                 response[1:])
                     elif '-' in response:
                         if computer_delta == -5:
-                            return (human, computer + computer_delta,
-                                    response[1:])
+                            return human, computer + computer_delta, response[1:]
                         else:
                             human_delta = -5
                     else:
@@ -543,13 +577,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             else:
                 response = None
 
-    return (human + human_delta, computer + computer_delta, "")
+    return human + human_delta, computer + computer_delta, ""
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--questions', type=str, default='questions.csv')
     parser.add_argument('--buzzes', type=str, default="ir_buzz.csv")
+    parser.add_argument('--skip', type=int, default=0)
     parser.add_argument('--output', type=str, default="competition.csv")
     parser.add_argument('--finals', type=str, default="finals.csv")
     parser.add_argument('--power', type=str, default="power.csv")
@@ -592,12 +627,18 @@ if __name__ == "__main__":
     if flags.readable != "":
         write_readable(flags.readable, question_ids, questions, power)
 
+    skipped = 0
     for ii in question_ids:
+        if skipped < flags.skip:
+            skipped += 1
+            continue
+        
         question_num += 1
         power_mark = power(ii)
         if power_mark == "10":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
+
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),
@@ -634,5 +675,4 @@ if __name__ == "__main__":
                                                          questions.answer(ii)))
             sleep(kPAUSE)
 
-    show_score(human, computer,
-               "HUMAN", "COMPUTER")
+    show_score(human, computer, "HUMAN", "COMPUTER")

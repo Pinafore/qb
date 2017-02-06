@@ -14,9 +14,9 @@ PRE_PROCESS_TARGETS = {
     'output/kenlm.binary'
 }
 
-DEEP_TARGETS = {'output/deep'}
-
-GUESS_TARGETS = {'output/guesses.db'}
+GUESS_TARGETS = {
+    'output/guesser'
+}
 
 CLM_TARGETS = {
     'output/language_model.txt',
@@ -29,41 +29,43 @@ CLASSIFIER_TARGETS = {
     'output/classifier/ans_type'
 }
 
-SPARK_COMPUTE_TARGETS = {
-    'output/features/dev/sentence.answer_present.parquet',
-    'output/features/dev/sentence.classifier.parquet',
-    'output/features/dev/sentence.label.parquet',
-    'output/features/dev/sentence.wikilinks.parquet',
-    'output/features/devtest/sentence.answer_present.parquet',
-    'output/features/devtest/sentence.classifier.parquet',
-    'output/features/devtest/sentence.label.parquet',
-    'output/features/devtest/sentence.wikilinks.parquet',
-    'output/features/test/sentence.answer_present.parquet',
-    'output/features/test/sentence.classifier.parquet',
-    'output/features/test/sentence.label.parquet',
-    'output/features/test/sentence.wikilinks.parquet'
+SPARK_CLASSIFIER_TARGETS = {
+    'output/features/dev/classifier.parquet',
+    'output/features/test/classifier.parquet',
+}
+
+SPARK_FAST_TARGETS = {
+    'output/features/dev/answer_present.parquet',
+    'output/features/dev/stats.parquet',
+    'output/features/dev/text.parquet',
+    'output/features/test/answer_present.parquet',
+    'output/features/test/stats.parquet',
+    'output/features/test/text.parquet',
 }
 
 SPARK_LM_TARGETS = {
-    'output/features/dev/sentence.lm.parquet',
-    'output/features/devtest/sentence.lm.parquet',
-    'output/features/test/sentence.lm.parquet'
+    'output/features/dev/lm.parquet',
+    'output/features/devtest/lm.parquet',
+    'output/features/test/lm.parquet'
 }
 
 SPARK_MENTIONS_TARGETS = {
-    'output/features/dev/sentence.mentions.parquet',
-    'output/features/devtest/sentence.mentions.parquet',
-    'output/features/test/sentence.mentions.parquet'
+    'output/features/dev/mentions.parquet',
+    'output/features/test/mentions.parquet'
 }
 
 SPARK_DEEP_TARGETS = {
-    'output/features/dev/sentence.deep.parquet',
-    'output/features/devtest/sentence.deep.parquet',
-    'output/features/test/sentence.deep.parquet'
+    'output/features/dev/deep.parquet',
+    'output/features/test/deep.parquet'
 }
 
-SPARK_FEATURE_TARGETS = SPARK_COMPUTE_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
-                        | SPARK_DEEP_TARGETS
+SPARK_GUESSERS_TARGETS = {
+    'output/features/dev/guessers.parquet',
+    'output/features/test/guessers.parquet'
+}
+
+SPARK_FEATURE_TARGETS = SPARK_FAST_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
+                        | SPARK_GUESSERS_TARGETS | SPARK_CLASSIFIER_TARGETS
 
 VW_INPUT = {'output/vw_input'}
 
@@ -73,26 +75,38 @@ PREDICTIONS = {'output/predictions'}
 
 SUMMARIES = {'output/summary'}
 
+REPORTING = {'output/reporting'}
 
-CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | DEEP_TARGETS | GUESS_TARGETS | CLM_TARGETS \
+fold = os.environ.get('QB_FOLD', 'test')
+EXPO = {
+    'output/expo/test.questions.csv',
+    'output/expo/{}.buzz'.format(fold),
+    'output/expo/{}.final'.format(fold)
+}
+
+
+CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | GUESS_TARGETS | CLM_TARGETS \
                      | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
-                     | PREDICTIONS | SUMMARIES
+                     | PREDICTIONS | SUMMARIES | REPORTING | EXPO
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
-    'deep': DEEP_TARGETS,
     'guesses': GUESS_TARGETS,
     'clm': CLM_TARGETS,
     'classifiers': CLASSIFIER_TARGETS,
     'spark': SPARK_FEATURE_TARGETS,
-    'spark_compute': SPARK_COMPUTE_TARGETS,
+    'spark_fast': SPARK_FAST_TARGETS,
+    'spark_classifier': SPARK_CLASSIFIER_TARGETS,
     'spark_lm': SPARK_LM_TARGETS,
     'spark_mentions': SPARK_MENTIONS_TARGETS,
     'spark_deep': SPARK_DEEP_TARGETS,
+    'spark_guessers': SPARK_GUESSERS_TARGETS,
     'vw_input': VW_INPUT,
     'vw_models': VW_MODELS,
     'predictions': PREDICTIONS,
     'summaries': SUMMARIES,
+    'reporting': REPORTING,
+    'expo': EXPO,
     'all': CHECKPOINT_TARGETS
 }
 
@@ -180,7 +194,7 @@ def cli(ctx, bucket, namespace):
 @cli.command(name='list')
 @click.pass_context
 def list_runs(ctx):
-    for key in ctx.obj['s3'].list_runs():
+    for key in sorted(ctx.obj['s3'].list_runs()):
         print(key)
 
 
@@ -193,7 +207,7 @@ def latest(ctx):
 @cli.command()
 @click.pass_context
 def keys(ctx):
-    for k in TARGET_GROUPS:
+    for k in sorted(TARGET_GROUPS):
         print(k)
 
 
@@ -224,6 +238,7 @@ def save(ctx, date, targets):
             namespace=s3.namespace,
             date=date
         ))
+        shell('rm /tmp/qb/{name}.tar.lz4'.format(name=name))
 
 
 @cli.command()
@@ -244,6 +259,7 @@ def restore(ctx, date, targets):
             date=date
         ))
         shell('lz4 -d /tmp/qb/{name}.tar.lz4 | tar -x -C .'.format(name=name))
+        shell('rm /tmp/qb/{name}.tar.lz4'.format(name=name))
 
 
 if __name__ == '__main__':

@@ -1,10 +1,6 @@
 from collections import defaultdict
 import time
-import re
-import os
 import ctypes
-
-from unidecode import unidecode
 
 from nltk.tokenize import RegexpTokenizer
 from nltk import bigrams
@@ -13,6 +9,7 @@ from qanta import logging
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, MIN_APPEARANCES
+from qanta.preprocess import format_guess
 
 from clm import clm
 from qanta.util.io import safe_open
@@ -25,7 +22,6 @@ kUNK = "OOV"
 kSTART = "STRT"
 kEND = "END"
 kMAX_TEXT_LENGTH = 5000
-kGOODCHAR = re.compile(r"[a-zA-Z0-9]*")
 
 
 def pretty_debug(name, result, max_width=10):
@@ -114,13 +110,13 @@ class LanguageModelBase:
 
     @staticmethod
     def normalize_title(corpus, title):
-        norm_title = corpus + "".join(x for x in kGOODCHAR.findall(title) if x)
+        norm_title = corpus + format_guess(title)
         return norm_title
 
     @staticmethod
     def tokenize_without_censor(sentence):
         yield kSTART
-        for ii in kTOKENIZER(unidecode(sentence)):
+        for ii in kTOKENIZER(sentence):
             yield ii.lower()
         yield kEND
 
@@ -136,7 +132,7 @@ class LanguageModelBase:
         if not isinstance(sentence, str):
             sentence = ' '.join(list(sentence))
         yield self.vocab_lookup(kSTART)
-        for ii in kTOKENIZER(unidecode(sentence)):
+        for ii in kTOKENIZER(sentence):
             yield self.vocab_lookup(ii.lower())
         yield self.vocab_lookup(kEND)
 
@@ -160,8 +156,12 @@ class LanguageModelReader(LanguageModelBase):
         self._corpora = {}
         self._sort_voc = None
 
-        self.set_params(interp, min_span, max_span, start_rank, smooth, cutoff,
-                        slop, censor_slop, give_score, log_length, stopwords)
+        assert(max_span >= min_span), "Max span %i must be greater than min %i" % \
+            (max_span, min_span)
+            
+        self.set_params(interp, min(min_span, max_span), max(min_span, max_span),
+                        start_rank, smooth, cutoff, slop, censor_slop, give_score,
+                        log_length, stopwords)
 
     def set_params(self, interp, min_span, max_span, start_rank, smooth,
                    cutoff, slop, censor_slop, give_score,
@@ -206,9 +206,9 @@ class LanguageModelReader(LanguageModelBase):
             self._lm.add_stop(i)
 
         # Load comparisons language model
-        for i in [x for x in self._corpora if x.startswith("compare")]:
-            self._loaded_lms.add(self._corpora[i])
-            self._lm.read_counts("%s/%i" % (self._datafile, self._corpora[i]))
+        for file_name in [x for x in self._corpora if x.startswith("compare")]:
+            self._loaded_lms.add(self._corpora[file_name])
+            self._lm.read_counts("%s/%i" % (self._datafile, self._corpora[file_name]))
 
     def verbose_feature(self, corpus, guess, sentence):
         """
@@ -411,7 +411,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                      min_pages=MIN_APPEARANCES):
         num_docs += 1
         if num_docs % 500 == 0:
-            log.info("{} {}".format(unidecode(title), num_docs))
+            log.info("{} {}".format(title, num_docs))
             log.info(str(list(lm.tokenize_without_censor(text[100:200]))))
 
         for tt in lm.tokenize_without_censor(text):
@@ -440,7 +440,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                          min_pages=MIN_APPEARANCES):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
-                log.info("Adding train doc %i, %s (%s)" % (doc_num, unidecode(title), corpus))
+                log.info("Adding train doc %i, %s (%s)" % (doc_num, title, corpus))
                 start = time.time()
             lm.add_train(corpus, title, text)
 

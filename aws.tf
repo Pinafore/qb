@@ -17,16 +17,6 @@ variable "master_instance_type" {
   description = "EC2 Instance type to use for the master node"
 }
 
-variable "worker_instance_type" {
-  default = "p2.xlarge"
-  description = "EC2 Instance type to use for worker nodes"
-}
-
-variable "num_workers" {
-  default = 0
-  description = "Number of worker nodes"
-}
-
 variable "cluster_id" {
   default = "default"
   description = "Cluster identifier to prevent collissions for users on the same AWS account"
@@ -39,11 +29,16 @@ variable "qb_aws_s3_bucket" {
 
 variable "qb_aws_s3_namespace" {
   default = ""
-  description = "Stores variable for QB_AWS_S3_NAMESPACED used in checkpoint script"
+  description = "Stores variable for QB_AWS_S3_NAMESPACE used in checkpoint script"
+}
+
+variable "qb_branch" {
+  default = "master"
+  description = "Which git branch to checkout when cloning Pinafore/qb"
 }
 
 variable "num_experiments" {
-  default = "2"
+  default = "1"
   description = "Number of masters to bring up"
 }
 
@@ -59,7 +54,11 @@ data "aws_ami" "qanta_ami" {
   }
   filter {
     name = "tag-value"
+<<<<<<< HEAD
     values = ["davis-qanta"]
+=======
+    values = ["qanta-cpu"]
+>>>>>>> master
   }
 }
 
@@ -89,12 +88,17 @@ resource "aws_route" "internet_access" {
   gateway_id             = "${aws_internet_gateway.qanta.id}"
 }
 
-# We use us-west-1b since r3.8xlarge are cheaper in this availability zone
-resource "aws_subnet" "qanta_zone_1b" {
+# We use us-west-2a since r3.8xlarge are cheaper in this availability zone
+# p2 Instances are cheaper on us-west-2c however
+resource "aws_subnet" "qanta_zone_2a" {
   vpc_id                  = "${aws_vpc.qanta.id}"
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
+<<<<<<< HEAD
   availability_zone = "us-west-2b"
+=======
+  availability_zone = "us-west-2a"
+>>>>>>> master
 }
 
 # A security group for SSH access from anywhere
@@ -154,24 +158,6 @@ resource "aws_security_group" "qanta_internal" {
 # | |__| |___ / __/   | || | | \__ \ || (_| | | | | (_|  __/\__ \
 # |_____\____|_____| |___|_| |_|___/\__\__,_|_| |_|\___\___||___/
 
-# Create Spark workers
-resource "aws_spot_instance_request" "workers" {
-  ami           = "${data.aws_ami.qanta_ami.id}"
-  instance_type = "${var.worker_instance_type}"
-  count         = "${var.num_workers}"
-  key_name = "${var.key_pair}"
-  spot_price = "${var.spot_price}"
-
-  vpc_security_group_ids = [
-    "${aws_security_group.qanta_internal.id}",
-    "${aws_security_group.qanta_ssh.id}"
-  ]
-  subnet_id = "${aws_subnet.qanta_zone_1b.id}"
-
-  wait_for_fulfillment = true
-}
-
-# Create Spark master node
 resource "aws_spot_instance_request" "master" {
   count = "${var.num_experiments}"
   # ami           = "${data.aws_ami.qanta_ami.id}"
@@ -186,7 +172,13 @@ resource "aws_spot_instance_request" "master" {
     "${aws_security_group.qanta_internal.id}",
     "${aws_security_group.qanta_ssh.id}"
   ]
-  subnet_id = "${aws_subnet.qanta_zone_1b.id}"
+  subnet_id = "${aws_subnet.qanta_zone_2a.id}"
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = "80"
+    delete_on_termination = true
+  }
 
   # ephemeral_block_device {
   #   device_name = "/dev/sdb"
@@ -285,7 +277,7 @@ resource "aws_spot_instance_request" "master" {
       "sudo mkdir /ssd-c/qanta",
       "sudo chown ubuntu /ssd-c/qanta",
       "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb",
-      "(cd /ssd-c/qanta/qb && /home/ubuntu/anaconda3/bin/python setup.py develop)"
+      "(cd /ssd-c/qanta/qb && git checkout ${var.qb_branch} && /home/ubuntu/anaconda3/bin/python setup.py develop)"
     ]
   }
 

@@ -1,0 +1,43 @@
+data "aws_ami" "qanta_ami" {
+  most_recent = true
+  filter {
+    name = "tag-key"
+    values = ["Image"]
+  }
+  filter {
+    name = "tag-value"
+    values = ["qanta-gpu"]
+  }
+}
+
+variable "spot_price" {
+  default = ".5"
+}
+
+resource "aws_spot_instance_request" "master" {
+  instance_type = "p2.xlarge"
+
+  ephemeral_block_device {
+    device_name = "/dev/sdb"
+    virtual_name = "ephemeral0"
+    no_device = true
+  }
+
+  ephemeral_block_device {
+    device_name = "/dev/sdc"
+    virtual_name = "ephemeral1"
+    no_device = true
+  }
+
+  ebs_block_device {
+   device_name = "/dev/sdd"
+   volume_type = "gp2"
+   volume_size = 80
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sde"
+    volume_type = "gp2"
+    volume_size = 80
+  }
+}

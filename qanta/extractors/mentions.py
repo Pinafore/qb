@@ -5,13 +5,14 @@ from functools import lru_cache
 
 import kenlm
 import nltk
-from unidecode import unidecode
 from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
-from qanta.extractors.abstract import FeatureExtractor
-from qanta.util.environment import data_path
-from qanta.util.constants import KEN_LM
+from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.util.environment import data_path, QB_QUESTION_DB
+from qanta.util.constants import KEN_LM, MIN_APPEARANCES
+from qanta.util.build_whoosh import text_iterator
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
 
@@ -70,17 +71,19 @@ def build_lm_data(path, output):
     for i in [x.split("/")[-1] for x in glob("%s/*" % path)]:
         count += 1
         if count % 1000 == 0:
-            print("%i\t%s" % (count, unidecode(i)))
+            print("%i\t%s" % (count, i))
         page = cw[i]
 
         for ss in nltk.sent_tokenize(page.content):
-            o.write("%s\n" % " ".join(kTOKENIZER(unidecode(ss.lower()))))
+            o.write("%s\n" % " ".join(kTOKENIZER(ss.lower())))
 
 
-class Mentions(FeatureExtractor):
-    def __init__(self, answers):
+class Mentions(AbstractFeatureExtractor):
+    def __init__(self):
         super().__init__()
-        self.name = "mentions"
+        question_db = QuestionDatabase(QB_QUESTION_DB)
+        answers = set(x for x, y in text_iterator(
+            False, "", False, question_db, False, "", limit=-1, min_pages=MIN_APPEARANCES))
         self.answers = answers
         self.initialized = False
         self.refex_count = defaultdict(int)
@@ -92,6 +95,10 @@ class Mentions(FeatureExtractor):
         self.suf = []
         self.text = ""
         self.kenlm_path = data_path(KEN_LM)
+
+    @property
+    def name(self):
+        return 'mentions'
 
     @property
     def lm(self):
@@ -112,9 +119,9 @@ class Mentions(FeatureExtractor):
                 for pp, mm, ss in find_references(text):
                     # Exclude too short mentions
                     if len(mm.strip()) > 3:
-                        self.pre.append(unidecode(pp.lower()))
-                        self.suf.append(unidecode(ss.lower()))
-                        self.ment.append(unidecode(mm.lower()))
+                        self.pre.append(pp.lower())
+                        self.suf.append(ss.lower())
+                        self.ment.append(mm.lower())
 
             best_score = float("-inf")
             for ref in self.referring_exs(guess):
@@ -133,14 +140,14 @@ class Mentions(FeatureExtractor):
             else:
                 res = "|%s missing:1" % self.name
 
-            norm_title = LanguageModelBase.normalize_title('', unidecode(guess))
+            norm_title = LanguageModelBase.normalize_title('', guess)
             assert ":" not in norm_title
             for mm in self.ment:
                 assert ":" not in mm
                 res += " "
                 res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
 
-            yield res, guess
+            yield res
 
     def generate_refexs(self, answer_list):
         """

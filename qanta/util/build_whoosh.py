@@ -2,13 +2,13 @@ import gzip
 import zlib
 import os
 
-
-from unidecode import unidecode
-
-from qanta.util.constants import COUNTRY_LIST_PATH
-from qanta.util.environment import data_path
-from qanta.util.qdb import QuestionDatabase
+from qanta import logging
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.util.environment import data_path
+from qanta.util.constants import COUNTRY_LIST_PATH
+
+log = logging.get(__name__)
 
 
 def text_iterator(use_wiki, wiki_location,
@@ -45,7 +45,7 @@ def text_iterator(use_wiki, wiki_location,
                     with gzip.open(filename, 'rb') as f:
                         source_text = f.read()
                 except zlib.error:
-                    print("Error reading %s" % filename)
+                    log.info("Error reading %s" % filename)
                     source_text = ''
             else:
                 source_text = ''
@@ -61,7 +61,7 @@ def text_iterator(use_wiki, wiki_location,
         total_text += "\n"
         total_text += question_text
         total_text += "\n"
-        total_text += unidecode(str(source_text))
+        total_text += str(source_text)
 
         yield pp, total_text
         doc_num += 1

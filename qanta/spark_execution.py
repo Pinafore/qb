@@ -2,7 +2,7 @@ import click
 from pyspark import SparkConf, SparkContext
 
 from qanta.util.constants import FEATURE_NAMES
-from qanta.util.environment import QB_QUESTION_DB, QB_GUESS_DB, QB_SPARK_MASTER
+from qanta.util.environment import QB_SPARK_MASTER
 from qanta.util import spark_features
 import qanta.extract_features as ef
 
@@ -23,11 +23,17 @@ def create_spark_context(app_name="Quiz Bowl"):
 
 
 def extract_features(features):
-    sc = create_spark_context(
+    create_spark_context(
         app_name='Quiz Bowl: ' + ' '.join(features)
     )
-    ef.spark_batch(sc, features, QB_QUESTION_DB, QB_GUESS_DB)
-    sc.stop()
+    ef.spark_batch(features)
+
+
+def extract_guess_features():
+    create_spark_context(
+        app_name='Quiz Bowl: guessers'
+    )
+    ef.generate_guesser_feature()
 
 
 @cli.command(name='extract_features')
@@ -37,9 +43,8 @@ def extract_features_cli(**kwargs):
 
 
 def merge_features():
-    sc = create_spark_context(app_name='Quiz Bowl Merge')
+    create_spark_context(app_name='Quiz Bowl Merge')
     spark_features.create_output('output/features')
-    sc.stop()
 
 
 @cli.command(name='merge_features')

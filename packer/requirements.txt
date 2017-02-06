@@ -27,3 +27,4 @@ bottle
 boto3
 pypandoc
 slacker
+pyhcl
