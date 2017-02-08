@@ -21,4 +21,5 @@ aws_small_override.tf
 jupyter_s3_config.py
 jupyter_s3.tf
 jupyter_s3.sh
+naqt_db.tf
 qb.egg-info/
