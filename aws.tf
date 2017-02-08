@@ -157,7 +157,7 @@ resource "aws_spot_instance_request" "master" {
     "${aws_security_group.qanta_internal.id}",
     "${aws_security_group.qanta_ssh.id}"
   ]
-  subnet_id = "${aws_subnet.qanta_zone_2a.id}"
+  subnet_id = "${aws_subnet.qanta_zone_2b.id}"
 
   root_block_device {
     volume_type = "gp2"
