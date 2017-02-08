@@ -11,7 +11,7 @@ import click
 PRE_PROCESS_TARGETS = {
     'output/wikifier/input',
     'output/wikifier/output',
-    'output/kenlm.binary'
+    'output/kenlm.binary',
 }
 
 GUESS_TARGETS = {
