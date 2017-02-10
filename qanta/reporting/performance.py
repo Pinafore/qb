@@ -218,12 +218,11 @@ def plot(stats_dir, output):
 
 @cli.command()
 @click.option('--min-count', default=5)
-@click.option('--qdb', default='data/internal/non_naqt.db')
 @click.argument('pred_file')
 @click.argument('meta_file')
 @click.argument('output')
-def generate(min_count, qdb, pred_file, meta_file, output):
-    database = QuestionDatabase(qdb)
+def generate(min_count,  pred_file, meta_file, output):
+    database = QuestionDatabase()
     data = load_data(pred_file, meta_file, database)
     dan_answers = set(database.page_by_count(min_count, True))
     answers = compute_answers(data, dan_answers)

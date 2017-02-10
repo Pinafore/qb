@@ -52,11 +52,12 @@ This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-s
 
 ##### Installed Software
 * Python 3.6
-* Apache Spark 1.6.1
+* Apache Spark 2.1.0
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
 * Postgres
 * KenLM
+* Redis (latest stable)
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
