@@ -54,11 +54,7 @@ data "aws_ami" "qanta_ami" {
   }
   filter {
     name = "tag-value"
-<<<<<<< HEAD
     values = ["davis-qanta"]
-=======
-    values = ["qanta-cpu"]
->>>>>>> master
   }
 }
 
@@ -94,11 +90,7 @@ resource "aws_subnet" "qanta_zone_2a" {
   vpc_id                  = "${aws_vpc.qanta.id}"
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
-<<<<<<< HEAD
-  availability_zone = "us-west-2b"
-=======
   availability_zone = "us-west-2a"
->>>>>>> master
 }
 
 # A security group for SSH access from anywhere

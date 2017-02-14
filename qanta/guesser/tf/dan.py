@@ -5,7 +5,8 @@ import numpy as np
 import os
 import pickle
 from qanta import logging
-from qanta.guesser.util.dataset import Dataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser.util.dataset import get_or_make_id_map, get_all_questions
 from qanta.guesser.util.preprocessing import preprocess_text
 from qanta.util.constants import (DEEP_DAN_PARAMS_TARGET, DEEP_EXPERIMENT_S3_BUCKET,
@@ -32,14 +33,14 @@ def _make_layer(i, in_tensor, n_out, op, n_in=None, dropout_prob=None):
     return (out if op is None else op(out)), W
 
 
-class TFDan:
+class TFDan(AbstractGuesser):
     def __init__(self,
                  batch_size=128,
                  max_epochs=61,
                  init_scale=0.06,
                  learning_rate=0.0001,
                  hidden_units=300,
-                 adversarial_units=300,
+                 adversarial_units=301,
                  n_prediction_layers=2,
                  is_train=True,
                  adversarial=False,

@@ -35,7 +35,7 @@ LM_OPT_FEATURES = [LM]
 MENTIONS_OPT_FEATURES = [MENTIONS]
 
 GUESSER_LIST = [
-    ('qanta.guesser.dan_tf.DANGuesser', 'qanta.pipeline.guesser.dan.DANDependencies')
+    ('qanta.guesser.tf.dan.TFDan', None)
 ]
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
