@@ -96,6 +96,7 @@ class DistCounter:
             return 0
         return self._counts.get(word, 0) / float(self._total)
 
+
 class LanguageModelReader(LanguageModelBase):
     def __init__(self, lm_file, interp=0.8, smooth=0.001,
                  min_span=CLM_MIN_SPAN, start_rank=CLM_START_RANK,
@@ -143,7 +144,9 @@ class LanguageModelReader(LanguageModelBase):
         self._stopwords = stopwords
 
     def init(self):
-        infile = open("%s.txt" % self._datafile)
+        filename = "%s.txt" % self._datafile
+        log.info("Opening %s for LM input" % filename)
+        infile = open(filename)
         num_lms = int(infile.readline())
 
         vocab_size = int(infile.readline())
@@ -320,6 +323,7 @@ class LanguageModelWriter(LanguageModelBase):
 
         # TODO(jbg): actually write the correct mean and variance
 
+        outfile.write("%i\n" % self.num_corpora())
         outfile.write("%i\n" % len(self._vocab))
         vocab_size = len(self._vocab)
         for ii in self._sort_voc:
@@ -338,6 +342,9 @@ class LanguageModelWriter(LanguageModelBase):
 
     def write_corpus(self, corpus_name, id, file):
         self._lms[corpus_name].write_lm(id, file)
+
+    def num_corpora(self):
+        return len(self._lms)
 
     def corpora(self):
         for ii in sorted(self._lms):
