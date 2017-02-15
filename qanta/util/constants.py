@@ -11,8 +11,9 @@ from nltk.tokenize.treebank import TreebankWordTokenizer
 NEG_INF = float('-inf')
 PAREN_EXPRESSION = re.compile(r'\s*\([^)]*\)\s*')
 ENGLISH_STOP_WORDS = set(stopwords.words('english'))
-QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']',
-                 '[', ":", "due", "!", "'s", "''", 'ftp'}
+QB_STOP_WORDS = set(["10", "ten", "points", "tenpoints", "one", "name",
+                     ",", ")", "``", "(", '"', ']',
+                     '[', ":", "due", "!", "'s", "''", 'ftp'])
 STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile(r'[\W_]+')
 PUNCTUATION = string.punctuation
@@ -40,6 +41,23 @@ NERS_PATH = 'data/internal/common/ners'
 
 CLM_PATH = 'output/language_model'
 CLM_TARGET = 'output/language_model.txt'
+CLM_ORDER = 3
+CLM_VOCAB = 100000
+CLM_COMPARE = 5
+CLM_MAX_SPAN = 5
+CLM_HASH_NAMES = False
+CLM_SLOP = 0
+CLM_LOG_LENGTH = True
+CLM_GIVE_SCORE = False
+CLM_CUTOFF = -2
+CLM_START_RANK = 200
+CLM_MIN_SPAN = 2
+CLM_CENSOR_SLOP = True
+# Longest question we can score
+CLM_MAX_LENGTH = 5000
+CLM_UNK_TOK = "UNK"
+CLM_START_TOK = "<S>"
+CLM_END_TOK = "</S>"
 
 DEEP_WE_TARGET = 'output/deep/We'
 DEEP_DAN_PARAMS_TARGET = 'output/deep/params'

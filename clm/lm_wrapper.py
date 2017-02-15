@@ -1,31 +1,38 @@
+# TODO:
+#
+# Make sure runs with existing python trie
+# Add in training for a guesser
+# Add in demo for guessing
+# C++ implementation
+# KN scoring
+# Implement guesser interface
+
 from collections import defaultdict
 import time
-import re
-import os
 import ctypes
 
 from unidecode import unidecode
-
-from nltk.tokenize import RegexpTokenizer
-from nltk import bigrams
+from nltk import ngrams
 
 from qanta import logging
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
-from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, MIN_APPEARANCES
+from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, QB_STOP_WORDS, \
+    MIN_APPEARANCES, CLM_ORDER, CLM_COMPARE, CLM_VOCAB, \
+    CLM_CUTOFF, CLM_SLOP, CLM_GIVE_SCORE, CLM_LOG_LENGTH, CLM_CENSOR_SLOP, \
+    CLM_MAX_LENGTH, CLM_MIN_SPAN, CLM_START_RANK, CLM_UNK_TOK, CLM_START_TOK, \
+    CLM_END_TOK, CLM_HASH_NAMES, CLM_MAX_SPAN
 
-import clm
+from clm import ctrie
+from clm.trie import TrieLanguageModel
+from clm.lm_base import LanguageModelBase
 from qanta.util.io import safe_open
 
 log = logging.get(__name__)
 
-kTOKENIZER = RegexpTokenizer('[A-Za-z0-9]+').tokenize
+kLEFT_PAD = '<s>'
 
-kUNK = "OOV"
-kSTART = "STRT"
-kEND = "END"
-kMAX_TEXT_LENGTH = 5000
-kGOODCHAR = re.compile(r"[a-zA-Z0-9]*")
+
 
 
 def pretty_debug(name, result, max_width=10):
@@ -90,67 +97,20 @@ class DistCounter:
         return self._counts.get(word, 0) / float(self._total)
 
 
-class LanguageModelBase:
-    def __init__(self):
-        self._vocab_final = None
-        self._vocab = None
-
-    def vocab_lookup(self, word):
-        """
-        Given a word, provides a vocabulary representation.  Words under the
-        cutoff threshold shold have the same value.  All words with counts
-        greater than or equal to the cutoff should be unique and consistent.
-        """
-        assert self._vocab_final, "Vocab must be finalized before looking up words"
-
-        # return -1
-
-        # ----------------------------------------------
-
-        if word in self._vocab:
-            return self._vocab[word]
-        else:
-            return self._vocab[kUNK]
-
-    @staticmethod
-    def normalize_title(corpus, title):
-        norm_title = corpus + "".join(x for x in kGOODCHAR.findall(title) if x)
-        return norm_title
-
-    @staticmethod
-    def tokenize_without_censor(sentence):
-        yield kSTART
-        for ii in kTOKENIZER(unidecode(sentence)):
-            yield ii.lower()
-        yield kEND
-
-    def vocab_size(self):
-        return len(self._vocab)
-
-    def tokenize_and_censor(self, sentence):
-        """
-        Given a sentence, yields a sentence suitable for training or testing.
-        Prefix the sentence with <s>, replace words not in the vocabulary with
-        <UNK>, and end the sentence with </s>.
-        """
-        if not isinstance(sentence, str):
-            sentence = ' '.join(list(sentence))
-        yield self.vocab_lookup(kSTART)
-        for ii in kTOKENIZER(unidecode(sentence)):
-            yield self.vocab_lookup(ii.lower())
-        yield self.vocab_lookup(kEND)
-
-
 class LanguageModelReader(LanguageModelBase):
-    def __init__(self, lm_file, interp=0.8, min_span=2, start_rank=200, smooth=0.001, cutoff=-2,
-                 slop=0, give_score=False, log_length=True, censor_slop=True, hash_names=False,
-                 max_span=5, stopwords=["for", "10", "points", "ftp", "ten", "name"]):
+    def __init__(self, lm_file, interp=0.8, smooth=0.001,
+                 min_span=CLM_MIN_SPAN, start_rank=CLM_START_RANK,
+                 cutoff=CLM_CUTOFF, slop=CLM_SLOP,
+                 give_score=CLM_GIVE_SCORE, log_length=CLM_LOG_LENGTH,
+                 censor_slop=CLM_CENSOR_SLOP,
+                 hash_names=CLM_HASH_NAMES, max_span=CLM_MAX_SPAN,
+                 stopwords=QB_STOP_WORDS):
 
         super().__init__()
         self._loaded_lms = set()
         self._datafile = lm_file
-        self._lm = clm.JelinekMercerFeature()
-        self._sentence = clm.intArray(kMAX_TEXT_LENGTH)
+        self._lm = ctrie.JelinekMercerFeature()
+        self._sentence = ctrie.intArray(CLM_MAX_LENGTH)
         self._sentence_length = 0
         self._sentence_hash = 0
         self._vocab_final = True
@@ -162,7 +122,7 @@ class LanguageModelReader(LanguageModelBase):
 
         assert(max_span >= min_span), "Max span %i must be greater than min %i" % \
             (max_span, min_span)
-            
+
         self.set_params(interp, min(min_span, max_span), max(min_span, max_span),
                         start_rank, smooth, cutoff, slop, censor_slop, give_score,
                         log_length, stopwords)
@@ -184,7 +144,9 @@ class LanguageModelReader(LanguageModelBase):
         self._stopwords = stopwords
 
     def init(self):
-        infile = open("%s.txt" % self._datafile)
+        filename = "%s.txt" % self._datafile
+        log.info("Opening %s for LM input" % filename)
+        infile = open(filename)
         num_lms = int(infile.readline())
 
         vocab_size = int(infile.readline())
@@ -229,7 +191,7 @@ class LanguageModelReader(LanguageModelBase):
         guess_id = self._corpora[norm_title]
 
         # Get the counts of words in unigram and bigram
-        for ii, jj in bigrams(tokenized):
+        for ii, jj in ngrams(tokenized, CLM_ORDER):
             result["wrd"].append(reverse_vocab[ii][:7])
             result["uni_cnt"].append(self._lm.unigram_count(guess_id, ii))
             result["bi_cnt"].append(self._lm.bigram_count(guess_id, ii, jj))
@@ -300,26 +262,27 @@ class LanguageModelReader(LanguageModelBase):
 
 
 class LanguageModelWriter(LanguageModelBase):
-    def __init__(self, vocab_size, comparison_corpora):
+    def __init__(self, vocab_size, comparison_corpora, order=2):
         super().__init__()
         self._vocab_size = vocab_size
         self._vocab_final = False
         self._vocab = {}
         self._compare = comparison_corpora
 
+        self._order = order
         self._training_counts = DistCounter()
-        self._obs_counts = {}
+        self._lms = {}
         self._sort_voc = None
 
         # Unigram counts
-        self._unigram = defaultdict(DistCounter)
 
     def train_seen(self, word, count=1):
         """
         Tells the language model that a word has been seen @count times.  This
         will be used to build the final vocabulary.
         """
-        assert not self._vocab_final, "Trying to add new words to finalized vocab"
+        assert not self._vocab_final, \
+            "Trying to add new words to finalized vocab"
 
         self._training_counts.inc(word, count)
 
@@ -335,13 +298,15 @@ class LanguageModelWriter(LanguageModelBase):
             vocab = sorted(self._training_counts)
             vocab = sorted(vocab, key=lambda x: self._training_counts[x],
                            reverse=True)[:self._vocab_size]
-            self._vocab = dict((x, y + 1) for y, x in enumerate(vocab))
 
-            assert kUNK not in self._vocab, "Vocab already has %s" % kUNK
-            for ii in [kSTART, kEND]:
-                assert ii in self._vocab, \
-                    "%s missing from %s" % (ii, str(self._vocab.keys()))
-            self._vocab[kUNK] = 0
+            # Add three for unk, start, and end
+            self._vocab = dict((x, y + 3) for y, x in enumerate(vocab))
+
+            for vv, ii in enumerate([CLM_UNK_TOK, CLM_START_TOK, CLM_END_TOK]):
+                assert ii not in self._vocab, \
+                    "%s already in from %s" % (ii, str(self._vocab.keys()))
+                self._vocab[ii] = vv
+
             self._sort_voc = sorted(self._vocab, key=lambda x: self._vocab[x])
         else:
             self._vocab = vocab
@@ -353,13 +318,14 @@ class LanguageModelWriter(LanguageModelBase):
 
     def add_counts(self, corpus, sentence):
 
-        if corpus not in self._obs_counts:
-            self._obs_counts[corpus] = defaultdict(DistCounter)
+        if corpus not in self._lms:
+            self._lms[corpus] = TrieLanguageModel(self._order, 1)
 
         # TODO: add start/end tokens (perhaps as option)
-        for context, word in bigrams(self.tokenize_and_censor(sentence)):
-            self._obs_counts[corpus][context].inc(word)
-            self._unigram[corpus].inc(word)
+        for ii in ngrams(self.tokenize_and_censor(sentence), self._order,
+                         pad_left=True, left_pad_symbol=CLM_START_TOK,
+                         pad_right=True, right_pad_symbol=CLM_END_TOK):
+            self._lms[corpus].add_count(ii)
 
     def add_train(self, corpus, title, sentence):
         """
@@ -383,7 +349,7 @@ class LanguageModelWriter(LanguageModelBase):
 
         # TODO(jbg): actually write the correct mean and variance
 
-        outfile.write("%i\n" % len(self._unigram))
+        outfile.write("%i\n" % self.num_corpora())
         outfile.write("%i\n" % len(self._vocab))
         vocab_size = len(self._vocab)
         for ii in self._sort_voc:
@@ -396,7 +362,7 @@ class LanguageModelWriter(LanguageModelBase):
             outfile.write("%s %i\n" % (cc, self.compare(cc)))
 
             if corpus_num % 100 == 0:
-                log.info("{} {}".format(cc, self.compare(cc)))
+                log.info("Corpus compare {} {}".format(cc, self.compare(cc)))
 
             corpus_num += 1
 
@@ -404,33 +370,20 @@ class LanguageModelWriter(LanguageModelBase):
         for ii in sorted(self._unigram):
             yield ii
 
-    def write_corpus(self, corpus, offset, outfile):
-        assert(corpus in self._obs_counts), "%s not in corpora %s" % \
-            (str(corpus), str(self._obs_counts.keys())[:80])
-        num_contexts = len(self._obs_counts[corpus].keys())
-        outfile.write("%s %i %i\n" % (corpus, offset, num_contexts))
+    def write_corpus(self, corpus_name, id, file):
+        self._lms[corpus_name].write_lm(id, file)
 
-        for ww in sorted([x for x in self._sort_voc
-                          if self._vocab[x] in self._obs_counts[corpus]],
-                         key=lambda x:
-                         self._obs_counts[corpus][self._vocab[x]].N(),
-                         reverse=True):
-            ii = self._vocab[ww]
-            num_bigrams = self._obs_counts[corpus][ii].B()
-            total = self._obs_counts[corpus][ii].N()
-            outfile.write("%s %i %i %i\n" %
-                          (ww, ii, total, num_bigrams))
+    def num_corpora(self):
+        return len(self._lms)
 
-            for jj in sorted(self._obs_counts[corpus][ii]):
-                assert isinstance(jj, int), "Not an integer: %s" % str(jj)
-                assert isinstance(self._obs_counts[corpus][ii][jj], int), \
-                    "Got %s for %s %s %s" % (self._obs_counts[corpus][ii][jj], corpus, ii, jj)
-
-                outfile.write("%i %i\n" % (jj, self._obs_counts[corpus][ii][jj]))
+    def corpora(self):
+        for ii in sorted(self._lms):
+            yield ii
 
 
-def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
-    log.info("Training language model with pages that appear more than %i times" % MIN_APPEARANCES)
+def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
+              max_pages=-1):
+    log.info("Training LM with pages appearing %i times" % MIN_APPEARANCES)
 
     lm = LanguageModelWriter(vocab_size, global_lms)
     num_docs = 0
@@ -472,7 +425,8 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                          min_pages=MIN_APPEARANCES):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
-                log.info("Adding train doc %i, %s (%s)" % (doc_num, unidecode(title), corpus))
+                log.info("Adding train doc %i, %s (%s)" %
+                         (doc_num, unidecode(title), corpus))
                 start = time.time()
             lm.add_train(corpus, title, text)
 
@@ -484,4 +438,11 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
 
         for ii, cc in enumerate(lm.corpora()):
             with safe_open("%s/%i" % (lm_out, ii), 'w') as f:
-                lm.write_corpus(cc, ii, f)
+                        if ii % 100 == 0:
+                            log.info("Write LM corpus %s to %s" %
+                                     (cc, "%s/%i" % (lm_out, ii)))
+                            lm.write_corpus(cc, ii, f)
+
+
+if __name__ == "__main__":
+    build_clm(max_pages=15)

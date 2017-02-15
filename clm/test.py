@@ -47,9 +47,12 @@ def filter_feat(term):
 
 # TODO(jbg): remove low frequency words
 # Compute bigrams
+
+
 kBIGRAM = {}
+
 for cc, ss in kCORPUS:
-    if not cc in kBIGRAM:
+    if cc not in kBIGRAM:
         kBIGRAM[cc] = defaultdict(list)
     words = [x if x in kVOCAB else kVOCAB[0] for x in
              [kSTART] + ss.split() + [kEND]]
@@ -213,8 +216,8 @@ class TestStringMethods(unittest.TestCase):
 
     def tearDown(self):
         None
-        #os.remove("temp_toy_lm.txt")
-        #shutil.rmtree("temp_toy_lm")
+        # os.remove("temp_toy_lm.txt")
+        # shutil.rmtree("temp_toy_lm")
 
     def test_vocab(self):
         sw = StubWriter()
@@ -270,7 +273,7 @@ class TestStringMethods(unittest.TestCase):
         normalizer = {}
         for jj, ww in enumerate(kVOCAB):
             for ii, cc in enumerate(self.corpora()):
-                if not cc in normalizer:
+                if cc not in normalizer:
                     normalizer[cc] = sum(len(kBIGRAM[cc][ww]) for
                                          ww in kBIGRAM[cc])
                 if ww in kBIGRAM[cc]:

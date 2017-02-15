@@ -1,17 +1,18 @@
 clean:
-	rm clm/clm_wrap.cxx
+	rm -f clm/clm_wrap.cxx
+	rm -f clm/_ctrie.so
 
-clm/clm_wrap.cxx: clm/clm.swig
+clm/ctrie_wrap.cxx: clm/ctrie.swig
 	swig -c++ -python $<
 
-clm/clm_wrap.o: clm/clm_wrap.cxx
+clm/ctrie_wrap.o: clm/ctrie_wrap.cxx
 	gcc -O3 `python3-config --includes` -std=c++11 -fPIC -c $< -o $@
 
 clm/clm.o: clm/clm.cpp clm/clm.h
 	gcc -O3 `python3-config --includes` -std=c++11 -fPIC -c $< -o $@
 
-clm/_clm.so: clm/clm.o clm/clm_wrap.o
+clm/_ctrie.so: clm/clm.o clm/ctrie_wrap.o
 	g++ -shared `python3-config --ldflags` $^ -o $@
 	touch clm/_SUCCESS
 
-clm: clm/_clm.so
+clm: clm/_ctrie.so

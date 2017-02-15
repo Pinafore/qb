@@ -1,9 +1,11 @@
-from lm_wrapper import LanguageModelReader, LanguageModelBase, pretty_debug
 from csv import DictReader
 from collections import defaultdict
 
+from qanta.util.constants import CLM_PATH
+from lm_wrapper import LanguageModelReader, LanguageModelBase, pretty_debug
+
 if __name__ == "__main__":
-    lm = LanguageModelReader("data/language_model")
+    lm = LanguageModelReader(CLM_PATH)
     lm.init()
 
     results = defaultdict(str)
