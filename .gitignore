@@ -18,6 +18,7 @@ eip.tf
 readable.txt
 aws_gpu_override.tf
 aws_small_override.tf
+aws_x1_32_override.tf
 jupyter_s3_config.py
 jupyter_s3.tf
 jupyter_s3.sh

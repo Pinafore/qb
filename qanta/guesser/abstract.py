@@ -116,14 +116,13 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     @classmethod
-    @abstractmethod
     def display_name(cls) -> str:
         """
         Return the display name of this guesser which is used in reporting scripts to identify this
         particular guesser
         :return: display name of this guesser
         """
-        pass
+        return str(cls)
 
     def generate_guesses(self, max_n_guesses: int, folds: List[str]) -> pd.DataFrame:
         """
