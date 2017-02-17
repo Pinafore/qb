@@ -5,8 +5,7 @@ import shutil
 from typing import Dict, List, Tuple, Union, Set
 
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.datasets.abstract import AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path, shell
 from qanta import logging
@@ -36,7 +35,8 @@ def _make_layer(i: int, in_tensor, n_out, op,
     out = tf.matmul(in_tensor, w) + b
     if batch_norm:
         out = tf.contrib.layers.batch_norm(
-            out, center=True, scale=True, is_training=batch_is_training, scope='bn' + str(i))
+            out, center=True, scale=True, is_training=batch_is_training, scope='bn' + str(i),
+            fused=True)
     return (out if op is None else op(out)), w
 
 
@@ -393,19 +393,14 @@ class DANGuesser(AbstractGuesser):
     def targets(cls) -> List[str]:
         return [DEEP_DAN_PARAMS_TARGET]
 
-    @property
-    def requested_datasets(self) -> Dict[str, AbstractDataset]:
-        return {
-            'qb': QuizBowlEvaluationDataset()
-        }
+    def qb_dataset(self):
+        return QuizBowlDataset(1)
 
     def train(self,
-              training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
-        qb_data = training_data['qb']
-
+              training_data: Tuple[List[List[str]], List[str]]) -> None:
         log.info('Preprocessing training data...')
         x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            qb_data)
+            training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
@@ -423,7 +418,7 @@ class DANGuesser(AbstractGuesser):
         x_test_lengths = _compute_lengths(x_test)
 
         log.info('Computing number of classes and max paragraph length in words')
-        self.n_classes = _compute_n_classes(qb_data[1])
+        self.n_classes = _compute_n_classes(training_data[1])
         self.max_len = _compute_max_len(x_train)
         x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
         x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])

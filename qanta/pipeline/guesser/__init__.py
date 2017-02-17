@@ -36,11 +36,8 @@ class TrainGuesser(Task):
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_instance = guesser_class()  # type: AbstractGuesser
-        datasets = guesser_instance.requested_datasets
-        data = {}
-        for name, dataset_instance in datasets.items():
-            data[name] = dataset_instance.training_data()
-        guesser_instance.train(data)
+        qb_dataset = guesser_instance.qb_dataset()
+        guesser_instance.train(qb_dataset.training_data())
         guesser_instance.save(output_path(self.guesser_module, self.guesser_class, ''))
 
     def output(self):

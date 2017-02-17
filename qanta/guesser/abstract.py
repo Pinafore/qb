@@ -13,8 +13,8 @@ from functional import seq
 
 from qanta.preprocess import format_guess
 from qanta.reporting.report_generator import ReportGenerator
-from qanta.datasets.abstract import TrainingData, QuestionText, Answer, AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset, QuestionDatabase
+from qanta.datasets.abstract import TrainingData, QuestionText, Answer
+from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
 from qanta.util import constants as c
 from qanta.util.io import safe_path
 
@@ -34,27 +34,15 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         self.parallel = False
 
-    @property
-    @abstractmethod
-    def requested_datasets(self) -> Dict[str, AbstractDataset]:
-        """
-        Return a mapping of requested datasets. For each entry in the dictionary
-        AbstractDataset.training_data will be called and its result stored using the str key for use
-        in AbstractGuesser.train
-        :return:
-        """
-        pass
+    def qb_dataset(self) -> QuizBowlDataset:
+        return QuizBowlDataset(2)
 
     @abstractmethod
-    def train(self, training_data: Dict[str, TrainingData]) -> None:
+    def train(self, training_data: TrainingData) -> None:
         """
         Given training data, train this guesser so that it can produce guesses.
 
-        The training_data dictionary is keyed by constants from Datasets such as Datasets.QUIZ_BOWL.
-        The provided data to this method is based on the requested list of datasets from
-        self.requested_datasets.
-
-        The values of these keys is a tuple of two elements which can be seen as (train_x, train_y).
+        training_data can be seen as a tuple of two elements which are (train_x, train_y).
         In this case train_x is a list of question runs. For example, if the answer for a question
         is "Albert Einstein" the runs might be ["This", "This German", "This German physicist", ...]
         train_y is a list of true labels. The questions are strings and the true labels are strings.
@@ -119,7 +107,7 @@ class AbstractGuesser(metaclass=ABCMeta):
     def display_name(cls) -> str:
         """
         Return the display name of this guesser which is used in reporting scripts to identify this
-        particular guesser
+        particular guesser. By default str() on the classname, but can be overriden
         :return: display name of this guesser
         """
         return str(cls)
@@ -135,7 +123,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         :param folds: which folds to generate guesses for
         :return: dataframe of guesses
         """
-        dataset = QuizBowlEvaluationDataset()
+        dataset = self.qb_dataset()
         questions_by_fold = dataset.questions_by_fold()
 
         q_folds = []
