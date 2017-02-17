@@ -58,6 +58,7 @@ CLM_MAX_LENGTH = 5000
 CLM_UNK_TOK = "UNK"
 CLM_START_TOK = "<S>"
 CLM_END_TOK = "</S>"
+CLM_USE_C_VERSION = False
 
 DEEP_WE_TARGET = 'output/deep/We'
 DEEP_DAN_PARAMS_TARGET = 'output/deep/params'
@@ -86,9 +87,9 @@ CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pdf'
 PRED_TARGET = 'output/predictions/{0}.sentence.{1}.pred'
 META_TARGET = 'output/vw_input/{0}.sentence.{1}.meta'
 
+EXPO_QUESTIONS = 'data/internal/expo.csv'
 EXPO_BUZZ = 'output/expo/{}.{}.buzz'
 EXPO_FINAL = 'output/expo/{}.{}.final'
-EXPO_QUESTIONS = 'output/expo/test.questions.csv'
 
 KEN_LM = 'output/kenlm.binary'
 

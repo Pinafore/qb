@@ -1,5 +1,6 @@
 clean:
 	rm -f clm/clm_wrap.cxx
+	rm -f clm/clm_wrap.o
 	rm -f clm/_ctrie.so
 
 clm/ctrie_wrap.cxx: clm/ctrie.swig

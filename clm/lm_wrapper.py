@@ -21,11 +21,17 @@ from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, QB_STOP_WORDS, \
     MIN_APPEARANCES, CLM_ORDER, CLM_COMPARE, CLM_VOCAB, \
     CLM_CUTOFF, CLM_SLOP, CLM_GIVE_SCORE, CLM_LOG_LENGTH, CLM_CENSOR_SLOP, \
     CLM_MAX_LENGTH, CLM_MIN_SPAN, CLM_START_RANK, CLM_UNK_TOK, CLM_START_TOK, \
-    CLM_END_TOK, CLM_HASH_NAMES, CLM_MAX_SPAN
+    CLM_END_TOK, CLM_HASH_NAMES, CLM_MAX_SPAN, CLM_USE_C_VERSION
 
-from clm import ctrie
-from clm.trie import TrieLanguageModel
-from clm.lm_base import LanguageModelBase
+if CLM_USE_C_VERSION:
+    from clm import ctrie
+    from ctrie import JelinekMercerFeature as TrieLanguageModel
+    from ctrie import intArray as Sentence
+else:
+    from trie import TrieLanguageModel
+    from trie import Sentence
+
+from lm_base import LanguageModelBase
 from qanta.util.io import safe_open
 
 log = logging.get(__name__)
@@ -109,8 +115,8 @@ class LanguageModelReader(LanguageModelBase):
         super().__init__()
         self._loaded_lms = set()
         self._datafile = lm_file
-        self._lm = ctrie.JelinekMercerFeature()
-        self._sentence = ctrie.intArray(CLM_MAX_LENGTH)
+        self._lm = TrieLanguageModel()
+        self._sentence = Sentence(CLM_MAX_LENGTH)
         self._sentence_length = 0
         self._sentence_hash = 0
         self._vocab_final = True
@@ -131,12 +137,12 @@ class LanguageModelReader(LanguageModelBase):
                    cutoff, slop, censor_slop, give_score,
                    log_length, stopwords):
         assert isinstance(min_span, int), "Got bad span %s" % str(min_span)
-        self._lm.set_interpolation(interp)
+        self._lm.set_jm_interpolation(interp)
         self._lm.set_slop(slop)
         self._lm.set_cutoff(cutoff)
         self._lm.set_min_span(min_span)
         self._lm.set_max_span(max_span)
-        self._lm.set_smooth(smooth)
+        self._lm.set_unigram_smooth(smooth)
         self._lm.set_min_start_rank(start_rank)
         self._lm.set_score(give_score)
         self._lm.set_log_length(log_length)
@@ -150,16 +156,20 @@ class LanguageModelReader(LanguageModelBase):
         num_lms = int(infile.readline())
 
         vocab_size = int(infile.readline())
-        for i in range(vocab_size):
-            self._vocab[infile.readline().strip()] = i
+        for ii in range(vocab_size):
+            self._vocab[infile.readline().strip()] = ii
         if vocab_size > 100:
             log.info("Done reading %i vocab (Python)" % vocab_size)
 
-        for i in range(num_lms):
+        for ii in range(num_lms):
             line = infile.readline()
-            log.info("LINE {}: {}".format(i, line))
             corpus, compare = line.split()
-            self._corpora[corpus] = i
+            compare = int(compare)
+            if ii % 1000 == 0:
+                log.info("Corpus (%s) loaded: compare %i, line %i" %
+                         (corpus, compare, ii))
+            self._corpora[corpus] = ii
+            self._lm.set_compare(ii, compare)
 
         corpora_keys = list(self._corpora.keys())
         if len(corpora_keys) > 10:
@@ -174,7 +184,9 @@ class LanguageModelReader(LanguageModelBase):
         # Load comparisons language model
         for i in [x for x in self._corpora if x.startswith("compare")]:
             self._loaded_lms.add(self._corpora[i])
-            self._lm.read_counts("%s/%i" % (self._datafile, self._corpora[i]))
+            filename = "%s/%i" % (self._datafile, self._corpora[i])
+            log.info("reading %s" % filename)
+            self._lm.read_counts(filename)
 
     def verbose_feature(self, corpus, guess, sentence):
         """
@@ -184,7 +196,7 @@ class LanguageModelReader(LanguageModelBase):
         result = defaultdict(list)
         reverse_vocab = dict((y, x) for x, y in self._vocab.items())
 
-        tokenized = list(self.tokenize_and_censor(sentence))
+        tokenized = list(self.tokenize_and_censor(sentence, pad=True))
         norm_title = self.normalize_title(corpus, guess)
         if norm_title not in self._corpora:
             return result
@@ -201,9 +213,9 @@ class LanguageModelReader(LanguageModelBase):
     def preprocess_and_cache(self, sentence):
         if self._sentence_hash != hash(sentence):
             self._sentence_hash = hash(sentence)
-            tokenized = list(self.tokenize_and_censor(sentence))
+            tokenized = list(self.tokenize_and_censor(sentence, pad=True))
             self._sentence_length = len(tokenized)
-            assert self._sentence_length < kMAX_TEXT_LENGTH
+            assert self._sentence_length < CLM_MAX_LENGTH
             for ii, ww in enumerate(tokenized):
                 self._sentence[ii] = ww        
 
@@ -239,7 +251,9 @@ class LanguageModelReader(LanguageModelBase):
         else:
             guess_id = self._corpora[norm_title]
             if guess_id not in self._loaded_lms:
-                self._lm.read_counts("%s/%i" % (self._datafile, guess_id))
+                filename = "%s/%i" % (self._datafile, guess_id)
+                log.info("reading %s" % filename)
+                self._lm.read_counts(filename)
                 self._loaded_lms.add(guess_id)
 
             feat = self._lm.feature(corpus, guess_id, self._sentence, self._sentence_length)
@@ -262,7 +276,7 @@ class LanguageModelReader(LanguageModelBase):
 
 
 class LanguageModelWriter(LanguageModelBase):
-    def __init__(self, vocab_size, comparison_corpora, order=2):
+    def __init__(self, vocab_size, comparison_corpora, order):
         super().__init__()
         self._vocab_size = vocab_size
         self._vocab_final = False
@@ -271,7 +285,7 @@ class LanguageModelWriter(LanguageModelBase):
 
         self._order = order
         self._training_counts = DistCounter()
-        self._lms = {}
+        self._lm = TrieLanguageModel()
         self._sort_voc = None
 
         # Unigram counts
@@ -318,14 +332,12 @@ class LanguageModelWriter(LanguageModelBase):
 
     def add_counts(self, corpus, sentence):
 
-        if corpus not in self._lms:
-            self._lms[corpus] = TrieLanguageModel(self._order, 1)
-
         # TODO: add start/end tokens (perhaps as option)
-        for ii in ngrams(self.tokenize_and_censor(sentence), self._order,
-                         pad_left=True, left_pad_symbol=CLM_START_TOK,
-                         pad_right=True, right_pad_symbol=CLM_END_TOK):
-            self._lms[corpus].add_count(ii)
+        for ii in ngrams(self.tokenize_and_censor(sentence, pad=False),
+                         self._order, pad_left=True, pad_right=True,
+                         left_pad_symbol=self.vocab_lookup(CLM_START_TOK),
+                         right_pad_symbol=self.vocab_lookup(CLM_END_TOK)):
+            self._lm.add_count(corpus, ii)
 
     def add_train(self, corpus, title, sentence):
         """
@@ -362,7 +374,7 @@ class LanguageModelWriter(LanguageModelBase):
             outfile.write("%s %i\n" % (cc, self.compare(cc)))
 
             if corpus_num % 100 == 0:
-                log.info("Corpus compare {} {}".format(cc, self.compare(cc)))
+                log.info("Corpus compare write {} {}".format(cc, self.compare(cc)))
 
             corpus_num += 1
 
@@ -371,13 +383,13 @@ class LanguageModelWriter(LanguageModelBase):
             yield ii
 
     def write_corpus(self, corpus_name, id, file):
-        self._lms[corpus_name].write_lm(id, file)
+        self._lm.write_lm(corpus_name, id, file)
 
     def num_corpora(self):
-        return len(self._lms)
+        return self._lm.num_corpora()
 
     def corpora(self):
-        for ii in sorted(self._lms):
+        for ii in self._lm.corpora():
             yield ii
 
 
@@ -385,7 +397,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
               max_pages=-1):
     log.info("Training LM with pages appearing %i times" % MIN_APPEARANCES)
 
-    lm = LanguageModelWriter(vocab_size, global_lms)
+    lm = LanguageModelWriter(vocab_size, global_lms, CLM_ORDER)
     num_docs = 0
     background = defaultdict(int)
     # Initialize language models
@@ -445,4 +457,4 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
 
 
 if __name__ == "__main__":
-    build_clm(max_pages=15)
+    build_clm(max_pages=500)

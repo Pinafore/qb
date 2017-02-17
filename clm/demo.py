@@ -1,7 +1,7 @@
 from csv import DictReader
 from collections import defaultdict
 
-from qanta.util.constants import CLM_PATH
+from qanta.util.constants import CLM_PATH, EXPO_QUESTIONS
 from lm_wrapper import LanguageModelReader, LanguageModelBase, pretty_debug
 
 if __name__ == "__main__":
@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     results = defaultdict(str)
     sort = defaultdict(int)
-    for ii in DictReader(open("data/expo.csv")):
+    for ii in DictReader(open(EXPO_QUESTIONS)):
         for corpus in ["qb", "wiki", "source"]:
             ans = LanguageModelBase.normalize_title("", ii["answer"])
             feat = lm.feature_line(corpus, ii["answer"], ii["text"])

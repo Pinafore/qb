@@ -20,7 +20,7 @@ typedef std::pair <int, int> bigram;
 class JelinekMercerFeature {
  public:
     float interpolation() const;
-    void set_interpolation(float lambda);
+    void set_jm_interpolation(float lambda);
     void set_slop(int slop);
     void set_censor_slop(bool censor_slop);
     bool censor_slop() const;
@@ -30,7 +30,7 @@ class JelinekMercerFeature {
     void set_score(bool score);
     bool score() const;
     void add_stop(int word);
-    void set_smooth(float smooth);
+    void set_unigram_smooth(float smooth);
     float smooth() const;
     void set_min_start_rank(int rank);
     int min_start_rank() const;

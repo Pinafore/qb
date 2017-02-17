@@ -1,6 +1,6 @@
 #include "clm.h"
 
-void JelinekMercerFeature::set_interpolation(float lambda) {
+void JelinekMercerFeature::set_jm_interpolation(float lambda) {
   this->_bigram_contribution = 1.0 - lambda;
   this->_unigram_contribution = lambda;
 }
@@ -75,7 +75,7 @@ int JelinekMercerFeature::min_start_rank() const {
   return _min_start_rank;
 }
 
-void JelinekMercerFeature::set_smooth(float smooth) {
+void JelinekMercerFeature::set_unigram_smooth(float smooth) {
   assert(smooth > 0.0);
   _smooth = smooth;
   _smooth_norm = smooth * (float)_vocab;

@@ -44,7 +44,7 @@ class LanguageModelBase:
     def vocab_size(self):
         return len(self._vocab)
 
-    def tokenize_and_censor(self, sentence):
+    def tokenize_and_censor(self, sentence, pad=False):
         """
         Given a sentence, yields a sentence suitable for training or testing.
         Prefix the sentence with <s>, replace words not in the vocabulary with
@@ -52,7 +52,9 @@ class LanguageModelBase:
         """
         if not isinstance(sentence, str):
             sentence = ' '.join(list(sentence))
-        yield self.vocab_lookup(CLM_START_TOK)
+        if pad:
+            yield self.vocab_lookup(CLM_START_TOK)
         for ii in kTOKENIZER(unidecode(sentence)):
             yield self.vocab_lookup(ii.lower())
-        yield self.vocab_lookup(CLM_END_TOK)
+        if pad:
+            yield self.vocab_lookup(CLM_END_TOK)
