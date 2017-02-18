@@ -46,28 +46,35 @@ def format_guess(guess):
     return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
 
 
-def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9):
+def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9,
+                       vocab=None, class_to_i=None, i_to_class=None):
     for i in range(len(data[1])):
         data[1][i] = format_guess(data[1][i])
     classes = set(data[1])
-    class_to_i = {}
-    i_to_class = []
-    for i, ans_class in enumerate(classes):
-        class_to_i[ans_class] = i
-        i_to_class.append(ans_class)
+    if class_to_i is None or i_to_class is None:
+        class_to_i = {}
+        i_to_class = []
+        for i, ans_class in enumerate(classes):
+            class_to_i[ans_class] = i
+            i_to_class.append(ans_class)
 
     x_train = []
     y_train = []
     x_test = []
     y_test = []
-    vocab = set()
+    if vocab is None:
+        vocab = set()
 
     question_runs_with_answer = list(zip(data[0], data[1]))
-    train, test = train_test_split(question_runs_with_answer, train_size=train_size)
+    if train_size != 1:
+        train, test = train_test_split(question_runs_with_answer, train_size=train_size)
+    else:
+        train = question_runs_with_answer
+        test = []
 
     for q, ans in train:
-        for run in q:
-            q_text = tokenize_question(run)
+        for sentence in q:
+            q_text = tokenize_question(sentence)
             if len(q_text) > 0:
                 for w in q_text:
                     vocab.add(w)
@@ -75,8 +82,8 @@ def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9):
                 y_train.append(class_to_i[ans])
 
     for q, ans in test:
-        for run in q:
-            q_text = tokenize_question(run)
+        for sentence in q:
+            q_text = tokenize_question(sentence)
             x_test.append(q_text)
             y_test.append(class_to_i[ans])
 

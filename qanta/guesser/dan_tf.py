@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Union, Set
 
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.wikipedia import WikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path, shell
 from qanta import logging
@@ -377,7 +378,7 @@ DEFAULT_DAN_PARAMS = dict(
 
 
 class DANGuesser(AbstractGuesser):
-    def __init__(self, dan_params=DEFAULT_DAN_PARAMS):
+    def __init__(self, dan_params=DEFAULT_DAN_PARAMS, use_wiki=True, min_answers=2):
         super().__init__()
         self.dan_params = dan_params
         self.model = None  # type: Union[None, TFDanModel]
@@ -388,13 +389,15 @@ class DANGuesser(AbstractGuesser):
         self.class_to_i = None
         self.vocab = None
         self.n_classes = None
+        self.use_wiki = use_wiki
+        self.min_answers = min_answers
 
     @classmethod
     def targets(cls) -> List[str]:
         return [DEEP_DAN_PARAMS_TARGET]
 
     def qb_dataset(self):
-        return QuizBowlDataset(1)
+        return QuizBowlDataset(self.min_answers)
 
     def train(self,
               training_data: Tuple[List[List[str]], List[str]]) -> None:
@@ -404,6 +407,12 @@ class DANGuesser(AbstractGuesser):
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
+
+        if self.use_wiki:
+            wiki_training_data = WikipediaDataset(self.min_answers).training_data()
+            x_train_wiki, y_train_wiki, _, _, _, _, _ = preprocess_dataset(
+                wiki_training_data, train_size=1, vocab=vocab, class_to_i=class_to_i,
+                i_to_class=i_to_class)
 
         log.info('Creating embeddings...')
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
@@ -416,6 +425,14 @@ class DANGuesser(AbstractGuesser):
 
         x_test = [_convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test]
         x_test_lengths = _compute_lengths(x_test)
+
+        if self.use_wiki:
+            x_train_wiki = [_convert_text_to_embeddings_indices(q, embedding_lookup)
+                            for q in x_train_wiki]
+            x_train_lengths_wiki = _compute_lengths(x_train_wiki)
+            x_train.extend(x_train_wiki)
+            y_train.extend(y_train_wiki)
+            x_train_lengths = np.concatenate([x_train_lengths, x_train_lengths_wiki])
 
         log.info('Computing number of classes and max paragraph length in words')
         self.n_classes = _compute_n_classes(training_data[1])
