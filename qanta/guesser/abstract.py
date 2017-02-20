@@ -2,6 +2,8 @@ import os
 from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple
+import pickle
+from pprint import pformat
 
 import matplotlib
 matplotlib.use('Agg')
@@ -111,6 +113,15 @@ class AbstractGuesser(metaclass=ABCMeta):
         :return: display name of this guesser
         """
         return str(cls)
+
+    def parameters(self) -> Dict:
+        """
+        Return the parameters of the model. This is displayed as part of the report to make
+        identifying particular runs of particular hyper parameters easier. str(self.parameters())
+        will be called at some point to display it as well as making a pickle of parameters.
+        :return: model parameters
+        """
+        return {}
 
     def generate_guesses(self, max_n_guesses: int, folds: List[str]) -> pd.DataFrame:
         """
@@ -241,6 +252,8 @@ class AbstractGuesser(metaclass=ABCMeta):
 
     @classmethod
     def create_report(cls, directory: str):
+        with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
+            params = pickle.load(f)
         all_guesses = AbstractGuesser.load_guesses(directory)
         dev_guesses = all_guesses[all_guesses.fold == 'dev']
         test_guesses = all_guesses[all_guesses.fold == 'test']
@@ -275,10 +288,18 @@ class AbstractGuesser(metaclass=ABCMeta):
             'test_accuracy_plot': '/tmp/test_accuracy.png',
             'dev_accuracy': dev_summary_accuracy,
             'test_accuracy': test_summary_accuracy,
-            'guesser_name': cls.display_name()
+            'guesser_name': cls.display_name(),
+            'guesser_params': pformat(params)
         }, 'guesser.md')
         output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
         report.create(output)
+        with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
+            pickle.dump({
+                'dev_accuracy': dev_summary_accuracy,
+                'test_accuracy': test_summary_accuracy,
+                'guesser_name': cls.display_name(),
+                'guesser_params': params
+            }, f)
 
 QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
 

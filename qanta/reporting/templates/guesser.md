@@ -1,5 +1,9 @@
 ## Guesser: {{ guesser_name }}
 
+### Parameters
+
+{{ guesser_params }}
+
 ### Accuracy
 
 #### Dev Fold

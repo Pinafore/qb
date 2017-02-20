@@ -22,7 +22,7 @@ def wiki_sentences(page_content):
 
 
 class WikipediaDataset(AbstractDataset):
-    def __init__(self, min_answers: int, max_sentences: int=40):
+    def __init__(self, min_answers: int, max_sentences: int=100):
         super().__init__()
         self.min_answers = min_answers
         self.max_sentences = max_sentences

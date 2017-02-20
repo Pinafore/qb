@@ -1,5 +1,6 @@
 import os
 import importlib
+import pickle
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
@@ -7,7 +8,7 @@ from luigi import LocalTarget, Task, WrapperTask
 from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.io import safe_path
+from qanta.util.io import safe_path, safe_open
 
 
 def get_class(instance_module: str, instance_class: str):
@@ -16,7 +17,7 @@ def get_class(instance_module: str, instance_class: str):
     return py_instance_class
 
 
-def output_path(guesser_module: str, guesser_class: str, file):
+def output_path(guesser_module: str, guesser_class: str, file: str):
     guesser_path = '{}.{}'.format(guesser_module, guesser_class)
     return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
 
@@ -39,6 +40,10 @@ class TrainGuesser(Task):
         qb_dataset = guesser_instance.qb_dataset()
         guesser_instance.train(qb_dataset.training_data())
         guesser_instance.save(output_path(self.guesser_module, self.guesser_class, ''))
+        params = guesser_instance.parameters()
+        params_path = output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle')
+        with open(params_path, 'wb') as f:
+            pickle.dump(params, f)
 
     def output(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
@@ -49,7 +54,9 @@ class TrainGuesser(Task):
             )]
 
         return [
-            LocalTarget(output_path(self.guesser_module, self.guesser_class, ''))
+            LocalTarget(output_path(self.guesser_module, self.guesser_class, '')),
+            LocalTarget(
+                output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle'))
         ] + guesser_targets
 
 
@@ -108,11 +115,15 @@ class GuesserReport(Task):
         guesser_class.create_report(guesser_directory)
 
     def output(self):
-        return LocalTarget(output_path(
+        return [LocalTarget(output_path(
             self.guesser_module,
             self.guesser_class,
             'guesser_report.pdf')
-        )
+        ), LocalTarget(output_path(
+            self.guesser_module,
+            self.guesser_class,
+            'guesser_report.pickle'
+        ))]
 
 
 class AllGuessers(WrapperTask):
