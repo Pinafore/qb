@@ -7,7 +7,7 @@ cd /ssd-c/qanta/qb
 /home/ubuntu/anaconda3/bin/python setup.py download
 
 mkdir -p data/external
-/home/ubuntu/anaconda3/bin/aws s3 cp s3://pinafore-us-west-2/public/wikipedia.tar.gz /tmp/wikipedia.tar.gz
+/home/ubuntu/anaconda3/bin/aws s3 cp s3://pinafore-us-west-2/public/wikipedia-normed.tar.gz /tmp/wikipedia.tar.gz
 tar -xvzf /tmp/wikipedia.tar.gz -C data/external
 touch data/external/wikipedia_SUCESS
 rm /tmp/wikipedia.tar.gz

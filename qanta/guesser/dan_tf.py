@@ -229,7 +229,7 @@ class TFDanModel:
             logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
             representation_layer = layer_out
             self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits, tf.to_int64(self.label_placeholder))
+                logits=logits, labels=tf.to_int64(self.label_placeholder))
             self.loss = tf.reduce_mean(self.loss)
             self.softmax_output = tf.nn.softmax(logits)
             preds = tf.to_int32(tf.argmax(logits, 1))

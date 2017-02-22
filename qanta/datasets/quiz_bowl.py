@@ -268,4 +268,4 @@ class QuizBowlDataset(AbstractDataset):
 
 class QuizBowlEvaluationDataset(QuizBowlDataset):
     def __init__(self):
-        super().__init__(5)
+        super().__init__(2)

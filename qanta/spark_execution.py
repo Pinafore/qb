@@ -14,11 +14,14 @@ def cli():
     pass
 
 
-def create_spark_context(app_name="Quiz Bowl"):
+def create_spark_context(app_name="Quiz Bowl", configs=None):
     spark_conf = SparkConf()\
-        .set('spark.akka.frameSize', 300)\
+        .set('spark.rpc.message.maxSize', 300)\
         .setAppName(app_name)\
         .setMaster(QB_SPARK_MASTER)
+    if configs is not None:
+        for key, value in configs:
+            spark_conf = spark_conf.set(key, value)
     return SparkContext.getOrCreate(spark_conf)
 
 
@@ -31,7 +34,8 @@ def extract_features(features):
 
 def extract_guess_features():
     create_spark_context(
-        app_name='Quiz Bowl: guessers'
+        app_name='Quiz Bowl: guessers',
+        configs=[('spark.executor.cores', 10)]
     )
     ef.generate_guesser_feature()
 

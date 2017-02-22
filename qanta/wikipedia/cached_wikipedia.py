@@ -1,6 +1,7 @@
 import os
 import pickle
 from time import sleep
+from multiprocessing import Pool
 from requests import ConnectionError
 from requests.exceptions import ReadTimeout
 
@@ -10,6 +11,7 @@ from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import COUNTRY_LIST_PATH
 from qanta.util.environment import QB_QUESTION_DB
+from qanta.preprocess import format_guess
 from functional import seq
 
 log = logging.get(__name__)
@@ -68,6 +70,11 @@ class WikipediaPage:
         return LinkResult(text_freq, link_freq, early)
 
 
+def access_page(title, cached_wiki):
+    cached_wiki[title].content
+    return None
+
+
 class CachedWikipedia:
     def __init__(self, location, country_list=COUNTRY_LIST_PATH, write_dummy=True):
         """
@@ -94,8 +101,11 @@ class CachedWikipedia:
         db = QuestionDatabase(QB_QUESTION_DB)
         pages = db.questions_with_pages()
         cw = CachedWikipedia(path)
-        for p in pages:
-            cw[p].content
+        pool = Pool()
+
+
+        input_data = [(format_guess(title), cw) for title in pages.keys()]
+        pool.starmap(access_page, input_data)
 
     def load_page(self, key: str):
         log.info("Loading %s" % key)
@@ -140,7 +150,7 @@ class CachedWikipedia:
         return raw
 
     def __getitem__(self, key: str):
-        key = key.replace("_", " ")
+        key = format_guess(key)
         if key in self.cache:
             return self.cache[key]
 

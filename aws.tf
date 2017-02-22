@@ -86,11 +86,11 @@ resource "aws_route" "internet_access" {
 
 # We use us-west-2a since r3.8xlarge are cheaper in this availability zone
 # p2 Instances are cheaper on us-west-2c however
-resource "aws_subnet" "qanta_zone_2a" {
+resource "aws_subnet" "qanta_zone_2b" {
   vpc_id                  = "${aws_vpc.qanta.id}"
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-2a"
+  availability_zone = "us-west-2b"
 }
 
 # A security group for SSH access from anywhere
@@ -164,7 +164,7 @@ resource "aws_spot_instance_request" "master" {
     "${aws_security_group.qanta_internal.id}",
     "${aws_security_group.qanta_ssh.id}"
   ]
-  subnet_id = "${aws_subnet.qanta_zone_2a.id}"
+  subnet_id = "${aws_subnet.qanta_zone_2b.id}"
 
   root_block_device {
     volume_type = "gp2"

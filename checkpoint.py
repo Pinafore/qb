@@ -11,7 +11,7 @@ import click
 PRE_PROCESS_TARGETS = {
     'output/wikifier/input',
     'output/wikifier/output',
-    'output/kenlm.binary'
+    'output/kenlm.binary',
 }
 
 GUESS_TARGETS = {
@@ -54,11 +54,6 @@ SPARK_MENTIONS_TARGETS = {
     'output/features/test/mentions.parquet'
 }
 
-SPARK_DEEP_TARGETS = {
-    'output/features/dev/deep.parquet',
-    'output/features/test/deep.parquet'
-}
-
 SPARK_GUESSERS_TARGETS = {
     'output/features/dev/guessers.parquet',
     'output/features/test/guessers.parquet'
@@ -99,7 +94,6 @@ TARGET_GROUPS = {
     'spark_classifier': SPARK_CLASSIFIER_TARGETS,
     'spark_lm': SPARK_LM_TARGETS,
     'spark_mentions': SPARK_MENTIONS_TARGETS,
-    'spark_deep': SPARK_DEEP_TARGETS,
     'spark_guessers': SPARK_GUESSERS_TARGETS,
     'vw_input': VW_INPUT,
     'vw_models': VW_MODELS,

@@ -52,11 +52,12 @@ This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-s
 
 ##### Installed Software
 * Python 3.6
-* Apache Spark 1.6.1
+* Apache Spark 2.1.0
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
 * Postgres
 * KenLM
+* Redis (latest stable)
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
@@ -344,3 +345,22 @@ Then to finally run the expo
 ```bash
 python3 qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.16.buzz --output=output/expo/competition.csv --finals=output/expo/test.16.final
 ```
+
+## Utility Templates
+
+Terraform works by reading all files ending in `.tf` within the directory that it is run. Unless the
+filename ends with `_override` it will concatenate all these files together. In the case of
+`_override` it will use the contents to override the current configuration. The combination of these
+allows for keeping the root `aws.tf` clean while adding the possibility of customizing the build.
+
+In the repository there are a number of `.tf.tftemplate` files. These are not read by terraform but
+are intended to be copied to the same filename without the `.tftemplate` extension. The extension
+merely serves to make it so that terraform by default does not read it, but to keep it in source
+control (the files ending in `.tf` are in `.gitignore`). Below is a description of these
+
+* `aws_gpu_override.tf.tftemplate`: This configures terraform to start a GPU instance instead of a
+normal instance. This instance uses a different AMI that has GPU enabled Tensorflow/CUDA/etc.
+* `aws_small_override.tf.tftemplate`: This configures terraform to use a smaller CPU instance than the
+default r3.8xlarge
+* `naqt_db.tf.tftemplate`: Configure qanta to use the private NAQT dataset
+* `eip.tf.template`: Configure terraform to add a pre-made elastic IP to the instance
