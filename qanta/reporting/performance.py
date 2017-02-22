@@ -13,6 +13,7 @@ from fn import _
 
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
@@ -44,8 +45,8 @@ Line = namedtuple('Line',
                   ['question', 'sentence', 'token', 'buzz', 'guess', 'answer', 'all_guesses'])
 ScoredGuess = namedtuple('ScoredGuess', ['score', 'guess'])
 
-SUMMARY_REGEX = re.compile(r'.*sentence\.([0-9]+)\.json')
-ANSWER_REGEX = re.compile(r'.*sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
+SUMMARY_REGEX = re.compile(r'test\.json')
+ANSWER_REGEX = re.compile(r'test\.([-+\a-z]+)\.json')
 
 
 def load_predictions(pred_file: str) -> Sequence:
@@ -173,29 +174,26 @@ def compute_statistics(questions: Dict[int, Answer]) -> Sequence:
 
 def parse_data(stats_dir):
     def parse_file(file):
-        weight = None
         experiment = None
         base_file = path.basename(file)
         m = SUMMARY_REGEX.match(base_file)
         if m:
-            weight = int(m.group(1))
-            experiment = 'summary'
+            experiment = 'all features'
         m = ANSWER_REGEX.match(base_file)
         if m:
-            weight = int(m.group(1))
-            experiment = m.group(2)
-        if weight is None or experiment is None:
-            raise ValueError('Incorrect file name argument')
+            experiment = m.group(1)
+        if experiment is None:
+            raise ValueError('Incorrect file name argument: {}'.format(base_file))
         with open(file) as f:
             data = json.load(f)
             return seq(data.items()).map(lambda kv: {
                 'experiment': experiment,
-                'weight': weight,
                 'result': kv[0].replace('Answer.', ''),
                 'score': kv[1]
             })
 
-    rows = seq(glob(path.join(stats_dir, '*.json'))).flat_map(parse_file).to_pandas()
+    rows = seq(glob(path.join(stats_dir, 'test*.json')))\
+        .sorted().flat_map(parse_file).to_pandas()
     return rows
 
 
@@ -204,20 +202,30 @@ def cli():
     pass
 
 
-@cli.command()
-@click.argument('stats_dir')
-@click.argument('output')
-def plot(stats_dir, output):
+def plot_summary(summary_only, stats_dir, output):
     import seaborn as sns
     rows = parse_data(stats_dir)
-    g = sns.factorplot(y='result', x='score', row='experiment', col='weight',
-                       data=rows, kind='bar', orient='h', ci=None, margin_titles=True,
-                       order=ANSWER_PLOT_ORDER, size=10)
-    g.savefig(output, format='png')
+    g = sns.factorplot(y='result', x='score', col='experiment',
+                       data=rows, kind='bar', ci=None,
+                       order=ANSWER_PLOT_ORDER, size=4, col_wrap=4, sharex=False)
+    for ax in g.axes.flat:
+        for label in ax.get_xticklabels():
+            label.set_rotation(30)
+    plt.subplots_adjust(top=0.93)
+    g.fig.suptitle('Feature Ablation Study')
+    g.savefig(output, format='png', dpi=200)
 
 
 @cli.command()
-@click.option('--min-count', default=5)
+@click.option('--summary-only', is_flag=False)
+@click.argument('stats_dir')
+@click.argument('output')
+def plot(summary_only, stats_dir, output):
+    plot_summary(summary_only, stats_dir, output)
+
+
+@cli.command()
+@click.option('--min-count', default=2)
 @click.argument('pred_file')
 @click.argument('meta_file')
 @click.argument('output')
@@ -228,8 +236,7 @@ def generate(min_count,  pred_file, meta_file, output):
     answers = compute_answers(data, dan_answers)
     stats = compute_statistics(answers).cache()
     stats.to_json(output, root_array=False)
-    pp = pprint.PrettyPrinter()
-    pp.pprint(stats)
+    pprint.pprint(stats)
 
 
 if __name__ == '__main__':
