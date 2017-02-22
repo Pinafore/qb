@@ -1,23 +1,29 @@
-from collections import Counter, defaultdict
+from collections import ChainMap, Counter, defaultdict
+
 import heapq
 from itertools import chain, repeat
 import numpy as np
 import os
+from pathlib import Path
 import pickle
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
+from qanta.guesser.dan_tf import _create_embeddings
 from qanta.guesser.util.dataset import get_or_make_id_map, get_all_questions
-from qanta.guesser.util.preprocessing import preprocess_text
+from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.constants import (DEEP_DAN_PARAMS_TARGET, DEEP_EXPERIMENT_S3_BUCKET,
-                                  DEEP_EXPERIMENT_FLAG, DEEP_TF_PARAMS_TARGET, DEEP_WE_TARGET, N_GUESSES)
+                                  DEEP_EXPERIMENT_FLAG, DEEP_TF_PARAMS_TARGET, N_GUESSES)
 from qanta.util.environment import QB_TF_EXPERIMENT_ID
-from qanta.util.io import shell
+from qanta.util.io import shell, safe_open
 import random
 import sys
 import tempfile
 import tensorflow as tf
 import time
+
+QUIZ_BOWL_DS = 'qb'
+WIKI_DS = 'wiki'
 
 sys.setrecursionlimit(4096)
 
@@ -34,50 +40,34 @@ def _make_layer(i, in_tensor, n_out, op, n_in=None, dropout_prob=None):
 
 
 class TFDan(AbstractGuesser):
-    def __init__(self,
-                 batch_size=128,
-                 max_epochs=61,
-                 init_scale=0.06,
-                 learning_rate=0.0001,
-                 hidden_units=300,
-                 adversarial_units=301,
-                 n_prediction_layers=2,
-                 is_train=True,
-                 adversarial=False,
-                 domain_classifier_weight=0.02,
-                 adversarial_interval=3,
-                 n_representation_layers=2,
-                 lstm_representation=True,
-                 initial_embed=None,
-                 word_drop=0.3,
-                 lstm_dropout_prob=0.5,
-                 prediction_dropout_prob=0.5,
-                 rho=10**-5,
-                 dataset_weights=None,
-                 use_weights=False):
+    def __init__(self, **params):
+        self._is_train = params.get('is_train', True)
+        self._batch_size = params.get('batch_size', 128)
+        self._max_epochs = params.get('max_epochs', 50)
+        self._init_scale = params.get('init_scale', 0.06)
+        self._word_drop = params.get('word_drop', 0.3)
+        self._lstm_representation = params.get('lstm_representation', False)
+        self._lstm_dropout_prob = params.get('lstm_dropout_prob', 0.5)
+        self._prediction_dropout_prob = params.get('prediction_dropout_prob', 0.5)
+        self._adversarial = params.get('adversarial', False)
+        self._adversarial_interval = params.get('adversarial_interval', 3)
+        self._use_weights = params.get('use_weights', False)
+        self._hidden_units = params.get('hidden_units', 300)
+        self._adversarial_units = params.get('adversarial_units', 301)
+        self._n_prediction_layers = params.get('n_prediction_layers', 2)
+        self._domain_classifier_weight = params.get('domain_classifier_weight', 0.02)
+        self._n_representation_layers = params.get('n_representation_layers', 2)
+        self._learning_rate = params.get('learning_rate', 0.0001)
+        self._l2_rho = params.get('rho', 10**-5)
+        self._dataset_weights = params.get('dataset_weights', None)
+        self._label_map = params.get('label_map', None)
+        self._embedding_shape = params.get('embedding_shape', None)
+        self._word_ids = params.get('word_ids', None)
+        self._params = params
 
-        self._batch_size = batch_size if is_train else 1
-        self._max_epochs = max_epochs
-        self._init_scale = init_scale
-        self._is_train = is_train
-        self._word_drop = word_drop
-        self._lstm_representation = lstm_representation
-        self._lstm_dropout_prob = lstm_dropout_prob
-        self._prediction_dropout_prob = prediction_dropout_prob
-        self._adversarial = adversarial
-        self._adversarial_interval = adversarial_interval
-        self._use_weights = use_weights
-        self._hidden_units = hidden_units
-        self._adversarial_units = adversarial_units
-        self._n_prediction_layers = n_prediction_layers
-        # self._domain_classifier_weight = domain_classifier_weight
-        self._n_representation_layers = n_representation_layers
-        self._learning_rate = learning_rate
-        self._l2_rho = rho
-        self._dataset_weights = dataset_weights
 
         if self._dataset_weights is None:
-            self._dataset_weights = {Dataset.QUIZ_BOWL: 1, Dataset.WIKI: 1}
+            self._dataset_weights = {QUIZ_BOWL_DS: 1, WIKI_DS: 1}
 
     def __enter__(self):
         # self._graph_manager = tf.Graph().as_default()
@@ -97,74 +87,56 @@ class TFDan(AbstractGuesser):
         self._var_scope.__exit__(exc_type, exc_value, traceback)
         self._session.__exit__(exc_type, exc_value, traceback)
 
-    def _setup(self, data, label_map, initial_embed, embedding_shape, n_classes, word_ids):
-        embed_shape = embedding_shape or np.shape(initial_embed)
-        result = self._load_data(
-            datasets=data,
-            label_map=label_map,
-            start_token_index=embed_shape[0] - 2,
-            end_token_index=embed_shape[0] - 1,
-            word_ids=word_ids)
-
+    def _setup(self, data):
         if self._is_train:
             (self._data,
              self._labels,
              self._lens,
              self._weights,
              self._domains,
+             self._val_data,
+             self._val_labels,
+             self._val_lens,
+             embeddings,
              self._domain_indices,
              self._n_classes,
              self._complete,
              self._max_len,
              self._label_map,
              self._word_ids,
-             self._answer_counts,
-             self._train_indices,
-             self._val_indices,
-             self._wiki_holdout_indices) = result
+             self._answer_counts) = self._load_data(datasets=data)
         else:
-            (self._data,
-             self._labels,
-             self._lens,
-             self._weights,
-             self._domains,
-             self._domain_indices,
-             self._n_classes,
-             self._complete,
-             self._max_len,
-             self._label_map,
-             self._word_ids,
-             self._answer_counts) = result
+            self._n_classes = len(self._label_map)
+            embeddings = None
 
         log.info('Building model')
-        self._build_model(initial_embed=initial_embed,
-                          embedding_shape=embedding_shape)
+        self._build_model(initial_embed=embeddings)
 
         self._saver = tf.train.Saver()
 
     def train(self, data):
-        initial_embed = _load_embeddings()
-        print('Setting up')
-        self._setup(data=data, label_map=None, initial_embed=initial_embed, embedding_shape=None, n_classes=None, word_ids=None)
-        return self._run_training()
+        with tf.Graph().as_default(), tf.Session() as self._session,\
+            tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(minval=-self._init_scale, maxval=self._init_scale)):
+
+            self._setup(data=data)
+            return self._run_training()
 
     def evaluate(self, data, label_map, embedding_shape, n_classes, word_ids):
-        print('Setting up')
         self._setup(data=data, label_map=label_map, initial_embed=None, embedding_shape=embedding_shape, n_classes=n_classes, word_ids=word_ids)
         return self._evaluate()
 
     def _build_model(
             self,
-            initial_embed,
-            embedding_shape):
+            initial_embed):
         if initial_embed is not None:
             self._embedding = tf.get_variable('embedding', initializer=tf.constant(initial_embed, dtype=tf.float32))
+            self._embedding_shape = np.shape(initial_embed)
         else:
-            self._embedding = tf.get_variable('embedding', shape=embedding_shape, dtype=tf.float32)
+            self._embedding = tf.get_variable('embedding', shape=self._embedding_shape, dtype=tf.float32)
 
         embed_and_zero = tf.pad(self._embedding, [[1, 0], [0, 0]], mode='CONSTANT')
 
-        batch_dim = self._batch_size if self._is_train else 1
+        batch_dim = self._batch_size
         self._input_placeholder = tf.placeholder(tf.int32, shape=(batch_dim, None), name='input_placeholder')
         self._len_placeholder = tf.placeholder(tf.float32, shape=batch_dim, name='len_placeholder')
         self._label_placeholder = tf.placeholder(tf.int32, shape=batch_dim, name='label_placeholder')
@@ -201,12 +173,12 @@ class TFDan(AbstractGuesser):
                 weights.append(w)
                 in_dim = None
 
-            logits, w = _make_layer(self._n_prediction_layers - 1, layer_out, n_out=self._n_classes, op=None)
+            self._logits, w = _make_layer(self._n_prediction_layers - 1, layer_out, n_out=self._n_classes, op=None)
             weights.append(w)
             self._softmax_weights = weights[-1]
             # logits = logits - tf.expand_dims(tf.reduce_max(logits, 1), 1)
 
-            self._loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, tf.to_int64(self._label_placeholder))
+            self._loss = tf.nn.sparse_softmax_cross_entropy_with_logits(self._logits, tf.to_int64(self._label_placeholder))
         if self._use_weights:
             self._loss *= self._weight_placeholder
             self._loss = tf.reduce_sum(self._loss) / tf.reduce_sum(self._weight_placeholder)
@@ -227,9 +199,9 @@ class TFDan(AbstractGuesser):
                 self._loss += tf.nn.l2_loss(W) * self._l2_rho
 
         # Used for labeling
-        self._softmax_output = tf.nn.softmax(logits)
+        self._softmax_output = tf.nn.softmax(self._logits)
 
-        self._preds = tf.to_int32(tf.argmax(logits, 1))
+        self._preds = tf.to_int32(tf.argmax(self._logits, 1))
         # correct_labels = tf.to_int32(tf.argmax(self._label_placeholder, 1))
         self._batch_accuracy = tf.contrib.metrics.accuracy(self._preds, self._label_placeholder)
         self._accuracy, self._accuracy_update = tf.contrib.metrics.streaming_accuracy(self._preds, self._label_placeholder)
@@ -252,8 +224,8 @@ class TFDan(AbstractGuesser):
 
         if self._lstm_representation:
             return self._build_lstm(
-                    input_layer=sent_vecs,
-                    lengths=lengths)
+                input_layer=sent_vecs,
+                lengths=lengths)
         else:
             layer_out = tf.reduce_sum(sent_vecs, 1) / tf.expand_dims(lengths, 1)
             in_dim = embedding.get_shape()[1]
@@ -268,7 +240,6 @@ class TFDan(AbstractGuesser):
 
         @tf.RegisterGradient(grad_name)
         def gradient_reversal(op, grads):
-            print(grads.get_shape())
             return -grads * self._domain_classifier_weight_placeholder * self._domain_gate_placeholder
 
         first_loop = True
@@ -316,57 +287,75 @@ class TFDan(AbstractGuesser):
         outputs = tf.gather(outputs, indices)
         return outputs
 
-    def _load_data(self, datasets, label_map, start_token_index, end_token_index, word_ids, len_limit=200):
-        """Handles data in format created by qanta/guesser/util/format_dan.py"""
+    def _load_data(self, datasets, len_limit=200):
+        """Load training data"""
+        preprocessed_datasets = {}
+        vocab = set()
+        class_to_i = {}
+        i_to_class = []
+        x_val = []
+        y_val = []
+        for dataset_name, dataset in sorted(datasets.items(), key=lambda n: n != QUIZ_BOWL_DS):
+            results = preprocess_dataset(
+                dataset,
+                train_size=0.9 if dataset_name == QUIZ_BOWL_DS else 1,
+                vocab=vocab,
+                class_to_i=class_to_i,
+                i_to_class=i_to_class)
+            preprocessed_datasets[dataset_name] = results[:2]
+            x_val.extend(results[2])
+            y_val.extend(results[3])
+
+        embeddings, word_ids = _create_embeddings(vocab)
+        embeddings = np.vstack((embeddings, np.zeros(embeddings[0].shape), np.zeros(embeddings[0].shape)))
+        start_token_index = embeddings.shape[0] - 2
+        end_token_index = embeddings.shape[0] - 1
+        unk_index = word_ids['UNK']
+
         vecs = []
         labels = []
-        add_labels = (label_map is None)
-        if add_labels:
-            label_map = defaultdict()
-            label_map.default_factory = label_map.__len__
-
-        if word_ids is None:
-            word_ids = get_or_make_id_map(list(datasets))
 
         complete = []
         weights = []
         domains = []
         example_counts = Counter()
         max_len = 0
-        for dataset_name, data in datasets.items():
-            print('Loading', dataset_name)
+        for dataset_name, (questions, answers) in preprocessed_datasets.items():
+            log.info('Loading', dataset_name)
             weight = self._dataset_weights[dataset_name]
             if weight == 0:
                 continue
-            questions, answers = zip(*data)
             q_count = 0
-            for sentences, a in zip(questions, answers):
-                if add_labels:
-                    label = label_map[a]
-                else:
-                    label = label_map.get(a, len(label_map))
-
+            for run, label in zip(questions, answers):
                 q_count += 1
                 q = [start_token_index]
                 example_counts[label] += 1
 
-                for i, sent in sentences.items():
-                    q.extend(word_ids.get(w, len(word_ids)) for w in preprocess_text(sent).split())
-                    q.append(end_token_index)
+                q.extend(word_ids.get(w, unk_index) for w in run)
+                q.append(end_token_index)
 
-                    max_len = max(len(q), max_len)
-                    if len(q) > 2:
-                        # Shift indices by 1 so that 0 can represent zero embedding
-                        vecs.append([d + 1 for d in q])
-                        labels.append(label)
-                        complete.append(i == len(sentences) - 1)
-                        weights.append(weight)
-                        domains.append(dataset_name == Dataset.QUIZ_BOWL)
+                max_len = max(len(q), max_len)
+                if len(q) > 2:
+                    # Shift indices by 1 so that 0 can represent zero embedding
+                    vecs.append([d + 1 for d in q])
+                    labels.append(label)
+                    weights.append(weight)
+                    domains.append(dataset_name == WIKI_DS)
+
+        val_vecs = []
+        val_labels = []
+        for run, label in zip(x_val, y_val):
+            q = [start_token_index] + list(word_ids.get(w, len(word_ids)) for w in run) + [end_token_index]
+            q = q[:max_len]
+            if len(q) > 2:
+                val_vecs.append([d + 1 for d in q])
+                val_labels.append(label)
 
         lens = []
-        for v in vecs:
-            lens.append(len(v))
-            if self._is_train:
+        val_lens = []
+        for vec_list, len_list in ((vecs, lens), (val_vecs, val_lens)):
+            for v in vec_list:
+                len_list.append(len(v))
                 # After end of question, pad with zero embedding
                 v.extend(repeat(0, max_len - len(v)))
 
@@ -374,8 +363,8 @@ class TFDan(AbstractGuesser):
         log.info('Max example len: {}'.format(max_len))
 
         # Only need to get number of classes if building a model from scratch
-        n_classes = len(label_map)
         labels = np.array(labels)
+        n_classes = len(i_to_class)
 
         # Conversion of each v to array matters if data is jagged (which it will be for non-training models)
         data = np.array([np.array(v) for v in vecs])
@@ -383,60 +372,44 @@ class TFDan(AbstractGuesser):
         weights = np.array(weights)
         domains = np.array(domains)
 
+        val_data = np.array([np.array(v) for v in val_vecs])
+        val_labels = np.array(val_labels)
+        val_lens = np.array(val_lens)
+
         domain_indices = [[], []]
         for i, d in enumerate(domains):
             domain_indices[d].append(i)
 
-        if self._is_train:
-            log.info('Making folds')
-            # Make sure all runs of each question land in the same fold
-            end_indices = list(i for i, c in enumerate(complete) if c)
-            index_groups = []
-            wiki_index_groups = []
-            for e in end_indices:
-                use_group = (index_groups if domains[e] else wiki_index_groups)
-                use_group.append([e])
-                for i in reversed(range(e)):
-                    if complete[i]:
-                        break
-                    use_group[-1].append(i)
-
-            random.shuffle(index_groups)
-            random.shuffle(wiki_index_groups)
-
-            n_qb_examples = sum(domains)
-            n_val_examples = int(0.1 * n_qb_examples) if index_groups else int(0.1 * len(labels))
-            val_indices = []
-            train_indices = []
-            for i, g in enumerate(index_groups):
-                val_indices.extend(g)
-                if len(val_indices) >= n_val_examples:
-                    train_indices = list(chain.from_iterable(index_groups[i + 1:]))
-                    break
-
-            wiki_holdout_indices = []
-            for i, g in enumerate(wiki_index_groups):
-                wiki_holdout_indices.extend(g)
-                if len(wiki_holdout_indices) >= n_val_examples:
-                    train_indices.extend(chain.from_iterable(wiki_index_groups[i + 1:]))
-                    break
-
-            if not index_groups:
-                val_indices = wiki_holdout_indices
-
-        # Convert from defaultdict to allow pickling as well as avoiding adding any new fields on accident
-        label_map = dict(label_map)
-
         log.info('Done loading data')
-        return ((data, labels, lens, weights, domains, domain_indices, n_classes, complete, max_len, label_map, word_ids, example_counts) +
-                ((train_indices, val_indices, wiki_holdout_indices) if self._is_train else ()))
+        return (
+            data, labels, lens, weights, domains,
+            val_data, val_labels, val_lens,
+            embeddings,
+            domain_indices, n_classes, complete, max_len, class_to_i, word_ids, example_counts)
 
     def _batches(self, train=True):
-        order = [i for i in (self._train_indices if train else self._val_indices)]
+        data_arr = self._data if train else self._val_data
+        len_arr = self._lens if train else self._val_lens
+        label_arr = self._labels if train else self._val_labels
+        order = [i for i in list(range(len(data_arr)))]
         np.random.shuffle(order)
         for indices in (order[i:(i + self._batch_size)] for i in range(0, len(order), self._batch_size)):
             if len(indices) == self._batch_size:
-                yield self._data[indices, :], self._lens[indices], self._labels[indices], self._weights[indices], self._domains[indices]
+                yield ((data_arr[indices, :], len_arr[indices], label_arr[indices]) +
+                    ((self._weights[indices], self._domains[indices]) if train else ()))
+
+    def _guess_batches(self, data, lens):
+        real_len = len(data)
+        padded_len = real_len + (-real_len % self._batch_size)
+        for i in range(0, padded_len, self._batch_size):
+            batch_data = data[i : i + self._batch_size, :]
+            batch_lens = lens[i : i + self._batch_size]
+            if i + self._batch_size > real_len:
+                batch_data = np.vstack(
+                    (batch_data,
+                    np.zeros((i + self._batch_size - real_len, len(data[0])))))
+                batch_lens = np.concatenate((batch_lens, np.zeros(i + self._batch_size - real_len)))
+            yield batch_data, batch_lens
 
     def _representation_batches(self, n):
         source_count = 0
@@ -475,7 +448,12 @@ class TFDan(AbstractGuesser):
 
         if self._adversarial:
             domain_accuracies = []
-        for i, (inputs, lens, labels, weights, domains) in enumerate(self._batches(train=train)):
+        for i, batch in enumerate(self._batches(train=train)):
+            if train:
+                inputs, lens, labels, weights, domains = batch
+            else:
+                inputs, lens, labels = batch
+
             batch_start = time.time()
             fetches = ((self._loss, self._batch_accuracy, self._train_op)
                        if train else
@@ -483,9 +461,9 @@ class TFDan(AbstractGuesser):
             feed_dict = {self._input_placeholder: inputs,
                          self._len_placeholder: lens,
                          self._label_placeholder: labels}
-            if self._use_weights:
+            if self._use_weights and train:
                 feed_dict[self._weight_placeholder] = weights
-            if self._adversarial:
+            if self._adversarial and train:
                 feed_dict[self._domain_gate_placeholder] = 1  # int(not i % self._adversarial_interval)
                 feed_dict[self._domain_placeholder] = domains
                 # Create sample of opposite domains
@@ -589,12 +567,9 @@ class TFDan(AbstractGuesser):
                 max_accuracy = val_accuracy
                 log.info('New best accuracy. Saving model')
                 patience = max_patience
+                with safe_open(DEEP_TF_PARAMS_TARGET, 'wb') as f:
+                    pickle.dump(dict(ChainMap({'label_map': self._label_map, 'embedding_shape': self._embedding_shape, 'word_ids': self._word_ids}, self._params)), f)
                 self._saver.save(self._session, DEEP_DAN_PARAMS_TARGET)
-                with open(DEEP_TF_PARAMS_TARGET, 'wb') as f:
-                    save_vals = {'n_classes': self._softmax_output.get_shape()[1],
-                                 'embedding_shape': self._embedding.get_shape(),
-                                 'label_map': self._label_map}
-                    pickle.dump(save_vals, f)
 
             if patience == 0:
                 break
@@ -651,7 +626,73 @@ class TFDan(AbstractGuesser):
         return representations
 
     def restore(self, path):
-        self._saver.restore(self._session, path)
+        self._saver.restore(self._session, str(path))
+
+    def save(self, directory):
+        params_path = Path(DEEP_DAN_PARAMS_TARGET)
+        in_dir = params_path.parent
+        out_dir = Path(directory)
+        tf_file = params_path.name
+        extra_params = Path(DEEP_TF_PARAMS_TARGET).name
+        for f_name in (tf_file, tf_file + '.meta', 'checkpoint', extra_params):
+            shell('cp {} {}'.format(in_dir / f_name, out_dir / f_name))
+
+    def format_test_data(self, questions):
+        data = []
+        lens = []
+        max_len = 0
+        end_token_index = self._embedding_shape[0]
+        start_token_index = self._embedding_shape[0] - 1
+        unk_index = self._word_ids['UNK']
+        for q in questions:
+            row = [start_token_index]
+            row.extend(self._word_ids.get(w, unk_index) for w in tokenize_question(q))
+            row.append(end_token_index)
+            lens.append(len(row))
+            max_len = max(len(row), max_len)
+            data.append(row)
+
+        for row in data:
+            row.extend(0 for _ in range(max_len - len(row)))
+        return np.array(data), np.array(lens)
+
+
+    def guess(self, questions, max_n_guesses):
+        with tf.Graph().as_default(), tf.Session() as self._session,\
+            tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(minval=-self._init_scale, maxval=self._init_scale)):
+            self._setup(None)
+            self.restore(DEEP_DAN_PARAMS_TARGET)
+
+            i_to_class = {i: c for c, i in self._label_map.items()}
+            data, lens = self.format_test_data(questions)
+
+            guesses = []
+            for i, (x_batch, len_batch) in enumerate(self._guess_batches(data, lens)):
+                feed_dict = {self._input_placeholder: x_batch, self._len_placeholder: len_batch}
+                batch_logits = self._session.run(self._logits, feed_dict=feed_dict)
+                guesses.extend([(i_to_class[i], row[i]) for i in np.argsort(row)[:-max_n_guesses - 1:-1]] for row in batch_logits)
+        return guesses[:len(questions)]
+
+    @classmethod
+    def load(cls, directory):
+        dir_path = Path(directory)
+        with (dir_path / Path(DEEP_TF_PARAMS_TARGET).name).open('rb') as f:
+            params = pickle.load(f)
+        shell('cp -r {}/* {}'.format(dir_path, Path(DEEP_DAN_PARAMS_TARGET).parent))
+        dan = cls(**ChainMap({'is_train': False}, params))
+        return dan
+
+    @classmethod
+    def display_name(cls):
+        return 'DomainDAN'
+
+    @property
+    def requested_datasets(self):
+        return {QUIZ_BOWL_DS: QuizBowlDataset(5)}
+
+    @classmethod
+    def targets(cls):
+        return [Path(DEEP_DAN_PARAMS_TARGET).name, Path(DEEP_TF_PARAMS_TARGET).name]
 
     @property
     def n_classes(self):
@@ -670,31 +711,22 @@ class TFDan(AbstractGuesser):
         return self._word_ids
 
 
-def _load_embeddings():
-    with open(DEEP_WE_TARGET, 'rb') as f:
-        embed = pickle.load(f)
-        # For some reason embeddings are stored in column-major order
-        embed = np.vstack((embed.T, np.zeros((1, np.shape(embed)[0])), np.zeros((1, np.shape(embed)[0]))))
-    return embed
-
 
 def run_experiment(params, outfile):
-    embed = _load_embeddings()
     use_qb = params['use_qb']
     use_wiki = params['use_wiki']
     exclude_keys = {'use_qb', 'use_wiki', 'wiki_data_frac'}
     model_params = {k: v for k, v in params.items() if k not in exclude_keys}
-    dataset_weights = {Dataset.QUIZ_BOWL: 1, Dataset.WIKI: int(use_wiki)}
+    dataset_weights = {QUIZ_BOWL_DS: 1, WIKI_DS: int(use_wiki)}
 
     with tf.Graph().as_default():
-        with TFDan(is_train=True, dataset_weights=dataset_weights, initial_embed=embed, **model_params) as train_model:
+        with TFDan(is_train=True, dataset_weights=dataset_weights, **model_params) as train_model:
             domains = []
             if use_qb:
-                domains.append(Dataset.QUIZ_BOWL)
+                domains.append(QUIZ_BOWL_DS)
             if use_wiki:
-                domains.append(Dataset.WIKI)
+                domains.append(WIKI_DS)
             train_data = get_all_questions(domains)
-            print('Training')
             (train_losses,
              train_accuracies,
              train_domain_accuracies,
@@ -709,9 +741,9 @@ def run_experiment(params, outfile):
         with TFDan(is_train=False, dataset_weights=dataset_weights, initial_embed=None, **model_params) as dev_model:
 
             print('Loading val data')
-            val_data = get_all_questions([Dataset.QUIZ_BOWL], folds=['dev'])
-            val_list = list(val_data[Dataset.QUIZ_BOWL])
-            val_data[Dataset.QUIZ_BOWL] = val_list
+            val_data = get_all_questions([QUIZ_BOWL_DS], folds=['dev'])
+            val_list = list(val_data[QUIZ_BOWL_DS])
+            val_data[QUIZ_BOWL_DS] = val_list
             print('Got {} val examples'.format(len(val_list)))
             print('Evaluating')
             dev_accuracy, dev_recalls = dev_model.evaluate(

@@ -8,12 +8,11 @@ from qanta.guesser.util.preprocessing import preprocess_answer, preprocess_text
 from qanta.util import constants
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.io import pickle_cache
-from qanta.util.qdb import QuestionDatabase
+from qanta.datasets.quiz_bowl import QuestionDatabase
 
 
-class Dataset:
-    QUIZ_BOWL = 'QUIZ_BOWL'
-    WIKI = 'WIKI'
+QUIZ_BOWL_DS = 'qb'
+WIKI_DS = 'wiki'
 
 
 def _fname_maker(datasets):

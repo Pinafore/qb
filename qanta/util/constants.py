@@ -47,6 +47,8 @@ CLM_TARGET = 'output/language_model.txt'
 
 REPRESENTATION_RES_TARGET = 'output/deep/representations'
 REPRESENTATION_TSNE_TARGET = 'output/deep/tsne'
+DEEP_DAN_PARAMS_TARGET = 'output/deep/params'
+DEEP_TF_PARAMS_TARGET = 'output/deep/tfparams'
 DEEP_EXPERIMENT_FLAG = 'output/deep/experiment_done'
 DEEP_EXPERIMENT_S3_BUCKET = 's3://tfexperiments'
 

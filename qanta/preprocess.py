@@ -46,21 +46,20 @@ def format_guess(guess):
     return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
 
 
-def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9):
+def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
     for i in range(len(data[1])):
         data[1][i] = format_guess(data[1][i])
     classes = set(data[1])
-    class_to_i = {}
-    i_to_class = []
+    class_to_i = {} if class_to_i is None else class_to_i
+    i_to_class = [] if i_to_class is None else i_to_class
     for i, ans_class in enumerate(classes):
         class_to_i[ans_class] = i
         i_to_class.append(ans_class)
-
     x_train = []
     y_train = []
     x_test = []
     y_test = []
-    vocab = set()
+    vocab = set() if vocab is None else vocab
 
     question_runs_with_answer = list(zip(data[0], data[1]))
     train, test = train_test_split(question_runs_with_answer, train_size=train_size)
