@@ -174,7 +174,7 @@ class QuestionDatabase:
         c = self._conn.cursor()
         if exclude_test:
             command = 'select page, count(*) as num from questions where ' + \
-                      'page != "" and fold != "test" and fold != "devtest"' + \
+                      'page != "" and fold != "test" and fold != "devtest" and fold != "dev" ' + \
                       'group by page order by num desc'
         else:
             command = 'select page, count(*) as num from questions where ' + \
