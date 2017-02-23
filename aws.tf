@@ -223,7 +223,8 @@ resource "aws_spot_instance_request" "master" {
       "echo \"export QB_SPARK_MASTER=spark://${aws_spot_instance_request.master.private_dns}:7077\" >> /home/ubuntu/.bashrc",
       "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
-      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc"
+      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc",
+      "echo \"export LUIGI_CONFIG_PATH=/ssd-c/qanta/luigi.cfg\" >> /home/ubuntu/.bashrc"
     ]
   }
 
