@@ -65,6 +65,9 @@ class TrieLanguageModel(LanguageModelBase):
         for ii in range(self._order + 1):
             self._subtotals[corpus][ngram[0:ii]] += count
 
+    def feature(self, corpus, guess, sentence, length):
+        return "FOO"
+            
     def corpora(self):
         for ii in self._subtotals:
             yield ii
@@ -76,6 +79,8 @@ class TrieLanguageModel(LanguageModelBase):
         return self._subtotals[corpus][ngram]
 
     def total(self, corpus, ngram):
+        assert corpus in self._subtotals, "%s not in corpora (%s)" % \
+          (str(corpus), str(list(self.corpora()))[:50])
         return self._subtotals[corpus][ngram[:-1]]
 
     def read_vocab(self, filename):
@@ -108,15 +113,17 @@ class TrieLanguageModel(LanguageModelBase):
         Write the LM to a text file
         """
 
-        number_contexts = len(self._contexts[corpus_name])
-        outfile.write("%i %i\n" % (corpus_id, number_contexts))
-
         full_contexts = dict((x, y) for x, y in self._subtotals[corpus_name].items() 
                              if len(x) == self._order)
+        outfile.write("%i %i %s\n" % (corpus_id, len(full_contexts), corpus_name))
+        lines_written = 0
         for context, count in sorted(full_contexts.items(), reverse=True,
                                      key=lambda x: (x[1], len(x[0]))):
+            lines_written += 1
             context_string = " ".join(str(x) for x in context)
             outfile.write("%i\t%s\n" % (count, context_string))
+        assert lines_written==len(full_contexts), "Wrong number contexts"
+        return lines_written
 
     def set_jm_interpolation(self, val):
         self._jm = val
@@ -140,10 +147,10 @@ class TrieLanguageModel(LanguageModelBase):
                 else:
                     # Every other line
                     fields = [int(x) for x in ii.split()]
-                    ngram = fields[1:]
-                    log.info(fields, ngram)
-                    assert len(ngram) == fields[1], "Bad line %s" % ii
+                    ngram = tuple(fields[1:])
+                    assert len(ngram) == self._order, "Bad line %s" % ii
                     self.add_count(corpus, ngram, fields[0])
+        return num_contexts
 
     def next_word(self, corpus, ngram):
         """

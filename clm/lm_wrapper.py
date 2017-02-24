@@ -203,10 +203,10 @@ class LanguageModelReader(LanguageModelBase):
         guess_id = self._corpora[norm_title]
 
         # Get the counts of words in unigram and bigram
-        for ii, jj in ngrams(tokenized, CLM_ORDER):
-            result["wrd"].append(reverse_vocab[ii][:7])
-            result["uni_cnt"].append(self._lm.unigram_count(guess_id, ii))
-            result["bi_cnt"].append(self._lm.bigram_count(guess_id, ii, jj))
+        for ii in ngrams(tokenized, CLM_ORDER):
+            result["wrd"].append(" ".join(reverse_vocab[x] for x in ii))
+            result["uni_cnt"].append(self._lm.total(corpus, ii))
+            result["bi_cnt"].append(self._lm.count(corpus, ii))
 
         return result
 
@@ -252,8 +252,9 @@ class LanguageModelReader(LanguageModelBase):
             guess_id = self._corpora[norm_title]
             if guess_id not in self._loaded_lms:
                 filename = "%s/%i" % (self._datafile, guess_id)
-                log.info("reading %s" % filename)
-                self._lm.read_counts(filename)
+                
+                contexts = self._lm.read_counts(filename)
+                log.info("read %s (%i contexts)" % (filename, contexts))
                 self._loaded_lms.add(guess_id)
 
             feat = self._lm.feature(corpus, guess_id, self._sentence, self._sentence_length)
@@ -383,7 +384,7 @@ class LanguageModelWriter(LanguageModelBase):
             yield ii
 
     def write_corpus(self, corpus_name, id, file):
-        self._lm.write_lm(corpus_name, id, file)
+        return self._lm.write_lm(corpus_name, id, file)
 
     def num_corpora(self):
         return self._lm.num_corpora()
@@ -453,7 +454,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
                         if ii % 100 == 0:
                             log.info("Write LM corpus %s to %s" %
                                      (cc, "%s/%i" % (lm_out, ii)))
-                            lm.write_corpus(cc, ii, f)
+                        lm.write_corpus(cc, ii, f)
 
 
 if __name__ == "__main__":
