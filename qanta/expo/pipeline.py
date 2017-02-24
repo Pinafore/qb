@@ -59,7 +59,7 @@ class GenerateExpo(Task):
         db = QuestionDatabase(QB_QUESTION_DB)
         data = load_data(PRED_TARGET.format(self.fold),
                          META_TARGET.format(self.fold), db)
-        audit_data = load_audit(VW_AUDIT.format(self.fold))
+        audit_data = load_audit(VW_AUDIT.format(self.fold), META_TARGET.format(self.fold))
         buzz_file = open(safe_path(EXPO_BUZZ.format(self.fold)), 'w', newline='')
         buzz_file.write('question,sentence,word,page,evidence,final,weight\n')
         buzz_writer = csv.writer(buzz_file, delimiter=',')
@@ -67,14 +67,6 @@ class GenerateExpo(Task):
         final_file = open(safe_path(EXPO_FINAL.format(self.fold)), 'w', newline='')
         final_file.write('question,answer\n')
         final_writer = csv.writer(final_file, delimiter=',')
-
-        def format_audit_line(line):
-            features = line.split()
-            audit_features = []
-            for f in features:
-                name, product = f.split(':')
-                audit_features.append('{}:{}'.format(name, product))
-            return ' '.join(audit_features)
 
         for qnum, lines in data:
             final_sentence, final_token, final_guess = find_final(lines)
@@ -89,8 +81,7 @@ class GenerateExpo(Task):
                     is_final = True
 
                 for g in l.all_guesses:
-                    evidence = format_audit_line(
-                        audit_data['{}_{}_{}'.format(l.question, l.sentence, l.token)])
+                    evidence = audit_data[(l.question, l.sentence, l.token, g.guess)]
                     buzz_writer.writerow([
                         l.question, l.sentence, l.token, g.guess, evidence,
                         int(is_final and g.guess == l.guess), g.score
