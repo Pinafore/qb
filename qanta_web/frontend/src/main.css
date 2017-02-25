@@ -14,3 +14,15 @@ img {
 .wrapper {
   margin-top: 70px;
 }
+
+.player-card {
+  height: 150px;
+}
+
+.main-container {
+  min-height: 700px;
+}
+
+.main {
+  padding-top: 30px;
+}

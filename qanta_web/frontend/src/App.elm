@@ -1,6 +1,6 @@
 module App exposing (..)
 
-import Html exposing (Html, text, div, img, li, ul, nav, button, a)
+import Html exposing (Html, text, div, img, li, ul, nav, button, a, Attribute, h3)
 import Html.Attributes exposing (src, class, type_)
 import Json.Decode exposing (int, string, float, bool, list, nullable, Decoder)
 import Json.Decode.Pipeline exposing (decode, required, optional)
@@ -31,6 +31,15 @@ playerDecoder =
         |> required "is_human" bool
 
 
+defaultPlayer =
+    { id = -1
+    , name = "default"
+    , score = 0
+    , answered = False
+    , isHuman = False
+    }
+
+
 type alias Buzz =
     { playerId : Int
     , correct : Bool
@@ -53,6 +62,16 @@ type alias GameState =
     , buzzes : List Buzz
     , answer : Maybe String
     , isEndOfQuestion : Bool
+    }
+
+
+defaultGameState =
+    { gameId = 1
+    , players = []
+    , text = ""
+    , buzzes = []
+    , answer = Nothing
+    , isEndOfQuestion = False
     }
 
 
@@ -113,32 +132,48 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ navbar
-        , (template
-            (div []
-                [ img [ src model.logo ] []
-                , let
-                    playerHtml =
-                        case dummyPlayer of
-                            Err msg ->
-                                text "An error occurred"
+    let
+        parsedState =
+            case dummyState of
+                Err msg ->
+                    defaultGameState
 
-                            Ok player ->
-                                card [ renderPlayer player ]
-                  in
-                    row [ playerHtml ]
-                ]
-            )
-          )
-        ]
+                Ok state ->
+                    state
+    in
+        div []
+            [ navbar
+            , (template
+                (div []
+                    [ row (List.map renderPlayer parsedState.players)
+                    ]
+                )
+              )
+            ]
+
+
+playerList =
+    let
+        parsedState =
+            case dummyState of
+                Err msg ->
+                    defaultGameState
+
+                Ok state ->
+                    state
+    in
+        List.map renderPlayer parsedState.players
 
 
 renderPlayer : Player -> Html Msg
 renderPlayer player =
-    div []
-        [ text (player |> .id |> toString)
-        , text player.name
+    colmd 3
+        [ card
+            [ div [ class "player-card" ]
+                [ div [] [ text ("Player: " ++ player.name) ]
+                , div [] [ text ("Score: " ++ toString player.score) ]
+                ]
+            ]
         ]
 
 
@@ -146,27 +181,27 @@ template : Html Msg -> Html Msg
 template content =
     div [ class "wrapper" ]
         [ div [ class "main" ]
-            [ container content ]
+            [ container [ class "main-container" ] content ]
         ]
 
 
-container : Html Msg -> Html Msg
-container content =
-    div [ class "container" ] [ content ]
+container : List (Attribute Msg) -> Html Msg -> Html Msg
+container classes content =
+    div ([ class "container" ] ++ classes) [ content ]
 
 
-containerList : List (Html Msg) -> Html Msg
-containerList contentList =
-    div [ class "container" ] contentList
+containerList : List (Attribute Msg) -> List (Html Msg) -> Html Msg
+containerList classes contentList =
+    div ([ class "container" ] ++ classes) contentList
 
 
 navbar =
     nav [ class "navbar navbar-info navbar-fixed-top" ]
-        [ containerList
+        [ containerList []
             [ div [ class "navbar-header" ] []
             , div [ class "collapse navbar-collapse" ]
-                [ ul [ class "nav navbar-nav navbar-right" ]
-                    [ li [] [ a [] [ text "Navigation" ] ]
+                [ ul [ class "nav navbar-nav text-center" ]
+                    [ li [] [ h3 [] [ text "QANTA AI Exhibition" ] ]
                     ]
                 ]
             ]
