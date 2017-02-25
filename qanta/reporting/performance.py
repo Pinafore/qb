@@ -120,7 +120,7 @@ def load_audit(audit_file: str, meta_file: str):
     with open(audit_file) as audit_f, open(meta_file) as meta_f:
         for a_line, m_line in zip(audit_f, meta_f):
             qid, evidence = a_line.split('\t')
-            a_qnum, a_sentence, a_token = qid.split()
+            a_qnum, a_sentence, a_token = qid.split('_')
             a_qnum = int(a_qnum)
             a_sentence = int(a_sentence)
             a_token = int(a_token)
