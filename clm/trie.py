@@ -4,8 +4,10 @@
 
 from collections import defaultdict
 from lm_base import LanguageModelBase
+from nltk import ngrams
 
 from qanta import logging
+from qanta.util.constants import CLM_INT_WORDS
 
 log = logging.get(__name__)
 
@@ -34,11 +36,13 @@ class TrieLanguageModel(LanguageModelBase):
         self._start_rank = 200
         self._unigram_smooth = 0.01
         self._cutoff = -2
+        self._score_method = "jm"
         self._censor_slop = True
         self._give_score = True
         self._log_length = True
         self._stopwords = set()
         self._start_index = start_index
+        self._vocab = {}
 
         self._jm = [1.0 / order] * order
 
@@ -65,8 +69,74 @@ class TrieLanguageModel(LanguageModelBase):
         for ii in range(self._order + 1):
             self._subtotals[corpus][ngram[0:ii]] += count
 
-    def feature(self, corpus, guess, sentence, length):
-        return "FOO"
+    def feature(self, name, corpus, sentence, length):
+        compare = self._compare[corpus]
+        
+        span_length = 0
+        num_spans = 0
+        max_length = 0
+        max_prob = float("-inf")
+
+        # Set counters for keeping track of spans
+        start = 0
+        history = []
+        slop_count = self._slop
+        # end of counters for keeping track of spans
+        
+        index = 0
+        res = []
+        for ngram in ngrams(sentence, self._order):
+             # trim history if it's too long
+             if len(history) > self._max_span:
+                 history = history[1:]
+
+             # output the history if we've seen enough
+             if len(history) > self._min_span:
+                 if CLM_INT_WORDS:
+                    tokens = "_".join(str(x) for x in history)
+                 else:
+                    tokens = "_".join(self._vocab[x] for x in history)
+                    
+                 if self._score:
+                     score = self.log_ratio(corpus, compare, history)
+                     res.append("%s:%0.2f" % (tokens, score))
+                 else:
+                    res.append("_".join(str(x) for x in history))
+                 
+             seen = self.count(corpus, ngram)
+
+             if seen > 0 and len(history) == 0:
+                 num_spans += 1
+                 span_length += 1
+                 start = index
+                 history = list(ngram)
+             elif seen > 0 and len(history) > 0:
+                 span_length += 1
+                 history.append(ngram[-1])
+             elif seen == 0 and len(history) > 0 and slop_count > 0:
+                 slop_count -= 1
+                 if self._censor_slop:
+                     history.append(QB_LM_SLOP)
+                 else:
+                     history.append(ngram[-1])
+             elif seen == 0 and slop_count == 0:
+                 max_length = max(index - start, max_length)
+                 history = []
+                 slop_count = self._slop
+
+             # Increment the index for keeping track of longest span
+             index += 1
+
+        if self._score:
+            res.append("%s-PROB:%f" % (name, self.log_ratio(corpus, compare, sentence)))
+            res.append("%s-MAXPROB:%f" % (name, max_prob))
+            
+        res.append("%s-LEN:%i" % (name, max_length))
+        res.append("%s-SPAN:%i" % (name, span_length / float(length)))
+        res.append("%s-HITS:%i" % (name, num_spans))
+        if self._log_length:
+            res.append("%s-LGLEN:%f" % (name, log(max_length)))
+        return " ".join(res)
             
     def corpora(self):
         for ii in self._subtotals:
@@ -87,18 +157,34 @@ class TrieLanguageModel(LanguageModelBase):
         """
         This function doesn't actually do anything, but is included to match C API
         """
-        None
+        with open(filename) as infile:
+            num_corpora = infile.readline()
+            num_words = infile.readline()
+
+            for ii in range(int(num_words)):
+                self._vocab[ii] = infile.readline().strip()
     
-    def jm(self, ngram, theta=None):
+    def jm(self, corpus, ngram, theta=None):
         if theta is None:
             theta = self._jm
 
         # get this context probability
         val = 0
         for nn, ww in zip([ngram[0:x] for x in range(self._order)], theta):
-            prob = self.count(nn) / self.total(nn)
+            prob = self.count(corpus, nn) / self.total(corpus, nn)
             val += ww * prob
 
+    def log_ratio(self, sequence, corpus, compare):
+        val = 0.0
+        for ii in ngrams(sequence, self._order):
+            if self._score_method == "jm":
+                val += self.jm(corpus, ii)
+                val -= self.jm(compare, ii)
+            elif self._score_method == "kn":
+                val += self.kn(corpus, ii)
+                val -= self.kn(compare, ii)
+        return val
+    
     def add_stop(self, word):
         self._stopwords.add(word)
             

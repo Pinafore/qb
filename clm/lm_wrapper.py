@@ -205,8 +205,8 @@ class LanguageModelReader(LanguageModelBase):
         # Get the counts of words in unigram and bigram
         for ii in ngrams(tokenized, CLM_ORDER):
             result["wrd"].append(" ".join(reverse_vocab[x] for x in ii))
-            result["uni_cnt"].append(self._lm.total(corpus, ii))
-            result["bi_cnt"].append(self._lm.count(corpus, ii))
+            result["uni_cnt"].append(self._lm.total(guess_id, ii))
+            result["bi_cnt"].append(self._lm.count(guess_id, ii))
 
         return result
 
