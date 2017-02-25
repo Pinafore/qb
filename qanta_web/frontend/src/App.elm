@@ -1,8 +1,9 @@
 module App exposing (..)
 
-import Html exposing (Html, text, div, img, li, ul, nav, button, a, Attribute, h3)
+import Html exposing (Html, text, div, img, li, ul, nav, button, a, Attribute, h3, span)
 import Html.Attributes exposing (src, class, type_)
-import Json.Decode exposing (int, string, float, bool, list, nullable, Decoder)
+import Json.Decode as JsonDecode
+import Json.Decode exposing (int, string, float, bool, list, nullable, Decoder, fail, succeed, andThen)
 import Json.Decode.Pipeline exposing (decode, required, optional)
 
 
@@ -12,11 +13,51 @@ type alias Model =
     }
 
 
+type AnswerStatus
+    = Unanswered
+    | Correct
+    | Wrong
+
+
+answerStatusDecoder : Decoder AnswerStatus
+answerStatusDecoder =
+    let
+        answerStatusParse : String -> Decoder AnswerStatus
+        answerStatusParse raw =
+            case raw of
+                "unanswered" ->
+                    succeed Unanswered
+
+                "correct" ->
+                    succeed Correct
+
+                "wrong" ->
+                    succeed Wrong
+
+                _ ->
+                    fail "could not parse answer status"
+    in
+        string |> andThen answerStatusParse
+
+
+renderAnswerStatus : AnswerStatus -> Html Msg
+renderAnswerStatus status =
+    case status of
+        Unanswered ->
+            span [ class "label label-info" ] [ text "Ready to Buzz" ]
+
+        Correct ->
+            span [ class "label label-success" ] [ text "Correct" ]
+
+        Wrong ->
+            span [ class "label label-danger" ] [ text "Wrong" ]
+
+
 type alias Player =
     { id : Int
     , name : String
     , score : Int
-    , answered : Bool
+    , answerStatus : AnswerStatus
     , isHuman : Bool
     }
 
@@ -27,7 +68,7 @@ playerDecoder =
         |> required "id" int
         |> required "name" string
         |> required "score" int
-        |> required "answered" bool
+        |> required "answer_status" answerStatusDecoder
         |> required "is_human" bool
 
 
@@ -93,9 +134,9 @@ dummyState =
     {
       "game_id": 0,
       "players": [
-        {"id": 1, "name": "pedro", "score": 0, "answered": true, "is_human": true},
-        {"id": 2, "name": "jordan", "score": 100, "answered": false, "is_human": true},
-        {"id": 3, "name": "qanta", "score": 50, "answered": false, "is_human": false}
+        {"id": 1, "name": "pedro", "score": 0, "answer_status": "correct", "is_human": true},
+        {"id": 2, "name": "jordan", "score": 100, "answer_status": "wrong", "is_human": true},
+        {"id": 3, "name": "qanta", "score": 50, "answer_status": "unanswered", "is_human": false}
       ],
       "text": "Who was this american president who was born in a logged cabin?",
       "buzzes": [
@@ -112,7 +153,7 @@ dummyPlayer =
     Json.Decode.decodeString
         playerDecoder
         """
-        {"id": 1, "name": "pedro", "score": 0, "answered": false, "is_human": true}
+        {"id": 1, "name": "pedro", "score": 0, "answer_status": "correct", "is_human": true}
         """
 
 
@@ -172,6 +213,7 @@ renderPlayer player =
             [ div [ class "player-card" ]
                 [ div [] [ text ("Player: " ++ player.name) ]
                 , div [] [ text ("Score: " ++ toString player.score) ]
+                , div [] [ renderAnswerStatus player.answerStatus ]
                 ]
             ]
         ]
