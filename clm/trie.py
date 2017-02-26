@@ -21,7 +21,7 @@ class Sentence:
         assert key < self._max, "%i out of range (%i)" % (key, self._max)
         return self._data[key]
 
-    
+
 
 class TrieLanguageModel(LanguageModelBase):
     def __init__(self, order=3, start_index=2):
@@ -52,7 +52,7 @@ class TrieLanguageModel(LanguageModelBase):
         if corpus not in self._contexts:
             self._contexts[corpus] = {}
             self._subtotals[corpus] = defaultdict(int)
-            
+
         context = self._contexts[corpus]
         last_index = 0
         for ii in range(self._start_index, self._order + 1):
@@ -68,10 +68,10 @@ class TrieLanguageModel(LanguageModelBase):
     def corpora(self):
         for ii in self._subtotals:
             yield ii
-            
+
     def num_corpora(self):
         return len(self._subtotals)
-            
+
     def count(self, corpus, ngram):
         return self._subtotals[corpus][ngram]
 
@@ -83,7 +83,7 @@ class TrieLanguageModel(LanguageModelBase):
         This function doesn't actually do anything, but is included to match C API
         """
         None
-    
+
     def jm(self, ngram, theta=None):
         if theta is None:
             theta = self._jm
@@ -96,7 +96,7 @@ class TrieLanguageModel(LanguageModelBase):
 
     def add_stop(self, word):
         self._stopwords.add(word)
-            
+
     def mle(self, ngram):
         return self.count(ngram) / self.total(ngram)
 
@@ -111,7 +111,7 @@ class TrieLanguageModel(LanguageModelBase):
         number_contexts = len(self._contexts[corpus_name])
         outfile.write("%i %i\n" % (corpus_id, number_contexts))
 
-        full_contexts = dict((x, y) for x, y in self._subtotals[corpus_name].items() 
+        full_contexts = dict((x, y) for x, y in self._subtotals[corpus_name].items()
                              if len(x) == self._order)
         for context, count in sorted(full_contexts.items(), reverse=True,
                                      key=lambda x: (x[1], len(x[0]))):
@@ -141,7 +141,7 @@ class TrieLanguageModel(LanguageModelBase):
                     # Every other line
                     fields = [int(x) for x in ii.split()]
                     ngram = fields[1:]
-                    log.info(fields, ngram)
+                    log.info(str(fields) + str(ngram))
                     assert len(ngram) == fields[1], "Bad line %s" % ii
                     self.add_count(corpus, ngram, fields[0])
 
@@ -178,7 +178,7 @@ class TrieLanguageModel(LanguageModelBase):
         self._score = val
 
     def set_min_start_rank(self, val):
-        self._min_start_rank = val                
+        self._min_start_rank = val
 
     def set_min_span(self, val):
         self._min_span = val
@@ -187,8 +187,8 @@ class TrieLanguageModel(LanguageModelBase):
         self._max_span = val
 
     def set_unigram_smooth(self, val):
-        self._unigram_smooth = val             
-                
+        self._unigram_smooth = val
+
 if __name__ == "__main__":
     tlm = TrieLanguageModel(3)
 
