@@ -557,11 +557,6 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                                      points=question_value))
     if computer_delta == 0:
         answer(final)
-        max_sentence = max(question_text)
-        max_words = len(question_text[max_sentence].split()) + 1
-        final_guesses = buzzes.current_guesses(question_id, max_sentence, max_words)
-        print(format_display(display_num, question_text, max_sentence, max_words, final_guesses,
-                             answer=correct, points=question_value))
         if final == correct:
             return human + human_delta, computer + 10, final
         else:
