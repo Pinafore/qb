@@ -17,6 +17,7 @@ img {
 
 .player-card {
   height: 150px;
+  padding: 10px;
 }
 
 .main-container {
@@ -25,4 +26,13 @@ img {
 
 .main {
   padding-top: 30px;
+}
+
+.buzz-status {
+  border-bottom-left-radius: 5px !important;
+  border-bottom-right-radius: 5px !important;
+}
+
+.question-text {
+  margin-bottom: 0 !important;
 }

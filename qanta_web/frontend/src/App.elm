@@ -1,15 +1,33 @@
 module App exposing (..)
 
-import Html exposing (Html, text, div, img, li, ul, nav, button, a, Attribute, h3, span)
+import Html exposing (Html, text, div, img, li, ul, nav, button, a, Attribute, h3, span, p, h4)
 import Html.Attributes exposing (src, class, type_)
+import Keyboard exposing (downs)
 import Json.Decode as JsonDecode
 import Json.Decode exposing (int, string, float, bool, list, nullable, Decoder, fail, succeed, andThen)
 import Json.Decode.Pipeline exposing (decode, required, optional)
+import Char exposing (fromCode)
+import Elements exposing (colmd, colmdoffset, card, navbar, jumbotron, row, template)
+
+
+type Msg
+    = NoOp
+    | HumanBuzz String
+    | Presses Char
 
 
 type alias Model =
-    { message : String
-    , logo : String
+    { gameState : GameState
+    , keyPress : Maybe Char
+    }
+
+
+type alias Player =
+    { id : Int
+    , name : String
+    , score : Int
+    , answerStatus : AnswerStatus
+    , isHuman : Bool
     }
 
 
@@ -17,6 +35,103 @@ type AnswerStatus
     = Unanswered
     | Correct
     | Wrong
+
+
+type alias Buzz =
+    { playerId : Int
+    , correct : Bool
+    , guess : String
+    }
+
+
+type alias GameState =
+    { gameId : Int
+    , players : List Player
+    , text : String
+    , buzzes : List Buzz
+    , answer : Maybe String
+    , isEndOfQuestion : Bool
+    }
+
+
+init : String -> ( Model, Cmd Msg )
+init path =
+    ( { gameState = defaultGameState, keyPress = Nothing }, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
+        HumanBuzz player ->
+            ( model, Cmd.none )
+
+        Presses char ->
+            ( model, Cmd.none )
+
+
+view : Model -> Html Msg
+view model =
+    let
+        parsedState =
+            case dummyState of
+                Err msg ->
+                    defaultGameState
+
+                Ok state ->
+                    state
+    in
+        div []
+            [ navbar
+            , (template
+                (div []
+                    [ row [ h3 [] [ text "Question 1" ] ]
+                    , row [ (jumbotron "question-text" Nothing "This is the start of a question!") ]
+                    , row [ renderBuzzStatus model ]
+                    , row [ h3 [] [ text "Scoreboard" ] ]
+                    , row (List.map renderPlayer parsedState.players)
+                    ]
+                )
+              )
+            ]
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Keyboard.downs (\code -> Presses (fromCode code))
+
+
+type AlertType
+    = Info
+    | Success
+    | Warning
+    | Danger
+
+
+alert : AlertType -> String -> Html a -> Html a
+alert alertType classes content =
+    let
+        alertCss =
+            case alertType of
+                Info ->
+                    "alert-info"
+
+                Success ->
+                    "alert-success"
+
+                Warning ->
+                    "alert-warning"
+
+                Danger ->
+                    "alert-danger"
+    in
+        div [ class ("alert " ++ alertCss ++ " " ++ classes) ] [ div [ class "container-fluid" ] [ content ] ]
+
+renderBuzzStatus : Model -> Html Msg
+renderBuzzStatus model =
+    colmdoffset 6 3 [ alert Success "buzz-status" (h4 [] [ text "Status: No Buzzes Yet!" ]) ]
 
 
 answerStatusDecoder : Decoder AnswerStatus
@@ -53,15 +168,6 @@ renderAnswerStatus status =
             span [ class "label label-danger" ] [ text "Wrong" ]
 
 
-type alias Player =
-    { id : Int
-    , name : String
-    , score : Int
-    , answerStatus : AnswerStatus
-    , isHuman : Bool
-    }
-
-
 playerDecoder : Decoder Player
 playerDecoder =
     decode Player
@@ -81,29 +187,12 @@ defaultPlayer =
     }
 
 
-type alias Buzz =
-    { playerId : Int
-    , correct : Bool
-    , guess : String
-    }
-
-
 buzzDecoder : Decoder Buzz
 buzzDecoder =
     decode Buzz
         |> required "player_id" int
         |> required "correct" bool
         |> required "guess" string
-
-
-type alias GameState =
-    { gameId : Int
-    , players : List Player
-    , text : String
-    , buzzes : List Buzz
-    , answer : Maybe String
-    , isEndOfQuestion : Bool
-    }
 
 
 defaultGameState =
@@ -157,42 +246,6 @@ dummyPlayer =
         """
 
 
-init : String -> ( Model, Cmd Msg )
-init path =
-    ( { message = "Your Elm App is working!", logo = path }, Cmd.none )
-
-
-type Msg
-    = NoOp
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, Cmd.none )
-
-
-view : Model -> Html Msg
-view model =
-    let
-        parsedState =
-            case dummyState of
-                Err msg ->
-                    defaultGameState
-
-                Ok state ->
-                    state
-    in
-        div []
-            [ navbar
-            , (template
-                (div []
-                    [ row (List.map renderPlayer parsedState.players)
-                    ]
-                )
-              )
-            ]
-
-
 playerList =
     let
         parsedState =
@@ -217,54 +270,3 @@ renderPlayer player =
                 ]
             ]
         ]
-
-
-template : Html Msg -> Html Msg
-template content =
-    div [ class "wrapper" ]
-        [ div [ class "main" ]
-            [ container [ class "main-container" ] content ]
-        ]
-
-
-container : List (Attribute Msg) -> Html Msg -> Html Msg
-container classes content =
-    div ([ class "container" ] ++ classes) [ content ]
-
-
-containerList : List (Attribute Msg) -> List (Html Msg) -> Html Msg
-containerList classes contentList =
-    div ([ class "container" ] ++ classes) contentList
-
-
-navbar =
-    nav [ class "navbar navbar-info navbar-fixed-top" ]
-        [ containerList []
-            [ div [ class "navbar-header" ] []
-            , div [ class "collapse navbar-collapse" ]
-                [ ul [ class "nav navbar-nav text-center" ]
-                    [ li [] [ h3 [] [ text "QANTA AI Exhibition" ] ]
-                    ]
-                ]
-            ]
-        ]
-
-
-card : List (Html Msg) -> Html Msg
-card content =
-    div [ class "card" ] content
-
-
-row : List (Html Msg) -> Html Msg
-row content =
-    div [ class "row" ] content
-
-
-colmd : Int -> List (Html Msg) -> Html Msg
-colmd colWidth content =
-    div [ class ("col-md-" ++ (toString colWidth)) ] content
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
