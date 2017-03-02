@@ -44,19 +44,26 @@ type alias Buzz =
     }
 
 
-type alias GameState =
-    { gameId : Int
-    , players : List Player
+type alias Question =
+    { id : Int
+    , qb_id : Int
     , text : String
-    , buzzes : List Buzz
     , answer : Maybe String
     , isEndOfQuestion : Bool
     }
 
 
+type alias GameState =
+    { gameId : Int
+    , players : List Player
+    , buzzes : List Buzz
+    , question : Maybe Question
+    }
+
+
 init : String -> ( Model, Cmd Msg )
 init path =
-    ( { gameState = defaultGameState, keyPress = Nothing }, Cmd.none )
+    ( { gameState = dummyState, keyPress = Nothing }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -74,28 +81,19 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    let
-        parsedState =
-            case dummyState of
-                Err msg ->
-                    defaultGameState
-
-                Ok state ->
-                    state
-    in
-        div []
-            [ navbar
-            , (template
-                (div []
-                    [ row [ h3 [] [ text "Question 1" ] ]
-                    , row [ (jumbotron "question-text" Nothing "This is the start of a question!") ]
-                    , row [ renderBuzzStatus model ]
-                    , row [ h3 [] [ text "Scoreboard" ] ]
-                    , row (List.map renderPlayer parsedState.players)
-                    ]
-                )
-              )
-            ]
+    div []
+        [ navbar
+        , (template
+            (div []
+                [ row [ h3 [] [ text "Question 1" ] ]
+                , row [ (jumbotron "question-text" Nothing "This is the start of a question!") ]
+                , row [ renderBuzzStatus model ]
+                , row [ h3 [] [ text "Scoreboard" ] ]
+                , row (List.map renderPlayer dummyState.players)
+                ]
+            )
+          )
+        ]
 
 
 subscriptions : Model -> Sub Msg
@@ -129,6 +127,7 @@ alert alertType classes content =
     in
         div [ class ("alert " ++ alertCss ++ " " ++ classes) ] [ div [ class "container-fluid" ] [ content ] ]
 
+
 renderBuzzStatus : Model -> Html Msg
 renderBuzzStatus model =
     colmdoffset 6 3 [ alert Success "buzz-status" (h4 [] [ text "Status: No Buzzes Yet!" ]) ]
@@ -155,6 +154,43 @@ answerStatusDecoder =
         string |> andThen answerStatusParse
 
 
+playerDecoder : Decoder Player
+playerDecoder =
+    decode Player
+        |> required "id" int
+        |> required "name" string
+        |> required "score" int
+        |> required "answer_status" answerStatusDecoder
+        |> required "is_human" bool
+
+
+buzzDecoder : Decoder Buzz
+buzzDecoder =
+    decode Buzz
+        |> required "player_id" int
+        |> required "correct" bool
+        |> required "guess" string
+
+
+gameStateDecoder : Decoder GameState
+gameStateDecoder =
+    decode GameState
+        |> required "game_id" int
+        |> required "players" (list playerDecoder)
+        |> required "buzzes" (list buzzDecoder)
+        |> required "question" (nullable questionDecoder)
+
+
+questionDecoder : Decoder Question
+questionDecoder =
+    decode Question
+        |> required "id" int
+        |> required "qb_id" int
+        |> required "text" string
+        |> required "answer" (nullable string)
+        |> required "is_end_of_question" bool
+
+
 renderAnswerStatus : AnswerStatus -> Html Msg
 renderAnswerStatus status =
     case status of
@@ -168,95 +204,82 @@ renderAnswerStatus status =
             span [ class "label label-danger" ] [ text "Wrong" ]
 
 
-playerDecoder : Decoder Player
-playerDecoder =
-    decode Player
-        |> required "id" int
-        |> required "name" string
-        |> required "score" int
-        |> required "answer_status" answerStatusDecoder
-        |> required "is_human" bool
-
-
+defaultPlayer : Player
 defaultPlayer =
     { id = -1
     , name = "default"
     , score = 0
-    , answered = False
+    , answerStatus = Unanswered
     , isHuman = False
     }
 
 
-buzzDecoder : Decoder Buzz
-buzzDecoder =
-    decode Buzz
-        |> required "player_id" int
-        |> required "correct" bool
-        |> required "guess" string
-
-
+defaultGameState : GameState
 defaultGameState =
     { gameId = 1
     , players = []
-    , text = ""
     , buzzes = []
-    , answer = Nothing
-    , isEndOfQuestion = False
+    , question = Just { id = 0, qb_id = 0, text = "", answer = Just "albert_einstein", isEndOfQuestion = False }
     }
 
 
-gameStateDecoder : Decoder GameState
-gameStateDecoder =
-    decode GameState
-        |> required "game_id" int
-        |> required "players" (list playerDecoder)
-        |> required "text" string
-        |> required "buzzes" (list buzzDecoder)
-        |> required "answer" (nullable string)
-        |> required "is_end_of_question" bool
-
-
+dummyState : GameState
 dummyState =
-    Json.Decode.decodeString
-        gameStateDecoder
-        """
-    {
-      "game_id": 0,
-      "players": [
-        {"id": 1, "name": "pedro", "score": 0, "answer_status": "correct", "is_human": true},
-        {"id": 2, "name": "jordan", "score": 100, "answer_status": "wrong", "is_human": true},
-        {"id": 3, "name": "qanta", "score": 50, "answer_status": "unanswered", "is_human": false}
-      ],
-      "text": "Who was this american president who was born in a logged cabin?",
-      "buzzes": [
-        {"player_id": 1, "correct": false, "guess": ""},
-        {"player_id": 3, "correct": false, "guess": "george_washington"}
-      ],
-      "answer": null,
-      "is_end_of_question": false
-    }
-  """
-
-
-dummyPlayer =
-    Json.Decode.decodeString
-        playerDecoder
-        """
-        {"id": 1, "name": "pedro", "score": 0, "answer_status": "correct", "is_human": true}
-        """
-
-
-playerList =
     let
-        parsedState =
-            case dummyState of
-                Err msg ->
-                    defaultGameState
-
-                Ok state ->
-                    state
+        parsedGameState =
+            Json.Decode.decodeString
+                gameStateDecoder
+                """
+                {
+                    "game_id": 0,
+                    "players": [
+                        {"id": 1, "name": "pedro", "score": 0, "answer_status": "correct", "is_human": true},
+                        {"id": 2, "name": "jordan", "score": 100, "answer_status": "wrong", "is_human": true},
+                        {"id": 3, "name": "qanta", "score": 50, "answer_status": "unanswered", "is_human": false}
+                    ],
+                    "buzzes": [
+                        {"player_id": 1, "correct": false, "guess": ""},
+                        {"player_id": 3, "correct": false, "guess": "george_washington"}
+                    ],
+                    "question": {
+                        "id": 0,
+                        "qb_id": 0,
+                        "text": "This american president",
+                        "answer": null,
+                        "is_end_of_question": false
+                    }
+                }
+                """
     in
-        List.map renderPlayer parsedState.players
+        case parsedGameState of
+            Ok gameState ->
+                gameState
+
+            Err _ ->
+                defaultGameState
+
+
+dummyPlayer : Player
+dummyPlayer =
+    let
+        parsedPlayer =
+            Json.Decode.decodeString
+                playerDecoder
+                """
+            {"id": 1, "name": "pedro", "score": 0, "answer_status": "correct", "is_human": true}
+            """
+    in
+        case parsedPlayer of
+            Ok player ->
+                player
+
+            Err _ ->
+                defaultPlayer
+
+
+renderPlayerList : List (Html Msg)
+renderPlayerList =
+    List.map renderPlayer dummyState.players
 
 
 renderPlayer : Player -> Html Msg
