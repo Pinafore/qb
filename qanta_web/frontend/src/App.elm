@@ -76,7 +76,7 @@ update msg model =
             ( model, Cmd.none )
 
         Presses char ->
-            ( model, Cmd.none )
+            ( { model | keyPress = Just char }, Cmd.none )
 
 
 view : Model -> Html Msg
