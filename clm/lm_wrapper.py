@@ -113,7 +113,6 @@ class LanguageModelReader(LanguageModelBase):
                  stopwords=QB_STOP_WORDS):
 
         super().__init__()
-        self._loaded_lms = set()
         self._datafile = lm_file
         self._lm = TrieLanguageModel()
         self._sentence = Sentence(CLM_MAX_LENGTH)
@@ -122,9 +121,8 @@ class LanguageModelReader(LanguageModelBase):
         self._vocab_final = True
         self._hash_names = hash_names
         self._stopwords = stopwords
-        self._vocab = {}
-        self._corpora = {}
         self._sort_voc = None
+        self._loaded_lms = set()
 
         assert(max_span >= min_span), "Max span %i must be greater than min %i" % \
             (max_span, min_span)
@@ -150,41 +148,12 @@ class LanguageModelReader(LanguageModelBase):
         self._stopwords = stopwords
 
     def init(self):
-        filename = "%s.txt" % self._datafile
-        log.info("Opening %s for LM input" % filename)
-        infile = open(filename)
-        num_lms = int(infile.readline())
-
-        vocab_size = int(infile.readline())
-        for ii in range(vocab_size):
-            self._vocab[infile.readline().strip()] = ii
-        if vocab_size > 100:
-            log.info("Done reading %i vocab (Python)" % vocab_size)
-
-        for ii in range(num_lms):
-            line = infile.readline()
-            corpus, compare = line.split()
-            compare = int(compare)
-            if ii % 1000 == 0:
-                log.info("Corpus (%s) loaded: compare %i, line %i" %
-                         (corpus, compare, ii))
-            self._corpora[corpus] = ii
-            self._lm.set_compare(ii, compare)
-
-        corpora_keys = list(self._corpora.keys())
-        if len(corpora_keys) > 10:
-            log.info(corpora_keys[:10])
-
-        self._lm.read_vocab("%s.txt" % self._datafile)
-
-        # Add stop words that are in vocabulary (unknown word is 0)
-        for i in [self.vocab_lookup(x) for x in self._stopwords if self.vocab_lookup(x) != 0]:
-            self._lm.add_stop(i)
+        self._read_vocab_and_corpora("%s.txt" % self._datafile)
 
         # Load comparisons language model
-        for i in [x for x in self._corpora if x.startswith("compare")]:
-            self._loaded_lms.add(self._corpora[i])
-            filename = "%s/%i" % (self._datafile, self._corpora[i])
+        for ii in [x for x in self._corpora if x.startswith("compare_")]:
+            self._loaded_lms.add(self._corpora[ii])
+            filename = "%s/%i" % (self._datafile, self._corpora[ii])
             log.info("reading %s" % filename)
             self._lm.read_counts(filename)
 
@@ -252,7 +221,7 @@ class LanguageModelReader(LanguageModelBase):
             guess_id = self._corpora[norm_title]
             if guess_id not in self._loaded_lms:
                 filename = "%s/%i" % (self._datafile, guess_id)
-                
+
                 contexts = self._lm.read_counts(filename)
                 log.info("read %s (%i contexts)" % (filename, contexts))
                 self._loaded_lms.add(guess_id)
@@ -287,7 +256,6 @@ class LanguageModelWriter(LanguageModelBase):
         self._order = order
         self._training_counts = DistCounter()
         self._lm = TrieLanguageModel()
-        self._sort_voc = None
 
         # Unigram counts
 
@@ -300,36 +268,6 @@ class LanguageModelWriter(LanguageModelBase):
             "Trying to add new words to finalized vocab"
 
         self._training_counts.inc(word, count)
-
-    def finalize(self, vocab=None):
-        """
-        Fixes the vocabulary as static, prevents keeping additional vocab from
-        being added
-        """
-        self._vocab_final = True
-        if vocab is None:
-            self._vocab_size = min(len(self._training_counts),
-                                   self._vocab_size)
-            vocab = sorted(self._training_counts)
-            vocab = sorted(vocab, key=lambda x: self._training_counts[x],
-                           reverse=True)[:self._vocab_size]
-
-            # Add three for unk, start, and end
-            self._vocab = dict((x, y + 3) for y, x in enumerate(vocab))
-
-            for vv, ii in enumerate([CLM_UNK_TOK, CLM_START_TOK, CLM_END_TOK]):
-                assert ii not in self._vocab, \
-                    "%s already in from %s" % (ii, str(self._vocab.keys()))
-                self._vocab[ii] = vv
-
-            self._sort_voc = sorted(self._vocab, key=lambda x: self._vocab[x])
-        else:
-            self._vocab = vocab
-
-        # -------------------------------------------------
-        # Add one for the unknown tokens
-        del self._training_counts
-        return self._vocab
 
     def add_counts(self, corpus, sentence):
 
@@ -353,31 +291,10 @@ class LanguageModelWriter(LanguageModelBase):
                 self.add_counts("compare_%i" % ii, sentence)
 
     def compare(self, title):
-        return hash(title) % self._compare
-
-    def write_vocab(self, outfile):
-        """
-        Write the text-based language model to a file
-        """
-
-        # TODO(jbg): actually write the correct mean and variance
-
-        outfile.write("%i\n" % self.num_corpora())
-        outfile.write("%i\n" % len(self._vocab))
-        vocab_size = len(self._vocab)
-        for ii in self._sort_voc:
-            outfile.write("%s\n" % ii)
-        if vocab_size > 100:
-            log.info("Done writing vocab")
-
-        corpus_num = 0
-        for cc in self.corpora():
-            outfile.write("%s %i\n" % (cc, self.compare(cc)))
-
-            if corpus_num % 100 == 0:
-                log.info("Corpus compare write {} {}".format(cc, self.compare(cc)))
-
-            corpus_num += 1
+        if title.startswith("compare_"):
+            return -1
+        else:
+            return hash(title) % self._compare
 
     def corpora(self):
         for ii in sorted(self._unigram):
@@ -451,11 +368,11 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
 
         for ii, cc in enumerate(lm.corpora()):
             with safe_open("%s/%i" % (lm_out, ii), 'w') as f:
-                        if ii % 100 == 0:
-                            log.info("Write LM corpus %s to %s" %
-                                     (cc, "%s/%i" % (lm_out, ii)))
-                        lm.write_corpus(cc, ii, f)
+                if ii % 100 == 0:
+                    log.info("Write LM corpus %s to %s" %
+                             (cc, "%s/%i" % (lm_out, ii)))
+                lm.write_corpus(cc, ii, f)
 
 
 if __name__ == "__main__":
-    build_clm(max_pages=500)
+    build_clm(max_pages=5)

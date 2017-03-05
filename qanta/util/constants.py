@@ -61,6 +61,10 @@ CLM_END_TOK = "</S>"
 CLM_SLOP_TOK = "<SLOP>"
 CLM_INT_WORDS = False
 CLM_USE_C_VERSION = False
+# how many pages can a phrase be in before we ignore it for guessing?
+CLM_MAX_GLOBAL_GUESS = 25
+# how many times must we see a phrase in a page before we use it for guessing?
+CLM_MIN_LOCAL_GUESS = 2
 
 DEEP_WE_TARGET = 'output/deep/We'
 DEEP_DAN_PARAMS_TARGET = 'output/deep/params'
