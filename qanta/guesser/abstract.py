@@ -410,7 +410,7 @@ def compute_summary_recall(questions, recall_stats):
     return recall_numbers
 
 
-def compute_recall_plot_data(recall_positions, n_questions, max_recall=200):
+def compute_recall_plot_data(recall_positions, n_questions, max_recall=c.N_GUESSES + 20):
     x = list(range(1, max_recall + 1))
     y = [0] * max_recall
     for r in recall_positions:
