@@ -1,5 +1,7 @@
 import os
 import pickle
+import requests
+import json
 from time import sleep
 from multiprocessing import Pool
 from requests import ConnectionError
@@ -149,7 +151,28 @@ class CachedWikipedia:
             return CachedWikipedia.load_page(key)
         return raw
 
+    def get_wikidata(self, key: str):
+        web_page = "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" + key + "&language=en&format=json"
+        headers = {"Accept": "application/json"}
+        req = requests.get(web_page, headers=headers)
+
+        try:
+            if not req.json()['search']:
+                print('No results ' + search_term + " : " + search_term)
+            else:
+                id = req.json()['search'][0]['id']
+                url = req.json()['search'][0]['concepturi']
+                headers = {"Accept": "application/json"}
+                req = requests.get(url, headers=headers)
+                claims = req.json()['entities'][id]['claims']
+                return claims
+
+        except ValueError:
+            print('Decoding JSON has failed : ' + search_term + " : " + search_term)
+            return None
+
     def __getitem__(self, key: str):
+        unformatted_key = key
         key = format_guess(key)
         if key in self.cache:
             return self.cache[key]
@@ -183,8 +206,13 @@ class CachedWikipedia:
             if raw:
                 if len(raw) > 1:
                     log.info("%i pages for %s" % (len(raw), key))
+
+                wikidata = self.get_wikidata(unformatted_key)
+                wikidata_str = "\n\n== WikiData Properties ==\n\n" + ''.join('{}{}'.format(key, val) for key, val in wikidata.items()) + "\n\n"
+                wikipedia_data = "\n".join(x.content for x in raw)
+                data = wikipedia_data + wikidata_str
                 page = WikipediaPage(
-                    "\n".join(x.content for x in raw),
+                    data,
                     seq(raw).map(lambda x: x.links).flatten().list(),
                     seq(raw).map(lambda x: x.categories).flatten().list())
 
