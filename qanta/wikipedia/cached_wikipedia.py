@@ -158,7 +158,7 @@ class CachedWikipedia:
 
         try:
             if not req.json()['search']:
-                print('No results ' + search_term + " : " + search_term)
+                log.info("No results "" + search_term + " : " + search_term)
             else:
                 id = req.json()['search'][0]['id']
                 url = req.json()['search'][0]['concepturi']
@@ -168,7 +168,7 @@ class CachedWikipedia:
                 return claims
 
         except ValueError:
-            print('Decoding JSON has failed : ' + search_term + " : " + search_term)
+            log.info("Decoding JSON has failed : " + search_term + " : " + search_term)
             return None
 
     def __getitem__(self, key: str):
