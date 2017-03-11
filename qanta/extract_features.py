@@ -37,11 +37,6 @@ def instantiate_feature(feature_name: str):
     log.info('Loading feature {} ...'.format(feature_name))
     if feature_name == 'lm':
         feature = LanguageModel()
-    elif feature_name == 'deep':
-
-        feature = DeepExtractor()
-    elif feature_name == 'wikilinks':
-        feature = WikiLinks()
     elif feature_name == 'answer_present':
         feature = AnswerPresent()
     elif feature_name == 'stats':

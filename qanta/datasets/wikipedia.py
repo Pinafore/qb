@@ -43,4 +43,4 @@ class WikipediaDataset(AbstractDataset):
                 training_examples.append(sentence)
             train_x.append(training_examples)
             train_y.append(page)
-        return train_x, train_y
+        return train_x, train_y, None

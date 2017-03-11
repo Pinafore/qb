@@ -87,4 +87,3 @@ class WikifierOutput(Task):
 class Preprocess(WrapperTask):
     def requires(self):
         yield KenLM()
-        yield WikifierOutput()

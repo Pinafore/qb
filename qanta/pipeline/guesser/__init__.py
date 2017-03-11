@@ -9,6 +9,9 @@ from qanta.pipeline.preprocess import Preprocess
 from qanta.util import constants as c
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_path, safe_open
+from qanta import logging
+
+log = logging.get(__name__)
 
 
 def get_class(instance_module: str, instance_class: str):
@@ -65,6 +68,8 @@ class GenerateGuesses(Task):
     guesser_class = luigi.Parameter()  # type: str
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
+    word_skip = luigi.IntParameter(default=-1)  # type: int
+    n_guesses = luigi.IntParameter(default=c.N_GUESSES)  # type: int
 
     def requires(self):
         yield TrainGuesser(
@@ -79,20 +84,21 @@ class GenerateGuesses(Task):
         guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
-        guess_df = guesser_instance.generate_guesses(c.N_GUESSES, c.ALL_FOLDS)
-        guesser_class.save_guesses(guess_df, guesser_directory)
+        for fold in c.ALL_FOLDS:
+            log.info('Generating and saving guesses for {} fold'.format(fold))
+            log.info('Starting guess generation...')
+            guess_df = guesser_instance.generate_guesses(self.n_guesses, [fold],
+                                                         word_skip=self.word_skip)
+            log.info('Starting guess saving...')
+            guesser_class.save_guesses(guess_df, guesser_directory, [fold])
+            log.info('Done saving guesses')
 
     def output(self):
-        return [
-            LocalTarget(output_path(
-                self.guesser_module, self.guesser_class, 'guesses_train.pickle')),
-            LocalTarget(output_path(
-                self.guesser_module, self.guesser_class, 'guesses_dev.pickle')),
-            LocalTarget(output_path(
-                self.guesser_module, self.guesser_class, 'guesses_test.pickle')),
-            LocalTarget(output_path(
-                self.guesser_module, self.guesser_class, 'guesses_devtest.pickle')),
-        ]
+        targets = []
+        for fold in c.ALL_FOLDS:
+            targets.append(LocalTarget(output_path(
+                self.guesser_module, self.guesser_class, 'guesses_{}.pickle'.format(fold))))
+        return targets
 
 
 class GuesserReport(Task):
@@ -146,4 +152,28 @@ class AllGuessers(WrapperTask):
                 guesser_class=guesser_class,
                 dependency_module=dependency_module,
                 dependency_class=dependency_class
+            )
+
+
+class AllWordLevelGuesses(WrapperTask):
+    def requires(self):
+        for guesser, dependency in c.GUESSER_LIST:
+            parts = guesser.split('.')
+            guesser_module = '.'.join(parts[:-1])
+            guesser_class = parts[-1]
+
+            if dependency is None:
+                dependency_module = None
+                dependency_class = None
+            else:
+                parts = dependency.split('.')
+                dependency_module = '.'.join(parts[:-1])
+                dependency_class = parts[-1]
+
+            yield GenerateGuesses(
+                guesser_module=guesser_module,
+                guesser_class=guesser_class,
+                dependency_module=dependency_module,
+                dependency_class=dependency_class,
+                word_skip=1
             )

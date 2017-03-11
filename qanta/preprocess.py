@@ -6,6 +6,7 @@ from qanta import logging
 from nltk import word_tokenize
 from sklearn.cross_validation import train_test_split
 
+from qanta.datasets.abstract import TrainingData
 
 log = logging.get(__name__)
 
@@ -46,7 +47,7 @@ def format_guess(guess):
     return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
 
 
-def preprocess_dataset(data: Tuple[List[List[str]], List[str]], train_size=.9,
+def preprocess_dataset(data: TrainingData, train_size=.9,
                        vocab=None, class_to_i=None, i_to_class=None):
     for i in range(len(data[1])):
         data[1][i] = format_guess(data[1][i])

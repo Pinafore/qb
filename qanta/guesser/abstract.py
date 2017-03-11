@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 import pickle
 from pprint import pformat
 
@@ -19,9 +19,11 @@ from qanta.datasets.abstract import TrainingData, QuestionText, Answer
 from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
 from qanta.util import constants as c
 from qanta.util.io import safe_path
+from qanta import logging
 
 
 Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
+log = logging.get(__name__)
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -44,12 +46,16 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         Given training data, train this guesser so that it can produce guesses.
 
-        training_data can be seen as a tuple of two elements which are (train_x, train_y).
+        training_data can be seen as a tuple of two elements which are
+        (train_x, train_y, properties).
         In this case train_x is a list of question runs. For example, if the answer for a question
         is "Albert Einstein" the runs might be ["This", "This German", "This German physicist", ...]
         train_y is a list of true labels. The questions are strings and the true labels are strings.
         Labels are in canonical form. Questions are not preprocessed in any way. To implement common
         pre-processing refer to the qanta/guesser/preprocessing module.
+
+        properties is either None or a list of dictionaries that contain extra information about
+        each training example
 
         :param training_data: training data in the format described above
         :return: This function does not return anything
@@ -59,7 +65,7 @@ class AbstractGuesser(metaclass=ABCMeta):
     @abstractmethod
     def guess(self,
               questions: List[QuestionText],
-              max_n_guesses: int) -> List[List[Tuple[Answer, float]]]:
+              max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         """
         Given a list of questions as text, return n_guesses number of guesses per question. Guesses
         must be returned in canonical form, are returned with a score in which higher is better, and
@@ -70,7 +76,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         AbstractGuesser.train is called or AbstractGuesser.load is called.
 
         :param questions: Questions to guess on
-        :param max_n_guesses: Number of guesses to produce per question
+        :param max_n_guesses: Number of guesses to produce per question, if None then return all
+        of them if possible
         :return: List of top guesses per question
         """
         pass
@@ -123,7 +130,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         return {}
 
-    def generate_guesses(self, max_n_guesses: int, folds: List[str]) -> pd.DataFrame:
+    def generate_guesses(self, max_n_guesses: int, folds: List[str], word_skip=-1) -> pd.DataFrame:
         """
         Generates guesses for this guesser for all questions in specified folds and returns it as a
         DataFrame
@@ -132,6 +139,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         train. Unexpected behavior may occur if that is not the case.
         :param max_n_guesses: generate at most this many guesses per question, sentence, and token
         :param folds: which folds to generate guesses for
+        :param word_skip: by default, generate sentence level buzzes, if not set to -1 then generate
+        buzzes every word_skip words
         :return: dataframe of guesses
         """
         dataset = self.qb_dataset()
@@ -146,7 +155,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         for fold in folds:
             questions = questions_by_fold[fold]
             for q in questions:
-                for sent, token, text_list in q.partials():
+                for sent, token, text_list in q.partials(word_skip=word_skip):
                     text = ' '.join(text_list)
                     question_texts.append(text)
                     q_folds.append(fold)
@@ -159,6 +168,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         if len(guesses_per_question) != len(question_texts):
             raise ValueError('Guesser not returning the right number of answers')
 
+        log.info('Creating guess dataframe from guesses...')
         df_qnums = []
         df_sentences = []
         df_tokens = []
@@ -198,8 +208,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         return os.path.join(directory, 'guesses_{}.pickle'.format(fold))
 
     @staticmethod
-    def save_guesses(guess_df: pd.DataFrame, directory: str):
-        folds = ['train', 'dev', 'test', 'devtest']
+    def save_guesses(guess_df: pd.DataFrame, directory: str, folds: List[str]):
         for fold in folds:
             fold_df = guess_df[guess_df.fold == fold]
             output_path = AbstractGuesser.guess_path(directory, fold)
@@ -410,7 +419,12 @@ def compute_summary_recall(questions, recall_stats):
     return recall_numbers
 
 
-def compute_recall_plot_data(recall_positions, n_questions, max_recall=c.N_GUESSES + 20):
+def compute_recall_plot_data(recall_positions, n_questions,
+                             max_recall=c.N_GUESSES + int(c.N_GUESSES * .1)):
+    """
+    Compute the recall, compute recall out a little further than number of guesses to give the
+    plot that uses this data some margin on the right side
+    """
     x = list(range(1, max_recall + 1))
     y = [0] * max_recall
     for r in recall_positions:

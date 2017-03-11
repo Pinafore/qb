@@ -7,8 +7,8 @@ import random
 import numpy as np
 
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.datasets.abstract import AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
+from qanta.datasets.abstract import AbstractDataset, TrainingData
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 
 class RandomGuesser(AbstractGuesser):
@@ -26,23 +26,16 @@ class RandomGuesser(AbstractGuesser):
         self.answer_pdf = []
         self.answer_set = set()
 
-    @property
-    def requested_datasets(self) -> Dict[str, AbstractDataset]:
-        return {
-            'qb': QuizBowlEvaluationDataset()
-        }
-
     @classmethod
     def display_name(cls) -> str:
         return 'random'
 
     def train(self,
-              training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
+              training_data: TrainingData) -> None:
         answer_counts = defaultdict(int)
-        for dataset in training_data:
-            examples, labels = training_data[dataset]
-            for answer in labels:
-                answer_counts[answer] += 1
+        examples, labels, _ = training_data
+        for answer in labels:
+            answer_counts[answer] += 1
 
         for i, answer in enumerate(answer_counts):
             self.answer_lookup[answer] = i

@@ -84,9 +84,14 @@ class Question:
     def flatten_text(self):
         return " ".join(self.text[x] for x in sorted(self.text))
 
-    def to_example(self) -> Tuple[List[QuestionText], Answer]:
+    def to_example(self) -> Tuple[List[QuestionText], Answer, Dict]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
-        return sentence_list, self.page
+        properties = {
+            'ans_type': self.ans_type,
+            'category': self.category,
+            'gender': self.gender
+        }
+        return sentence_list, self.page, properties
 
 
 class QuestionDatabase:
@@ -227,11 +232,13 @@ class QuizBowlDataset(AbstractDataset):
             .map(lambda q: q.to_example())
         training_examples = []
         training_answers = []
-        for example, answer in filtered_questions:
+        training_properties = []
+        for example, answer, properties in filtered_questions:
             training_examples.append(example)
             training_answers.append(answer)
+            training_properties.append(properties)
 
-        return training_examples, training_answers
+        return training_examples, training_answers, training_properties
 
     def questions_by_fold(self) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())
