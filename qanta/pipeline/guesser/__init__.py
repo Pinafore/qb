@@ -175,5 +175,6 @@ class AllWordLevelGuesses(WrapperTask):
                 guesser_class=guesser_class,
                 dependency_module=dependency_module,
                 dependency_class=dependency_class,
-                word_skip=1
+                word_skip=1,
+                n_guesses=25
             )

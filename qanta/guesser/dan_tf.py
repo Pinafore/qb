@@ -254,7 +254,6 @@ class TFDanModel:
                 )
                 in_dim = None
             logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
-            representation_layer = layer_out
             with tf.name_scope('cross_entropy'):
                 self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=tf.to_int64(self.label_placeholder))
@@ -394,7 +393,7 @@ class TFDanModel:
             column_index = [[i] for i in range(self.batch_size)]
             for x_batch, y_batch, x_len_batch in _create_batches(
                     self.batch_size, x_test, y_test, x_test_lengths, pad=True, shuffle=False):
-                if batch_i % 100 == 0:
+                if batch_i % 250 == 0:
                     log.info('Starting batch {}'.format(batch_i))
                 feed_dict = {
                     self.input_placeholder: x_batch,
@@ -463,7 +462,7 @@ class DANGuesser(AbstractGuesser):
     def train(self,
               training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
+        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -471,7 +470,7 @@ class DANGuesser(AbstractGuesser):
 
         if self.use_wiki:
             wiki_training_data = WikipediaDataset(self.min_answers).training_data()
-            x_train_wiki, y_train_wiki, _, _, _, _, _ = preprocess_dataset(
+            x_train_wiki, y_train_wiki, _, _, _, _, _, _, _ = preprocess_dataset(
                 wiki_training_data, train_size=1, vocab=vocab, class_to_i=class_to_i,
                 i_to_class=i_to_class)
 

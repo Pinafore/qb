@@ -88,7 +88,7 @@ class Question:
         sentence_list = [self.text[i] for i in range(len(self.text))]
         properties = {
             'ans_type': self.ans_type,
-            'category': self.category,
+            'category': self.category.split(':')[0],
             'gender': self.gender
         }
         return sentence_list, self.page, properties
