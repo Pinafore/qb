@@ -13,7 +13,7 @@ from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import COUNTRY_LIST_PATH
 from qanta.util.environment import QB_QUESTION_DB
-from qanta.preprocess import format_guess
+from qanta.preprocess import format_guess, format_search
 from functional import seq
 
 log = logging.get(__name__)
@@ -151,29 +151,70 @@ class CachedWikipedia:
             return CachedWikipedia.load_page(key)
         return raw
 
-    def get_wikidata(self, key: str):
-        web_page = "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" + key + "&language=en&format=json"
+    def get_property_name(self, property: str):
+        web_page = "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + property + "&languages=en&props=labels&format=json"
+        headers = {"Accept": "application/json"}
+        req = requests.get(web_page, headers=headers)
+        name = req.json()['entities'][property]['labels']['en']['value']
+        return name
+
+    def get_entity_name(self, entity: str):
+        web_page = "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + entity + "&languages=en&props=labels&format=json"
+        headers = {"Accept": "application/json"}
+        req = requests.get(web_page, headers=headers)
+        try:
+            name = req.json()['entities'][entity]['labels']['en']['value']
+            return name
+        except KeyError:
+            log.info(entity + "key error")
+            return None
+
+    def get_wikidata(self, search_term: str):
+        web_page = "https://www.wikidata.org/w/api.php?action=wbsearchentities&search=" + search_term + "&language=en&format=json"
         headers = {"Accept": "application/json"}
         req = requests.get(web_page, headers=headers)
 
         try:
             if not req.json()['search']:
-                log.info("No results "" + search_term + " : " + search_term)
+                print('No results ' + search_term + " : " + search_term)
+                return None
             else:
-                id = req.json()['search'][0]['id']
-                url = req.json()['search'][0]['concepturi']
+                jobj = req.json()
+                id = jobj['search'][0]['id'] # retreiving the first result since it is the most relevant
+                url = jobj['search'][0]['concepturi']
                 headers = {"Accept": "application/json"}
                 req = requests.get(url, headers=headers)
                 claims = req.json()['entities'][id]['claims']
                 return claims
 
-        except ValueError:
-            log.info("Decoding JSON has failed : " + search_term + " : " + search_term)
+        except (ValueError, IndexError):
+            print('Decoding JSON has failed : ' + search_term + " : " + search_term)
             return None
 
+    def get_formatted_wikidata(self, search_term: str):
+        p = self.get_wikidata(search_term)
+        pobj = {}
+        keys = p.keys()
+
+        for prop in keys:
+            # P2959 is permanent duplicated item
+            if prop == 'P2959':
+                continue
+
+            prop_name = self.get_property_name(prop)
+            if p[prop][0]['mainsnak']['datatype'] == "wikibase-item":
+                val = p[prop][0]['mainsnak']['datavalue']['value']['id']
+                # get value in english
+                val_name = self.get_entity_name(val)
+            else:
+                val_name = p[prop][0]['mainsnak']['datavalue']['value']
+
+            pobj[prop_name.lower()] = val_name
+        return pobj
+
     def __getitem__(self, key: str):
-        unformatted_key = key
         key = format_guess(key)
+        search_key = format_search(key)
         if key in self.cache:
             return self.cache[key]
 
@@ -207,8 +248,10 @@ class CachedWikipedia:
                 if len(raw) > 1:
                     log.info("%i pages for %s" % (len(raw), key))
 
-                wikidata = self.get_wikidata(unformatted_key)
-                wikidata_str = "\n\n== WikiData Properties ==\n\n" + ''.join('{}{}'.format(key, val) for key, val in wikidata.items()) + "\n\n"
+                #wikidata = self.get_wikidata(unformatted_key)
+                wikidata = self.get_formatted_wikidata(search_key)
+                #wikidata_str = "\n\n== WikiData Properties ==\n\n" + ''.join('{}{}'.format(key, val) for key, val in wikidata.items()) + "\n\n"
+                wikidata_str = "\n\n== WikiData Properties ==\n\n" + str(wikidata) + "\n\n"
                 wikipedia_data = "\n".join(x.content for x in raw)
                 data = wikipedia_data + wikidata_str
                 page = WikipediaPage(
