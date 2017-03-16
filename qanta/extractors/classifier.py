@@ -19,7 +19,7 @@ class Classifier(AbstractFeatureExtractor):
     def score_guesses(self, guesses, text):
         features = ['|classifier']
         for class_type, classifier in self.classifiers.items():
-            probabilities = classifier.predict_proba(text)
+            probabilities = classifier.predict_proba([text])
             if len(probabilities) == 0:
                 for label in classifier.classes_:
                     features.append(
