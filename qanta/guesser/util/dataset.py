@@ -6,13 +6,10 @@ import pickle
 
 from qanta.guesser.util.preprocessing import preprocess_answer, preprocess_text
 from qanta.util import constants
+from qanta.util.constants import QUIZ_BOWL_DS, WIKI_DS
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.io import pickle_cache
 from qanta.datasets.quiz_bowl import QuestionDatabase
-
-
-QUIZ_BOWL_DS = 'qb'
-WIKI_DS = 'wiki'
 
 
 def _fname_maker(datasets):
@@ -67,13 +64,13 @@ def get_all_questions(datasets, folds=None):
     if folds is None:
         folds = ['train']
     db = QuestionDatabase(QB_QUESTION_DB)
-    pages = set(db.page_by_count(min_count=constants.MIN_APPEARANCES))
+    pages = set(db.page_by_count(exclude_test=True, min_count=constants.MIN_APPEARANCES))
 
     result = {}
-    if Dataset.QUIZ_BOWL in datasets:
-        result[Dataset.QUIZ_BOWL] = chain.from_iterable(_qb_generator(db, pages, fold=fold) for fold in folds)
+    if QUIZ_BOWL_DS in datasets:
+        result[QUIZ_BOWL_DS] = chain.from_iterable(_qb_generator(db, pages, fold=fold) for fold in folds)
 
-    if Dataset.WIKI in datasets:
-        result[Dataset.WIKI] = _wiki_generator(pages)
+    if WIKI_DS in datasets:
+        result[WIKI_DS] = _wiki_generator(pages)
 
     return result

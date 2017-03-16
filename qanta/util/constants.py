@@ -35,7 +35,7 @@ LM_OPT_FEATURES = [LM]
 MENTIONS_OPT_FEATURES = [MENTIONS]
 
 GUESSER_LIST = [
-    ('qanta.guesser.tf.dan.TFDan', None)
+    ('qanta.guesser.tf.dan.TFDan', 'qanta.pipeline.wiki_questions.SelectWikiQuestions')
 ]
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
@@ -51,6 +51,9 @@ DEEP_DAN_PARAMS_TARGET = 'output/deep/params'
 DEEP_TF_PARAMS_TARGET = 'output/deep/tfparams'
 DEEP_EXPERIMENT_FLAG = 'output/deep/experiment_done'
 DEEP_EXPERIMENT_S3_BUCKET = 's3://tfexperiments'
+
+QUIZ_BOWL_DS = 'qb'
+WIKI_DS = 'wiki'
 
 DOMAIN_TARGET_PREFIX = 'output/deep/domain_data'
 DOMAIN_MODEL_FORMAT = 'output/deep/domain_clf{}.vw'
@@ -90,6 +93,6 @@ VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.csv'
 VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.pdf'
 
 NEGATIVE_WEIGHTS = [16]
-MIN_APPEARANCES = 5
+MIN_APPEARANCES = 2
 MAX_APPEARANCES = 5
 N_GUESSES = 200

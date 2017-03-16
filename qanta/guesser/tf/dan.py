@@ -8,12 +8,18 @@ from pathlib import Path
 import pickle
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser.dan_tf import _create_embeddings
+try:
+    from qanta.guesser.tf.experiments import experiments
+except ImportError:
+    experiments = [{}]
 from qanta.guesser.util.dataset import get_or_make_id_map, get_all_questions
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.constants import (DEEP_DAN_PARAMS_TARGET, DEEP_EXPERIMENT_S3_BUCKET,
-                                  DEEP_EXPERIMENT_FLAG, DEEP_TF_PARAMS_TARGET, N_GUESSES)
+                                  DEEP_EXPERIMENT_FLAG, DEEP_TF_PARAMS_TARGET, N_GUESSES,
+                                  QUIZ_BOWL_DS, WIKI_DS)
 from qanta.util.environment import QB_TF_EXPERIMENT_ID
 from qanta.util.io import shell, safe_open
 import random
@@ -22,8 +28,6 @@ import tempfile
 import tensorflow as tf
 import time
 
-QUIZ_BOWL_DS = 'qb'
-WIKI_DS = 'wiki'
 
 sys.setrecursionlimit(4096)
 
@@ -40,8 +44,14 @@ def _make_layer(i, in_tensor, n_out, op, n_in=None, dropout_prob=None):
 
 
 class TFDan(AbstractGuesser):
-    def __init__(self, **params):
-        self._is_train = params.get('is_train', True)
+    def __init__(self, is_train=True, label_map=None, embedding_shape=None, word_ids=None, **kwargs):
+        self._is_train = is_train
+        self._label_map = label_map
+        self._embedding_shape = embedding_shape
+        self._word_ids = word_ids
+
+        params = dict(experiments[QB_TF_EXPERIMENT_ID]) if is_train else kwargs
+        log.info('Params %s', params)
         self._batch_size = params.get('batch_size', 128)
         self._max_epochs = params.get('max_epochs', 50)
         self._init_scale = params.get('init_scale', 0.06)
@@ -60,32 +70,12 @@ class TFDan(AbstractGuesser):
         self._learning_rate = params.get('learning_rate', 0.0001)
         self._l2_rho = params.get('rho', 10**-5)
         self._dataset_weights = params.get('dataset_weights', None)
-        self._label_map = params.get('label_map', None)
-        self._embedding_shape = params.get('embedding_shape', None)
-        self._word_ids = params.get('word_ids', None)
+        self._use_wiki = params.get('use_wiki', False)
         self._params = params
 
 
         if self._dataset_weights is None:
             self._dataset_weights = {QUIZ_BOWL_DS: 1, WIKI_DS: 1}
-
-    def __enter__(self):
-        # self._graph_manager = tf.Graph().as_default()
-        # self._graph_manager.__enter__()
-        self._session = tf.Session()
-        self._session.__enter__()
-
-        self._var_scope = tf.variable_scope(
-            'dan',
-            reuse=(None if self._is_train else True),
-            initializer=tf.random_uniform_initializer(minval=-self._init_scale, maxval=self._init_scale))
-        self._var_scope.__enter__()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        # self._graph_manager.__exit__(exc_type, exc_value, traceback)
-        self._var_scope.__exit__(exc_type, exc_value, traceback)
-        self._session.__exit__(exc_type, exc_value, traceback)
 
     def _setup(self, data):
         if self._is_train:
@@ -104,7 +94,7 @@ class TFDan(AbstractGuesser):
              self._max_len,
              self._label_map,
              self._word_ids,
-             self._answer_counts) = self._load_data(datasets=data)
+             self._answer_counts) = self._load_data(qb_data=data)
         else:
             self._n_classes = len(self._label_map)
             embeddings = None
@@ -116,7 +106,7 @@ class TFDan(AbstractGuesser):
 
     def train(self, data):
         with tf.Graph().as_default(), tf.Session() as self._session,\
-            tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(minval=-self._init_scale, maxval=self._init_scale)):
+            tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(-self._init_scale, self._init_scale)):
 
             self._setup(data=data)
             return self._run_training()
@@ -167,7 +157,7 @@ class TFDan(AbstractGuesser):
         with tf.variable_scope('prediction_net'):
             layer_out = self._representation_layer
             in_dim = self._hidden_units
-            self._prediction_dropout_var = tf.get_variable('prediction_dropout', (), dtype=tf.float32, trainable=False)
+            self._prediction_dropout_var = tf.get_variable('prediction_dropout', (), dtype=tf.float32, trainable=False, initializer=tf.constant_initializer())
             for i in range(self._n_prediction_layers - 1):
                 layer_out, w = _make_layer(i, layer_out, n_in=in_dim, n_out=self._hidden_units, op=tf.nn.relu, dropout_prob=self._prediction_dropout_var)
                 weights.append(w)
@@ -218,7 +208,7 @@ class TFDan(AbstractGuesser):
 
         # Apply dropout at word level
         if self._is_train and self._word_drop > 0:
-            self._word_drop_var = tf.get_variable('word_drop', (), dtype=tf.float32, trainable=False)
+            self._word_drop_var = tf.get_variable('word_drop', (), dtype=tf.float32, trainable=False, initializer=tf.constant_initializer())
             drop_filter = tf.nn.dropout(tf.ones((self._max_len, 1)), keep_prob=(1 - self._word_drop_var))
             sent_vecs = sent_vecs * drop_filter
 
@@ -273,7 +263,7 @@ class TFDan(AbstractGuesser):
         self._lstm_max_len = tf.get_variable('lstm_max_len', dtype=tf.int32, initializer=tf.constant(-1), trainable=False)
         cell = tf.nn.rnn_cell.LSTMCell(self._hidden_units, forget_bias=1.0, state_is_tuple=True, use_peepholes=True)
         if self._is_train:
-            self._lstm_dropout_var = tf.get_variable('lstm_dropout', (), dtype=tf.float32, trainable=False)
+            self._lstm_dropout_var = tf.get_variable('lstm_dropout', (), dtype=tf.float32, trainable=False, initializer=tf.constant_initializer())
             cell = tf.nn.rnn_cell.DropoutWrapper(cell,
                                                  output_keep_prob=1 - self._lstm_dropout_var,
                                                  input_keep_prob=1 - self._lstm_dropout_var)
@@ -287,15 +277,19 @@ class TFDan(AbstractGuesser):
         outputs = tf.gather(outputs, indices)
         return outputs
 
-    def _load_data(self, datasets, len_limit=200):
+    def _load_data(self, qb_data, len_limit=200):
         """Load training data"""
+        datasets = {QUIZ_BOWL_DS: qb_data}
+        if self._use_wiki:
+            datasets[WIKI_DS] = FilteredWikipediaDataset().training_data()
         preprocessed_datasets = {}
         vocab = set()
         class_to_i = {}
         i_to_class = []
         x_val = []
         y_val = []
-        for dataset_name, dataset in sorted(datasets.items(), key=lambda n: n != QUIZ_BOWL_DS):
+        for dataset_name, dataset in sorted(datasets.items(), key=lambda item: item[0] != QUIZ_BOWL_DS):
+            log.info('Processing %s. %d examples', dataset_name, len(dataset[0]))
             results = preprocess_dataset(
                 dataset,
                 train_size=0.9 if dataset_name == QUIZ_BOWL_DS else 1,
@@ -303,10 +297,12 @@ class TFDan(AbstractGuesser):
                 class_to_i=class_to_i,
                 i_to_class=i_to_class)
             preprocessed_datasets[dataset_name] = results[:2]
+            log.info('# of classes %d', len(class_to_i))
             x_val.extend(results[2])
             y_val.extend(results[3])
 
         embeddings, word_ids = _create_embeddings(vocab)
+        log.info('Creating embeddings')
         embeddings = np.vstack((embeddings, np.zeros(embeddings[0].shape), np.zeros(embeddings[0].shape)))
         start_token_index = embeddings.shape[0] - 2
         end_token_index = embeddings.shape[0] - 1
@@ -626,6 +622,7 @@ class TFDan(AbstractGuesser):
         return representations
 
     def restore(self, path):
+        print('Restoring')
         self._saver.restore(self._session, str(path))
 
     def save(self, directory):
@@ -646,7 +643,7 @@ class TFDan(AbstractGuesser):
         unk_index = self._word_ids['UNK']
         for q in questions:
             row = [start_token_index]
-            row.extend(self._word_ids.get(w, unk_index) for w in tokenize_question(q))
+            row.extend(self._word_ids.get(w, unk_index) + 1 for w in tokenize_question(q))
             row.append(end_token_index)
             lens.append(len(row))
             max_len = max(len(row), max_len)
@@ -658,8 +655,7 @@ class TFDan(AbstractGuesser):
 
 
     def guess(self, questions, max_n_guesses):
-        with tf.Graph().as_default(), tf.Session() as self._session,\
-            tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(minval=-self._init_scale, maxval=self._init_scale)):
+        with tf.Graph().as_default(), tf.Session() as self._session, tf.variable_scope('dan', reuse=None):
             self._setup(None)
             self.restore(DEEP_DAN_PARAMS_TARGET)
 
@@ -688,7 +684,7 @@ class TFDan(AbstractGuesser):
 
     @property
     def requested_datasets(self):
-        return {QUIZ_BOWL_DS: QuizBowlDataset(5)}
+        return {QUIZ_BOWL_DS: QuizBowlDataset(1), WIKI_DS: FilteredWikipediaDataset()}
 
     @classmethod
     def targets(cls):
@@ -786,6 +782,7 @@ if __name__ == '__main__':
     run_experiment({'init_scale': 0.08,
                     'use_qb': True,
                     'use_wiki': True,
+
                     'adversarial': True,
                     'max_epochs': 70,
                     'n_prediction_layers': 2,
