@@ -46,6 +46,8 @@ def tokenize_question(text: str) -> List[str]:
 def format_guess(guess):
     return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
 
+def format_search(search):
+    return search.replace("_", " ")
 
 def preprocess_dataset(data: TrainingData, train_size=.9,
                        vocab=None, class_to_i=None, i_to_class=None):
