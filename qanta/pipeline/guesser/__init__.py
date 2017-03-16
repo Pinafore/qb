@@ -118,7 +118,8 @@ class GuesserReport(Task):
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
-        guesser_class.create_report(guesser_directory)
+        guesser_instance = guesser_class()
+        guesser_instance.create_report(guesser_directory)
 
     def output(self):
         return [LocalTarget(output_path(
