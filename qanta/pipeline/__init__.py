@@ -6,6 +6,11 @@ from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor, V
 from qanta.pipeline.preprocess import Preprocess
 
 
+@luigi.Task.event_handler(luigi.Event.PROCESSING_TIME)
+def get_execution_time(self, processing_time):
+    self.execution_time = processing_time
+
+
 class Summary(Task):
     fold = luigi.Parameter()
 

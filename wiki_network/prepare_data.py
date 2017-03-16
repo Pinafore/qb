@@ -31,13 +31,16 @@ def generate_questions():
 
 @main.command()
 def preprocess_titles():
-    stop_words = set(stopwords.words('english'))
+    # stop_words = set(stopwords.words('english'))
     titles_file = open('data/titles-sorted.txt')
+    db = QuestionDatabase()
+    pages = {format_guess(page) for page in db.questions_with_pages().keys()}
     with open('data/processed-titles-sorted.txt', 'w') as f:
         for line in titles_file:
-            page = line.strip().lower()
-            if len(page) > 2 and re.match(r"^[a-zA-Z0-9_()']+$", page)\
-                    and page not in stop_words and page[0].isalnum():
+            page = format_guess(line.strip().lower())
+            # if len(page) > 2 and re.match(r"^[a-zA-Z0-9_()']+$", page)\
+            #         and page not in stop_words and page[0].isalnum():
+            if page in pages:
                 f.write(line.strip().lower())
             else:
                 f.write('@')
@@ -57,15 +60,14 @@ def n2v_edge_list():
     n = 0
     with open('data/processed-titles-sorted.txt') as f:
         for line in f:
-            line = line.strip()
-            if line == '@':
+            title = line.strip()
+            if title == '@':
                 n_invalid_titles += 1
             else:
-                normed_title = format_guess(line)
                 vid_old_to_new[i] = n
                 vid_new_to_old[n] = i
-                ind_to_title[n] = normed_title
-                title_to_ind[normed_title] = n
+                ind_to_title[n] = title
+                title_to_ind[title] = n
                 n += 1
             i += 1
     print('Found {} valid titles, {} invalid titles'.format(n, n_invalid_titles))

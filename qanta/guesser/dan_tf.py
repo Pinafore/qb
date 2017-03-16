@@ -5,8 +5,8 @@ import shutil
 from typing import Dict, List, Tuple, Union, Set
 
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.datasets.abstract import AbstractDataset
-from qanta.datasets.quiz_bowl import QuizBowlEvaluationDataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.wikipedia import WikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path, shell
 from qanta import logging
@@ -26,18 +26,36 @@ DEEP_DAN_PARAMS_TARGET = 'dan_params.pickle'
 
 def _make_layer(i: int, in_tensor, n_out, op,
                 n_in=None, dropout_prob=None, batch_norm=False, batch_is_training=None):
-    if batch_norm and batch_is_training is None:
-        raise ValueError('if using batch norm then passing a training placeholder is required')
-    w = tf.get_variable('W' + str(i), (in_tensor.get_shape()[1] if n_in is None else n_in, n_out),
-                        dtype=tf.float32)
-    if dropout_prob is not None:
-        w = tf.nn.dropout(w, keep_prob=1 - dropout_prob)
-    b = tf.get_variable('b' + str(i), n_out, dtype=tf.float32)
-    out = tf.matmul(in_tensor, w) + b
-    if batch_norm:
-        out = tf.contrib.layers.batch_norm(
-            out, center=True, scale=True, is_training=batch_is_training, scope='bn' + str(i))
-    return (out if op is None else op(out)), w
+    with tf.variable_scope('layer' + str(i)):
+        if batch_norm and batch_is_training is None:
+            raise ValueError('if using batch norm then passing a training placeholder is required')
+        w = tf.get_variable('w', (in_tensor.get_shape()[1] if n_in is None else n_in, n_out),
+                            dtype=tf.float32)
+        if dropout_prob is not None:
+            w = tf.nn.dropout(w, keep_prob=1 - dropout_prob)
+        b = tf.get_variable('b', n_out, dtype=tf.float32)
+        out = tf.matmul(in_tensor, w) + b
+        if batch_norm:
+            out = tf.contrib.layers.batch_norm(
+                out, center=True, scale=True, is_training=batch_is_training, scope='bn', fused=True)
+        out = (out if op is None else op(out))
+        # tf.summary.histogram('weights', w)
+        # tf.summary.histogram('biases', b)
+        # tf.summary.histogram('activations', out)
+        return out, w
+
+
+def parametric_relu(_x):
+    alphas = tf.get_variable(
+        'alpha',
+        _x.get_shape()[-1],
+        initializer=tf.constant_initializer(0.0),
+        dtype=tf.float32
+    )
+    pos = tf.nn.relu(_x)
+    neg = alphas * (_x - abs(_x)) * 0.5
+
+    return pos + neg
 
 
 def _create_embeddings(vocab: Set[str]):
@@ -151,6 +169,7 @@ def _compute_lengths(x_data):
 
 class TFDanModel:
     def __init__(self, dan_params: Dict, max_len: int, n_classes: int):
+        self.dan_params = dan_params
         self.max_len = max_len
         self.n_classes = n_classes
         self.n_hidden_units = dan_params['n_hidden_units']
@@ -158,9 +177,9 @@ class TFDanModel:
         self.word_dropout = dan_params['word_dropout']
         self.nn_dropout = dan_params['nn_dropout']
         self.batch_size = dan_params['batch_size']
-        self.init_scale = dan_params['init_scale']
         self.learning_rate = dan_params['learning_rate']
         self.max_epochs = dan_params['max_epochs']
+        self.max_patience = dan_params['max_patience']
 
         # These are set by build_tf_model
         self.input_placeholder = None
@@ -179,9 +198,12 @@ class TFDanModel:
         self.initial_embed = None
         self.mean_embeddings = None
         self.embed_and_zero = None
+        self.accuracy = None
 
         # Set at runtime
+        self.summary = None
         self.session = None
+        self.summary_counter = 0
 
     def build_tf_model(self):
         with tf.variable_scope(
@@ -222,31 +244,41 @@ class TFDanModel:
                 layer_out, w = _make_layer(
                     i, layer_out,
                     n_in=in_dim, n_out=self.n_hidden_units,
-                    op=tf.nn.relu, dropout_prob=self.nn_dropout_var,
+                    op=tf.nn.elu, dropout_prob=self.nn_dropout_var,
                     batch_norm=True, batch_is_training=self.training_phase
                 )
                 in_dim = None
             logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
             representation_layer = layer_out
-            self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits=logits, labels=tf.to_int64(self.label_placeholder))
-            self.loss = tf.reduce_mean(self.loss)
+            with tf.name_scope('cross_entropy'):
+                self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    logits=logits, labels=tf.to_int64(self.label_placeholder))
+                self.loss = tf.reduce_mean(self.loss)
+                tf.summary.scalar('cross_entropy', self.loss)
+
             self.softmax_output = tf.nn.softmax(logits)
             preds = tf.to_int32(tf.argmax(logits, 1))
-            self.batch_accuracy = tf.contrib.metrics.accuracy(preds, self.label_placeholder)
-            accuracy, accuracy_update = tf.contrib.metrics.streaming_accuracy(
-                preds, self.label_placeholder)
+
+            with tf.name_scope('accuracy'):
+                self.batch_accuracy = tf.contrib.metrics.accuracy(preds, self.label_placeholder)
+                tf.summary.scalar('accuracy', self.batch_accuracy)
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            with tf.control_dependencies(update_ops):
-                optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
-                self.train_op = optimizer.minimize(self.loss)
+            with tf.name_scope('train'):
+                with tf.control_dependencies(update_ops):
+                    optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+                    self.train_op = optimizer.minimize(self.loss)
+
+            self.summary = tf.summary.merge_all()
             self.saver = tf.train.Saver()
 
     def train(self, x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths, save=True):
         with tf.Graph().as_default(), tf.Session() as session:
             self.build_tf_model()
-            self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
             self.session = session
+            self.session.run(tf.global_variables_initializer())
+            params_suffix = ','.join('{}={}'.format(k, v) for k, v in self.dan_params.items())
+            self.file_writer = tf.summary.FileWriter(
+                os.path.join('output/tensorflow', params_suffix), session.graph)
             train_losses, train_accuracies, holdout_losses, holdout_accuracies = self._train(
                 x_train, y_train, x_train_lengths,
                 x_test, y_test, x_test_lengths,
@@ -259,11 +291,8 @@ class TFDanModel:
                x_train, y_train, x_train_lengths,
                x_test, y_test, x_test_lengths,
                n_epochs: int, save=True):
-        self.session.run(tf.global_variables_initializer())
-
         max_accuracy = -1
-        max_patience = 5
-        patience = 5
+        patience = self.max_patience
 
         train_accuracies = []
         train_losses = []
@@ -297,7 +326,7 @@ class TFDanModel:
             patience -= 1
             if val_accuracy > max_accuracy:
                 max_accuracy = val_accuracy
-                patience = max_patience
+                patience = self.max_patience
                 if save:
                     log.info('New best accuracy, saving model')
                     self.save()
@@ -317,7 +346,7 @@ class TFDanModel:
         if train:
             fetches = self.loss, self.batch_accuracy, self.train_op
         else:
-            fetches = self.loss, self.batch_accuracy
+            fetches = self.loss, self.batch_accuracy, self.summary
 
         batch_i = 0
         self.session.run(self.word_dropout_var.assign(self.word_dropout if train else 0))
@@ -333,6 +362,10 @@ class TFDanModel:
             returned = self.session.run(fetches, feed_dict=feed_dict)
             loss = returned[0]
             accuracy = returned[1]
+            if not train:
+                summary = returned[2]
+                self.file_writer.add_summary(summary, self.summary_counter)
+                self.summary_counter += 1
 
             accuracies.append(accuracy)
             losses.append(loss)
@@ -346,7 +379,6 @@ class TFDanModel:
             self.session = session
             self.session.run(tf.global_variables_initializer())
             self.load()
-            self.file_writer = tf.summary.FileWriter('output/tensorflow', session.graph)
             y_test = np.zeros((x_test.shape[0]))
             self.session.run(self.word_dropout_var.assign(0))
             self.session.run(self.nn_dropout_var.assign(0))
@@ -371,13 +403,13 @@ class TFDanModel:
 
 
 DEFAULT_DAN_PARAMS = dict(
-    n_hidden_units=200, n_hidden_layers=2, word_dropout=.6, batch_size=256,
-    learning_rate=.001, init_scale=.08, max_epochs=50, nn_dropout=0
+    n_hidden_units=300, n_hidden_layers=1, word_dropout=.6, batch_size=256,
+    learning_rate=.003, max_epochs=100, nn_dropout=0, max_patience=10
 )
 
 
 class DANGuesser(AbstractGuesser):
-    def __init__(self, dan_params=DEFAULT_DAN_PARAMS):
+    def __init__(self, dan_params=DEFAULT_DAN_PARAMS, use_wiki=False, min_answers=2):
         super().__init__()
         self.dan_params = dan_params
         self.model = None  # type: Union[None, TFDanModel]
@@ -388,27 +420,30 @@ class DANGuesser(AbstractGuesser):
         self.class_to_i = None
         self.vocab = None
         self.n_classes = None
+        self.use_wiki = use_wiki
+        self.min_answers = min_answers
 
     @classmethod
     def targets(cls) -> List[str]:
         return [DEEP_DAN_PARAMS_TARGET]
 
-    @property
-    def requested_datasets(self) -> Dict[str, AbstractDataset]:
-        return {
-            'qb': QuizBowlEvaluationDataset()
-        }
+    def qb_dataset(self):
+        return QuizBowlDataset(self.min_answers)
 
     def train(self,
-              training_data: Dict[str, Tuple[List[List[str]], List[str]]]) -> None:
-        qb_data = training_data['qb']
-
+              training_data: Tuple[List[List[str]], List[str]]) -> None:
         log.info('Preprocessing training data...')
         x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            qb_data)
+            training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
+
+        if self.use_wiki:
+            wiki_training_data = WikipediaDataset(self.min_answers).training_data()
+            x_train_wiki, y_train_wiki, _, _, _, _, _ = preprocess_dataset(
+                wiki_training_data, train_size=1, vocab=vocab, class_to_i=class_to_i,
+                i_to_class=i_to_class)
 
         log.info('Creating embeddings...')
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
@@ -422,8 +457,16 @@ class DANGuesser(AbstractGuesser):
         x_test = [_convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test]
         x_test_lengths = _compute_lengths(x_test)
 
+        if self.use_wiki:
+            x_train_wiki = [_convert_text_to_embeddings_indices(q, embedding_lookup)
+                            for q in x_train_wiki]
+            x_train_lengths_wiki = _compute_lengths(x_train_wiki)
+            x_train.extend(x_train_wiki)
+            y_train.extend(y_train_wiki)
+            x_train_lengths = np.concatenate([x_train_lengths, x_train_lengths_wiki])
+
         log.info('Computing number of classes and max paragraph length in words')
-        self.n_classes = _compute_n_classes(qb_data[1])
+        self.n_classes = _compute_n_classes(training_data[1])
         self.max_len = _compute_max_len(x_train)
         x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
         x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])
@@ -461,6 +504,9 @@ class DANGuesser(AbstractGuesser):
     @classmethod
     def display_name(cls) -> str:
         return 'DAN'
+
+    def parameters(self):
+        return {**self.dan_params, 'use_wiki': self.use_wiki, 'min_answers': self.min_answers}
 
     @classmethod
     def load(cls, directory: str) -> AbstractGuesser:
