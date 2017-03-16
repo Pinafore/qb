@@ -18,7 +18,6 @@ from qanta.preprocess import format_guess
 
 from qanta.extractors.stats import StatsExtractor
 from qanta.extractors.lm import LanguageModel
-from qanta.extractors.deep import DeepExtractor
 from qanta.extractors.classifier import Classifier
 from qanta.extractors.wikilinks import WikiLinks
 from qanta.extractors.mentions import Mentions
@@ -38,11 +37,6 @@ def instantiate_feature(feature_name: str):
     log.info('Loading feature {} ...'.format(feature_name))
     if feature_name == 'lm':
         feature = LanguageModel()
-    elif feature_name == 'deep':
-
-        feature = DeepExtractor()
-    elif feature_name == 'wikilinks':
-        feature = WikiLinks()
     elif feature_name == 'answer_present':
         feature = AnswerPresent()
     elif feature_name == 'stats':

@@ -252,7 +252,6 @@ resource "aws_spot_instance_request" "master" {
       "echo 'export PYTHONPATH=:/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/python' >> /home/ubuntu/qbenv",
       "echo 'export QB_SPARK_MASTER=spark://${self.private_dns}:7077' >> /home/ubuntu/qbenv",
       "echo 'export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python' >> /home/ubuntu/qbenv",
-      "echo 'export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python' >> /home/ubuntu/qbenv",
       "echo 'export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}' >> /home/ubuntu/qbenv",
       "echo 'export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}' >> /home/ubuntu/qbenv",
       "echo 'export QB_TF_EXPERIMENT_ID=${count.index}' >> /home/ubuntu/qbenv",
@@ -260,7 +259,8 @@ resource "aws_spot_instance_request" "master" {
       "echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64' >> /home/ubuntu/qbenv",
       "echo 'export PATH=/home/ubuntu/anaconda3/bin:$PATH' >> /home/ubuntu/qbenv",
       "echo 'export SPARK_HOME=/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7' >> /home/ubuntu/qbenv",
-      "echo 'export PYTHONPATH=$PYTHONPATH:/ssd-c/qanta/qb' >> /home/ubuntu/qbenv"
+      "echo 'export PYTHONPATH=$PYTHONPATH:/ssd-c/qanta/qb' >> /home/ubuntu/qbenv",
+      "echo \"export LUIGI_CONFIG_PATH=/ssd-c/qanta/luigi.cfg\" >> /home/ubuntu/qbenv"
     ]
   }
 

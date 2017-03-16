@@ -53,20 +53,15 @@ class Question:
     def partials(self, word_skip=-1):
         for i in sorted(self.text):
             previous = [self.text[x] for x in sorted(self.text) if x < i]
-
-            # TODO(jbg): Test to make sure this gives individual words
-            # correctly if word_skip > 0
             if word_skip > 0:
                 words = self.text[i].split()
                 for j in range(word_skip, len(words), word_skip):
-                    yield i, j, previous + [" ".join(words[:j])]
+                    yield i + 1, j, previous + [" ".join(words[:j])]
 
             yield i + 1, 0, [self.text[x] for x in sorted(self.text) if x <= i]
 
     def text_lines(self):
-        d = {}
-        d["id"] = self.qnum
-        d["answer"] = self.page
+        d = {"id": self.qnum, "answer": self.page}
         for i in sorted(self.text):
             d["sent"] = i
             d["text"] = self.text[i]
@@ -76,8 +71,8 @@ class Question:
         if self._last_query != (sentence, token):
             self._last_query = (sentence, token)
             previous = ""
-            for ii in range(sentence):
-                previous += self.text.get(ii, "")
+            for i in range(sentence):
+                previous += self.text.get(i, "")
             if token > 0:
                 previous += " ".join(self.text[sentence].split()[:token])
             self._cached_query = previous
@@ -89,9 +84,14 @@ class Question:
     def flatten_text(self):
         return " ".join(self.text[x] for x in sorted(self.text))
 
-    def to_example(self) -> Tuple[List[QuestionText], Answer]:
+    def to_example(self) -> Tuple[List[QuestionText], Answer, Dict]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
-        return sentence_list, self.page
+        properties = {
+            'ans_type': self.ans_type,
+            'category': self.category.split(':')[0],
+            'gender': self.gender
+        }
+        return sentence_list, self.page, properties
 
 
 class QuestionDatabase:
@@ -105,14 +105,15 @@ class QuestionDatabase:
             'tournament, type, naqt, fold, gender ' + command
         c.execute(command, arguments)
 
-        for qq, pp, cc, aa, tt, kk, nn, ff, gg in c:
-            questions[qq] = Question(qq, aa, cc, nn, tt, pp, kk, ff, gg)
+        for qnum, page, category, answer, tournaments, ans_type, naqt, fold, gender in c:
+            questions[qnum] = Question(qnum, answer, category, naqt, tournaments, page, ans_type,
+                                       fold, gender)
 
-        for ii in questions:
+        for qnum in questions:
             command = 'select sent, raw from text where question=? order by sent asc'
-            c.execute(command, (ii, ))
-            for ss, rr in c:
-                questions[ii].add_text(ss, rr)
+            c.execute(command, (qnum, ))
+            for sentence, text in c:
+                questions[qnum].add_text(sentence, text)
 
         return questions
 
@@ -126,8 +127,8 @@ class QuestionDatabase:
         c.execute(command)
 
         d = defaultdict(Counter)
-        for aa, pp in c:
-            d[normalization(aa)][pp] += 1
+        for answer, page in c:
+            d[normalization(answer)][page] += 1
 
         return d
 
@@ -174,7 +175,7 @@ class QuestionDatabase:
         c = self._conn.cursor()
         if exclude_test:
             command = 'select page, count(*) as num from questions where ' + \
-                      'page != "" and fold != "test" and fold != "devtest"' + \
+                      'page != "" and fold != "test" and fold != "devtest" and fold != "dev" ' + \
                       'group by page order by num desc'
         else:
             command = 'select page, count(*) as num from questions where ' + \
@@ -231,11 +232,13 @@ class QuizBowlDataset(AbstractDataset):
             .map(lambda q: q.to_example())
         training_examples = []
         training_answers = []
-        for example, answer in filtered_questions:
+        training_properties = []
+        for example, answer, properties in filtered_questions:
             training_examples.append(example)
             training_answers.append(answer)
+            training_properties.append(properties)
 
-        return training_examples, training_answers
+        return training_examples, training_answers, training_properties
 
     def questions_by_fold(self) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())

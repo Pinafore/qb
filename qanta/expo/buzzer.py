@@ -406,7 +406,7 @@ def select_features(evidence_str, allowed_features):
 
 
 def format_display(display_num, question_text, sent, word, current_guesses,
-                   answer=None, guess_limit=5, points=10):
+                   answer=None, guess_limit=5, points=10, disable_features=False):
     sep = "".join(["-"] * 80)
 
     current_text = ""
@@ -438,17 +438,21 @@ def format_display(display_num, question_text, sent, word, current_guesses,
         raise Exception()
     for gg in top_guesses:
         guess = current_guesses[gg]
+        if disable_features:
+            features = ''
+        else:
+            features = select_features(guess.evidence, allowed_features)[:100]
         if guess.page == answer:
             report += "%s\t%f\t%s\n" % (
                 "***CORRECT***",
                 guess.weight,
-                select_features(guess.evidence, allowed_features)[:100]
+                features
             )
         else:
             report += "%s\t%f\t%s\n" % (
                 guess.page,
                 guess.weight,
-                select_features(guess.evidence, allowed_features)[:100]
+                features
             )
     return report
 
@@ -531,10 +535,12 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
                                      points=question_value))
-                answer(buzz_now[0].page.split('(')[0])
+                answer(buzz_now[0].page)
                 if buzz_now[0].page == correct:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(1)
+                    print(format_display(display_num, question_text, max(question_text), 0,
+                                         current_guesses, answer=correct, points=question_value))
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
@@ -544,10 +550,8 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                     show_score(human + human_delta,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
-                    format_display(display_num, question_text,
-                                   max(question_text), 0,
-                                   current_guesses, answer=correct,
-                                   points=question_value)
+                    print(format_display(display_num, question_text, max(question_text), 0,
+                                         current_guesses, answer=correct, points=question_value))
             else:
                 show_score(human + human_delta,
                            computer + computer_delta,
@@ -556,9 +560,9 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                                      current_guesses, answer=correct,
                                      points=question_value))
     if computer_delta == 0:
-        answer(final.split('(')[0])
+        answer(final)
         if final == correct:
-            return (human + human_delta, computer + 10, final)
+            return human + human_delta, computer + 10, final
         else:
             print("Incorrect answer: %s" % final)
 
@@ -615,7 +619,7 @@ if __name__ == "__main__":
                 current_players.add(press)
 
         sleep(1.5)
-        answer("I'm ready too")
+        answer("I am ready too")
 
     human = 0
     computer = 0

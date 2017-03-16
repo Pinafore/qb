@@ -2,8 +2,10 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call, shell, make_dirs
-from qanta.pipeline.vw import VWPredictions, VWMergeFeature, VWAuditRegressor, VWAudit
+from qanta.pipeline.vw import (VWPredictions, VWMergeFeature, VWAuditRegressor, VWAudit,
+                               VWMergeAllFeatures)
 from qanta.pipeline.preprocess import Preprocess
+from qanta.reporting import performance
 
 
 @luigi.Task.event_handler(luigi.Event.PROCESSING_TIME)
@@ -38,8 +40,7 @@ class AllSummaries(WrapperTask):
             yield Summary(fold=fold)
 
 
-class Reports(Task):
-    fold = luigi.Parameter()
+class ConcatReports(Task):
     resources = {'report_write': 1}
 
     def requires(self):
@@ -55,15 +56,68 @@ class Reports(Task):
         shell('mv /tmp/report.pdf output/reporting/report.pdf')
 
 
-class AllReports(WrapperTask):
-    def requires(self):
-        for fold in c.VW_FOLDS:
-            yield Reports(fold=fold)
-
-
-class AblationRun(Task):
-    fold = luigi.Parameter()
+class FeatureAblation(Task):
     feature = luigi.Parameter()
 
     def requires(self):
-        yield VWMergeFeature(fold=self.fold)
+        yield VWMergeAllFeatures()
+
+    def output(self):
+        return [
+            LocalTarget('output/models/model.-{feature}.vw'.format(feature=self.feature)),
+            LocalTarget('output/predictions/test.-{feature}.pred'.format(feature=self.feature)),
+            LocalTarget('output/summary/test.-{feature}.json'.format(feature=self.feature))
+        ]
+
+    def run(self):
+        shell('bin/feature-ablation.sh {feature}'.format(feature=self.feature))
+
+
+class AllFeatureAblation(WrapperTask):
+    def requires(self):
+        for feature in c.FEATURE_NAMES:
+            yield FeatureAblation(feature=feature)
+
+
+class FeatureEval(Task):
+    feature = luigi.Parameter()
+
+    def requires(self):
+        yield VWMergeAllFeatures()
+
+    def output(self):
+        return [
+            LocalTarget('output/models/model.+{feature}.vw'.format(feature=self.feature)),
+            LocalTarget('output/predictions/test.+{feature}.pred'.format(feature=self.feature)),
+            LocalTarget('output/summary/test.+{feature}.json'.format(feature=self.feature))
+        ]
+
+    def run(self):
+        shell('bin/feature-eval.sh {feature}'.format(feature=self.feature))
+
+
+class AllFeatureEval(WrapperTask):
+    def requires(self):
+        for feature in c.FEATURE_NAMES:
+            yield FeatureEval(feature=feature)
+
+
+class PerformancePlot(Task):
+    def requires(self):
+        yield AllFeatureEval()
+        yield AllFeatureAblation()
+        yield Summary(fold='test')
+
+    def output(self):
+        return LocalTarget('output/summary/performance.png')
+
+    def run(self):
+        performance.plot_summary(False, 'output/summary/', 'output/summary/performance.png')
+
+
+class All(WrapperTask):
+    def requires(self):
+        yield ConcatReports()
+        yield AllFeatureAblation()
+        yield AllFeatureEval()
+        yield PerformancePlot()

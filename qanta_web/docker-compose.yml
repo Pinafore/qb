@@ -1,0 +1,25 @@
+version: '2'
+services:
+  db:
+    image: postgres:9.6
+    hostname: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+
+  redis:
+    image: redis:3.2
+    hostname: redis
+
+  web:
+    build: .
+    command: ./run_web.sh
+    volumes:
+      - ./:/app/src
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    hostname: web

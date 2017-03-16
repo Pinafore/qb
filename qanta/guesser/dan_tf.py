@@ -2,8 +2,9 @@ import pickle
 import time
 import os
 import shutil
-from typing import Dict, List, Tuple, Union, Set
+from typing import Dict, List, Tuple, Union, Set, Optional
 
+from qanta.datasets.abstract import TrainingData
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.datasets.wikipedia import WikipediaDataset
@@ -78,10 +79,14 @@ def _create_embeddings(vocab: Set[str]):
         return embed_with_unk, embedding_lookup
 
 
-def _load_embeddings(vocab=None):
+def _load_embeddings(vocab=None, root_directory=''):
     if os.path.exists(TF_DAN_WE_TMP):
-        log.info('Loading word embeddings from cache')
+        log.info('Loading word embeddings from tmp cache')
         with safe_open(TF_DAN_WE_TMP, 'rb') as f:
+            return pickle.load(f)
+    elif os.path.exists(os.path.join(root_directory, TF_DAN_WE)):
+        log.info('Loading word embeddings from restored cache')
+        with safe_open(os.path.join(root_directory, TF_DAN_WE), 'rb') as f:
             return pickle.load(f)
     else:
         if vocab is None:
@@ -249,7 +254,6 @@ class TFDanModel:
                 )
                 in_dim = None
             logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
-            representation_layer = layer_out
             with tf.name_scope('cross_entropy'):
                 self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=tf.to_int64(self.label_placeholder))
@@ -373,7 +377,7 @@ class TFDanModel:
         duration = time.time() - start_time
         return accuracies, losses, duration
 
-    def guess(self, x_test, x_test_lengths):
+    def guess(self, x_test, x_test_lengths, n_guesses: Optional[int]):
         with tf.Graph().as_default(), tf.Session() as session:
             self.build_tf_model()
             self.session = session
@@ -382,9 +386,15 @@ class TFDanModel:
             y_test = np.zeros((x_test.shape[0]))
             self.session.run(self.word_dropout_var.assign(0))
             self.session.run(self.nn_dropout_var.assign(0))
-            predictions = []
+            all_labels = []
+            all_scores = []
+            log.info('Starting dan tf batches...')
+            batch_i = 0
+            column_index = [[i] for i in range(self.batch_size)]
             for x_batch, y_batch, x_len_batch in _create_batches(
                     self.batch_size, x_test, y_test, x_test_lengths, pad=True, shuffle=False):
+                if batch_i % 250 == 0:
+                    log.info('Starting batch {}'.format(batch_i))
                 feed_dict = {
                     self.input_placeholder: x_batch,
                     self.label_placeholder: y_batch,
@@ -392,8 +402,27 @@ class TFDanModel:
                     self.training_phase: 0
                 }
                 batch_predictions = self.session.run(self.softmax_output, feed_dict=feed_dict)
-                predictions.append(batch_predictions)
-            return np.vstack(predictions)[:len(x_test)]
+                if n_guesses is None:
+                    n_guesses = batch_predictions.shape[1]
+
+                #  Solution and explanation for column_index at
+                #  http://stackoverflow.com/questions/33140674/argsort-for-a-multidimensional-ndarray
+                ans_order = np.argsort(-batch_predictions, axis=1)
+                sorted_labels = ans_order[:, :n_guesses]
+                sorted_scores = batch_predictions[column_index, ans_order][:, :n_guesses]
+
+                # We add an explicit np.copy so that we don't get a view into the original data.
+                # The original data is much higher dimension and keeping a view over it is extremely
+                # wasteful in terms of memory. It is better to pay the cost to copy a small portion
+                # of it out.
+                all_labels.append(np.copy(sorted_labels))
+                all_scores.append(np.copy(sorted_scores))
+                if batch_i % 250 == 0:
+                    log.info('Finishing batch {}'.format(batch_i))
+                batch_i += 1
+            log.info('Done generating guesses, vstacking them...')
+
+            return np.vstack(all_labels)[0:len(x_test)], np.vstack(all_scores)[0:len(x_test)]
 
     def save(self):
         self.saver.save(self.session, safe_path(DEEP_DAN_MODEL_TMP_PREFIX))
@@ -431,9 +460,9 @@ class DANGuesser(AbstractGuesser):
         return QuizBowlDataset(self.min_answers)
 
     def train(self,
-              training_data: Tuple[List[List[str]], List[str]]) -> None:
+              training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
+        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -441,7 +470,7 @@ class DANGuesser(AbstractGuesser):
 
         if self.use_wiki:
             wiki_training_data = WikipediaDataset(self.min_answers).training_data()
-            x_train_wiki, y_train_wiki, _, _, _, _, _ = preprocess_dataset(
+            x_train_wiki, y_train_wiki, _, _, _, _, _, _, _ = preprocess_dataset(
                 wiki_training_data, train_size=1, vocab=vocab, class_to_i=class_to_i,
                 i_to_class=i_to_class)
 
@@ -480,24 +509,26 @@ class DANGuesser(AbstractGuesser):
         train_losses, train_accuracies, holdout_losses, holdout_accuracies = self.model.train(
             x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths)
 
-    def guess(self, questions: List[str], n_guesses: int) -> List[List[Tuple[str, float]]]:
-        log.info('Generating {} for each of {} questions'.format(n_guesses, len(questions)))
+    def guess(self,
+              questions: List[str], n_guesses: Optional[int]) -> List[List[Tuple[str, float]]]:
+        log.info('Generating {} guesses for each of {} questions'.format(n_guesses, len(questions)))
+        log.info('Converting text to embedding indices...')
         x_test = [_convert_text_to_embeddings_indices(
             tokenize_question(q), self.embedding_lookup) for q in questions]
+        log.info('Computing question lengths...')
         x_test_lengths = _compute_lengths(x_test)
+        log.info('Converting questions to tensorflow format...')
         x_test = _tf_format(x_test, self.max_len, self.embeddings.shape[0])
         x_test = np.array(x_test)
         self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
-        question_guesses = self.model.guess(x_test, x_test_lengths)
-        ans_order = np.argsort(-question_guesses, axis=1)
+        log.info('Starting Tensorflow model guessing...')
+        guess_labels, guess_scores = self.model.guess(x_test, x_test_lengths, n_guesses)
+        log.info('Guess generation and fetching top guesses done, converting to output format')
         all_guesses = []
-        for i_row, score_row in zip(ans_order, question_guesses):
+        for i_row, score_row in zip(guess_labels, guess_scores):
             guesses = []
-            for i, a_index in enumerate(i_row):
-                if i < n_guesses:
-                    guesses.append((self.i_to_class[a_index], score_row[a_index]))
-                else:
-                    break
+            for label, score in zip(i_row, score_row):
+                guesses.append((self.i_to_class[label], score))
             all_guesses.append(guesses)
         return all_guesses
 
@@ -511,7 +542,7 @@ class DANGuesser(AbstractGuesser):
     @classmethod
     def load(cls, directory: str) -> AbstractGuesser:
         guesser = DANGuesser()
-        embeddings, embedding_lookup = _load_embeddings()
+        embeddings, embedding_lookup = _load_embeddings(root_directory=directory)
         guesser.embeddings = embeddings
         guesser.embedding_lookup = embedding_lookup
         params_path = os.path.join(directory, DEEP_DAN_PARAMS_TARGET)
@@ -529,7 +560,7 @@ class DANGuesser(AbstractGuesser):
                     or guesser.n_classes is None):
                 raise ValueError('Attempting to load uninitialized model parameters')
         model_path = os.path.join(directory, DEEP_DAN_MODEL_TARGET)
-        shell('cp -r {} {}'.format(model_path, DEEP_DAN_MODEL_TMP_DIR))
+        shell('cp -r {} {}'.format(model_path, safe_path(DEEP_DAN_MODEL_TMP_DIR)))
 
         we_path = os.path.join(directory, TF_DAN_WE)
         shutil.copyfile(TF_DAN_WE_TMP, we_path)

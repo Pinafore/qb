@@ -25,3 +25,6 @@ jupyter_s3.sh
 slack_notify.tf
 naqt_db.tf
 qb.egg-info/
+qanta_web/.vscode
+qanta_web/*.sqlite3
+qanta_web/tags
