@@ -1,8 +1,6 @@
 import abc
 from typing import List
 
-from qanta.util.constants import N_GUESSES
-
 
 class AbstractFeatureExtractor(metaclass=abc.ABCMeta):
     @property

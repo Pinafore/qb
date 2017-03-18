@@ -8,7 +8,8 @@ from nltk import bigrams
 from qanta import logging
 from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
-from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, MIN_APPEARANCES
+from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION
+from qanta.config import conf
 from qanta.preprocess import format_guess
 
 from clm import clm
@@ -398,7 +399,8 @@ class LanguageModelWriter(LanguageModelBase):
 
 
 def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
-    log.info("Training language model with pages that appear more than %i times" % MIN_APPEARANCES)
+    min_appearances = conf['clm']['min_appearances']
+    log.info("Training language model with pages that appear more than %i times" % min_appearances)
 
     lm = LanguageModelWriter(vocab_size, global_lms)
     num_docs = 0
@@ -408,7 +410,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                      True, QB_QUESTION_DB,
                                      True, QB_SOURCE_LOCATION,
                                      max_pages,
-                                     min_pages=MIN_APPEARANCES):
+                                     min_pages=min_appearances):
         num_docs += 1
         if num_docs % 500 == 0:
             log.info("{} {}".format(title, num_docs))
@@ -437,7 +439,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                          qb, QB_QUESTION_DB,
                                          source, QB_SOURCE_LOCATION,
                                          max_pages,
-                                         min_pages=MIN_APPEARANCES):
+                                         min_pages=min_appearances):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
                 log.info("Adding train doc %i, %s (%s)" % (doc_num, title, corpus))

@@ -1,6 +1,6 @@
 from qanta import logging
 from qanta.util.environment import QB_QUESTION_DB
-from qanta.util.constants import MIN_APPEARANCES
+from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuestionDatabase
 
 log = logging.get(__name__)
@@ -12,7 +12,7 @@ def wikify(output_directory):
 
     total = 0
     for p in pages:
-        if len(pages[p]) >= MIN_APPEARANCES:
+        if len(pages[p]) >= conf['wikifier']['min_appearances']:
             log.info('{} {}'.format(p, len(pages[p])))
             for q in pages[p]:
                 total += 1

@@ -17,6 +17,7 @@ from qanta.preprocess import format_guess
 from qanta.reporting.report_generator import ReportGenerator
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer
 from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
+from qanta.config import conf
 from qanta.util import constants as c
 from qanta.util.io import safe_path
 from qanta import logging
@@ -93,8 +94,16 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     @classmethod
+    def raw_targets(cls) -> List[str]:
+        """
+        Similar to targets but it does not join a unique directory prefix. The provided paths are
+        raw paths to the targets.
+        :return: list of written files
+        """
+
+    @classmethod
     def files(cls, directory: str) -> List[str]:
-        return [os.path.join(directory, file) for file in cls.targets()]
+        return [os.path.join(directory, file) for file in cls.targets()] + cls.raw_targets()
 
     @classmethod
     @abstractmethod
@@ -241,13 +250,16 @@ class AbstractGuesser(metaclass=ABCMeta):
         :return:
         """
         guess_df = None
-        for guesser_class, _ in c.GUESSER_LIST:
-            input_path = os.path.join(directory_prefix, c.GUESSER_TARGET_PREFIX, guesser_class)
-            if guess_df is None:
-                guess_df = AbstractGuesser.load_guesses(input_path)
-            else:
-                new_guess_df = AbstractGuesser.load_guesses(input_path)
-                guess_df = pd.concat([guess_df, new_guess_df])
+        guessers = conf['guessers']
+        for guesser_key, g in guessers.items():
+            g = guessers[guesser_key]
+            if g['enabled']:
+                input_path = os.path.join(directory_prefix, c.GUESSER_TARGET_PREFIX, g['class'])
+                if guess_df is None:
+                    guess_df = AbstractGuesser.load_guesses(input_path)
+                else:
+                    new_guess_df = AbstractGuesser.load_guesses(input_path)
+                    guess_df = pd.concat([guess_df, new_guess_df])
 
         return guess_df
 
@@ -470,7 +482,11 @@ def make_percent_of_question(percent):
     def percent_of_question(group):
         n_sentences = len(group)
         middle = max(1, round(n_sentences * percent))
-        return seq(group).filter(lambda g: g[1] == middle).first()[3]
+        middle_element = seq(group).filter(lambda g: g[1] == middle).head_option()
+        if middle_element is None:
+            return None
+        else:
+            return middle_element[3]
     return percent_of_question
 
 
@@ -550,7 +566,7 @@ def compute_summary_recall(questions, recall_stats):
 
 
 def compute_recall_plot_data(recall_positions, n_questions,
-                             max_recall=c.N_GUESSES + int(c.N_GUESSES * .1)):
+                             max_recall=conf['n_guesses'] + int(conf['n_guesses'] * .1)):
     """
     Compute the recall, compute recall out a little further than number of guesses to give the
     plot that uses this data some margin on the right side

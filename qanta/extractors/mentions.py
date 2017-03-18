@@ -9,8 +9,9 @@ from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
 
 from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.config import conf
 from qanta.util.environment import data_path, QB_QUESTION_DB
-from qanta.util.constants import KEN_LM, MIN_APPEARANCES
+from qanta.util.constants import KEN_LM
 from qanta.util.build_whoosh import text_iterator
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
@@ -83,7 +84,8 @@ class Mentions(AbstractFeatureExtractor):
         super().__init__()
         question_db = QuestionDatabase(QB_QUESTION_DB)
         answers = set(x for x, y in text_iterator(
-            False, "", False, question_db, False, "", limit=-1, min_pages=MIN_APPEARANCES))
+            False, "", False, question_db, False, "", limit=-1,
+            min_pages=conf['mentions']['min_appearances']))
         self.answers = answers
         self.initialized = False
         self.refex_count = defaultdict(int)

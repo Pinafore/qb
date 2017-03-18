@@ -1,5 +1,3 @@
-import pandas as pd
-
 from qanta.util.constants import CLASSIFIER_TYPES
 from qanta.extractors.abstract import AbstractFeatureExtractor
 from qanta.learning.classifier import load_classifier

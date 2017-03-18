@@ -19,7 +19,6 @@ from qanta.preprocess import format_guess
 from qanta.extractors.stats import StatsExtractor
 from qanta.extractors.lm import LanguageModel
 from qanta.extractors.classifier import Classifier
-from qanta.extractors.wikilinks import WikiLinks
 from qanta.extractors.mentions import Mentions
 from qanta.extractors.answer_present import AnswerPresent
 from qanta.extractors.text import TextExtractor

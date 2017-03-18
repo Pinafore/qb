@@ -32,11 +32,6 @@ DEEP_OPT_FEATURES = [DEEP]
 LM_OPT_FEATURES = [LM]
 MENTIONS_OPT_FEATURES = [MENTIONS]
 
-GUESSER_LIST = [
-    ('qanta.guesser.dan_tf.DANGuesser', 'qanta.pipeline.guesser.dan.DANDependencies')
-    #('qanta.guesser.dan.aux_dan.AuxDANGuesser', 'qanta.pipeline.guesser.dan.DANDependencies')
-]
-
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 
 SENTENCE_STATS = 'output/guesser/sentence_stats.pickle'
@@ -53,7 +48,7 @@ WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
 
 QB_SOURCE_LOCATION = 'data/internal/source'
 
-WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki'
+WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki/'
 CLASSIFIER_TYPES = ['ans_type', 'category', 'gender']
 CLASSIFIER_PICKLE_PATH = 'output/classifier/{0}/{0}.pkl'
 CLASSIFIER_REPORT_PATH = 'output/reporting/classifier_{}.pdf'
@@ -75,7 +70,3 @@ VW_META = 'output/vw_input/{0}.meta'
 VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.txt'
 VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.csv'
 VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.pdf'
-
-MIN_APPEARANCES = 2
-MAX_APPEARANCES = 2
-N_GUESSES = 50

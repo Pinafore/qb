@@ -2,7 +2,7 @@
 import sys
 from collections import defaultdict
 from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.util.constants import N_GUESSES
+from qanta.config import conf
 from qanta import logging
 
 log = logging.get(__name__)
@@ -25,7 +25,7 @@ def process_file(filename):
         recall = 0
         warn = 0
         for ident, guesses in questions.items():
-            if len(guesses) < N_GUESSES:
+            if len(guesses) < conf['n_guesses']:
                 log.info("WARNING LOW GUESSES")
                 log.info('Question {0} is missing guesses, only has {1}'.format(ident, len(guesses)))
                 warn += 1

@@ -10,7 +10,7 @@ from wikipedia.exceptions import WikipediaException
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import COUNTRY_LIST_PATH
-from qanta.util.environment import QB_QUESTION_DB
+from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.preprocess import format_guess
 from functional import seq
 
@@ -76,7 +76,7 @@ def access_page(title, cached_wiki):
 
 
 class CachedWikipedia:
-    def __init__(self, location, country_list=COUNTRY_LIST_PATH, write_dummy=True):
+    def __init__(self, location=QB_WIKI_LOCATION, country_list=COUNTRY_LIST_PATH, write_dummy=True):
         """
         @param write_dummy If this is true, it writes an empty pickle if there
         is an error accessing a page in Wikipedia.  This will speed up future
