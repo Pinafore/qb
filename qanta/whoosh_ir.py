@@ -33,7 +33,7 @@ class WhooshWikiIndex:
             writer.add_document(page=p, content=cw[p].content, quiz_bowl=documents[p])
         writer.commit()
 
-    def search(self, text: str, limit: int, timelimit=2.0):
+    def search(self, text: str, limit: int, timelimit=3.0):
         with self.index.searcher() as searcher:
             or_group = OrGroup.factory(.9)
             parser = MultifieldParser(['content', 'quiz_bowl'], schema=self.schema, group=or_group)
