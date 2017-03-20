@@ -100,6 +100,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         raw paths to the targets.
         :return: list of written files
         """
+        return []
 
     @classmethod
     def files(cls, directory: str) -> List[str]:

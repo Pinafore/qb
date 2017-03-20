@@ -6,7 +6,7 @@ from qanta.datasets.abstract import TrainingData, Answer, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.preprocess import format_guess
-from qanta.whoosh_ir import WhooshWikiIndex
+from qanta.search.whoosh import WhooshWikiIndex
 from qanta.util.constants import WHOOSH_WIKI_INDEX_PATH
 import progressbar
 

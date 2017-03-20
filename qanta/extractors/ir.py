@@ -1,5 +1,5 @@
 from qanta.extractors.abstract import AbstractFeatureExtractor
-from qanta.whoosh_ir import WhooshWikiIndex
+from qanta.search.whoosh import WhooshWikiIndex
 
 
 class IrExtractor(AbstractFeatureExtractor):
