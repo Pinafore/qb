@@ -9,3 +9,6 @@ sbin/start-all.sh
 
 cd $QB_ROOT
 make clm
+
+bash packer/bin/install-elasticsearch.sh
+~/dependencies/elasticsearch-5.2.2/bin/elasticsearch -d

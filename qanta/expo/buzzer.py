@@ -224,22 +224,16 @@ class kCOLORS:
         print(start + text + kCOLORS.ENDC, end=end)
 
 
-def write_readable(filename, ids, questions, power):
+def write_readable(filename, questions, question_ids):
     question_num = 0
-    o = open(flags.readable, 'w')
-    for ii in question_ids:
+    o = open(filename, 'w')
+    for qnum in question_ids:
         question_num += 1
         o.write("%i) " % question_num)
-        power_found = False
-        for jj in questions[ii]:
-            if not power_found and power(ii).lower() in questions[ii][jj].lower():
-                power_found = True
-                o.write("%s  " %
-                        questions[ii][jj].replace(power(ii), "(*) %s" %
-                                                  power(ii)))
-            else:
-                o.write("%s  " % questions[ii][jj])
-        o.write("\nANSWER: %s\n\n" % questions.answer(ii))
+        for sent in questions[qnum]:
+            o.write("%s  " % questions[qnum][sent])
+        o.write("\nANSWER: %s\n\n" % questions.answer(qnum))
+    o.close()
 
 
 def clear_screen():
@@ -629,7 +623,7 @@ if __name__ == "__main__":
     question_ids = [x for x in question_ids if x in buzzes]
 
     if flags.readable != "":
-        write_readable(flags.readable, question_ids, questions, power)
+        write_readable(flags.readable, questions, question_ids)
 
     skipped = 0
     for ii in question_ids:

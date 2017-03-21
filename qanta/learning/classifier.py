@@ -12,9 +12,11 @@ from sklearn.linear_model import LogisticRegression
 
 from qanta import logging
 from qanta.util.io import safe_open, safe_path
-from qanta.util.constants import CLASSIFIER_PICKLE_PATH, CLASSIFIER_REPORT_PATH
+from qanta.util.constants import (CLASSIFIER_PICKLE_PATH, CLASSIFIER_REPORT_PATH,
+                                  CLASSIFIER_GUESS_PROPS)
 from qanta.util.environment import QB_QUESTION_DB
-from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.preprocess import format_guess
+from qanta.datasets.quiz_bowl import QuestionDatabase, QuizBowlDataset
 from qanta.reporting.report_generator import ReportGenerator
 from qanta.reporting.plotting import plot_confusion
 
@@ -108,6 +110,39 @@ def save_classifier(classifier, class_type):
 def load_classifier(class_type):
     classifier_file = CLASSIFIER_PICKLE_PATH.format(class_type)
     with open(classifier_file, 'rb') as f:
+        return pickle.load(f)
+
+
+def compute_guess_properties():
+    dataset = QuizBowlDataset(1)
+    training_data = dataset.training_data()
+    guess_ans_types = {}
+    guess_categories = {}
+    guess_genders = {}
+    for page, aux_data in zip(training_data[1], training_data[2]):
+        page = format_guess(page)
+
+        ans_type = aux_data['ans_type']
+        if ans_type != '' and ans_type != 'None':
+            guess_ans_types[page] = ans_type
+
+        category = aux_data['category']
+        guess_categories[page] = category
+
+        gender = aux_data['gender']
+        if gender != '':
+            guess_genders[page] = gender
+
+    with open(CLASSIFIER_GUESS_PROPS, 'wb') as f:
+        pickle.dump({
+            'guess_ans_types': guess_ans_types,
+            'guess_categories': guess_categories,
+            'guess_genders': guess_genders
+        }, f)
+
+
+def load_guess_properties():
+    with open(CLASSIFIER_GUESS_PROPS, 'rb') as f:
         return pickle.load(f)
 
 

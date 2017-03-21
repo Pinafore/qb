@@ -1,6 +1,6 @@
 from qanta.util.constants import CLASSIFIER_TYPES
 from qanta.extractors.abstract import AbstractFeatureExtractor
-from qanta.learning.classifier import load_classifier
+from qanta.learning.classifier import load_classifier, load_guess_properties
 
 
 class Classifier(AbstractFeatureExtractor):
@@ -9,6 +9,10 @@ class Classifier(AbstractFeatureExtractor):
         self.classifiers = {}
         for c in CLASSIFIER_TYPES:
             self.classifiers[c] = load_classifier(c)
+        guess_properties = load_guess_properties()
+        self.guess_ans_types = guess_properties['guess_ans_types']
+        self.guess_categories = guess_properties['guess_categories']
+        self.genders = guess_properties['guess_genders']
 
     @property
     def name(self):
