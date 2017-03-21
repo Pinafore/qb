@@ -76,6 +76,7 @@ def create_output(path: str):
         group_features(df.filter(df.fold == fold))\
             .map(generate_string)\
             .saveAsTextFile('output/vw_input/{0}.vw'.format(fold))
+    sc.stop()
 
 
 def read_dfs(path: str) -> DataFrame:

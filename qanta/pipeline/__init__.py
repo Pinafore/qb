@@ -70,7 +70,8 @@ class FeatureAblation(Task):
         ]
 
     def run(self):
-        shell('bin/feature-ablation.sh {feature}'.format(feature=self.feature))
+        shell('bin/feature-ablation.sh {file} {feature}'.format(file=self.feature,
+                                                                feature=self.feature[0]))
 
 
 class AllFeatureAblation(WrapperTask):
@@ -93,7 +94,8 @@ class FeatureEval(Task):
         ]
 
     def run(self):
-        shell('bin/feature-eval.sh {feature}'.format(feature=self.feature))
+        shell('bin/feature-eval.sh {file} {feature}'.format(file=self.feature,
+                                                            feature=self.feature[0]))
 
 
 class AllFeatureEval(WrapperTask):

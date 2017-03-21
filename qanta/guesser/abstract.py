@@ -122,14 +122,13 @@ class AbstractGuesser(metaclass=ABCMeta):
     def save(self, directory: str) -> None:
         pass
 
-    @classmethod
-    def display_name(cls) -> str:
+    def display_name(self) -> str:
         """
         Return the display name of this guesser which is used in reporting scripts to identify this
         particular guesser. By default str() on the classname, but can be overriden
         :return: display name of this guesser
         """
-        return str(cls)
+        return self.__class__.__name__
 
     def parameters(self) -> Dict:
         """

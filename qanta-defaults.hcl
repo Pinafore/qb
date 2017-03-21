@@ -15,7 +15,7 @@ wikifier {
 guessers "Dan" {
   class = "qanta.guesser.dan_tf.DANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.dan.DANDependencies"
-  enabled = false
+  enabled = true
 }
 
 guessers "Whoosh" {
@@ -33,5 +33,5 @@ guessers "AuxDan" {
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = true
+  enabled = false
 }
