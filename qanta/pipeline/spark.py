@@ -51,8 +51,20 @@ class ClassifierReport(Task):
         classifier.create_report(model, self.class_type)
 
 
+class ClassifierGuessProperties(Task):
+    def requires(self):
+        yield Preprocess()
+
+    def output(self):
+        return LocalTarget(c.CLASSIFIER_GUESS_PROPS)
+
+    def run(self):
+        classifier.compute_guess_properties()
+
+
 class AllClassifierPickles(WrapperTask):
     def requires(self):
+        yield ClassifierGuessProperties()
         for t in c.CLASSIFIER_TYPES:
             yield ClassifierPickle(class_type=t)
 

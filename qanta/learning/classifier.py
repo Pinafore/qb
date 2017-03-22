@@ -135,9 +135,9 @@ def compute_guess_properties():
 
     with open(CLASSIFIER_GUESS_PROPS, 'wb') as f:
         pickle.dump({
-            'guess_ans_types': guess_ans_types,
-            'guess_categories': guess_categories,
-            'guess_genders': guess_genders
+            'ans_type': guess_ans_types,
+            'category': guess_categories,
+            'gender': guess_genders
         }, f)
 
 
