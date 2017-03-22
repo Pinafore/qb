@@ -71,6 +71,7 @@ class TFDan(AbstractGuesser):
         self._l2_rho = params.get('rho', 10**-5)
         self._dataset_weights = params.get('dataset_weights', None)
         self._use_wiki = params.get('use_wiki', False)
+        self._randomize_wiki_labels = params.get('randomize_wiki_labels', False)
         self._params = params
 
 
@@ -298,8 +299,12 @@ class TFDan(AbstractGuesser):
                 i_to_class=i_to_class)
             preprocessed_datasets[dataset_name] = results[:2]
             log.info('# of classes %d', len(class_to_i))
-            x_val.extend(results[2])
-            y_val.extend(results[3])
+            x_val.extend(results[3])
+            y_val.extend(results[4])
+
+        permuted_labels = list(range(len(class_to_i)))
+        np.random.shuffle(permuted_labels)
+        label_permutation = {i: j for i, j in enumerate(permuted_labels)}
 
         embeddings, word_ids = _create_embeddings(vocab)
         log.info('Creating embeddings')
@@ -334,7 +339,10 @@ class TFDan(AbstractGuesser):
                 if len(q) > 2:
                     # Shift indices by 1 so that 0 can represent zero embedding
                     vecs.append([d + 1 for d in q])
-                    labels.append(label)
+                    if dataset_name == WIKI_DS and self._randomize_wiki_labels:
+                        labels.append(label_permutation[label])
+                    else:
+                        labels.append(label)
                     weights.append(weight)
                     domains.append(dataset_name == WIKI_DS)
 

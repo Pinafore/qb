@@ -71,7 +71,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
     if vocab is None:
         vocab = set()
 
-    question_runs_with_answer = list(zip(data[0], data[1], data[2]))
+    question_runs_with_answer = list(zip(data[0], data[1], (data[2] if data[2] else [None for _ in data[0]])))
     if train_size != 1:
         train, test = train_test_split(question_runs_with_answer, train_size=train_size)
     else:

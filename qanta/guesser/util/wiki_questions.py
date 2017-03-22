@@ -25,7 +25,7 @@ def generate_domain_classifier_data(weight=150):
     interleaving true quiz bowl questions randomly and with higher weight specified by the weight arg.
     """
     qb_data = QuizBowlDataset(1).training_data()
-    real_questions = [('1', str(weight), format_guess(ans), preprocess_text(sent)) for q, ans in zip(*qb_data) for sent in q]
+    real_questions = [('1', str(weight), format_guess(ans), preprocess_text(sent)) for q, ans, _ in zip(*qb_data) for sent in q]
     pages = set(a for _, _, a, _ in real_questions)
 
     cw = CachedWikipedia(QB_WIKI_LOCATION)
