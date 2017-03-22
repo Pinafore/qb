@@ -19,7 +19,6 @@ from qanta.preprocess import format_guess
 from qanta.extractors.stats import StatsExtractor
 from qanta.extractors.lm import LanguageModel
 from qanta.extractors.classifier import Classifier
-from qanta.extractors.wikilinks import WikiLinks
 from qanta.extractors.mentions import Mentions
 from qanta.extractors.answer_present import AnswerPresent
 from qanta.extractors.text import TextExtractor
@@ -133,6 +132,7 @@ def generate_guesser_feature():
     feature_rdd = sc.parallelize(tasks, 5000).flatMap(f_eval)
     feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).cache()
     write_feature_df(feature_df, ['guessers'])
+    sc.stop()
 
 
 def spark_batch(feature_names: List[str]):
@@ -154,6 +154,8 @@ def spark_batch(feature_names: List[str]):
     feature_rdd = sc.parallelize(tasks, 5000 * len(feature_names)).flatMap(f_eval)
     feature_df = sql_context.createDataFrame(feature_rdd, SCHEMA).cache()
     write_feature_df(feature_df, feature_names)
+    log.info('Computation Completed, stopping Spark')
+    sc.stop()
 
 
 def write_feature_df(feature_df, feature_names: list):
@@ -168,7 +170,6 @@ def write_feature_df(feature_df, feature_names: list):
                 .partitionBy('qnum')\
                 .parquet(filename, mode='overwrite')
         feature_df_with_fold.unpersist()
-    log.info('Computation Completed, stopping Spark')
 
 
 def evaluate_feature_question(task: Task, b_features) -> List[Row]:

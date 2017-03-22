@@ -33,6 +33,7 @@ sys.setrecursionlimit(4096)
 
 log = logging.get(__name__)
 
+MIN_APPEARANCES = 1
 
 def _make_layer(i, in_tensor, n_out, op, n_in=None, dropout_prob=None):
     W = tf.get_variable('W' + str(i), (in_tensor.get_shape()[1] if n_in is None else n_in, n_out), dtype=tf.float32)
@@ -690,9 +691,8 @@ class TFDan(AbstractGuesser):
     def display_name(cls):
         return 'DomainDAN'
 
-    @property
-    def requested_datasets(self):
-        return {QUIZ_BOWL_DS: QuizBowlDataset(1), WIKI_DS: FilteredWikipediaDataset()}
+    def qb_dataset(self):
+        return QuizBowlDataset(MIN_APPEARANCES)
 
     @classmethod
     def targets(cls):

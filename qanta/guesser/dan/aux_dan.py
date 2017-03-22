@@ -573,8 +573,7 @@ class AuxDANGuesser(AbstractGuesser):
             all_guesses.append(guesses)
         return all_guesses
 
-    @classmethod
-    def display_name(cls) -> str:
+    def display_name(self) -> str:
         return 'AuxDAN'
 
     def parameters(self):

@@ -26,8 +26,13 @@ def create_spark_context(app_name="Quiz Bowl", configs=None):
 
 
 def extract_features(features):
+    if 'lm' in features:
+        # This deals with out of memory problems when using the language model
+        configs = [('spark.executor.cores', 15)]
+    else:
+        configs = None
     create_spark_context(
-        app_name='Quiz Bowl: ' + ' '.join(features)
+        app_name='Quiz Bowl: ' + ' '.join(features), configs=configs
     )
     ef.spark_batch(features)
 

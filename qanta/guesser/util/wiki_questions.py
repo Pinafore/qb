@@ -6,10 +6,10 @@ import random
 
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase, QuizBowlDataset
-from qanta.guesser.tf.dan import QUIZ_BOWL_DS
+from qanta.guesser.tf.dan import MIN_APPEARANCES, QUIZ_BOWL_DS
 from qanta.guesser.util.dataset import get_all_questions, sentences_from_page
 from qanta.guesser.util.preprocessing import preprocess_text
-from qanta.util.constants import DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT, DOMAIN_TARGET_PREFIX, MIN_APPEARANCES
+from qanta.util.constants import DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT, DOMAIN_TARGET_PREFIX
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.io import safe_open
 from qanta.preprocess import format_guess
@@ -24,7 +24,7 @@ def generate_domain_classifier_data(weight=150):
 
     interleaving true quiz bowl questions randomly and with higher weight specified by the weight arg.
     """
-    qb_data = QuizBowlDataset(1).training_data()
+    qb_data = QuizBowlDataset(MIN_APPEARANCES).training_data()
     real_questions = [('1', str(weight), format_guess(ans), preprocess_text(sent)) for q, ans, _ in zip(*qb_data) for sent in q]
     pages = set(a for _, _, a, _ in real_questions)
 

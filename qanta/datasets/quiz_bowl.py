@@ -117,10 +117,13 @@ class QuestionDatabase:
 
         return questions
 
-    def all_questions(self):
-        return self.query('FROM questions where page != ""', ())
+    def all_questions(self, unfiltered=False):
+        if unfiltered:
+            return self.query('FROM questions', ())
+        else:
+            return self.query('FROM questions where page != ""', ())
 
-    def answer_map(self, normalization=lambda x: x):
+    def answer_map(self):
         c = self._conn.cursor()
         command = 'select answer, page from questions ' + \
             'where page != ""'
@@ -128,7 +131,7 @@ class QuestionDatabase:
 
         d = defaultdict(Counter)
         for answer, page in c:
-            d[normalization(answer)][page] += 1
+            d[answer][page] += 1
 
         return d
 

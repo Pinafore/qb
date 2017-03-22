@@ -6,9 +6,10 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 
 from qanta.pipeline.preprocess import Preprocess
+from qanta.config import conf
 from qanta.util import constants as c
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.io import safe_path, safe_open
+from qanta.util.io import safe_path
 from qanta import logging
 
 log = logging.get(__name__)
@@ -23,6 +24,11 @@ def get_class(instance_module: str, instance_class: str):
 def output_path(guesser_module: str, guesser_class: str, file: str):
     guesser_path = '{}.{}'.format(guesser_module, guesser_class)
     return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
+
+
+class EmptyTask(luigi.Task):
+    def complete(self):
+        return True
 
 
 class TrainGuesser(Task):
@@ -69,7 +75,7 @@ class GenerateGuesses(Task):
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
     word_skip = luigi.IntParameter(default=-1)  # type: int
-    n_guesses = luigi.IntParameter(default=c.N_GUESSES)  # type: int
+    n_guesses = luigi.IntParameter(default=conf['n_guesses'])  # type: int
 
     def requires(self):
         yield TrainGuesser(
@@ -118,7 +124,8 @@ class GuesserReport(Task):
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
-        guesser_class.create_report(guesser_directory)
+        guesser_instance = guesser_class()
+        guesser_instance.create_report(guesser_directory)
 
     def output(self):
         return [LocalTarget(output_path(
@@ -134,47 +141,55 @@ class GuesserReport(Task):
 
 class AllGuessers(WrapperTask):
     def requires(self):
-        for guesser, dependency in c.GUESSER_LIST:
-            parts = guesser.split('.')
-            guesser_module = '.'.join(parts[:-1])
-            guesser_class = parts[-1]
+        guessers = conf['guessers']
+        for g in guessers.values():
+            if g['enabled']:
+                guesser = g['class']
+                dependency = g['luigi_dependency']
+                parts = guesser.split('.')
+                guesser_module = '.'.join(parts[:-1])
+                guesser_class = parts[-1]
 
-            if dependency is None:
-                dependency_module = None
-                dependency_class = None
-            else:
-                parts = dependency.split('.')
-                dependency_module = '.'.join(parts[:-1])
-                dependency_class = parts[-1]
+                if dependency is None:
+                    dependency_module = None
+                    dependency_class = None
+                else:
+                    parts = dependency.split('.')
+                    dependency_module = '.'.join(parts[:-1])
+                    dependency_class = parts[-1]
 
-            yield GuesserReport(
-                guesser_module=guesser_module,
-                guesser_class=guesser_class,
-                dependency_module=dependency_module,
-                dependency_class=dependency_class
-            )
+                yield GuesserReport(
+                    guesser_module=guesser_module,
+                    guesser_class=guesser_class,
+                    dependency_module=dependency_module,
+                    dependency_class=dependency_class
+                )
 
 
 class AllWordLevelGuesses(WrapperTask):
     def requires(self):
-        for guesser, dependency in c.GUESSER_LIST:
-            parts = guesser.split('.')
-            guesser_module = '.'.join(parts[:-1])
-            guesser_class = parts[-1]
+        guessers = conf['guessers']
+        for g in guessers.values():
+            if g['enabled']:
+                guesser = g['class']
+                dependency = g['luigi_dependency']
+                parts = guesser.split('.')
+                guesser_module = '.'.join(parts[:-1])
+                guesser_class = parts[-1]
 
-            if dependency is None:
-                dependency_module = None
-                dependency_class = None
-            else:
-                parts = dependency.split('.')
-                dependency_module = '.'.join(parts[:-1])
-                dependency_class = parts[-1]
+                if dependency is None:
+                    dependency_module = None
+                    dependency_class = None
+                else:
+                    parts = dependency.split('.')
+                    dependency_module = '.'.join(parts[:-1])
+                    dependency_class = parts[-1]
 
-            yield GenerateGuesses(
-                guesser_module=guesser_module,
-                guesser_class=guesser_class,
-                dependency_module=dependency_module,
-                dependency_class=dependency_class,
-                word_skip=1,
-                n_guesses=25
-            )
+                yield GenerateGuesses(
+                    guesser_module=guesser_module,
+                    guesser_class=guesser_class,
+                    dependency_module=dependency_module,
+                    dependency_class=dependency_class,
+                    word_skip=1,
+                    n_guesses=25
+                )

@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.preprocess import format_guess
+from qanta.util.io import safe_path
 
 log = logging.get(__name__)
 
@@ -245,7 +246,7 @@ def generate(min_count,  pred_file, meta_file, output):
     dan_answers = set(database.page_by_count(min_count, True))
     answers = compute_answers(data, dan_answers)
     stats = compute_statistics(answers).cache()
-    stats.to_json(output, root_array=False)
+    stats.to_json(safe_path(output), root_array=False)
     pprint.pprint(stats)
 
 
