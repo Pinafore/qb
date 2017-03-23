@@ -1,23 +1,25 @@
-from glob import glob
 from collections import defaultdict
 from string import punctuation
 from functools import lru_cache
 
 import kenlm
 import nltk
-from qanta.pattern3 import pluralize
 from nltk.tokenize import word_tokenize
+from nltk.corpus import wordnet as wn
 
+from qanta.pattern3 import pluralize
 from qanta.extractors.abstract import AbstractFeatureExtractor
-from qanta.config import conf
-from qanta.util.environment import data_path, QB_QUESTION_DB
 from qanta.util.constants import KEN_LM
-from qanta.util.build_whoosh import text_iterator
-from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.util.environment import data_path
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta import logging
+from qanta.preprocess import format_guess
+
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
 
-from nltk.corpus import wordnet as wn
+
+log = logging.get(__name__)
 
 
 @lru_cache(maxsize=None)
@@ -33,6 +35,22 @@ def get_states():
     return states
 
 
+def build_lm_data(output):
+    cw = CachedWikipedia()
+
+    with open(output, 'w') as o:
+        dataset = QuizBowlDataset(1)
+        training_data = dataset.training_data()
+        train_pages = {format_guess(g) for g in training_data[1]}
+        for i, page in enumerate(train_pages):
+            content = cw[page].content
+            for sentence in nltk.sent_tokenize(content):
+                o.write("%s\n" % " ".join(kTOKENIZER(sentence.lower())))
+
+            if i % 1000 == 0:
+                log.info("%i\t%s" % (i, page))
+
+
 def find_references(sentence, padding=5):
     tags = nltk.pos_tag(word_tokenize(sentence))
     tags.append(("END", "V"))
@@ -40,17 +58,17 @@ def find_references(sentence, padding=5):
 
     references_found = []
     this_ref_start = -1
-    for ii, pair in enumerate(tags):
+    for i, pair in enumerate(tags):
         word, tag = pair
         if word.lower() == 'this' or word.lower() == 'these':
-            this_ref_start = ii
+            this_ref_start = i
         elif all(x in punctuation for x in word):
             continue
         elif word in states:
             continue
         elif this_ref_start >= 0 and tag.startswith('NN') and \
-                not tags[ii + 1][1].startswith('NN'):
-            references_found.append((this_ref_start, ii))
+                not tags[i + 1][1].startswith('NN'):
+            references_found.append((this_ref_start, i))
             this_ref_start = -1
         elif tag.startswith('V'):
             this_ref_start = -1
@@ -64,38 +82,14 @@ def find_references(sentence, padding=5):
                         for x in tags[stop + 1:stop + padding + 1]))
 
 
-def build_lm_data(path, output):
-    cw = CachedWikipedia(path, "")
-    o = open(output, 'w')
-
-    count = 0
-    for i in [x.split("/")[-1] for x in glob("%s/*" % path)]:
-        count += 1
-        if count % 1000 == 0:
-            print("%i\t%s" % (count, i))
-        page = cw[i]
-
-        for ss in nltk.sent_tokenize(page.content):
-            o.write("%s\n" % " ".join(kTOKENIZER(ss.lower())))
-
-
 class Mentions(AbstractFeatureExtractor):
     def __init__(self):
         super().__init__()
-        question_db = QuestionDatabase(QB_QUESTION_DB)
-        answers = set(x for x, y in text_iterator(
-            False, "", False, question_db, False, "", limit=-1,
-            min_pages=conf['mentions']['min_appearances']))
-        self.answers = answers
         self.initialized = False
         self.refex_count = defaultdict(int)
         self.refex_lookup = defaultdict(set)
         self._lm = None
-        self.generate_refexs(self.answers)
-        self.pre = []
-        self.ment = []
-        self.suf = []
-        self.text = ""
+        self.generate_refexs()
         self.kenlm_path = data_path(KEN_LM)
 
     @property
@@ -111,23 +105,21 @@ class Mentions(AbstractFeatureExtractor):
 
     def score_guesses(self, guesses, text):
         # Find mentions if the text has changed
-        for guess in guesses:
-            if text != self.text:
-                self.text = text
-                self.pre = []
-                self.ment = []
-                self.suf = []
-                # Find prefixes, suffixes, and mentions
-                for pp, mm, ss in find_references(text):
-                    # Exclude too short mentions
-                    if len(mm.strip()) > 3:
-                        self.pre.append(pp.lower())
-                        self.suf.append(ss.lower())
-                        self.ment.append(mm.lower())
+        pre = []
+        ment = []
+        suf = []
+        for p, m, s in find_references(text):
+            # Exclude too short mentions
+            if len(m.strip()) > 3:
+                pre.append(p.lower())
+                suf.append(s.lower())
+                ment.append(m.lower())
 
+        for guess in guesses:
+            # Find prefixes, suffixes, and mentions
             best_score = float("-inf")
             for ref in self.referring_exs(guess):
-                for pp, ss in zip(self.pre, self.suf):
+                for pp, ss in zip(pre, suf):
                     pre_tokens = kTOKENIZER(pp)
                     ref_tokens = kTOKENIZER(ref)
                     suf_tokens = kTOKENIZER(ss)
@@ -144,39 +136,40 @@ class Mentions(AbstractFeatureExtractor):
 
             norm_title = LanguageModelBase.normalize_title('', guess)
             assert ":" not in norm_title
-            for mm in self.ment:
-                assert ":" not in mm
+            for m in ment:
+                m = m.replace(':', '')
                 res += " "
-                res += ("%s~%s" % (norm_title, mm)).replace(" ", "_")
+                res += ("%s~%s" % (norm_title, m)).replace(" ", "_")
 
             yield res
 
-    def generate_refexs(self, answer_list):
+    def generate_refexs(self):
         """
         Given all of the possible answers, generate the referring expressions to
         store in dictionary.
         """
-
-        # TODO: Make referring expression data-driven
-
-        for aa in answer_list:
-            ans = aa.split("_(")[0]
-            for jj in ans.split():
-                # each word and plural form of each word
-                self.refex_lookup[aa].add(jj.lower())
-                self.refex_lookup[aa].add(pluralize(jj).lower())
-                self.refex_count[jj] += 1
-                self.refex_count[pluralize(jj)] += 1
+        answer_list = {ans for ans in QuizBowlDataset(1).training_data()[1]}
+        for raw_answer in answer_list:
+            page = format_guess(raw_answer)
+            ans = raw_answer.split("_(")[0].lower()
+            answer_words = ans.split()
+            if len(answer_words) > 1:
+                for word in answer_words:
+                    # each word and plural form of each word
+                    self.refex_lookup[page].add(word)
+                    self.refex_lookup[page].add(pluralize(word))
+                    self.refex_count[word] += 1
+                    self.refex_count[pluralize(word)] += 1
 
             # answer and plural form
-            self.refex_count[ans.lower()] += 1
-            self.refex_count[pluralize(ans).lower()] += 1
-            self.refex_lookup[aa].add(ans.lower())
-            self.refex_lookup[aa].add(pluralize(ans).lower())
+            self.refex_count[ans] += 1
+            self.refex_count[pluralize(ans)] += 1
+            self.refex_lookup[page].add(ans)
+            self.refex_lookup[page].add(pluralize(ans))
 
             # THE answer
-            self.refex_count["the %s" % ans.lower()] += 1
-            self.refex_lookup[aa].add("the %s" % ans.lower())
+            self.refex_count["the %s" % ans] += 1
+            self.refex_lookup[page].add("the %s" % ans)
 
     def referring_exs(self, answer, max_count=5):
         """

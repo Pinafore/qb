@@ -1,6 +1,7 @@
 from luigi import LocalTarget, Task, WrapperTask, ExternalTask
 from qanta.util.io import shell
 import qanta.util.constants as c
+from qanta.extractors import mentions
 
 
 class NLTKDownload(ExternalTask):
@@ -39,10 +40,10 @@ class KenLM(Task):
     def run(self):
         shell('mkdir -p temp')
         shell('mkdir -p output')
-        shell('python3 cli.py build_mentions_lm_data data/external/wikipedia /tmp/wiki_sent')
-        shell('lmplz -o 5 < /tmp/wiki_sent > temp/kenlm.arpa')
-        shell('build_binary temp/kenlm.arpa {}'.format(c.KEN_LM))
-        shell('rm /tmp/wiki_sent temp/kenlm.arpa')
+        mentions.build_lm_data('/tmp/wikipedia_sentences')
+        shell('lmplz -o 5 < /tmp/wikipedia_sentences > /tmp/kenlm.arpa')
+        shell('build_binary /tmp/kenlm.arpa {}'.format(c.KEN_LM))
+        shell('rm /tmp/wikipedia_sentences /tmp/kenlm.arpa')
 
     def output(self):
         return LocalTarget(c.KEN_LM)

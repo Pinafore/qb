@@ -4,10 +4,6 @@ clm {
   min_appearances = 2
 }
 
-mentions {
-  min_appearances = 2
-}
-
 wikifier {
   min_appearances = 2
 }
@@ -34,4 +30,6 @@ guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
+  # Set the level of parallelism for guess generation
+  n_cores = 15
 }

@@ -1,7 +1,6 @@
 import click
 
 from qanta import logging
-from qanta.extractors import mentions
 from qanta.util.environment import ENVIRONMENT
 from qanta.util.vw import format_audit
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
@@ -29,13 +28,6 @@ def spark_stream():
 @main.command()
 def qanta_stream():
     start_qanta_streaming()
-
-
-@main.command()
-@click.argument('wikipedia_input')
-@click.argument('output')
-def build_mentions_lm_data(wikipedia_input, output):
-    mentions.build_lm_data(wikipedia_input, output)
 
 
 @main.command()

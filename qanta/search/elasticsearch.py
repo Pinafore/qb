@@ -1,5 +1,5 @@
 from typing import Dict
-from elasticsearch_dsl import DocType, Text, Keyword, Search
+from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 import progressbar
 
@@ -21,6 +21,7 @@ class Answer(DocType):
 class ElasticSearchIndex:
     @staticmethod
     def build(documents: Dict[str, str]):
+        Index('qb').delete()
         Answer.init()
         cw = CachedWikipedia()
         bar = progressbar.ProgressBar()
