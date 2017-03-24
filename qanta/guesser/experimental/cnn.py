@@ -1,5 +1,5 @@
 """
-This file implements a TF based fixed length neural guesser. It takes a fixed length number of input
+This file implements a TF based fixed length CNN neural guesser. It takes a fixed length number of input
 words and attempts to predict the answer
 """
 import pickle
@@ -20,13 +20,13 @@ import tensorflow as tf
 import numpy as np
 
 log = logging.get(__name__)
-TF_DAN_WE_TMP = '/tmp/qanta/deep/dan_ans_rep.pickle'
-TF_DAN_WE = 'dan_ans_rep.pickle'
+TF_DAN_WE_TMP = '/tmp/qanta/deep/cnn.pickle'
+TF_DAN_WE = 'cnn.pickle'
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
-DEEP_DAN_MODEL_TMP_PREFIX = '/tmp/qanta/deep/dan_ans_rep'
-DEEP_DAN_MODEL_TMP_DIR = '/tmp/qanta/deep'
-DEEP_DAN_MODEL_TARGET = 'dan_ans_rep_dir'
-DEEP_DAN_PARAMS_TARGET = 'dan_ans_rep_params.pickle'
+DEEP_CNN_MODEL_TMP_PREFIX = '/tmp/qanta/deep/cnn'
+DEEP_CNN_MODEL_TMP_DIR = '/tmp/qanta/deep'
+DEEP_CNN_MODEL_TARGET = 'cnn_dir'
+DEEP_CNN_PARAMS_TARGET = 'cnn_params.pickle'
 
 
 def _make_layer(i: int, in_tensor, n_out, op,
@@ -44,9 +44,6 @@ def _make_layer(i: int, in_tensor, n_out, op,
             out = tf.contrib.layers.batch_norm(
                 out, center=True, scale=True, is_training=batch_is_training, scope='bn', fused=True)
         out = (out if op is None else op(out))
-        # tf.summary.histogram('weights', w)
-        # tf.summary.histogram('biases', b)
-        # tf.summary.histogram('activations', out)
         return out, w
 
 
@@ -163,19 +160,19 @@ def _compute_lengths(x_data):
     return np.array([max(1, len(x)) for x in x_data])
 
 
-class TFDanModel:
-    def __init__(self, dan_params: Dict, max_len: int, n_classes: int):
-        self.dan_params = dan_params
+class CNNModel:
+    def __init__(self, cnn_params: Dict, max_len: int, n_classes: int):
+        self.cnn_params = cnn_params
         self.max_len = max_len
         self.n_classes = n_classes
-        self.n_hidden_units = dan_params['n_hidden_units']
-        self.n_hidden_layers = dan_params['n_hidden_layers']
-        self.word_dropout = dan_params['word_dropout']
-        self.nn_dropout = dan_params['nn_dropout']
-        self.batch_size = dan_params['batch_size']
-        self.learning_rate = dan_params['learning_rate']
-        self.max_epochs = dan_params['max_epochs']
-        self.max_patience = dan_params['max_patience']
+        self.n_hidden_units = cnn_params['n_hidden_units']
+        self.n_hidden_layers = cnn_params['n_hidden_layers']
+        self.word_dropout = cnn_params['word_dropout']
+        self.nn_dropout = cnn_params['nn_dropout']
+        self.batch_size = cnn_params['batch_size']
+        self.learning_rate = cnn_params['learning_rate']
+        self.max_epochs = cnn_params['max_epochs']
+        self.max_patience = cnn_params['max_patience']
 
         # These are set by build_tf_model
         self.input_placeholder = None
@@ -188,18 +185,23 @@ class TFDanModel:
         self.saver = None
         self.file_writer = None
         self.sent_vecs = None
-        self.avg_embeddings = None
         self.word_dropout_var = None
         self.nn_dropout_var = None
         self.initial_embed = None
         self.mean_embeddings = None
         self.embed_and_zero = None
         self.accuracy = None
+        self.training_phase = None
+        self.h_pool = None
+        self.h_pool_flat = None
+        self.h_drop = None
 
         # Set at runtime
         self.summary = None
         self.session = None
         self.summary_counter = 0
+        self.filter_sizes = [3, 4, 5]
+        self.num_filters = 128
 
     def build_tf_model(self):
         with tf.variable_scope(
@@ -211,6 +213,7 @@ class TFDanModel:
                 'embedding',
                 initializer=tf.constant(embedding, dtype=tf.float32)
             )
+            embedding_size = embedding.shape[1]
             self.embed_and_zero = tf.pad(self.initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
             self.input_placeholder = tf.placeholder(
                 tf.int32, shape=(self.batch_size, self.max_len), name='input_placeholder')
@@ -218,60 +221,94 @@ class TFDanModel:
                 tf.float32, shape=self.batch_size, name='len_placeholder')
             self.label_placeholder = tf.placeholder(
                 tf.int32, shape=self.batch_size, name='label_placeholder')
+            self.training_phase = tf.placeholder(tf.bool, name='phase')
 
             # (batch_size, max_len, embedding_dim)
             self.sent_vecs = tf.nn.embedding_lookup(self.embed_and_zero, self.input_placeholder)
-
-            # Apply word level dropout
             self.word_dropout_var = tf.get_variable('word_dropout', (), dtype=tf.float32,
                                                     trainable=False)
+            drop_filter = tf.nn.dropout(
+                tf.ones((self.batch_size, self.max_len, 1)),
+                keep_prob=1 - self.word_dropout_var)
+            self.sent_vecs = self.sent_vecs * drop_filter
+            self.sent_vecs = tf.expand_dims(self.sent_vecs, -1)
+
             self.nn_dropout_var = tf.get_variable('nn_dropout', (), dtype=tf.float32,
                                                   trainable=False)
-            drop_filter = tf.nn.dropout(
-                tf.ones((self.max_len, 1)), keep_prob=1 - self.word_dropout_var)
-            self.sent_vecs = self.sent_vecs * drop_filter
-            in_dim = self.embed_and_zero.get_shape()[1]
-            self.avg_embeddings = tf.reduce_sum(self.sent_vecs, 1) / tf.expand_dims(
-                self.len_placeholder, 1)
 
-            layer_out = self.avg_embeddings
-            self.training_phase = tf.placeholder(tf.bool, name='phase')
-            for i in range(self.n_hidden_layers):
-                layer_out, w = _make_layer(
-                    i, layer_out,
-                    n_in=in_dim, n_out=self.n_hidden_units,
-                    op=tf.nn.elu, dropout_prob=self.nn_dropout_var,
-                    batch_norm=True, batch_is_training=self.training_phase
-                )
-                in_dim = None
-            logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
-            with tf.name_scope('cross_entropy'):
-                self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            pooled_outputs = []
+            for i, filter_size in enumerate(self.filter_sizes):
+                with tf.name_scope('conv-maxpool-{}'.format(filter_size)):
+                    filter_shape = [filter_size, embedding_size, 1, self.num_filters]
+                    W = tf.Variable(tf.truncated_normal(filter_shape, stddev=.1), name='W')
+                    b = tf.Variable(tf.constant(.1, shape=[self.num_filters]), name='b')
+                    conv = tf.nn.conv2d(
+                        self.sent_vecs,
+                        W,
+                        strides=[1, 1, 1, 1],
+                        padding='VALID',
+                        name='conv'
+                    )
+                    h_bias_add = tf.nn.bias_add(conv, b)
+                    h_batch_normed = tf.contrib.layers.batch_norm(h_bias_add,
+                                                                  center=True, scale=True,
+                                                                  is_training=self.training_phase,
+                                                                  scope='bn', fused=True)
+                    h = tf.nn.relu(h_batch_normed, name='relu')
+                    pooled = tf.nn.max_pool(
+                        h,
+                        ksize=[1, self.max_len - filter_size + 1, 1, 1],
+                        strides=[1, 1, 1, 1],
+                        padding='VALID',
+                        name='pool'
+                    )
+                    pooled_outputs.append(pooled)
+
+            num_filters_total = self.num_filters * len(self.filter_sizes)
+            self.h_pool = tf.concat(pooled_outputs, 3)
+            self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
+            with tf.name_scope('dropout'):
+                self.h_drop = tf.nn.dropout(self.h_pool_flat, 1 - self.nn_dropout_var)
+
+            with tf.name_scope('output'):
+                W = tf.Variable(
+                    tf.truncated_normal([num_filters_total, self.n_classes],
+                                        stddev=.1), name='W')
+                b = tf.Variable(tf.constant(.1, shape=[self.n_classes]), name='b')
+                logits = tf.nn.xw_plus_b(self.h_drop, W, b, name='logits')
+                predictions = tf.to_int32(tf.argmax(logits, 1, name='predictions'))
+                self.softmax_output = tf.nn.softmax(logits)
+
+            with tf.name_scope('loss'):
+                losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=tf.to_int64(self.label_placeholder))
-                self.loss = tf.reduce_mean(self.loss)
-                tf.summary.scalar('cross_entropy', self.loss)
-
-            self.softmax_output = tf.nn.softmax(logits)
-            preds = tf.to_int32(tf.argmax(logits, 1))
+                self.loss = tf.reduce_mean(losses)
+                tf.summary.scalar('loss', self.loss)
 
             with tf.name_scope('accuracy'):
-                self.batch_accuracy = tf.contrib.metrics.accuracy(preds, self.label_placeholder)
-                tf.summary.scalar('accuracy', self.batch_accuracy)
+                self.accuracy = tf.contrib.metrics.accuracy(
+                    predictions, self.label_placeholder)
+                tf.summary.scalar('accuracy', self.accuracy)
+
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.name_scope('train'):
                 with tf.control_dependencies(update_ops):
+                    global_step = tf.Variable(0, name='global_step', trainable=False)
                     optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
-                    self.train_op = optimizer.minimize(self.loss)
+                    grads_and_vars = optimizer.compute_gradients(self.loss)
+                    self.train_op = optimizer.apply_gradients(
+                        grads_and_vars, global_step=global_step)
 
             self.summary = tf.summary.merge_all()
             self.saver = tf.train.Saver()
 
     def train(self, x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths, save=True):
-        with tf.Graph().as_default(), tf.Session() as session:
+        session_conf = tf.ConfigProto(log_device_placement=True)
+        with tf.Graph().as_default(), tf.Session(config=session_conf) as session:
             self.build_tf_model()
             self.session = session
             self.session.run(tf.global_variables_initializer())
-            params_suffix = ','.join('{}={}'.format(k, v) for k, v in self.dan_params.items())
+            params_suffix = ','.join('{}={}'.format(k, v) for k, v in self.cnn_params.items())
             self.file_writer = tf.summary.FileWriter(
                 os.path.join('output/tensorflow', params_suffix), session.graph)
             train_losses, train_accuracies, holdout_losses, holdout_accuracies = self._train(
@@ -339,9 +376,9 @@ class TFDanModel:
         accuracies = []
         losses = []
         if train:
-            fetches = self.loss, self.batch_accuracy, self.train_op
+            fetches = self.loss, self.accuracy, self.train_op
         else:
-            fetches = self.loss, self.batch_accuracy, self.summary
+            fetches = self.loss, self.accuracy, self.summary
 
         batch_i = 0
         self.session.run(self.word_dropout_var.assign(self.word_dropout if train else 0))
@@ -354,7 +391,17 @@ class TFDanModel:
                 self.len_placeholder: x_len_batch,
                 self.training_phase: int(train)
             }
-            returned = self.session.run(fetches, feed_dict=feed_dict)
+            if batch_i % 100 == 0:
+                run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+                run_metadata = tf.RunMetadata()
+                fetches = self.loss, self.accuracy, self.train_op, self.summary
+                returned = self.session.run(fetches, feed_dict=feed_dict, options=run_options,
+                                            run_metadata=run_metadata)
+                self.file_writer.add_run_metadata(run_metadata, 'step%d' % self.summary_counter)
+                self.file_writer.add_summary(returned[3], self.summary_counter)
+                self.summary_counter += 1
+            else:
+                returned = self.session.run(fetches, feed_dict=feed_dict)
             loss = returned[0]
             accuracy = returned[1]
             if not train:
@@ -416,23 +463,23 @@ class TFDanModel:
             return np.vstack(all_labels)[0:len(x_test)], np.vstack(all_scores)[0:len(x_test)]
 
     def save(self):
-        self.saver.save(self.session, safe_path(DEEP_DAN_MODEL_TMP_PREFIX))
+        self.saver.save(self.session, safe_path(DEEP_CNN_MODEL_TMP_PREFIX))
 
     def load(self):
-        self.saver.restore(self.session, DEEP_DAN_MODEL_TMP_PREFIX)
+        self.saver.restore(self.session, DEEP_CNN_MODEL_TMP_PREFIX)
 
 
-DEFAULT_DAN_PARAMS = dict(
-    n_hidden_units=300, n_hidden_layers=1, word_dropout=.6, batch_size=256,
-    learning_rate=.003, max_epochs=100, nn_dropout=0, max_patience=10
+DEFAULT_FIXED_PARAMS = dict(
+    n_hidden_units=300, n_hidden_layers=2, word_dropout=.5, batch_size=128,
+    learning_rate=.0001, max_epochs=60, nn_dropout=.5, max_patience=8
 )
 
 
-class DANGuesser(AbstractGuesser):
-    def __init__(self, dan_params=DEFAULT_DAN_PARAMS, use_wiki=False, min_answers=2):
+class CNNGuesser(AbstractGuesser):
+    def __init__(self, cnn_params=DEFAULT_FIXED_PARAMS, use_wiki=False, min_answers=2):
         super().__init__()
-        self.dan_params = dan_params
-        self.model = None  # type: Union[None, TFDanModel]
+        self.cnn_params = cnn_params
+        self.model = None  # type: Union[None, CNNModel]
         self.embedding_lookup = None
         self.max_len = None  # type: Union[None, int]
         self.embeddings = None
@@ -445,7 +492,7 @@ class DANGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls) -> List[str]:
-        return [DEEP_DAN_PARAMS_TARGET]
+        return [DEEP_CNN_PARAMS_TARGET]
 
     def qb_dataset(self):
         return QuizBowlDataset(self.min_answers)
@@ -492,7 +539,7 @@ class DANGuesser(AbstractGuesser):
         x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])
 
         log.info('Training deep model...')
-        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
+        self.model = CNNModel(self.cnn_params, self.max_len, self.n_classes)
         x_train = np.array(x_train)
         y_train = np.array(y_train)
         x_test = np.array(x_test)
@@ -511,7 +558,7 @@ class DANGuesser(AbstractGuesser):
         log.info('Converting questions to tensorflow format...')
         x_test = _tf_format(x_test, self.max_len, self.embeddings.shape[0])
         x_test = np.array(x_test)
-        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
+        self.model = CNNModel(self.cnn_params, self.max_len, self.n_classes)
         log.info('Starting Tensorflow model guessing...')
         guess_labels, guess_scores = self.model.guess(x_test, x_test_lengths, n_guesses)
         log.info('Guess generation and fetching top guesses done, converting to output format')
@@ -523,19 +570,16 @@ class DANGuesser(AbstractGuesser):
             all_guesses.append(guesses)
         return all_guesses
 
-    def display_name(self) -> str:
-        return 'DAN'
-
     def parameters(self):
-        return {**self.dan_params, 'use_wiki': self.use_wiki, 'min_answers': self.min_answers}
+        return {**self.cnn_params, 'use_wiki': self.use_wiki, 'min_answers': self.min_answers}
 
     @classmethod
     def load(cls, directory: str) -> AbstractGuesser:
-        guesser = DANGuesser()
+        guesser = CNNGuesser()
         embeddings, embedding_lookup = _load_embeddings(root_directory=directory)
         guesser.embeddings = embeddings
         guesser.embedding_lookup = embedding_lookup
-        params_path = os.path.join(directory, DEEP_DAN_PARAMS_TARGET)
+        params_path = os.path.join(directory, DEEP_CNN_PARAMS_TARGET)
         with open(params_path, 'rb') as f:
             params = pickle.load(f)
             guesser.max_len = params['max_len']
@@ -549,8 +593,8 @@ class DANGuesser(AbstractGuesser):
                     or guesser.vocab is None
                     or guesser.n_classes is None):
                 raise ValueError('Attempting to load uninitialized model parameters')
-        model_path = os.path.join(directory, DEEP_DAN_MODEL_TARGET)
-        shell('cp -r {} {}'.format(model_path, safe_path(DEEP_DAN_MODEL_TMP_DIR)))
+        model_path = os.path.join(directory, DEEP_CNN_MODEL_TARGET)
+        shell('cp -r {} {}'.format(model_path, safe_path(DEEP_CNN_MODEL_TMP_DIR)))
 
         we_path = os.path.join(directory, TF_DAN_WE)
         shutil.copyfile(TF_DAN_WE_TMP, we_path)
@@ -558,7 +602,7 @@ class DANGuesser(AbstractGuesser):
         return guesser
 
     def save(self, directory: str) -> None:
-        params_path = os.path.join(directory, DEEP_DAN_PARAMS_TARGET)
+        params_path = os.path.join(directory, DEEP_CNN_PARAMS_TARGET)
         with safe_open(params_path, 'wb') as f:
             if (self.max_len is None
                     or self.class_to_i is None
@@ -573,7 +617,7 @@ class DANGuesser(AbstractGuesser):
                 'vocab': self.vocab,
                 'n_classes': self.n_classes
             }, f)
-        model_path = os.path.join(directory, DEEP_DAN_MODEL_TARGET)
-        shell('cp -r {} {}'.format(DEEP_DAN_MODEL_TMP_DIR, safe_path(model_path)))
+        model_path = os.path.join(directory, DEEP_CNN_MODEL_TARGET)
+        shell('cp -r {} {}'.format(DEEP_CNN_MODEL_TMP_DIR, safe_path(model_path)))
         we_path = os.path.join(directory, TF_DAN_WE)
         shutil.copyfile(TF_DAN_WE_TMP, safe_path(we_path))

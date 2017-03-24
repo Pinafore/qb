@@ -15,13 +15,13 @@ guessers "Dan" {
 }
 
 guessers "Whoosh" {
-  class = "qanta.guesser.whoosh.WhooshWikiGuesser"
+  class = "qanta.guesser.experimental.whoosh.WhooshWikiGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }
 
 guessers "AuxDan" {
-  class = "qanta.guesser.dan.aux_dan.AuxDANGuesser"
+  class = "qanta.guesser.experimental.dan.aux_dan.AuxDANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }
@@ -32,4 +32,16 @@ guessers "ElasticSearch" {
   enabled = false
   # Set the level of parallelism for guess generation
   n_cores = 15
+}
+
+guessers "FixedLen" {
+  class = "qanta.guesser.experimental.tf_fixed.FixedLenGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+}
+
+guessers "CNN" {
+  class = "qanta.guesser.experimental.cnn.CNNGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
 }
