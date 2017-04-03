@@ -496,7 +496,8 @@ class DANGuesser(AbstractGuesser):
 
         log.info('Computing number of classes and max paragraph length in words')
         self.n_classes = _compute_n_classes(training_data[1])
-        self.max_len = _compute_max_len(x_train)
+        # self.max_len = _compute_max_len(x_train)
+        self.max_len = max([len(' '.join(sentences).split()) for sentences in training_data[0]])
         x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
         x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])
 
