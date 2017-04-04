@@ -68,15 +68,12 @@ class Question:
             yield d
 
     def get_text(self, sentence, token):
-        if self._last_query != (sentence, token):
-            self._last_query = (sentence, token)
-            previous = ""
-            for i in range(sentence):
-                previous += self.text.get(i, "")
-            if token > 0:
-                previous += " ".join(self.text[sentence].split()[:token])
-            self._cached_query = previous
-        return self._cached_query
+        text = ""
+        for i in range(sentence):
+            text += self.text.get(i, "")
+        if token > 0:
+            text += " ".join(self.text.get(sentence, "").split()[:token])
+        return text
 
     def add_text(self, sent, text):
         self.text[sent] = text
