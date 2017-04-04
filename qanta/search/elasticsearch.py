@@ -1,5 +1,4 @@
 from typing import Dict
-import time
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 import elasticsearch
@@ -36,7 +35,6 @@ class ElasticSearchIndex:
         for page in bar(documents):
             answer = Answer(page=page, wiki_content=cw[page].content, qb_content=documents[page])
             answer.save()
-        time.sleep(5)
 
     def search(self, text: str):
         s = Search(index='qb').query(
