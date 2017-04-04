@@ -22,7 +22,7 @@ def es_search(max_n_guesses, query):
 
 class ElasticSearchGuesser(AbstractGuesser):
     def qb_dataset(self):
-        return QuizBowlDataset(1)
+        return QuizBowlDataset(conf['guessers']['ElasticSearch']['min_appearances'])
 
     def train(self, training_data):
         documents = {}

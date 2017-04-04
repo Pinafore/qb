@@ -43,11 +43,11 @@ class VWGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        #with open('/tmp/vw_test.txt', 'w') as f:
-        #    for q in questions:
-        #        features = format_question(q)
-        #        f.write('1 |words {features}\n'.format(features=features))
-        #shell('vw -t -i /tmp/vw_guesser.model -r /tmp/raw_predictions.txt -d /tmp/vw_test.txt')
+        with open('/tmp/vw_test.txt', 'w') as f:
+            for q in questions:
+                features = format_question(q)
+                f.write('1 |words {features}\n'.format(features=features))
+        shell('vw -t -i /tmp/vw_guesser.model -r /tmp/raw_predictions.txt -d /tmp/vw_test.txt')
         predictions = []
         with open('/tmp/raw_predictions.txt') as f:
             for line in f:

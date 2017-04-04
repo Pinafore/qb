@@ -2,14 +2,18 @@ import pickle
 import time
 import os
 import shutil
-from typing import Dict, List, Tuple, Union, Set, Optional
+from typing import Dict, List, Tuple, Union, Optional
 
 from qanta.datasets.abstract import TrainingData
-from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.datasets.wikipedia import WikipediaDataset
+from qanta.guesser.abstract import AbstractGuesser
+from qanta.guesser.nn import (make_layer, convert_text_to_embeddings_indices, compute_n_classes,
+                              compute_lengths, compute_max_len, tf_format,
+                              create_load_embeddings_function, create_batches)
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path, shell
+from qanta.config import conf
 from qanta import logging
 
 import tensorflow as tf
@@ -18,158 +22,13 @@ import numpy as np
 log = logging.get(__name__)
 TF_DAN_WE_TMP = '/tmp/qanta/deep/tf_dan_we.pickle'
 TF_DAN_WE = 'tf_dan_we.pickle'
-GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 DEEP_DAN_MODEL_TMP_PREFIX = '/tmp/qanta/deep/tfdan'
 DEEP_DAN_MODEL_TMP_DIR = '/tmp/qanta/deep'
 DEEP_DAN_MODEL_TARGET = 'tfdan_dir'
 DEEP_DAN_PARAMS_TARGET = 'dan_params.pickle'
 
 
-def _make_layer(i: int, in_tensor, n_out, op,
-                n_in=None, dropout_prob=None, batch_norm=False, batch_is_training=None):
-    with tf.variable_scope('layer' + str(i)):
-        if batch_norm and batch_is_training is None:
-            raise ValueError('if using batch norm then passing a training placeholder is required')
-        w = tf.get_variable('w', (in_tensor.get_shape()[1] if n_in is None else n_in, n_out),
-                            dtype=tf.float32)
-        if dropout_prob is not None:
-            w = tf.nn.dropout(w, keep_prob=1 - dropout_prob)
-        b = tf.get_variable('b', n_out, dtype=tf.float32)
-        out = tf.matmul(in_tensor, w) + b
-        if batch_norm:
-            out = tf.contrib.layers.batch_norm(
-                out, center=True, scale=True, is_training=batch_is_training, scope='bn', fused=True)
-        out = (out if op is None else op(out))
-        # tf.summary.histogram('weights', w)
-        # tf.summary.histogram('biases', b)
-        # tf.summary.histogram('activations', out)
-        return out, w
-
-
-def parametric_relu(_x):
-    alphas = tf.get_variable(
-        'alpha',
-        _x.get_shape()[-1],
-        initializer=tf.constant_initializer(0.0),
-        dtype=tf.float32
-    )
-    pos = tf.nn.relu(_x)
-    neg = alphas * (_x - abs(_x)) * 0.5
-
-    return pos + neg
-
-
-def _create_embeddings(vocab: Set[str]):
-    embeddings = []
-    embedding_lookup = {}
-    with open(GLOVE_WE) as f:
-        i = 0
-        for l in f:
-            splits = l.split()
-            word = splits[0]
-            if word in vocab:
-                emb = [float(n) for n in splits[1:]]
-                embeddings.append(emb)
-                embedding_lookup[word] = i
-                i += 1
-        embeddings = np.array(embeddings)
-        mean_embedding = embeddings.mean(axis=0)
-        embed_with_unk = np.vstack([embeddings, mean_embedding])
-        embedding_lookup['UNK'] = i
-        return embed_with_unk, embedding_lookup
-
-
-def _load_embeddings(vocab=None, root_directory=''):
-    if os.path.exists(TF_DAN_WE_TMP):
-        log.info('Loading word embeddings from tmp cache')
-        with safe_open(TF_DAN_WE_TMP, 'rb') as f:
-            return pickle.load(f)
-    elif os.path.exists(os.path.join(root_directory, TF_DAN_WE)):
-        log.info('Loading word embeddings from restored cache')
-        with safe_open(os.path.join(root_directory, TF_DAN_WE), 'rb') as f:
-            return pickle.load(f)
-    else:
-        if vocab is None:
-            raise ValueError('To create fresh embeddings a vocab is needed')
-        with safe_open(TF_DAN_WE_TMP, 'wb') as f:
-            log.info('Creating word embeddings and saving to cache')
-            embed_and_lookup = _create_embeddings(vocab)
-            pickle.dump(embed_and_lookup, f)
-            return embed_and_lookup
-
-
-def _convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[str, int]):
-    w_indices = []
-    for w in words:
-        if w in embedding_lookup:
-            w_indices.append(embedding_lookup[w])
-        else:
-            w_indices.append(embedding_lookup['UNK'])
-    return w_indices
-
-
-def _compute_n_classes(labels: List[str]):
-    return len(set(labels))
-
-
-def _compute_max_len(x_data: List[List[int]]):
-    return max(len(x) for x in x_data)
-
-
-def _tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
-    """
-    Pad with elements until it has max_len or shorten it until it has max_len. When padding insert
-    the zero index so it doesn't contribute anything
-    :param x_data:
-    :param max_len:
-    :return:
-    """
-    for i in range(len(x_data)):
-        row = x_data[i]
-        while len(row) < max_len:
-            row.append(zero_index)
-        x_data[i] = x_data[i][:max_len]
-    return x_data
-
-
-def _create_batches(batch_size,
-                    x_data: np.ndarray, y_data: np.ndarray, x_lengths: np.ndarray,
-                    pad=False, shuffle=True):
-    if type(x_data) != np.ndarray or type(y_data) != np.ndarray:
-        raise ValueError('x and y must be numpy arrays')
-    if len(x_data) != len(y_data):
-        raise ValueError('x and y must have the same dimension')
-    n = len(x_data)
-    order = list(range(n))
-    if shuffle:
-        np.random.shuffle(order)
-    for i in range(0, n, batch_size):
-        if len(order[i:i + batch_size]) == batch_size:
-            x_batch = x_data[order[i:i + batch_size]]
-            y_batch = y_data[order[i:i + batch_size]]
-            x_batch_lengths = x_lengths[order[i:i + batch_size]]
-            yield x_batch, y_batch, x_batch_lengths
-        elif pad:
-            size = len(order[i:i + batch_size])
-            x_batch = np.vstack((
-                x_data[order[i:i + batch_size]],
-                np.zeros((batch_size - size, x_data.shape[1])))
-            )
-            y_batch = np.hstack((
-                y_data[order[i:i + batch_size]],
-                np.zeros((batch_size - size,)))
-            )
-            x_batch_lengths = np.hstack((
-                x_lengths[order[i:i + batch_size]],
-                np.zeros((batch_size - size,)))
-            )
-            yield x_batch, y_batch, x_batch_lengths
-        else:
-            break
-
-
-def _compute_lengths(x_data):
-    return np.array([max(1, len(x)) for x in x_data])
+load_embeddings = create_load_embeddings_function(TF_DAN_WE_TMP, TF_DAN_WE, log)
 
 
 class TFDanModel:
@@ -204,6 +63,7 @@ class TFDanModel:
         self.mean_embeddings = None
         self.embed_and_zero = None
         self.accuracy = None
+        self.training_phase = None
 
         # Set at runtime
         self.summary = None
@@ -215,7 +75,7 @@ class TFDanModel:
                 'dan',
                 reuse=None,
                 initializer=tf.contrib.layers.xavier_initializer()):
-            embedding, embedding_word_lookup = _load_embeddings()
+            embedding, embedding_word_lookup = load_embeddings()
             self.initial_embed = tf.get_variable(
                 'embedding',
                 initializer=tf.constant(embedding, dtype=tf.float32)
@@ -246,14 +106,15 @@ class TFDanModel:
             layer_out = self.avg_embeddings
             self.training_phase = tf.placeholder(tf.bool, name='phase')
             for i in range(self.n_hidden_layers):
-                layer_out, w = _make_layer(
+                layer_out, w = make_layer(
                     i, layer_out,
                     n_in=in_dim, n_out=self.n_hidden_units,
                     op=tf.nn.elu, dropout_prob=self.nn_dropout_var,
                     batch_norm=True, batch_is_training=self.training_phase
                 )
                 in_dim = None
-            logits, w = _make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
+            logits, w = make_layer(self.n_hidden_layers, layer_out, n_out=self.n_classes, op=None)
+
             with tf.name_scope('cross_entropy'):
                 self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=logits, labels=tf.to_int64(self.label_placeholder))
@@ -355,7 +216,7 @@ class TFDanModel:
         batch_i = 0
         self.session.run(self.word_dropout_var.assign(self.word_dropout if train else 0))
         self.session.run(self.nn_dropout_var.assign(self.nn_dropout if train else 0))
-        for x_batch, y_batch, x_len_batch in _create_batches(
+        for x_batch, y_batch, x_len_batch in create_batches(
                 self.batch_size, x_data, y_data, x_lengths):
             feed_dict = {
                 self.input_placeholder: x_batch,
@@ -391,7 +252,7 @@ class TFDanModel:
             log.info('Starting dan tf batches...')
             batch_i = 0
             column_index = [[i] for i in range(self.batch_size)]
-            for x_batch, y_batch, x_len_batch in _create_batches(
+            for x_batch, y_batch, x_len_batch in create_batches(
                     self.batch_size, x_test, y_test, x_test_lengths, pad=True, shuffle=False):
                 if batch_i % 250 == 0:
                     log.info('Starting batch {}'.format(batch_i))
@@ -438,7 +299,7 @@ DEFAULT_DAN_PARAMS = dict(
 
 
 class DANGuesser(AbstractGuesser):
-    def __init__(self, dan_params=DEFAULT_DAN_PARAMS, use_wiki=False, min_answers=2):
+    def __init__(self, dan_params=DEFAULT_DAN_PARAMS, use_wiki=False):
         super().__init__()
         self.dan_params = dan_params
         self.model = None  # type: Union[None, TFDanModel]
@@ -450,7 +311,7 @@ class DANGuesser(AbstractGuesser):
         self.vocab = None
         self.n_classes = None
         self.use_wiki = use_wiki
-        self.min_answers = min_answers
+        self.min_answers = conf['guessers']['Dan']['min_appearances']
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -462,8 +323,7 @@ class DANGuesser(AbstractGuesser):
     def train(self,
               training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data)
+        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
@@ -475,31 +335,29 @@ class DANGuesser(AbstractGuesser):
                 i_to_class=i_to_class)
 
         log.info('Creating embeddings...')
-        embeddings, embedding_lookup = _load_embeddings(vocab=vocab)
+        embeddings, embedding_lookup = load_embeddings(vocab=vocab)
         self.embeddings = embeddings
-        self.embedding_lookup = self.embedding_lookup
+        self.embedding_lookup = embedding_lookup
 
         log.info('Converting dataset to embeddings...')
-        x_train = [_convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train]
-        x_train_lengths = _compute_lengths(x_train)
+        x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train]
+        x_train_lengths = compute_lengths(x_train)
 
-        x_test = [_convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test]
-        x_test_lengths = _compute_lengths(x_test)
+        x_test = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test]
+        x_test_lengths = compute_lengths(x_test)
 
         if self.use_wiki:
-            x_train_wiki = [_convert_text_to_embeddings_indices(q, embedding_lookup)
-                            for q in x_train_wiki]
-            x_train_lengths_wiki = _compute_lengths(x_train_wiki)
+            x_train_wiki = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train_wiki]
+            x_train_lengths_wiki = compute_lengths(x_train_wiki)
             x_train.extend(x_train_wiki)
             y_train.extend(y_train_wiki)
             x_train_lengths = np.concatenate([x_train_lengths, x_train_lengths_wiki])
 
         log.info('Computing number of classes and max paragraph length in words')
-        self.n_classes = _compute_n_classes(training_data[1])
-        # self.max_len = _compute_max_len(x_train)
-        self.max_len = max([len(' '.join(sentences).split()) for sentences in training_data[0]])
-        x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
-        x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])
+        self.n_classes = compute_n_classes(training_data[1])
+        self.max_len = compute_max_len(training_data)
+        x_train = tf_format(x_train, self.max_len, embeddings.shape[0])
+        x_test = tf_format(x_test, self.max_len, embeddings.shape[0])
 
         log.info('Training deep model...')
         self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
@@ -514,12 +372,12 @@ class DANGuesser(AbstractGuesser):
               questions: List[str], n_guesses: Optional[int]) -> List[List[Tuple[str, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(n_guesses, len(questions)))
         log.info('Converting text to embedding indices...')
-        x_test = [_convert_text_to_embeddings_indices(
+        x_test = [convert_text_to_embeddings_indices(
             tokenize_question(q), self.embedding_lookup) for q in questions]
         log.info('Computing question lengths...')
-        x_test_lengths = _compute_lengths(x_test)
+        x_test_lengths = compute_lengths(x_test)
         log.info('Converting questions to tensorflow format...')
-        x_test = _tf_format(x_test, self.max_len, self.embeddings.shape[0])
+        x_test = tf_format(x_test, self.max_len, self.embeddings.shape[0])
         x_test = np.array(x_test)
         self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
         log.info('Starting Tensorflow model guessing...')
@@ -542,7 +400,7 @@ class DANGuesser(AbstractGuesser):
     @classmethod
     def load(cls, directory: str) -> AbstractGuesser:
         guesser = DANGuesser()
-        embeddings, embedding_lookup = _load_embeddings(root_directory=directory)
+        embeddings, embedding_lookup = load_embeddings(root_directory=directory)
         guesser.embeddings = embeddings
         guesser.embedding_lookup = embedding_lookup
         params_path = os.path.join(directory, DEEP_DAN_PARAMS_TARGET)

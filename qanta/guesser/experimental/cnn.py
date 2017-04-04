@@ -200,8 +200,8 @@ class CNNModel:
         self.summary = None
         self.session = None
         self.summary_counter = 0
-        self.filter_sizes = [3, 4, 5]
-        self.num_filters = 128
+        self.filter_sizes = [2, 3, 4]
+        self.num_filters = 300
 
     def build_tf_model(self):
         with tf.variable_scope(
@@ -251,7 +251,7 @@ class CNNModel:
                     )
                     h_bias_add = tf.nn.bias_add(conv, b)
                     h = tf.nn.relu(h_bias_add, name='relu')
-                    pooled = tf.nn.max_pool(
+                    pooled = tf.nn.avg_pool(
                         h,
                         ksize=[1, self.max_len - filter_size + 1, 1, 1],
                         strides=[1, 1, 1, 1],

@@ -93,8 +93,11 @@ class GenerateGuesses(Task):
         for fold in c.ALL_FOLDS:
             log.info('Generating and saving guesses for {} fold'.format(fold))
             log.info('Starting guess generation...')
-            guess_df = guesser_instance.generate_guesses(self.n_guesses, [fold],
-                                                         word_skip=self.word_skip)
+            if fold == 'test' and self.word_skip == -1:
+                guess_df = guesser_instance.generate_guesses(
+                    self.n_guesses, [fold], word_skip=conf['test_fold_word_skip'])
+            else:
+                guess_df = guesser_instance.generate_guesses(self.n_guesses, [fold], word_skip=self.word_skip)
             log.info('Starting guess saving...')
             guesser_class.save_guesses(guess_df, guesser_directory, [fold])
             log.info('Done saving guesses')
