@@ -56,7 +56,7 @@ class Question:
             if word_skip > 0:
                 words = self.text[i].split()
                 for j in range(word_skip, len(words), word_skip):
-                    yield i + 1, j, previous + [" ".join(words[:j])]
+                    yield i, j, previous + [" ".join(words[:j])]
 
             yield i + 1, 0, [self.text[x] for x in sorted(self.text) if x <= i]
 

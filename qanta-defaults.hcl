@@ -32,7 +32,7 @@ guessers "AuxDan" {
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
+  enabled = true
   # Set the level of parallelism for guess generation
   n_cores = 2
   min_appearances = 1
