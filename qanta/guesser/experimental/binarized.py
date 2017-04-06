@@ -151,7 +151,7 @@ class BinarizedSiameseModel:
         self.embedding_lookup = word_embedding_lookup
         word_embeddings = tf.get_variable(
             'word_embeddings',
-            tf.constant(word_embeddings, dtype=tf.float32)
+            initializer=tf.constant(word_embeddings, dtype=tf.float32)
         )
         self.word_embeddings = tf.pad(self.word_embeddings, [[0, 1], [0, 0]], mode='CONSTANT')
 
@@ -504,6 +504,8 @@ class BinarizedGuesser(AbstractGuesser):
             guesser.vocab = params['vocab']
             guesser.question_max_length = params['question_max_length']
             guesser.wiki_pages = params['wiki_pages']
+            guesser.embeddings = embeddings
+            guesser.embedding_lookup = embedding_lookup
 
         model_path = os.path.join(directory, BINARIZED_MODEL_TARGET)
         shell('cp -r {} {}'.format(model_path, safe_path(BINARIZED_MODEL_TMP_DIR)))
