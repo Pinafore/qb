@@ -32,6 +32,52 @@ BINARIZED_PARAMS_TARGET = 'binarized_params.pickle'
 load_embeddings = create_load_embeddings_function(BINARIZED_WE_TMP, BINARIZED_WE, log)
 
 
+def create_binarized_batches(
+        batch_size,
+        x_data: np.ndarray, x_lengths, y_data: np.ndarray,
+        wiki_data: np.ndarray, wiki_lengths: np.ndarray,
+        pad=False, shuffle=True):
+    if len({len(x_data), len(x_lengths), len(y_data), len(wiki_data), len(wiki_lengths)}) != 1:
+        raise ValueError('x and y must have the same dimension')
+    n = len(x_data)
+    order = list(range(n))
+    if shuffle:
+        np.random.shuffle(order)
+    for i in range(0, n, batch_size):
+        if len(order[i:i + batch_size]) == batch_size:
+            x_batch = x_data[order[i:i + batch_size]]
+            x_batch_lengths = x_lengths[order[i:i + batch_size]]
+            y_batch = y_data[order[i:i + batch_size]]
+            wiki_batch = wiki_data[order[i:i + batch_size]]
+            wiki_batch_lengths = wiki_lengths[order[i:i + batch_size]]
+            yield x_batch, x_batch_lengths, y_batch, wiki_batch, wiki_batch_lengths
+        elif pad:
+            size = len(order[i:i + batch_size])
+            x_batch = np.vstack((
+                x_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size, x_data.shape[1])))
+            )
+            x_batch_lengths = np.hstack((
+                x_lengths[order[i:i + batch_size]],
+                np.zeros((batch_size - size,)))
+            )
+            y_batch = np.hstack((
+                y_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size,)))
+            )
+            wiki_batch = np.vstack((
+                wiki_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size, wiki_data.shape[1])))
+            )
+            wiki_batch_lengths = np.hstack((
+                wiki_lengths[order[i:i + batch_size]],
+                np.zeros((batch_size - size,)))
+            )
+            yield x_batch, x_batch_lengths, y_batch, wiki_batch, wiki_batch_lengths
+        else:
+            break
+
+
 class DAN:
     def __init__(self, name,
                  text_placeholder, length_placeholder,
@@ -74,14 +120,32 @@ class BinarizedSiameseModel:
                  batch_size=128,
                  n_layers=1,
                  n_hidden_units=200,
-                 max_n_epochs=100):
+                 max_n_epochs=100,
+                 max_patience=10,
+                 word_dropout_keep_prob=.5,
+                 nn_dropout_keep_prob=1.0,
+                 class_to_i=None,
+                 i_to_class=None,
+                 wiki_pages=None):
         self.session = None
+        self.file_writer = None
         self.question_max_length = question_max_length
         self.wiki_max_length = wiki_max_length
         self.batch_size = batch_size
         self.n_layers = n_layers
         self.n_hidden_units = n_hidden_units
         self.max_n_epochs = max_n_epochs
+        self.max_patience = max_patience
+        self.word_dropout_keep_prob = word_dropout_keep_prob
+        self.nn_dropout_keep_prob = nn_dropout_keep_prob
+        self.accuracy = None
+        self.loss = None
+        self.train_op = None
+        self.probabilities = None
+        self.summary_counter = 0
+        self.wiki_pages = wiki_pages
+        self.class_to_i = class_to_i
+        self.i_to_class = i_to_class
 
         word_embeddings, word_embedding_lookup = load_embeddings()
         self.embedding_lookup = word_embedding_lookup
@@ -91,9 +155,9 @@ class BinarizedSiameseModel:
         )
         self.word_embeddings = tf.pad(self.word_embeddings, [[0, 1], [0, 0]], mode='CONSTANT')
 
-        self.word_dropout_keep_prob = tf.get_variable(
+        self.word_dropout_keep_prob_var = tf.get_variable(
             'word_dropout_keep_prob', (), dtype=tf.float32, trainable=False)
-        self.nn_dropout_keep_prob = tf.get_variable('nn_dropout_keep_prob', (), dtype=tf.float32, trainable=False)
+        self.nn_dropout_keep_prob_var = tf.get_variable('nn_dropout_keep_prob', (), dtype=tf.float32, trainable=False)
         self.is_training = tf.placeholder(tf.bool, name='is_training')
         self.labels = tf.placeholder(tf.int32, shape=self.batch_size, name='labels')
 
@@ -113,13 +177,13 @@ class BinarizedSiameseModel:
 
         self.question_dan = DAN(
             'question_dan', self.qb_questions, self.question_lengths,
-            self.word_dropout_keep_prob, self.nn_dropout_keep_prob, self.is_training,
+            self.word_dropout_keep_prob_var, self.nn_dropout_keep_prob_var, self.is_training,
             word_embeddings, self.question_max_length, self.n_layers, self.n_hidden_units
         )
 
         self.wiki_dan = DAN(
             'wiki_dan', self.wiki_data, self.wiki_lengths,
-            self.word_dropout_keep_prob, self.nn_dropout_keep_prob, self.is_training,
+            self.word_dropout_keep_prob_var, self.nn_dropout_keep_prob_var, self.is_training,
             word_embeddings, self.wiki_max_length, self.n_layers, self.n_hidden_units
         )
 
@@ -134,7 +198,7 @@ class BinarizedSiameseModel:
             self.loss = tf.reduce_mean(self.loss)
             tf.summary.scalar('log_loss', self.loss)
 
-            self.accuracy = tf.metrics.accuracy(self.labels, self.predictions)
+            self.accuracy = tf.contrib.metrics.accuracy(self.labels, self.predictions)
             tf.summary.scalar('accuracy', self.accuracy)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -145,10 +209,12 @@ class BinarizedSiameseModel:
         self.summary = tf.summary.merge_all()
         self.saver = tf.train.Saver()
 
-    def train(self, session,
+    def train(self, session, file_writer,
               x_train, y_train, x_train_lengths,
               x_test, y_test, x_test_lengths,
               class_to_i, i_to_class):
+        self.session = session
+        self.file_writer = file_writer
         wiki_pages = {}
         cw = CachedWikipedia()
         classes = set(y_train) | set(y_test)
@@ -157,9 +223,11 @@ class BinarizedSiameseModel:
             tokens = word_tokenize(cw[page].content[0:3000].strip().lower())
             w_indices = convert_text_to_embeddings_indices(tokens, self.embedding_lookup)
             wiki_pages[c_index] = w_indices
-
+        self.wiki_pages = wiki_pages
         wiki_train = []
+        wiki_train_lengths = []
         wiki_test = []
+        wiki_test_lengths = []
         negative_y_train = np.copy(y_train)
         np.random.shuffle(negative_y_train)
         negative_y_test = np.copy(y_test)
@@ -169,25 +237,162 @@ class BinarizedSiameseModel:
 
         for y in y_train:
             wiki_train.append(wiki_pages[y])
+            wiki_train_lengths.append(len(wiki_pages[y]))
 
         for y in negative_y_train:
             wiki_train.append(wiki_pages[y])
+            wiki_train_lengths.append(len(wiki_pages[y]))
 
         for y in y_test:
             wiki_test.append(wiki_pages[y])
+            wiki_test_lengths.append(len(wiki_pages[y]))
 
         for y in negative_y_test:
             wiki_test.append(wiki_pages[y])
+            wiki_test_lengths.append(len(wiki_pages[y]))
 
         wiki_train = np.array(wiki_train)
+        wiki_train_lengths = np.array(wiki_train_lengths)
         all_x_train = np.vstack([x_train, x_train])
+        all_x_train_lengths = np.vstack([x_train_lengths, x_train_lengths])
         all_y_train = np.vstack([np.ones((n_train_examples,)), np.zeros((n_train_examples,))])
 
         wiki_test = np.array(wiki_test)
+        wiki_test_lengths = np.array(wiki_test_lengths)
         all_x_test = np.vstack([x_test, x_test])
+        all_x_test_lengths = np.vstack([x_test_lengths, x_test_lengths])
         all_y_test = np.vstack([np.ones((n_test_examples,)), np.zeros((n_test_examples,))])
 
+        max_accuracy = -1
+        patience = 0
 
+        train_accuracies = []
+        train_losses = []
+        train_runtimes = []
+
+        validation_accuracies = []
+        validation_losses = []
+        validation_runtimes = []
+
+        for i in range(self.max_n_epochs):
+            train_accuracy, train_loss, train_runtime = self.run_epoch(
+                all_x_train, all_x_train_lengths, all_y_train, wiki_train, wiki_train_lengths, True)
+            train_accuracies.append(train_accuracy)
+            train_losses.append(train_loss)
+            train_runtimes.append(train_runtime)
+
+            val_accuracy, val_loss, val_runtime = self.run_epoch(
+                all_x_test, all_x_test_lengths, all_y_test, wiki_test, wiki_test_lengths, False)
+            validation_accuracies.append(val_accuracy)
+            validation_losses.append(val_loss)
+            validation_runtimes.append(val_runtime)
+
+            patience += 1
+
+            if val_accuracy > max_accuracy:
+                max_accuracy = val_accuracy
+                patience = 0
+            elif patience == self.max_patience:
+                break
+
+    def run_epoch(self, x_data, x_lengths, y_data, wiki_data, wiki_data_lengths, is_train):
+        start_time = time.time()
+        batch_accuracies = []
+        batch_losses = []
+        batch_i = 0
+
+        if is_train:
+            fetches = self.loss, self.accuracy, self.train_op
+        else:
+            fetches = self.loss, self.accuracy, self.summary
+
+        self.session.run(self.word_dropout_keep_prob_var.assign(self.word_dropout_keep_prob if is_train else 1))
+        self.session.run(self.nn_dropout_keep_prob_var.assign(self.nn_dropout_keep_prob if is_train else 1))
+
+        for x_batch, x_len_batch, y_batch, wiki_batch, wiki_len_batch in create_binarized_batches(
+                self.batch_size, x_data, x_lengths, y_data, wiki_data, wiki_data_lengths):
+            feed_dict = {
+                self.qb_questions: x_batch,
+                self.question_lengths: x_len_batch,
+                self.labels: y_batch,
+                self.wiki_data: wiki_batch,
+                self.wiki_lengths: wiki_len_batch,
+                self.is_training: int(is_train)
+            }
+            returned = self.session.run(fetches, feed_dict=feed_dict)
+            loss = returned[0]
+            accuracy = returned[1]
+            if not is_train:
+                summary = returned[2]
+                self.file_writer.add_summary(summary, self.summary_counter)
+                self.summary_counter += 1
+
+            batch_losses.append(loss)
+            batch_accuracies.append(accuracy)
+            batch_i += 1
+
+        runtime = time.time() - start_time
+
+        return np.mean(batch_accuracies), np.mean(batch_losses), runtime
+
+    def guess(self, x_test, x_test_lengths, n_guesses: Optional[int]):
+        candidates = list(self.i_to_class.keys())
+        string_candidates = [self.i_to_class[k] for k in candidates]
+        candidate_words = [self.wiki_pages[y] for y in candidates]
+        candidate_lengths = compute_lengths(candidate_words)
+        n_candidates = len(candidates)
+        all_x = []
+        all_x_lengths = []
+        all_wiki = []
+        all_wiki_lengths = []
+
+        n = len(x_test)
+        for i in range(n):
+            for j in range(n_candidates):
+                all_x.append(x_test[i])
+                all_x_lengths.append(x_test_lengths[i])
+                all_wiki.append(candidate_words[j])
+                all_wiki_lengths.append(candidate_lengths[j])
+
+        all_x = np.array(all_x)
+        all_x_lengths = np.array(all_x_lengths)
+        all_wiki = np.array(all_wiki)
+        all_wiki_lengths = np.array(all_wiki_lengths)
+
+        y_labels = np.zeros((len(all_x),))
+        n_all = len(y_labels)
+        all_predictions = []
+
+        self.session.run(tf.global_variables_initializer())
+        self.load()
+        self.session.run(self.word_dropout_keep_prob_var.assign(1))
+        self.session.run(self.nn_dropout_keep_prob_var.assign(1))
+
+        for x_batch, x_len_batch, y_batch, wiki_batch, wiki_len_batch in create_binarized_batches(
+                self.batch_size, all_x, all_x_lengths, y_labels, all_wiki, all_wiki_lengths,
+                pad=True, shuffle=False):
+            feed_dict = {
+                self.qb_questions: x_batch,
+                self.question_lengths: x_len_batch,
+                self.labels: y_batch,
+                self.wiki_data: wiki_batch,
+                self.wiki_lengths: wiki_len_batch,
+                self.is_training: 0
+            }
+            batch_predictions = self.session.run(self.probabilities, feed_dict=feed_dict)
+            all_predictions.extend(batch_predictions)
+
+        all_predictions = all_predictions[:n_all]
+        all_guesses = []
+        for i in range(0, n_all, n_candidates):
+            scores = all_predictions[i:i + n_candidates]
+            scores_with_guesses = sorted(zip(scores, string_candidates), reverse=True)
+            if n_guesses is None:
+                top_guesses = scores_with_guesses
+            else:
+                top_guesses = scores_with_guesses[:n_guesses]
+            all_guesses.append(top_guesses)
+        return all_guesses
 
     def save(self):
         self.saver.save(self.session, safe_path(BINARIZED_MODEL_TMP_PREFIX))
@@ -207,6 +412,7 @@ class BinarizedGuesser(AbstractGuesser):
         self.model = None
         self.question_max_length = None
         self.file_writer = None
+        self.wiki_pages = None
 
     def qb_dataset(self):
         return QuizBowlDataset(1)
@@ -242,7 +448,10 @@ class BinarizedGuesser(AbstractGuesser):
         y_train = np.array(y_train)
         y_test = np.array(y_test)
         with tf.Graph().as_default(), tf.Session() as session:
-            self.model = BinarizedSiameseModel(self.question_max_length, 550)
+            self.model = BinarizedSiameseModel(
+                self.question_max_length, 550,
+                i_to_class=self.i_to_class, class_to_i=self.class_to_i
+            )
             session.run(tf.global_variables_initializer())
             self.file_writer = tf.summary.FileWriter(os.path.join('output/tensorflow', 'binarized_logs', session.graph))
             self.model.train(
@@ -251,14 +460,52 @@ class BinarizedGuesser(AbstractGuesser):
                 x_test, y_test, x_test_lengths,
                 class_to_i, i_to_class
             )
+            self.wiki_pages = self.model.wiki_pages
+
+    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
+        log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
+        x_test = [convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
+        x_test_lengths = compute_lengths(x_test)
+        x_test = np.array(tf_format(x_test, self.question_max_length, self.embeddings.shape[0]))
+
+        with tf.Graph().as_default(), tf.Session() as session:
+            self.model = BinarizedSiameseModel(
+                self.question_max_length, 550,
+                i_to_class=self.i_to_class, class_to_i=self.class_to_i,
+                wiki_pages=self.wiki_pages
+            )
+            self.model.session = session
+            return self.model.guess(x_test, x_test_lengths, max_n_guesses)
 
     def save(self, directory: str) -> None:
-        pass
+        params_path = os.path.join(directory, BINARIZED_PARAMS_TARGET)
+        with safe_open(params_path, 'wb') as f:
+            pickle.dump({
+                'class_to_i': self.class_to_i,
+                'i_to_class': self.i_to_class,
+                'vocab': self.vocab,
+                'question_max_length': self.question_max_length,
+                'wiki_pages': self.wiki_pages
+            }, f)
+            model_path = os.path.join(directory, BINARIZED_MODEL_TARGET)
+            shell('cp -r {} {}'.format(BINARIZED_MODEL_TMP_DIR, safe_path(model_path)))
+            we_path = os.path.join(directory, BINARIZED_WE)
+            shutil.copyfile(BINARIZED_WE_TMP, safe_path(we_path))
 
     @classmethod
     def load(cls, directory: str):
-        pass
+        guesser = BinarizedGuesser()
+        embeddings, embedding_lookup = load_embeddings(root_directory=directory)
+        params_path = os.path.join(directory, BINARIZED_PARAMS_TARGET)
+        with open(params_path, 'rb') as f:
+            params = pickle.load(f)
+            guesser.class_to_i = params['class_to_i']
+            guesser.i_to_class = params['i_to_class']
+            guesser.vocab = params['vocab']
+            guesser.question_max_length = params['question_max_length']
+            guesser.wiki_pages = params['wiki_pages']
 
-    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        pass
-
+        model_path = os.path.join(directory, BINARIZED_MODEL_TARGET)
+        shell('cp -r {} {}'.format(model_path, safe_path(BINARIZED_MODEL_TMP_DIR)))
+        we_path = os.path.join(directory, BINARIZED_WE)
+        shutil.copyfile(BINARIZED_WE_TMP, we_path)

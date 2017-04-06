@@ -1,6 +1,6 @@
 n_guesses = 50
 
-test_fold_word_skip = 3
+test_fold_word_skip = -1
 
 clm {
   min_appearances = 2
@@ -46,6 +46,12 @@ guessers "FixedLen" {
 
 guessers "CNN" {
   class = "qanta.guesser.experimental.cnn.CNNGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+}
+
+guessers "BinarizedSiamese" {
+  class = "qanta.guesser.experimental.binarized.BinarizedGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }
