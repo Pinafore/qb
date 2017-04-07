@@ -365,58 +365,56 @@ class BinarizedSiameseModel:
         return np.mean(batch_accuracies), np.mean(batch_losses), runtime
 
     def guess(self, x_test, x_test_lengths, n_guesses: Optional[int]):
+        log.info('Initializing tensorflow')
+        self.session.run(tf.global_variables_initializer())
+        self.load()
+        self.session.run(self.word_dropout_keep_prob_var.assign(1))
+        self.session.run(self.nn_dropout_keep_prob_var.assign(1))
+
         candidates = list(range(len(self.i_to_class)))
         string_candidates = [self.i_to_class[k] for k in candidates]
         candidate_words = [self.wiki_pages[y] for y in candidates]
         candidate_lengths = compute_lengths(candidate_words)
         n_candidates = len(candidates)
-        all_x = []
-        all_x_lengths = []
-        all_wiki = []
-        all_wiki_lengths = []
+        all_guesses = []
 
         log.info('Generating {} candidates for each question'.format(n_candidates))
         n = len(x_test)
         for i in range(n):
+            all_x = []
+            all_x_lengths = []
+            all_wiki = []
+            all_wiki_lengths = []
             for j in range(n_candidates):
                 all_x.append(x_test[i])
                 all_x_lengths.append(x_test_lengths[i])
                 all_wiki.append(candidate_words[j])
                 all_wiki_lengths.append(candidate_lengths[j])
 
-        all_x = np.array(all_x)
-        all_x_lengths = np.array(all_x_lengths)
-        all_wiki = np.array(all_wiki)
-        all_wiki_lengths = np.array(all_wiki_lengths)
+            all_x = np.array(all_x)
+            all_x_lengths = np.array(all_x_lengths)
+            all_wiki = np.array(all_wiki)
+            all_wiki_lengths = np.array(all_wiki_lengths)
 
-        y_labels = np.zeros((len(all_x),))
-        n_all = len(y_labels)
-        all_predictions = []
+            y_labels = np.zeros((len(all_x),))
+            n_all = len(y_labels)
+            all_predictions = []
 
-        self.session.run(tf.global_variables_initializer())
-        self.load()
-        self.session.run(self.word_dropout_keep_prob_var.assign(1))
-        self.session.run(self.nn_dropout_keep_prob_var.assign(1))
+            for x_batch, x_len_batch, y_batch, wiki_batch, wiki_len_batch in create_binarized_batches(
+                    self.batch_size, all_x, all_x_lengths, y_labels, all_wiki, all_wiki_lengths,
+                    pad=True, shuffle=False):
+                feed_dict = {
+                    self.qb_questions: x_batch,
+                    self.question_lengths: x_len_batch,
+                    self.labels: y_batch,
+                    self.wiki_data: wiki_batch,
+                    self.wiki_lengths: wiki_len_batch,
+                    self.is_training: 0
+                }
+                batch_predictions = self.session.run(self.probabilities, feed_dict=feed_dict)
+                all_predictions.extend(batch_predictions)
 
-        log.info('Generating guesses with tensorflow')
-        for x_batch, x_len_batch, y_batch, wiki_batch, wiki_len_batch in create_binarized_batches(
-                self.batch_size, all_x, all_x_lengths, y_labels, all_wiki, all_wiki_lengths,
-                pad=True, shuffle=False):
-            feed_dict = {
-                self.qb_questions: x_batch,
-                self.question_lengths: x_len_batch,
-                self.labels: y_batch,
-                self.wiki_data: wiki_batch,
-                self.wiki_lengths: wiki_len_batch,
-                self.is_training: 0
-            }
-            batch_predictions = self.session.run(self.probabilities, feed_dict=feed_dict)
-            all_predictions.extend(batch_predictions)
-
-        all_predictions = all_predictions[:n_all]
-        all_guesses = []
-        for i in range(0, n_all, n_candidates):
-            scores = all_predictions[i:i + n_candidates]
+            scores = all_predictions[:n_all]
             scores_with_guesses = sorted(zip(scores, string_candidates), reverse=True)
             if n_guesses is None:
                 top_guesses = scores_with_guesses
