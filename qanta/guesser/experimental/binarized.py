@@ -28,7 +28,6 @@ BINARIZED_MODEL_TMP_DIR = '/tmp/qanta/deep'
 BINARIZED_MODEL_TARGET = 'binarized_dir'
 BINARIZED_PARAMS_TARGET = 'binarized_params.pickle'
 
-
 load_embeddings = create_load_embeddings_function(BINARIZED_WE_TMP, BINARIZED_WE, log)
 
 
@@ -37,8 +36,25 @@ def create_binarized_batches(
         x_data: np.ndarray, x_lengths, y_data: np.ndarray,
         wiki_data: np.ndarray, wiki_lengths: np.ndarray,
         pad=False, shuffle=True):
+    if (type(x_data) != np.ndarray or
+            type(x_lengths) != np.ndarray or
+            type(y_data) != np.ndarray or
+            type(wiki_data) != np.ndarray or
+            type(wiki_lengths) != np.ndarray):
+        log.info('type(x_data)={}'.format(x_data))
+        log.info('type(x_lengths)={}'.format(x_lengths))
+        log.info('type(y_data)={}'.format(y_data))
+        log.info('type(wiki_data)={}'.format(wiki_data))
+        log.info('type(wiki_lengths)={}'.format(wiki_lengths))
+        raise ValueError('All inputs must be numpy arrays')
+
     if len({len(x_data), len(x_lengths), len(y_data), len(wiki_data), len(wiki_lengths)}) != 1:
-        raise ValueError('x and y must have the same dimension')
+        log.info('len(x_data)={}'.format(len(x_data)))
+        log.info('len(x_lengths)={}'.format(len(x_lengths)))
+        log.info('len(y_data)={}'.format(len(y_data)))
+        log.info('len(wiki_data)={}'.format(len(wiki_data)))
+        log.info('len(wiki_lengths)={}'.format(len(wiki_lengths)))
+        raise ValueError('All inputs must have the same length')
     n = len(x_data)
     order = list(range(n))
     if shuffle:
@@ -88,7 +104,7 @@ class DAN:
         self.n_hidden_units = n_hidden_units
         self.max_input_length = max_input_length
         self._output = None
-        with tf.variable_scope(name, reuse=None, initializer=tf.contrib.layers.xaviar_initializer()):
+        with tf.variable_scope(name, reuse=None, initializer=tf.contrib.layers.xavier_initializer()):
             word_vectors = tf.nn.embedding_lookup(embeddings, text_placeholder)
 
             word_drop_filter = tf.nn.dropout(tf.ones((self.max_input_length, 1)), keep_prob=word_dropout_keep_prob)
@@ -102,7 +118,7 @@ class DAN:
                 layer_out, _ = make_layer(
                     i, layer_out,
                     n_in=in_dim, n_out=self.n_hidden_units, op=tf.nn.elu,
-                    dropout_prob=1-nn_dropout_keep_prob,
+                    dropout_prob=1 - nn_dropout_keep_prob,
                     batch_norm=True, batch_is_training=is_training
                 )
                 in_dim = None
@@ -121,7 +137,7 @@ class BinarizedSiameseModel:
                  n_layers=1,
                  n_hidden_units=200,
                  max_n_epochs=100,
-                 max_patience=10,
+                 max_patience=5,
                  word_dropout_keep_prob=.5,
                  nn_dropout_keep_prob=1.0,
                  class_to_i=None,
@@ -148,12 +164,13 @@ class BinarizedSiameseModel:
         self.i_to_class = i_to_class
 
         word_embeddings, word_embedding_lookup = load_embeddings()
+        self.np_word_embeddings = word_embeddings
         self.embedding_lookup = word_embedding_lookup
         word_embeddings = tf.get_variable(
             'word_embeddings',
             initializer=tf.constant(word_embeddings, dtype=tf.float32)
         )
-        self.word_embeddings = tf.pad(self.word_embeddings, [[0, 1], [0, 0]], mode='CONSTANT')
+        self.word_embeddings = tf.pad(word_embeddings, [[0, 1], [0, 0]], mode='CONSTANT')
 
         self.word_dropout_keep_prob_var = tf.get_variable(
             'word_dropout_keep_prob', (), dtype=tf.float32, trainable=False)
@@ -187,11 +204,11 @@ class BinarizedSiameseModel:
             word_embeddings, self.wiki_max_length, self.n_layers, self.n_hidden_units
         )
 
-        with tf.variable_scope('similarity_prediction', reuse=None, initializer=tf.contrib.layers.xaviar_initializer()):
+        with tf.variable_scope('similarity_prediction', reuse=None, initializer=tf.contrib.layers.xavier_initializer()):
             self.question_wiki_similarity = self.question_dan.output * self.wiki_dan.output
             self.probabilities, _ = make_layer(-1, self.question_wiki_similarity, n_out=1, op=tf.nn.sigmoid)
             self.probabilities = tf.reshape(self.probabilities, (-1,))
-            self.predictions = tf.round(self.probabilities)
+            self.predictions = tf.cast(tf.round(self.probabilities), tf.int32)
 
         with tf.name_scope('metrics'):
             self.loss = tf.losses.log_loss(self.labels, self.probabilities)
@@ -211,17 +228,19 @@ class BinarizedSiameseModel:
 
     def train(self, session, file_writer,
               x_train, y_train, x_train_lengths,
-              x_test, y_test, x_test_lengths,
-              class_to_i, i_to_class):
+              x_test, y_test, x_test_lengths):
         self.session = session
         self.file_writer = file_writer
         wiki_pages = {}
         cw = CachedWikipedia()
         classes = set(y_train) | set(y_test)
         for c_index in classes:
-            page = i_to_class[c_index]
+            page = self.i_to_class[c_index]
             tokens = word_tokenize(cw[page].content[0:3000].strip().lower())
             w_indices = convert_text_to_embeddings_indices(tokens, self.embedding_lookup)
+            while len(w_indices) < self.wiki_max_length:
+                w_indices.append(self.np_word_embeddings.shape[0])
+            w_indices = np.array(w_indices[:self.wiki_max_length])
             wiki_pages[c_index] = w_indices
         self.wiki_pages = wiki_pages
         wiki_train = []
@@ -254,14 +273,14 @@ class BinarizedSiameseModel:
         wiki_train = np.array(wiki_train)
         wiki_train_lengths = np.array(wiki_train_lengths)
         all_x_train = np.vstack([x_train, x_train])
-        all_x_train_lengths = np.vstack([x_train_lengths, x_train_lengths])
-        all_y_train = np.vstack([np.ones((n_train_examples,)), np.zeros((n_train_examples,))])
+        all_x_train_lengths = np.concatenate([x_train_lengths, x_train_lengths])
+        all_y_train = np.concatenate([np.ones((n_train_examples,)), np.zeros((n_train_examples,))])
 
         wiki_test = np.array(wiki_test)
         wiki_test_lengths = np.array(wiki_test_lengths)
         all_x_test = np.vstack([x_test, x_test])
-        all_x_test_lengths = np.vstack([x_test_lengths, x_test_lengths])
-        all_y_test = np.vstack([np.ones((n_test_examples,)), np.zeros((n_test_examples,))])
+        all_x_test_lengths = np.concatenate([x_test_lengths, x_test_lengths])
+        all_y_test = np.concatenate([np.ones((n_test_examples,)), np.zeros((n_test_examples,))])
 
         max_accuracy = -1
         patience = 0
@@ -281,17 +300,27 @@ class BinarizedSiameseModel:
             train_losses.append(train_loss)
             train_runtimes.append(train_runtime)
 
+            log.info('Train Epoch: {} Avg loss: {:.4f} Accuracy: {:.4f} Runtime: {:.2f} seconds'.format(
+                i, train_loss, train_accuracy, train_runtime
+            ))
+
             val_accuracy, val_loss, val_runtime = self.run_epoch(
                 all_x_test, all_x_test_lengths, all_y_test, wiki_test, wiki_test_lengths, False)
             validation_accuracies.append(val_accuracy)
             validation_losses.append(val_loss)
             validation_runtimes.append(val_runtime)
 
+            log.info('Val Epoch: {} Avg loss: {:.4f} Accuracy: {:.4f} Runtime: {:.2f} seconds'.format(
+                i, val_loss, val_accuracy, val_runtime
+            ))
+
             patience += 1
 
             if val_accuracy > max_accuracy:
+                log.info('New Best Accuracy, saving model')
                 max_accuracy = val_accuracy
                 patience = 0
+                self.save()
             elif patience == self.max_patience:
                 break
 
@@ -336,7 +365,7 @@ class BinarizedSiameseModel:
         return np.mean(batch_accuracies), np.mean(batch_losses), runtime
 
     def guess(self, x_test, x_test_lengths, n_guesses: Optional[int]):
-        candidates = list(self.i_to_class.keys())
+        candidates = list(range(len(self.i_to_class)))
         string_candidates = [self.i_to_class[k] for k in candidates]
         candidate_words = [self.wiki_pages[y] for y in candidates]
         candidate_lengths = compute_lengths(candidate_words)
@@ -346,6 +375,7 @@ class BinarizedSiameseModel:
         all_wiki = []
         all_wiki_lengths = []
 
+        log.info('Generating {} candidates for each question'.format(n_candidates))
         n = len(x_test)
         for i in range(n):
             for j in range(n_candidates):
@@ -368,6 +398,7 @@ class BinarizedSiameseModel:
         self.session.run(self.word_dropout_keep_prob_var.assign(1))
         self.session.run(self.nn_dropout_keep_prob_var.assign(1))
 
+        log.info('Generating guesses with tensorflow')
         for x_batch, x_len_batch, y_batch, wiki_batch, wiki_len_batch in create_binarized_batches(
                 self.batch_size, all_x, all_x_lengths, y_labels, all_wiki, all_wiki_lengths,
                 pad=True, shuffle=False):
@@ -453,12 +484,11 @@ class BinarizedGuesser(AbstractGuesser):
                 i_to_class=self.i_to_class, class_to_i=self.class_to_i
             )
             session.run(tf.global_variables_initializer())
-            self.file_writer = tf.summary.FileWriter(os.path.join('output/tensorflow', 'binarized_logs', session.graph))
+            self.file_writer = tf.summary.FileWriter(os.path.join('output/tensorflow', 'binarized_logs'), session.graph)
             self.model.train(
-                session,
+                session, self.file_writer,
                 x_train, y_train, x_train_lengths,
-                x_test, y_test, x_test_lengths,
-                class_to_i, i_to_class
+                x_test, y_test, x_test_lengths
             )
             self.wiki_pages = self.model.wiki_pages
 
@@ -511,3 +541,4 @@ class BinarizedGuesser(AbstractGuesser):
         shell('cp -r {} {}'.format(model_path, safe_path(BINARIZED_MODEL_TMP_DIR)))
         we_path = os.path.join(directory, BINARIZED_WE)
         shutil.copyfile(BINARIZED_WE_TMP, we_path)
+        return guesser
