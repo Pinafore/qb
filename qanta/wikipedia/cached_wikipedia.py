@@ -223,6 +223,23 @@ class CachedWikipedia:
         else:
             filename = "%s/%s" % (self.path, key)
         page = None
+
+        claims_filename = "%s/%s/%s" % (self.path, 'claims', key+'_claims')
+        claims_page = None
+
+        # check if claims exist on disk
+        if os.path.exists(claims_filename):
+            try:
+                claims_page = pickle.load(open(claims_filename, 'rb'))
+            except pickle.UnpicklingError:
+                claims_page = None
+            except AttributeError:
+                log.info("Error loading claims %s" % key)
+                claims_page = None
+            except ImportError:
+                log.info("Error importing claims %s" % key)
+                claims_page = None
+
         if os.path.exists(filename):
             try:
                 page = pickle.load(open(filename, 'rb'))
@@ -234,6 +251,40 @@ class CachedWikipedia:
             except ImportError:
                 log.info("Error importing %s" % key)
                 page = None
+
+        if claims_page is None:
+            if key in self.countries:
+                raw = [self.load_page("%s%s" % (x, self.countries[key])) for x in COUNTRY_SUB]
+                raw.append(self.load_page(key))
+                log.info("%s is a country!" % key)
+            else:
+                raw = [self.load_page(key)]
+
+            raw = [x for x in raw if x is not None]
+            if raw:
+                if len(raw) > 1:
+                    log.info("%i pages for %s" % (len(raw), key))
+
+                wikidata = self.get_formatted_wikidata(search_key)
+                #wikidata_str = "\n\n== WikiData Properties ==\n\n" + str(wikidata) + "\n\n"
+                #print('wiki data string:',str(wikidata))
+                #wikipedia_data = "\n".join(x.content for x in raw)
+                #data = wikipedia_data + wikidata_str
+                #data = wikidata_str
+                claims_page = WikipediaPage(str(wikidata))
+
+                log.info("Writing file to claims %s" % claims_filename)
+                pickle.dump(claims_page, open(claims_filename, 'wb'),
+                            protocol=pickle.HIGHEST_PROTOCOL)
+            else:
+                log.info("Dummy page for claims %s" % key)
+                claims_page = WikipediaPage()
+                if self.write_dummy:
+                    pickle.dump(claims_page, open(claims_filename, 'wb'),
+                                protocol=pickle.HIGHEST_PROTOCOL)
+
+        self.cache[key] = claims_page
+        #return page
 
         if page is None:
             if key in self.countries:
@@ -248,9 +299,7 @@ class CachedWikipedia:
                 if len(raw) > 1:
                     log.info("%i pages for %s" % (len(raw), key))
 
-                #wikidata = self.get_wikidata(unformatted_key)
                 wikidata = self.get_formatted_wikidata(search_key)
-                #wikidata_str = "\n\n== WikiData Properties ==\n\n" + ''.join('{}{}'.format(key, val) for key, val in wikidata.items()) + "\n\n"
                 wikidata_str = "\n\n== WikiData Properties ==\n\n" + str(wikidata) + "\n\n"
                 wikipedia_data = "\n".join(x.content for x in raw)
                 data = wikipedia_data + wikidata_str
