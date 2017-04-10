@@ -7,9 +7,8 @@ from typing import List, Tuple, Optional
 from qanta.datasets.abstract import TrainingData
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser, QuestionText, Answer
-from qanta.guesser.nn import (make_layer, convert_text_to_embeddings_indices, compute_n_classes,
-                              compute_lengths, compute_max_len, tf_format,
-                              create_load_embeddings_function, batch_iterables)
+from qanta.guesser.nn import (make_layer, convert_text_to_embeddings_indices, compute_lengths, compute_max_len,
+                              tf_format, create_load_embeddings_function)
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path, shell
@@ -18,6 +17,7 @@ from qanta import logging
 import tensorflow as tf
 import numpy as np
 from nltk import word_tokenize
+import progressbar
 
 log = logging.get(__name__)
 BINARIZED_WE_TMP = '/tmp/qanta/deep/binarized_we.pickle'
@@ -90,6 +90,95 @@ def create_binarized_batches(
                 np.zeros((batch_size - size,)))
             )
             yield x_batch, x_batch_lengths, y_batch, wiki_batch, wiki_batch_lengths
+        else:
+            break
+
+
+def create_wikipedia_batches(batch_size, wiki_data: np.ndarray, wiki_lengths: np.ndarray, pad=False, shuffle=True):
+    if type(wiki_data) != np.ndarray or type(wiki_lengths) != np.ndarray:
+        log.info('type(wiki_data)={}'.format(wiki_data))
+        log.info('type(wiki_lengths)={}'.format(wiki_lengths))
+        raise ValueError('All inputs must be numpy arrays')
+
+    if len({len(wiki_data), len(wiki_lengths)}) != 1:
+        log.info('len(wiki_data)={}'.format(len(wiki_data)))
+        log.info('len(wiki_lengths)={}'.format(len(wiki_lengths)))
+        raise ValueError('All inputs must have the same length')
+    n = len(wiki_data)
+    order = list(range(n))
+    if shuffle:
+        np.random.shuffle(order)
+    for i in range(0, n, batch_size):
+        if len(order[i:i + batch_size]) == batch_size:
+            wiki_batch = wiki_data[order[i:i + batch_size]]
+            wiki_batch_lengths = wiki_lengths[order[i:i + batch_size]]
+            yield wiki_batch, wiki_batch_lengths
+        elif pad:
+            size = len(order[i:i + batch_size])
+            wiki_batch = np.vstack((
+                wiki_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size, wiki_data.shape[1])))
+            )
+            wiki_batch_lengths = np.hstack((
+                wiki_lengths[order[i:i + batch_size]],
+                np.zeros((batch_size - size,)))
+            )
+            yield wiki_batch, wiki_batch_lengths
+        else:
+            break
+
+
+def create_test_batches(
+        batch_size,
+        x_data: np.ndarray, x_lengths, y_data: np.ndarray,
+        wiki_dan_output: np.ndarray,
+        pad=False, shuffle=True):
+    if (type(x_data) != np.ndarray or
+            type(x_lengths) != np.ndarray or
+            type(y_data) != np.ndarray or
+            type(wiki_dan_output) != np.ndarray):
+        log.info('type(x_data)={}'.format(x_data))
+        log.info('type(x_lengths)={}'.format(x_lengths))
+        log.info('type(y_data)={}'.format(y_data))
+        log.info('type(wiki_dan_output)={}'.format(wiki_dan_output))
+        raise ValueError('All inputs must be numpy arrays')
+
+    if len({len(x_data), len(x_lengths), len(y_data), len(wiki_dan_output)}) != 1:
+        log.info('len(x_data)={}'.format(len(x_data)))
+        log.info('len(x_lengths)={}'.format(len(x_lengths)))
+        log.info('len(y_data)={}'.format(len(y_data)))
+        log.info('len(wiki_dan_output)={}'.format(len(wiki_dan_output)))
+        raise ValueError('All inputs must have the same length')
+    n = len(x_data)
+    order = list(range(n))
+    if shuffle:
+        np.random.shuffle(order)
+    for i in range(0, n, batch_size):
+        if len(order[i:i + batch_size]) == batch_size:
+            x_batch = x_data[order[i:i + batch_size]]
+            x_batch_lengths = x_lengths[order[i:i + batch_size]]
+            y_batch = y_data[order[i:i + batch_size]]
+            wiki_batch = wiki_dan_output[order[i:i + batch_size]]
+            yield x_batch, x_batch_lengths, y_batch, wiki_batch
+        elif pad:
+            size = len(order[i:i + batch_size])
+            x_batch = np.vstack((
+                x_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size, x_data.shape[1])))
+            )
+            x_batch_lengths = np.hstack((
+                x_lengths[order[i:i + batch_size]],
+                np.zeros((batch_size - size,)))
+            )
+            y_batch = np.hstack((
+                y_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size,)))
+            )
+            wiki_batch = np.vstack((
+                wiki_dan_output[order[i:i + batch_size]],
+                np.zeros((batch_size - size, wiki_dan_output.shape[1])))
+            )
+            yield x_batch, x_batch_lengths, y_batch, wiki_batch
         else:
             break
 
@@ -377,44 +466,60 @@ class BinarizedSiameseModel:
         candidate_lengths = compute_lengths(candidate_words)
         n_candidates = len(candidates)
         all_guesses = []
+        wiki_dan_output = []
+        all_wiki = []
+        all_wiki_lengths = []
+
+        for j in range(n_candidates):
+            all_wiki.append(candidate_words[j])
+            all_wiki_lengths.append(candidate_lengths[j])
+
+        all_wiki = np.array(all_wiki)
+        all_wiki_lengths = np.array(all_wiki_lengths)
+        for wiki_batch, wiki_len_batch in create_wikipedia_batches(self.batch_size, all_wiki, all_wiki_lengths,
+                                                                   pad=True, shuffle=False):
+            feed_dict = {
+                self.wiki_data: wiki_batch,
+                self.wiki_lengths: wiki_len_batch,
+                self.is_training: 0
+            }
+            wiki_dan_output.append(self.session.run(self.wiki_dan.output, feed_dict=feed_dict))
+        wiki_dan_output = np.vstack(wiki_dan_output)[:n_candidates]
 
         log.info('Generating {} candidates for each question'.format(n_candidates))
         n = len(x_test)
-        for i in range(n):
-            all_x = []
-            all_x_lengths = []
-            all_wiki = []
-            all_wiki_lengths = []
-            for j in range(n_candidates):
-                all_x.append(x_test[i])
-                all_x_lengths.append(x_test_lengths[i])
-                all_wiki.append(candidate_words[j])
-                all_wiki_lengths.append(candidate_lengths[j])
+        bar = progressbar.ProgressBar()
+        for i in bar(range(n)):
+            all_x = np.repeat(x_test[i].reshape((1, -1)), n_candidates, axis=0)
+            all_x_lengths = np.repeat(x_test_lengths[i], n_candidates)
 
-            all_x = np.array(all_x)
-            all_x_lengths = np.array(all_x_lengths)
-            all_wiki = np.array(all_wiki)
-            all_wiki_lengths = np.array(all_wiki_lengths)
-
-            y_labels = np.zeros((len(all_x),))
-            n_all = len(y_labels)
+            y_labels = np.zeros((n_candidates,))
             all_predictions = []
+            first_iteration = True
+            dan_output = None
 
-            for x_batch, x_len_batch, y_batch, wiki_batch, wiki_len_batch in create_binarized_batches(
-                    self.batch_size, all_x, all_x_lengths, y_labels, all_wiki, all_wiki_lengths,
+            for x_batch, x_len_batch, y_batch, wiki_dan_batch in create_test_batches(
+                    self.batch_size, all_x, all_x_lengths, y_labels, wiki_dan_output,
                     pad=True, shuffle=False):
+                if first_iteration:
+                    feed_dict = {
+                        self.qb_questions: x_batch,
+                        self.question_lengths: x_len_batch,
+                        self.is_training: 0
+                    }
+                    dan_output = self.session.run(self.question_dan.output, feed_dict=feed_dict)
+                    first_iteration = False
+
                 feed_dict = {
-                    self.qb_questions: x_batch,
-                    self.question_lengths: x_len_batch,
+                    self.question_dan.output: dan_output,
                     self.labels: y_batch,
-                    self.wiki_data: wiki_batch,
-                    self.wiki_lengths: wiki_len_batch,
+                    self.wiki_dan.output: wiki_dan_batch,
                     self.is_training: 0
                 }
                 batch_predictions = self.session.run(self.probabilities, feed_dict=feed_dict)
                 all_predictions.extend(batch_predictions)
 
-            scores = all_predictions[:n_all]
+            scores = all_predictions[:n_candidates]
             scores_with_guesses = sorted(zip(scores, string_candidates), reverse=True)
             if n_guesses is None:
                 top_guesses = scores_with_guesses
@@ -444,7 +549,7 @@ class BinarizedGuesser(AbstractGuesser):
         self.wiki_pages = None
 
     def qb_dataset(self):
-        return QuizBowlDataset(1)
+        return QuizBowlDataset(2)
 
     @classmethod
     def targets(cls) -> List[str]:

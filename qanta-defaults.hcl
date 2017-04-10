@@ -2,6 +2,10 @@ n_guesses = 50
 
 test_fold_word_skip = -1
 
+generate_train_guesses = false
+
+guessers_train_on_dev = false
+
 clm {
   min_appearances = 2
 }

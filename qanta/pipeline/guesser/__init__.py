@@ -91,6 +91,9 @@ class GenerateGuesses(Task):
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
         for fold in c.ALL_FOLDS:
+            if fold == 'train' and not conf['generate_train_guesses']:
+                log.info('Skipping generation of train fold guesses')
+                continue
             log.info('Generating and saving guesses for {} fold'.format(fold))
             log.info('Starting guess generation...')
             if fold == 'test' and self.word_skip == -1:
@@ -105,6 +108,8 @@ class GenerateGuesses(Task):
     def output(self):
         targets = []
         for fold in c.ALL_FOLDS:
+            if fold == 'train' and not conf['generate_train_guesses']:
+                continue
             targets.append(LocalTarget(output_path(
                 self.guesser_module, self.guesser_class, 'guesses_{}.pickle'.format(fold))))
         return targets

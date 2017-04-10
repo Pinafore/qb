@@ -8,6 +8,7 @@ from qanta import logging
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PUNCTUATION
+from qanta.config import conf
 
 log = logging.get(__name__)
 
@@ -224,8 +225,12 @@ class QuizBowlDataset(AbstractDataset):
 
     def training_data(self) -> TrainingData:
         all_questions = seq(self.db.all_questions().values())
+        if conf['guessers_train_on_dev']:
+            fold_condition = lambda q: q.fold == 'train' or q.fold == 'dev'
+        else:
+            fold_condition = lambda q: q.fold == 'train'
         filtered_questions = all_questions\
-            .filter(lambda q: q.fold == 'train')\
+            .filter(fold_condition)\
             .group_by(lambda q: q.page)\
             .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\

@@ -234,6 +234,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         assert len(folds) > 0
         guess_df = None
         for fold in folds:
+            if fold == 'train' and not conf['generate_train_guesses']:
+                continue
             input_path = AbstractGuesser.guess_path(directory, fold)
             if guess_df is None:
                 guess_df = pd.read_pickle(input_path)
