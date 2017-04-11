@@ -520,7 +520,7 @@ class BinarizedSiameseModel:
                 all_predictions.extend(batch_predictions)
 
             scores = all_predictions[:n_candidates]
-            scores_with_guesses = sorted(zip(scores, string_candidates), reverse=True)
+            scores_with_guesses = sorted(zip(string_candidates, scores), reverse=True, key=lambda x: x[1])
             if n_guesses is None:
                 top_guesses = scores_with_guesses
             else:
