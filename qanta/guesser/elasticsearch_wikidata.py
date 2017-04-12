@@ -152,7 +152,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
             is_human_model = b_is_human_model.value
             is_human = bool(is_human_model.transform([query])[0])
             return es_index.search(query, is_human)[:max_n_guesses]
-        
+
         return sc.parallelize(questions).map(ir_search).collect()
 
     @classmethod
