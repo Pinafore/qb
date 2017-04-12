@@ -38,16 +38,16 @@ guessers "ElasticSearch" {
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = true
   # Set the level of parallelism for guess generation
-  n_cores = 2
+  n_cores = 15
   min_appearances = 1
 }
 
 guessers "ElasticSearchWikidata" {
   class = "qanta.guesser.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = true
+  luigi_dependency = "qanta.pipeline.guesser.wikidata.DownloadWikidata"
+  enabled = false
   # Set the level of parallelism for guess generation
-  n_cores = 2
+  n_cores = 15
   min_appearances = 1
 }
 

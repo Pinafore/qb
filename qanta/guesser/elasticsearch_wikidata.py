@@ -1,10 +1,10 @@
 import pickle
 import os
-from itertools import repeat
 from typing import List, Optional, Dict, Set
 from qanta.spark_execution import create_spark_context
 
 import elasticsearch
+from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index, Boolean
 import progressbar
 from sklearn.linear_model import RidgeClassifier
@@ -23,7 +23,10 @@ from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 
 log = logging.get(__name__)
 
+connections.create_connection(hosts=['localhost'])
+
 IS_HUMAN_MODEL_PICKLE = 'is_human_model.pickle'
+WIKIDATA_PICKLE = 'output/wikidata.pickle'
 
 
 class Answer(DocType):
@@ -47,11 +50,15 @@ class ElasticSearchIndex:
         cw = CachedWikipedia()
         bar = progressbar.ProgressBar()
         for page in bar(documents):
+            if page in is_human_map:
+                is_human = is_human_map[page]
+            else:
+                is_human = False
             answer = Answer(
                 page=page,
                 wiki_content=cw[page].content,
                 qb_content=documents[page],
-                is_human=is_human_map[page]
+                is_human=is_human
             )
             answer.save()
 
@@ -71,7 +78,7 @@ es_index = ElasticSearchIndex()
 
 
 def create_instance_of_map(formatted_answers: Set[str]):
-    with open('output/wikidata.pickle', 'rb') as f:
+    with open(WIKIDATA_PICKLE, 'rb') as f:
         d = pickle.load(f)
         parsed_item_map = d['parsed_item_map']
         instance_of_map = {}
@@ -101,7 +108,10 @@ def format_human_data(is_human_map, questions: List[List[str]], pages: List[str]
         x_data.append(full_text)
 
         p = format_guess(p)
-        y_data.append(int(is_human_map[p]))
+        if p in is_human_map:
+            y_data.append(int(is_human_map[p]))
+        else:
+            y_data.append(0)
 
     return x_data, y_data
 
@@ -124,10 +134,12 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
 
     def train(self, training_data):
         answers = {format_guess(a) for a in training_data[1]}
-        log.info('Training is_human model...')
+        log.info('Loading instance of data from wikidata...')
         instance_of_map = create_instance_of_map(answers)
         is_human_map = create_is_human_map(instance_of_map)
+        log.info('Creating training data...')
         x_data, y_data = format_human_data(is_human_map, training_data[0], training_data[1])
+        log.info('Training is_human model...')
         self.is_human_model = create_human_model(x_data, y_data)
 
         log.info('Building Elastic Search Index...')
@@ -145,15 +157,15 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
         n_cores = conf['guessers']['ElasticSearch']['n_cores']
-        sc = create_spark_context([('spark.executor.cores', n_cores)])
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '40g')])
         b_is_human_model = sc.broadcast(self.is_human_model)
 
         def ir_search(query):
             is_human_model = b_is_human_model.value
-            is_human = bool(is_human_model.transform([query])[0])
+            is_human = bool(is_human_model.predict([query])[0])
             return es_index.search(query, is_human)[:max_n_guesses]
 
-        return sc.parallelize(questions).map(ir_search).collect()
+        return sc.parallelize(questions, 4 * n_cores).map(ir_search).collect()
 
     @classmethod
     def targets(cls):
