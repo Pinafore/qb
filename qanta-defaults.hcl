@@ -42,6 +42,15 @@ guessers "ElasticSearch" {
   min_appearances = 1
 }
 
+guessers "ElasticSearchWikidata" {
+  class = "qanta.guesser.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = true
+  # Set the level of parallelism for guess generation
+  n_cores = 2
+  min_appearances = 1
+}
+
 guessers "FixedLen" {
   class = "qanta.guesser.experimental.tf_fixed.FixedLenGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"

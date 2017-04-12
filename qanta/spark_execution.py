@@ -14,7 +14,7 @@ def cli():
     pass
 
 
-def create_spark_context(app_name="Quiz Bowl", configs=None):
+def create_spark_context(app_name="Quiz Bowl", configs=None) -> SparkContext:
     spark_conf = SparkConf()\
         .set('spark.rpc.message.maxSize', 300)\
         .setAppName(app_name)\

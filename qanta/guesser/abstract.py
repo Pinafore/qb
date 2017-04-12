@@ -33,11 +33,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         Abstract class representing a guesser. All abstract methods must be implemented. Class
         construction should be light and not load data since this is reserved for the
         AbstractGuesser.load method.
-
-        self.parallel tells qanta whether or not this guesser should be parallelized.
-
         """
-        self.parallel = False
+        pass
 
     def qb_dataset(self) -> QuizBowlDataset:
         return QuizBowlDataset(2)
