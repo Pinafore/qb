@@ -2,10 +2,11 @@ from collections import ChainMap, Counter, defaultdict
 
 import heapq
 from itertools import chain, repeat
-import numpy as np
+import glob
 import os
 from pathlib import Path
 import pickle
+import numpy as np
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
@@ -18,7 +19,7 @@ except ImportError:
 from qanta.guesser.util.dataset import get_or_make_id_map, get_all_questions
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.constants import (DEEP_DAN_PARAMS_TARGET, DEEP_EXPERIMENT_S3_BUCKET,
-                                  DEEP_EXPERIMENT_FLAG, DEEP_TF_PARAMS_TARGET, N_GUESSES,
+                                  DEEP_EXPERIMENT_FLAG, DEEP_TF_PARAMS_TARGET,
                                   QUIZ_BOWL_DS, WIKI_DS)
 from qanta.util.environment import QB_TF_EXPERIMENT_ID
 from qanta.util.io import shell, safe_open
@@ -79,7 +80,7 @@ class TFDan(AbstractGuesser):
         if self._dataset_weights is None:
             self._dataset_weights = {QUIZ_BOWL_DS: 1, WIKI_DS: 1}
 
-    def _setup(self, data):
+    def _setup(self, data, restoring=False):
         if self._is_train:
             (self._data,
              self._labels,
@@ -96,9 +97,12 @@ class TFDan(AbstractGuesser):
              self._max_len,
              self._label_map,
              self._word_ids,
-             self._answer_counts) = self._load_data(qb_data=data)
+             self._answer_counts) = self._load_data(qb_data=data, restoring=restoring)
         else:
             self._n_classes = len(self._label_map)
+            embeddings = None
+
+        if restoring:
             embeddings = None
 
         log.info('Building model')
@@ -110,8 +114,17 @@ class TFDan(AbstractGuesser):
         with tf.Graph().as_default(), tf.Session() as self._session,\
             tf.variable_scope('dan', reuse=None, initializer=tf.random_uniform_initializer(-self._init_scale, self._init_scale)):
 
-            self._setup(data=data)
-            return self._run_training()
+            restoring = os.path.exists('output/deep/checkpoint')
+            if restoring:
+                with open(DEEP_TF_PARAMS_TARGET, 'rb') as f:
+                    tfparams = pickle.load(f)
+                self._embedding_shape = tfparams['embedding_shape']
+                self._label_map = tfparams['label_map']
+                self._word_ids = tfparams['word_ids']
+            self._setup(data=data, restoring=restoring)
+            if restoring:
+                self.restore(DEEP_DAN_PARAMS_TARGET)
+            return self._run_training(initialize=not restoring)
 
     def evaluate(self, data, label_map, embedding_shape, n_classes, word_ids):
         self._setup(data=data, label_map=label_map, initial_embed=None, embedding_shape=embedding_shape, n_classes=n_classes, word_ids=word_ids)
@@ -155,7 +168,6 @@ class TFDan(AbstractGuesser):
                 unlabeled_representation = self._make_representation(embedding=embed_and_zero,
                                                                      input_ids=self._unlabeled_placeholder,
                                                                      lengths=self._unlabeled_len_placeholder)
-
         with tf.variable_scope('prediction_net'):
             layer_out = self._representation_layer
             in_dim = self._hidden_units
@@ -170,7 +182,9 @@ class TFDan(AbstractGuesser):
             self._softmax_weights = weights[-1]
             # logits = logits - tf.expand_dims(tf.reduce_max(logits, 1), 1)
 
-            self._loss = tf.nn.sparse_softmax_cross_entropy_with_logits(self._logits, tf.to_int64(self._label_placeholder))
+            self._loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                logits=self._logits,
+                labels=tf.to_int64(self._label_placeholder))
         if self._use_weights:
             self._loss *= self._weight_placeholder
             self._loss = tf.reduce_sum(self._loss) / tf.reduce_sum(self._weight_placeholder)
@@ -263,15 +277,15 @@ class TFDan(AbstractGuesser):
 
     def _build_lstm(self, input_layer, lengths):
         self._lstm_max_len = tf.get_variable('lstm_max_len', dtype=tf.int32, initializer=tf.constant(-1), trainable=False)
-        cell = tf.nn.rnn_cell.LSTMCell(self._hidden_units, forget_bias=1.0, state_is_tuple=True, use_peepholes=True)
+        cell = tf.contrib.rnn.LSTMCell(self._hidden_units, forget_bias=1.0, state_is_tuple=True, use_peepholes=True)
         if self._is_train:
             self._lstm_dropout_var = tf.get_variable('lstm_dropout', (), dtype=tf.float32, trainable=False, initializer=tf.constant_initializer())
-            cell = tf.nn.rnn_cell.DropoutWrapper(cell,
+            cell = tf.contrib.rnn.DropoutWrapper(cell,
                                                  output_keep_prob=1 - self._lstm_dropout_var,
                                                  input_keep_prob=1 - self._lstm_dropout_var)
 
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * self._n_representation_layers, state_is_tuple=True)
-        initial_state = cell.zero_state(self._batch_size if self._is_train else 1, tf.float32)
+        cell = tf.contrib.rnn.MultiRNNCell([cell] * self._n_representation_layers, state_is_tuple=True)
+        initial_state = cell.zero_state(self._batch_size, tf.float32)
         outputs, state = tf.nn.dynamic_rnn(cell, input_layer, sequence_length=lengths, initial_state=initial_state, parallel_iterations=128)
         # Select just the last output from each example
         outputs = tf.reshape(outputs, (-1, self._hidden_units))
@@ -279,15 +293,23 @@ class TFDan(AbstractGuesser):
         outputs = tf.gather(outputs, indices)
         return outputs
 
-    def _load_data(self, qb_data, len_limit=200):
+    def _load_data(self, qb_data, len_limit=200, restoring=False):
         """Load training data"""
         datasets = {QUIZ_BOWL_DS: qb_data}
         if self._use_wiki:
+            log.info('Loading wikipedia data')
             datasets[WIKI_DS] = FilteredWikipediaDataset().training_data()
         preprocessed_datasets = {}
         vocab = set()
-        class_to_i = {}
-        i_to_class = []
+        if restoring:
+            class_to_i = self._label_map
+            i_to_class = [0 for _ in class_to_i]
+            for k, v in class_to_i.items():
+                i_to_class[v] = k
+        else:
+            class_to_i = {}
+            i_to_class = []
+
         x_val = []
         y_val = []
         for dataset_name, dataset in sorted(datasets.items(), key=lambda item: item[0] != QUIZ_BOWL_DS):
@@ -307,11 +329,18 @@ class TFDan(AbstractGuesser):
         np.random.shuffle(permuted_labels)
         label_permutation = {i: j for i, j in enumerate(permuted_labels)}
 
-        embeddings, word_ids = _create_embeddings(vocab)
-        log.info('Creating embeddings')
-        embeddings = np.vstack((embeddings, np.zeros(embeddings[0].shape), np.zeros(embeddings[0].shape)))
-        start_token_index = embeddings.shape[0] - 2
-        end_token_index = embeddings.shape[0] - 1
+        if not restoring:
+            embeddings, word_ids = _create_embeddings(vocab)
+            log.info('Creating embeddings')
+            embeddings = np.vstack((embeddings, np.zeros(embeddings[0].shape), np.zeros(embeddings[0].shape)))
+            start_token_index = embeddings.shape[0] - 2
+            end_token_index = embeddings.shape[0] - 1
+        else:
+            embeddings = None
+            start_token_index = self._embedding_shape[0] - 2
+            end_token_index = self._embedding_shape[0] - 1
+            word_ids = self._word_ids
+
         unk_index = word_ids['UNK']
 
         vecs = []
@@ -404,16 +433,17 @@ class TFDan(AbstractGuesser):
                     ((self._weights[indices], self._domains[indices]) if train else ()))
 
     def _guess_batches(self, data, lens):
+        batch_size = self._batch_size
         real_len = len(data)
-        padded_len = real_len + (-real_len % self._batch_size)
-        for i in range(0, padded_len, self._batch_size):
-            batch_data = data[i : i + self._batch_size, :]
-            batch_lens = lens[i : i + self._batch_size]
-            if i + self._batch_size > real_len:
+        padded_len = real_len + (-real_len % batch_size)
+        for i in range(0, padded_len, batch_size):
+            batch_data = data[i : i + batch_size, :]
+            batch_lens = lens[i : i + batch_size]
+            if i + batch_size > real_len:
                 batch_data = np.vstack(
                     (batch_data,
-                    np.zeros((i + self._batch_size - real_len, len(data[0])))))
-                batch_lens = np.concatenate((batch_lens, np.zeros(i + self._batch_size - real_len)))
+                    np.zeros((i + batch_size - real_len, len(data[0])))))
+                batch_lens = np.concatenate((batch_lens, np.zeros(i + batch_size - real_len)))
             yield batch_data, batch_lens
 
     def _representation_batches(self, n):
@@ -504,31 +534,11 @@ class TFDan(AbstractGuesser):
 
         return (accuracies, losses, duration) + ((domain_accuracies,) if self._adversarial else ())
 
-    def _recall_at_n(self, probs, n_max=N_GUESSES):
-        """Compute recall@N for all N up to n_max"""
-        # Get indices of all examples which are full questions
-        num_correct = 0
-        ordered_probs = [(i, heapq.nlargest(n_max, range(self._n_classes), key=p.__getitem__)) for i, p in probs]
-        total = len(ordered_probs)
-        incorrect = {i: j for i, (j, _) in enumerate(ordered_probs)}
-        result = []
-        for i in range(0, n_max):
-            log.info('Computing recall@{}'.format(i))
-            to_remove = []
-            for ex_num, label_index in incorrect.items():
-                if ordered_probs[ex_num][1][i] == self._labels[label_index]:
-                    to_remove.append(ex_num)
-                    num_correct += 1
-            for r in to_remove:
-                del incorrect[r]
-
-            result.append(num_correct / total)
-        return result
-
-    def _run_training(self):
+    def _run_training(self, initialize=True):
         if not self._is_train:
             raise ValueError('To use a non-train model, call label() instead')
-        self._session.run(tf.initialize_all_variables())
+        if initialize:
+            self._session.run(tf.initialize_all_variables())
         if self._lstm_representation:
             self._session.run(self._lstm_max_len.assign(self._max_len))
         max_accuracy = -1
@@ -640,7 +650,7 @@ class TFDan(AbstractGuesser):
         out_dir = Path(directory)
         tf_file = params_path.name
         extra_params = Path(DEEP_TF_PARAMS_TARGET).name
-        for f_name in (tf_file, tf_file + '.meta', 'checkpoint', extra_params):
+        for f_name in glob.glob(tf_file + '*') + ['checkpoint', extra_params]:
             shell('cp {} {}'.format(in_dir / f_name, out_dir / f_name))
 
     def format_test_data(self, questions):
@@ -670,10 +680,13 @@ class TFDan(AbstractGuesser):
 
             i_to_class = {i: c for c, i in self._label_map.items()}
             data, lens = self.format_test_data(questions)
+            self._max_len = len(data[0])
 
             guesses = []
             for i, (x_batch, len_batch) in enumerate(self._guess_batches(data, lens)):
                 feed_dict = {self._input_placeholder: x_batch, self._len_placeholder: len_batch}
+                if self._lstm_representation:
+                    self._session.run(self._lstm_max_len.assign(len_batch[0]))
                 batch_logits = self._session.run(self._logits, feed_dict=feed_dict)
                 guesses.extend([(i_to_class[i], row[i]) for i in np.argsort(row)[:-max_n_guesses - 1:-1]] for row in batch_logits)
         return guesses[:len(questions)]
@@ -696,7 +709,7 @@ class TFDan(AbstractGuesser):
 
     @classmethod
     def targets(cls):
-        return [Path(DEEP_DAN_PARAMS_TARGET).name, Path(DEEP_TF_PARAMS_TARGET).name]
+        return ['checkpoint', Path(DEEP_TF_PARAMS_TARGET).name]
 
     @property
     def n_classes(self):

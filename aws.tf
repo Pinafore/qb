@@ -54,7 +54,7 @@ data "aws_ami" "qanta_ami" {
   }
   filter {
     name = "tag-value"
-    values = ["davis-qanta"]
+    values = ["qanta-gpu"]
   }
 }
 
@@ -152,8 +152,7 @@ resource "aws_security_group" "qanta_internal" {
 
 resource "aws_spot_instance_request" "master" {
   count = "${var.num_experiments}"
-  # ami           = "${data.aws_ami.qanta_ami.id}"
-  ami           = "ami-2b7ea04b"
+  ami           = "${data.aws_ami.qanta_ami.id}"
   instance_type = "${var.master_instance_type}"
   key_name = "${var.key_pair}"
   spot_price = "${var.spot_price}"

@@ -3,7 +3,10 @@ from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call, shell, make_dirs, safe_path
 from qanta.reporting.vw_audit import parse_audit, audit_report
-from qanta.pipeline.spark import SparkMergeFeatures
+try:
+    from qanta.pipeline.spark import SparkMergeFeatures
+except ImportError:
+    pass
 
 
 class VWMergeFeature(Task):

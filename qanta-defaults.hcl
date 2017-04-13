@@ -12,8 +12,8 @@ wikifier {
   min_appearances = 2
 }
 
-guessers "Experimental Dan" {
-  class = "qanta.guesser.tf.dan.TFDan
+guessers "ExperimentalDan" {
+  class = "qanta.guesser.tf.dan.TFDan"
   luigi_dependency = "qanta.pipeline.wiki_questions.SelectWikiQuestions"
   enabled = true
 }
