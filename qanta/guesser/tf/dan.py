@@ -682,11 +682,13 @@ class TFDan(AbstractGuesser):
             data, lens = self.format_test_data(questions)
             self._max_len = len(data[0])
 
+            if self._lstm_representation:
+                self._session.run(self._lstm_max_len.assign(len_batch[0]))
+                session.run(self._lstm_dropout_var.assign(0))
+
             guesses = []
             for i, (x_batch, len_batch) in enumerate(self._guess_batches(data, lens)):
                 feed_dict = {self._input_placeholder: x_batch, self._len_placeholder: len_batch}
-                if self._lstm_representation:
-                    self._session.run(self._lstm_max_len.assign(len_batch[0]))
                 batch_logits = self._session.run(self._logits, feed_dict=feed_dict)
                 guesses.extend([(i_to_class[i], row[i]) for i in np.argsort(row)[:-max_n_guesses - 1:-1]] for row in batch_logits)
         return guesses[:len(questions)]
