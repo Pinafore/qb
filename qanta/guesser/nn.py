@@ -54,8 +54,9 @@ def make_layer(i: int, in_tensor, n_out, op, n_in=None,
                dropout_prob=None,
                batch_norm=False,
                batch_is_training=None,
-               tf_histogram=False):
-    with tf.variable_scope('layer' + str(i)):
+               tf_histogram=False,
+               reuse=None):
+    with tf.variable_scope('layer' + str(i), reuse=reuse):
         if batch_norm and batch_is_training is None:
             raise ValueError('if using batch norm then passing a training placeholder is required')
         w = tf.get_variable('w', (in_tensor.get_shape()[1] if n_in is None else n_in, n_out),

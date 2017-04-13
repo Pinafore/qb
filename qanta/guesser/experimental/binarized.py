@@ -33,27 +33,34 @@ load_embeddings = create_load_embeddings_function(BINARIZED_WE_TMP, BINARIZED_WE
 
 def create_binarized_batches(
         batch_size,
-        x_data: np.ndarray, x_lengths, y_data: np.ndarray,
+        x_data: np.ndarray, x_lengths,
         wiki_data: np.ndarray, wiki_lengths: np.ndarray,
+        neg_wiki_data: np.ndarray, neg_wiki_lengths: np.ndarray,
         pad=False, shuffle=True):
     if (type(x_data) != np.ndarray or
             type(x_lengths) != np.ndarray or
-            type(y_data) != np.ndarray or
             type(wiki_data) != np.ndarray or
-            type(wiki_lengths) != np.ndarray):
+            type(wiki_lengths) != np.ndarray or
+            type(neg_wiki_data) != np.ndarray or
+            type(neg_wiki_lengths) != np.ndarray):
         log.info('type(x_data)={}'.format(x_data))
         log.info('type(x_lengths)={}'.format(x_lengths))
-        log.info('type(y_data)={}'.format(y_data))
         log.info('type(wiki_data)={}'.format(wiki_data))
         log.info('type(wiki_lengths)={}'.format(wiki_lengths))
+        log.info('type(neg_wiki_data)={}'.format(neg_wiki_data))
+        log.info('type(neg_wiki_lengths)={}'.format(neg_wiki_lengths))
         raise ValueError('All inputs must be numpy arrays')
 
-    if len({len(x_data), len(x_lengths), len(y_data), len(wiki_data), len(wiki_lengths)}) != 1:
+    if len({
+        len(x_data), len(x_lengths),
+        len(wiki_data), len(wiki_lengths),
+        len(neg_wiki_data), len(neg_wiki_lengths)}) != 1:
         log.info('len(x_data)={}'.format(len(x_data)))
         log.info('len(x_lengths)={}'.format(len(x_lengths)))
-        log.info('len(y_data)={}'.format(len(y_data)))
         log.info('len(wiki_data)={}'.format(len(wiki_data)))
         log.info('len(wiki_lengths)={}'.format(len(wiki_lengths)))
+        log.info('len(neg_wiki_data)={}'.format(len(neg_wiki_data)))
+        log.info('len(neg_wiki_lengths)={}'.format(len(neg_wiki_lengths)))
         raise ValueError('All inputs must have the same length')
     n = len(x_data)
     order = list(range(n))
@@ -63,10 +70,11 @@ def create_binarized_batches(
         if len(order[i:i + batch_size]) == batch_size:
             x_batch = x_data[order[i:i + batch_size]]
             x_batch_lengths = x_lengths[order[i:i + batch_size]]
-            y_batch = y_data[order[i:i + batch_size]]
             wiki_batch = wiki_data[order[i:i + batch_size]]
             wiki_batch_lengths = wiki_lengths[order[i:i + batch_size]]
-            yield x_batch, x_batch_lengths, y_batch, wiki_batch, wiki_batch_lengths
+            neg_wiki_batch = neg_wiki_data[order[i:i + batch_size]]
+            neg_wiki_batch_lengths = neg_wiki_lengths[order[i:i + batch_size]]
+            yield x_batch, x_batch_lengths, wiki_batch, wiki_batch_lengths, neg_wiki_batch, neg_wiki_batch_lengths
         elif pad:
             size = len(order[i:i + batch_size])
             x_batch = np.vstack((
@@ -77,10 +85,6 @@ def create_binarized_batches(
                 x_lengths[order[i:i + batch_size]],
                 np.zeros((batch_size - size,)))
             )
-            y_batch = np.hstack((
-                y_data[order[i:i + batch_size]],
-                np.zeros((batch_size - size,)))
-            )
             wiki_batch = np.vstack((
                 wiki_data[order[i:i + batch_size]],
                 np.zeros((batch_size - size, wiki_data.shape[1])))
@@ -89,7 +93,15 @@ def create_binarized_batches(
                 wiki_lengths[order[i:i + batch_size]],
                 np.zeros((batch_size - size,)))
             )
-            yield x_batch, x_batch_lengths, y_batch, wiki_batch, wiki_batch_lengths
+            neg_wiki_batch = np.vstack((
+                neg_wiki_data[order[i:i + batch_size]],
+                np.zeros((batch_size - size, neg_wiki_data.shape[1])))
+            )
+            neg_wiki_batch_lengths = np.hstack((
+                neg_wiki_lengths[order[i:i + batch_size]],
+                np.zeros((batch_size - size,)))
+            )
+            yield x_batch, x_batch_lengths, wiki_batch, wiki_batch_lengths, neg_wiki_batch, neg_wiki_batch_lengths
         else:
             break
 
@@ -188,12 +200,12 @@ class DAN:
                  text_placeholder, length_placeholder,
                  word_dropout_keep_prob, nn_dropout_keep_prob, is_training,
                  embeddings, max_input_length,
-                 n_layers, n_hidden_units):
+                 n_layers, n_hidden_units, reuse=None):
         self.n_layers = n_layers
         self.n_hidden_units = n_hidden_units
         self.max_input_length = max_input_length
         self._output = None
-        with tf.variable_scope(name, reuse=None, initializer=tf.contrib.layers.xavier_initializer()):
+        with tf.variable_scope(name, reuse=reuse, initializer=tf.contrib.layers.xavier_initializer()):
             word_vectors = tf.nn.embedding_lookup(embeddings, text_placeholder)
 
             word_drop_filter = tf.nn.dropout(tf.ones((self.max_input_length, 1)), keep_prob=word_dropout_keep_prob)
@@ -208,7 +220,8 @@ class DAN:
                     i, layer_out,
                     n_in=in_dim, n_out=self.n_hidden_units, op=tf.nn.elu,
                     dropout_prob=1 - nn_dropout_keep_prob,
-                    batch_norm=True, batch_is_training=is_training
+                    batch_norm=True, batch_is_training=is_training,
+                    reuse=reuse
                 )
                 in_dim = None
             self._output = layer_out
@@ -251,6 +264,8 @@ class BinarizedSiameseModel:
         self.wiki_pages = wiki_pages
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
+        self.cached_wikipedia = None
+        self.question_wiki_similarity = None
 
         word_embeddings, word_embedding_lookup = load_embeddings()
         self.np_word_embeddings = word_embeddings
@@ -265,7 +280,6 @@ class BinarizedSiameseModel:
             'word_dropout_keep_prob', (), dtype=tf.float32, trainable=False)
         self.nn_dropout_keep_prob_var = tf.get_variable('nn_dropout_keep_prob', (), dtype=tf.float32, trainable=False)
         self.is_training = tf.placeholder(tf.bool, name='is_training')
-        self.labels = tf.placeholder(tf.int32, shape=self.batch_size, name='labels')
 
         self.qb_questions = tf.placeholder(
             tf.int32,
@@ -281,6 +295,13 @@ class BinarizedSiameseModel:
         )
         self.wiki_lengths = tf.placeholder(tf.float32, shape=self.batch_size, name='wiki_data_lengths')
 
+        self.neg_wiki_data = tf.placeholder(
+            tf.int32,
+            shape=(self.batch_size, self.wiki_max_length),
+            name='neg_wiki_data_input'
+        )
+        self.neg_wiki_lengths = tf.placeholder(tf.float32, shape=self.batch_size, name='neg_wiki_data_lengths')
+
         self.question_dan = DAN(
             'question_dan', self.qb_questions, self.question_lengths,
             self.word_dropout_keep_prob_var, self.nn_dropout_keep_prob_var, self.is_training,
@@ -293,19 +314,29 @@ class BinarizedSiameseModel:
             word_embeddings, self.wiki_max_length, self.n_layers, self.n_hidden_units
         )
 
+        self.neg_wiki_dan = DAN(
+            'wiki_dan', self.neg_wiki_data, self.neg_wiki_lengths,
+            self.word_dropout_keep_prob_var, self.nn_dropout_keep_prob_var, self.is_training,
+            word_embeddings, self.wiki_max_length, self.n_layers, self.n_hidden_units, reuse=True
+        )
+
         with tf.variable_scope('similarity_prediction', reuse=None, initializer=tf.contrib.layers.xavier_initializer()):
-            self.question_wiki_similarity = self.question_dan.output * self.wiki_dan.output
-            self.probabilities, _ = make_layer(-1, self.question_wiki_similarity, n_out=1, op=tf.nn.sigmoid)
-            self.probabilities = tf.reshape(self.probabilities, (-1,))
-            self.predictions = tf.cast(tf.round(self.probabilities), tf.int32)
+            self.question_wiki_similarity = tf.reduce_sum(
+                self.question_dan.output * self.wiki_dan.output, axis=1)
+
+            self.question_neg_wiki_similarity = tf.reduce_sum(
+                self.question_dan.output * self.neg_wiki_dan.output, axis=1)
 
         with tf.name_scope('metrics'):
-            self.loss = tf.losses.log_loss(self.labels, self.probabilities)
-            self.loss = tf.reduce_mean(self.loss)
-            tf.summary.scalar('log_loss', self.loss)
+            self.loss = tf.reduce_sum(
+                tf.maximum(0.0, .1 - self.question_wiki_similarity + self.question_neg_wiki_similarity)
+            )
+            tf.summary.scalar('rank_loss', self.loss)
 
-            self.accuracy = tf.contrib.metrics.accuracy(self.labels, self.predictions)
-            tf.summary.scalar('accuracy', self.accuracy)
+            self.accuracy = tf.reduce_mean(tf.cast(
+                tf.greater_equal(self.question_wiki_similarity - self.question_neg_wiki_similarity, 0.0),
+                tf.float32
+            ))
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
@@ -321,11 +352,11 @@ class BinarizedSiameseModel:
         self.session = session
         self.file_writer = file_writer
         wiki_pages = {}
-        cw = CachedWikipedia()
+        self.cached_wikipedia = CachedWikipedia()
         classes = set(y_train) | set(y_test)
         for c_index in classes:
             page = self.i_to_class[c_index]
-            tokens = word_tokenize(cw[page].content[0:3000].strip().lower())
+            tokens = word_tokenize(self.cached_wikipedia[page].content[0:3000].strip().lower())
             w_indices = convert_text_to_embeddings_indices(tokens, self.embedding_lookup)
             while len(w_indices) < self.wiki_max_length:
                 w_indices.append(self.np_word_embeddings.shape[0])
@@ -336,18 +367,8 @@ class BinarizedSiameseModel:
         wiki_train_lengths = []
         wiki_test = []
         wiki_test_lengths = []
-        negative_y_train = np.copy(y_train)
-        np.random.shuffle(negative_y_train)
-        negative_y_test = np.copy(y_test)
-        np.random.shuffle(negative_y_test)
-        n_train_examples = len(x_train)
-        n_test_examples = len(x_test)
 
         for y in y_train:
-            wiki_train.append(wiki_pages[y])
-            wiki_train_lengths.append(len(wiki_pages[y]))
-
-        for y in negative_y_train:
             wiki_train.append(wiki_pages[y])
             wiki_train_lengths.append(len(wiki_pages[y]))
 
@@ -355,21 +376,11 @@ class BinarizedSiameseModel:
             wiki_test.append(wiki_pages[y])
             wiki_test_lengths.append(len(wiki_pages[y]))
 
-        for y in negative_y_test:
-            wiki_test.append(wiki_pages[y])
-            wiki_test_lengths.append(len(wiki_pages[y]))
-
         wiki_train = np.array(wiki_train)
         wiki_train_lengths = np.array(wiki_train_lengths)
-        all_x_train = np.vstack([x_train, x_train])
-        all_x_train_lengths = np.concatenate([x_train_lengths, x_train_lengths])
-        all_y_train = np.concatenate([np.ones((n_train_examples,)), np.zeros((n_train_examples,))])
 
         wiki_test = np.array(wiki_test)
         wiki_test_lengths = np.array(wiki_test_lengths)
-        all_x_test = np.vstack([x_test, x_test])
-        all_x_test_lengths = np.concatenate([x_test_lengths, x_test_lengths])
-        all_y_test = np.concatenate([np.ones((n_test_examples,)), np.zeros((n_test_examples,))])
 
         max_accuracy = -1
         patience = 0
@@ -384,7 +395,7 @@ class BinarizedSiameseModel:
 
         for i in range(self.max_n_epochs):
             train_accuracy, train_loss, train_runtime = self.run_epoch(
-                all_x_train, all_x_train_lengths, all_y_train, wiki_train, wiki_train_lengths, True)
+                x_train, x_train_lengths, y_train, wiki_train, wiki_train_lengths, True)
             train_accuracies.append(train_accuracy)
             train_losses.append(train_loss)
             train_runtimes.append(train_runtime)
@@ -394,7 +405,7 @@ class BinarizedSiameseModel:
             ))
 
             val_accuracy, val_loss, val_runtime = self.run_epoch(
-                all_x_test, all_x_test_lengths, all_y_test, wiki_test, wiki_test_lengths, False)
+                x_test, x_test_lengths, y_test, wiki_test, wiki_test_lengths, False)
             validation_accuracies.append(val_accuracy)
             validation_losses.append(val_loss)
             validation_runtimes.append(val_runtime)
@@ -426,15 +437,26 @@ class BinarizedSiameseModel:
 
         self.session.run(self.word_dropout_keep_prob_var.assign(self.word_dropout_keep_prob if is_train else 1))
         self.session.run(self.nn_dropout_keep_prob_var.assign(self.nn_dropout_keep_prob if is_train else 1))
+        neg_wiki_data = np.copy(wiki_data)
+        np.random.shuffle(neg_wiki_data)
+        neg_wiki_data_lengths = np.copy(wiki_data_lengths)
+        np.random.shuffle(neg_wiki_data_lengths)
 
-        for x_batch, x_len_batch, y_batch, wiki_batch, wiki_len_batch in create_binarized_batches(
-                self.batch_size, x_data, x_lengths, y_data, wiki_data, wiki_data_lengths):
+        batch_iter = create_binarized_batches(
+            self.batch_size,
+            x_data, x_lengths,
+            wiki_data, wiki_data_lengths,
+            neg_wiki_data, neg_wiki_data_lengths
+        )
+
+        for x_batch, x_len_batch, wiki_batch, wiki_len_batch, neg_wiki_batch, neg_wiki_len_batch in batch_iter:
             feed_dict = {
                 self.qb_questions: x_batch,
                 self.question_lengths: x_len_batch,
-                self.labels: y_batch,
                 self.wiki_data: wiki_batch,
                 self.wiki_lengths: wiki_len_batch,
+                self.neg_wiki_data: neg_wiki_batch,
+                self.neg_wiki_lengths: neg_wiki_len_batch,
                 self.is_training: int(is_train)
             }
             returned = self.session.run(fetches, feed_dict=feed_dict)
@@ -512,11 +534,10 @@ class BinarizedSiameseModel:
 
                 feed_dict = {
                     self.question_dan.output: dan_output,
-                    self.labels: y_batch,
                     self.wiki_dan.output: wiki_dan_batch,
                     self.is_training: 0
                 }
-                batch_predictions = self.session.run(self.probabilities, feed_dict=feed_dict)
+                batch_predictions = self.session.run(self.question_wiki_similarity, feed_dict=feed_dict)
                 all_predictions.extend(batch_predictions)
 
             scores = all_predictions[:n_candidates]
@@ -558,8 +579,6 @@ class BinarizedGuesser(AbstractGuesser):
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
         x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
-        n_train_examples = len(x_train)
-        n_test_examples = len(x_test)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
