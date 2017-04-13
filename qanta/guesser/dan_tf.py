@@ -32,12 +32,14 @@ load_embeddings = create_load_embeddings_function(TF_DAN_WE_TMP, TF_DAN_WE, log)
 
 
 class TFDanModel:
-    def __init__(self, dan_params: Dict, max_len: int, n_classes: int):
+    def __init__(self, dan_params: Dict, max_len: int, n_classes: int, embeddings, embedding_lookup):
+        self.embeddings = embeddings
+        self.embedding_lookup = embedding_lookup
         self.dan_params = dan_params
         self.max_len = max_len
         self.n_classes = n_classes
         self.n_hidden_units = dan_params['n_hidden_units']
-        self.n_hidden_layers = dan_params['n_hidden_layers']
+        self.n_hidden_layers = conf['guessers']['Dan']['n_hidden_layers']
         self.word_dropout = dan_params['word_dropout']
         self.nn_dropout = dan_params['nn_dropout']
         self.batch_size = dan_params['batch_size']
@@ -75,10 +77,9 @@ class TFDanModel:
                 'dan',
                 reuse=None,
                 initializer=tf.contrib.layers.xavier_initializer()):
-            embedding, embedding_word_lookup = load_embeddings()
             self.initial_embed = tf.get_variable(
-                'embedding',
-                initializer=tf.constant(embedding, dtype=tf.float32)
+                'embeddings',
+                initializer=tf.constant(self.embeddings, dtype=tf.float32)
             )
             self.embed_and_zero = tf.pad(self.initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
             self.input_placeholder = tf.placeholder(
@@ -293,7 +294,7 @@ class TFDanModel:
 
 
 DEFAULT_DAN_PARAMS = dict(
-    n_hidden_units=300, n_hidden_layers=1, word_dropout=.6, batch_size=256,
+    n_hidden_units=300, word_dropout=.6, batch_size=256,
     learning_rate=.003, max_epochs=100, nn_dropout=0, max_patience=10
 )
 
@@ -312,6 +313,7 @@ class DANGuesser(AbstractGuesser):
         self.n_classes = None
         self.use_wiki = use_wiki
         self.min_answers = conf['guessers']['Dan']['min_appearances']
+        self.expand_glove = conf['guessers']['Dan']['expand_glove']
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -335,7 +337,7 @@ class DANGuesser(AbstractGuesser):
                 i_to_class=i_to_class)
 
         log.info('Creating embeddings...')
-        embeddings, embedding_lookup = load_embeddings(vocab=vocab)
+        embeddings, embedding_lookup = load_embeddings(vocab=vocab, expand_glove=self.expand_glove)
         self.embeddings = embeddings
         self.embedding_lookup = embedding_lookup
 
@@ -360,16 +362,14 @@ class DANGuesser(AbstractGuesser):
         x_test = tf_format(x_test, self.max_len, embeddings.shape[0])
 
         log.info('Training deep model...')
-        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
+        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes, self.embeddings, self.embedding_lookup)
         x_train = np.array(x_train)
         y_train = np.array(y_train)
         x_test = np.array(x_test)
         y_test = np.array(y_test)
-        train_losses, train_accuracies, holdout_losses, holdout_accuracies = self.model.train(
-            x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths)
+        self.model.train(x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths)
 
-    def guess(self,
-              questions: List[str], n_guesses: Optional[int]) -> List[List[Tuple[str, float]]]:
+    def guess(self, questions: List[str], n_guesses: Optional[int]) -> List[List[Tuple[str, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(n_guesses, len(questions)))
         log.info('Converting text to embedding indices...')
         x_test = [convert_text_to_embeddings_indices(
@@ -379,7 +379,7 @@ class DANGuesser(AbstractGuesser):
         log.info('Converting questions to tensorflow format...')
         x_test = tf_format(x_test, self.max_len, self.embeddings.shape[0])
         x_test = np.array(x_test)
-        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes)
+        self.model = TFDanModel(self.dan_params, self.max_len, self.n_classes, self.embeddings, self.embedding_lookup)
         log.info('Starting Tensorflow model guessing...')
         guess_labels, guess_scores = self.model.guess(x_test, x_test_lengths, n_guesses)
         log.info('Guess generation and fetching top guesses done, converting to output format')
@@ -391,11 +391,13 @@ class DANGuesser(AbstractGuesser):
             all_guesses.append(guesses)
         return all_guesses
 
-    def display_name(self) -> str:
-        return 'DAN'
-
     def parameters(self):
-        return {**self.dan_params, 'use_wiki': self.use_wiki, 'min_answers': self.min_answers}
+        return {
+            **self.dan_params,
+            'use_wiki': self.use_wiki,
+            'min_answers': self.min_answers,
+            'expand_glove': self.expand_glove
+        }
 
     @classmethod
     def load(cls, directory: str) -> AbstractGuesser:

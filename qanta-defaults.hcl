@@ -19,6 +19,8 @@ guessers "Dan" {
   luigi_dependency = "qanta.pipeline.guesser.dan.DANDependencies"
   enabled = true
   min_appearances = 2
+  expand_glove = true
+  n_hidden_layers = 1
 }
 
 guessers "Whoosh" {

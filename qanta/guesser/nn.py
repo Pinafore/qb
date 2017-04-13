@@ -4,13 +4,18 @@ import numpy as np
 import tensorflow as tf
 import os
 import pickle
+
 from qanta.util.io import safe_open
+from qanta import logging
+
+
+log = logging.get(__name__)
 
 
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 
-def create_embeddings(vocab: Set[str]):
+def create_embeddings(vocab: Set[str], expand_glove=False):
     embeddings = []
     embedding_lookup = {}
     with open(GLOVE_WE) as f:
@@ -23,8 +28,23 @@ def create_embeddings(vocab: Set[str]):
                 embeddings.append(emb)
                 embedding_lookup[word] = i
                 i += 1
+        n_glove_embeddings = i
+        log.info('Loaded {} embeddings from glove'.format(n_glove_embeddings))
+        mean_embedding = np.array(embeddings).mean(axis=0)
+        if expand_glove:
+            embed_dim = len(embeddings[0])
+            words_not_in_glove = vocab - set(embedding_lookup.keys())
+            for w in words_not_in_glove:
+                emb = np.random.rand(embed_dim) * .08 * 2 - .08
+                embeddings.append(emb)
+                embedding_lookup[w] = i
+                i += 1
+
+            log.info('Initialized an additional {} embeddings not in glove'.format(i - n_glove_embeddings))
+
+        log.info('Total number of embeddings: {}'.format(i))
+
         embeddings = np.array(embeddings)
-        mean_embedding = embeddings.mean(axis=0)
         embed_with_unk = np.vstack([embeddings, mean_embedding])
         embedding_lookup['UNK'] = i
         return embed_with_unk, embedding_lookup
@@ -84,6 +104,7 @@ def tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
     the zero index so it doesn't contribute anything
     :param x_data:
     :param max_len:
+    :param zero_index:
     :return:
     """
     for i in range(len(x_data)):
@@ -95,7 +116,7 @@ def tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
 
 
 def create_load_embeddings_function(we_tmp_target, we_target, logger):
-    def load_embeddings(vocab=None, root_directory=''):
+    def load_embeddings(vocab=None, root_directory='', expand_glove=False):
         if os.path.exists(we_tmp_target):
             logger.info('Loading word embeddings from tmp cache')
             with safe_open(we_tmp_target, 'rb') as f:
@@ -109,7 +130,7 @@ def create_load_embeddings_function(we_tmp_target, we_target, logger):
                 raise ValueError('To create fresh embeddings a vocab is needed')
             with safe_open(we_tmp_target, 'wb') as f:
                 logger.info('Creating word embeddings and saving to cache')
-                embed_and_lookup = create_embeddings(vocab)
+                embed_and_lookup = create_embeddings(vocab, expand_glove=expand_glove)
                 pickle.dump(embed_and_lookup, f)
                 return embed_and_lookup
     return load_embeddings
