@@ -1,9 +1,9 @@
-from multiprocessing import Pool
-from itertools import repeat
 from typing import List, Optional
+
 from qanta.datasets.abstract import QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
+from qanta.spark_execution import create_spark_context
 from qanta.preprocess import format_guess
 from qanta.search.elasticsearch import ElasticSearchIndex
 from qanta.config import conf
@@ -14,10 +14,6 @@ log = logging.get(__name__)
 
 
 es_index = ElasticSearchIndex()
-
-
-def es_search(max_n_guesses, query):
-    return es_index.search(query)[:max_n_guesses]
 
 
 class ElasticSearchGuesser(AbstractGuesser):
@@ -38,12 +34,13 @@ class ElasticSearchGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        predictions = []
-        pool = Pool(processes=conf['guessers']['ElasticSearch']['n_cores'])
-        for guesses in pool.starmap(es_search,
-                                    zip(repeat(max_n_guesses), questions), chunksize=1000):
-            predictions.append(guesses)
-        return predictions
+        n_cores = conf['guessers']['ElasticSearch']['n_cores']
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '40g')])
+
+        def es_search(query):
+            return es_index.search(query)[:max_n_guesses]
+
+        return sc.parallelize(questions, 4 * n_cores).map(es_search).collect()
 
     @classmethod
     def targets(cls):

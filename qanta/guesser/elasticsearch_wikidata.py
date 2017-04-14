@@ -7,7 +7,7 @@ import elasticsearch
 from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index, Boolean
 import progressbar
-from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -62,10 +62,27 @@ class ElasticSearchIndex:
             )
             answer.save()
 
-    def search(self, text: str, is_human: bool):
-        s = Search(index='qb')\
-            .filter('term', is_human=is_human)\
-            .query(
+    def search(self, text: str, is_human_probability: float):
+        if is_human_probability > .8:
+            is_human = True
+            apply_filter = True
+        elif is_human_probability < .2:
+            is_human = False
+            apply_filter = True
+        else:
+            is_human = None
+            apply_filter = False
+        if apply_filter:
+            s = Search(index='qb')\
+                .filter('term', is_human=is_human)\
+                .query(
+                    'multi_match',
+                    query=text,
+                    fields=['wiki_content', 'qb_content']
+                )
+        else:
+            s = Search(index='qb') \
+                .query(
                 'multi_match',
                 query=text,
                 fields=['wiki_content', 'qb_content']
@@ -119,7 +136,7 @@ def format_human_data(is_human_map, questions: List[List[str]], pages: List[str]
 def create_human_model(x_data, y_data):
     pipeline = Pipeline([
         ('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=2)),
-        ('ridge', RidgeClassifier())
+        ('lr', LogisticRegression())  # RidgeClassifier is better but has no probabilistic interpretation
     ])
     return pipeline.fit(x_data, y_data)
 
@@ -162,8 +179,8 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
 
         def ir_search(query):
             is_human_model = b_is_human_model.value
-            is_human = bool(is_human_model.predict([query])[0])
-            return es_index.search(query, is_human)[:max_n_guesses]
+            is_human_probability = is_human_model.predict_proba([query])[0][1]
+            return es_index.search(query, is_human_probability)[:max_n_guesses]
 
         return sc.parallelize(questions, 4 * n_cores).map(ir_search).collect()
 
