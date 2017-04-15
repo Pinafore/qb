@@ -1,19 +1,19 @@
 variable "spot_price" {
-  default = "1.00"
+  default = "3.00"
 }
 
 resource "aws_spot_instance_request" "master" {
-  instance_type = "r3.2xlarge"
+  instance_type = "x1.16xlarge"
 
   ebs_block_device {
-    device_name = "/dev/sdc"
+    device_name = "/dev/sde"
     volume_type = "gp2"
     volume_size = 80
   }
 
   ephemeral_block_device {
-    device_name = "/dev/sdb"
-    virtual_name = "ephemeral0"
+    device_name = "/dev/sdc"
+    virtual_name = "ephemeral1"
     no_device = true
   }
 }

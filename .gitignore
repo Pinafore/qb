@@ -19,6 +19,7 @@ readable.txt
 aws_gpu_override.tf
 aws_small_override.tf
 aws_x1_32_override.tf
+aws_x1_16_override.tf
 aws_m4_10_override.tf
 aws_c4_8_override.tf
 aws_r4_8_override.tf
