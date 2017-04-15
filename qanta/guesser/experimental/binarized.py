@@ -12,12 +12,13 @@ from qanta.guesser.nn import (make_layer, convert_text_to_embeddings_indices, co
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path, shell
+from qanta.guesser.elasticsearch import ElasticSearchGuesser
+from qanta.config import conf
 from qanta import logging
 
 import tensorflow as tf
 import numpy as np
 from nltk import word_tokenize
-import progressbar
 
 log = logging.get(__name__)
 BINARIZED_WE_TMP = '/tmp/qanta/deep/binarized_we.pickle'
@@ -241,10 +242,11 @@ class BinarizedSiameseModel:
                  max_n_epochs=100,
                  max_patience=5,
                  word_dropout_keep_prob=.5,
-                 nn_dropout_keep_prob=1.0,
+                 nn_dropout_keep_prob=conf['guessers']['BinarizedSiamese']['nn_dropout_keep_prob'],
                  class_to_i=None,
                  i_to_class=None,
-                 wiki_pages=None):
+                 wiki_pages=None,
+                 wiki_length_map=None):
         self.session = None
         self.file_writer = None
         self.question_max_length = question_max_length
@@ -262,6 +264,7 @@ class BinarizedSiameseModel:
         self.probabilities = None
         self.summary_counter = 0
         self.wiki_pages = wiki_pages
+        self.wiki_length_map = wiki_length_map
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.cached_wikipedia = None
@@ -337,6 +340,7 @@ class BinarizedSiameseModel:
                 tf.greater_equal(self.question_wiki_similarity - self.question_neg_wiki_similarity, 0.0),
                 tf.float32
             ))
+            tf.summary.scalar('accuracy', self.accuracy)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
@@ -351,30 +355,31 @@ class BinarizedSiameseModel:
               x_test, y_test, x_test_lengths):
         self.session = session
         self.file_writer = file_writer
-        wiki_pages = {}
+        self.wiki_pages = {}
+        self.wiki_length_map = {}
         self.cached_wikipedia = CachedWikipedia()
         classes = set(y_train) | set(y_test)
         for c_index in classes:
             page = self.i_to_class[c_index]
             tokens = word_tokenize(self.cached_wikipedia[page].content[0:3000].strip().lower())
             w_indices = convert_text_to_embeddings_indices(tokens, self.embedding_lookup)
+            self.wiki_length_map[c_index] = max(1, min(len(w_indices), self.wiki_max_length))
             while len(w_indices) < self.wiki_max_length:
                 w_indices.append(self.np_word_embeddings.shape[0])
             w_indices = np.array(w_indices[:self.wiki_max_length])
-            wiki_pages[c_index] = w_indices
-        self.wiki_pages = wiki_pages
+            self.wiki_pages[c_index] = w_indices
         wiki_train = []
         wiki_train_lengths = []
         wiki_test = []
         wiki_test_lengths = []
 
         for y in y_train:
-            wiki_train.append(wiki_pages[y])
-            wiki_train_lengths.append(len(wiki_pages[y]))
+            wiki_train.append(self.wiki_pages[y])
+            wiki_train_lengths.append(self.wiki_length_map[y])
 
         for y in y_test:
-            wiki_test.append(wiki_pages[y])
-            wiki_test_lengths.append(len(wiki_pages[y]))
+            wiki_test.append(self.wiki_pages[y])
+            wiki_test_lengths.append(self.wiki_length_map[y])
 
         wiki_train = np.array(wiki_train)
         wiki_train_lengths = np.array(wiki_train_lengths)
@@ -475,29 +480,47 @@ class BinarizedSiameseModel:
 
         return np.mean(batch_accuracies), np.mean(batch_losses), runtime
 
-    def guess(self, x_test, x_test_lengths, n_guesses: Optional[int]):
+    def guess(self, candidates: List[List[str]], x_test, x_test_lengths, n_guesses: Optional[int]):
         log.info('Initializing tensorflow')
         self.session.run(tf.global_variables_initializer())
         self.load()
         self.session.run(self.word_dropout_keep_prob_var.assign(1))
         self.session.run(self.nn_dropout_keep_prob_var.assign(1))
 
-        candidates = list(range(len(self.i_to_class)))
-        string_candidates = [self.i_to_class[k] for k in candidates]
-        candidate_words = [self.wiki_pages[y] for y in candidates]
-        candidate_lengths = compute_lengths(candidate_words)
+        n_candidates_per_question = []
+        string_candidates = []
+        candidate_indices = []
+        all_x_test = []
+        all_x_test_lengths = []
+        for i, question_candidates in enumerate(candidates):
+            qb_words = x_test[i]
+            qb_length = x_test_lengths[i]
+            n_candidates_for_q = 0
+            for string_c in question_candidates:
+                if string_c in self.class_to_i:
+                    c_index = self.class_to_i[string_c]
+                    string_candidates.append(string_c)
+                    candidate_indices.append(c_index)
+                    all_x_test.append(qb_words)
+                    all_x_test_lengths.append(qb_length)
+                    n_candidates_for_q += 1
+            n_candidates_per_question.append(n_candidates_for_q)
+        all_x_test = np.array(all_x_test)
+        all_x_test_lengths = np.array(all_x_test_lengths)
         n_candidates = len(candidates)
-        all_guesses = []
-        wiki_dan_output = []
+
         all_wiki = []
         all_wiki_lengths = []
 
-        for j in range(n_candidates):
-            all_wiki.append(candidate_words[j])
-            all_wiki_lengths.append(candidate_lengths[j])
+        n_wiki_candidates = len(self.i_to_class)
+        for i in range(n_wiki_candidates):
+            all_wiki.append(self.wiki_pages[i])
+            all_wiki_lengths.append(self.wiki_length_map[i])
 
         all_wiki = np.array(all_wiki)
         all_wiki_lengths = np.array(all_wiki_lengths)
+
+        wiki_dan_output = []
         for wiki_batch, wiki_len_batch in create_wikipedia_batches(self.batch_size, all_wiki, all_wiki_lengths,
                                                                    pad=True, shuffle=False):
             feed_dict = {
@@ -506,47 +529,41 @@ class BinarizedSiameseModel:
                 self.is_training: 0
             }
             wiki_dan_output.append(self.session.run(self.wiki_dan.output, feed_dict=feed_dict))
-        wiki_dan_output = np.vstack(wiki_dan_output)[:n_candidates]
+        wiki_dan_output = np.vstack(wiki_dan_output)[:n_wiki_candidates]
 
-        log.info('Generating {} candidates for each question'.format(n_candidates))
+        all_x_wiki_dan = []
+        for c_index in candidate_indices:
+            all_x_wiki_dan.append(wiki_dan_output[c_index])
+        all_x_wiki_dan = np.array(all_x_wiki_dan)
+
         n = len(x_test)
-        bar = progressbar.ProgressBar()
-        for i in bar(range(n)):
-            all_x = np.repeat(x_test[i].reshape((1, -1)), n_candidates, axis=0)
-            all_x_lengths = np.repeat(x_test_lengths[i], n_candidates)
+        log.info(
+            'Scoring each of {} questions totalling {} scored guesses across all questions'.format(n, n_candidates))
+        all_guesses = []
+        y_labels = np.zeros((n_candidates,))
+        all_predictions = []
 
-            y_labels = np.zeros((n_candidates,))
-            all_predictions = []
-            first_iteration = True
-            dan_output = None
+        for x_batch, x_len_batch, y_batch, wiki_dan_batch in create_test_batches(
+                self.batch_size, all_x_test, all_x_test_lengths, y_labels, all_x_wiki_dan,
+                pad=True, shuffle=False):
+            feed_dict = {
+                self.qb_questions: x_batch,
+                self.question_lengths: x_len_batch,
+                self.wiki_dan.output: wiki_dan_batch,
+                self.is_training: 0
+            }
+            batch_predictions = self.session.run(self.question_wiki_similarity, feed_dict=feed_dict)
+            all_predictions.extend(batch_predictions)
 
-            for x_batch, x_len_batch, y_batch, wiki_dan_batch in create_test_batches(
-                    self.batch_size, all_x, all_x_lengths, y_labels, wiki_dan_output,
-                    pad=True, shuffle=False):
-                if first_iteration:
-                    feed_dict = {
-                        self.qb_questions: x_batch,
-                        self.question_lengths: x_len_batch,
-                        self.is_training: 0
-                    }
-                    dan_output = self.session.run(self.question_dan.output, feed_dict=feed_dict)
-                    first_iteration = False
+        scores = all_predictions[:n_candidates]
+        guesses_with_scores = list(zip(string_candidates, scores))
 
-                feed_dict = {
-                    self.question_dan.output: dan_output,
-                    self.wiki_dan.output: wiki_dan_batch,
-                    self.is_training: 0
-                }
-                batch_predictions = self.session.run(self.question_wiki_similarity, feed_dict=feed_dict)
-                all_predictions.extend(batch_predictions)
+        position = 0
+        for n in n_candidates_per_question:
+            candidate_guesses = sorted(guesses_with_scores[position:position + n], reverse=True, key=lambda gs: gs[1])
+            all_guesses.append(candidate_guesses[:n_guesses])
+            position += n
 
-            scores = all_predictions[:n_candidates]
-            scores_with_guesses = sorted(zip(string_candidates, scores), reverse=True, key=lambda x: x[1])
-            if n_guesses is None:
-                top_guesses = scores_with_guesses
-            else:
-                top_guesses = scores_with_guesses[:n_guesses]
-            all_guesses.append(top_guesses)
         return all_guesses
 
     def save(self):
@@ -568,6 +585,7 @@ class BinarizedGuesser(AbstractGuesser):
         self.question_max_length = None
         self.file_writer = None
         self.wiki_pages = None
+        self.wiki_length_map = None
 
     def qb_dataset(self):
         return QuizBowlDataset(2)
@@ -613,9 +631,14 @@ class BinarizedGuesser(AbstractGuesser):
                 x_test, y_test, x_test_lengths
             )
             self.wiki_pages = self.model.wiki_pages
+            self.wiki_length_map = self.model.wiki_length_map
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
+        candidates_with_scores = ElasticSearchGuesser().guess(questions, 200)
+        candidates = []
+        for question_candidates in candidates_with_scores:
+            candidates.append([candidate for candidate, _ in question_candidates])
         x_test = [convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
         x_test_lengths = compute_lengths(x_test)
         x_test = np.array(tf_format(x_test, self.question_max_length, self.embeddings.shape[0]))
@@ -627,7 +650,7 @@ class BinarizedGuesser(AbstractGuesser):
                 wiki_pages=self.wiki_pages
             )
             self.model.session = session
-            return self.model.guess(x_test, x_test_lengths, max_n_guesses)
+            return self.model.guess(candidates, x_test, x_test_lengths, max_n_guesses)
 
     def save(self, directory: str) -> None:
         params_path = os.path.join(directory, BINARIZED_PARAMS_TARGET)
@@ -637,7 +660,8 @@ class BinarizedGuesser(AbstractGuesser):
                 'i_to_class': self.i_to_class,
                 'vocab': self.vocab,
                 'question_max_length': self.question_max_length,
-                'wiki_pages': self.wiki_pages
+                'wiki_pages': self.wiki_pages,
+                'wiki_length_map': self.wiki_length_map
             }, f)
             model_path = os.path.join(directory, BINARIZED_MODEL_TARGET)
             shell('cp -r {} {}'.format(BINARIZED_MODEL_TMP_DIR, safe_path(model_path)))
@@ -656,6 +680,7 @@ class BinarizedGuesser(AbstractGuesser):
             guesser.vocab = params['vocab']
             guesser.question_max_length = params['question_max_length']
             guesser.wiki_pages = params['wiki_pages']
+            guesser.wiki_length_map = params['wiki_length_map']
             guesser.embeddings = embeddings
             guesser.embedding_lookup = embedding_lookup
 

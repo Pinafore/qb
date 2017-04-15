@@ -77,10 +77,16 @@ class TFDanModel:
                 'dan',
                 reuse=None,
                 initializer=tf.contrib.layers.xavier_initializer()):
-            self.initial_embed = tf.get_variable(
-                'embeddings',
-                initializer=tf.constant(self.embeddings, dtype=tf.float32)
-            )
+
+            if conf['use_pretrained_embeddings']:
+                self.initial_embed = tf.get_variable(
+                    'embeddings',
+                    initializer=tf.constant(self.embeddings, dtype=tf.float32)
+                )
+            else:
+                self.initial_embed = tf.get_variable(
+                    'embeddings', shape=self.embeddings.shape
+                )
             self.embed_and_zero = tf.pad(self.initial_embed, [[0, 1], [0, 0]], mode='CONSTANT')
             self.input_placeholder = tf.placeholder(
                 tf.int32, shape=(self.batch_size, self.max_len), name='input_placeholder')

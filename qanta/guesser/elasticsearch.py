@@ -35,12 +35,12 @@ class ElasticSearchGuesser(AbstractGuesser):
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
         n_cores = conf['guessers']['ElasticSearch']['n_cores']
-        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '40g')])
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '4g')])
 
         def es_search(query):
-            return es_index.search(query)[:max_n_guesses]
+            return es_index.search(query, max_n_guesses)
 
-        return sc.parallelize(questions, 4 * n_cores).map(es_search).collect()
+        return sc.parallelize(questions, 16 * n_cores).map(es_search).collect()
 
     @classmethod
     def targets(cls):

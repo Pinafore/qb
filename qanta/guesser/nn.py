@@ -6,30 +6,48 @@ import os
 import pickle
 
 from qanta.util.io import safe_open
+from qanta.config import conf
 from qanta import logging
 
 
 log = logging.get(__name__)
 
 
-GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
-
-
-def create_embeddings(vocab: Set[str], expand_glove=False):
+def create_embeddings(vocab: Set[str], expand_glove=False, mask_zero=False):
+    """
+    Create embeddings
+    :param vocab: words in the vocabulary
+    :param expand_glove: Whether or not to expand embeddings past pre-trained ones
+    :param mask_zero: if True, then 0 is reserved as a sequence length mask (distinct from UNK)
+    :return: 
+    """
     embeddings = []
     embedding_lookup = {}
-    with open(GLOVE_WE) as f:
+    with open(conf['word_embeddings']) as f:
         i = 0
+        line_number = 0
+        n_bad_embeddings = 0
+        if mask_zero:
+            emb = np.zeros((conf['embedding_dimension']))
+            embeddings.append(emb)
+            embedding_lookup['MASK'] = i
+            i += 1
         for l in f:
             splits = l.split()
             word = splits[0]
             if word in vocab:
-                emb = [float(n) for n in splits[1:]]
+                try:
+                    emb = [float(n) for n in splits[1:]]
+                except ValueError:
+                    n_bad_embeddings += 1
+                    continue
                 embeddings.append(emb)
                 embedding_lookup[word] = i
                 i += 1
-        n_glove_embeddings = i
-        log.info('Loaded {} embeddings from glove'.format(n_glove_embeddings))
+            line_number += 1
+        n_embeddings = i
+        log.info('Loaded {} embeddings'.format(n_embeddings))
+        log.info('Encountered {} bad embeddings that were skipped'.format(n_bad_embeddings))
         mean_embedding = np.array(embeddings).mean(axis=0)
         if expand_glove:
             embed_dim = len(embeddings[0])
@@ -40,7 +58,7 @@ def create_embeddings(vocab: Set[str], expand_glove=False):
                 embedding_lookup[w] = i
                 i += 1
 
-            log.info('Initialized an additional {} embeddings not in glove'.format(i - n_glove_embeddings))
+            log.info('Initialized an additional {} embeddings not in dataset'.format(i - n_embeddings))
 
         log.info('Total number of embeddings: {}'.format(i))
 
@@ -117,7 +135,7 @@ def tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
 
 
 def create_load_embeddings_function(we_tmp_target, we_target, logger):
-    def load_embeddings(vocab=None, root_directory='', expand_glove=False):
+    def load_embeddings(vocab=None, root_directory='', expand_glove=False, mask_zero=False):
         if os.path.exists(we_tmp_target):
             logger.info('Loading word embeddings from tmp cache')
             with safe_open(we_tmp_target, 'rb') as f:
@@ -131,7 +149,7 @@ def create_load_embeddings_function(we_tmp_target, we_target, logger):
                 raise ValueError('To create fresh embeddings a vocab is needed')
             with safe_open(we_tmp_target, 'wb') as f:
                 logger.info('Creating word embeddings and saving to cache')
-                embed_and_lookup = create_embeddings(vocab, expand_glove=expand_glove)
+                embed_and_lookup = create_embeddings(vocab, expand_glove=expand_glove, mask_zero=mask_zero)
                 pickle.dump(embed_and_lookup, f)
                 return embed_and_lookup
     return load_embeddings

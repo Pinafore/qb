@@ -6,6 +6,10 @@ generate_train_guesses = false
 
 guessers_train_on_dev = false
 
+word_embeddings = "data/external/deep/glove.6B.300d.txt"
+embedding_dimension = 300
+use_pretrained_embeddings = true
+
 clm {
   min_appearances = 2
 }
@@ -69,4 +73,16 @@ guessers "BinarizedSiamese" {
   class = "qanta.guesser.experimental.binarized.BinarizedGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
+
+  # Model parameters
+  nn_dropout_keep_prob = 0.6
+}
+
+guessers "RNN" {
+  class = "qanta.guesser.rnn.RNNGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+  min_answers = 2
+  expand_we = true
+  rnn_cell = "lstm"
 }
