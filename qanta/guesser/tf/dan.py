@@ -73,6 +73,7 @@ class TFDan(AbstractGuesser):
         self._l2_rho = params.get('rho', 10**-5)
         self._dataset_weights = params.get('dataset_weights', None)
         self._use_wiki = params.get('use_wiki', False)
+        self._use_qb = params.get('use_qb', True)
         self._randomize_wiki_labels = params.get('randomize_wiki_labels', False)
         self._params = params
 
@@ -295,7 +296,7 @@ class TFDan(AbstractGuesser):
 
     def _load_data(self, qb_data, len_limit=200, restoring=False):
         """Load training data"""
-        datasets = {QUIZ_BOWL_DS: qb_data}
+        datasets = {QUIZ_BOWL_DS: qb_data} if self._use_qb else {}
         if self._use_wiki:
             log.info('Loading wikipedia data')
             datasets[WIKI_DS] = FilteredWikipediaDataset().training_data()
@@ -316,7 +317,7 @@ class TFDan(AbstractGuesser):
             log.info('Processing %s. %d examples', dataset_name, len(dataset[0]))
             results = preprocess_dataset(
                 dataset,
-                train_size=0.9 if dataset_name == QUIZ_BOWL_DS else 1,
+                train_size=0.9 if (dataset_name == QUIZ_BOWL_DS or not self._use_qb) else 1,
                 vocab=vocab,
                 class_to_i=class_to_i,
                 i_to_class=i_to_class)
@@ -496,8 +497,8 @@ class TFDan(AbstractGuesser):
             feed_dict = {self._input_placeholder: inputs,
                          self._len_placeholder: lens,
                          self._label_placeholder: labels}
-            if self._use_weights and train:
-                feed_dict[self._weight_placeholder] = weights
+            if self._use_weights:
+                feed_dict[self._weight_placeholder] = weights if train else np.ones(self._batch_size)
             if self._adversarial and train:
                 feed_dict[self._domain_gate_placeholder] = 1  # int(not i % self._adversarial_interval)
                 feed_dict[self._domain_placeholder] = domains
@@ -683,12 +684,17 @@ class TFDan(AbstractGuesser):
             self._max_len = len(data[0])
 
             if self._lstm_representation:
-                self._session.run(self._lstm_max_len.assign(len_batch[0]))
                 session.run(self._lstm_dropout_var.assign(0))
 
+            has_set_len = False
             guesses = []
             for i, (x_batch, len_batch) in enumerate(self._guess_batches(data, lens)):
+                if self._lstm_representation and not has_set_len:
+                    self._session.run(self._lstm_max_len.assign(len_batch[0]))
+                    has_set_len = True
                 feed_dict = {self._input_placeholder: x_batch, self._len_placeholder: len_batch}
+                if self._use_weights:
+                    feed_dict[self._weight_placeholder] = np.ones(self._batch_size)
                 batch_logits = self._session.run(self._logits, feed_dict=feed_dict)
                 guesses.extend([(i_to_class[i], row[i]) for i in np.argsort(row)[:-max_n_guesses - 1:-1]] for row in batch_logits)
         return guesses[:len(questions)]
