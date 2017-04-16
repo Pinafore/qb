@@ -5,11 +5,11 @@ import pickle
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 
-from qanta.pipeline.preprocess import Preprocess
 from qanta.config import conf
 from qanta.util import constants as c
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_path
+from qanta.pipeline.preprocess import DownloadData
 from qanta import logging
 
 log = logging.get(__name__)
@@ -38,7 +38,7 @@ class TrainGuesser(Task):
     dependency_class = luigi.Parameter()  # type: str
 
     def requires(self):
-        yield Preprocess()
+        yield DownloadData()
         if self.dependency_class is not None and self.dependency_module is not None:
             dependency_class = get_class(self.dependency_module, self.dependency_class)
             yield dependency_class()

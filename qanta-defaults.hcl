@@ -27,12 +27,6 @@ guessers "Dan" {
   n_hidden_layers = 1
 }
 
-guessers "Whoosh" {
-  class = "qanta.guesser.experimental.whoosh.WhooshWikiGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-}
-
 guessers "AuxDan" {
   class = "qanta.guesser.experimental.dan.aux_dan.AuxDANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
@@ -85,4 +79,14 @@ guessers "RNN" {
   min_answers = 2
   expand_we = true
   rnn_cell = "lstm"
+}
+
+guessers "KerasDAN" {
+  class = "qanta.guesser.dan.DANGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+  min_answers = 2
+  expand_we = true
+  n_hidden_layers = 1
+  dropout_probability = 0.5
 }

@@ -13,7 +13,7 @@ from qanta.config import conf
 from qanta import logging
 
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation
+from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Average
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping
@@ -23,23 +23,24 @@ import numpy as np
 
 log = logging.get(__name__)
 
-RNN_WE_TMP = '/tmp/qanta/deep/rnn_we.pickle'
-RNN_WE = 'rnn_we.pickle'
-RNN_MODEL_TMP_TARGET = '/tmp/qanta/deep/final_rnn.keras'
-RNN_MODEL_TARGET = 'final_rnn.keras'
-RNN_PARAMS_TARGET = 'rnn_params.pickle'
+DAN_WE_TMP = '/tmp/qanta/deep/dan_we.pickle'
+DAN_WE = 'dan_we.pickle'
+DAN_MODEL_TMP_TARGET = '/tmp/qanta/deep/final_dan.keras'
+DAN_MODEL_TARGET = 'final_dan.keras'
+DAN_PARAMS_TARGET = 'dan_params.pickle'
 
 
-load_embeddings = nn.create_load_embeddings_function(RNN_WE_TMP, RNN_WE, log)
+load_embeddings = nn.create_load_embeddings_function(DAN_WE_TMP, DAN_WE, log)
 
 
-class RNNGuesser(AbstractGuesser):
+class DANGuesser(AbstractGuesser):
     def __init__(self):
         super().__init__()
-        guesser_conf = conf['guessers']['RNN']
-        self.rnn_cell = guesser_conf['rnn_cell']
+        guesser_conf = conf['guessers']['KerasDAN']
         self.min_answers = guesser_conf['min_answers']
         self.expand_we = guesser_conf['expand_we']
+        self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.dropout_probability = guesser_conf['dropout_probability']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -54,7 +55,6 @@ class RNNGuesser(AbstractGuesser):
 
     def dump_parameters(self):
         return {
-            'rnn_cell': self.rnn_cell,
             'min_answers': self.min_answers,
             'embeddings': self.embeddings,
             'embedding_lookup': self.embedding_lookup,
@@ -65,11 +65,12 @@ class RNNGuesser(AbstractGuesser):
             'n_classes': self.n_classes,
             'max_n_epochs': self.max_n_epochs,
             'batch_size': self.batch_size,
-            'max_patience': self.max_patience
+            'max_patience': self.max_patience,
+            'n_hidden_layers': self.n_hidden_layers,
+            'dropout_probability': self.dropout_probability
         }
 
     def load_parameters(self, params):
-        self.rnn_cell = params['rnn_cell']
         self.min_answers = params['min_answers']
         self.embeddings = params['embeddings']
         self.embedding_lookup = params['embedding_lookup']
@@ -81,23 +82,17 @@ class RNNGuesser(AbstractGuesser):
         self.max_n_epochs = params['max_n_epochs']
         self.batch_size = params['batch_size']
         self.max_patience = params['max_patience']
+        self.n_hidden_layers = params['n_hidden_layers']
+        self.dropout_probability = params['dropout_probability']
 
     def qb_dataset(self):
         return QuizBowlDataset(self.min_answers)
 
     @classmethod
     def targets(cls) -> List[str]:
-        return [RNN_PARAMS_TARGET]
+        return [DAN_PARAMS_TARGET]
 
     def build_model(self):
-        if self.rnn_cell == 'lstm':
-            cell = LSTM
-        elif self.rnn_cell == 'gru':
-            cell = GRU
-        elif self.rnn_cell == 'simple_rnn':
-            cell = SimpleRNN
-        else:
-            raise ValueError('rnn_cell must be lstm, gru, or simple_rdd and was: {}'.format(self.rnn_cell))
         model = Sequential()
         model.add(Embedding(
             self.embeddings.shape[0],
@@ -106,12 +101,19 @@ class RNNGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(cell(300))
-        model.add(Dropout(.5))
+        model.add(Average())
+
+        for _ in range(self.n_hidden_layers):
+            model.add(Dense(300))
+            model.add(BatchNormalization())
+            model.add(Activation('relu'))
+            model.add(Dropout(self.dropout_probability))
+
         model.add(Dense(self.n_classes))
         model.add(BatchNormalization())
-        model.add(Dropout(.5))
+        model.add(Dropout(self.dropout_probability))
         model.add(Activation('softmax'))
+
         adam = Adam()
         model.compile(
             loss=sparse_categorical_crossentropy, optimizer=adam,
@@ -155,7 +157,7 @@ class RNNGuesser(AbstractGuesser):
         )
         log.info('Done training')
         log.info('Saving model...')
-        self.model.save(safe_path(RNN_MODEL_TMP_TARGET))
+        self.model.save(safe_path(DAN_MODEL_TMP_TARGET))
         log.info('Printing model training history...')
         log.info(history.history)
 
@@ -173,15 +175,15 @@ class RNNGuesser(AbstractGuesser):
         return guesses
 
     def save(self, directory: str) -> None:
-        shutil.copyfile(RNN_MODEL_TMP_TARGET, os.path.join(directory, RNN_MODEL_TARGET))
-        with safe_open(os.path.join(directory, RNN_PARAMS_TARGET), 'wb') as f:
+        shutil.copyfile(DAN_MODEL_TMP_TARGET, os.path.join(directory, DAN_MODEL_TARGET))
+        with safe_open(os.path.join(directory, DAN_PARAMS_TARGET), 'wb') as f:
             pickle.dump(self.dump_parameters(), f)
 
     @classmethod
     def load(cls, directory: str):
-        guesser = RNNGuesser()
-        guesser.model = load_model(os.path.join(directory, RNN_MODEL_TARGET))
-        with open(os.path.join(directory, RNN_PARAMS_TARGET), 'rb') as f:
+        guesser = DANGuesser()
+        guesser.model = load_model(os.path.join(directory, DAN_MODEL_TARGET))
+        with open(os.path.join(directory, DAN_PARAMS_TARGET), 'rb') as f:
             params = pickle.load(f)
             guesser.load_parameters(params)
 
