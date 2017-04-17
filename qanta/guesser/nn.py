@@ -224,6 +224,12 @@ def compute_lengths(x_data):
 class GlobalAveragePooling1DMasked(GlobalAveragePooling1D):
     def call(self, x, mask=None):
         if mask is not None:
-            return K.sum(x, axis=1) / K.sum(mask, axis=1)
+            summed = K.sum(x, axis=1)
+            n_words = K.expand_dims(K.sum(K.cast(mask, 'float32'), axis=1), 1)
+            average = summed / n_words
+            return average
         else:
             return super().call(x)
+
+    def compute_mask(self, inputs, mask=None):
+        return None

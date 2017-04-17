@@ -13,7 +13,7 @@ from qanta.config import conf
 from qanta import logging
 
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, GlobalAveragePooling1D
+from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping
@@ -144,7 +144,7 @@ class DANGuesser(AbstractGuesser):
         x_train = np.array(nn.tf_format(x_train, self.max_len, 0))
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
 
-        log.info('Building model...')
+        log.info('Building keras model...')
         self.model = self.build_model()
 
         log.info('Training model...')
