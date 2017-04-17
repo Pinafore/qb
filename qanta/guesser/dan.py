@@ -40,6 +40,7 @@ class DANGuesser(AbstractGuesser):
         self.min_answers = guesser_conf['min_answers']
         self.expand_we = guesser_conf['expand_we']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.n_hidden_units = guesser_conf['n_hidden_units']
         self.dropout_probability = guesser_conf['dropout_probability']
         self.embeddings = None
         self.embedding_lookup = None
@@ -67,6 +68,7 @@ class DANGuesser(AbstractGuesser):
             'batch_size': self.batch_size,
             'max_patience': self.max_patience,
             'n_hidden_layers': self.n_hidden_layers,
+            'n_hidden_units': self.n_hidden_units,
             'dropout_probability': self.dropout_probability
         }
 
@@ -83,6 +85,7 @@ class DANGuesser(AbstractGuesser):
         self.batch_size = params['batch_size']
         self.max_patience = params['max_patience']
         self.n_hidden_layers = params['n_hidden_layers']
+        self.n_hidden_units = params['n_hidden_units']
         self.dropout_probability = params['dropout_probability']
 
     def qb_dataset(self):
@@ -104,7 +107,7 @@ class DANGuesser(AbstractGuesser):
         model.add(Average())
 
         for _ in range(self.n_hidden_layers):
-            model.add(Dense(300))
+            model.add(Dense(self.n_hidden_units))
             model.add(BatchNormalization())
             model.add(Activation('relu'))
             model.add(Dropout(self.dropout_probability))

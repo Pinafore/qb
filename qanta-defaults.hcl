@@ -88,5 +88,6 @@ guessers "KerasDAN" {
   min_answers = 2
   expand_we = true
   n_hidden_layers = 1
+  n_hidden_units = 300
   dropout_probability = 0.5
 }
