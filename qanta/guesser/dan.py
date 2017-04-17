@@ -16,7 +16,7 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, EarlyStopping
+from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
 
 import numpy as np
 
@@ -150,7 +150,8 @@ class DANGuesser(AbstractGuesser):
         log.info('Training model...')
         callbacks = [
             TensorBoard(),
-            EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy')
+            EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy'),
+            ModelCheckpoint(DAN_MODEL_TMP_TARGET, save_best_only=True, monitor='val_sparse_categorical_accuracy')
         ]
         history = self.model.fit(
             x_train, y_train,
@@ -159,8 +160,6 @@ class DANGuesser(AbstractGuesser):
             callbacks=callbacks, verbose=2
         )
         log.info('Done training')
-        log.info('Saving model...')
-        self.model.save(safe_path(DAN_MODEL_TMP_TARGET))
         log.info('Printing model training history...')
         log.info(history.history)
 

@@ -16,7 +16,7 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, EarlyStopping
+from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
 
 import numpy as np
 
@@ -145,7 +145,8 @@ class RNNGuesser(AbstractGuesser):
         log.info('Training model...')
         callbacks = [
             TensorBoard(),
-            EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy')
+            EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy'),
+            ModelCheckpoint(RNN_MODEL_TMP_TARGET, save_best_only=True)
         ]
         history = self.model.fit(
             x_train, y_train,
@@ -154,8 +155,6 @@ class RNNGuesser(AbstractGuesser):
             callbacks=callbacks, verbose=2
         )
         log.info('Done training')
-        log.info('Saving model...')
-        self.model.save(safe_path(RNN_MODEL_TMP_TARGET))
         log.info('Printing model training history...')
         log.info(history.history)
 
