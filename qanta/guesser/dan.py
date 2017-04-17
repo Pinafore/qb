@@ -13,7 +13,7 @@ from qanta.config import conf
 from qanta import logging
 
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Average
+from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, GlobalAveragePooling1D
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping
@@ -104,7 +104,7 @@ class DANGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(Average())
+        model.add(GlobalAveragePooling1D())
 
         for _ in range(self.n_hidden_layers):
             model.add(Dense(self.n_hidden_units))
