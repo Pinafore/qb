@@ -5,6 +5,9 @@ import tensorflow as tf
 import os
 import pickle
 
+from keras import backend as K
+from keras.layers import GlobalAveragePooling1D
+
 from qanta.util.io import safe_open
 from qanta.config import conf
 from qanta import logging
@@ -216,3 +219,11 @@ def compute_max_len(training_data):
 
 def compute_lengths(x_data):
     return np.array([max(1, len(x)) for x in x_data])
+
+
+class GlobalAveragePooling1DMasked(GlobalAveragePooling1D):
+    def call(self, x, mask=None):
+        if mask is not None:
+            return K.sum(x, axis=1) / K.sum(mask, axis=1)
+        else:
+            return super().call(x)

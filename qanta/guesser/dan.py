@@ -104,7 +104,7 @@ class DANGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(GlobalAveragePooling1D())
+        model.add(nn.GlobalAveragePooling1DMasked())
 
         for _ in range(self.n_hidden_layers):
             model.add(Dense(self.n_hidden_units))
