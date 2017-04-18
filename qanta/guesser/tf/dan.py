@@ -684,7 +684,7 @@ class TFDan(AbstractGuesser):
             self._max_len = len(data[0])
 
             if self._lstm_representation:
-                session.run(self._lstm_dropout_var.assign(0))
+                self._session.run(self._lstm_dropout_var.assign(0))
 
             has_set_len = False
             guesses = []
@@ -734,95 +734,3 @@ class TFDan(AbstractGuesser):
     @property
     def word_ids(self):
         return self._word_ids
-
-
-
-def run_experiment(params, outfile):
-    use_qb = params['use_qb']
-    use_wiki = params['use_wiki']
-    exclude_keys = {'use_qb', 'use_wiki', 'wiki_data_frac'}
-    model_params = {k: v for k, v in params.items() if k not in exclude_keys}
-    dataset_weights = {QUIZ_BOWL_DS: 1, WIKI_DS: int(use_wiki)}
-
-    with tf.Graph().as_default():
-        with TFDan(is_train=True, dataset_weights=dataset_weights, **model_params) as train_model:
-            domains = []
-            if use_qb:
-                domains.append(QUIZ_BOWL_DS)
-            if use_wiki:
-                domains.append(WIKI_DS)
-            train_data = get_all_questions(domains)
-            (train_losses,
-             train_accuracies,
-             train_domain_accuracies,
-             holdout_losses,
-             holdout_accuracies,
-             holdout_domain_accuracies) = train_model.train(train_data)
-            train_model.restore(DEEP_DAN_PARAMS_TARGET)
-            representations = train_model.get_representations() if params['adversarial'] else None
-            train_weight = train_model._session.run(train_model._softmax_weights)
-
-        del train_data
-        with TFDan(is_train=False, dataset_weights=dataset_weights, initial_embed=None, **model_params) as dev_model:
-
-            print('Loading val data')
-            val_data = get_all_questions([QUIZ_BOWL_DS], folds=['dev'])
-            val_list = list(val_data[QUIZ_BOWL_DS])
-            val_data[QUIZ_BOWL_DS] = val_list
-            print('Got {} val examples'.format(len(val_list)))
-            print('Evaluating')
-            dev_accuracy, dev_recalls = dev_model.evaluate(
-                val_data,
-                n_classes=train_model.n_classes,
-                embedding_shape=train_model.embedding_shape,
-                label_map=train_model.label_map,
-                word_ids=train_model.word_ids)
-
-            dev_weight = dev_model._session.run(dev_model._softmax_weights)
-
-            print('Weights same: {}'.format((train_weight == dev_weight).all()))
-            log.info('Accuracy on dev: {}'.format(dev_accuracy))
-        result = {'params': params,
-                  'train_losses': train_losses,
-                  'train_accuracies': train_accuracies,
-                  'train_domain_accuracies': train_domain_accuracies,
-                  'holdout_losses': holdout_losses,
-                  'holdout_accuracies': holdout_accuracies,
-                  'holdout_domain_accuracies': holdout_accuracies,
-                  'recalls': dev_recalls,
-                  'representations': representations
-                  }
-
-    _write_result_to_s3(result)
-
-    # Touch flag file to let luigi know experiment is done
-    open(DEEP_EXPERIMENT_FLAG, 'w').close()
-
-
-def _write_result_to_s3(result):
-    _, f_name = tempfile.mkstemp()
-    with open(f_name, 'wb') as f:
-        pickle.dump(result, f)
-    shell('aws s3 cp {} {}/{}'.format(f_name, DEEP_EXPERIMENT_S3_BUCKET, QB_TF_EXPERIMENT_ID))
-    os.remove(f_name)
-
-
-if __name__ == '__main__':
-    run_experiment({'init_scale': 0.08,
-                    'use_qb': True,
-                    'use_wiki': True,
-
-                    'adversarial': True,
-                    'max_epochs': 70,
-                    'n_prediction_layers': 2,
-                    'lstm_representation': False,
-                    'n_representation_layers': 2,
-                    'adversarial_units': 300,
-                    'domain_classifier_weight': 0.3,
-                    'learning_rate': 0.0001,
-                    'hidden_units': 300,
-                    'lstm_dropout_prob': 0.5,
-                    'prediction_dropout_prob': 0.5,
-                    'word_drop': 0.3,
-                    'rho': 10**-5,
-                    'batch_size': 128}, outfile='/tmp/exp_output')
