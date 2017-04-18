@@ -41,7 +41,10 @@ class DANGuesser(AbstractGuesser):
         self.expand_we = guesser_conf['expand_we']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.n_hidden_units = guesser_conf['n_hidden_units']
-        self.dropout_probability = guesser_conf['dropout_probability']
+        self.nn_dropout_rate = guesser_conf['nn_dropout_rate']
+        self.word_dropout_rate = guesser_conf['word_dropout_rate']
+        self.batch_size = guesser_conf['batch_size']
+        self.learning_rate = guesser_conf['learning_rate']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -51,7 +54,6 @@ class DANGuesser(AbstractGuesser):
         self.n_classes = None
         self.model = None
         self.max_n_epochs = 100
-        self.batch_size = 128
         self.max_patience = 5
 
     def dump_parameters(self):
@@ -69,7 +71,9 @@ class DANGuesser(AbstractGuesser):
             'max_patience': self.max_patience,
             'n_hidden_layers': self.n_hidden_layers,
             'n_hidden_units': self.n_hidden_units,
-            'dropout_probability': self.dropout_probability
+            'nn_dropout_rate': self.nn_dropout_rate,
+            'word_dropout_rate': self.word_dropout_rate,
+            'learning_rate': self.learning_rate
         }
 
     def load_parameters(self, params):
@@ -86,7 +90,9 @@ class DANGuesser(AbstractGuesser):
         self.max_patience = params['max_patience']
         self.n_hidden_layers = params['n_hidden_layers']
         self.n_hidden_units = params['n_hidden_units']
-        self.dropout_probability = params['dropout_probability']
+        self.nn_dropout_rate = params['dropout_probability']
+        self.word_dropout_rate = params['word_dropout_rate']
+        self.learning_rate = params['learning_rate']
 
     def qb_dataset(self):
         return QuizBowlDataset(self.min_answers)
@@ -99,22 +105,23 @@ class DANGuesser(AbstractGuesser):
         model = Sequential()
         model.add(Embedding(
             self.embeddings.shape[0],
-            output_dim=300,
+            self.embeddings.shape[1],
             mask_zero=True,
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
+        model.add(nn.WordDropout(self.word_dropout_rate))
         model.add(nn.GlobalAveragePooling1DMasked())
 
         for _ in range(self.n_hidden_layers):
             model.add(Dense(self.n_hidden_units))
             model.add(BatchNormalization())
             model.add(Activation('relu'))
-            model.add(Dropout(self.dropout_probability))
+            model.add(Dropout(self.nn_dropout_rate))
 
         model.add(Dense(self.n_classes))
         model.add(BatchNormalization())
-        model.add(Dropout(self.dropout_probability))
+        model.add(Dropout(self.nn_dropout_rate))
         model.add(Activation('softmax'))
 
         adam = Adam()
@@ -151,7 +158,11 @@ class DANGuesser(AbstractGuesser):
         callbacks = [
             TensorBoard(),
             EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy'),
-            ModelCheckpoint(DAN_MODEL_TMP_TARGET, save_best_only=True, monitor='val_sparse_categorical_accuracy')
+            ModelCheckpoint(
+                safe_path(DAN_MODEL_TMP_TARGET),
+                save_best_only=True,
+                monitor='val_sparse_categorical_accuracy'
+            )
         ]
         history = self.model.fit(
             x_train, y_train,
@@ -184,7 +195,13 @@ class DANGuesser(AbstractGuesser):
     @classmethod
     def load(cls, directory: str):
         guesser = DANGuesser()
-        guesser.model = load_model(os.path.join(directory, DAN_MODEL_TARGET))
+        guesser.model = load_model(
+            os.path.join(directory, DAN_MODEL_TARGET),
+            custom_objects={
+                'GlobalAveragePooling1DMasked': nn.GlobalAveragePooling1DMasked,
+                'WordDropout': nn.WordDropout
+            }
+        )
         with open(os.path.join(directory, DAN_PARAMS_TARGET), 'rb') as f:
             params = pickle.load(f)
             guesser.load_parameters(params)

@@ -78,7 +78,7 @@ guessers "RNN" {
   enabled = false
   min_answers = 2
   expand_we = true
-  rnn_cell = "lstm"
+  rnn_cell = "gru"
 }
 
 guessers "KerasDAN" {
@@ -89,5 +89,8 @@ guessers "KerasDAN" {
   expand_we = true
   n_hidden_layers = 1
   n_hidden_units = 300
-  dropout_probability = 0.5
+  nn_dropout_rate = 0.5
+  word_dropout_rate = 0.5
+  batch_size = 256
+  learning_rate = 0.001
 }
