@@ -91,5 +91,5 @@ guessers "KerasDAN" {
   l2_normalize_averaged_words = false
   max_n_epochs = 100
   max_patience = 10
-  activation_function = 'relu'
+  activation_function = "relu"
 }
