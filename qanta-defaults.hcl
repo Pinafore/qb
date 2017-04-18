@@ -74,6 +74,7 @@ guessers "RNN" {
   max_patience = 10
   max_n_epochs = 100
   batch_size = 512
+  nn_dropout_rate = 0.5
 }
 
 guessers "KerasDAN" {
