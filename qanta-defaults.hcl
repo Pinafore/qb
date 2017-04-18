@@ -18,15 +18,6 @@ wikifier {
   min_appearances = 2
 }
 
-guessers "Dan" {
-  class = "qanta.guesser.dan_tf.DANGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.dan.DANDependencies"
-  enabled = true
-  min_appearances = 2
-  expand_glove = true
-  n_hidden_layers = 1
-}
-
 guessers "AuxDan" {
   class = "qanta.guesser.experimental.dan.aux_dan.AuxDANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
@@ -88,7 +79,7 @@ guessers "RNN" {
 guessers "KerasDAN" {
   class = "qanta.guesser.dan.DANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
+  enabled = true
   min_answers = 2
   expand_we = true
   n_hidden_layers = 1
