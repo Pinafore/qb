@@ -41,6 +41,10 @@ class RNNGuesser(AbstractGuesser):
         self.min_answers = guesser_conf['min_answers']
         self.expand_we = guesser_conf['expand_we']
         self.batch_size = guesser_conf['batch_size']
+        self.n_rnn_units = guesser_conf['n_rnn_units']
+        self.max_n_epochs = guesser_conf['max_n_epochs']
+        self.max_patience = guesser_conf['max_patience']
+        self.nn_dropout_rate = guesser_conf['nn_dropout_rate']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -49,8 +53,6 @@ class RNNGuesser(AbstractGuesser):
         self.vocab = None
         self.n_classes = None
         self.model = None
-        self.max_n_epochs = 100
-        self.max_patience = 5
 
     def dump_parameters(self):
         return {
@@ -65,7 +67,9 @@ class RNNGuesser(AbstractGuesser):
             'n_classes': self.n_classes,
             'max_n_epochs': self.max_n_epochs,
             'batch_size': self.batch_size,
-            'max_patience': self.max_patience
+            'max_patience': self.max_patience,
+            'n_rnn_units': self.n_rnn_units,
+            'nn_dropout_rate': self.nn_dropout_rate
         }
 
     def load_parameters(self, params):
@@ -81,6 +85,21 @@ class RNNGuesser(AbstractGuesser):
         self.max_n_epochs = params['max_n_epochs']
         self.batch_size = params['batch_size']
         self.max_patience = params['max_patience']
+        self.n_rnn_units = params['n_rnn_units']
+        self.nn_dropout_rate = params['nn_dropout_rate']
+
+    def parameters(self):
+        return {
+            'rnn_cell': self.rnn_cell,
+            'min_answers': self.min_answers,
+            'max_len': self.max_len,
+            'n_classes': self.n_classes,
+            'max_n_epochs': self.max_n_epochs,
+            'batch_size': self.batch_size,
+            'max_patience': self.max_patience,
+            'n_rnn_units': self.n_rnn_units,
+            'nn_dropout_rate': self.nn_dropout_rate
+        }
 
     def qb_dataset(self):
         return QuizBowlDataset(self.min_answers)
@@ -101,16 +120,16 @@ class RNNGuesser(AbstractGuesser):
         model = Sequential()
         model.add(Embedding(
             self.embeddings.shape[0],
-            output_dim=300,
+            self.embeddings.shape[1],
             mask_zero=True,
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(cell(300))
-        model.add(Dropout(.5))
+        model.add(cell(self.n_rnn_units))
+        model.add(Dropout(self.nn_dropout_rate))
         model.add(Dense(self.n_classes))
         model.add(BatchNormalization())
-        model.add(Dropout(.5))
+        model.add(Dropout(self.nn_dropout_rate))
         model.add(Activation('softmax'))
         adam = Adam()
         model.compile(

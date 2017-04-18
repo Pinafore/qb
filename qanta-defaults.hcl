@@ -79,6 +79,10 @@ guessers "RNN" {
   min_answers = 2
   expand_we = true
   rnn_cell = "gru"
+  n_rnn_units = 300
+  max_patience = 10
+  max_n_epochs = 100
+  batch_size = 512
 }
 
 guessers "KerasDAN" {
@@ -93,4 +97,8 @@ guessers "KerasDAN" {
   word_dropout_rate = 0.5
   batch_size = 256
   learning_rate = 0.001
+  l2_normalize_averaged_words = false
+  max_n_epochs = 100
+  max_patience = 10
+  activation_function = 'relu'
 }

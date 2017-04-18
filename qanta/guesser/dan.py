@@ -17,6 +17,7 @@ from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activati
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
+from keras import backend as K
 
 import numpy as np
 
@@ -45,6 +46,10 @@ class DANGuesser(AbstractGuesser):
         self.word_dropout_rate = guesser_conf['word_dropout_rate']
         self.batch_size = guesser_conf['batch_size']
         self.learning_rate = guesser_conf['learning_rate']
+        self.l2_normalize_averaged_words = guesser_conf['l2_normalize_averaged_words']
+        self.max_n_epochs = guesser_conf['max_n_epochs']
+        self.max_patience = guesser_conf['max_patience']
+        self.activation_function = guesser_conf['activation_function']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -53,8 +58,6 @@ class DANGuesser(AbstractGuesser):
         self.vocab = None
         self.n_classes = None
         self.model = None
-        self.max_n_epochs = 100
-        self.max_patience = 5
 
     def dump_parameters(self):
         return {
@@ -73,7 +76,9 @@ class DANGuesser(AbstractGuesser):
             'n_hidden_units': self.n_hidden_units,
             'nn_dropout_rate': self.nn_dropout_rate,
             'word_dropout_rate': self.word_dropout_rate,
-            'learning_rate': self.learning_rate
+            'learning_rate': self.learning_rate,
+            'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
+            'activation_function': self.activation_function
         }
 
     def load_parameters(self, params):
@@ -92,7 +97,26 @@ class DANGuesser(AbstractGuesser):
         self.n_hidden_units = params['n_hidden_units']
         self.nn_dropout_rate = params['nn_dropout_rate']
         self.word_dropout_rate = params['word_dropout_rate']
+        self.l2_normalize_averaged_words = params['l2_normalize_averaged_words']
         self.learning_rate = params['learning_rate']
+        self.activation_function = params['activation_function']
+
+    def parameters(self):
+        return {
+            'min_answers': self.min_answers,
+            'max_len': self.max_len,
+            'n_classes': self.n_classes,
+            'max_n_epochs': self.max_n_epochs,
+            'batch_size': self.batch_size,
+            'max_patience': self.max_patience,
+            'n_hidden_layers': self.n_hidden_layers,
+            'n_hidden_units': self.n_hidden_units,
+            'nn_dropout_rate': self.nn_dropout_rate,
+            'word_dropout_rate': self.word_dropout_rate,
+            'learning_rate': self.learning_rate,
+            'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
+            'activation_function': self.activation_function
+        }
 
     def qb_dataset(self):
         return QuizBowlDataset(self.min_answers)
@@ -112,11 +136,13 @@ class DANGuesser(AbstractGuesser):
         ))
         model.add(nn.WordDropout(self.word_dropout_rate))
         model.add(nn.GlobalAveragePooling1DMasked())
+        if self.l2_normalize_averaged_words:
+            model.add(Lambda(lambda x: K.l2_normalize(x, 1)))
 
         for _ in range(self.n_hidden_layers):
             model.add(Dense(self.n_hidden_units))
             model.add(BatchNormalization())
-            model.add(Activation('relu'))
+            model.add(Activation(self.activation_function))
             model.add(Dropout(self.nn_dropout_rate))
 
         model.add(Dense(self.n_classes))
