@@ -40,6 +40,7 @@ class RNNGuesser(AbstractGuesser):
         self.rnn_cell = guesser_conf['rnn_cell']
         self.min_answers = guesser_conf['min_answers']
         self.expand_we = guesser_conf['expand_we']
+        self.batch_size = guesser_conf['batch_size']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -49,7 +50,6 @@ class RNNGuesser(AbstractGuesser):
         self.n_classes = None
         self.model = None
         self.max_n_epochs = 100
-        self.batch_size = 128
         self.max_patience = 5
 
     def dump_parameters(self):

@@ -90,7 +90,7 @@ class DANGuesser(AbstractGuesser):
         self.max_patience = params['max_patience']
         self.n_hidden_layers = params['n_hidden_layers']
         self.n_hidden_units = params['n_hidden_units']
-        self.nn_dropout_rate = params['dropout_probability']
+        self.nn_dropout_rate = params['nn_dropout_rate']
         self.word_dropout_rate = params['word_dropout_rate']
         self.learning_rate = params['learning_rate']
 

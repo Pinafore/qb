@@ -33,3 +33,5 @@ qb.egg-info/
 qanta_web/.vscode
 qanta_web/*.sqlite3
 qanta_web/tags
+clm/_SUCCESS
+logs/
