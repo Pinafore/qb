@@ -45,7 +45,7 @@ class ClassifierPickle(Task):
     class_type = luigi.Parameter()
 
     def requires(self):
-        yield Preprocess()
+        yield DownloadData()
 
     def output(self):
         return LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type))
@@ -71,7 +71,7 @@ class ClassifierReport(Task):
 
 class ClassifierGuessProperties(Task):
     def requires(self):
-        yield Preprocess()
+        yield DownloadData()
 
     def output(self):
         return LocalTarget(c.CLASSIFIER_GUESS_PROPS)

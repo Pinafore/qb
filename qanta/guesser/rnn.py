@@ -8,7 +8,7 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question
-from qanta.util.io import safe_open, safe_path
+from qanta.util.io import safe_open
 from qanta.config import conf
 from qanta import logging
 

@@ -3,7 +3,7 @@ from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple, Optional
 import pickle
-from pprint import pformat
+import json
 
 import matplotlib
 matplotlib.use('Agg')
@@ -405,7 +405,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             'dev_accuracy': dev_summary_accuracy,
             'test_accuracy': test_summary_accuracy,
             'guesser_name': self.display_name(),
-            'guesser_params': pformat(params),
+            'guesser_params': json.dumps(params, sort_keys=True, indent=2),
             'n_answers_all_folds': len(all_answers),
             'n_total_train_questions': len(train_questions),
             'min_class_examples': dataset.min_class_examples,

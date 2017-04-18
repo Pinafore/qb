@@ -18,12 +18,6 @@ wikifier {
   min_appearances = 2
 }
 
-guessers "AuxDan" {
-  class = "qanta.guesser.experimental.dan.aux_dan.AuxDANGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-}
-
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
@@ -31,6 +25,62 @@ guessers "ElasticSearch" {
   # Set the level of parallelism for guess generation
   n_cores = 15
   min_appearances = 1
+}
+
+guessers "DAN" {
+  class = "qanta.guesser.dan.DANGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = true
+  min_answers = 2
+  expand_we = true
+  n_hidden_layers = 1
+  n_hidden_units = 300
+  nn_dropout_rate = 0.5
+  word_dropout_rate = 0.5
+  batch_size = 256
+  learning_rate = 0.001
+  l2_normalize_averaged_words = true
+  max_n_epochs = 100
+  max_patience = 10
+  activation_function = "elu"
+}
+
+guessers "RNN" {
+  class = "qanta.guesser.rnn.RNNGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+  min_answers = 2
+  expand_we = true
+  rnn_cell = "gru"
+  n_rnn_units = 300
+  max_patience = 10
+  max_n_epochs = 100
+  batch_size = 256
+  nn_dropout_rate = 0.5
+}
+
+guessers "MemNN" {
+  class = "qanta.guesser.mem_nn.MemNNGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+  min_answers = 2
+  expand_we = true
+  n_hops = 1
+  n_hidden_units = 300
+  nn_dropout_rate = 0.5
+  word_dropout_rate = 0.5
+  batch_size = 256
+  learning_rate = 0.001
+  l2_normalize_averaged_words = true
+  max_n_epochs = 100
+  max_patience = 10
+  activation_function = "relu"
+}
+
+guessers "AuxDan" {
+  class = "qanta.guesser.experimental.dan.aux_dan.AuxDANGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
 }
 
 guessers "ElasticSearchWikidata" {
@@ -61,36 +111,4 @@ guessers "BinarizedSiamese" {
 
   # Model parameters
   nn_dropout_keep_prob = 0.6
-}
-
-guessers "RNN" {
-  class = "qanta.guesser.rnn.RNNGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-  min_answers = 2
-  expand_we = true
-  rnn_cell = "gru"
-  n_rnn_units = 300
-  max_patience = 10
-  max_n_epochs = 100
-  batch_size = 512
-  nn_dropout_rate = 0.5
-}
-
-guessers "KerasDAN" {
-  class = "qanta.guesser.dan.DANGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = true
-  min_answers = 2
-  expand_we = true
-  n_hidden_layers = 1
-  n_hidden_units = 300
-  nn_dropout_rate = 0.5
-  word_dropout_rate = 0.5
-  batch_size = 256
-  learning_rate = 0.001
-  l2_normalize_averaged_words = false
-  max_n_epochs = 100
-  max_patience = 10
-  activation_function = "relu"
 }
