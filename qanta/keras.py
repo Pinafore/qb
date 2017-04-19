@@ -3,7 +3,7 @@ from keras import backend as K
 import tensorflow as tf
 
 
-class GlobalAveragePooling1DMasked(GlobalAveragePooling1D):
+class AverageWords(GlobalAveragePooling1D):
     def call(self, x, mask=None):
         if mask is not None:
             summed = K.sum(x, axis=1)

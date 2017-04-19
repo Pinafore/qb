@@ -10,12 +10,12 @@ from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import GlobalAveragePooling1DMasked, WordDropout
+from qanta.keras import AverageWords, WordDropout
 from qanta import logging
 
 from keras import backend as K
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda
+from keras.models import Sequential, Model, load_model
+from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda, Input, dot, multiply, add
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -54,7 +54,8 @@ class MemNNGuesser(AbstractGuesser):
         self.activation_function = guesser_conf['activation_function']
         self.embeddings = None
         self.embedding_lookup = None
-        self.max_len = None
+        self.qb_max_len = None
+        self.wiki_max_len = None
         self.i_to_class = None
         self.class_to_i = None
         self.vocab = None
@@ -66,7 +67,8 @@ class MemNNGuesser(AbstractGuesser):
             'min_answers': self.min_answers,
             'embeddings': self.embeddings,
             'embedding_lookup': self.embedding_lookup,
-            'max_len': self.max_len,
+            'qb_max_len': self.qb_max_len,
+            'wiki_max_len': self.wiki_max_len,
             'i_to_class': self.i_to_class,
             'class_to_i': self.class_to_i,
             'vocab': self.vocab,
@@ -87,7 +89,8 @@ class MemNNGuesser(AbstractGuesser):
         self.min_answers = params['min_answers']
         self.embeddings = params['embeddings']
         self.embedding_lookup = params['embedding_lookup']
-        self.max_len = params['max_len']
+        self.qb_max_len = params['qb_max_len']
+        self.wiki_max_len = params['wiki_max_len']
         self.i_to_class = params['i_to_class']
         self.class_to_i = params['class_to_i']
         self.vocab = params['vocab']
@@ -106,7 +109,8 @@ class MemNNGuesser(AbstractGuesser):
     def parameters(self):
         return {
             'min_answers': self.min_answers,
-            'max_len': self.max_len,
+            'qb_max_len': self.qb_max_len,
+            'wiki_max_len': self.wiki_max_len,
             'n_classes': self.n_classes,
             'max_n_epochs': self.max_n_epochs,
             'batch_size': self.batch_size,
@@ -128,31 +132,48 @@ class MemNNGuesser(AbstractGuesser):
         return [MEM_PARAMS_TARGET]
 
     def build_model(self):
-        model = Sequential()
-        model.add(Embedding(
-            self.embeddings.shape[0],
-            self.embeddings.shape[1],
-            mask_zero=True,
-            input_length=self.max_len,
-            weights=[self.embeddings]
-        ))
-        model.add(WordDropout(self.word_dropout_rate))
-        model.add(GlobalAveragePooling1DMasked())
-        if self.l2_normalize_averaged_words:
-            model.add(Lambda(lambda x: K.l2_normalize(x, 1)))
+        vocab_size = self.embeddings.shape[0]
+        we_dimension = self.embeddings.shape[1]
 
-        for _ in range(self.n_hops):
-            model.add(Dense(self.n_hidden_units))
-            model.add(BatchNormalization())
-            model.add(Activation(self.activation_function))
-            model.add(Dropout(self.nn_dropout_rate))
+        wiki_input = Input((self.wiki_max_len,), name='wiki_input')
+        qb_input = Input((self.qb_max_len,), name='wiki_input')
 
-        model.add(Dense(self.n_classes))
-        model.add(BatchNormalization())
-        model.add(Dropout(self.nn_dropout_rate))
-        model.add(Activation('softmax'))
+        wiki_embeddings = Embedding(vocab_size, we_dimension, weights=[self.embeddings], mask_zero=True)
+        qb_embeddings = Embedding(vocab_size, we_dimension, weights=[self.embeddings], mask_zero=True)
+
+        # encoders
+
+        # Wikipedia sentence encoder used to search memory
+        wiki_m_encoder = Sequential()
+        wiki_m_encoder.add(wiki_embeddings)
+        wiki_m_encoder.add(WordDropout(self.word_dropout_rate))
+        wiki_m_encoder.add(AverageWords())
+        wiki_input_encoded_m = wiki_m_encoder(wiki_input)
+
+        # Wikipedia sentence encoder for retrieved memories
+        wiki_c_encoder = Sequential()
+        wiki_c_encoder.add(wiki_embeddings)
+        wiki_c_encoder.add(WordDropout(self.word_dropout_rate))
+        wiki_c_encoder.add(AverageWords())
+        wiki_input_encoded_c = wiki_c_encoder(wiki_input)
+
+        # Quiz Bowl question encoder
+        qb_encoder = Sequential()
+        qb_encoder.add(qb_embeddings)
+        qb_encoder.add(WordDropout(self.word_dropout_rate))
+        qb_encoder.add(AverageWords())
+        qb_input_encoded = qb_encoder(qb_input)
+
+        # Compute the attention based on match between memory addresses and question input
+        match_probability = dot([wiki_input_encoded_m, qb_input_encoded], 1)
+        match_probability = Activation('softmax')(match_probability)
+
+        memories = multiply([match_probability, wiki_input_encoded_c])
+        memories_and_question = add([memories, qb_input_encoded])
+        actions = Dense(self.n_classes, activation='softmax')(memories_and_question)
 
         adam = Adam()
+        model = Model(inputs=[qb_input, wiki_input], outputs=actions)
         model.compile(
             loss=sparse_categorical_crossentropy, optimizer=adam,
             metrics=['sparse_categorical_accuracy']
@@ -175,9 +196,9 @@ class MemNNGuesser(AbstractGuesser):
         x_train = [nn.convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train]
         x_test = [nn.convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test]
         self.n_classes = nn.compute_n_classes(training_data[1])
-        self.max_len = nn.compute_max_len(training_data)
-        x_train = pad_sequences(x_train, maxlen=self.max_len, value=0, padding='post', truncating='post')
-        x_test = pad_sequences(x_test, maxlen=self.max_len, value=0, padding='post', truncating='post')
+        self.qb_max_len = nn.compute_max_len(training_data)
+        x_train = pad_sequences(x_train, maxlen=self.qb_max_len, value=0, padding='post', truncating='post')
+        x_test = pad_sequences(x_test, maxlen=self.qb_max_len, value=0, padding='post', truncating='post')
 
         log.info('Building keras model...')
         self.model = self.build_model()
@@ -205,7 +226,7 @@ class MemNNGuesser(AbstractGuesser):
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
         x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
-        x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
+        x_test = np.array(nn.tf_format(x_test, self.qb_max_len, 0))
         class_probabilities = self.model.predict_proba(x_test, batch_size=self.batch_size)
         guesses = []
         for row in class_probabilities:
@@ -226,7 +247,7 @@ class MemNNGuesser(AbstractGuesser):
         guesser.model = load_model(
             os.path.join(directory, MEM_MODEL_TARGET),
             custom_objects={
-                'GlobalAveragePooling1DMasked': GlobalAveragePooling1DMasked,
+                'GlobalAveragePooling1DMasked': AverageWords,
                 'WordDropout': WordDropout
             }
         )

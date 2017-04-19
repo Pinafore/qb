@@ -10,7 +10,7 @@ from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import GlobalAveragePooling1DMasked, WordDropout
+from qanta.keras import AverageWords, WordDropout
 from qanta import logging
 
 from keras.models import Sequential, load_model
@@ -136,7 +136,7 @@ class DANGuesser(AbstractGuesser):
             weights=[self.embeddings]
         ))
         model.add(WordDropout(self.word_dropout_rate))
-        model.add(GlobalAveragePooling1DMasked())
+        model.add(AverageWords())
         if self.l2_normalize_averaged_words:
             model.add(Lambda(lambda x: K.l2_normalize(x, 1)))
 
@@ -225,7 +225,7 @@ class DANGuesser(AbstractGuesser):
         guesser.model = load_model(
             os.path.join(directory, DAN_MODEL_TARGET),
             custom_objects={
-                'GlobalAveragePooling1DMasked': GlobalAveragePooling1DMasked,
+                'AverageWords': AverageWords,
                 'WordDropout': WordDropout
             }
         )
