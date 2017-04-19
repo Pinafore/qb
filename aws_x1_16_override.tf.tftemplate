@@ -2,7 +2,7 @@ variable "spot_price" {
   default = "3.00"
 }
 
-resource "aws_spot_instance_request" "master" {
+resource "aws_spot_instance_request" "qanta" {
   instance_type = "x1.16xlarge"
 
   ebs_block_device {
