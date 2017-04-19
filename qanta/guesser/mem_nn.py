@@ -1,7 +1,7 @@
 import pickle
 import os
 import shutil
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 import nltk
 
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
@@ -22,10 +22,16 @@ from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
 from keras.preprocessing.sequence import pad_sequences
 
+import elasticsearch
+from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
+from elasticsearch_dsl.connections import connections
+import progressbar
+
 import numpy as np
 
 
 log = logging.get(__name__)
+connections.create_connection(hosts=['localhost'])
 
 MEM_WE_TMP = '/tmp/qanta/deep/mem_nn_we.pickle'
 MEM_WE = 'mem_nn_we.pickle'
@@ -37,11 +43,51 @@ MEM_PARAMS_TARGET = 'mem_nn_params.pickle'
 load_embeddings = nn.create_load_embeddings_function(MEM_WE_TMP, MEM_WE, log)
 
 
-def fetch_wikipedia_sentences(pages, n_sentences):
+class Memory(DocType):
+    # Currently this is just for debugging purposes, it isn't used
+    page = Text(fields={'raw': Keyword()})
+    text = Text()
+
+    class Meta:
+        index = 'mem_nn'
+
+
+class MemoryIndex:
+    @staticmethod
+    def build(documents: Dict[str, List[str]]):
+        try:
+            Index('mem_nn').delete()
+        except elasticsearch.exceptions.NotFoundError:
+            log.info('Could not delete non-existent index, continuing to creating new index...')
+        Memory.init()
+        bar = progressbar.ProgressBar()
+        for page in bar(documents):
+            for m_text in documents[page]:
+                memory = Memory(page=page, text=m_text)
+                memory.save()
+
+    @staticmethod
+    def search(text: str, max_n_memories: int):
+        s = Search(index='mem_nn')[0:max_n_memories].query('match', text=text)
+        return [(r.text, r.page, r.meta.score) for r in s.execute()]
+
+
+def build_wikipedia_sentences(pages, n_sentences):
     cw = CachedWikipedia()
     page_sentences = {}
     for p in pages:
         page_sentences[p] = nltk.tokenize.sent_tokenize(cw[p].content)[:n_sentences]
+    return page_sentences
+
+
+def build_qb_sentences(training_data: TrainingData):
+    page_sentences = {}
+    for sentences, page in zip(training_data[0], training_data[1]):
+        if page in page_sentences:
+            page_sentences[page].extend(sentences)
+        else:
+            page_sentences[page] = sentences
+
     return page_sentences
 
 
@@ -206,8 +252,11 @@ class MemNNGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Collecting Wikipedia data...')
-        classes = {format_guess(g) for g in training_data[1]}
-        class_sentences = fetch_wikipedia_sentences(classes, self.n_wiki_sentences)
+        for i in range(len(training_data[1])):
+            training_data[1][i] = format_guess(training_data[1][i])
+        classes = set(training_data[1])
+        wiki_sentences = build_wikipedia_sentences(classes, self.n_wiki_sentences)
+        MemoryIndex.build(wiki_sentences)
 
         log.info('Preprocessing training data...')
         x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)

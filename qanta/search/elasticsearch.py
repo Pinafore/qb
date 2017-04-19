@@ -36,7 +36,8 @@ class ElasticSearchIndex:
             answer = Answer(page=page, wiki_content=cw[page].content, qb_content=documents[page])
             answer.save()
 
-    def search(self, text: str, max_n_guesses: int):
+    @staticmethod
+    def search(text: str, max_n_guesses: int):
         s = Search(index='qb')[0:max_n_guesses].query(
             'multi_match', query=text, fields=['wiki_content', 'qb_content'])
         results = s.execute()

@@ -11,6 +11,6 @@ resource "null_resource" "init_instance" {
   }
 
   provisioner "remote-exec" {
-    command = "bin/init.sh"
+    script = "bin/init.sh"
   }
 }
