@@ -74,7 +74,8 @@ guessers "MemNN" {
   l2_normalize_averaged_words = true
   max_n_epochs = 100
   max_patience = 10
-  activation_function = "relu"
+  activation_function = "elu"
+  n_wiki_sentences = 10
 }
 
 guessers "AuxDan" {

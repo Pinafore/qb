@@ -2,20 +2,21 @@ import pickle
 import os
 import shutil
 from typing import List, Tuple, Optional
+import nltk
 
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser import nn
-from qanta.preprocess import preprocess_dataset, tokenize_question
+from qanta.preprocess import preprocess_dataset, tokenize_question, format_guess
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
 from qanta.keras import AverageWords, WordDropout
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta import logging
 
-from keras import backend as K
 from keras.models import Sequential, Model, load_model
-from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda, Input, dot, multiply, add
+from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, dot, multiply, add
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -36,6 +37,14 @@ MEM_PARAMS_TARGET = 'mem_nn_params.pickle'
 load_embeddings = nn.create_load_embeddings_function(MEM_WE_TMP, MEM_WE, log)
 
 
+def fetch_wikipedia_sentences(pages, n_sentences):
+    cw = CachedWikipedia()
+    page_sentences = {}
+    for p in pages:
+        page_sentences[p] = nltk.tokenize.sent_tokenize(cw[p].content)[:n_sentences]
+    return page_sentences
+
+
 class MemNNGuesser(AbstractGuesser):
     def __init__(self):
         super().__init__()
@@ -52,6 +61,8 @@ class MemNNGuesser(AbstractGuesser):
         self.max_n_epochs = guesser_conf['max_n_epochs']
         self.max_patience = guesser_conf['max_patience']
         self.activation_function = guesser_conf['activation_function']
+        self.n_memories = guesser_conf['n_memories']
+        self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
         self.embeddings = None
         self.embedding_lookup = None
         self.qb_max_len = None
@@ -82,7 +93,9 @@ class MemNNGuesser(AbstractGuesser):
             'word_dropout_rate': self.word_dropout_rate,
             'learning_rate': self.learning_rate,
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
-            'activation_function': self.activation_function
+            'activation_function': self.activation_function,
+            'n_memories': self.n_memories,
+            'n_wiki_sentences': self.n_wiki_sentences
         }
 
     def load_parameters(self, params):
@@ -105,6 +118,8 @@ class MemNNGuesser(AbstractGuesser):
         self.l2_normalize_averaged_words = params['l2_normalize_averaged_words']
         self.learning_rate = params['learning_rate']
         self.activation_function = params['activation_function']
+        self.n_memories = params['n_memories']
+        self.n_wiki_sentences = params['n_wiki_sentences']
 
     def parameters(self):
         return {
@@ -121,7 +136,9 @@ class MemNNGuesser(AbstractGuesser):
             'word_dropout_rate': self.word_dropout_rate,
             'learning_rate': self.learning_rate,
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
-            'activation_function': self.activation_function
+            'activation_function': self.activation_function,
+            'n_memories': self.n_memories,
+            'n_wiki_sentences': self.n_wiki_sentences
         }
 
     def qb_dataset(self):
@@ -135,7 +152,8 @@ class MemNNGuesser(AbstractGuesser):
         vocab_size = self.embeddings.shape[0]
         we_dimension = self.embeddings.shape[1]
 
-        wiki_input = Input((self.wiki_max_len,), name='wiki_input')
+        # Keras Embeddings only supports 2 dimensional input so we have to do reshape ninjitsu to make this work
+        wiki_input = Input((self.n_memories, self.wiki_max_len,), name='wiki_input')
         qb_input = Input((self.qb_max_len,), name='wiki_input')
 
         wiki_embeddings = Embedding(vocab_size, we_dimension, weights=[self.embeddings], mask_zero=True)
@@ -145,15 +163,17 @@ class MemNNGuesser(AbstractGuesser):
 
         # Wikipedia sentence encoder used to search memory
         wiki_m_encoder = Sequential()
+        wiki_m_encoder.add(Reshape((self.n_memories * self.wiki_max_len,)))
         wiki_m_encoder.add(wiki_embeddings)
-        wiki_m_encoder.add(WordDropout(self.word_dropout_rate))
+        wiki_m_encoder.add(Reshape((self.n_memories, self.wiki_max_len, we_dimension)))
         wiki_m_encoder.add(AverageWords())
         wiki_input_encoded_m = wiki_m_encoder(wiki_input)
 
         # Wikipedia sentence encoder for retrieved memories
         wiki_c_encoder = Sequential()
+        wiki_c_encoder.add(Reshape((self.n_memories * self.wiki_max_len,)))
         wiki_c_encoder.add(wiki_embeddings)
-        wiki_c_encoder.add(WordDropout(self.word_dropout_rate))
+        wiki_c_encoder.add(Reshape((self.n_memories, self.wiki_max_len, we_dimension)))
         wiki_c_encoder.add(AverageWords())
         wiki_input_encoded_c = wiki_c_encoder(wiki_input)
 
@@ -170,7 +190,11 @@ class MemNNGuesser(AbstractGuesser):
 
         memories = multiply([match_probability, wiki_input_encoded_c])
         memories_and_question = add([memories, qb_input_encoded])
-        actions = Dense(self.n_classes, activation='softmax')(memories_and_question)
+
+        actions = Dense(self.n_classes)(memories_and_question)
+        actions = BatchNormalization()(actions)
+        actions = Dropout(self.nn_dropout_rate)(actions)
+        actions = Activation('softmax')(actions)
 
         adam = Adam()
         model = Model(inputs=[qb_input, wiki_input], outputs=actions)
@@ -181,6 +205,10 @@ class MemNNGuesser(AbstractGuesser):
         return model
 
     def train(self, training_data: TrainingData) -> None:
+        log.info('Collecting Wikipedia data...')
+        classes = {format_guess(g) for g in training_data[1]}
+        class_sentences = fetch_wikipedia_sentences(classes, self.n_wiki_sentences)
+
         log.info('Preprocessing training data...')
         x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
         self.class_to_i = class_to_i
