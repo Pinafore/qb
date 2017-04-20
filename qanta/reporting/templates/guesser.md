@@ -68,7 +68,7 @@ in the answer set)
 
 ### Parameters
 
-{{ guesser_params }}
+{{ guesser_params | pprint }}
 
 ### Accuracy
 

@@ -12,6 +12,7 @@ from qanta.preprocess import preprocess_dataset, tokenize_question, format_guess
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
 from qanta.keras import AverageWords, WordDropout
+from qanta.spark_execution import create_spark_context
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta import logging
 
@@ -23,7 +24,7 @@ from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
 from keras.preprocessing.sequence import pad_sequences
 
 import elasticsearch
-from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
+from elasticsearch_dsl import DocType, Text, Search, Index
 from elasticsearch_dsl.connections import connections
 import progressbar
 
@@ -33,19 +34,22 @@ import numpy as np
 log = logging.get(__name__)
 connections.create_connection(hosts=['localhost'])
 
-MEM_WE_TMP = '/tmp/qanta/deep/mem_nn_we.pickle'
-MEM_WE = 'mem_nn_we.pickle'
+MEM_QB_WE_TMP = '/tmp/qanta/deep/mem_nn_qb_we.pickle'
+MEM_QB_WE = 'mem_nn_qb_we.pickle'
+MEM_WIKI_WE_TMP = '/tmp/qanta/deep/mem_nn_wiki_we.pickle'
+MEM_WIKI_WE = 'mem_nn_wiki_we.pickle'
 MEM_MODEL_TMP_TARGET = '/tmp/qanta/deep/mem_nn.h5'
 MEM_MODEL_TARGET = 'mem_nn.h5'
 MEM_PARAMS_TARGET = 'mem_nn_params.pickle'
 
 
-load_embeddings = nn.create_load_embeddings_function(MEM_WE_TMP, MEM_WE, log)
+qb_load_embeddings = nn.create_load_embeddings_function(MEM_QB_WE_TMP, MEM_QB_WE, log)
+wiki_load_embeddings = nn.create_load_embeddings_function(MEM_WIKI_WE_TMP, MEM_WIKI_WE, log)
 
 
 class Memory(DocType):
     # Currently this is just for debugging purposes, it isn't used
-    page = Text(fields={'raw': Keyword()})
+    page = Text()
     text = Text()
 
     class Meta:
@@ -63,13 +67,28 @@ class MemoryIndex:
         bar = progressbar.ProgressBar()
         for page in bar(documents):
             for m_text in documents[page]:
-                memory = Memory(page=page, text=m_text)
+                memory = Memory(page=page.replace('_', ' '), text=m_text)
                 memory.save()
 
     @staticmethod
-    def search(text: str, max_n_memories: int):
-        s = Search(index='mem_nn')[0:max_n_memories].query('match', text=text)
-        return [(r.text, r.page, r.meta.score) for r in s.execute()]
+    def search(text: str, max_n_memories: int, include_page=False):
+        s = Search(index='mem_nn')[0:max_n_memories].query(
+            'multi_match', query=text, fields=['text', 'page']
+        )
+        if include_page:
+            return [(r.text, r.page) for r in s.execute()]
+        else:
+            return [r.text for r in s.execute()]
+
+    @staticmethod
+    def search_parallel(text_list: List[List[str]], max_n_memories: int, include_page=False):
+        n_cores = conf['guessers']['MemNN']['n_cores']
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '4g')])
+
+        def es_search(query: List[str]):
+            return MemoryIndex.search(' '.join(query), max_n_memories, include_page=include_page)
+
+        return sc.parallelize(text_list, 400 * n_cores).map(es_search).collect()
 
 
 def build_wikipedia_sentences(pages, n_sentences):
@@ -90,6 +109,29 @@ def build_qb_sentences(training_data: TrainingData):
 
     return page_sentences
 
+Sentence = str
+NMemories = List[Sentence]
+
+
+def preprocess_wikipedia(question_memories: List[NMemories], create_vocab):
+    if create_vocab:
+        vocab = set()
+    else:
+        vocab = None
+
+    tokenized_question_memories = []
+    for memories in question_memories:
+        tokenized_memories = []
+        for mem in memories:
+            words = tokenize_question(mem)
+            tokenized_memories.append(words)
+            if create_vocab:
+                for w in words:
+                    vocab.add(w)
+        tokenized_question_memories.append(tokenized_memories)
+
+    return tokenized_question_memories, vocab
+
 
 class MemNNGuesser(AbstractGuesser):
     def __init__(self):
@@ -109,26 +151,32 @@ class MemNNGuesser(AbstractGuesser):
         self.activation_function = guesser_conf['activation_function']
         self.n_memories = guesser_conf['n_memories']
         self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
-        self.embeddings = None
-        self.embedding_lookup = None
+        self.qb_embeddings = None
+        self.qb_embedding_lookup = None
+        self.wiki_embeddings = None
+        self.wiki_embedding_lookup = None
         self.qb_max_len = None
         self.wiki_max_len = None
         self.i_to_class = None
         self.class_to_i = None
-        self.vocab = None
+        self.qb_vocab = None
+        self.wiki_vocab = None
         self.n_classes = None
         self.model = None
 
     def dump_parameters(self):
         return {
             'min_answers': self.min_answers,
-            'embeddings': self.embeddings,
-            'embedding_lookup': self.embedding_lookup,
+            'qb_embeddings': self.qb_embeddings,
+            'qb_embedding_lookup': self.qb_embedding_lookup,
+            'wiki_embeddings': self.wiki_embeddings,
+            'wiki_embedding_lookup': self.wiki_embedding_lookup,
             'qb_max_len': self.qb_max_len,
             'wiki_max_len': self.wiki_max_len,
             'i_to_class': self.i_to_class,
             'class_to_i': self.class_to_i,
-            'vocab': self.vocab,
+            'qb_vocab': self.qb_vocab,
+            'wiki_vocab': self.wiki_vocab,
             'n_classes': self.n_classes,
             'max_n_epochs': self.max_n_epochs,
             'batch_size': self.batch_size,
@@ -146,13 +194,16 @@ class MemNNGuesser(AbstractGuesser):
 
     def load_parameters(self, params):
         self.min_answers = params['min_answers']
-        self.embeddings = params['embeddings']
-        self.embedding_lookup = params['embedding_lookup']
+        self.qb_embeddings = params['qb_embeddings']
+        self.qb_embedding_lookup = params['qb_embedding_lookup']
+        self.wiki_embeddings = params['wiki_embeddings']
+        self.wiki_embedding_lookup = params['wiki_embedding_lookup']
         self.qb_max_len = params['qb_max_len']
         self.wiki_max_len = params['wiki_max_len']
         self.i_to_class = params['i_to_class']
         self.class_to_i = params['class_to_i']
-        self.vocab = params['vocab']
+        self.qb_vocab = params['qb_vocab']
+        self.wiki_vocab = params['wiki_vocab']
         self.n_classes = params['n_classes']
         self.max_n_epochs = params['max_n_epochs']
         self.batch_size = params['batch_size']
@@ -195,15 +246,17 @@ class MemNNGuesser(AbstractGuesser):
         return [MEM_PARAMS_TARGET]
 
     def build_model(self):
-        vocab_size = self.embeddings.shape[0]
-        we_dimension = self.embeddings.shape[1]
+        wiki_vocab_size = self.wiki_embeddings.shape[0]
+        wiki_we_dimension = self.wiki_embeddings.shape[1]
+        qb_vocab_size = self.qb_embeddings.shape[0]
+        qb_we_dimension = self.qb_embeddings.shape[1]
 
         # Keras Embeddings only supports 2 dimensional input so we have to do reshape ninjitsu to make this work
         wiki_input = Input((self.n_memories, self.wiki_max_len,), name='wiki_input')
         qb_input = Input((self.qb_max_len,), name='wiki_input')
 
-        wiki_embeddings = Embedding(vocab_size, we_dimension, weights=[self.embeddings], mask_zero=True)
-        qb_embeddings = Embedding(vocab_size, we_dimension, weights=[self.embeddings], mask_zero=True)
+        wiki_embeddings = Embedding(wiki_vocab_size, wiki_we_dimension, weights=[self.wiki_embeddings], mask_zero=True)
+        qb_embeddings = Embedding(qb_vocab_size, qb_we_dimension, weights=[self.qb_embeddings], mask_zero=True)
 
         # encoders
 
@@ -211,7 +264,7 @@ class MemNNGuesser(AbstractGuesser):
         wiki_m_encoder = Sequential()
         wiki_m_encoder.add(Reshape((self.n_memories * self.wiki_max_len,)))
         wiki_m_encoder.add(wiki_embeddings)
-        wiki_m_encoder.add(Reshape((self.n_memories, self.wiki_max_len, we_dimension)))
+        wiki_m_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
         wiki_m_encoder.add(AverageWords())
         wiki_input_encoded_m = wiki_m_encoder(wiki_input)
 
@@ -219,7 +272,7 @@ class MemNNGuesser(AbstractGuesser):
         wiki_c_encoder = Sequential()
         wiki_c_encoder.add(Reshape((self.n_memories * self.wiki_max_len,)))
         wiki_c_encoder.add(wiki_embeddings)
-        wiki_c_encoder.add(Reshape((self.n_memories, self.wiki_max_len, we_dimension)))
+        wiki_c_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
         wiki_c_encoder.add(AverageWords())
         wiki_input_encoded_c = wiki_c_encoder(wiki_input)
 
@@ -251,31 +304,69 @@ class MemNNGuesser(AbstractGuesser):
         return model
 
     def train(self, training_data: TrainingData) -> None:
-        log.info('Collecting Wikipedia data...')
-        for i in range(len(training_data[1])):
-            training_data[1][i] = format_guess(training_data[1][i])
-        classes = set(training_data[1])
-        wiki_sentences = build_wikipedia_sentences(classes, self.n_wiki_sentences)
-        MemoryIndex.build(wiki_sentences)
-
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
+        x_train, y_train, _, x_test, y_test, _, qb_vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
-        self.vocab = vocab
+        self.qb_vocab = qb_vocab
 
-        log.info('Creating embeddings...')
-        embeddings, embedding_lookup = load_embeddings(vocab=vocab, expand_glove=self.expand_we, mask_zero=True)
-        self.embeddings = embeddings
-        self.embedding_lookup = embedding_lookup
+        log.info('Creating qb embeddings...')
+        qb_embeddings, qb_embedding_lookup = qb_load_embeddings(
+            vocab=qb_vocab, expand_glove=self.expand_we, mask_zero=True
+        )
+        self.qb_embeddings = qb_embeddings
+        self.qb_embedding_lookup = qb_embedding_lookup
 
-        log.info('Converting dataset to embeddings...')
-        x_train = [nn.convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train]
-        x_test = [nn.convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test]
+        log.info('Converting qb dataset to embeddings...')
+        x_train = [nn.convert_text_to_embeddings_indices(q, qb_embedding_lookup) for q in x_train]
+        x_test = [nn.convert_text_to_embeddings_indices(q, qb_embedding_lookup) for q in x_test]
         self.n_classes = nn.compute_n_classes(training_data[1])
         self.qb_max_len = nn.compute_max_len(training_data)
         x_train = pad_sequences(x_train, maxlen=self.qb_max_len, value=0, padding='post', truncating='post')
         x_test = pad_sequences(x_test, maxlen=self.qb_max_len, value=0, padding='post', truncating='post')
+
+        log.info('Collecting Wikipedia data...')
+        classes = set(i_to_class)
+        wiki_sentences = build_wikipedia_sentences(classes, self.n_wiki_sentences)
+
+        log.info('Building Memory Index...')
+        MemoryIndex.build(wiki_sentences)
+
+        log.info('Fetching most relevant {} memories per question in train and test...'.format(self.n_memories))
+        log.info('Fetching train memories...')
+        train_memories = MemoryIndex.search_parallel(x_train, self.n_memories)
+        log.info('Fetching test memories...')
+        test_memories = MemoryIndex.search_parallel(x_test, self.n_memories)
+
+        tokenized_train_memories, wiki_vocab = preprocess_wikipedia(train_memories, True)
+        tokenized_test_memories, _ = preprocess_wikipedia(test_memories, False)
+
+        log.info('Creating wiki embeddings...')
+        wiki_embeddings, wiki_embedding_lookup = wiki_load_embeddings(
+            vocab=wiki_vocab, expand_glove=self.expand_we, mask_zero=True
+        )
+
+        wiki_max_len = 0
+        for i in range(len(tokenized_train_memories)):
+            memories = tokenized_train_memories[i]
+            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
+            if len(we_memories) != 0:
+                wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_memories))
+            tokenized_train_memories[i] = we_memories
+
+        self.wiki_max_len = wiki_max_len
+        tokenized_train_memories = pad_sequences(tokenized_train_memories,
+                                                 maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+
+        for i in range(len(tokenized_test_memories)):
+            memories = tokenized_test_memories[i]
+            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
+            tokenized_test_memories[i] = we_memories
+
+        tokenized_test_memories = pad_sequences(tokenized_test_memories,
+                                                maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+
+        log.info('Converting wiki dataset to embeddings...')
 
         log.info('Building keras model...')
         self.model = self.build_model()

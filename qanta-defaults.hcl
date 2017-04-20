@@ -34,15 +34,16 @@ guessers "DAN" {
   min_answers = 2
   expand_we = true
   n_hidden_layers = 1
-  n_hidden_units = 300
+  n_hidden_units = 1000
   nn_dropout_rate = 0.5
   word_dropout_rate = 0.5
-  batch_size = 256
+  batch_size = 512
   learning_rate = 0.001
   l2_normalize_averaged_words = true
   max_n_epochs = 100
   max_patience = 10
   activation_function = "elu"
+  train_on_q_runs = false
 }
 
 guessers "RNN" {
@@ -57,6 +58,9 @@ guessers "RNN" {
   max_n_epochs = 100
   batch_size = 256
   nn_dropout_rate = 0.5
+  n_rnn_layers = 1
+  bidirectional_rnn = false
+  train_on_q_runs = false
 }
 
 guessers "MemNN" {
@@ -76,6 +80,8 @@ guessers "MemNN" {
   max_patience = 10
   activation_function = "elu"
   n_wiki_sentences = 10
+  n_memories = 10
+  n_cores = 2
 }
 
 guessers "AuxDan" {

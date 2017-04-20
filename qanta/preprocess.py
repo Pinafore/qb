@@ -47,7 +47,8 @@ def format_guess(guess):
     return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
 
 
-def preprocess_dataset(data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
+def preprocess_dataset(data: TrainingData, train_size=.9,
+                       vocab=None, class_to_i=None, i_to_class=None, create_runs=False):
     for i in range(len(data[1])):
         data[1][i] = format_guess(data[1][i])
     classes = set(data[1])
@@ -75,19 +76,33 @@ def preprocess_dataset(data: TrainingData, train_size=.9, vocab=None, class_to_i
         test = []
 
     for q, ans, prop in train:
+        q_text = []
         for sentence in q:
-            q_text = tokenize_question(sentence)
-            if len(q_text) > 0:
-                for w in q_text:
+            t_question = tokenize_question(sentence)
+            if create_runs:
+                q_text.extend(t_question)
+            else:
+                q_text = t_question
+            if len(t_question) > 0:
+                for w in t_question:
                     vocab.add(w)
-                x_train.append(q_text)
+                if create_runs:
+                    x_train.append(list(q_text))
+                else:
+                    x_train.append(q_text)
                 y_train.append(class_to_i[ans])
                 properties_train.append(prop)
 
     for q, ans, prop in test:
+        q_text = []
         for sentence in q:
-            q_text = tokenize_question(sentence)
-            x_test.append(q_text)
+            t_question = tokenize_question(sentence)
+            if create_runs:
+                q_text.extend(t_question)
+                x_test.append(list(q_text))
+            else:
+                q_text = t_question
+                x_test.append(q_text)
             y_test.append(class_to_i[ans])
             properties_test.append(prop)
 

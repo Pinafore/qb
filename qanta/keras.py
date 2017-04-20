@@ -28,13 +28,10 @@ class AverageWords(Layer):
 
 
 class WordDropout(Layer):
-    """Applies Word Level Dropout to the input.
-    Dropout consists in randomly setting
-    a fraction `rate` of input words to 0 at each update during training time,
-    which helps prevent overfitting.
-    # Arguments
+    """
+    Applies Word Level Dropout to the input which helps prevent overfitting
+    
         rate: float between 0 and 1. Fraction of the input words to drop.
-        seed: A Python integer to use as random seed.
     """
     def __init__(self, rate, **kwargs):
         super().__init__(**kwargs)

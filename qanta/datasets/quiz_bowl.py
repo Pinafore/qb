@@ -5,6 +5,7 @@ from collections import defaultdict, OrderedDict, Counter
 from functional import seq
 
 from qanta import logging
+from qanta.preprocess import format_guess
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PUNCTUATION
@@ -223,7 +224,7 @@ class QuizBowlDataset(AbstractDataset):
         self.db = QuestionDatabase(qb_question_db)
         self.min_class_examples = min_class_examples
 
-    def training_data(self) -> TrainingData:
+    def training_data(self, normalize_guess=False) -> TrainingData:
         all_questions = seq(self.db.all_questions().values())
         if conf['guessers_train_on_dev']:
             fold_condition = lambda q: q.fold == 'train' or q.fold == 'dev'
@@ -240,7 +241,10 @@ class QuizBowlDataset(AbstractDataset):
         training_properties = []
         for example, answer, properties in filtered_questions:
             training_examples.append(example)
-            training_answers.append(answer)
+            if normalize_guess:
+                training_answers.append(format_guess(answer))
+            else:
+                training_answers.append(answer)
             training_properties.append(properties)
 
         return training_examples, training_answers, training_properties

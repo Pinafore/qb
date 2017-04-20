@@ -13,7 +13,7 @@ from qanta.config import conf
 from qanta import logging
 
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation
+from keras.layers import Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation, Bidirectional
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -45,6 +45,9 @@ class RNNGuesser(AbstractGuesser):
         self.max_n_epochs = guesser_conf['max_n_epochs']
         self.max_patience = guesser_conf['max_patience']
         self.nn_dropout_rate = guesser_conf['nn_dropout_rate']
+        self.bidirectional_rnn = guesser_conf['bidirectional_rnn']
+        self.train_on_q_runs = guesser_conf['train_on_q_runs']
+        self.n_rnn_layers = guesser_conf['n_rnn_layers']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -53,6 +56,7 @@ class RNNGuesser(AbstractGuesser):
         self.vocab = None
         self.n_classes = None
         self.model = None
+        self.history = None
 
     def dump_parameters(self):
         return {
@@ -69,7 +73,10 @@ class RNNGuesser(AbstractGuesser):
             'batch_size': self.batch_size,
             'max_patience': self.max_patience,
             'n_rnn_units': self.n_rnn_units,
-            'nn_dropout_rate': self.nn_dropout_rate
+            'nn_dropout_rate': self.nn_dropout_rate,
+            'bidirectional_rnn': self.bidirectional_rnn,
+            'train_on_q_runs': self.train_on_q_runs,
+            'n_rnn_layers': self.n_rnn_layers
         }
 
     def load_parameters(self, params):
@@ -87,6 +94,9 @@ class RNNGuesser(AbstractGuesser):
         self.max_patience = params['max_patience']
         self.n_rnn_units = params['n_rnn_units']
         self.nn_dropout_rate = params['nn_dropout_rate']
+        self.bidirectional_rnn = params['bidirectional_rnn']
+        self.train_on_q_runs = params['train_on_q_runs']
+        self.n_rnn_layers = params['n_rnn_layers']
 
     def parameters(self):
         return {
@@ -98,7 +108,12 @@ class RNNGuesser(AbstractGuesser):
             'batch_size': self.batch_size,
             'max_patience': self.max_patience,
             'n_rnn_units': self.n_rnn_units,
-            'nn_dropout_rate': self.nn_dropout_rate
+            'nn_dropout_rate': self.nn_dropout_rate,
+            'bidirectional_rnn': self.bidirectional_rnn,
+            'epcohs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
+            'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
+            'train_on_q_runs': self.train_on_q_runs,
+            'n_rnn_layers': self.n_rnn_layers
         }
 
     def qb_dataset(self):
@@ -125,8 +140,12 @@ class RNNGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(cell(self.n_rnn_units))
-        model.add(Dropout(self.nn_dropout_rate))
+        for _ in range(self.n_rnn_layers):
+            if self.bidirectional_rnn:
+                model.add(Bidirectional(cell(self.n_rnn_units)))
+            else:
+                model.add(cell(self.n_rnn_units))
+            model.add(Dropout(self.nn_dropout_rate))
         model.add(Dense(self.n_classes))
         model.add(BatchNormalization())
         model.add(Dropout(self.nn_dropout_rate))
@@ -140,7 +159,8 @@ class RNNGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
+        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
+            training_data, create_runs=self.train_on_q_runs)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
@@ -173,9 +193,8 @@ class RNNGuesser(AbstractGuesser):
             batch_size=self.batch_size, epochs=self.max_n_epochs,
             callbacks=callbacks, verbose=2
         )
+        self.history = history.history
         log.info('Done training')
-        log.info('Printing model training history...')
-        log.info(history.history)
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))

@@ -405,7 +405,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             'dev_accuracy': dev_summary_accuracy,
             'test_accuracy': test_summary_accuracy,
             'guesser_name': self.display_name(),
-            'guesser_params': json.dumps(params, sort_keys=True, indent=2),
+            'guesser_params': params,
             'n_answers_all_folds': len(all_answers),
             'n_total_train_questions': len(train_questions),
             'min_class_examples': dataset.min_class_examples,

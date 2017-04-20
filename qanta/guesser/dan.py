@@ -51,6 +51,7 @@ class DANGuesser(AbstractGuesser):
         self.max_n_epochs = guesser_conf['max_n_epochs']
         self.max_patience = guesser_conf['max_patience']
         self.activation_function = guesser_conf['activation_function']
+        self.train_on_q_runs = guesser_conf['train_on_q_runs']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -59,6 +60,7 @@ class DANGuesser(AbstractGuesser):
         self.vocab = None
         self.n_classes = None
         self.model = None
+        self.history = None
 
     def dump_parameters(self):
         return {
@@ -79,7 +81,8 @@ class DANGuesser(AbstractGuesser):
             'word_dropout_rate': self.word_dropout_rate,
             'learning_rate': self.learning_rate,
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
-            'activation_function': self.activation_function
+            'activation_function': self.activation_function,
+            'train_on_q_runs': self.train_on_q_runs
         }
 
     def load_parameters(self, params):
@@ -101,6 +104,7 @@ class DANGuesser(AbstractGuesser):
         self.l2_normalize_averaged_words = params['l2_normalize_averaged_words']
         self.learning_rate = params['learning_rate']
         self.activation_function = params['activation_function']
+        self.train_on_q_runs = params['train_on_q_runs']
 
     def parameters(self):
         return {
@@ -116,7 +120,10 @@ class DANGuesser(AbstractGuesser):
             'word_dropout_rate': self.word_dropout_rate,
             'learning_rate': self.learning_rate,
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
-            'activation_function': self.activation_function
+            'activation_function': self.activation_function,
+            'epochs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
+            'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
+            'train_on_q_runs': self.train_on_q_runs
         }
 
     def qb_dataset(self):
@@ -160,7 +167,8 @@ class DANGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
+        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
+            training_data, create_runs=self.train_on_q_runs)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
@@ -197,9 +205,8 @@ class DANGuesser(AbstractGuesser):
             batch_size=self.batch_size, epochs=self.max_n_epochs,
             callbacks=callbacks, verbose=2
         )
+        self.history = history.history
         log.info('Done training')
-        log.info('Printing model training history...')
-        log.info(history.history)
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
