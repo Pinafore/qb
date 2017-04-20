@@ -152,7 +152,7 @@ resource "aws_spot_instance_request" "qanta" {
   spot_price = "${var.spot_price}"
   spot_type = "one-time"
   wait_for_fulfillment = true
-  count = 2
+  count = 3
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
@@ -275,5 +275,3 @@ output "qanta_instance_id" {
 output "vpc_id" {
   value = "${aws_vpc.qanta.id}"
 }
-
-# ascii art from http://patorjk.com/software/taag/#p=display&f=Standard&t=EC2%20Instances
