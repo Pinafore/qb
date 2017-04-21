@@ -13,7 +13,8 @@ from qanta.config import conf
 from qanta import logging
 
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation, Bidirectional
+from keras.layers import (Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation,
+                          Bidirectional, TimeDistributed)
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -33,6 +34,17 @@ RNN_PARAMS_TARGET = 'rnn_params.pickle'
 load_embeddings = nn.create_load_embeddings_function(RNN_WE_TMP, RNN_WE, log)
 
 
+def time_distributed_labels(y, max_len):
+    y = np.array(y)
+    # Insert a dimension to make labels 2d
+    y = np.expand_dims(y, 1)
+    # Repeat the labels for each time step, each question has one right answer
+    y = np.repeat(y, max_len, axis=1)
+    # Expand dims for application to prediction softmax layer
+    y = np.expand_dims(y, 2)
+    return y
+
+
 class RNNGuesser(AbstractGuesser):
     def __init__(self):
         super().__init__()
@@ -47,6 +59,7 @@ class RNNGuesser(AbstractGuesser):
         self.nn_dropout_rate = guesser_conf['nn_dropout_rate']
         self.bidirectional_rnn = guesser_conf['bidirectional_rnn']
         self.train_on_q_runs = guesser_conf['train_on_q_runs']
+        self.train_on_full_q = guesser_conf['train_on_full_q']
         self.n_rnn_layers = guesser_conf['n_rnn_layers']
         self.embeddings = None
         self.embedding_lookup = None
@@ -76,7 +89,8 @@ class RNNGuesser(AbstractGuesser):
             'nn_dropout_rate': self.nn_dropout_rate,
             'bidirectional_rnn': self.bidirectional_rnn,
             'train_on_q_runs': self.train_on_q_runs,
-            'n_rnn_layers': self.n_rnn_layers
+            'n_rnn_layers': self.n_rnn_layers,
+            'train_on_full_q': self.train_on_full_q
         }
 
     def load_parameters(self, params):
@@ -96,6 +110,7 @@ class RNNGuesser(AbstractGuesser):
         self.nn_dropout_rate = params['nn_dropout_rate']
         self.bidirectional_rnn = params['bidirectional_rnn']
         self.train_on_q_runs = params['train_on_q_runs']
+        self.train_on_full_q = params['train_on_full_q']
         self.n_rnn_layers = params['n_rnn_layers']
 
     def parameters(self):
@@ -113,6 +128,7 @@ class RNNGuesser(AbstractGuesser):
             'epcohs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
             'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
             'train_on_q_runs': self.train_on_q_runs,
+            'train_on_full_q': self.train_on_full_q,
             'n_rnn_layers': self.n_rnn_layers
         }
 
@@ -142,12 +158,17 @@ class RNNGuesser(AbstractGuesser):
         ))
         for _ in range(self.n_rnn_layers):
             if self.bidirectional_rnn:
-                model.add(Bidirectional(cell(self.n_rnn_units)))
+                model.add(Bidirectional(cell(
+                    self.n_rnn_units, return_sequences=True,
+                    dropout=self.nn_dropout_rate#, recurrent_dropout=self.nn_dropout_rate
+                )))
             else:
-                model.add(cell(self.n_rnn_units))
-            model.add(Dropout(self.nn_dropout_rate))
-        model.add(Dense(self.n_classes))
-        model.add(BatchNormalization())
+                model.add(cell(
+                    self.n_rnn_units, return_sequences=True,
+                    dropout=self.nn_dropout_rate#, recurrent_dropout=self.nn_dropout_rate
+                ))
+        model.add(TimeDistributed(Dense(self.n_classes)))
+        model.add(TimeDistributed(BatchNormalization()))
         model.add(Dropout(self.nn_dropout_rate))
         model.add(Activation('softmax'))
         adam = Adam()
@@ -160,7 +181,7 @@ class RNNGuesser(AbstractGuesser):
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
         x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data, create_runs=self.train_on_q_runs)
+            training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
@@ -177,6 +198,10 @@ class RNNGuesser(AbstractGuesser):
         self.max_len = nn.compute_max_len(training_data)
         x_train = np.array(nn.tf_format(x_train, self.max_len, 0))
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
+
+        # Reformat the labels to have one for each time step/word
+        y_train = time_distributed_labels(y_train, self.max_len)
+        y_test = time_distributed_labels(y_test, self.max_len)
 
         log.info('Building model...')
         self.model = self.build_model()
@@ -198,15 +223,29 @@ class RNNGuesser(AbstractGuesser):
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
+        log.info('Converting questions to embeddings...')
         x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
+        x_lengths = [len(x) for x in x_test]
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
-        class_probabilities = self.model.predict_proba(x_test, batch_size=self.batch_size)
         guesses = []
-        for row in class_probabilities:
-            sorted_labels = np.argsort(-row)[:max_n_guesses]
-            sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
-            sorted_scores = np.copy(row[sorted_labels])
-            guesses.append(list(zip(sorted_guesses, sorted_scores)))
+
+        # Keras creates a large numpy array as a placeholder for predictions which crashes python with a MemoryError
+        # To avoid that we collect guesses in smaller size chunks. Ordinarily this isn't a problem but since we predict
+        # make predictions at each time step and each question that can get large. Since input runs fine and is of size
+        # ~35,000 seems safe to chunk in 30,000 size increments
+        log.info('Starting predictions...')
+        chunk_size = 2000
+        for chunk_i in range(0, len(x_test), chunk_size):
+            chunk_x_test = x_test[chunk_i:chunk_i + chunk_size]
+            chunk_x_lengths = x_lengths[chunk_i:chunk_i + chunk_size]
+            class_probabilities = self.model.predict(chunk_x_test, batch_size=self.batch_size)
+            for x_i, row in enumerate(class_probabilities):
+                question_length = chunk_x_lengths[x_i]
+                time_step_row = row[question_length - 1]
+                sorted_labels = np.argsort(-time_step_row)[:max_n_guesses]
+                sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
+                sorted_scores = np.copy(time_step_row[sorted_labels])
+                guesses.append(list(zip(sorted_guesses, sorted_scores)))
         return guesses
 
     def save(self, directory: str) -> None:

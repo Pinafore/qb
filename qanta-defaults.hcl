@@ -44,6 +44,7 @@ guessers "DAN" {
   max_patience = 10
   activation_function = "elu"
   train_on_q_runs = false
+  train_on_full_q = false
 }
 
 guessers "RNN" {
@@ -56,11 +57,13 @@ guessers "RNN" {
   n_rnn_units = 300
   max_patience = 10
   max_n_epochs = 100
-  batch_size = 256
+  batch_size = 64
   nn_dropout_rate = 0.5
   n_rnn_layers = 1
   bidirectional_rnn = false
+  # The default is to train on sentences
   train_on_q_runs = false
+  train_on_full_q = false
 }
 
 guessers "MemNN" {

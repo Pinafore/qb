@@ -152,7 +152,7 @@ resource "aws_spot_instance_request" "qanta" {
   spot_price = "${var.spot_price}"
   spot_type = "one-time"
   wait_for_fulfillment = true
-  count = 3
+  count = 1
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
