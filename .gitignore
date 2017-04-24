@@ -37,3 +37,4 @@ qanta_web/*.sqlite3
 qanta_web/tags
 clm/_SUCCESS
 logs/
+.DS_Store
