@@ -45,7 +45,6 @@ configuration section for a summary of how the Terraform install scripts treat t
 10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
 and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
 nodes can communicate via SSH
-11. [Install sshuttle](https://github.com/apenwarr/sshuttle/) which is used to create an SSH VPN
 
 #### What do the Packer/Terraform scripts install and configure?
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)

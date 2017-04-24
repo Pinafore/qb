@@ -18,6 +18,7 @@ from keras.layers import (Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, Batch
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
+from keras import backend as K
 
 import numpy as np
 
@@ -159,16 +160,14 @@ class RNNGuesser(AbstractGuesser):
         for _ in range(self.n_rnn_layers):
             if self.bidirectional_rnn:
                 model.add(Bidirectional(cell(
-                    self.n_rnn_units, return_sequences=True,
-                    dropout=self.nn_dropout_rate#, recurrent_dropout=self.nn_dropout_rate
+                    self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
                 )))
             else:
                 model.add(cell(
-                    self.n_rnn_units, return_sequences=True,
-                    dropout=self.nn_dropout_rate#, recurrent_dropout=self.nn_dropout_rate
+                    self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
                 ))
-        model.add(TimeDistributed(Dense(self.n_classes)))
-        model.add(TimeDistributed(BatchNormalization()))
+        model.add(Dense(self.n_classes))
+        model.add(BatchNormalization())
         model.add(Dropout(self.nn_dropout_rate))
         model.add(Activation('softmax'))
         adam = Adam()
@@ -199,10 +198,6 @@ class RNNGuesser(AbstractGuesser):
         x_train = np.array(nn.tf_format(x_train, self.max_len, 0))
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
 
-        # Reformat the labels to have one for each time step/word
-        y_train = time_distributed_labels(y_train, self.max_len)
-        y_test = time_distributed_labels(y_test, self.max_len)
-
         log.info('Building model...')
         self.model = self.build_model()
 
@@ -225,27 +220,16 @@ class RNNGuesser(AbstractGuesser):
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
         log.info('Converting questions to embeddings...')
         x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
-        x_lengths = [len(x) for x in x_test]
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
+        class_probabilities = self.model.predict_proba(x_test, batch_size=self.batch_size)
         guesses = []
 
-        # Keras creates a large numpy array as a placeholder for predictions which crashes python with a MemoryError
-        # To avoid that we collect guesses in smaller size chunks. Ordinarily this isn't a problem but since we predict
-        # make predictions at each time step and each question that can get large. Since input runs fine and is of size
-        # ~35,000 seems safe to chunk in 30,000 size increments
         log.info('Starting predictions...')
-        chunk_size = 2000
-        for chunk_i in range(0, len(x_test), chunk_size):
-            chunk_x_test = x_test[chunk_i:chunk_i + chunk_size]
-            chunk_x_lengths = x_lengths[chunk_i:chunk_i + chunk_size]
-            class_probabilities = self.model.predict(chunk_x_test, batch_size=self.batch_size)
-            for x_i, row in enumerate(class_probabilities):
-                question_length = chunk_x_lengths[x_i]
-                time_step_row = row[question_length - 1]
-                sorted_labels = np.argsort(-time_step_row)[:max_n_guesses]
-                sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
-                sorted_scores = np.copy(time_step_row[sorted_labels])
-                guesses.append(list(zip(sorted_guesses, sorted_scores)))
+        for row in class_probabilities:
+            sorted_labels = np.argsort(-row)[:max_n_guesses]
+            sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
+            sorted_scores = np.copy(row[sorted_labels])
+            guesses.append(list(zip(sorted_guesses, sorted_scores)))
         return guesses
 
     def save(self, directory: str) -> None:

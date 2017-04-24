@@ -14,6 +14,6 @@ make clm
 bash packer/bin/install-elasticsearch.sh
 /home/ubuntu/dependencies/elasticsearch-5.2.2/bin/elasticsearch -d
 
-/home/ubuntu/anaconda3/bin/pip install keras
+/home/ubuntu/anaconda3/bin/pip install keras || true
 
 sudo apt install -y poppler-utils
