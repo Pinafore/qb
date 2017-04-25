@@ -1,6 +1,7 @@
 import os
 import importlib
 import pickle
+import time
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
@@ -47,9 +48,12 @@ class TrainGuesser(Task):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_instance = guesser_class()  # type: AbstractGuesser
         qb_dataset = guesser_instance.qb_dataset()
+        start_time = time.time()
         guesser_instance.train(qb_dataset.training_data())
+        end_time = time.time()
         guesser_instance.save(output_path(self.guesser_module, self.guesser_class, ''))
         params = guesser_instance.parameters()
+        params['training_time'] = end_time - start_time
         params_path = output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle')
         with open(params_path, 'wb') as f:
             pickle.dump(params, f)
@@ -96,11 +100,14 @@ class GenerateGuesses(Task):
                 continue
             log.info('Generating and saving guesses for {} fold'.format(fold))
             log.info('Starting guess generation...')
+            start_time = time.time()
             if fold == 'test' and self.word_skip == -1:
                 guess_df = guesser_instance.generate_guesses(
                     self.n_guesses, [fold], word_skip=conf['test_fold_word_skip'])
             else:
                 guess_df = guesser_instance.generate_guesses(self.n_guesses, [fold], word_skip=self.word_skip)
+            end_time = time.time()
+            log.info('Guessing on {} fold took {}s'.format(fold, end_time - start_time))
             log.info('Starting guess saving...')
             guesser_class.save_guesses(guess_df, guesser_directory, [fold])
             log.info('Done saving guesses')

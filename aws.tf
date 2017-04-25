@@ -248,7 +248,10 @@ resource "aws_spot_instance_request" "qanta" {
   }
 
   provisioner "remote-exec" {
-    script = "bin/init.sh"
+    inline = [
+      "export PATH=$PATH:/home/ubuntu/anaconda3/bin",
+      "bash bin/init.sh"
+    ]
   }
 }
 
