@@ -38,3 +38,4 @@ qanta_web/tags
 clm/_SUCCESS
 logs/
 .DS_Store
+terraform.tfvars

@@ -17,6 +17,10 @@ variable "master_instance_type" {
   description = "EC2 Instance type to use for the master node"
 }
 
+variable "instance_count" {
+  default = 1
+}
+
 variable "cluster_id" {
   default = "default"
   description = "Cluster identifier to prevent collissions for users on the same AWS account"
@@ -152,7 +156,7 @@ resource "aws_spot_instance_request" "qanta" {
   spot_price = "${var.spot_price}"
   spot_type = "one-time"
   wait_for_fulfillment = true
-  count = 1
+  count = "${var.instance_count}"
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
