@@ -156,15 +156,26 @@ class RNNGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        for _ in range(self.n_rnn_layers):
+        for _ in range(self.n_rnn_layers - 1):
             if self.bidirectional_rnn:
                 model.add(Bidirectional(cell(
-                    self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
+                    self.n_rnn_units, return_sequences=True,
+                    dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
                 )))
             else:
                 model.add(cell(
-                    self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
+                    self.n_rnn_units, return_sequences=True,
+                    dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
                 ))
+
+        if self.bidirectional_rnn:
+            model.add(Bidirectional(cell(
+                self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
+            )))
+        else:
+            model.add(cell(
+                self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
+            ))
         model.add(Dense(self.n_classes))
         model.add(BatchNormalization())
         model.add(Dropout(self.nn_dropout_rate))
