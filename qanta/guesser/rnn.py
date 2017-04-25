@@ -14,11 +14,10 @@ from qanta import logging
 
 from keras.models import Sequential, load_model
 from keras.layers import (Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation,
-                          Bidirectional, TimeDistributed)
+                          Bidirectional)
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
-from keras import backend as K
 
 import numpy as np
 
