@@ -3,7 +3,7 @@ import click
 from qanta import logging
 from qanta.util.environment import ENVIRONMENT
 from qanta.util.vw import format_audit
-from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.wikipedia.cached_wikipedia import web_initialize_file_cache
 
 
 log = logging.get(__name__)
@@ -21,7 +21,7 @@ def main():
 @main.command()
 @click.argument('wiki_cache')
 def init_wiki_cache(wiki_cache):
-    CachedWikipedia.initialize_cache(wiki_cache)
+    web_initialize_file_cache(wiki_cache)
 
 
 @main.command()

@@ -9,7 +9,7 @@ variable "access_key" {}
 variable "secret_key" {}
 
 variable "spot_price" {
-  default = "2.5"
+  default = "2.70"
 }
 
 variable "master_instance_type" {

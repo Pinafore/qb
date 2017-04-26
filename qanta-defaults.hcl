@@ -127,3 +127,13 @@ guessers "BinarizedSiamese" {
   # Model parameters
   nn_dropout_keep_prob = 0.6
 }
+
+guessers "VowpalWabbit" {
+  class = "qanta.guesser.experimental.vw.VWGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+
+  # These two flags are XOR with each other, one must be true and the other false
+  multiclass_one_against_all = false
+  multiclass_online_trees = true
+}

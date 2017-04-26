@@ -32,10 +32,29 @@ def access_page(title, cached_wiki):
 
 
 def spark_initialize_file_cache():
+    """
+    Initialize the cache using spark and the full wikipedia dump
+    :return: 
+    """
     spark = create_spark_session()
     wiki_path = 's3a://pinafore-us-west-2/public/wikipedia-json/*/*'
     wiki_df = spark.read.json(wiki_path)
     return wiki_df
+
+
+def web_initialize_file_cache(path):
+    """
+    Initialize the cache by requesting each page with wikipedia package.
+    This function iterates over all pages and accessing them in the cache. This forces a
+    prefetch of all wiki pages
+    """
+    db = QuestionDatabase(QB_QUESTION_DB)
+    pages = db.questions_with_pages()
+    cw = CachedWikipedia(path)
+    pool = Pool()
+
+    input_data = [(format_guess(title), cw) for title in pages.keys()]
+    pool.starmap(access_page, input_data)
 
 
 class CachedWikipedia:
@@ -55,20 +74,6 @@ class CachedWikipedia:
                 for line in f:
                     k, v = line.split('\t')
                     self.countries[k] = v
-
-    @staticmethod
-    def initialize_cache(path):
-        """
-        This function iterates over all pages and accessing them in the cache. This forces a
-        prefetch of all wiki pages
-        """
-        db = QuestionDatabase(QB_QUESTION_DB)
-        pages = db.questions_with_pages()
-        cw = CachedWikipedia(path)
-        pool = Pool()
-
-        input_data = [(format_guess(title), cw) for title in pages.keys()]
-        pool.starmap(access_page, input_data)
 
     @staticmethod
     def _wiki_request_page(key: str):

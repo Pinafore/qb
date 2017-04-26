@@ -8,6 +8,7 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.preprocess import format_guess
 from qanta.util.io import shell
+from qanta.config import conf
 
 
 def format_question(text):
@@ -20,6 +21,11 @@ class VWGuesser(AbstractGuesser):
         self.label_to_i = None
         self.i_to_label = None
         self.max_label = None
+        guesser_conf = conf['guessers']['VowpalWabbit']
+        self.multiclass_one_against_all = guesser_conf['multiclass_one_against_all']
+        self.multiclass_online_trees = guesser_conf['multiclass_online_trees']
+        if not (self.multiclass_one_against_all != self.multiclass_online_trees):
+            raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
     def qb_dataset(self):
         return QuizBowlDataset(2)
@@ -30,7 +36,9 @@ class VWGuesser(AbstractGuesser):
         data = {
             'label_to_i': self.label_to_i,
             'i_to_label': self.i_to_label,
-            'max_label': self.max_label
+            'max_label': self.max_label,
+            'multiclass_one_against_all': self.multiclass_one_against_all,
+            'multiclass_online_trees': self.multiclass_online_trees
         }
         data_pickle_path = os.path.join(directory, 'vw_guesser.pickle')
         with open(data_pickle_path, 'wb') as f:
@@ -73,6 +81,8 @@ class VWGuesser(AbstractGuesser):
         guesser.label_to_i = data['label_to_i']
         guesser.i_to_label = data['i_to_label']
         guesser.max_label = data['max_label']
+        guesser.multiclass_one_against_all = data['multiclass_one_against_all']
+        guesser.multiclass_online_trees = data['multiclass_online_trees']
         return guesser
 
     def train(self, training_data: TrainingData) -> None:
@@ -99,5 +109,13 @@ class VWGuesser(AbstractGuesser):
                 label = self.label_to_i[y]
                 f.write('{label} |words {features}\n'.format(label=label, features=features))
 
-        shell('vw --oaa {max_label} -d /tmp/vw_train.txt -f /tmp/vw_guesser.model --loss_function '
-              'logistic --ngram 2 --skips 1 -c --passes 10 -b 29'.format(max_label=self.max_label))
+        if self.multiclass_online_trees:
+            multiclass_flag = '--log_multi'
+        elif self.multiclass_one_against_all:
+            multiclass_flag = '--oaa'
+        else:
+            raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
+
+        shell('vw -k {multiclass_flag} {max_label} -d /tmp/vw_train.txt -f /tmp/vw_guesser.model --loss_function '
+              'logistic --ngram 1 --ngram 2 -c --passes 3 -b 29'.format(max_label=self.max_label,
+                                                                        multiclass_flag=multiclass_flag))
