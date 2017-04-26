@@ -4,8 +4,6 @@ from qanta import logging
 from qanta.util.environment import ENVIRONMENT
 from qanta.util.vw import format_audit
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
-from qanta.wikipedia import wikification
-from qanta.streaming import start_qanta_streaming, start_spark_streaming
 
 
 log = logging.get(__name__)
@@ -21,25 +19,9 @@ def main():
 
 
 @main.command()
-def spark_stream():
-    start_spark_streaming()
-
-
-@main.command()
-def qanta_stream():
-    start_qanta_streaming()
-
-
-@main.command()
 @click.argument('wiki_cache')
 def init_wiki_cache(wiki_cache):
     CachedWikipedia.initialize_cache(wiki_cache)
-
-
-@main.command()
-@click.argument('output')
-def wikify(output):
-    wikification.wikify(output)
 
 
 @main.command()

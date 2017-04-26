@@ -12,7 +12,7 @@ from qanta.preprocess import preprocess_dataset, tokenize_question, format_guess
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
 from qanta.keras import AverageWords, WordDropout
-from qanta.spark_execution import create_spark_context
+from qanta.spark import create_spark_context
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta import logging
 

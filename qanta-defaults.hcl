@@ -10,6 +10,10 @@ word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
 use_pretrained_embeddings = true
 
+# Configure whether qanta.wikipedia.cached_wikipedia.CachedWikipedia should fallback
+# performing a remote call to Wikipedia if a page doesn't exist
+cached_wikipedia_remote_fallback = false
+
 clm {
   min_appearances = 2
 }

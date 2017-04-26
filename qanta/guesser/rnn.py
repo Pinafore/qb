@@ -17,7 +17,7 @@ from keras.layers import (Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, Batch
                           Bidirectional)
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
+from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
 import numpy as np
 

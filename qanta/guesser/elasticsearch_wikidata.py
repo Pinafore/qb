@@ -1,7 +1,7 @@
 import pickle
 import os
 from typing import List, Optional, Dict, Set
-from qanta.spark_execution import create_spark_context
+from qanta.spark import create_spark_context
 
 import elasticsearch
 from elasticsearch_dsl.connections import connections

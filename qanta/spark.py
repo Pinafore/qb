@@ -1,5 +1,6 @@
 import click
 from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
 
 from qanta.util.constants import FEATURE_NAMES
 from qanta.util.environment import QB_SPARK_MASTER
@@ -23,6 +24,11 @@ def create_spark_context(app_name="Quiz Bowl", configs=None) -> SparkContext:
         for key, value in configs:
             spark_conf = spark_conf.set(key, value)
     return SparkContext.getOrCreate(spark_conf)
+
+
+def create_spark_session(app_name='Quiz Bowl', configs=None) -> SparkSession:
+    create_spark_context(app_name=app_name, configs=configs)
+    return SparkSession.builder.getOrCreate()
 
 
 def extract_features(features):

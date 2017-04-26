@@ -3,7 +3,7 @@ from typing import List, Optional
 from qanta.datasets.abstract import QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.spark_execution import create_spark_context
+from qanta.spark import create_spark_context
 from qanta.preprocess import format_guess
 from qanta.search.elasticsearch import ElasticSearchIndex
 from qanta.config import conf

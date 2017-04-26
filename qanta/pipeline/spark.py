@@ -4,7 +4,7 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from clm.lm_wrapper import build_clm
 from qanta.util import constants as c
-from qanta.spark_execution import extract_features, extract_guess_features, merge_features
+from qanta.spark import extract_features, extract_guess_features, merge_features
 from qanta.pipeline.guesser import AllGuessers
 from qanta.pipeline.preprocess import DownloadData
 from qanta.util.io import shell
