@@ -3,7 +3,6 @@ import pickle
 from multiprocessing import Pool
 
 import wikipedia
-from pyspark.sql import SparkSession
 
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
