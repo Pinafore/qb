@@ -90,19 +90,9 @@ class CachedWikipedia:
         return raw
 
     @staticmethod
-    def _load_from_file_cache(key, filename):
-        try:
-            return pickle.load(open(filename, 'rb'))
-        except pickle.UnpicklingError:
-            return None
-        except AttributeError:
-            log.info("Error loading %s" % key)
-            return None
-        except ImportError:
-            log.info("Error importing %s" % key)
-            return None
-        finally:
-            return None
+    def _load_from_file_cache(filename):
+        with open(filename, 'rb') as f:
+            return pickle.load(f)
 
     def _load_remote_page(self, key, filename):
         if key in self.countries:
@@ -141,7 +131,7 @@ class CachedWikipedia:
 
         page = None
         if os.path.exists(filename):
-            page = self._load_from_file_cache(key, filename)
+            page = self._load_from_file_cache(filename)
 
         if page is None and self.cached_wikipedia_remote_fallback:
             page = self._load_remote_page(key, filename)
