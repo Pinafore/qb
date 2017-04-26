@@ -125,19 +125,20 @@ class CachedWikipedia:
             return self.cache[key]
 
         if "/" in key:
-            filename = "%s/%s" % (self.path, key.replace("/", "---"))
+            filename = os.path.join(self.path, key.replace("/", "---"))
         else:
-            filename = "%s/%s" % (self.path, key)
+            filename = os.path.join(self.path, key)
 
         page = None
         if os.path.exists(filename):
             page = self._load_from_file_cache(filename)
 
-        if page is None and self.cached_wikipedia_remote_fallback:
-            page = self._load_remote_page(key, filename)
-        else:
-            log.info('Could not find local page for {} and remote wikipedia fallback is disable'.format(key))
-            page = WikipediaPage(key, '')
+        if page is None:
+            if self.cached_wikipedia_remote_fallback:
+                page = self._load_remote_page(key, filename)
+            else:
+                log.info('Could not find local page for {} and remote wikipedia fallback is disabled'.format(key))
+                page = WikipediaPage(key, '')
 
         self.cache[key] = page
         return page
