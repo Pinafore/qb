@@ -18,8 +18,11 @@ COUNTRY_SUB = ["History of ", "Geography of "]
 
 
 class WikipediaPage:
-    def __init__(self, content):
+    def __init__(self, title, content, wiki_id=None, url=None):
+        self.title = title
         self.content = content
+        self.wiki_id = wiki_id
+        self.url = url
 
 
 def access_page(title, cached_wiki):
@@ -113,14 +116,14 @@ class CachedWikipedia:
         if raw:
             if len(raw) > 1:
                 log.info("%i pages for %s" % (len(raw), key))
-            page = WikipediaPage("\n".join(x.content for x in raw))
+            page = WikipediaPage(key, "\n".join(x.content for x in raw))
 
             log.info("Writing file to %s" % filename)
             with open(filename, 'wb') as f:
                 pickle.dump(page, f)
         else:
             log.info("Dummy page for %s" % key)
-            page = WikipediaPage('')
+            page = WikipediaPage(key, '')
             if self.write_dummy:
                 with open(filename, 'wb') as f:
                     pickle.dump(page, f)
@@ -144,7 +147,7 @@ class CachedWikipedia:
             page = self._load_remote_page(key, filename)
         else:
             log.info('Could not find local page for {} and remote wikipedia fallback is disable'.format(key))
-            page = WikipediaPage('')
+            page = WikipediaPage(key, '')
 
         self.cache[key] = page
         return page
