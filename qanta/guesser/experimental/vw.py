@@ -55,19 +55,12 @@ class VWGuesser(AbstractGuesser):
             for q in questions:
                 features = format_question(q)
                 f.write('1 |words {features}\n'.format(features=features))
-        shell('vw -t -i /tmp/vw_guesser.model -r /tmp/raw_predictions.txt -d /tmp/vw_test.txt')
+        shell('vw -t -i /tmp/vw_guesser.model -p /tmp/predictions.txt -d /tmp/vw_test.txt')
         predictions = []
         with open('/tmp/raw_predictions.txt') as f:
             for line in f:
-                all_label_scores = []
-                for label_score in line.split():
-                    label, score = label_score.split(':')
-                    label = int(label)
-                    score = float(score)
-                    all_label_scores.append((self.i_to_label[label], score))
-                top_label_scores = sorted(
-                    all_label_scores, reverse=True, key=lambda x: x[1])[:max_n_guesses]
-                predictions.append(top_label_scores)
+                label = int(line)
+                predictions.append([(self.i_to_label[label], 0)])
         return predictions
 
     @classmethod
