@@ -136,4 +136,10 @@ guessers "VowpalWabbit" {
   # These two flags are XOR with each other, one must be true and the other false
   multiclass_one_against_all = false
   multiclass_online_trees = true
+  l2 = 0.000001
+  l1 = 0
+  passes = 20
+  learning_rate = 0.1
+  decay_learning_rate = 0.95
+  bits = 30
 }

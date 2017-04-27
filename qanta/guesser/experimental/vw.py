@@ -24,11 +24,33 @@ class VWGuesser(AbstractGuesser):
         guesser_conf = conf['guessers']['VowpalWabbit']
         self.multiclass_one_against_all = guesser_conf['multiclass_one_against_all']
         self.multiclass_online_trees = guesser_conf['multiclass_online_trees']
+        self.l1 = guesser_conf['l1']
+        self.l2 = guesser_conf['l2']
+        self.passes = guesser_conf['passes']
+        self.learning_rate = guesser_conf['learning_rate']
+        self.decay_learning_rate = guesser_conf['decay_learning_rate']
+        self.bits = guesser_conf['bits']
         if not (self.multiclass_one_against_all != self.multiclass_online_trees):
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
     def qb_dataset(self):
         return QuizBowlDataset(2)
+
+    @classmethod
+    def targets(cls) -> List[str]:
+        return ['vw_guesser.model', 'vw_guesser.pickle']
+
+    def parameters(self):
+        return {
+            'multiclass_one_against_all': self.multiclass_one_against_all,
+            'multiclass_online_trees': self.multiclass_online_trees,
+            'l1': self.l1,
+            'l2': self.l2,
+            'passes': self.passes,
+            'learning_rate': self.learning_rate,
+            'decay_learning_rate': self.decay_learning_rate,
+            'bits': self.bits
+        }
 
     def save(self, directory: str) -> None:
         model_path = os.path.join(directory, 'vw_guesser.model')
@@ -38,30 +60,17 @@ class VWGuesser(AbstractGuesser):
             'i_to_label': self.i_to_label,
             'max_label': self.max_label,
             'multiclass_one_against_all': self.multiclass_one_against_all,
-            'multiclass_online_trees': self.multiclass_online_trees
+            'multiclass_online_trees': self.multiclass_online_trees,
+            'l1': self.l1,
+            'l2': self.l2,
+            'passes': self.passes,
+            'learning_rate': self.learning_rate,
+            'decay_learning_rate': self.decay_learning_rate,
+            'bits': self.bits
         }
         data_pickle_path = os.path.join(directory, 'vw_guesser.pickle')
         with open(data_pickle_path, 'wb') as f:
             pickle.dump(data, f)
-
-    @classmethod
-    def targets(cls) -> List[str]:
-        return ['vw_guesser.model', 'vw_guesser.pickle']
-
-    def guess(self,
-              questions: List[QuestionText],
-              max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        with open('/tmp/vw_test.txt', 'w') as f:
-            for q in questions:
-                features = format_question(q)
-                f.write('1 |words {features}\n'.format(features=features))
-        shell('vw -t -i /tmp/vw_guesser.model -p /tmp/predictions.txt -d /tmp/vw_test.txt')
-        predictions = []
-        with open('/tmp/raw_predictions.txt') as f:
-            for line in f:
-                label = int(line)
-                predictions.append([(self.i_to_label[label], 0)])
-        return predictions
 
     @classmethod
     def load(cls, directory: str):
@@ -76,7 +85,28 @@ class VWGuesser(AbstractGuesser):
         guesser.max_label = data['max_label']
         guesser.multiclass_one_against_all = data['multiclass_one_against_all']
         guesser.multiclass_online_trees = data['multiclass_online_trees']
+        guesser.l1 = data['l1']
+        guesser.l2 = data['l2']
+        guesser.passes = data['passes']
+        guesser.learning_rate = data['learning_rate']
+        guesser.decay_learning_rate = data['decay_learning_rate']
+        guesser.bits = data['bits']
         return guesser
+
+    def guess(self,
+              questions: List[QuestionText],
+              max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
+        with open('/tmp/vw_test.txt', 'w') as f:
+            for q in questions:
+                features = format_question(q)
+                f.write('1 |words {features}\n'.format(features=features))
+        shell('vw -t -i /tmp/vw_guesser.model -p /tmp/predictions.txt -d /tmp/vw_test.txt')
+        predictions = []
+        with open('/tmp/predictions.txt') as f:
+            for line in f:
+                label = int(line)
+                predictions.append([(self.i_to_label[label], 0)])
+        return predictions
 
     def train(self, training_data: TrainingData) -> None:
         questions = training_data[0]
@@ -110,5 +140,10 @@ class VWGuesser(AbstractGuesser):
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
         shell('vw -k {multiclass_flag} {max_label} -d /tmp/vw_train.txt -f /tmp/vw_guesser.model --loss_function '
-              'logistic --ngram 1 --ngram 2 -c --passes 3 -b 29'.format(max_label=self.max_label,
-                                                                        multiclass_flag=multiclass_flag))
+              'logistic --ngram 1 --ngram 2 --skips 1 -c --passes {passes} -b {bits} '
+              '--l1 {l1} --l2 {l2} -l {learning_rate} --decay_learning_rate {decay_learning_rate}'.format(
+                    max_label=self.max_label,
+                    multiclass_flag=multiclass_flag, bits=self.bits,
+                    l1=self.l1, l2=self.l2, passes=self.passes,
+                    learning_rate=self.learning_rate, decay_learning_rate=self.decay_learning_rate
+                ))
