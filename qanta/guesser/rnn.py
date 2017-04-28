@@ -130,6 +130,7 @@ class RNNGuesser(AbstractGuesser):
             'bidirectional_rnn': self.bidirectional_rnn,
             'epcohs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
             'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
+            'best_train_accuracy': max(self.history['sparse_categorical_accuracy']),
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
             'n_rnn_layers': self.n_rnn_layers,
