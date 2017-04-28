@@ -29,6 +29,8 @@ guessers "ElasticSearch" {
   # Set the level of parallelism for guess generation
   n_cores = 15
   min_appearances = 1
+  # Whether or not to index all Wikipedia articles for guessing
+  use_all_wikipedia = false
 }
 
 guessers "DAN" {
