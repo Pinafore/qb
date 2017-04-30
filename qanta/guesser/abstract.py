@@ -3,7 +3,6 @@ from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple, Optional
 import pickle
-import json
 
 import matplotlib
 matplotlib.use('Agg')
