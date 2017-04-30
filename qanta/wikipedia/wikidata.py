@@ -154,22 +154,32 @@ class WikiMath(WikiDatatype):
         return None
 
 wiki_datatypes = [
-    WikiString, WikiTime,
-    WikiItem, WikiProperty, WikiExternalId,
-    WikiMath, WikiUrl,
-    WikiMonolingualText, WikiCommonsMedia, WikiQuantity, WikiGlobeCoordinate
+    WikiString(), WikiTime(),
+    WikiItem(), WikiProperty(), WikiExternalId(),
+    WikiMath(), WikiUrl(),
+    WikiMonolingualText(), WikiCommonsMedia(), WikiQuantity(), WikiGlobeCoordinate()
 ]
 
-datatype_parsers = {wd.datatype: wd.parse for wd in wiki_datatypes}
+
+datatype_parsers = {}
+for wd in wiki_datatypes:
+    datatype = wd.datatype
+    datatype_parsers[datatype] = wd.parse
 
 
 class Claim:
-    def __init__(self, subject, relation, wiki_object, datatype, title):
+    def __init__(self, subject, relation, wiki_object, datatype, title, property_id):
         self.subject = subject
         self.relation = relation
         self.object = wiki_object
         self.datatype = datatype
         self.title = title
+        self.property_id = property_id
+
+    def __repr__(self):
+        return '(s="{}", r="{}", o="{}", dt="{}", title="{}"'.format(
+            self.subject, self.relation, self.object, self.datatype, self.title
+        )
 
 
 def extract_property_map(parsed_wikidata: RDD):
@@ -192,23 +202,29 @@ def extract_item_page_map(wikidata_items: RDD):
     return wikidata_items.flatMap(parse_item_page).collectAsMap()
 
 
-def extract_claims(wikidata_items: RDD):
+def extract_claims(wikidata_items: RDD, b_property_map: Broadcast):
     def parse_item_claims(item):
         item_id = item['id']
+        property_map = b_property_map.value
         if 'enwiki' in item['sitelinks']:
             title = item['sitelinks']['enwiki']['title']
         else:
             title = None
         item_claims = []
         for property_id, property_claims in item['claims'].items():
-            for claim in property_claims:
-                mainsnak = claim['mainsnak']
-                if 'datatype' in mainsnak:
-                    datatype = mainsnak['datatype']
-                    datavalue = mainsnak['datavalue']
-                    if datatype in datatype_parsers:
-                        wiki_object = datatype_parsers[datatype](datavalue)
-                        item_claims.append(Claim(item_id, property_id, wiki_object, datatype, title))
+            if property_id in property_map:
+                property_name = property_map[property_id]
+                for claim in property_claims:
+                    mainsnak = claim['mainsnak']
+                    if 'datatype' in mainsnak and 'datavalue' in mainsnak:
+                        datatype = mainsnak['datatype']
+                        datavalue = mainsnak['datavalue']
+                        if datatype in datatype_parsers:
+                            wiki_object = datatype_parsers[datatype](datavalue)
+                            if wiki_object is not None:
+                                item_claims.append(
+                                    Claim(item_id, property_name, wiki_object, datatype, title, property_id)
+                                )
 
         return item_claims
 
