@@ -388,8 +388,6 @@ class MemNNGuesser(AbstractGuesser):
             for mem in tokenized_test_memories]
         tokenized_test_memories = np.array(tokenized_test_memories)
 
-        log.info('Converting wiki dataset to embeddings...')
-
         log.info('Building keras model...')
         self.model = self.build_model()
 
@@ -415,7 +413,8 @@ class MemNNGuesser(AbstractGuesser):
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
-        x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
+        x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.wiki_embedding_lookup)
+                  for q in questions]
         x_test = np.array(nn.tf_format(x_test, self.qb_max_len, 0))
         class_probabilities = self.model.predict_proba(x_test, batch_size=self.batch_size)
         guesses = []

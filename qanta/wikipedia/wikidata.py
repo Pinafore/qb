@@ -168,17 +168,18 @@ for wd in wiki_datatypes:
 
 
 class Claim:
-    def __init__(self, subject, relation, wiki_object, datatype, title, property_id):
-        self.subject = subject
-        self.relation = relation
+    def __init__(self, item, wiki_property, wiki_object, datatype, title, property_id, item_id):
+        self.item = item
+        self.property = wiki_property
         self.object = wiki_object
         self.datatype = datatype
         self.title = title
         self.property_id = property_id
+        self.item_id = item_id
 
     def __repr__(self):
-        return '(s="{}", r="{}", o="{}", dt="{}", title="{}"'.format(
-            self.subject, self.relation, self.object, self.datatype, self.title
+        return '(item="{}", property="{}", object="{}", dt="{}", title="{}"'.format(
+            self.item, self.property, self.object, self.datatype, self.title
         )
 
 
@@ -202,9 +203,23 @@ def extract_item_page_map(wikidata_items: RDD):
     return wikidata_items.flatMap(parse_item_page).collectAsMap()
 
 
-def extract_claims(wikidata_items: RDD, b_property_map: Broadcast):
+def extract_item_map(wikidata_items: RDD):
+    def parse_item(item):
+        if 'en' in item['labels']:
+            label = item['labels']['en']['value']
+            return item['id'], label
+        else:
+            return None
+    return wikidata_items.map(parse_item).filter(lambda i: i is not None).collectAsMap()
+
+
+def extract_claims(wikidata_items: RDD, b_property_map: Broadcast, b_item_map: Broadcast):
     def parse_item_claims(item):
         item_id = item['id']
+        item_map = b_item_map.value
+        if item_id not in item_map:
+            return []
+        item_label = item_map[item_id]
         property_map = b_property_map.value
         if 'enwiki' in item['sitelinks']:
             title = item['sitelinks']['enwiki']['title']
@@ -213,6 +228,8 @@ def extract_claims(wikidata_items: RDD, b_property_map: Broadcast):
         item_claims = []
         for property_id, property_claims in item['claims'].items():
             if property_id in property_map:
+                if property_id not in property_map:
+                    continue
                 property_name = property_map[property_id]
                 for claim in property_claims:
                     mainsnak = claim['mainsnak']
@@ -223,9 +240,8 @@ def extract_claims(wikidata_items: RDD, b_property_map: Broadcast):
                             wiki_object = datatype_parsers[datatype](datavalue)
                             if wiki_object is not None:
                                 item_claims.append(
-                                    Claim(item_id, property_name, wiki_object, datatype, title, property_id)
+                                    Claim(item_label, property_name, wiki_object, datatype, title, property_id, item_id)
                                 )
-
         return item_claims
 
     return wikidata_items.flatMap(parse_item_claims)
