@@ -1,3 +1,4 @@
+from pathlib import Path
 import pickle
 import os
 import shutil
@@ -11,13 +12,15 @@ from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question, format_guess
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import AverageWords, WordDropout
+from qanta.keras import AverageWords, BatchMatmul, WordDropout
 from qanta.spark import create_spark_context
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta import logging
 
+
+from keras import backend as K
 from keras.models import Sequential, Model, load_model
-from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, dot, multiply, add
+from keras.layers import Concatenate, Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, dot, multiply, add, pooling, Lambda
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -29,6 +32,7 @@ from elasticsearch_dsl.connections import connections
 import progressbar
 
 import numpy as np
+import tensorflow as tf
 
 
 log = logging.get(__name__)
@@ -253,7 +257,7 @@ class MemNNGuesser(AbstractGuesser):
 
         # Keras Embeddings only supports 2 dimensional input so we have to do reshape ninjitsu to make this work
         wiki_input = Input((self.n_memories, self.wiki_max_len,), name='wiki_input')
-        qb_input = Input((self.qb_max_len,), name='wiki_input')
+        qb_input = Input((self.qb_max_len,), name='qb_input')
 
         wiki_embeddings = Embedding(wiki_vocab_size, wiki_we_dimension, weights=[self.wiki_embeddings], mask_zero=True)
         qb_embeddings = Embedding(qb_vocab_size, qb_we_dimension, weights=[self.qb_embeddings], mask_zero=True)
@@ -262,17 +266,17 @@ class MemNNGuesser(AbstractGuesser):
 
         # Wikipedia sentence encoder used to search memory
         wiki_m_encoder = Sequential()
-        wiki_m_encoder.add(Reshape((self.n_memories * self.wiki_max_len,)))
+        # wiki_m_encoder.add(Reshape((self.n_memories * self.wiki_max_len,), input_shape=(self.n_memories, self.wiki_max_len)))
         wiki_m_encoder.add(wiki_embeddings)
-        wiki_m_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
+        # wiki_m_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
         wiki_m_encoder.add(AverageWords())
         wiki_input_encoded_m = wiki_m_encoder(wiki_input)
 
         # Wikipedia sentence encoder for retrieved memories
         wiki_c_encoder = Sequential()
-        wiki_c_encoder.add(Reshape((self.n_memories * self.wiki_max_len,)))
+        # wiki_c_encoder.add(Reshape((self.n_memories * self.wiki_max_len,), input_shape=(self.n_memories, self.wiki_max_len)))
         wiki_c_encoder.add(wiki_embeddings)
-        wiki_c_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
+        # wiki_c_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
         wiki_c_encoder.add(AverageWords())
         wiki_input_encoded_c = wiki_c_encoder(wiki_input)
 
@@ -284,11 +288,20 @@ class MemNNGuesser(AbstractGuesser):
         qb_input_encoded = qb_encoder(qb_input)
 
         # Compute the attention based on match between memory addresses and question input
-        match_probability = dot([wiki_input_encoded_m, qb_input_encoded], 1)
-        match_probability = Activation('softmax')(match_probability)
+        def similarity(inputs):
+            memories, embedding = inputs
+            return tf.reduce_sum(memories * K.expand_dims(embedding, 1), axis=-1)
 
-        memories = multiply([match_probability, wiki_input_encoded_c])
-        memories_and_question = add([memories, qb_input_encoded])
+        # match_probability = Lambda(similarity, output_shape=lambda input_shape: (None, self.n_memories))([wiki_input_encoded_m, qb_input_encoded])
+        match_probability = BatchMatmul(self.n_memories)([wiki_input_encoded_m, qb_input_encoded])
+        # match_probability = K.sum(match_probability, axis=-1)
+        match_probability = Activation('softmax')(match_probability)
+        match_probability = Reshape(match_probability.shape.as_list()[1:] + [1])(match_probability)
+        memories = multiply([(match_probability), wiki_input_encoded_c])
+        memories = pooling.GlobalAveragePooling1D()(memories)
+
+        # memories_and_question = K.concat([memories, qb_input_encoded], axis=1)
+        memories_and_question = Concatenate(1)([memories, qb_input_encoded])
 
         actions = Dense(self.n_classes)(memories_and_question)
         actions = BatchNormalization()(actions)
@@ -296,6 +309,7 @@ class MemNNGuesser(AbstractGuesser):
         actions = Activation('softmax')(actions)
 
         adam = Adam()
+        # model = Model(inputs=[qb_input, wiki_input], outputs=actions)
         model = Model(inputs=[qb_input, wiki_input], outputs=actions)
         model.compile(
             loss=sparse_categorical_crossentropy, optimizer=adam,
@@ -305,7 +319,8 @@ class MemNNGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, qb_vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
+        training_data = tuple(d[:100] for d in training_data)
+        x_train_text, y_train, _, x_test_text, y_test, _, qb_vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.qb_vocab = qb_vocab
@@ -318,8 +333,8 @@ class MemNNGuesser(AbstractGuesser):
         self.qb_embedding_lookup = qb_embedding_lookup
 
         log.info('Converting qb dataset to embeddings...')
-        x_train = [nn.convert_text_to_embeddings_indices(q, qb_embedding_lookup) for q in x_train]
-        x_test = [nn.convert_text_to_embeddings_indices(q, qb_embedding_lookup) for q in x_test]
+        x_train = [nn.convert_text_to_embeddings_indices(q, qb_embedding_lookup) for q in x_train_text]
+        x_test = [nn.convert_text_to_embeddings_indices(q, qb_embedding_lookup) for q in x_test_text]
         self.n_classes = nn.compute_n_classes(training_data[1])
         self.qb_max_len = nn.compute_max_len(training_data)
         x_train = pad_sequences(x_train, maxlen=self.qb_max_len, value=0, padding='post', truncating='post')
@@ -328,43 +343,50 @@ class MemNNGuesser(AbstractGuesser):
         log.info('Collecting Wikipedia data...')
         classes = set(i_to_class)
         wiki_sentences = build_wikipedia_sentences(classes, self.n_wiki_sentences)
-
         log.info('Building Memory Index...')
         MemoryIndex.build(wiki_sentences)
 
         log.info('Fetching most relevant {} memories per question in train and test...'.format(self.n_memories))
         log.info('Fetching train memories...')
-        train_memories = MemoryIndex.search_parallel(x_train, self.n_memories)
+        train_memories = MemoryIndex.search_parallel(x_train_text, self.n_memories)
+
         log.info('Fetching test memories...')
-        test_memories = MemoryIndex.search_parallel(x_test, self.n_memories)
+        test_memories = MemoryIndex.search_parallel(x_test_text, self.n_memories)
 
         tokenized_train_memories, wiki_vocab = preprocess_wikipedia(train_memories, True)
         tokenized_test_memories, _ = preprocess_wikipedia(test_memories, False)
 
         log.info('Creating wiki embeddings...')
-        wiki_embeddings, wiki_embedding_lookup = wiki_load_embeddings(
+        self.wiki_embeddings, wiki_embedding_lookup = wiki_load_embeddings(
             vocab=wiki_vocab, expand_glove=self.expand_we, mask_zero=True
         )
 
         wiki_max_len = 0
         for i in range(len(tokenized_train_memories)):
             memories = tokenized_train_memories[i]
-            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
+            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup)
+                for m in memories + [['٩(◕‿◕｡)۶']] * (self.n_memories - len(memories))]
             if len(we_memories) != 0:
                 wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_memories))
             tokenized_train_memories[i] = we_memories
 
         self.wiki_max_len = wiki_max_len
-        tokenized_train_memories = pad_sequences(tokenized_train_memories,
-                                                 maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+        tokenized_train_memories = [
+            pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+            for mem in tokenized_train_memories]
+
+        tokenized_train_memories = np.array(tokenized_train_memories)
 
         for i in range(len(tokenized_test_memories)):
             memories = tokenized_test_memories[i]
-            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
+            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup)
+                for m in memories + [['٩(◕‿◕｡)۶']] * (self.n_memories - len(memories))]
             tokenized_test_memories[i] = we_memories
 
-        tokenized_test_memories = pad_sequences(tokenized_test_memories,
-                                                maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+        tokenized_test_memories = [
+            pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+            for mem in tokenized_test_memories]
+        tokenized_test_memories = np.array(tokenized_test_memories)
 
         log.info('Converting wiki dataset to embeddings...')
 
@@ -382,8 +404,8 @@ class MemNNGuesser(AbstractGuesser):
             )
         ]
         history = self.model.fit(
-            x_train, y_train,
-            validation_data=(x_test, y_test),
+            [x_train, tokenized_train_memories], y_train,
+            validation_data=([x_test, tokenized_test_memories], y_test),
             batch_size=self.batch_size, epochs=self.max_n_epochs,
             callbacks=callbacks, verbose=2
         )
@@ -415,8 +437,9 @@ class MemNNGuesser(AbstractGuesser):
         guesser.model = load_model(
             os.path.join(directory, MEM_MODEL_TARGET),
             custom_objects={
-                'GlobalAveragePooling1DMasked': AverageWords,
-                'WordDropout': WordDropout
+                'AverageWords': AverageWords,
+                'WordDropout': WordDropout,
+                'BatchMatmul': BatchMatmul
             }
         )
         with open(os.path.join(directory, MEM_PARAMS_TARGET), 'rb') as f:

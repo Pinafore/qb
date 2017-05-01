@@ -1,3 +1,5 @@
+from collections import ChainMap
+
 from keras.layers import Layer
 from keras import backend as K
 import tensorflow as tf
@@ -30,7 +32,6 @@ class AverageWords(Layer):
 class WordDropout(Layer):
     """
     Applies Word Level Dropout to the input which helps prevent overfitting
-    
         rate: float between 0 and 1. Fraction of the input words to drop.
     """
     def __init__(self, rate, **kwargs):
@@ -54,3 +55,22 @@ class WordDropout(Layer):
         config = {'rate': self.rate}
         base_config = super().get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+class BatchMatmul(Layer):
+    """
+    Compute dot product between multiple vectors and one vector
+    """
+    def __init__(self, num_outputs, **kwargs):
+        super().__init__(**kwargs)
+        self.num_outputs = num_outputs
+
+    def call(self, inputs):
+        return tf.reduce_sum(inputs[0] * K.expand_dims(inputs[1], 1), axis=-1)
+
+    def compute_output_shape(self, input_shape):
+        return (None, self.num_outputs)
+
+    def get_config(self):
+        base_config = super().get_config()
+        return dict(ChainMap(base_config, {'num_outputs': self.num_outputs}))
