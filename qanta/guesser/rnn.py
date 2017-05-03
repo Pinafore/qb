@@ -14,10 +14,10 @@ from qanta import logging
 
 from keras.models import Sequential, load_model
 from keras.layers import (Dense, Dropout, Embedding, LSTM, GRU, SimpleRNN, BatchNormalization, Activation,
-                          Bidirectional, TimeDistributed)
+                          Bidirectional)
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
+from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
 import numpy as np
 
@@ -61,6 +61,7 @@ class RNNGuesser(AbstractGuesser):
         self.train_on_q_runs = guesser_conf['train_on_q_runs']
         self.train_on_full_q = guesser_conf['train_on_full_q']
         self.n_rnn_layers = guesser_conf['n_rnn_layers']
+        self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -90,7 +91,8 @@ class RNNGuesser(AbstractGuesser):
             'bidirectional_rnn': self.bidirectional_rnn,
             'train_on_q_runs': self.train_on_q_runs,
             'n_rnn_layers': self.n_rnn_layers,
-            'train_on_full_q': self.train_on_full_q
+            'train_on_full_q': self.train_on_full_q,
+            'decay_lr_on_plateau': self.decay_lr_on_plateau
         }
 
     def load_parameters(self, params):
@@ -112,6 +114,7 @@ class RNNGuesser(AbstractGuesser):
         self.train_on_q_runs = params['train_on_q_runs']
         self.train_on_full_q = params['train_on_full_q']
         self.n_rnn_layers = params['n_rnn_layers']
+        self.decay_lr_on_plateau = params['decay_lr_on_plateau']
 
     def parameters(self):
         return {
@@ -127,9 +130,11 @@ class RNNGuesser(AbstractGuesser):
             'bidirectional_rnn': self.bidirectional_rnn,
             'epcohs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
             'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
+            'best_train_accuracy': max(self.history['sparse_categorical_accuracy']),
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
-            'n_rnn_layers': self.n_rnn_layers
+            'n_rnn_layers': self.n_rnn_layers,
+            'decay_lr_on_plateau': self.decay_lr_on_plateau
         }
 
     def qb_dataset(self):
@@ -156,19 +161,28 @@ class RNNGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        for _ in range(self.n_rnn_layers):
+        for _ in range(self.n_rnn_layers - 1):
             if self.bidirectional_rnn:
                 model.add(Bidirectional(cell(
                     self.n_rnn_units, return_sequences=True,
-                    dropout=self.nn_dropout_rate#, recurrent_dropout=self.nn_dropout_rate
+                    dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
                 )))
             else:
                 model.add(cell(
                     self.n_rnn_units, return_sequences=True,
-                    dropout=self.nn_dropout_rate#, recurrent_dropout=self.nn_dropout_rate
+                    dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
                 ))
-        model.add(TimeDistributed(Dense(self.n_classes)))
-        model.add(TimeDistributed(BatchNormalization()))
+
+        if self.bidirectional_rnn:
+            model.add(Bidirectional(cell(
+                self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
+            )))
+        else:
+            model.add(cell(
+                self.n_rnn_units, dropout=self.nn_dropout_rate, recurrent_dropout=self.nn_dropout_rate
+            ))
+        model.add(Dense(self.n_classes))
+        model.add(BatchNormalization())
         model.add(Dropout(self.nn_dropout_rate))
         model.add(Activation('softmax'))
         adam = Adam()
@@ -199,10 +213,6 @@ class RNNGuesser(AbstractGuesser):
         x_train = np.array(nn.tf_format(x_train, self.max_len, 0))
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
 
-        # Reformat the labels to have one for each time step/word
-        y_train = time_distributed_labels(y_train, self.max_len)
-        y_test = time_distributed_labels(y_test, self.max_len)
-
         log.info('Building model...')
         self.model = self.build_model()
 
@@ -212,6 +222,8 @@ class RNNGuesser(AbstractGuesser):
             EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy'),
             ModelCheckpoint(RNN_MODEL_TMP_TARGET, save_best_only=True)
         ]
+        if self.decay_lr_on_plateau:
+            callbacks.append(ReduceLROnPlateau(monitor='val_sparse_categorical_accuracy', patience=5))
         history = self.model.fit(
             x_train, y_train,
             validation_data=(x_test, y_test),
@@ -225,27 +237,16 @@ class RNNGuesser(AbstractGuesser):
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
         log.info('Converting questions to embeddings...')
         x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
-        x_lengths = [len(x) for x in x_test]
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
+        class_probabilities = self.model.predict_proba(x_test, batch_size=self.batch_size)
         guesses = []
 
-        # Keras creates a large numpy array as a placeholder for predictions which crashes python with a MemoryError
-        # To avoid that we collect guesses in smaller size chunks. Ordinarily this isn't a problem but since we predict
-        # make predictions at each time step and each question that can get large. Since input runs fine and is of size
-        # ~35,000 seems safe to chunk in 30,000 size increments
         log.info('Starting predictions...')
-        chunk_size = 2000
-        for chunk_i in range(0, len(x_test), chunk_size):
-            chunk_x_test = x_test[chunk_i:chunk_i + chunk_size]
-            chunk_x_lengths = x_lengths[chunk_i:chunk_i + chunk_size]
-            class_probabilities = self.model.predict(chunk_x_test, batch_size=self.batch_size)
-            for x_i, row in enumerate(class_probabilities):
-                question_length = chunk_x_lengths[x_i]
-                time_step_row = row[question_length - 1]
-                sorted_labels = np.argsort(-time_step_row)[:max_n_guesses]
-                sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
-                sorted_scores = np.copy(time_step_row[sorted_labels])
-                guesses.append(list(zip(sorted_guesses, sorted_scores)))
+        for row in class_probabilities:
+            sorted_labels = np.argsort(-row)[:max_n_guesses]
+            sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
+            sorted_scores = np.copy(row[sorted_labels])
+            guesses.append(list(zip(sorted_guesses, sorted_scores)))
         return guesses
 
     def save(self, directory: str) -> None:

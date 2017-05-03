@@ -1,0 +1,31 @@
+resource "null_resource" "jupyter_s3" {
+  # Changes to any instance of the cluster requires re-provisioning
+  triggers {
+    cluster_instance_ids = "${join(",", aws_spot_instance_request.qanta.*.spot_instance_id)}"
+  }
+
+  # Bootstrap script can run on any instance of the cluster
+  # So we just choose the first in this case
+  connection {
+    user = "ubuntu"
+    host = "${element(aws_eip_association.qanta_ip.*.public_ip, count.index)}"
+  }
+
+  provisioner "file" {
+    source = "jupyter_s3_config.py"
+    destination = "/home/ubuntu/jupyter_s3_config.py"
+  }
+
+  provisioner "file" {
+    source = "jupyter_s3.sh"
+    destination = "/home/ubuntu/jupyter_s3.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "cat /home/ubuntu/jupyter_s3.sh >> /home/ubuntu/.bashrc",
+      "git clone https://github.com/EntilZha/s3contents /home/ubuntu/s3contents",
+      "(cd /home/ubuntu/s3contents && /home/ubuntu/anaconda3/bin/python setup.py install)"
+    ]
+  }
+}

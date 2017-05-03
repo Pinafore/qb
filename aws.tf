@@ -9,12 +9,16 @@ variable "access_key" {}
 variable "secret_key" {}
 
 variable "spot_price" {
-  default = "2.5"
+  default = "2.70"
 }
 
 variable "master_instance_type" {
   default = "r3.8xlarge"
   description = "EC2 Instance type to use for the master node"
+}
+
+variable "instance_count" {
+  default = 1
 }
 
 variable "cluster_id" {
@@ -152,7 +156,7 @@ resource "aws_spot_instance_request" "qanta" {
   spot_price = "${var.spot_price}"
   spot_type = "one-time"
   wait_for_fulfillment = true
-  count = 1
+  count = "${var.instance_count}"
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
@@ -248,7 +252,10 @@ resource "aws_spot_instance_request" "qanta" {
   }
 
   provisioner "remote-exec" {
-    script = "bin/init.sh"
+    inline = [
+      "export PATH=$PATH:/home/ubuntu/anaconda3/bin",
+      "cd /ssd-c/qanta/qb && bash bin/init.sh"
+    ]
   }
 }
 

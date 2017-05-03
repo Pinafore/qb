@@ -1,7 +1,186 @@
 import json
 import pickle
+from abc import ABCMeta, abstractmethod
+from collections import namedtuple
+
 from pyspark import SparkConf, SparkContext, RDD, Broadcast
 from qanta.util.environment import QB_SPARK_MASTER
+
+
+TimeData = namedtuple('TimeData', 'after before calendarmodel precision time timezone')
+QuantityData = namedtuple('QuantityData', 'amount unit upperbound lowerbound')
+GlobeCoordinateData = namedtuple('GlobeCoordinateData', 'globe latitude longitude altitude precision')
+
+
+class WikiDatatype(metaclass=ABCMeta):
+    @property
+    @abstractmethod
+    def datatype(self):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def parse(datavalue):
+        pass
+
+
+class WikiString(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'string'
+
+    @staticmethod
+    def parse(datavalue):
+        return datavalue['value']
+
+
+class WikiTime(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'time'
+
+    @staticmethod
+    def parse(datavalue):
+        value = datavalue['value']
+        return TimeData(
+            value['after'], value['before'],
+            value['calendarmodel'], value['precision'],
+            value['time'], value['timezone']
+        )
+
+
+class WikiItem(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'wikibase-item'
+
+    @staticmethod
+    def parse(datavalue):
+        return datavalue['value']['id']
+
+
+class WikiProperty(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'wikibase-property'
+
+    @staticmethod
+    def parse(datavalue):
+        return datavalue['value']['id']
+
+
+class WikiExternalId(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'external-id'
+
+    @staticmethod
+    def parse(datavalue):
+        """
+        We don't have a way to make use of it so just don't parse it
+        :param datavalue: 
+        :return: 
+        """
+        return None
+
+
+class WikiMonolingualText(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'monolingualtext'
+
+    @staticmethod
+    def parse(datavalue):
+        return datavalue['value']['text']
+
+
+class WikiCommonsMedia(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'commonsMedia'
+
+    @staticmethod
+    def parse(datavalue):
+        return datavalue['value']
+
+
+class WikiQuantity(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'quantity'
+
+    @staticmethod
+    def parse(datavalue):
+        value = datavalue['value']
+        return QuantityData(value.get('amount'), value.get('unit'), value.get('upperbound'), value.get('lowerbound'))
+
+
+class WikiGlobeCoordinate(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'globe-coordinate'
+
+    @staticmethod
+    def parse(datavalue):
+        value = datavalue['value']
+        return GlobeCoordinateData(
+            value.get('globe'), value.get('latitude'), value.get('longitude'),
+            value.get('altitude'), value.get('precision')
+        )
+
+
+class WikiUrl(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'url'
+
+    @staticmethod
+    def parse(datavalue):
+        return datavalue['value']
+
+
+class WikiMath(WikiDatatype):
+    @property
+    def datatype(self):
+        return 'math'
+
+    @staticmethod
+    def parse(datavalue):
+        """
+        We don't have a way to use this so parse it into nothing. To parse this out is just datavalue['value']
+        :param datavalue: 
+        :return: 
+        """
+        return None
+
+wiki_datatypes = [
+    WikiString(), WikiTime(),
+    WikiItem(), WikiProperty(), WikiExternalId(),
+    WikiMath(), WikiUrl(),
+    WikiMonolingualText(), WikiCommonsMedia(), WikiQuantity(), WikiGlobeCoordinate()
+]
+
+
+datatype_parsers = {}
+for wd in wiki_datatypes:
+    datatype = wd.datatype
+    datatype_parsers[datatype] = wd.parse
+
+
+class Claim:
+    def __init__(self, item, wiki_property, wiki_object, datatype, title, property_id, item_id):
+        self.item = item
+        self.property = wiki_property
+        self.object = wiki_object
+        self.datatype = datatype
+        self.title = title
+        self.property_id = property_id
+        self.item_id = item_id
+
+    def __repr__(self):
+        return '(item="{}", property="{}", object="{}", dt="{}", title="{}"'.format(
+            self.item, self.property, self.object, self.datatype, self.title
+        )
 
 
 def extract_property_map(parsed_wikidata: RDD):
@@ -22,6 +201,63 @@ def extract_item_page_map(wikidata_items: RDD):
         else:
             return []
     return wikidata_items.flatMap(parse_item_page).collectAsMap()
+
+
+def extract_item_map(wikidata_items: RDD):
+    def parse_item(item):
+        if 'en' in item['labels']:
+            label = item['labels']['en']['value']
+            return item['id'], label
+        else:
+            return None
+    return wikidata_items.map(parse_item).filter(lambda i: i is not None).collectAsMap()
+
+
+def extract_claims(wikidata_items: RDD, b_property_map: Broadcast, b_item_map: Broadcast):
+    def parse_item_claims(item):
+        item_id = item['id']
+        item_map = b_item_map.value
+        if item_id not in item_map:
+            return []
+        item_label = item_map[item_id]
+        property_map = b_property_map.value
+        if 'enwiki' in item['sitelinks']:
+            title = item['sitelinks']['enwiki']['title']
+        else:
+            title = None
+        item_claims = []
+        for property_id, property_claims in item['claims'].items():
+            if property_id in property_map:
+                if property_id not in property_map:
+                    continue
+                property_name = property_map[property_id]
+                for claim in property_claims:
+                    mainsnak = claim['mainsnak']
+                    if 'datatype' in mainsnak and 'datavalue' in mainsnak:
+                        datatype = mainsnak['datatype']
+                        datavalue = mainsnak['datavalue']
+                        if datatype in datatype_parsers:
+                            wiki_object = datatype_parsers[datatype](datavalue)
+                            if wiki_object is not None:
+                                item_claims.append(
+                                    Claim(item_label, property_name, wiki_object, datatype, title, property_id, item_id)
+                                )
+        return item_claims
+
+    return wikidata_items.flatMap(parse_item_claims)
+
+
+def extract_claim_types(wikidata_items: RDD):
+    def parse_types(item):
+        value_types = []
+        for property_claims in item['claims'].values():
+            for c in property_claims:
+                mainsnak = c['mainsnak']
+                if 'datatype' in mainsnak:
+                    value_types.append(mainsnak['datatype'])
+        return value_types
+
+    return set(wikidata_items.flatMap(parse_types).distinct().collect())
 
 
 def extract_items(wikidata_items: RDD, b_property_map: Broadcast, b_item_page_map: Broadcast):

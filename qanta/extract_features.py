@@ -9,9 +9,10 @@ from qanta import logging
 
 from qanta.datasets.quiz_bowl import Question, QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
+from qanta.spark import create_spark_context
 
 from qanta.util.io import safe_path
-from qanta.util import constants as c
+from qanta.util import constants as c, spark_features
 from qanta.util.environment import QB_ROOT
 from qanta.util.spark_features import SCHEMA
 from qanta.preprocess import format_guess
@@ -209,3 +210,28 @@ def evaluate_feature_question(task: Task, b_features) -> List[Row]:
                 )
                 result.append(row)
     return result
+
+
+def extract_features(features):
+    if 'lm' in features:
+        # This deals with out of memory problems when using the language model
+        configs = [('spark.executor.cores', 10)]
+    else:
+        configs = None
+    create_spark_context(
+        app_name='Quiz Bowl: ' + ' '.join(features), configs=configs
+    )
+    spark_batch(features)
+
+
+def extract_guess_features():
+    create_spark_context(
+        app_name='Quiz Bowl: guessers',
+        configs=[('spark.executor.cores', 10)]
+    )
+    generate_guesser_feature()
+
+
+def merge_features():
+    create_spark_context(app_name='Quiz Bowl Merge')
+    spark_features.create_output('output/features')

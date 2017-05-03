@@ -3,7 +3,6 @@ from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple, Optional
 import pickle
-import json
 
 import matplotlib
 matplotlib.use('Agg')
@@ -172,7 +171,9 @@ class AbstractGuesser(metaclass=ABCMeta):
         guesses_per_question = self.guess(question_texts, max_n_guesses)
 
         if len(guesses_per_question) != len(question_texts):
-            raise ValueError('Guesser not returning the right number of answers')
+            raise ValueError(
+                'Guesser has wrong number of answers: len(guesses_per_question)={} len(question_texts)={}'.format(
+                    len(guesses_per_question), len(question_texts)))
 
         log.info('Creating guess dataframe from guesses...')
         df_qnums = []

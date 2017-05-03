@@ -16,4 +16,4 @@ bash packer/bin/install-elasticsearch.sh
 
 /home/ubuntu/anaconda3/bin/pip install keras
 
-sudo apt install -y poppler-utils
+sudo apt install -y poppler-utils || true
