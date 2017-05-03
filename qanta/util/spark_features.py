@@ -1,103 +1,100 @@
 import os
 from functools import reduce
 from typing import List, Dict, Tuple
-from pyspark import SparkContext, RDD
+
+from pyspark import RDD, SparkContext
 from pyspark.sql import SparkSession, Row, DataFrame
-from pyspark.sql.functions import udf
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
-from unidecode import unidecode
 
 from qanta import logging
-from qanta.util.constants import FOLDS, FEATURE_NAMES, NEGATIVE_WEIGHTS
+from qanta.util.constants import VW_FOLDS, FEATURE_NAMES
+from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.preprocess import format_guess
 
 log = logging.get(__name__)
 
 SCHEMA = StructType([
-    StructField('feature_name', StringType(), True),
-    StructField('fold', StringType(), True),
-    StructField('guess', StringType(), True),
-    StructField('qnum', IntegerType(), True),
-    StructField('sentence', IntegerType(), True),
-    StructField('token', IntegerType(), True),
-    StructField('meta', StringType(), True),
-    StructField('feat', StringType(), True)
+    StructField('fold', StringType(), False),
+    StructField('qnum', IntegerType(), False),
+    StructField('sentence', IntegerType(), False),
+    StructField('token', IntegerType(), False),
+    StructField('guess', StringType(), False),
+    StructField('feature_name', StringType(), False),
+    StructField('feature_value', StringType(), False)
 ])
 
 
-def create_output(path: str, granularity='sentence'):
-    df = read_dfs(path, granularity=granularity).cache()
-    for fold in FOLDS:
-        filtered_df = df.filter('fold = "{0}"'.format(fold))
-        grouped_rdd = group_features(filtered_df).cache()
-        for weight in NEGATIVE_WEIGHTS:
-            def generate_string(group):
-                rows = group[1]
-                result = ""
-                meta = None
-                for name in FEATURE_NAMES:
-                    if name == 'label':
-                        name = 'label{0}'.format(weight)
-                    named_feature_list = list(filter(lambda r: r.feature_name == name, rows))
-                    if len(named_feature_list) != 1:
-                        raise ValueError(
-                            'Encountered more than one row when there should be exactly one row')
-                    named_feature = named_feature_list[0]
-                    if meta is None:
-                        meta = '%i %i %i %s' % (
-                            named_feature.qnum, named_feature.sentence, named_feature.token,
-                            unidecode(named_feature.guess))
-                    result = result + ' ' + named_feature.feat
-                return result + '|||' + meta
+def create_output(path: str):
+    df = read_dfs(path).cache()
+    question_db = QuestionDatabase()
+    answers = question_db.all_answers()
+    for qnum in answers:
+        answers[qnum] = format_guess(answers[qnum])
 
-            output_rdd = grouped_rdd.map(generate_string)
-            output_rdd.saveAsTextFile(
-                'output/vw_input/{0}/sentence.{1}.vw_input'.format(fold, int(weight)))
-        grouped_rdd.unpersist()
+    sc = SparkContext.getOrCreate()  # type: SparkContext
+    b_answers = sc.broadcast(answers)
+
+    def generate_string(group):
+        rows = group[1]
+        result = ""
+        feature_values = []
+        meta = None
+        qnum = None
+        sentence = None
+        token = None
+        guess = None
+        for name in FEATURE_NAMES:
+            named_feature_list = list(filter(lambda r: r.feature_name == name, rows))
+            if len(named_feature_list) != 1:
+                raise ValueError(
+                    'Encountered more than one row when there should be exactly one row')
+            named_feature = named_feature_list[0]
+            if meta is None:
+                qnum = named_feature.qnum
+                sentence = named_feature.sentence
+                token = named_feature.token
+                guess = named_feature.guess
+                meta = '{} {} {} {}'.format(
+                    qnum,
+                    named_feature.sentence,
+                    named_feature.token,
+                    guess
+                )
+            feature_values.append(named_feature.feature_value)
+        assert '@' not in result, \
+            '@ is a special character that is split on and not allowed in the feature line'
+
+        vw_features = ' '.join(feature_values)
+        if guess == b_answers.value[qnum]:
+            vw_label = "1 '{}_{}_{} ".format(qnum, sentence, token)
+        else:
+            vw_label = "-1 '{}_{}_{} ".format(qnum, sentence, token)
+
+        return vw_label + vw_features + '@' + meta
+
+    for fold in VW_FOLDS:
+        group_features(df.filter(df.fold == fold))\
+            .map(generate_string)\
+            .saveAsTextFile('output/vw_input/{0}.vw'.format(fold))
+    sc.stop()
 
 
-def read_dfs(path: str, granularity='sentence') -> DataFrame:
+def read_dfs(path: str) -> DataFrame:
     sql_context = SparkSession.builder.getOrCreate()
     feature_dfs = {}  # type: Dict[Tuple[str, str], DataFrame]
-    for fold in FOLDS:
+    for fold in VW_FOLDS:
         for name in FEATURE_NAMES:
             log.info("Reading {fold} for {feature}".format(fold=fold, feature=name))
-            filename = '{granularity}.{name}.parquet'.format(granularity=granularity, name=name)
+            filename = '{name}.parquet'.format(name=name)
             file_path = os.path.join(path, fold, filename)
             if not os.path.exists(file_path):
                 log.info("File {file} does not exist".format(file=file_path))
+                raise ValueError(
+                    'Was not able to parse {file} since it does not exist'.format(file=file_path))
             else:
-                feature_dfs[(fold, name)] = sql_context.read.load(file_path).cache()
-                count = feature_dfs[(fold, name)].count()
-                log.info("{count} rows read for {fold} and {name}".format(
-                    count=count, fold=fold, name=name))
+                feature_dfs[(fold, name)] = sql_context.read.load(file_path)
 
-    reweight_df(feature_dfs)
-
-    return reduce(lambda x, y: x.unionAll(y), feature_dfs.values())
-
-
-def reweight_df(feature_dfs: Dict[Tuple[str, str], DataFrame]):
-    for fold in FOLDS:
-        for weight in NEGATIVE_WEIGHTS:
-            def reweight(feat: str):
-                feat_split = feat.split()
-                label, neg_count_str = feat_split[0], feat_split[1]
-                if int(label) == 1:
-                    return feat
-                else:
-                    neg_count = int(neg_count_str)
-                    return feat.replace(" %s '" % neg_count_str,
-                                        " %f '" % (weight / float(neg_count)))
-            weight_udf = udf(reweight, StringType())
-            label_str = 'label{0}'.format(weight)
-            name_udf = udf(lambda r: label_str)
-            temp_df = feature_dfs[(fold, 'label')]
-            key = (fold, label_str)
-            feature_dfs[key] = temp_df\
-                .withColumn('feature_name', name_udf(temp_df.feature_name))\
-                .withColumn('feat', weight_udf(temp_df.feat)).cache()
-            feature_dfs[key].count()
-        del feature_dfs[(fold, 'label')]
+    return reduce(lambda x, y: x.union(y), feature_dfs.values())
 
 
 def group_features(df: DataFrame) -> RDD:
@@ -105,7 +102,8 @@ def group_features(df: DataFrame) -> RDD:
         if comb_value is None:
             return [value]
         else:
-            return [value] + comb_value
+            comb_value.append(value)
+            return comb_value
 
     def comb_op(left: List[Row], right: List[Row]):
         if left is None and right is None:
@@ -118,6 +116,7 @@ def group_features(df: DataFrame) -> RDD:
             left.extend(right)
             return left
 
-    grouped_rdd = df.rdd.map(lambda r: ((r.guess, r.qnum, r.sentence, r.token), r))\
+    grouped_rdd = df.rdd\
+        .map(lambda r: ((r.qnum, r.sentence, r.token, r.guess), r))\
         .aggregateByKey(None, seq_op, comb_op)
     return grouped_rdd

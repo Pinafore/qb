@@ -35,3 +35,18 @@ class CSCTransformer(TransformerMixin):
 
     def get_params(self, deep=True):
         return {}
+
+
+class CSRTransformer(TransformerMixin):
+    def transform(self, X, y=None, **fit_params):
+        return X.tocsr()
+
+    def fit_transform(self, X, y=None, **fit_params):
+        self.fit(X, y, **fit_params)
+        return self.transform(X)
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def get_params(self, deep=True):
+        return {}

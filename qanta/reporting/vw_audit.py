@@ -41,7 +41,7 @@ def parse_audit(path):
     return pd.DataFrame(columns).sort_values('magnitude', ascending=False)
 
 
-def audit_report(df, output, weight):
+def audit_report(df, output):
     df.to_csv(output)
 
     df.head(25).plot.bar('feature', 'value')
@@ -60,7 +60,7 @@ def audit_report(df, output, weight):
         'top_features': top_features
     }, 'audit_regressor.md')
 
-    output = safe_path(VW_AUDIT_REGRESSOR_REPORT.format(weight))
+    output = safe_path(VW_AUDIT_REGRESSOR_REPORT)
     report.create(output)
     plt.clf()
     plt.cla()

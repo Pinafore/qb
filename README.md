@@ -34,8 +34,8 @@ To execute the AWS scripts you will need to follow these steps (`brew` options a
 2. [Install Terraform 0.7.x](https://www.terraform.io/downloads.html) or run `brew install terraform`
 3. Python 3.5+: If you don't have a preferred distribution,
 [Anaconda Python](https://www.continuum.io/downloads) is a good choice
-4. Install the AWS command line tools via `pip3 install awscli`
-5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-1`
+4. Install the AWS command line tools via `pip3 install awscli`. Run `pip3 install pyhcl`
+5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-2`
 6. Create an [EC2 key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
 7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
 8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS
@@ -45,18 +45,18 @@ configuration section for a summary of how the Terraform install scripts treat t
 10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
 and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
 nodes can communicate via SSH
-11. [Install sshuttle](https://github.com/apenwarr/sshuttle/) which is used to create an SSH VPN
 
 #### What do the Packer/Terraform scripts install and configure?
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
 ##### Installed Software
-* Python 3.5
-* Apache Spark 1.6.1
+* Python 3.6
+* Apache Spark 2.1.0
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
 * Postgres
 * KenLM
+* Redis (latest stable)
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
@@ -344,3 +344,22 @@ Then to finally run the expo
 ```bash
 python3 qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.16.buzz --output=output/expo/competition.csv --finals=output/expo/test.16.final
 ```
+
+## Utility Templates
+
+Terraform works by reading all files ending in `.tf` within the directory that it is run. Unless the
+filename ends with `_override` it will concatenate all these files together. In the case of
+`_override` it will use the contents to override the current configuration. The combination of these
+allows for keeping the root `aws.tf` clean while adding the possibility of customizing the build.
+
+In the repository there are a number of `.tf.tftemplate` files. These are not read by terraform but
+are intended to be copied to the same filename without the `.tftemplate` extension. The extension
+merely serves to make it so that terraform by default does not read it, but to keep it in source
+control (the files ending in `.tf` are in `.gitignore`). Below is a description of these
+
+* `aws_gpu_override.tf.tftemplate`: This configures terraform to start a GPU instance instead of a
+normal instance. This instance uses a different AMI that has GPU enabled Tensorflow/CUDA/etc.
+* `aws_small_override.tf.tftemplate`: This configures terraform to use a smaller CPU instance than the
+default r3.8xlarge
+* `naqt_db.tf.tftemplate`: Configure qanta to use the private NAQT dataset
+* `eip.tf.template`: Configure terraform to add a pre-made elastic IP to the instance

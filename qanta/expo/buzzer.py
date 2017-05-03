@@ -1,13 +1,16 @@
 import textwrap
-from collections import defaultdict
+from collections import defaultdict, Counter
 import argparse
 from csv import DictReader
 from time import sleep
 import os
 
+from qanta.preprocess import format_guess
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+
 kSHOW_RIGHT = False
 kPAUSE = .25
-kSYSTEM = "OUSIA"
+kSYSTEM = "QANTA"
 
 kBIGNUMBERS = {-1:
 """
@@ -224,22 +227,16 @@ class kCOLORS:
         print(start + text + kCOLORS.ENDC, end=end)
 
 
-def write_readable(filename, ids, questions, power):
+def write_readable(filename, questions, question_ids):
     question_num = 0
-    o = open(flags.readable, 'w')
-    for ii in question_ids:
+    o = open(filename, 'w')
+    for qnum in question_ids:
         question_num += 1
         o.write("%i) " % question_num)
-        power_found = False
-        for jj in questions[ii]:
-            if not power_found and power(ii).lower() in questions[ii][jj].lower():
-                power_found = True
-                o.write("%s  " %
-                        questions[ii][jj].replace(power(ii), "(*) %s" %
-                                                  power(ii)))
-            else:
-                o.write("%s  " % questions[ii][jj])
-        o.write("\nANSWER: %s\n\n" % questions.answer(ii))
+        for sent in questions[qnum]:
+            o.write("%s  " % questions[qnum][sent])
+        o.write("\nANSWER: %s\n\n" % questions.answer(qnum))
+    o.close()
 
 
 def clear_screen():
@@ -255,10 +252,11 @@ class PowerPositions:
             for ii in infile:
                 question = int(ii['question'])
                 self._power_marks[question] = ii['word']
-        except:
-            print("Couldn't load from %s" % filename)
-        print("Read power marks from %s: %s ..." %
-              (filename, str(self._power_marks.keys())[1:69]))
+            print("Read power marks from %s: %s ..." %
+                  (filename, str(self._power_marks.keys())[1:69]))
+        except FileNotFoundError:
+            pass
+
     def __call__(self, question):
         if question in self._power_marks:
             return self._power_marks[question]
@@ -398,8 +396,14 @@ class Questions:
         return self._answers[val]
 
 
+def select_features(evidence_str, allowed_features):
+    features = evidence_str.split()
+    included_features = [f for f in features if f in allowed_features]
+    return ' '.join(included_features)
+
+
 def format_display(display_num, question_text, sent, word, current_guesses,
-                   answer=None, guess_limit=5, points=10):
+                   answer=None, guess_limit=5, points=10, disable_features=False, answerable=None):
     sep = "".join(["-"] * 80)
 
     current_text = ""
@@ -408,27 +412,58 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
 
-    report = "Question %i: %i points\n%s\n%s\n%s\n\n" % \
+    report = 'answerable: {}\n'.format(answerable)
+    report += "Question %i: %i points\n%s\n%s\n%s\n\n" % \
         (display_num, points, sep, current_text, sep)
 
-    for gg in sorted(current_guesses, key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]:
+    top_guesses = sorted(current_guesses,
+                         key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]
+    duplicated_feature_counter = Counter()
+    for g in top_guesses:
+        evidence = current_guesses[g].evidence.split()
+        for f in evidence:
+            duplicated_feature_counter[f] += 1
+
+    allowed_features = set()
+    for k, v in duplicated_feature_counter.items():
+        if v == 1:
+            allowed_features.add(k)
+
+    if False and len(top_guesses) > 0:
+        print(top_guesses)
+        print(allowed_features)
+        print(duplicated_feature_counter)
+        raise Exception()
+    for gg in top_guesses:
         guess = current_guesses[gg]
-        if guess.page == answer:
-            report += "%s\t%f\t%s\n" % ("***CORRECT***", guess.weight, guess.evidence[:100])
+        if disable_features:
+            features = ''
         else:
-            report += "%s\t%f\t%s\n" % (guess.page, guess.weight, guess.evidence[:100])
+            features = select_features(guess.evidence, allowed_features)[:100]
+        if guess.page == answer:
+            report += "%s\t%f\t%s\n" % (
+                "***CORRECT***",
+                guess.weight,
+                features
+            )
+        else:
+            report += "%s\t%f\t%s\n" % (
+                guess.page,
+                guess.weight,
+                features
+            )
     return report
 
 
 def load_finals(final_file):
-    ff = DictReader(open(final_file))
+    f = DictReader(open(final_file))
     d = {}
-    for ii in ff:
-        d[int(ii['question'])] = ii['answer']
+    for i in f:
+        d[int(i['question'])] = i['answer']
     return d
 
 
-def interpret_keypress(other_allowable=""):
+def interpret_keypress():
     """
     See whether a number was pressed (give terminal bell if so) and return
     value.  Otherwise returns none.  Tries to handle arrows as a single
@@ -440,8 +475,8 @@ def interpret_keypress(other_allowable=""):
         getch()
         press = "direction"
 
-    if press.upper() in other_allowable:
-        return press.upper()
+    if press == 'Q':
+        raise Exception('Exiting expo by user request from pressing Q')
 
     if press != "direction" and press != " ":
         try:
@@ -455,14 +490,13 @@ def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say %s" % ans.replace("'", "").split("(")[0])
+    os.system("say %s" % ans.replace("'", "").replace('_', '').split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
 
 def present_question(display_num, question_id, question_text, buzzes, final,
-                     correct, human=0, computer=0, power="10"):
-
+                     correct, human=0, computer=0, power="10", answerable=None):
     human_delta = 0
     computer_delta = 0
     question_value = 15
@@ -479,16 +513,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
                 while response is None:
-                    response = input("Player %i, provide an answer:\t"
-                                         %press)
+                    response = input("Player %i, provide an answer:\t" % press)
                     if '+' in response:
                         return (human + question_value,
                                 computer + computer_delta,
                                 response[1:])
                     elif '-' in response:
                         if computer_delta == -5:
-                            return (human, computer + computer_delta,
-                                    response[1:])
+                            return human, computer + computer_delta, response[1:]
                         else:
                             human_delta = -5
                     else:
@@ -500,11 +532,13 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                            "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
-                                     points=question_value))
-                answer(buzz_now[0].page.split('(')[0])
+                                     points=question_value, answerable=answerable))
+                answer(buzz_now[0].page)
                 if buzz_now[0].page == correct:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(1)
+                    print(format_display(display_num, question_text, max(question_text), 0,
+                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
@@ -514,21 +548,19 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                     show_score(human + human_delta,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
-                    format_display(display_num, question_text,
-                                   max(question_text), 0,
-                                   current_guesses, answer=correct,
-                                   points=question_value)
+                    print(format_display(display_num, question_text, max(question_text), 0,
+                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
             else:
                 show_score(human + human_delta,
                            computer + computer_delta,
                            "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
-                                     points=question_value))
+                                     points=question_value, answerable=answerable))
     if computer_delta == 0:
-        answer(final.split('(')[0])
+        answer(final)
         if final == correct:
-            return (human + human_delta, computer + 10, final)
+            return human + human_delta, computer + 10, final
         else:
             print("Incorrect answer: %s" % final)
 
@@ -547,7 +579,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             else:
                 response = None
 
-    return (human + human_delta, computer + computer_delta, "")
+    return human + human_delta, computer + computer_delta, ""
 
 
 if __name__ == "__main__":
@@ -567,6 +599,10 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
+    ir_dataset = QuizBowlDataset(1)
+    ir_answer_set = {format_guess(g) for g in ir_dataset.training_data()[1]}
+    dan_dataset = QuizBowlDataset(2)
+    dan_answer_set = {format_guess(g) for g in dan_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
 
@@ -585,7 +621,7 @@ if __name__ == "__main__":
                 current_players.add(press)
 
         sleep(1.5)
-        answer("I'm ready too")
+        answer("I am ready too")
 
     human = 0
     computer = 0
@@ -595,7 +631,7 @@ if __name__ == "__main__":
     question_ids = [x for x in question_ids if x in buzzes]
 
     if flags.readable != "":
-        write_readable(flags.readable, question_ids, questions, power)
+        write_readable(flags.readable, questions, question_ids)
 
     skipped = 0
     for ii in question_ids:
@@ -609,12 +645,21 @@ if __name__ == "__main__":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
 
+        correct_answer = format_guess(questions.answer(ii))
+        if correct_answer in dan_answer_set and correct_answer in ir_answer_set:
+            answerable = 'ir+dan'
+        elif correct_answer in ir_answer_set:
+            answerable = 'ir'
+        elif correct_answer in dan_answer_set:
+            answerable = 'dan'
+        else:
+            answerable = 'neither'
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),
                                           human=human,
                                           computer=computer,
-                                          power=power(ii))
+                                          power=power(ii), answerable=answerable)
         human = hum
         computer = comp
 
@@ -645,5 +690,4 @@ if __name__ == "__main__":
                                                          questions.answer(ii)))
             sleep(kPAUSE)
 
-    show_score(human, computer,
-               "HUMAN", "COMPUTER")
+    show_score(human, computer, "HUMAN", "COMPUTER")

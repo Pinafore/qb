@@ -1,73 +1,64 @@
 import os
 import pickle
-from time import sleep
-from requests import ConnectionError
-from requests.exceptions import ReadTimeout
+from multiprocessing import Pool
 
-from unidecode import unidecode
 import wikipedia
-from wikipedia.exceptions import WikipediaException
+
+from qanta import logging
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import COUNTRY_LIST_PATH
-from qanta.util.environment import QB_QUESTION_DB
-from qanta.util.qdb import QuestionDatabase
-from functional import seq
+from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
+from qanta.preprocess import format_guess
+from qanta.config import conf
+from qanta.spark import create_spark_session
+
+log = logging.get(__name__)
 
 COUNTRY_SUB = ["History of ", "Geography of "]
 
 
-class LinkResult:
-    def __init__(self, text_freq=0, link_freq=0, early=0):
-        self.text_freq = text_freq
-        self.link_freq = link_freq
-        self.early = early
-
-    def componentwise_max(self, lr):
-        self.text_freq = max(self.text_freq, lr.text_freq)
-        self.link_freq = max(self.link_freq, lr.link_freq)
-        self.early = max(self.early, lr.early)
-
-    def any(self):
-        """
-        Did we find anything on any metric
-        """
-        return any(x > 0.0 for x in
-                   [self.text_freq, self.link_freq, self.early])
-
-
 class WikipediaPage:
-    def __init__(self, content="", links=None, categories=None):
+    def __init__(self, title, content, wiki_id=None, url=None):
+        self.title = title
         self.content = content
-        self.links = links if links is not None else []
-        self.categories = categories if categories is not None else []
+        self.wiki_id = wiki_id
+        self.url = url
 
-    def weighted_link(self, other_page):
 
-        # Get the number of times it's mentioned in text
-        no_disambiguation = other_page.split("(")[0].strip()
-        if len(self.content) > 0:
-            text_freq = self.content.count(no_disambiguation)
-            text_freq *= len(no_disambiguation) / float(len(self.content))
-        else:
-            text_freq = 0.0
+def access_page(title, cached_wiki):
+    # accessing the page forces it to fetch from wikipedia if it isn't cached so this is not a no-op
+    cached_wiki[title].content
+    return None
 
-        # How many total links are there, divide by that number
-        if other_page in self.links:
-            link_freq = 1.0 / float(len(self.links))
-        else:
-            link_freq = 0.0
 
-        # How early is it mentioned in the page
-        early = self.content.find(no_disambiguation)
-        if early > 0:
-            early = 1.0 - early / float(len(self.content))
-        else:
-            0.0
+def spark_initialize_file_cache():
+    """
+    Initialize the cache using spark and the full wikipedia dump
+    :return: 
+    """
+    spark = create_spark_session()
+    wiki_path = 's3a://pinafore-us-west-2/public/wikipedia-json/*/*'
+    wiki_df = spark.read.json(wiki_path)
+    return wiki_df
 
-        return LinkResult(text_freq, link_freq, early)
+
+def web_initialize_file_cache(path):
+    """
+    Initialize the cache by requesting each page with wikipedia package.
+    This function iterates over all pages and accessing them in the cache. This forces a
+    prefetch of all wiki pages
+    """
+    db = QuestionDatabase(QB_QUESTION_DB)
+    pages = db.questions_with_pages()
+    cw = CachedWikipedia(path)
+    pool = Pool()
+
+    input_data = [(format_guess(title), cw) for title in pages.keys()]
+    pool.starmap(access_page, input_data)
 
 
 class CachedWikipedia:
-    def __init__(self, location, country_list=COUNTRY_LIST_PATH, write_dummy=True):
+    def __init__(self, location=QB_WIKI_LOCATION, country_list=COUNTRY_LIST_PATH, write_dummy=True):
         """
         @param write_dummy If this is true, it writes an empty pickle if there
         is an error accessing a page in Wikipedia.  This will speed up future
@@ -77,6 +68,7 @@ class CachedWikipedia:
         self.cache = {}
         self.write_dummy = write_dummy
         self.countries = dict()
+        self.cached_wikipedia_remote_fallback = conf['cached_wikipedia_remote_fallback']
         if country_list:
             with open(country_list) as f:
                 for line in f:
@@ -84,108 +76,74 @@ class CachedWikipedia:
                     self.countries[k] = v
 
     @staticmethod
-    def initialize_cache(path):
-        """
-        This function iterates over all pages and accessing them in the cache. This forces a
-        prefetch of all wiki pages
-        """
-        db = QuestionDatabase(QB_QUESTION_DB)
-        pages = db.questions_with_pages()
-        cw = CachedWikipedia(path)
-        for p in pages:
-            cw[p].content
-
-
-    def load_page(self, key: str):
-        print("Loading %s" % key)
+    def _wiki_request_page(key: str):
+        log.info('Loading {}'.format(key))
         try:
             raw = wikipedia.page(key, preload=True)
-            print(unidecode(raw.content[:80]))
-            print(unidecode(str(raw.links)[:80]))
-            print(unidecode(str(raw.categories)[:80]))
+            log.info(raw.content[:80])
+            log.info(str(raw.links)[:80])
+            log.info(str(raw.categories)[:80])
         except KeyError:
-            print("Key error")
+            log.info('Key error: {}'.format(key))
             raw = None
         except wikipedia.exceptions.DisambiguationError:
-            print("Disambig error!")
+            log.info('Disambig error: {}'.format(key))
             raw = None
         except wikipedia.exceptions.PageError:
-            print("Page error!")
+            log.info('Page error: {}'.format(key))
             raw = None
-        except ReadTimeout:
-            # Wait a while, see if the network comes back
-            print("Connection error, waiting 1 minutes ...")
-            sleep(60)
-            print("trying again")
-            return CachedWikipedia.load_page(key)
-        except ConnectionError:
-            # Wait a while, see if the network comes back
-            print("Connection error, waiting 1 minutes ...")
-            sleep(60)
-            print("trying again")
-            return CachedWikipedia.load_page(key)
-        except ValueError:
-            # Wait a while, see if the network comes back
-            print("Connection error, waiting 1 minutes ...")
-            sleep(60)
-            print("trying again")
-            return CachedWikipedia.load_page(key)
-        except WikipediaException:
-            # Wait a while, see if the network comes back
-            print("Connection error, waiting 1 minutes ...")
-            sleep(60)
-            print("trying again")
-            return CachedWikipedia.load_page(key)
         return raw
 
+    @staticmethod
+    def _load_from_file_cache(filename):
+        with open(filename, 'rb') as f:
+            return pickle.load(f)
+
+    def _load_remote_page(self, key, filename):
+        if key in self.countries:
+            raw = [self._wiki_request_page("%s%s" % (x, self.countries[key])) for x in COUNTRY_SUB]
+            raw.append(self._wiki_request_page(key))
+            log.info("%s is a country!" % key)
+        else:
+            raw = [self._wiki_request_page(key)]
+
+        raw = [x for x in raw if x is not None]
+        if raw:
+            if len(raw) > 1:
+                log.info("%i pages for %s" % (len(raw), key))
+            page = WikipediaPage(key, "\n".join(x.content for x in raw))
+
+            log.info("Writing file to %s" % filename)
+            with open(filename, 'wb') as f:
+                pickle.dump(page, f)
+        else:
+            log.info("Dummy page for %s" % key)
+            page = WikipediaPage(key, '')
+            if self.write_dummy:
+                with open(filename, 'wb') as f:
+                    pickle.dump(page, f)
+        return page
+
     def __getitem__(self, key: str):
-        key = key.replace("_", " ")
+        key = format_guess(key)
         if key in self.cache:
             return self.cache[key]
 
         if "/" in key:
-            filename = "%s/%s" % (self.path, key.replace("/", "---"))
+            filename = os.path.join(self.path, key.replace("/", "---"))
         else:
-            filename = "%s/%s" % (self.path, key)
+            filename = os.path.join(self.path, key)
+
         page = None
         if os.path.exists(filename):
-            try:
-                page = pickle.load(open(filename, 'rb'))
-            except pickle.UnpicklingError:
-                page = None
-            except AttributeError:
-                print("Error loading %s" % key)
-                page = None
-            except ImportError:
-                print("Error importing %s" % key)
-                page = None
+            page = self._load_from_file_cache(filename)
 
         if page is None:
-            if key in self.countries:
-                raw = [self.load_page("%s%s" % (x, self.countries[key])) for x in COUNTRY_SUB]
-                raw.append(self.load_page(key))
-                print("%s is a country!" % key)
+            if self.cached_wikipedia_remote_fallback:
+                page = self._load_remote_page(key, filename)
             else:
-                raw = [self.load_page(key)]
-
-            raw = [x for x in raw if x is not None]
-            if raw:
-                if len(raw) > 1:
-                    print("%i pages for %s" % (len(raw), key))
-                page = WikipediaPage(
-                    "\n".join(unidecode(x.content) for x in raw),
-                    seq(raw).map(lambda x: x.links).flatten().list(),
-                    seq(raw).map(lambda x: x.categories).flatten().list())
-
-                print("Writing file to %s" % filename)
-                pickle.dump(page, open(filename, 'wb'),
-                            protocol=pickle.HIGHEST_PROTOCOL)
-            else:
-                print("Dummy page for %s" % key)
-                page = WikipediaPage()
-                if self.write_dummy:
-                    pickle.dump(page, open(filename, 'wb'),
-                                protocol=pickle.HIGHEST_PROTOCOL)
+                log.info('Could not find local page for {} and remote wikipedia fallback is disabled'.format(key))
+                page = WikipediaPage(key, '')
 
         self.cache[key] = page
         return page

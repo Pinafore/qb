@@ -9,12 +9,16 @@ variable "access_key" {}
 variable "secret_key" {}
 
 variable "spot_price" {
-  default = "2.5"
+  default = "2.70"
 }
 
 variable "master_instance_type" {
   default = "r3.8xlarge"
   description = "EC2 Instance type to use for the master node"
+}
+
+variable "instance_count" {
+  default = 1
 }
 
 variable "cluster_id" {
@@ -32,6 +36,11 @@ variable "qb_aws_s3_namespace" {
   description = "Stores variable for QB_AWS_S3_NAMESPACE used in checkpoint script"
 }
 
+variable "qb_branch" {
+  default = "master"
+  description = "Which git branch to checkout when cloning Pinafore/qb"
+}
+
 provider "aws" {
   region = "us-west-2"
 }
@@ -44,7 +53,7 @@ data "aws_ami" "qanta_ami" {
   }
   filter {
     name = "tag-value"
-    values = ["qanta"]
+    values = ["qanta-cpu"]
   }
 }
 
@@ -76,11 +85,11 @@ resource "aws_route" "internet_access" {
 
 # We use us-west-2a since r3.8xlarge are cheaper in this availability zone
 # p2 Instances are cheaper on us-west-2c however
-resource "aws_subnet" "qanta_zone_2a" {
+resource "aws_subnet" "qanta_zone_2b" {
   vpc_id                  = "${aws_vpc.qanta.id}"
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-2a"
+  availability_zone = "us-west-2b"
 }
 
 # A security group for SSH access from anywhere
@@ -140,23 +149,24 @@ resource "aws_security_group" "qanta_internal" {
 # | |__| |___ / __/   | || | | \__ \ || (_| | | | | (_|  __/\__ \
 # |_____\____|_____| |___|_| |_|___/\__\__,_|_| |_|\___\___||___/
 
-resource "aws_spot_instance_request" "master" {
+resource "aws_spot_instance_request" "qanta" {
   ami           = "${data.aws_ami.qanta_ami.id}"
   instance_type = "${var.master_instance_type}"
   key_name = "${var.key_pair}"
   spot_price = "${var.spot_price}"
   spot_type = "one-time"
   wait_for_fulfillment = true
+  count = "${var.instance_count}"
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
     "${aws_security_group.qanta_ssh.id}"
   ]
-  subnet_id = "${aws_subnet.qanta_zone_2a.id}"
+  subnet_id = "${aws_subnet.qanta_zone_2b.id}"
 
   root_block_device {
     volume_type = "gp2"
-    volume_size = "25"
+    volume_size = "80"
     delete_on_termination = true
   }
 
@@ -215,10 +225,11 @@ resource "aws_spot_instance_request" "master" {
   # Configure qanta environment variables
   provisioner "remote-exec" {
     inline = [
-      "echo \"export QB_SPARK_MASTER=spark://${aws_spot_instance_request.master.private_dns}:7077\" >> /home/ubuntu/.bashrc",
+      "echo \"export QB_SPARK_MASTER=spark://${self.private_dns}:7077\" >> /home/ubuntu/.bashrc",
       "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
-      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc"
+      "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc",
+      "echo \"export LUIGI_CONFIG_PATH=/ssd-c/qanta/luigi.cfg\" >> /home/ubuntu/.bashrc"
     ]
   }
 
@@ -227,7 +238,7 @@ resource "aws_spot_instance_request" "master" {
       "sudo mkdir /ssd-c/qanta",
       "sudo chown ubuntu /ssd-c/qanta",
       "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb",
-      "(cd /ssd-c/qanta/qb && /home/ubuntu/anaconda3/bin/python setup.py develop)"
+      "(cd /ssd-c/qanta/qb && git checkout ${var.qb_branch} && /home/ubuntu/anaconda3/bin/python setup.py develop)"
     ]
   }
 
@@ -239,30 +250,35 @@ resource "aws_spot_instance_request" "master" {
   provisioner "remote-exec" {
     script = "terraform/aws-downloads.sh"
   }
+
+  provisioner "remote-exec" {
+    inline = [
+      "export PATH=$PATH:/home/ubuntu/anaconda3/bin",
+      "cd /ssd-c/qanta/qb && bash bin/init.sh"
+    ]
+  }
 }
 
-output "master_public_ip" {
-  value = "${aws_spot_instance_request.master.public_ip}"
+output "qanta_public_ip" {
+  value = "${join(",", aws_spot_instance_request.qanta.*.public_ip)}"
 }
 
-output "master_public_dns" {
-  value = "${aws_spot_instance_request.master.public_dns}"
+output "qanta_public_dns" {
+  value = "${join(",", aws_spot_instance_request.qanta.*.public_dns)}"
 }
 
-output "master_private_ip" {
-  value = "${aws_spot_instance_request.master.private_ip}"
+output "qanta_private_ip" {
+  value = "${join(",", aws_spot_instance_request.qanta.*.private_ip)}"
 }
 
-output "master_private_dns" {
-  value = "${aws_spot_instance_request.master.private_dns}"
+output "qanta_private_dns" {
+  value = "${join(",", aws_spot_instance_request.qanta.*.private_dns)}"
 }
 
-output "master_instance_id" {
-  value = "${aws_spot_instance_request.master.id}"
+output "qanta_instance_id" {
+  value = "${join(",", aws_spot_instance_request.qanta.*.id)}"
 }
 
 output "vpc_id" {
   value = "${aws_vpc.qanta.id}"
 }
-
-# ascii art from http://patorjk.com/software/taag/#p=display&f=Standard&t=EC2%20Instances

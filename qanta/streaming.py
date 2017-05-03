@@ -1,4 +1,5 @@
 import subprocess
+import warnings
 import socket
 import time
 import requests
@@ -9,8 +10,8 @@ from collections import namedtuple
 from qanta.util.environment import (QB_QUESTION_DB, QB_SPARK_MASTER, QB_STREAMING_CORES,
                                     QB_API_DOMAIN, QB_API_KEY, QB_API_USER_ID)
 from qanta.util.constants import FEATURE_NAMES
-from qanta.util.qdb import QuestionDatabase
 from qanta.extract_features import instantiate_feature
+from qanta.datasets.quiz_bowl import QuestionDatabase
 
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker
@@ -20,6 +21,9 @@ from functional import seq, pseq
 
 from pyspark import SparkContext, SparkConf
 from pyspark.streaming import StreamingContext
+
+
+warnings.warn('QB Streaming is deprecated and will almost certainly crash', DeprecationWarning)
 
 DB_URL = 'postgresql+psycopg2://postgres:postgres@localhost:5432'
 Base = declarative_base()

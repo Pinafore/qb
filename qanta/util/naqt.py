@@ -1,10 +1,13 @@
 from glob import glob
-from qanta.util.qdb import QuestionDatabase
-
 import codecs
 import os
 
 import nltk
+
+from qanta import logging
+from qanta.datasets.quiz_bowl import QuestionDatabase
+
+log = logging.get(__name__)
 
 sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
 
@@ -161,9 +164,9 @@ if __name__ == "__main__":
                          page, qq.text, qq.answer, naqt=qq.metadata["ID"])
 
             if last_id % 1000 == 0:
-                print(answer_map[qq.answer])
-                print(last_id, qq.answer, page, qq.text)
-                print(qq.tournaments)
+                log.info(str(answer_map[qq.answer]))
+                log.info('{} {} {} {}'.format(last_id, qq.answer, page, qq.text))
+                log.info(str(qq.tournaments))
 
-    print("Added %i, skipped %i" % (last_id - kNAQT_START, num_skipped))
+    log.info("Added %i, skipped %i" % (last_id - kNAQT_START, num_skipped))
     qdb.prune_text()
