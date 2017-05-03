@@ -82,7 +82,7 @@ class TitleFinder:
         candidates = dict((self.normalize(x.replace("_", " ")), x) for x in
                           candidates)
         val = process.extract(text, candidates, limit=num_candidates)
-        return [candidates[x] for x in val]
+        return val
 
 
 def best_guess(unassigned, index, min_val=0.5, delta=0.1):
