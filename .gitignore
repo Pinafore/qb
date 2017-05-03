@@ -37,3 +37,5 @@ clm/_SUCCESS
 logs/
 .DS_Store
 terraform.tfvars
+build/
+dist/
