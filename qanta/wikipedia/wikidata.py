@@ -166,21 +166,7 @@ for wd in wiki_datatypes:
     datatype = wd.datatype
     datatype_parsers[datatype] = wd.parse
 
-
-class Claim:
-    def __init__(self, item, wiki_property, wiki_object, datatype, title, property_id, item_id):
-        self.item = item
-        self.property = wiki_property
-        self.object = wiki_object
-        self.datatype = datatype
-        self.title = title
-        self.property_id = property_id
-        self.item_id = item_id
-
-    def __repr__(self):
-        return '(item="{}", property="{}", object="{}", dt="{}", title="{}"'.format(
-            self.item, self.property, self.object, self.datatype, self.title
-        )
+Claim = namedtuple('Claim', 'item property object datatype title property_id item_id')
 
 
 def extract_property_map(parsed_wikidata: RDD):
@@ -245,6 +231,30 @@ def extract_claims(wikidata_items: RDD, b_property_map: Broadcast, b_item_map: B
         return item_claims
 
     return wikidata_items.flatMap(parse_item_claims)
+
+
+def clean_claims(claims: RDD, b_item_map: Broadcast):
+    def clean(claim):
+        item_map = b_item_map.value
+        if claim.datatype == 'wikibase-item':
+            if claim.object in item_map:
+                claim = claim._replace(object=item_map[claim.object])
+                return claim
+            else:
+                return None
+        elif claim.datatype == 'quantity':
+            unit = claim.object.unit
+            unit = unit.split('/')[-1]
+            if unit in item_map:
+                claim = claim._replace(object=item_map[unit])
+                return claim
+            else:
+                return None
+        return claim
+
+    dt_filter = {'wikibase-item', 'string', 'monolingualtext', 'quantity', 'time'}
+
+    return claims.filter(lambda c: c.datatype in dt_filter).map(clean).filter(lambda c: c is not None)
 
 
 def extract_claim_types(wikidata_items: RDD):

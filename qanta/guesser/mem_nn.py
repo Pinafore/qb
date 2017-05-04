@@ -267,24 +267,22 @@ class MemNNGuesser(AbstractGuesser):
 
         # Wikipedia sentence encoder used to search memory
         wiki_m_encoder = Sequential()
-        # wiki_m_encoder.add(Reshape((self.n_memories * self.wiki_max_len,), input_shape=(self.n_memories, self.wiki_max_len)))
         wiki_m_encoder.add(wiki_embeddings)
-        # wiki_m_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
+        wiki_m_encoder.add(Dropout(self.word_dropout_rate, noise_shape=[self.n_memories, self.wiki_max_len, 1]))
         wiki_m_encoder.add(AverageWords())
         wiki_input_encoded_m = wiki_m_encoder(wiki_input)
 
         # Wikipedia sentence encoder for retrieved memories
         wiki_c_encoder = Sequential()
-        # wiki_c_encoder.add(Reshape((self.n_memories * self.wiki_max_len,), input_shape=(self.n_memories, self.wiki_max_len)))
         wiki_c_encoder.add(wiki_embeddings)
-        # wiki_c_encoder.add(Reshape((self.n_memories, self.wiki_max_len, wiki_we_dimension)))
+        wiki_c_encoder.add(Dropout(self.word_dropout_rate, noise_shape=[self.n_memories, self.wiki_max_len, 1]))
         wiki_c_encoder.add(AverageWords())
         wiki_input_encoded_c = wiki_c_encoder(wiki_input)
 
         # Quiz Bowl question encoder
         qb_encoder = Sequential()
         qb_encoder.add(qb_embeddings)
-        qb_encoder.add(WordDropout(self.word_dropout_rate))
+        qb_encoder.add(Dropout(self.word_dropout_rate, noise_shape=[self.qb_max_len, 1]))
         qb_encoder.add(AverageWords())
         qb_input_encoded = qb_encoder(qb_input)
 

@@ -1,6 +1,7 @@
 from typing import List, Dict, Iterable, Tuple
 import sqlite3
 from collections import defaultdict, OrderedDict, Counter
+import re
 
 from functional import seq
 
@@ -10,6 +11,11 @@ from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText,
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PUNCTUATION
 from qanta.config import conf
+
+kPAREN = re.compile(r'\([^)]*\)')
+kBRACKET = re.compile(r'\[[^)]*\]')
+kMULT_SPACE = re.compile(r'\s+')
+kANGLE = re.compile(r'<[^>]*>')
 
 log = logging.get(__name__)
 
@@ -133,6 +139,37 @@ class QuestionDatabase:
             d[answer][page] += 1
 
         return d
+
+    def normalize_answer(self, answer):
+        answer = answer.lower().replace("_ ", " ").replace(" _", " ").replace("_", "")
+        answer = answer.replace("{", "").replace("}", "")
+        answer = kPAREN.sub('', answer)
+        answer = kBRACKET.sub('', answer)
+        answer = kANGLE.sub('', answer)
+        answer = kMULT_SPACE.sub(' ', answer)
+        answer = " ".join(Question.split_and_remove_punc(answer))
+        return answer
+
+    def normalized_answers(self):
+        """
+        Return a dictionary with the most unmatched pages
+        """
+
+        c = self._conn.cursor()
+        command = 'select answer, page from questions '
+        c.execute(command)
+
+        answers = defaultdict(list)
+        for aa, page in c:
+            normalized = self.normalize_answer(aa)
+            answers[normalized].append((aa, page))
+        return answers
+
+    def questions_by_answer(self, answer):
+        questions = self.query('from questions where answer == ?', (answer,))
+
+        for ii in questions:
+            yield questions[ii]
 
     def questions_with_pages(self) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
