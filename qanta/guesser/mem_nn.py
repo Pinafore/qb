@@ -46,6 +46,7 @@ MEM_MODEL_TMP_TARGET = '/tmp/qanta/deep/mem_nn.h5'
 MEM_MODEL_TARGET = 'mem_nn.h5'
 MEM_PARAMS_TARGET = 'mem_nn_params.pickle'
 
+PAD_TOKEN = '٩(◕‿◕｡)۶'
 
 qb_load_embeddings = nn.create_load_embeddings_function(MEM_QB_WE_TMP, MEM_QB_WE, log)
 wiki_load_embeddings = nn.create_load_embeddings_function(MEM_WIKI_WE_TMP, MEM_WIKI_WE, log)
@@ -303,7 +304,12 @@ class MemNNGuesser(AbstractGuesser):
         # memories_and_question = K.concat([memories, qb_input_encoded], axis=1)
         memories_and_question = Concatenate(1)([memories, qb_input_encoded])
 
-        actions = Dense(self.n_classes)(memories_and_question)
+        hidden = Dense(self.n_hidden_units)(memories_and_question)
+        hidden = Activation('relu')(hidden)
+        hidden = BatchNormalization()(hidden)
+        hidden = Dropout(self.nn_dropout_rate)(hidden)
+
+        actions = Dense(self.n_classes)(hidden)
         actions = BatchNormalization()(actions)
         actions = Dropout(self.nn_dropout_rate)(actions)
         actions = Activation('softmax')(actions)
@@ -319,13 +325,13 @@ class MemNNGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        training_data = tuple(d[:100] for d in training_data)
         x_train_text, y_train, _, x_test_text, y_test, _, qb_vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.qb_vocab = qb_vocab
 
         log.info('Creating qb embeddings...')
+        log.info('EXPAND: %s', self.expand_we)
         qb_embeddings, qb_embedding_lookup = qb_load_embeddings(
             vocab=qb_vocab, expand_glove=self.expand_we, mask_zero=True
         )
@@ -344,7 +350,7 @@ class MemNNGuesser(AbstractGuesser):
         classes = set(i_to_class)
         wiki_sentences = build_wikipedia_sentences(classes, self.n_wiki_sentences)
         log.info('Building Memory Index...')
-        MemoryIndex.build(wiki_sentences)
+        # MemoryIndex.build(wiki_sentences)
 
         log.info('Fetching most relevant {} memories per question in train and test...'.format(self.n_memories))
         log.info('Fetching train memories...')
@@ -360,12 +366,13 @@ class MemNNGuesser(AbstractGuesser):
         self.wiki_embeddings, wiki_embedding_lookup = wiki_load_embeddings(
             vocab=wiki_vocab, expand_glove=self.expand_we, mask_zero=True
         )
+        self.wiki_embedding_lookup = wiki_embedding_lookup
 
         wiki_max_len = 0
         for i in range(len(tokenized_train_memories)):
             memories = tokenized_train_memories[i]
             we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup)
-                for m in memories + [['٩(◕‿◕｡)۶']] * (self.n_memories - len(memories))]
+                for m in memories + [[PAD_TOKEN]] * (self.n_memories - len(memories))]
             if len(we_memories) != 0:
                 wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_memories))
             tokenized_train_memories[i] = we_memories
@@ -391,7 +398,7 @@ class MemNNGuesser(AbstractGuesser):
         log.info('Building keras model...')
         self.model = self.build_model()
 
-        log.info('Training model...')
+        log.info('Training model with %d examples...', len(x_train))
         callbacks = [
             TensorBoard(),
             EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy'),
@@ -413,10 +420,28 @@ class MemNNGuesser(AbstractGuesser):
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
-        x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.wiki_embedding_lookup)
-                  for q in questions]
+        tokenized_x = [tokenize_question(q) for q in questions]
+        x_test = [nn.convert_text_to_embeddings_indices(q, self.qb_embedding_lookup) for q in tokenized_x]
         x_test = np.array(nn.tf_format(x_test, self.qb_max_len, 0))
-        class_probabilities = self.model.predict_proba(x_test, batch_size=self.batch_size)
+
+        test_memories = MemoryIndex.search_parallel(tokenized_x, self.n_memories)
+
+        tokenized_test_memories, _ = preprocess_wikipedia(test_memories, False)
+
+        for i in range(len(tokenized_test_memories)):
+            memories = tokenized_test_memories[i]
+            we_memories = [nn.convert_text_to_embeddings_indices(m, self.wiki_embedding_lookup)
+                for m in memories + [[PAD_TOKEN]] * (self.n_memories - len(memories))]
+            tokenized_test_memories[i] = we_memories
+
+        tokenized_test_memories = [
+            pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+            for mem in tokenized_test_memories]
+        tokenized_test_memories = np.array(tokenized_test_memories)
+        print(np.shape(tokenized_test_memories))
+        print(set(len(m) for m in tokenized_test_memories))
+
+        class_probabilities = self.model.predict([x_test, tokenized_test_memories], batch_size=self.batch_size)
         guesses = []
         for row in class_probabilities:
             sorted_labels = np.argsort(-row)[:max_n_guesses]
