@@ -6,129 +6,16 @@ import pandas as pd
 import itertools
 from functools import partial
 from functional import seq
+from multiprocessing import Pool
 
 from qanta.util import constants as c
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
 from qanta import logging
 
-from util import *
-from performance import Prediction, Meta
-from multiprocessing import Pool
 
 log = logging.get(__name__)
 
-def process_vw_row(line):
-    line = line.split('|')
-    qid, sent, token = map(int, line[0].split('\'')[1].split('_'))
-    features = dict()
-    for section in line[1:-1]:
-        section = section.strip().split(' ')
-        section_name = section[0]
-        for feature in section[1:]:
-            feature_name, score = feature.split(':')
-            feature_name = section_name + '^' + feature_name
-            score = float(score)
-            features[feature_name] = score
-    guesser = line[-1].strip().split(' ')
-    guess = guesser[1]
-    scores = dict()
-    for feature in guesser[2:]:
-        feature_name, score = feature.split(':')
-        score = float(score)
-        scores[feature_name] = score
-    features['guess'] = (guess, scores['DAN_score'])
-    return qid, sent, token, guess, features, scores['DAN_score']
-
-def process_question(option2id, all_questions, qnum_q):
-    qnum, q = qnum_q
-    answer = format_guess(all_questions[qnum].page)
-
-    guess_vecs = []
-    results = []
-    prev_vec = [0 for _ in range(NUM_GUESSES)]
-    prev_dict = {}
-    for sent_token, group in q.groupby(['sentence', 'token'], sort=True):
-        group = group.sort_values('score', ascending=False)[:NUM_GUESSES]
-
-        # check if top guess is correct
-        top_guess = group.guess.tolist()[0]
-        results.append(int(top_guess == answer))
-
-        # get the current input vector
-        curr_vec = group.score.tolist()
-        curr_dict = {x.guess: x.score for x in group.itertuples()}
-        diff_vec, isnew_vec = [], []
-        for i, x in enumerate(group.itertuples()):
-            if x.guess not in prev_dict:
-                diff_vec.append(x.score)
-                isnew_vec.append(1)
-            else:
-                diff_vec.append(x.score - prev_dict[x.guess])
-                isnew_vec.append(0)
-        vec = curr_vec + prev_vec + diff_vec + isnew_vec
-        assert(len(vec) == 4 * NUM_GUESSES)
-        guess_vecs.append(vec)
-        prev_vec = curr_vec
-        prev_duct = curr_dict
-
-    return QuestionGuesses(qnum, option2id[answer], guess_vecs, results)
-
-def main1():
-    cfg = config()
-    id2option = pickle.load(open(cfg.options_dir, 'rb'))
-    option2id = {o: i for i, o in enumerate(id2option)}
-    question_db = QuestionDatabase()
-    all_questions = question_db.all_questions()
-    vw_input_df = dict()
-    guesses = dict()
-    for fold in ['dev', 'test']:
-        vw_input = open(c.VW_INPUT.format(fold))
-        vw_rows = list(map(process_vw_row, vw_input.readlines()))
-        vw_rows = pd.DataFrame(vw_rows, columns=['qnum', 'sentence', 'token',
-            'guess', 'features', 'score'])
-        vw_input_df[fold] = vw_rows
-        worker = partial(process_question, option2id, all_questions)
-        guesses[fold] = list(map(worker, vw_rows.groupby('qnum')))
-    pickle.dump(vw_input_df, open('vw_input_df.pkl', 'wb'))
-    pickle.dump(guesses, open('guesses.pkl', 'wb'))
-    return vw_input_df, guesses
-
-def _2predmeta(buzzes, inputs):
-    (q, question), queue = inputs
-    question = question.groupby(['sentence', 'token'], sort=True)
-    preds, metas = [], []
-    for pos, (sent_token, group) in enumerate(question):
-        sent, token = sent_token
-        x = group.sort_values('score', ascending=False).iloc[0]
-        final = pos == buzzes[x.qnum]
-        preds.append(Prediction(x.score, x.qnum, sent, token))
-        metas.append(Meta(x.qnum, sent, token, x.guess))
-    queue.put(q)
-    return preds, metas
-
-def buzzer2predsmetas(vw_input, buzzes):
-    pool = Pool(16)
-    manager = Manager()
-    queue = manager.Queue()
-    inputs = [(question, queue) for question in vw_input.groupby('qnum')]
-    total_size = len(inputs)
-    worker = partial(_2predmeta, buzzes)
-    result = pool.map_async(worker, inputs)
-    # monitor loop
-    while True:
-        if result.ready():
-            break
-        else:
-            size = queue.qsize()
-            sys.stderr.write('\r[interface] done: {0}/{1}'.format(size, total_size))
-            time.sleep(0.1)
-
-    result = result.get()
-    preds, metas = list(map(list, zip(*result)))
-    preds = list(itertools.chain(*preds))
-    metas = list(itertools.chain(*metas))
-    return seq(preds), seq(metas)
 
 def buzzer2expo(vw_input, buzzes):
     '''
@@ -159,6 +46,7 @@ def buzzer2expo(vw_input, buzzes):
                 if final:
                     finalwriter.writerow([x.qnum, x.guess])
 
+
 def buzzer2vwout(vw_input, buzzes, fold):
     '''
     vw_input: dataframe
@@ -183,6 +71,7 @@ def buzzer2vwout(vw_input, buzzes, fold):
                 metafile.write('{0} {1} {2} {3}\n'.format(x.qnum, x.sentence,
                     x.token, x.guess))
 
+
 def _2vwexpo(buzzes, inputs):
     (q, question), queue = inputs
     question = question.groupby(['sentence', 'token'], sort=True)
@@ -202,6 +91,7 @@ def _2vwexpo(buzzes, inputs):
                 finalf.append([x.qnum, x.guess])
     queue.put(q)
     return buzzf, predf, metaf, finalf
+
 
 def buzzer2vwexpo(vw_input, buzzes, fold):
     pool = Pool(16)
