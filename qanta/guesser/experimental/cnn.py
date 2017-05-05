@@ -200,8 +200,8 @@ class CNNModel:
         self.summary = None
         self.session = None
         self.summary_counter = 0
-        self.filter_sizes = [3, 4, 5]
-        self.num_filters = 128
+        self.filter_sizes = [2, 3, 4]
+        self.num_filters = 300
 
     def build_tf_model(self):
         with tf.variable_scope(
@@ -250,12 +250,8 @@ class CNNModel:
                         name='conv'
                     )
                     h_bias_add = tf.nn.bias_add(conv, b)
-                    h_batch_normed = tf.contrib.layers.batch_norm(h_bias_add,
-                                                                  center=True, scale=True,
-                                                                  is_training=self.training_phase,
-                                                                  scope='bn', fused=True)
-                    h = tf.nn.relu(h_batch_normed, name='relu')
-                    pooled = tf.nn.max_pool(
+                    h = tf.nn.relu(h_bias_add, name='relu')
+                    pooled = tf.nn.avg_pool(
                         h,
                         ksize=[1, self.max_len - filter_size + 1, 1, 1],
                         strides=[1, 1, 1, 1],
@@ -303,8 +299,7 @@ class CNNModel:
             self.saver = tf.train.Saver()
 
     def train(self, x_train, y_train, x_train_lengths, x_test, y_test, x_test_lengths, save=True):
-        session_conf = tf.ConfigProto(log_device_placement=True)
-        with tf.Graph().as_default(), tf.Session(config=session_conf) as session:
+        with tf.Graph().as_default(), tf.Session() as session:
             self.build_tf_model()
             self.session = session
             self.session.run(tf.global_variables_initializer())
@@ -391,17 +386,7 @@ class CNNModel:
                 self.len_placeholder: x_len_batch,
                 self.training_phase: int(train)
             }
-            if batch_i % 100 == 0:
-                run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-                run_metadata = tf.RunMetadata()
-                fetches = self.loss, self.accuracy, self.train_op, self.summary
-                returned = self.session.run(fetches, feed_dict=feed_dict, options=run_options,
-                                            run_metadata=run_metadata)
-                self.file_writer.add_run_metadata(run_metadata, 'step%d' % self.summary_counter)
-                self.file_writer.add_summary(returned[3], self.summary_counter)
-                self.summary_counter += 1
-            else:
-                returned = self.session.run(fetches, feed_dict=feed_dict)
+            returned = self.session.run(fetches, feed_dict=feed_dict)
             loss = returned[0]
             accuracy = returned[1]
             if not train:
@@ -470,8 +455,8 @@ class CNNModel:
 
 
 DEFAULT_FIXED_PARAMS = dict(
-    n_hidden_units=300, n_hidden_layers=2, word_dropout=.5, batch_size=128,
-    learning_rate=.0001, max_epochs=60, nn_dropout=.5, max_patience=8
+    n_hidden_units=300, n_hidden_layers=2, word_dropout=.25, batch_size=128,
+    learning_rate=.0005, max_epochs=100, nn_dropout=.25, max_patience=8
 )
 
 
@@ -534,7 +519,8 @@ class CNNGuesser(AbstractGuesser):
 
         log.info('Computing number of classes and max paragraph length in words')
         self.n_classes = _compute_n_classes(training_data[1])
-        self.max_len = _compute_max_len(x_train)
+        # self.max_len = _compute_max_len(x_train)
+        self.max_len = max([len(' '.join(sentences).split()) for sentences in training_data[0]])
         x_train = _tf_format(x_train, self.max_len, embeddings.shape[0])
         x_test = _tf_format(x_test, self.max_len, embeddings.shape[0])
 

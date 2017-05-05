@@ -14,7 +14,7 @@ variable "spot_price" {
   default = ".95"
 }
 
-resource "aws_spot_instance_request" "master" {
+resource "aws_spot_instance_request" "qanta" {
   instance_type = "p2.xlarge"
 
   ephemeral_block_device {

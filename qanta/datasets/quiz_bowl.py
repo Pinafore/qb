@@ -1,13 +1,21 @@
 from typing import List, Dict, Iterable, Tuple
 import sqlite3
 from collections import defaultdict, OrderedDict, Counter
+import re
 
 from functional import seq
 
 from qanta import logging
+from qanta.preprocess import format_guess
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PUNCTUATION
+from qanta.config import conf
+
+kPAREN = re.compile(r'\([^)]*\)')
+kBRACKET = re.compile(r'\[[^)]*\]')
+kMULT_SPACE = re.compile(r'\s+')
+kANGLE = re.compile(r'<[^>]*>')
 
 log = logging.get(__name__)
 
@@ -56,7 +64,7 @@ class Question:
             if word_skip > 0:
                 words = self.text[i].split()
                 for j in range(word_skip, len(words), word_skip):
-                    yield i + 1, j, previous + [" ".join(words[:j])]
+                    yield i, j, previous + [" ".join(words[:j])]
 
             yield i + 1, 0, [self.text[x] for x in sorted(self.text) if x <= i]
 
@@ -68,15 +76,12 @@ class Question:
             yield d
 
     def get_text(self, sentence, token):
-        if self._last_query != (sentence, token):
-            self._last_query = (sentence, token)
-            previous = ""
-            for i in range(sentence):
-                previous += self.text.get(i, "")
-            if token > 0:
-                previous += " ".join(self.text[sentence].split()[:token])
-            self._cached_query = previous
-        return self._cached_query
+        text = ""
+        for i in range(sentence):
+            text += self.text.get(i, "")
+        if token > 0:
+            text += " ".join(self.text.get(sentence, "").split()[:token])
+        return text
 
     def add_text(self, sent, text):
         self.text[sent] = text
@@ -134,6 +139,37 @@ class QuestionDatabase:
             d[answer][page] += 1
 
         return d
+
+    def normalize_answer(self, answer):
+        answer = answer.lower().replace("_ ", " ").replace(" _", " ").replace("_", "")
+        answer = answer.replace("{", "").replace("}", "")
+        answer = kPAREN.sub('', answer)
+        answer = kBRACKET.sub('', answer)
+        answer = kANGLE.sub('', answer)
+        answer = kMULT_SPACE.sub(' ', answer)
+        answer = " ".join(Question.split_and_remove_punc(answer))
+        return answer
+
+    def normalized_answers(self):
+        """
+        Return a dictionary with the most unmatched pages
+        """
+
+        c = self._conn.cursor()
+        command = 'select answer, page from questions '
+        c.execute(command)
+
+        answers = defaultdict(list)
+        for aa, page in c:
+            normalized = self.normalize_answer(aa)
+            answers[normalized].append((aa, page))
+        return answers
+
+    def questions_by_answer(self, answer):
+        questions = self.query('from questions where answer == ?', (answer,))
+
+        for ii in questions:
+            yield questions[ii]
 
     def questions_with_pages(self) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
@@ -225,10 +261,14 @@ class QuizBowlDataset(AbstractDataset):
         self.db = QuestionDatabase(qb_question_db)
         self.min_class_examples = min_class_examples
 
-    def training_data(self) -> TrainingData:
+    def training_data(self, normalize_guess=False) -> TrainingData:
         all_questions = seq(self.db.all_questions().values())
+        if conf['guessers_train_on_dev']:
+            fold_condition = lambda q: q.fold == 'train' or q.fold == 'dev'
+        else:
+            fold_condition = lambda q: q.fold == 'train'
         filtered_questions = all_questions\
-            .filter(lambda q: q.fold == 'train')\
+            .filter(fold_condition)\
             .group_by(lambda q: q.page)\
             .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\
@@ -238,7 +278,10 @@ class QuizBowlDataset(AbstractDataset):
         training_properties = []
         for example, answer, properties in filtered_questions:
             training_examples.append(example)
-            training_answers.append(answer)
+            if normalize_guess:
+                training_answers.append(format_guess(answer))
+            else:
+                training_answers.append(answer)
             training_properties.append(properties)
 
         return training_examples, training_answers, training_properties

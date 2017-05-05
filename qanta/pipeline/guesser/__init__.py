@@ -1,15 +1,16 @@
 import os
 import importlib
 import pickle
+import time
 
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 
-from qanta.pipeline.preprocess import Preprocess
 from qanta.config import conf
 from qanta.util import constants as c
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_path
+from qanta.pipeline.preprocess import DownloadData
 from qanta import logging
 
 log = logging.get(__name__)
@@ -38,7 +39,7 @@ class TrainGuesser(Task):
     dependency_class = luigi.Parameter()  # type: str
 
     def requires(self):
-        yield Preprocess()
+        yield DownloadData()
         if self.dependency_class is not None and self.dependency_module is not None:
             dependency_class = get_class(self.dependency_module, self.dependency_class)
             yield dependency_class()
@@ -47,9 +48,12 @@ class TrainGuesser(Task):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_instance = guesser_class()  # type: AbstractGuesser
         qb_dataset = guesser_instance.qb_dataset()
+        start_time = time.time()
         guesser_instance.train(qb_dataset.training_data())
+        end_time = time.time()
         guesser_instance.save(output_path(self.guesser_module, self.guesser_class, ''))
         params = guesser_instance.parameters()
+        params['training_time'] = end_time - start_time
         params_path = output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle')
         with open(params_path, 'wb') as f:
             pickle.dump(params, f)
@@ -91,10 +95,19 @@ class GenerateGuesses(Task):
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
         for fold in c.ALL_FOLDS:
+            if fold == 'train' and not conf['generate_train_guesses']:
+                log.info('Skipping generation of train fold guesses')
+                continue
             log.info('Generating and saving guesses for {} fold'.format(fold))
             log.info('Starting guess generation...')
-            guess_df = guesser_instance.generate_guesses(self.n_guesses, [fold],
-                                                         word_skip=self.word_skip)
+            start_time = time.time()
+            if fold == 'test' and self.word_skip == -1:
+                guess_df = guesser_instance.generate_guesses(
+                    self.n_guesses, [fold], word_skip=conf['test_fold_word_skip'])
+            else:
+                guess_df = guesser_instance.generate_guesses(self.n_guesses, [fold], word_skip=self.word_skip)
+            end_time = time.time()
+            log.info('Guessing on {} fold took {}s'.format(fold, end_time - start_time))
             log.info('Starting guess saving...')
             guesser_class.save_guesses(guess_df, guesser_directory, [fold])
             log.info('Done saving guesses')
@@ -102,6 +115,8 @@ class GenerateGuesses(Task):
     def output(self):
         targets = []
         for fold in c.ALL_FOLDS:
+            if fold == 'train' and not conf['generate_train_guesses']:
+                continue
             targets.append(LocalTarget(output_path(
                 self.guesser_module, self.guesser_class, 'guesses_{}.pickle'.format(fold))))
         return targets

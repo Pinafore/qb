@@ -12,11 +12,19 @@ def api(command, parse=True):
         return json.loads(response.stdout.decode('utf8'))
 
 
-def get_spot_id():
+def get_spot_ids():
     with open('terraform.tfstate') as f:
         state = hcl.load(f)
 
-    return state['modules'][0]['resources']['aws_spot_instance_request.master']['primary']['id']
+    resources = state['modules'][0]['resources']
+
+    if 'aws_spot_instance_request.qanta' in resources:
+        return [resources['aws_spot_instance_request.qanta']['primary']['id']]
+    elif 'aws_spot_instance_request.qanta.0' in resources:
+        instances = [r for r in resources if 'aws_spot_instance_request.qanta' in r]
+        return [resources[r]['primary']['id'] for r in instances]
+    else:
+        raise ValueError('No matching instances found')
 
 
 def get_instance_id(spot_id):
@@ -54,8 +62,9 @@ if __name__ == '__main__':
     if security_groups is not None:
         print('Adding these security groups:', security_groups)
         security_groups = security_groups.split(',')
-        spot_id = get_spot_id()
-        instance_id = get_instance_id(spot_id)
-        attach_security_group(instance_id, security_groups)
+        spot_ids = get_spot_ids()
+        for spot_id in spot_ids:
+            instance_id = get_instance_id(spot_id)
+            attach_security_group(instance_id, security_groups)
     else:
         print('No additional security groups added')
