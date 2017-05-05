@@ -432,3 +432,20 @@ All the wikipedia database dumps are provided in MySQL sql files. This guide has
 After setting that up, read any relevant SQL dumps into MySQL using these instructions https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
 
 After these are loaded the following SQL commands will create a CSV file containing a source page id, source page title, and target page title. This can be interpretted as the source page redirecting to the target page
+
+## Queries to produce redirect table/csv
+
+With the `redirect` and `page` table in MySQL, these queries will fetch the appropriate data.
+
+To query for a table with a redirect going from a source page to a destination page
+
+```sql
+SELECT
+p.page_title AS source_page,
+r.rd_title AS dest_page
+FROM page p
+INNER JOIN (SELECT rd_title, rd_from FROM redirect) r
+ON p.page_id = r.rd_from
+```
+
+To write this to a csv you can reference http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format

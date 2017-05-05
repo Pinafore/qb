@@ -37,7 +37,7 @@ guessers "DAN" {
   class = "qanta.guesser.dan.DANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = true
-  min_answers = 2
+  min_answers = 1
   expand_we = true
   n_hidden_layers = 1
   n_hidden_units = 1000
@@ -58,7 +58,7 @@ guessers "RNN" {
   class = "qanta.guesser.rnn.RNNGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
-  min_answers = 2
+  min_answers = 1
   expand_we = true
   rnn_cell = "gru"
   n_rnn_units = 300
