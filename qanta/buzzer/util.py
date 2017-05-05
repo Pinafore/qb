@@ -88,21 +88,21 @@ def _process_question_df(option2id, all_questions, qnum_q_queue):
         top_guess = group.guess.tolist()[0]
         results.append(int(top_guess == answer))
 
-        # # get the current input vector
-        # curr_vec = group.score.tolist()
-        # curr_dict = {x.guess: x.score for x in group.itertuples()}
-        # diff_vec, isnew_vec = [], []
-        # for i, x in enumerate(group.itertuples()):
-        #     if x.guess not in prev_dict:
-        #         diff_vec.append(x.score)
-        #         isnew_vec.append(1)
-        #     else:
-        #         diff_vec.append(x.score - prev_dict[x.guess])
-        #         isnew_vec.append(0)
-        # vec = curr_vec + prev_vec + diff_vec + isnew_vec
-        # assert(len(vec) == 4 * NUM_GUESSES)
-        # prev_vec = curr_vec
-        # prev_dict = curr_dict
+        # get the current input vector
+        curr_vec = group.score.tolist()
+        curr_dict = {x.guess: x.score for x in group.itertuples()}
+        diff_vec, isnew_vec = [], []
+        for i, x in enumerate(group.itertuples()):
+            if x.guess not in prev_dict:
+                diff_vec.append(x.score)
+                isnew_vec.append(1)
+            else:
+                diff_vec.append(x.score - prev_dict[x.guess])
+                isnew_vec.append(0)
+        vec = curr_vec + prev_vec + diff_vec + isnew_vec
+
+        prev_vec = curr_vec
+        prev_dict = curr_dict
 
         vec = {x.guess: x.score for x in group.itertuples()}
 
@@ -127,9 +127,11 @@ def load_quizbowl():
         all_options.update({format_guess(q.page) for q in folds['dev'].values()})
 
         id2option = list(all_options)
-        pickle.dump(id2option, open(OPTIONS_DIR, 'wb'))
+        with open(OPTIONS_DIR, 'wb') as outfile:
+            pickle.dump(id2option, outfile)
     else:
-        id2option = pickle.load(open(OPTIONS_DIR, 'rb'))
+        with open(OPTIONS_DIR, 'rb') as infile:
+            id2option = pickle.load(infile)
     option2id = {o: i for i, o in enumerate(id2option)}
     num_options = len(id2option)
     log.info('Number of options', len(id2option))
@@ -140,7 +142,8 @@ def load_quizbowl():
     for fold in folds:
         save_dir = '%s_processed.pickle' % (GUESSES_DIR + fold)
         if os.path.isfile(save_dir):
-            all_guesses[fold] = pickle.load(open(save_dir, 'rb'))
+            with open(save_dir, 'rb') as infile:
+                all_guesses[fold] = pickle.load(infile)
             log.info('Loading {0} guesses'.format(fold))
             continue
 
@@ -165,7 +168,8 @@ def load_quizbowl():
 
         log.info('Processed {0} guesses saved to '.format(fold, save_dir))
         all_guesses[fold] = result.get()
-        pickle.dump(all_guesses[fold], open(save_dir, 'wb'))
+        with open(save_dir, 'wb') as outfile:
+            pickle.dump(all_guesses[fold], outfile)
     return id2option, all_guesses
 
 def metric(prediction, ground_truth, mask):
