@@ -426,3 +426,23 @@ If the above approaches cannot solve page assignments, then the last
 resort is to explicitly assign questions to pages based on either
 Protobowl or NAQT id.  These files have four fields but only use the
 first three.
+
+# Wikipedia Dumps
+
+As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
+dumps created on 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/
+
+Of these we use the following
+
+* [Wikipedia page text](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-pages-articles-multistream.xml.bz2): This is used to get the text, title, and id of wikipedia pages
+* [Wikipedia titles](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-all-titles.gz): This is used for more convenient access to wikipedia page titles
+* [Wikipedia redirects](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-redirect.sql.gz): DB dump for wikipedia redirects, used for resolving different ways of referencing the same wikipedia entity
+* [Wikipedia page to ids](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-page.sql.gz): Contains a mapping of wikipedia page and ids, necessary for making the redirect table useful
+
+NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
+
+All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
+
+After setting that up, read any relevant SQL dumps into MySQL using these instructions https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
+
+After these are loaded the following SQL commands will create a CSV file containing a source page id, source page title, and target page title. This can be interpretted as the source page redirecting to the target page
