@@ -34,7 +34,6 @@ def main():
     cfg = config()
     args = parse_args()
 
-    log.info('Loading data')
     id2option, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses['dev'], id2option, batch_size=cfg.batch_size,
             only_hopeful=False)
@@ -44,7 +43,7 @@ def main():
     model = RNN(eval_iter.n_input, 128, 2)
 
     if args.gpu != -1 and chainer.cuda.available:
-        log.info('Using gpu', args.gpu)
+        log.info('Using gpu {0}'.format(args.gpu))
         chainer.cuda.get_device(args.gpu).use()
         model.to_gpu(args.gpu)
 

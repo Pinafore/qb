@@ -66,7 +66,7 @@ def stupid_buzzer(iterator):
             qid = qid.tolist()
             buzz_dict[qid] = buzz
     tot_reward /= iterator.size
-    log.info('[stupid]', num_hopeful, num_results, tot_reward)
+    log.info('[stupid] {0} {1} {2} {3}'.format(num_hopeful, num_results, tot_reward))
     return buzz_dict
 
 def _process_question_df(option2id, all_questions, qnum_q_queue):
@@ -122,10 +122,9 @@ def load_quizbowl():
         all_guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=c.ALL_FOLDS)
         all_options = set(all_guesses.guess)
 
-        pool = Pool(conf['buzzer']['n_cores'])
         folds = quizbowl_db.questions_by_fold()
-        all_options.update({format_guess(q.page) for q in folds['train'].values()})
-        all_options.update({format_guess(q.page) for q in folds['dev'].values()})
+        train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
+        all_options.update({format_guess(q.page) for q in train_dev_questions})
 
         id2option = list(all_options)
         with open(OPTIONS_DIR, 'wb') as outfile:
@@ -135,7 +134,7 @@ def load_quizbowl():
             id2option = pickle.load(infile)
     option2id = {o: i for i, o in enumerate(id2option)}
     num_options = len(id2option)
-    log.info('Number of options', len(id2option))
+    log.info('Number of options {0}'.format(len(id2option)))
 
     all_guesses = dict()
     # folds = c.ALL_FOLDS

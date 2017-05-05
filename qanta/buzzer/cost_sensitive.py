@@ -43,7 +43,7 @@ def main():
             dropout=0.2)
 
     if args.gpu != -1 and chainer.cuda.available:
-        log.info('Using gpu', args.gpu)
+        log.info('Using gpu {0}'.format(args.gpu))
         chainer.cuda.get_device(args.gpu).use()
         model.to_gpu(args.gpu)
 
