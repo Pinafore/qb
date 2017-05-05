@@ -51,6 +51,7 @@ guessers "DAN" {
   activation_function = "elu"
   train_on_q_runs = false
   train_on_full_q = false
+  decay_lr_on_plateau = false
 }
 
 guessers "RNN" {

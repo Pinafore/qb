@@ -50,13 +50,12 @@ nodes can communicate via SSH
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
 ##### Installed Software
-* Python 3.6
+* Python 3.5
 * Apache Spark 2.1.0
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
-* Postgres
 * KenLM
-* Redis (latest stable)
+* CUDA and Nvidia drivers if using a GPU instance
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
@@ -78,7 +77,6 @@ on fixing this, but haven't yet.
 * Configure the 2 SSD drives attached to `r3.8xlarge` instances for use
 * Clone the `Pinafore/qb` to `/ssd-c/qanta/qb` and set it as the quiz bowl root
 * Download bootstrap AWS files to get the system running faster
-* TODO: based on variables download data from latest run to continue work on.
 
 #### Run AWS/Terraform/Packer Scripts
 
@@ -135,9 +133,12 @@ scripts that Packer and Terraform run to install and configure a running qanta s
 3. `aws.tf`: Terraform configuration
 4. `terraform/`: Bash scripts and configuration scripts
 
-## Environment Variables
-The majority of QANTA configuration is done through environment variables. These are set
-appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults.
+## Configuration
+QANTA configuration is done through a combination of environment variables and the `qanta-defaults.hcl` file. These are set
+appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults. QANTA will read a `qanta.hcl`
+first if it exists, otherwise it will fall back to reading `qanta-defaults.hcl`. This is meant to allow for custom
+configuration of `qanta.hcl` after copying it via `cp qanta-defaults.hcl qanta.hcl` without having a chance for configs
+to accidentally become defaults unless that is on purpose.
 
 Reference `conf/qb-env.sh.template` for a list of available configuration variables
 
@@ -147,40 +148,19 @@ Reference `conf/qb-env.sh.template` for a list of available configuration variab
 #### Accessing Resources on EC2
 
 For security reasons, the AWS machines qanta creates are only accessible to the internet via SSH
-to the master node. To gain access to the various web UIs (Spark, Luigi, Ganglia) and other services
-running on the cluster there are three options:
+to the master node. To gain access to the various web UIs (Spark, Luigi, Tensorboard) and other services
+running on the cluster there are two options:
 
-* Create an SSH VPN with `sshuttle`. This forwards all traffic from your machine through the master
-node, and gives access to AWS internal routing
 * Create an SSH tunnel to forward specific ports on the master to localhost
 * In the EC2 Console create a security group which whitelists your IP address and add it to the
 instance
-
-`sshuttle` gets you working off the ground the fastest but routes all your traffic to AWS. SSH
-tunneling doesn't give access to everything. EC2 Security Groups is the overall most convenient
-solution since it requires only adding your custom group to the instance after it starts
-
-The reason for these security precautions is that allowing access to the Spark application master
-or the spark master web UI would in principle expose a way for an attacker to gain access to your
-AWS credentials.
-
-##### SSH VPN
-
-**Warning:** The following steps guide you through creating an SSH VPN to the master node. This
-means **all** traffic will be redirected through the master node while the SSH VPN is running. AWS
-charges for bandwidth which is outgoing from AWS so avoid downloading large files/videos to your
-machine while the VPN is active (AWS does not charge for incoming bandwidth).
-
-We recommend that before you work with Qanta that you run:
-
-`sshuttle -N -H --dns -r ubuntu@public-ip 0/0`
 
 ##### SSH Tunnel
 
 The following SSH command will forward all the important UIs running on the master node to
 `localhost`:
 
-`ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 ubuntu@instance-ip`
+`ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 -L 6006:localhost:6006 ubuntu@instance-ip`
 
 This can be made easier by adding an entry like below in `~/.ssh/config`. Note that the example
 domain `example.com` is mapped to the master ip address outputed by terraform. This can be
@@ -194,6 +174,7 @@ Host qanta
   User ubuntu
   LocalForward 8082 127.0.0.1:8082
   LocalForward 8080 127.0.0.1:8080
+  LocalForward 6006 127.0.0.1:6006
 ```
 
 Now you can simply do `ssh qanta` and navigating to `localhost:8082` will access the EC2 instance.
@@ -234,6 +215,11 @@ $ python3 setup.py download
 $ make clm
 ```
 
+### Qanta on Path
+
+In addition to these steps you need to either run `python setup.py develop` or include the qanta directory in your
+`PYTHONPATH` environment variable. We intend to fix path issues in the future by fixing absolute/relative paths.
+
 ### Qanta Running Summary
 QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
 large batches of questions at a time. Running the batch pipeline is managed by
@@ -261,7 +247,7 @@ you wish to rerun.
 
 ### Running Streaming Mode
 
-**Warning: This mode is highly experimental**
+**Warning: This mode is highly experimental and/or deprecated. It almost certainly doesn't work anymore**
 
 Again, Apache Spark needs to be running at the url specified in the environment variable
 `QB_SPARK_MASTER`.
