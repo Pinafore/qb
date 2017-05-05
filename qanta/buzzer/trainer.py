@@ -18,7 +18,7 @@ from qanta.buzzer.progress import ProgressBar
 def metric(prediction, ground_truth, mask):
     if prediction.shape != ground_truth.shape:
         raise ValueError("Shape of prediction does not match with ground truth.")
-    if prediction.shape != mask.shape
+    if prediction.shape != mask.shape:
         raise ValueError("Shape of prediction does not match with mask.")
     stats = dict()
     match = ((prediction == ground_truth) * mask)
