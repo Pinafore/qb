@@ -21,7 +21,7 @@ Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward', 'reward_hopeful', 
                                      'buzz', 'correct', 'rush', 'late'])
 OPTIONS_DIR = 'output/buzzer/options.pkl'
-GUESSES_DIR = 'data/guesses/'
+GUESSES_DIR = 'output/guesses/'
 
 log = logging.get(__name__)
 

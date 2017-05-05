@@ -28,3 +28,4 @@ boto3
 pypandoc
 slacker
 pyhcl
+chainer
