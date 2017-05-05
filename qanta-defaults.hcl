@@ -51,6 +51,7 @@ guessers "DAN" {
   activation_function = "elu"
   train_on_q_runs = false
   train_on_full_q = false
+  decay_lr_on_plateau = false
 }
 
 guessers "RNN" {
@@ -144,4 +145,15 @@ guessers "VowpalWabbit" {
   learning_rate = 0.1
   decay_learning_rate = 0.95
   bits = 30
+}
+
+guessers "ElasticSearchWikiSentences" {
+  class = "qanta.guesser.experimental.elasticsearch_wikidata_sentences.ElasticSearchWikiSentencesGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+  wiki_page_enabled = true
+  wiki_sentences_enabled = true
+  # Set the level of parallelism for guess generation
+  n_cores = 15
+  min_appearances = 1
 }

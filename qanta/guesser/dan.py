@@ -17,7 +17,7 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
+from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras import backend as K
 
 import numpy as np
@@ -53,6 +53,7 @@ class DANGuesser(AbstractGuesser):
         self.activation_function = guesser_conf['activation_function']
         self.train_on_q_runs = guesser_conf['train_on_q_runs']
         self.train_on_full_q = guesser_conf['train_on_full_q']
+        self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -84,7 +85,8 @@ class DANGuesser(AbstractGuesser):
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
             'activation_function': self.activation_function,
             'train_on_q_runs': self.train_on_q_runs,
-            'train_on_full_q': self.train_on_full_q
+            'train_on_full_q': self.train_on_full_q,
+            'decay_lr_on_plateau': self.decay_lr_on_plateau
         }
 
     def load_parameters(self, params):
@@ -108,6 +110,7 @@ class DANGuesser(AbstractGuesser):
         self.activation_function = params['activation_function']
         self.train_on_q_runs = params['train_on_q_runs']
         self.train_on_full_q = params['train_on_full_q']
+        self.decay_lr_on_plateau = params['decay_lr_on_plateau']
 
     def parameters(self):
         return {
@@ -127,7 +130,8 @@ class DANGuesser(AbstractGuesser):
             'epochs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
             'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
             'train_on_q_runs': self.train_on_q_runs,
-            'train_on_full_q': self.train_on_full_q
+            'train_on_full_q': self.train_on_full_q,
+            'decay_lr_on_plateau': self.decay_lr_on_plateau
         }
 
     def qb_dataset(self):
@@ -203,6 +207,8 @@ class DANGuesser(AbstractGuesser):
                 monitor='val_sparse_categorical_accuracy'
             )
         ]
+        if self.decay_lr_on_plateau:
+            callbacks.append(ReduceLROnPlateau(monitor='val_sparse_categorical_accuracy', factor=.5, patience=5))
         history = self.model.fit(
             x_train, y_train,
             validation_data=(x_test, y_test),
