@@ -1,7 +1,6 @@
 import datetime
 import sys
 import time
-import logging
 from time import gmtime, strftime
 
 class ProgressBar(object):

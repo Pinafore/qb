@@ -1,17 +1,7 @@
 import os
-import pickle
-import numpy as np
 import argparse
-from collections import defaultdict, namedtuple
-
 import chainer
-import chainer.functions as F
-import chainer.links as L
-from chainer import Variable
-from chainer import cuda
 
-from qanta.guesser.abstract import AbstractGuesser
-from qanta.util import constants as c
 from qanta import logging
 
 from qanta.buzzer.progress import ProgressBar
@@ -52,9 +42,9 @@ def main():
     model = MLP(n_input=eval_iter.n_input, n_hidden=200, n_output=2, n_layers=3,
             dropout=0.2)
 
-    if args.gpu != -1 and cuda.available:
+    if args.gpu != -1 and chainer.cuda.available:
         log.info('Using gpu', args.gpu)
-        cuda.get_device(args.gpu).use()
+        chainer.cuda.get_device(args.gpu).use()
         model.to_gpu(args.gpu)
 
     if os.path.exists(cfg.model_dir) and args.load:

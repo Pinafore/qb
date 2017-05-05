@@ -1,8 +1,6 @@
 import os
-import pickle
 import numpy as np
 import argparse
-from collections import  namedtuple
 
 import chainer
 import chainer.functions as F
@@ -10,8 +8,6 @@ import chainer.links as L
 from chainer import Variable
 from chainer import cuda
 
-from qanta.guesser.abstract import AbstractGuesser
-from qanta.util import constants as c
 from qanta import logging
 
 from qanta.buzzer.progress import ProgressBar
@@ -27,8 +23,6 @@ class config:
         self.lr            = 1e-3
         self.max_grad_norm = 5
         self.batch_size    = 128
-        self.guesses_dir   = 'data/guesses/'
-        self.options_dir   = 'data/options.pickle'
         self.model_dir     = 'output/buzzer/dqn_buzzer.npz'
         self.log_dir       = 'dqn_buzzer.log'
 
@@ -321,7 +315,7 @@ def main():
     cfg = config()
     args = parse_args()
 
-    id2option, all_guesses = load_quizbowl(cfg)
+    id2option, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses['dev'], id2option, batch_size=cfg.batch_size,
             only_hopeful=ONLY_HOPEFUL)
     eval_iter = QuestionIterator(all_guesses['test'], id2option, batch_size=cfg.batch_size,

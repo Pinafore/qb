@@ -1,22 +1,12 @@
 import os
-import sys
-import pickle
-import numpy as np
 import argparse
-from collections import  namedtuple
 
 import chainer
-import chainer.functions as F
-import chainer.links as L
-from chainer import Variable
-from chainer import cuda
 
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util import constants as c
 from qanta import logging
 
 from qanta.buzzer.interface buzzer2vwexpo
-from qanta.buzzer.progress import ProgressBar
 from qanta.buzzer.iterator import QuestionIterator
 from qanta.buzzer.util import load_quizbowl
 from qanta.buzzer.trainer import Trainer
@@ -31,8 +21,6 @@ class config:
         self.lr            = 1e-3
         self.max_grad_norm = 5
         self.batch_size    = 128
-        self.guesses_dir   = 'data/guesses/'
-        self.options_dir   = 'data/options.pickle'
         self.model_dir     = 'output/buzzer/mlp_buzzer.npz'
         self.log_dir       = 'mlp_buzzer.log'
 
@@ -60,9 +48,9 @@ def main():
     log.info('Loading model {0}'.format(cfg.model_dir))
     chainer.serializers.load_npz(cfg.model_dir, model)
 
-    if cuda.available and args.gpu != -1:
+    if chainer.cuda.available and args.gpu != -1:
         log.info('Using gpu', args.gpu)
-        cuda.get_device(args.gpu).use()
+        chainer.cuda.get_device(args.gpu).use()
         model.to_gpu(args.gpu)
 
     trainer = Trainer(model, cfg.model_dir)

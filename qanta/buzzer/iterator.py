@@ -1,13 +1,6 @@
 import random
 import numpy as np
 from collections import defaultdict, namedtuple
-from multiprocessing import Pool
-from functools import partial
-
-from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.datasets.quiz_bowl import QuizBowlDataset
-from qanta.preprocess import format_guess
-from qanta.guesser.abstract import AbstractGuesser
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 

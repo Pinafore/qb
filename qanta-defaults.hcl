@@ -45,3 +45,7 @@ guessers "CNN" {
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }
+
+buzzer {
+  n_cores=16
+}

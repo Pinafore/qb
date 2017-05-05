@@ -13,6 +13,7 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.preprocess import format_guess
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
+from qanta.config import conf
 from qanta import logging
 
 NUM_GUESSES = 20
@@ -122,7 +123,7 @@ def load_quizbowl():
         all_guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=c.ALL_FOLDS)
         all_options = set(all_guesses.guess)
 
-        pool = Pool(8)
+        pool = Pool(conf['buzzer']['n_cores'])
         folds = quizbowl_db.questions_by_fold()
         all_options.update({format_guess(q.page) for q in folds['train'].values()})
         all_options.update({format_guess(q.page) for q in folds['dev'].values()})
@@ -150,7 +151,8 @@ def load_quizbowl():
 
         log.info('Processing {0} guesses'.format(fold))
         guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=[fold])
-        pool = Pool(16)
+
+        pool = Pool(conf['buzzer']['n_cores'])
         manager = Manager()
         queue = manager.Queue()
         worker = partial(_process_question_df, option2id, all_questions)

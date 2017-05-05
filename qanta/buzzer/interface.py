@@ -9,6 +9,7 @@ from functional import seq
 from multiprocessing import Pool
 
 from qanta.util import constants as c
+from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
 from qanta import logging
@@ -37,7 +38,7 @@ def _buzzer2vwexpo(buzzes, inputs):
 
 
 def buzzer2vwexpo(vw_input, buzzes, fold):
-    pool = Pool(16)
+    pool = Pool(conf['buzzer']['n_cores'])
     manager = Manager()
     queue = manager.Queue()
     inputs = [(question, queue) for question in vw_input.groupby('qnum')]

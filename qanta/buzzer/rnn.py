@@ -1,17 +1,7 @@
 import os
-import pickle
-import numpy as np
 import argparse
-from collections import defaultdict, namedtuple
-
 import chainer
-import chainer.functions as F
-import chainer.links as L
-from chainer import Variable
-from chainer import cuda
 
-from qanta.guesser.abstract import AbstractGuesser
-from qanta.util import constants as c
 from qanta import logging
 
 from qanta.buzzer.progress import ProgressBar
@@ -29,8 +19,6 @@ class config:
         self.lr            = 1e-3
         self.max_grad_norm = 5
         self.batch_size    = 128
-        self.guesses_dir   = 'data/guesses/'
-        self.options_dir   = 'data/options.pickle'
         self.log_dir       = 'rnn_buzzer.log'
         self.model_dir     = 'output/buzzer/rnn_buzzer.npz'
 
@@ -55,9 +43,9 @@ def main():
 
     model = RNN(eval_iter.n_input, 128, 2)
 
-    if args.gpu != -1 and cuda.available:
+    if args.gpu != -1 and chainer.cuda.available:
         log.info('Using gpu', args.gpu)
-        cuda.get_device(args.gpu).use()
+        chainer.cuda.get_device(args.gpu).use()
         model.to_gpu(args.gpu)
 
     if os.path.exists(cfg.model_dir) and args.load:
