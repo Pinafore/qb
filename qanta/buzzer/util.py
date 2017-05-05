@@ -17,9 +17,10 @@ from qanta import logging
 
 NUM_GUESSES = 20
 MIN_ANSWERS = 1
-Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
+
 BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward', 'reward_hopeful', 
                                      'buzz', 'correct', 'rush', 'late'])
+
 OPTIONS_DIR = 'output/buzzer/options.pkl'
 GUESSES_DIR = 'output/guesses/'
 
@@ -171,15 +172,3 @@ def load_quizbowl():
         with open(save_dir, 'wb') as outfile:
             pickle.dump(all_guesses[fold], outfile)
     return id2option, all_guesses
-
-def metric(prediction, ground_truth, mask):
-    assert prediction.shape == ground_truth.shape
-    assert prediction.shape == mask.shape
-    stats = dict()
-    match = ((prediction == ground_truth) * mask)
-    positive = (ground_truth * mask)
-    positive_match = (match * positive).sum()
-    total = mask.sum()
-    stats['acc'] = (match.sum() / total).tolist()
-    stats['pos_acc'] = (positive_match / total).tolist()
-    return stats

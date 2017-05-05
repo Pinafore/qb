@@ -15,13 +15,12 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
 from qanta import logging
 
-import interface
-import performance
-from progress import ProgressBar
-from iterator import QuestionIterator
-from util import *
-from trainer import *
-from models import *
+from qanta.buzzer.interface buzzer2vwexpo
+from qanta.buzzer.progress import ProgressBar
+from qanta.buzzer.iterator import QuestionIterator
+from qanta.buzzer.util import load_quizbowl
+from qanta.buzzer.trainer import Trainer
+from qanta.buzzer.models import MLP, RNN
 
 log = logging.get(__name__)
 
@@ -73,7 +72,7 @@ def main():
     # preds, metas = buzzer2predsmetas(guesses_df, buzzes)
     # log.info('preds and metas generated')
     # performance.generate(2, preds, metas, 'output/summary/{}_1.json'.format(fold))
-    interface.buzzer2vwexpo(guesses_df, buzzes, fold)
+    buzzer2vwexpo(guesses_df, buzzes, fold)
 
 if __name__ == '__main__':
     main()

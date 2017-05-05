@@ -9,9 +9,7 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.preprocess import format_guess
 from qanta.guesser.abstract import AbstractGuesser
 
-from util import *
-
-N_INPUT = 4 * NUM_GUESSES + 2
+Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 
 class QuestionIterator(object):
     '''Each batch contains:

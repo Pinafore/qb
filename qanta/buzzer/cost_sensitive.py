@@ -14,11 +14,11 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
 from qanta import logging
 
-from progress import ProgressBar
-from trainer import Trainer
-from iterator import QuestionIterator
-from util import *
-from models import *
+from qanta.buzzer.progress import ProgressBar
+from qanta.buzzer.trainer import Trainer
+from qanta.buzzer.iterator import QuestionIterator
+from qanta.buzzer.util import load_quizbowl
+from qanta.buzzer.models import MLP, RNN
 
 log = logging.get(__name__)
 

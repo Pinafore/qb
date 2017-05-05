@@ -13,10 +13,9 @@ from chainer import cuda
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
 
-from progress import ProgressBar
-from util import *
-from interface import *
-from iterator import QuestionIterator
+from qanta.buzzer.progress import ProgressBar
+from qanta.buzzer.util import load_quizbowl
+from qanta.buzzer.iterator import QuestionIterator
 
 class config:
     def __init__(self):

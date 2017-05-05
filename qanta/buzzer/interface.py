@@ -13,7 +13,6 @@ from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
 from qanta import logging
 
-
 log = logging.get(__name__)
 
 def _buzzer2vwexpo(buzzes, inputs):

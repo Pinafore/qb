@@ -13,8 +13,21 @@ from chainer import cuda
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
 
-from progress import ProgressBar
-from util import metric
+from qanta.buzzer.progress import ProgressBar
+
+def metric(prediction, ground_truth, mask):
+    if prediction.shape != ground_truth.shape:
+        raise ValueError("Shape of prediction does not match with ground truth.")
+    if prediction.shape != mask.shape
+        raise ValueError("Shape of prediction does not match with mask.")
+    stats = dict()
+    match = ((prediction == ground_truth) * mask)
+    positive = (ground_truth * mask)
+    positive_match = (match * positive).sum()
+    total = mask.sum()
+    stats['acc'] = (match.sum() / total).tolist()
+    stats['pos_acc'] = (positive_match / total).tolist()
+    return stats
 
 class Trainer(object):
 
