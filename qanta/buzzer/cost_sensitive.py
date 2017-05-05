@@ -29,8 +29,6 @@ class config:
         self.lr            = 1e-3
         self.max_grad_norm = 5
         self.batch_size    = 128
-        self.guesses_dir   = 'data/guesses/'
-        self.options_dir   = 'data/options.pickle'
         self.log_dir       = 'mlp_buzzer.log'
         self.model_dir     = 'output/buzzer/mlp_buzzer.npz'
 
@@ -45,8 +43,7 @@ def main():
     cfg = config()
     args = parse_args()
 
-    log.info('Loading data')
-    id2option, all_guesses = load_quizbowl(cfg)
+    id2option, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses['dev'], id2option, batch_size=cfg.batch_size,
             only_hopeful=True)
     eval_iter = QuestionIterator(all_guesses['test'], id2option, batch_size=cfg.batch_size,

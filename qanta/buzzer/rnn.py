@@ -47,7 +47,7 @@ def main():
     args = parse_args()
 
     log.info('Loading data')
-    id2option, all_guesses = load_quizbowl(cfg)
+    id2option, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses['dev'], id2option, batch_size=cfg.batch_size,
             only_hopeful=False)
     eval_iter = QuestionIterator(all_guesses['test'], id2option, batch_size=cfg.batch_size,

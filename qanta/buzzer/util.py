@@ -20,6 +20,9 @@ MIN_ANSWERS = 1
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward', 'reward_hopeful', 
                                      'buzz', 'correct', 'rush', 'late'])
+OPTIONS_DIR = 'output/buzzer/options.pkl'
+GUESSES_DIR = 'data/guesses/'
+
 log = logging.get(__name__)
 
 def stupid_buzzer(iterator):
@@ -108,12 +111,14 @@ def _process_question_df(option2id, all_questions, qnum_q_queue):
     queue.put(qnum)
     return (qnum, answer_id, guess_vecs, results)
 
-def load_quizbowl(cfg): 
+def load_quizbowl(): 
+    log.info('Loading data')
     question_db = QuestionDatabase()
     quizbowl_db = QuizBowlDataset(MIN_ANSWERS)
     all_questions = question_db.all_questions()
-    if not os.path.isfile(cfg.options_dir):
-        all_guesses = AbstractGuesser.load_guesses(cfg.guesses_dir, folds=c.ALL_FOLDS)
+    if not os.path.isfile(OPTIONS_DIR):
+        log.info('Loading the set of options')
+        all_guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=c.ALL_FOLDS)
         all_options = set(all_guesses.guess)
 
         pool = Pool(8)
@@ -122,9 +127,9 @@ def load_quizbowl(cfg):
         all_options.update({format_guess(q.page) for q in folds['dev'].values()})
 
         id2option = list(all_options)
-        pickle.dump(id2option, open(cfg.options_dir, 'wb'))
+        pickle.dump(id2option, open(OPTIONS_DIR, 'wb'))
     else:
-        id2option = pickle.load(open(cfg.options_dir, 'rb'))
+        id2option = pickle.load(open(OPTIONS_DIR, 'rb'))
     option2id = {o: i for i, o in enumerate(id2option)}
     num_options = len(id2option)
     log.info('Number of options', len(id2option))
@@ -133,14 +138,14 @@ def load_quizbowl(cfg):
     # folds = c.ALL_FOLDS
     folds = ['test', 'dev']
     for fold in folds:
-        save_dir = '%s_processed.pickle' % (cfg.guesses_dir + fold)
+        save_dir = '%s_processed.pickle' % (GUESSES_DIR + fold)
         if os.path.isfile(save_dir):
             all_guesses[fold] = pickle.load(open(save_dir, 'rb'))
             log.info('Loading {0} guesses'.format(fold))
             continue
 
         log.info('Processing {0} guesses'.format(fold))
-        guesses = AbstractGuesser.load_guesses(cfg.guesses_dir, folds=[fold])
+        guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=[fold])
         pool = Pool(16)
         manager = Manager()
         queue = manager.Queue()
