@@ -4,9 +4,11 @@ import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from clm.lm_wrapper import build_clm
 from qanta.util import constants as c
-from qanta.spark_execution import extract_features, extract_guess_features, merge_features
-from qanta.pipeline.preprocess import Preprocess
+from qanta.extract_features import extract_features, extract_guess_features, merge_features
 from qanta.pipeline.guesser import AllGuessers
+from qanta.pipeline.preprocess import DownloadData
+from qanta.util.io import shell
+from qanta.extractors import mentions
 from qanta.learning import classifier
 from qanta.extractors.stats import compute_question_stats
 from qanta.util.environment import QB_QUESTION_DB
@@ -14,7 +16,7 @@ from qanta.util.environment import QB_QUESTION_DB
 
 class BuildClm(Task):
     def requires(self):
-        yield Preprocess()
+        yield DownloadData()
 
     def output(self):
         return LocalTarget(c.CLM_TARGET)
@@ -23,11 +25,27 @@ class BuildClm(Task):
         build_clm()
 
 
+class KenLM(Task):
+    def requires(self):
+        yield DownloadData()
+
+    def run(self):
+        shell('mkdir -p temp')
+        shell('mkdir -p output')
+        mentions.build_lm_data('/tmp/wikipedia_sentences')
+        shell('lmplz -o 5 < /tmp/wikipedia_sentences > /tmp/kenlm.arpa')
+        shell('build_binary /tmp/kenlm.arpa {}'.format(c.KEN_LM))
+        shell('rm /tmp/wikipedia_sentences /tmp/kenlm.arpa')
+
+    def output(self):
+        return LocalTarget(c.KEN_LM)
+
+
 class ClassifierPickle(Task):
     class_type = luigi.Parameter()
 
     def requires(self):
-        yield Preprocess()
+        yield DownloadData()
 
     def output(self):
         return LocalTarget(c.CLASSIFIER_PICKLE_PATH.format(self.class_type))
@@ -53,7 +71,7 @@ class ClassifierReport(Task):
 
 class ClassifierGuessProperties(Task):
     def requires(self):
-        yield Preprocess()
+        yield DownloadData()
 
     def output(self):
         return LocalTarget(c.CLASSIFIER_GUESS_PROPS)
@@ -164,6 +182,7 @@ class ExtractMentionsFeatures(Task):
     resources = {'spark': 1}
 
     def requires(self):
+        yield KenLM()
         yield AllGuessers()
 
     def output(self):

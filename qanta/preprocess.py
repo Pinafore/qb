@@ -1,5 +1,5 @@
 import re
-from typing import Tuple, List
+from typing import List
 import string
 
 from qanta import logging
@@ -48,7 +48,12 @@ def format_guess(guess):
 
 
 def preprocess_dataset(data: TrainingData, train_size=.9,
-                       vocab=None, class_to_i=None, i_to_class=None):
+                       vocab=None, class_to_i=None, i_to_class=None,
+                       create_runs=False, full_question=False):
+    if full_question and create_runs:
+        raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
+            create_runs, full_question))
+
     for i in range(len(data[1])):
         data[1][i] = format_guess(data[1][i])
     classes = set(data[1])
@@ -76,18 +81,44 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
         test = []
 
     for q, ans, prop in train:
+        q_text = []
         for sentence in q:
-            q_text = tokenize_question(sentence)
-            if len(q_text) > 0:
-                for w in q_text:
+            t_question = tokenize_question(sentence)
+            if create_runs or full_question:
+                q_text.extend(t_question)
+            else:
+                q_text = t_question
+            if len(t_question) > 0:
+                for w in t_question:
                     vocab.add(w)
-                x_train.append(q_text)
-                y_train.append(class_to_i[ans])
-                properties_train.append(prop)
+                if create_runs:
+                    x_train.append(list(q_text))
+                elif not full_question:
+                    x_train.append(q_text)
+
+                if not full_question:
+                    y_train.append(class_to_i[ans])
+                    properties_train.append(prop)
+        if full_question:
+            x_train.append(q_text)
+            y_train.append(class_to_i[ans])
+            properties_train.append(prop)
 
     for q, ans, prop in test:
+        q_text = []
         for sentence in q:
-            q_text = tokenize_question(sentence)
+            t_question = tokenize_question(sentence)
+            if create_runs or full_question:
+                q_text.extend(t_question)
+                if not full_question:
+                    x_test.append(list(q_text))
+            else:
+                q_text = t_question
+                x_test.append(q_text)
+            if not full_question:
+                y_test.append(class_to_i[ans])
+                properties_test.append(prop)
+        if full_question:
             x_test.append(q_text)
             y_test.append(class_to_i[ans])
             properties_test.append(prop)

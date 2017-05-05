@@ -43,9 +43,6 @@ GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 GUESSER_TARGET_PREFIX = 'output/guesser'
 
-WIKIFIER_INPUT_TARGET = 'output/wikifier/input'
-WIKIFIER_OUTPUT_TARGET = 'output/wikifier/output'
-
 QB_SOURCE_LOCATION = 'data/internal/source'
 
 WHOOSH_WIKI_INDEX_PATH = 'output/whoosh/wiki/'

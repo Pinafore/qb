@@ -2,9 +2,7 @@ seaborn
 matplotlib
 scipy
 numpy
-unidecode
 wikipedia
-whoosh
 nltk
 scikit-learn
 regex

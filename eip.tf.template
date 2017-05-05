@@ -1,4 +1,0 @@
-resource "aws_eip_association" "qanta_ip" {
-  instance_id = "${aws_spot_instance_request.master.spot_instance_id}"
-  allocation_id = ""
-}

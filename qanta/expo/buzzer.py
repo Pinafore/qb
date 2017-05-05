@@ -5,6 +5,9 @@ from csv import DictReader
 from time import sleep
 import os
 
+from qanta.preprocess import format_guess
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+
 kSHOW_RIGHT = False
 kPAUSE = .25
 kSYSTEM = "QANTA"
@@ -400,7 +403,7 @@ def select_features(evidence_str, allowed_features):
 
 
 def format_display(display_num, question_text, sent, word, current_guesses,
-                   answer=None, guess_limit=5, points=10, disable_features=False):
+                   answer=None, guess_limit=5, points=10, disable_features=False, answerable=None):
     sep = "".join(["-"] * 80)
 
     current_text = ""
@@ -409,7 +412,8 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
 
-    report = "Question %i: %i points\n%s\n%s\n%s\n\n" % \
+    report = 'answerable: {}\n'.format(answerable)
+    report += "Question %i: %i points\n%s\n%s\n%s\n\n" % \
         (display_num, points, sep, current_text, sep)
 
     top_guesses = sorted(current_guesses,
@@ -486,13 +490,13 @@ def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say %s" % ans.replace("'", "").split("(")[0])
+    os.system("say %s" % ans.replace("'", "").replace('_', '').split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
 
 def present_question(display_num, question_id, question_text, buzzes, final,
-                     correct, human=0, computer=0, power="10"):
+                     correct, human=0, computer=0, power="10", answerable=None):
     human_delta = 0
     computer_delta = 0
     question_value = 15
@@ -528,13 +532,13 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                            "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
-                                     points=question_value))
+                                     points=question_value, answerable=answerable))
                 answer(buzz_now[0].page)
                 if buzz_now[0].page == correct:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(1)
                     print(format_display(display_num, question_text, max(question_text), 0,
-                                         current_guesses, answer=correct, points=question_value))
+                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
@@ -545,14 +549,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
                     print(format_display(display_num, question_text, max(question_text), 0,
-                                         current_guesses, answer=correct, points=question_value))
+                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
             else:
                 show_score(human + human_delta,
                            computer + computer_delta,
                            "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
-                                     points=question_value))
+                                     points=question_value, answerable=answerable))
     if computer_delta == 0:
         answer(final)
         if final == correct:
@@ -595,6 +599,10 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
+    ir_dataset = QuizBowlDataset(1)
+    ir_answer_set = {format_guess(g) for g in ir_dataset.training_data()[1]}
+    dan_dataset = QuizBowlDataset(2)
+    dan_answer_set = {format_guess(g) for g in dan_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
 
@@ -637,12 +645,21 @@ if __name__ == "__main__":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
 
+        correct_answer = format_guess(questions.answer(ii))
+        if correct_answer in dan_answer_set and correct_answer in ir_answer_set:
+            answerable = 'ir+dan'
+        elif correct_answer in ir_answer_set:
+            answerable = 'ir'
+        elif correct_answer in dan_answer_set:
+            answerable = 'dan'
+        else:
+            answerable = 'neither'
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),
                                           human=human,
                                           computer=computer,
-                                          power=power(ii))
+                                          power=power(ii), answerable=answerable)
         human = hum
         computer = comp
 

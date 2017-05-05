@@ -4,7 +4,6 @@ from qanta.util import constants as c
 from qanta.util.io import call, shell, make_dirs
 from qanta.pipeline.vw import (VWPredictions, VWMergeFeature, VWAuditRegressor, VWAudit,
                                VWMergeAllFeatures)
-from qanta.pipeline.preprocess import Preprocess
 from qanta.reporting import performance
 
 

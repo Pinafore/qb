@@ -1,4 +1,5 @@
 import subprocess
+import warnings
 import socket
 import time
 import requests
@@ -20,6 +21,9 @@ from functional import seq, pseq
 
 from pyspark import SparkContext, SparkConf
 from pyspark.streaming import StreamingContext
+
+
+warnings.warn('QB Streaming is deprecated and will almost certainly crash', DeprecationWarning)
 
 DB_URL = 'postgresql+psycopg2://postgres:postgres@localhost:5432'
 Base = declarative_base()

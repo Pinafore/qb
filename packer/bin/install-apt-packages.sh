@@ -13,4 +13,4 @@ sudo apt-get install -y default-jre default-jdk
 
 # Install LaTeX for reporting
 sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-extra texlive-fonts-recommended
-sudo apt-get install -y pdftk
+sudo apt-get install -y pdftk poppler-utils

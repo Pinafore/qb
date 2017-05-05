@@ -2,7 +2,6 @@ from collections import defaultdict
 from string import punctuation
 from functools import lru_cache
 
-import kenlm
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import wordnet as wn
@@ -98,6 +97,7 @@ class Mentions(AbstractFeatureExtractor):
 
     @property
     def lm(self):
+        import kenlm
         if not self.initialized:
             self._lm = kenlm.LanguageModel(self.kenlm_path)
             self.initialized = True

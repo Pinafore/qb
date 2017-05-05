@@ -64,7 +64,6 @@ def stupid_buzzer(iterator):
         tot_reward += reward
         for qid, buzz in zip(batch.qids, buzzes):
             qid = qid.tolist()
-            assert isinstance(qid, int)
             buzz_dict[qid] = buzz
     tot_reward /= iterator.size
     log.info('[stupid]', num_hopeful, num_results, tot_reward)

@@ -3,7 +3,6 @@ from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple, Optional
 import pickle
-from pprint import pformat
 
 import matplotlib
 matplotlib.use('Agg')
@@ -33,11 +32,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         Abstract class representing a guesser. All abstract methods must be implemented. Class
         construction should be light and not load data since this is reserved for the
         AbstractGuesser.load method.
-
-        self.parallel tells qanta whether or not this guesser should be parallelized.
-
         """
-        self.parallel = False
+        pass
 
     def qb_dataset(self) -> QuizBowlDataset:
         return QuizBowlDataset(2)
@@ -175,7 +171,9 @@ class AbstractGuesser(metaclass=ABCMeta):
         guesses_per_question = self.guess(question_texts, max_n_guesses)
 
         if len(guesses_per_question) != len(question_texts):
-            raise ValueError('Guesser not returning the right number of answers')
+            raise ValueError(
+                'Guesser has wrong number of answers: len(guesses_per_question)={} len(question_texts)={}'.format(
+                    len(guesses_per_question), len(question_texts)))
 
         log.info('Creating guess dataframe from guesses...')
         df_qnums = []
@@ -234,6 +232,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         assert len(folds) > 0
         guess_df = None
         for fold in folds:
+            if fold == 'train' and not conf['generate_train_guesses']:
+                continue
             input_path = AbstractGuesser.guess_path(directory, fold)
             if guess_df is None:
                 guess_df = pd.read_pickle(input_path)
@@ -406,7 +406,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             'dev_accuracy': dev_summary_accuracy,
             'test_accuracy': test_summary_accuracy,
             'guesser_name': self.display_name(),
-            'guesser_params': pformat(params),
+            'guesser_params': params,
             'n_answers_all_folds': len(all_answers),
             'n_total_train_questions': len(train_questions),
             'min_class_examples': dataset.min_class_examples,
