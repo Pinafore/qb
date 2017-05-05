@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from multiprocessing import Pool
 from functools import partial
 

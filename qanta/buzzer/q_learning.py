@@ -12,10 +12,13 @@ from chainer import cuda
 
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
+from qanta import logging
 
 from qanta.buzzer.progress import ProgressBar
 from qanta.buzzer.util import load_quizbowl
 from qanta.buzzer.iterator import QuestionIterator
+
+log = logging.get(__name__)
 
 class config:
     def __init__(self):
@@ -154,41 +157,6 @@ class QTrainer(object):
         epoch_stats = BuzzStats(*epoch_stats)
         return epoch_stats
 
-    # def train_one_epoch_new(self, progress_bar):
-    #     epoch_stats = [0, 0, 0, 0, 0, 0]
-    #     num_examples = 0
-    #     num_hopeful = 0
-    #     for i in range(self.train_iter.size):
-    #         batch = self.train_iter.next_batch(self.model.xp)
-    #         length, batch_size, _ = batch.vecs.shape
-    #         hopeful = [any(x == 1) for x in batch.results.T]
-    #         unfinished = self.model.xp.ones(batch_size)
-    #         num_examples += batch_size
-    #         num_hopeful += sum(hopeful)
-    #         for t in range(length):
-    #             qvalues = F.swapaxes(self.model(batch.vecs[t]), 0, 1) # 2 * batch_size
-    #             if t + 1 < length:
-    #                 nqvalues = F.swapaxes(self.model(batch.vecs[t + 1]), 0, 1)
-    #             else:
-    #                 nqvalues = self.model.xp.zeros((2, batch_size))
-    #             actions = F.argmax(qvalues, axis=0).data # batch_size
-    #             rewards = batch.results[t] * qvalues[1] # batch_size
-    #             nqv = F.max(nqvalues, axis=0).data # batch_size
-    #             loss = F.square(0.5 * nqv - qvalues[0])
-    #             loss += F.square(rewards + 0.5 * nqv - qvalues[1])
-    #             loss *= unfinished
-    #             loss *= batch.mask[t]
-    #             self.backprop(sum(loss))
-    #             unfinished *= (1 - actions)
-    #         progress_bar(*self.train_iter.epoch_detail)
-    #     # end of epoch
-    #     self.train_iter.finalize()
-    #     epoch_stats[0] /= num_examples # reward / num_total
-    #     epoch_stats[1] /= num_hopeful # reward_hopeful / num_hopeful
-    #     epoch_stats = [num_examples, num_hopeful] + epoch_stats
-    #     epoch_stats = BuzzStats(*epoch_stats)
-    #     return epoch_stats
-    
     def train_one_epoch(self, progress_bar, do_one=True):
 
         def _do_both(inputs):
@@ -326,7 +294,7 @@ class QTrainer(object):
                 output = get_output('train', train_stats)
                 with open(self.log_dir, 'a') as log_file:
                     log_file.write(output + '\n')
-                print('[dqn]', output) 
+                log.info('[dqn]', output) 
                 if save_model:
                     chainer.serializers.save_npz(self.model_dir, self.model)
                 progress_bar.finalize()
@@ -336,7 +304,7 @@ class QTrainer(object):
                 output = get_output('eval ', eval_stats)
                 with open(self.log_dir, 'a') as log_file:
                     log_file.write(output + '\n')
-                print('[dqn]', output)
+                log.info('[dqn]', output)
                 progress_bar.finalize()
 
 
@@ -354,21 +322,20 @@ def main():
     args = parse_args()
 
     id2option, all_guesses = load_quizbowl(cfg)
-    train_iter = QuestionIterator(all_guesses['dev'], batch_size=cfg.batch_size,
+    train_iter = QuestionIterator(all_guesses['dev'], id2option, batch_size=cfg.batch_size,
             only_hopeful=ONLY_HOPEFUL)
-    eval_iter = QuestionIterator(all_guesses['test'], batch_size=cfg.batch_size,
+    eval_iter = QuestionIterator(all_guesses['test'], id2option, batch_size=cfg.batch_size,
             only_hopeful=False)
 
-    n_input = 4 * NUM_GUESSES
-    model = MLP(n_input, 128, 2)
+    model = MLP(train_iter.n_input, 128, 2)
 
     if args.gpu != -1 and cuda.available:
-        print('[dqn] using gpu', args.gpu)
+        log.info('[dqn] using gpu', args.gpu)
         cuda.get_device(args.gpu).use()
         model.to_gpu(args.gpu)
 
     if os.path.exists(cfg.model_dir) and args.load:
-        print('[dqn] loading model')
+        log.info('[dqn] loading model')
         chainer.serializers.load_npz(cfg.model_dir, model)
 
     trainer = QTrainer(model, train_iter, eval_iter, cfg.model_dir, cfg.log_dir)

@@ -22,7 +22,7 @@ BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward', 'rewa
                                      'buzz', 'correct', 'rush', 'late'])
 
 OPTIONS_DIR = 'output/buzzer/options.pkl'
-GUESSES_DIR = 'output/guesses/'
+GUESSES_DIR = 'output/guesser/'
 
 log = logging.get(__name__)
 
