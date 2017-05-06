@@ -1,12 +1,13 @@
-import csv
+import sys
 import time
-import codecs
 import pickle
+import codecs
 import pandas as pd
 import itertools
 from functools import partial
 from functional import seq
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
+from typing import List, Dict, Tuple, Optional
 
 from qanta.util import constants as c
 from qanta.config import conf
@@ -16,32 +17,53 @@ from qanta import logging
 
 log = logging.get(__name__)
 
-def _buzzer2vwexpo(buzzes, inputs):
+def _buzzer2vwexpo(buzzes: Dict[int, int], 
+        inputs: tuple) -> Tuple[list, list, list, list]:
+    '''Multiprocessing worker for buzzer2vwexpo
+    buzzes: dictionary of qnum -> buzzing position
+    inputs: (qnum, question), queue:
+        qnum: int, question id
+        question: pd.group, the corresponding guesses
+        queue: multiprocessing queue for tracking progress
+    return:
+        buzzf: list of buzz file entries
+        predf: list of vw pred file entries
+        metaf: list of vw meta file entries
+        finalf: list of final file entries
+    '''
     (q, question), queue = inputs
     question = question.groupby(['sentence', 'token'], sort=True)
     q = int(q)
     buzzf, predf, metaf, finalf = [], [], [], []
     for pos, (sent_token, group) in enumerate(question):
         sent, token = sent_token
-        group = group.sort_values('score', ascending=False)[:NUM_GUESSES]
+        group = group.sort_values('score', ascending=False)
         for rank, x in enumerate(group.itertuples()):
             final = int((rank == 0) and (pos == buzzes[x.qnum]))
             score = x.score.tolist()
+            # force negative weight for guesses that are not chosen
             weight = score if final else score - 1
             predf.append([weight, q, sent, token])
             metaf.append([q, sent, token, x.guess])
-            buzzf.append([q, sent, token, x.guess, '', final, score])
+            guess = x.guess if ',' not in x.guess else '"' + x.guess + '"'
+            buzzf.append([q, sent, token, guess, '', final, score])
             if final:
-                finalf.append([x.qnum, x.guess])
+                finalf.append([x.qnum, guess])
     queue.put(q)
     return buzzf, predf, metaf, finalf
 
 
-def buzzer2vwexpo(vw_input, buzzes, fold):
+def buzzer2vwexpo(guesses_df: pd.DataFrame, 
+        buzzes: Dict[int, int], fold: str) -> None:
+    '''Given buzzing positions, generate vw_pred, vw_meta, buzz and final files
+    guesses_df: pd.DataFrame of guesses
+    buzzes: dictionary of qnum -> buzzing position
+    fold: string indicating the data fold
+    '''
     pool = Pool(conf['buzzer']['n_cores'])
     manager = Manager()
     queue = manager.Queue()
-    inputs = [(question, queue) for question in vw_input.groupby('qnum')]
+    inputs = [(question, queue) for question in guesses_df.groupby('qnum')]
     total_size = len(inputs)
     worker = partial(_buzzer2vwexpo, buzzes)
     result = pool.map_async(worker, inputs)
@@ -52,32 +74,40 @@ def buzzer2vwexpo(vw_input, buzzes, fold):
             break
         else:
             size = queue.qsize()
-            sys.stderr.write('\rbuzzer2vwexpo done: {0}/{1}'.format(size, total_size))
+            sys.stderr.write('\rbuzzer2vwexpo done: {0}/{1}'.format(
+                size, total_size))
             time.sleep(0.1)
+    sys.stderr.write('\n')
 
     result = result.get()
     buzzf, predf, metaf, finalf = list(map(list, zip(*result)))
 
-    with open(c.PRED_TARGET.format(fold), 'w') as pred_file, \
-         open(c.META_TARGET.format(fold), 'w') as meta_file, \
-         open(c.EXPO_BUZZ.format(fold), 'w') as buzz_file, \
-         open(c.EXPO_FINAL.format(fold), 'w') as final_file:
+    with codecs.open(c.PRED_TARGET.format(fold), 'w', 'utf-8') as pred_file, \
+         codecs.open(c.META_TARGET.format(fold), 'w', 'utf-8') as meta_file, \
+         codecs.open(c.EXPO_BUZZ.format(fold), 'w', 'utf-8') as buzz_file, \
+         codecs.open(c.EXPO_FINAL.format(fold), 'w', 'utf-8') as final_file:
 
-        buzz_writer = csv.writer(buzz_file, delimiter=',')
-        final_writer = csv.writer(final_file, delimiter=',')
+        buzz_file.write('question,sentence,word,page,evidence,final,weight\n')
         final_file.write('question,answer\n')
         
         log.info('\n\n[buzzer2vwexpo] writing to files')
 
-        for row in itertools.chain(*buzzf):
-            buzz_writer.writerow(row)
+        buzz_out = '\n'.join('{0},{1},{2},{3}{4}{5}{6}'.format(*r) for r in
+                itertools.chain(*buzzf))
+        buzz_file.write(buzz_out)
         log.info('buzz file written')
-        for row in itertools.chain(*finalf):
-            final_writer.writerow(row)
+
+        final_out = '\n'.join('{0},{1}'.format(*r) for r in
+                itertools.chain(*finalf))
+        final_file.write(final_out)
         log.info('final file written')
-        for row in itertools.chain(*predf):
-            pred_file.write('{0} {1}_{2}_{3}\n'.format(*row))
+
+        pred_out = '\n'.join('{0} {1}_{2}_{3}'.format(*r) for r in
+                itertools.chain(*predf))
+        pred_file.write(pred_out)
         log.info('vw_pred file written')
-        for row in itertools.chain(*metaf):
-            meta_file.write('{0} {1} {2} {3}\n'.format(*row))
+
+        meta_out = '\n'.join('{0} {1} {2} {3}'.format(*r) for r in
+                itertools.chain(*metaf))
+        meta_file.write(meta_out)
         log.info('vw_meta file written')

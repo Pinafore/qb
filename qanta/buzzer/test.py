@@ -5,62 +5,61 @@ import chainer
 
 from qanta.guesser.abstract import AbstractGuesser
 from qanta import logging
+from qanta.config import conf
 
-from qanta.buzzer.interface buzzer2vwexpo
+from qanta.buzzer import configs
+from qanta.buzzer.interface import buzzer2vwexpo
 from qanta.buzzer.iterator import QuestionIterator
-from qanta.buzzer.util import load_quizbowl
+from qanta.buzzer.util import load_quizbowl, GUESSES_DIR
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.models import MLP, RNN
 
 log = logging.get(__name__)
 
-class config:
-    def __init__(self):
-        self.n_hidden      = 200
-        self.optimizer     = 'Adam'
-        self.lr            = 1e-3
-        self.max_grad_norm = 5
-        self.batch_size    = 128
-        self.model_dir     = 'output/buzzer/mlp_buzzer.npz'
-        self.log_dir       = 'mlp_buzzer.log'
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--fold', required=True)
-    parser.add_argument('-g', '--gpu', type=int, default=-1)
+    parser.add_argument('-c', '--config', type=str, default='mlp')
     return parser.parse_args()
 
 def main():
-    cfg = config()
     args = parse_args()
+    cfg = getattr(configs, args.config)()
     fold = args.fold
 
-    option2id, all_guesses = load_quizbowl(cfg)
-    test_iter = QuestionIterator(all_guesses[fold], option2id, batch_size=cfg.batch_size)
+    option2id, all_guesses = load_quizbowl([fold])
+    test_iter = QuestionIterator(all_guesses[fold], option2id,
+            batch_size=cfg.batch_size)
     
     if not os.path.exists(cfg.model_dir):
         log.info('Model {0} not available'.format(cfg.model_dir))
         exit(0)
 
-    model = MLP(n_input=test_iter.n_input, n_hidden=200, n_output=2, n_layers=3,
-            dropout=0.2)
+    if isinstance(cfg, configs.mlp):
+        model = MLP(n_input=test_iter.n_input, n_hidden=cfg.n_hidden,
+                n_output=2, n_layers=cfg.n_layers, dropout=cfg.dropout)
+
+    if isinstance(cfg, configs.rnn):
+        model = RNN(test_iter.n_input, cfg.n_hidden, 2)
 
     log.info('Loading model {0}'.format(cfg.model_dir))
     chainer.serializers.load_npz(cfg.model_dir, model)
 
-    if chainer.cuda.available and args.gpu != -1:
-        log.info('Using gpu', args.gpu)
-        chainer.cuda.get_device(args.gpu).use()
-        model.to_gpu(args.gpu)
+    gpu = conf['buzzer']['gpu']
+    if gpu != -1 and chainer.cuda.available:
+        log.info('Using gpu {0}'.format(gpu))
+        chainer.cuda.get_device(gpu).use()
+        model.to_gpu(gpu)
 
     trainer = Trainer(model, cfg.model_dir)
     buzzes = trainer.test(test_iter)
     log.info('Buzzes generated')
-    guesses_df = AbstractGuesser.load_guesses(cfg.guesses_dir, folds=[fold])
+
+    guesses_df = AbstractGuesser.load_guesses(GUESSES_DIR, folds=[fold])
+    buzzer2vwexpo(guesses_df, buzzes, fold)
     # preds, metas = buzzer2predsmetas(guesses_df, buzzes)
     # log.info('preds and metas generated')
     # performance.generate(2, preds, metas, 'output/summary/{}_1.json'.format(fold))
-    buzzer2vwexpo(guesses_df, buzzes, fold)
 
 if __name__ == '__main__':
     main()

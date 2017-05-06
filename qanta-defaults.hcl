@@ -160,4 +160,5 @@ guessers "ElasticSearchWikiSentences" {
 
 buzzer {
   n_cores=16
+  gpu=1
 }

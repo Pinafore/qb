@@ -3,13 +3,12 @@ import sys
 import time
 import pickle
 import numpy as np
-import argparse
 from collections import namedtuple
 from multiprocessing import Pool, Manager
 from functools import partial
+from typing import List, Dict, Tuple, Optional
 
-from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.quiz_bowl import Question, QuestionDatabase, QuizBowlDataset
 from qanta.preprocess import format_guess
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
@@ -19,15 +18,17 @@ from qanta import logging
 NUM_GUESSES = 20
 MIN_ANSWERS = 1
 
-BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward', 'reward_hopeful', 
-                                     'buzz', 'correct', 'rush', 'late'])
+BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward',
+    'reward_hopeful', 'buzz', 'correct', 'rush', 'late'])
 
 OPTIONS_DIR = 'output/buzzer/options.pkl'
 GUESSES_DIR = 'output/guesser/'
 
 log = logging.get(__name__)
 
-def stupid_buzzer(iterator):
+def stupid_buzzer(iterator) -> Dict[int, int]:
+    '''Buzz by several heuristics.
+    '''
 
     def _do_one(vecs_results_masks):
         vecs, results, masks = vecs_results_masks
@@ -58,7 +59,8 @@ def stupid_buzzer(iterator):
         hopeful = sum(returns[0])
         results = sum(returns[1])
         buzzes = list(returns[2])
-        reward = ((results * 10) - (hopeful - results) * 5) / hopeful if hopeful > 0 else 0
+        reward = ((results * 10) - (hopeful - results) * 5) / hopeful \
+                if hopeful > 0 else 0
         num_hopeful += hopeful
         num_results += results
         tot_reward += reward
@@ -66,10 +68,20 @@ def stupid_buzzer(iterator):
             qid = qid.tolist()
             buzz_dict[qid] = buzz
     tot_reward /= iterator.size
-    log.info('[stupid] {0} {1} {2} {3}'.format(num_hopeful, num_results, tot_reward))
+    log.info('[stupid] {0} {1} {2} {3}'.format(
+        num_hopeful, num_results, tot_reward))
     return buzz_dict
 
-def _process_question_df(option2id, all_questions, qnum_q_queue):
+def _process_question_df(option2id: Dict[str, int], 
+        all_questions: List[Question], qnum_q_queue: Tuple) -> \
+                Tuple[int, int, List[Dict[str, int]], List[int]]:
+    '''Process one question.
+    return:
+        qnum: question id,
+        answer_id: answer id
+        guess_vecs: sequence of guess dictionaries
+        results: sequence of 0 and 1 indicating the correctness
+    '''
     (qnum, q), queue = qnum_q_queue
 
     answer = format_guess(all_questions[qnum].page)
@@ -81,7 +93,7 @@ def _process_question_df(option2id, all_questions, qnum_q_queue):
     guess_vecs = []
     results = []
     for sent_token, group in q.groupby(['sentence', 'token'], sort=True):
-        group = group.sort_values('score', ascending=False)[:NUM_GUESSES]
+        # group = group.sort_values('score', ascending=False)[:NUM_GUESSES]
 
         # check if top guess is correct
         top_guess = group.guess.tolist()[0]
@@ -90,17 +102,17 @@ def _process_question_df(option2id, all_questions, qnum_q_queue):
         guess_vecs.append(vec)
 
     queue.put(qnum)
-    return (qnum, answer_id, guess_vecs, results)
+    return qnum, answer_id, guess_vecs, results
 
-def load_quizbowl(): 
+def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list]]: 
     log.info('Loading data')
     question_db = QuestionDatabase()
     quizbowl_db = QuizBowlDataset(MIN_ANSWERS)
     all_questions = question_db.all_questions()
     if not os.path.isfile(OPTIONS_DIR):
         log.info('Loading the set of options')
-        all_guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=c.ALL_FOLDS)
-        all_options = set(all_guesses.guess)
+        all_fold_guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=c.ALL_FOLDS)
+        all_options = set(all_fold_guesses.guess)
 
         folds = quizbowl_db.questions_by_fold()
         train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
@@ -116,14 +128,12 @@ def load_quizbowl():
     num_options = len(id2option)
     log.info('Number of options {0}'.format(len(id2option)))
 
-    all_guesses = dict()
-    # folds = c.ALL_FOLDS
-    folds = ['test', 'dev']
+    guesses_by_fold = dict()
     for fold in folds:
         save_dir = '%s_processed.pickle' % (GUESSES_DIR + fold)
         if os.path.isfile(save_dir):
             with open(save_dir, 'rb') as infile:
-                all_guesses[fold] = pickle.load(infile)
+                guesses_by_fold[fold] = pickle.load(infile)
             log.info('Loading {0} guesses'.format(fold))
             continue
 
@@ -146,9 +156,10 @@ def load_quizbowl():
                 size = queue.qsize()
                 sys.stderr.write('\r[df data] done: {0}/{1}'.format(size, total_size))
                 time.sleep(0.1)
+        sys.stderr.write('\n')
 
         log.info('Processed {0} guesses saved to '.format(fold, save_dir))
-        all_guesses[fold] = result.get()
+        guesses_by_fold[fold] = result.get()
         with open(save_dir, 'wb') as outfile:
-            pickle.dump(all_guesses[fold], outfile)
-    return option2id, all_guesses
+            pickle.dump(guesses_by_fold[fold], outfile)
+    return option2id, guesses_by_fold

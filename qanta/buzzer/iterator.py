@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from collections import defaultdict, namedtuple
+from typing import List, Dict, Tuple, Optional
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 
@@ -13,8 +14,8 @@ class QuestionIterator(object):
         results: xp.int32, (length, batch_size)
     '''
 
-    def __init__(self, dataset, option2id, batch_size, bucket_size=4, shuffle=True,
-            only_hopeful=False):
+    def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
+            bucket_size=4, shuffle=True, only_hopeful=False):
         self.dataset = dataset
         self.option2id = option2id
         self.batch_size = batch_size
@@ -27,7 +28,9 @@ class QuestionIterator(object):
         self.is_end_epoch = False
         self.create_batches()
 
-    def dense_vector(self, dicts):
+    def dense_vector(self, dicts: List[Dict[str, float]]) -> List[List[float]]:
+        '''Generate dense vectors from a sequence of guess dictionaries.
+        '''
         num_guesses = len(dicts[0])
         vecs = []
         prev_vec = [0 for _ in range(num_guesses)]
@@ -52,7 +55,9 @@ class QuestionIterator(object):
             prev_dict = curr_dict
         return vecs
 
-    def sparse_vector(self, dicts):
+    def sparse_vector(self, dicts: List[Dict[str, float]]) -> List[List[float]]:
+        '''Generate sparse vectors from a sequence of guess dictionaries.
+        '''
         vecs = []
         prev_vec = [0 for _ in range(len(self.option2id) + 1)]
         for curr_dict in dicts:
@@ -76,7 +81,7 @@ class QuestionIterator(object):
             if self.only_hopeful and not any(np.asarray(results) == 1):
                 continue
 
-            vecs = self.sparse_vector(vecs)
+            vecs = self.dense_vector(vecs)
 
             self.n_input = len(vecs[0])
             padded_length = -((-length) // bucket_size) * bucket_size
