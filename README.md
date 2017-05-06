@@ -70,7 +70,7 @@ internet.
 * SSH keys generated from `bin/generate-ssh-keys.sh` are copied to each instance. Each instance
 receives its own ssh key and all other instances have SSH access to every other instance.
 * AWS keys are copied to `/home/ubuntu/.bashrc`,
-`/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh`, and
+`/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.6/conf/spark-env.sh`, and
 `/home/ubuntu/.aws/credentials`.
 * **Warning**: AWS keys are printed during `terraform apply`, we plan
 on fixing this, but haven't yet.

@@ -1,7 +1,8 @@
 import os
+import random
 from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, NamedTuple
 import pickle
 
 import matplotlib
@@ -22,8 +23,17 @@ from qanta.util.io import safe_path
 from qanta import logging
 
 
-Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
 log = logging.get(__name__)
+
+
+GuesserSpec = NamedTuple('GuesserSpec', [
+    ('dependency_module', Optional[str]),
+    ('dependency_class', Optional[str]),
+    ('guesser_module', str),
+    ('guesser_class', str)
+])
+
+Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -452,6 +462,35 @@ class AbstractGuesser(metaclass=ABCMeta):
                 'guesser_params': params
             }, f)
 
+    @staticmethod
+    def list_enabled_guessers() -> List[GuesserSpec]:
+        guessers = conf['guessers']
+        enabled_guessers = []
+        for g in guessers.values():
+            if g['enabled']:
+                guesser = g['class']
+                dependency = g['luigi_dependency']
+                parts = guesser.split('.')
+                guesser_module = '.'.join(parts[:-1])
+                guesser_class = parts[-1]
+
+                if dependency is None:
+                    dependency_module = None
+                    dependency_class = None
+                else:
+                    parts = dependency.split('.')
+                    dependency_module = '.'.join(parts[:-1])
+                    dependency_class = parts[-1]
+
+                enabled_guessers.append(GuesserSpec(dependency_module, dependency_class, guesser_module, guesser_class))
+
+        return enabled_guessers
+
+    @staticmethod
+    def output_path(guesser_module: str, guesser_class: str, file: str):
+        guesser_path = '{}.{}'.format(guesser_module, guesser_class)
+        return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
+
 QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
 
 
@@ -635,3 +674,118 @@ def n_train_vs_fold_plot(output, counts, fold):
     plt.cla()
     plt.close()
 
+
+def n_guesser_report(output, fold, n_samples=2):
+    qdb = QuestionDatabase()
+    questions = [q for q in qdb.all_questions().values() if q.fold == fold]
+    guess_dataframes = []
+    folds = [fold]
+    for g_spec in AbstractGuesser.list_enabled_guessers():
+        path = AbstractGuesser.output_path(g_spec.guesser_module, g_spec.guesser_class, '')
+        guess_dataframes.append(AbstractGuesser.load_guesses(path, folds=folds))
+    df = pd.concat(guess_dataframes) # type: pd.DataFrame
+    guessers = set(df['guesser'].unique())
+    n_guessers = len(guessers)
+    guesses = []
+    for name, group in df.groupby(['guesser', 'qnum', 'sentence', 'token']):
+        top_guess = group.sort_values('score', ascending=False).iloc[0]
+        guesses.append(top_guess)
+
+    top_df = pd.DataFrame.from_records(guesses)
+
+    guess_lookup = {}
+    for name, group in top_df.groupby(['qnum', 'sentence', 'token']):
+        guess_lookup[name] = group
+
+    performance = {}
+    question_positions = {}
+    n_correct_samples = defaultdict(list)
+    for q in questions:
+        page = format_guess(q.page)
+        positions = [(sent, token) for sent, token, _ in q.partials()]
+        n_sentences = len(positions)
+        q_positions = {
+            'start': 1,
+            'p_25': max(1, round(n_sentences * .25)),
+            'p_50': max(1, round(n_sentences * .5)),
+            'p_75': max(1, round(n_sentences * .75)),
+            'end': len(positions)
+        }
+        question_positions[q.qnum] = q_positions
+        for sent, token in positions:
+            key = (q.qnum, sent, token)
+            n_guessers_correct = [0] * (n_guessers + 1)
+            if key in guess_lookup:
+                n_correct = (guess_lookup[key].guess == page).sum()
+                n_correct_samples[n_correct].append(key)
+            else:
+                n_correct = 0
+            n_guessers_correct[n_correct] += 1
+            performance[key] = n_guessers_correct
+
+    start_accuracies = []
+    p_25_accuracies = []
+    p_50_accuracies = []
+    p_75_accuracies = []
+    end_accuracies = []
+
+    for q in questions:
+        qnum = q.qnum
+        start_pos = question_positions[qnum]['start']
+        p_25_pos = question_positions[qnum]['p_25']
+        p_50_pos = question_positions[qnum]['p_50']
+        p_75_pos = question_positions[qnum]['p_75']
+        end_pos = question_positions[qnum]['end']
+
+        start_accuracies.append(performance[(qnum, start_pos, 0)])
+        p_25_accuracies.append(performance[(qnum, p_25_pos, 0)])
+        p_50_accuracies.append(performance[(qnum, p_50_pos, 0)])
+        p_75_accuracies.append(performance[(qnum, p_75_pos, 0)])
+        end_accuracies.append(performance[(qnum, end_pos, 0)])
+
+    start_accuracies = np.array(start_accuracies)
+    p_25_accuracies = np.array(p_25_accuracies)
+    p_50_accuracies = np.array(p_50_accuracies)
+    p_75_accuracies = np.array(p_75_accuracies)
+    end_accuracies = np.array(end_accuracies)
+
+    start_perf = start_accuracies.sum(axis=0)
+    start_perf = start_perf / start_perf.sum()
+
+    p_25_perf = p_25_accuracies.sum(axis=0)
+    p_25_perf = p_25_perf / p_25_perf.sum()
+
+    p_50_perf = p_50_accuracies.sum(axis=0)
+    p_50_perf = p_50_perf / p_50_perf.sum()
+
+    p_75_perf = p_75_accuracies.sum(axis=0)
+    p_75_perf = p_75_perf / p_75_perf.sum()
+
+    end_perf = end_accuracies.sum(axis=0)
+    end_perf = end_perf / end_perf.sum()
+
+    all_perf = []
+    for i in range(n_guessers + 1):
+        all_perf.append((i, 'start', start_perf[i]))
+        all_perf.append((i, 'p_25', p_25_perf[i]))
+        all_perf.append((i, 'p_50', p_50_perf[i]))
+        all_perf.append((i, 'p_75', p_75_perf[i]))
+        all_perf.append((i, 'end', end_perf[i]))
+
+    all_perf_df = pd.DataFrame.from_records(all_perf, columns=['n_guessers_correct', 'position', 'percent'])
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sb.barplot(x='position', y='percent', hue='n_guessers_correct', data=all_perf_df, ax=ax)
+    ax.set(
+        title='Fraction of Questions Answered Correctly by N guessers on {} fold'.format(fold),
+        xlabel='Position', ylabel='Percent'
+    )
+    ax.set_xticklabels(['Start', '25%', '50%', '75%', 'End'])
+    fig.savefig(output, dpi=100)
+
+
+def sample_n_guesser_correct_questions(guess_lookup, n_correct_samples):
+    for n_correct, keys in n_correct_samples:
+        samples = random.sample(keys, min(n_correct, len(keys)))
+        for key in samples:
+            guesses = guess_lookup[key]
