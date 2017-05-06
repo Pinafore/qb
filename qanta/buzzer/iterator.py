@@ -13,10 +13,10 @@ class QuestionIterator(object):
         results: xp.int32, (length, batch_size)
     '''
 
-    def __init__(self, dataset, id2option, batch_size, bucket_size=4, shuffle=True,
+    def __init__(self, dataset, option2id, batch_size, bucket_size=4, shuffle=True,
             only_hopeful=False):
         self.dataset = dataset
-        self.id2option = id2option
+        self.option2id = option2id
         self.batch_size = batch_size
         self.bucket_size = bucket_size
         self.shuffle = shuffle
@@ -26,6 +26,43 @@ class QuestionIterator(object):
         self.batch_index = 0
         self.is_end_epoch = False
         self.create_batches()
+
+    def dense_vector(self, dicts):
+        num_guesses = len(dicts[0])
+        vecs = []
+        prev_vec = [0 for _ in range(num_guesses)]
+        prev_dict = {}
+
+        for curr_dict in dicts:
+            if len(curr_dict) != num_guesses:
+                raise ValueError("Inconsistent number of guesses")
+            curr_vec = sorted(curr_dict.items(), key=lambda x: x[1])
+            diff_vec, isnew_vec = [], []
+            for guess, score in curr_vec:
+                if guess not in prev_dict:
+                    diff_vec.append(score)
+                    isnew_vec.append(1)
+                else:
+                    diff_vec.append(score - prev_dict[guess])
+                    isnew_vec.append(0)
+            curr_vec = [x[1] for x in curr_vec]
+            vec = curr_vec + prev_vec + diff_vec + isnew_vec
+            vecs.append(vec)
+            prev_vec = curr_vec
+            prev_dict = curr_dict
+        return vecs
+
+    def sparse_vector(self, dicts):
+        vecs = []
+        prev_vec = [0 for _ in range(len(self.option2id) + 1)]
+        for curr_dict in dicts:
+            vec = [0 for _ in range(len(self.option2id) + 1)]
+            for guess, score in curr_dict.items():
+                guess = self.option2id.get(guess, len(self.option2id))
+                vec[guess] = score
+            vecs.append(vec + prev_vec)
+            prev_vec = vec
+        return vecs
 
     def create_batches(self):
         bucket_size = self.bucket_size
@@ -39,12 +76,7 @@ class QuestionIterator(object):
             if self.only_hopeful and not any(np.asarray(results) == 1):
                 continue
 
-            # add two features
-            # for i in range(length):
-            #     vecs[i].append(np.var(vecs[i]))
-            #     vecs[i].append(i)
-
-            # new_vecs = []
+            vecs = self.sparse_vector(vecs)
 
             self.n_input = len(vecs[0])
             padded_length = -((-length) // bucket_size) * bucket_size

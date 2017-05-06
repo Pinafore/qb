@@ -33,10 +33,10 @@ def main():
     cfg = config()
     args = parse_args()
 
-    id2option, all_guesses = load_quizbowl()
-    train_iter = QuestionIterator(all_guesses['dev'], id2option, batch_size=cfg.batch_size,
+    option2id, all_guesses = load_quizbowl()
+    train_iter = QuestionIterator(all_guesses['dev'], option2id, batch_size=cfg.batch_size,
             only_hopeful=True)
-    eval_iter = QuestionIterator(all_guesses['test'], id2option, batch_size=cfg.batch_size,
+    eval_iter = QuestionIterator(all_guesses['test'], option2id, batch_size=cfg.batch_size,
             only_hopeful=False)
 
     model = MLP(n_input=eval_iter.n_input, n_hidden=200, n_output=2, n_layers=3,

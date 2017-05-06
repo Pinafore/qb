@@ -35,8 +35,8 @@ def main():
     args = parse_args()
     fold = args.fold
 
-    id2option, all_guesses = load_quizbowl(cfg)
-    test_iter = QuestionIterator(all_guesses[fold], id2option, batch_size=cfg.batch_size)
+    option2id, all_guesses = load_quizbowl(cfg)
+    test_iter = QuestionIterator(all_guesses[fold], option2id, batch_size=cfg.batch_size)
     
     if not os.path.exists(cfg.model_dir):
         log.info('Model {0} not available'.format(cfg.model_dir))

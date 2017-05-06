@@ -80,33 +80,13 @@ def _process_question_df(option2id, all_questions, qnum_q_queue):
 
     guess_vecs = []
     results = []
-    prev_vec = [0 for _ in range(NUM_GUESSES)]
-    prev_dict = {}
     for sent_token, group in q.groupby(['sentence', 'token'], sort=True):
         group = group.sort_values('score', ascending=False)[:NUM_GUESSES]
 
         # check if top guess is correct
         top_guess = group.guess.tolist()[0]
         results.append(int(top_guess == answer))
-
-        # get the current input vector
-        curr_vec = group.score.tolist()
-        curr_dict = {x.guess: x.score for x in group.itertuples()}
-        diff_vec, isnew_vec = [], []
-        for i, x in enumerate(group.itertuples()):
-            if x.guess not in prev_dict:
-                diff_vec.append(x.score)
-                isnew_vec.append(1)
-            else:
-                diff_vec.append(x.score - prev_dict[x.guess])
-                isnew_vec.append(0)
-        vec = curr_vec + prev_vec + diff_vec + isnew_vec
-
-        prev_vec = curr_vec
-        prev_dict = curr_dict
-
         vec = {x.guess: x.score for x in group.itertuples()}
-
         guess_vecs.append(vec)
 
     queue.put(qnum)
@@ -171,4 +151,4 @@ def load_quizbowl():
         all_guesses[fold] = result.get()
         with open(save_dir, 'wb') as outfile:
             pickle.dump(all_guesses[fold], outfile)
-    return id2option, all_guesses
+    return option2id, all_guesses
