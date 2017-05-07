@@ -39,7 +39,7 @@ class Trainer(object):
         loss = -F.sum(F.sum(ys * ts, axis=1) * mask.data) / mask.data.sum()
         return loss
 
-    def take_action(self, ys):
+    def take_actions(self, ys):
         # ys: [length, batch_size, n_guessers]
         # actions: [length, batch_size]
         actions = F.argmax(ys, axis=2).data # length, batch
@@ -71,9 +71,13 @@ class Trainer(object):
             ys = self.model(batch.vecs, train=False)
             ys = F.reshape(ys, (length, batch_size, -1))
             actions = self.take_actions(ys)
-            for q, a in zip(batch.qids, actions):
-                q = q.tolist()
-                buzzes[q] = -1 if not any(a) else a.index(1)
+            for qnum, action in zip(batch.qids, actions):
+                qnum = qnum.tolist()
+                buzzes[qnum] = [-1, -1]
+                for i, a in enumerate(action):
+                    if a < test_iter.n_guessers:
+                        buzzes[qnum] = (i, a)
+                        break
             progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
         progress_bar.finalize()
