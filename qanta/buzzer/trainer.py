@@ -15,19 +15,6 @@ from qanta.util import constants as c
 
 from qanta.buzzer.progress import ProgressBar
 
-def metric(prediction, ground_truth, mask):
-    if prediction.shape != ground_truth.shape:
-        raise ValueError("Shape of prediction does not match with ground truth.")
-    if prediction.shape != mask.shape:
-        raise ValueError("Shape of prediction does not match with mask.")
-    stats = dict()
-    match = ((prediction == ground_truth) * mask)
-    positive = (ground_truth * mask)
-    positive_match = (match * positive).sum()
-    total = mask.sum()
-    stats['acc'] = (match.sum() / total).tolist()
-    stats['pos_acc'] = (positive_match / total).tolist()
-    return stats
 
 class Trainer(object):
 
@@ -42,6 +29,39 @@ class Trainer(object):
         self.optimizer.target.cleargrads()
         self.optimizer.update(lossfun=lambda: loss)
 
+    def loss(self, ys, ts, mask):
+        # ys: [length * batch_size, n_guessers]
+        # ts: [length * batch_size, n_guessers]
+        # mask: [length * batch_size]
+        xp = self.model.xp
+        ts = xp.asarray(ts.data, dtype=xp.float32)
+        ys = F.log_softmax(ys) # length * batch_size, n_guessers
+        loss = -F.sum(F.sum(ys * ts, axis=1) * mask.data) / mask.data.sum()
+        return loss
+
+    def take_action(self, ys):
+        # ys: [length, batch_size, n_guessers]
+        # actions: [length, batch_size]
+        actions = F.argmax(ys, axis=2).data # length, batch
+        actions = actions.T.tolist()
+        return actions
+
+    def metric(self, ys, ts, mask):
+        # shapes are length * batch_size * n_guessers
+        if ys.shape != ts.shape:
+            raise ValueError("Shape of prediction {0} does not match with ground \
+                truth {1}.".format( ys.shape, ts.shape))
+        if ys.shape[0] != mask.shape[0]:
+            raise ValueError("Shape0 of prediction {0} does not match with \
+                mask0 {1}.".format(ys.shape[0], mask.shape[0]))
+        stats = dict()
+        ys = F.argmax(ys, axis=1)
+        ts = self.model.xp.asarray(ts, dtype=self.model.xp.float32)
+        correct = F.sum((F.select_item(ts, ys) * mask)).data
+        total = mask.sum()
+        stats['acc'] = (correct / total).tolist()
+        return stats
+
     def test(self, test_iter):
         buzzes = dict()
         progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
@@ -50,8 +70,7 @@ class Trainer(object):
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=False)
             ys = F.reshape(ys, (length, batch_size, -1))
-            actions = F.argmax(ys, axis=2).data # length, batch
-            actions = actions.T.tolist()
+            actions = self.take_actions(ys)
             for q, a in zip(batch.qids, actions):
                 q = q.tolist()
                 buzzes[q] = -1 if not any(a) else a.index(1)
@@ -67,11 +86,10 @@ class Trainer(object):
             batch = eval_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=False)
-            ts = F.reshape(batch.results, (length * batch_size, ))
+            ts = F.reshape(batch.results, (length * batch_size, -1))
             mask = F.reshape(batch.mask, (length * batch_size, ))
-
-            stats['loss'] += F.sum(F.select_item(ys, ts) * mask).data.tolist()
-            batch_stats = metric(F.argmax(ys, axis=1).data, ts.data, mask.data)
+            stats['loss'] -= self.loss(ys, ts, mask).data.tolist()
+            batch_stats = self.metric(ys.data, ts.data, mask.data)
             for k, v in batch_stats.items():
                 stats[k] += v
 
@@ -89,13 +107,12 @@ class Trainer(object):
             batch = train_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=True)
-            ts = F.reshape(batch.results, (length * batch_size, ))
+            ts = F.reshape(batch.results, (length * batch_size, -1))
             mask = F.reshape(batch.mask, (length * batch_size, ))
-            loss = -F.sum(F.select_item(ys, ts) * mask.data)
+            loss = self.loss(ys, ts, mask)
             self.backprop(loss)
-
-            stats['loss'] += -loss.data.tolist()
-            batch_stats = metric(F.argmax(ys, axis=1).data, ts.data, mask.data)
+            stats['loss'] -= loss.data.tolist()
+            batch_stats = self.metric(ys.data, ts.data, mask.data)
             for k, v in batch_stats.items():
                 stats[k] += v
 

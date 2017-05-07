@@ -34,8 +34,7 @@ class MLP(chainer.ChainList):
             if self.dropout > 0:
                 xs = F.dropout(xs, ratio=self.dropout, train=train)
             xs = self[i](xs)
-        ys = F.log_softmax(xs)
-        return ys
+        return xs
 
 
 class RNN(chainer.Chain):
@@ -59,4 +58,5 @@ class RNN(chainer.Chain):
         length, batch_size, _ = xs.shape
         self.rnn.reset_state()
         ys = F.stack([self.rnn(x) for x in xs], axis=0)
-        return F.reshape(ys, (length * batch_size, -1))
+        ys = F.reshape(ys, (length * batch_size, -1))
+        return ys

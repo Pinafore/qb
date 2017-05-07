@@ -72,17 +72,17 @@ def stupid_buzzer(iterator) -> Dict[int, int]:
         num_hopeful, num_results, tot_reward))
     return buzz_dict
 
-def _process_question_df(option2id: Dict[str, int], 
-        all_questions: List[Question], qnum_q_queue: Tuple) -> \
-                Tuple[int, int, List[Dict[str, int]], List[int]]:
+def _process_question(option2id: Dict[str, int], 
+        all_questions: List[Question], inputs: Tuple) -> \
+                Tuple[int, int, List[List[Dict[str, int]]], List[List[int]]]:
     '''Process one question.
     return:
         qnum: question id,
         answer_id: answer id
-        guess_vecs: sequence of guess dictionaries
-        results: sequence of 0 and 1 indicating the correctness
+        guess_dicts: a sequence of guess dictionaries for each guesser
+        results: sequence of 0 and 1 for each guesser
     '''
-    (qnum, q), queue = qnum_q_queue
+    (qnum, question), queue = inputs
 
     answer = format_guess(all_questions[qnum].page)
     if answer in option2id:
@@ -90,19 +90,21 @@ def _process_question_df(option2id: Dict[str, int],
     else:
         answer_id = len(option2id)
 
-    guess_vecs = []
+    guess_dicts = []
     results = []
-    for sent_token, group in q.groupby(['sentence', 'token'], sort=True):
-        # group = group.sort_values('score', ascending=False)[:NUM_GUESSES]
-
-        # check if top guess is correct
-        top_guess = group.guess.tolist()[0]
-        results.append(int(top_guess == answer))
-        vec = {x.guess: x.score for x in group.itertuples()}
-        guess_vecs.append(vec)
+    for guesser, guesser_group in question.groupby('guesser', sort=True):
+        guess_dicts.append([])
+        results.append([])
+        for pos, sent_token in guesser_group.groupby(['sentence', 'token'], sort=True):
+            # check if top guess is correct
+            top_guess = sent_token.sort_values('score',
+                    ascending=False).iloc[0].guess
+            results[-1].append(int(top_guess == answer))
+            vec = {x.guess: x.score for x in sent_token.itertuples()}
+            guess_dicts[-1].append(vec)
 
     queue.put(qnum)
-    return qnum, answer_id, guess_vecs, results
+    return qnum, answer_id, guess_dicts, results
 
 def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list]]: 
     log.info('Loading data')
@@ -143,7 +145,7 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
         pool = Pool(conf['buzzer']['n_cores'])
         manager = Manager()
         queue = manager.Queue()
-        worker = partial(_process_question_df, option2id, all_questions)
+        worker = partial(_process_question, option2id, all_questions)
         inputs = [(question, queue) for question in guesses.groupby('qnum')]
         total_size = len(inputs)
         result = pool.map_async(worker, inputs)
@@ -158,8 +160,11 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
                 time.sleep(0.1)
         sys.stderr.write('\n')
 
-        log.info('Processed {0} guesses saved to '.format(fold, save_dir))
+        log.info('Processed {0} guesses saved to {1}'.format(fold, save_dir))
         guesses_by_fold[fold] = result.get()
         with open(save_dir, 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)
     return option2id, guesses_by_fold
+
+if __name__ == "__main__":
+    option2id, guesses_by_fold = load_quizbowl(['dev', 'test'])

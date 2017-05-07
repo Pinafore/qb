@@ -28,44 +28,32 @@ class QuestionIterator(object):
         self.is_end_epoch = False
         self.create_batches()
 
-    def dense_vector(self, dicts: List[Dict[str, float]]) -> List[List[float]]:
+    def dense_vector(self, dicts: List[List[Dict[str, float]]]) -> List[List[float]]:
         '''Generate dense vectors from a sequence of guess dictionaries.
+        dicts: a sequence of guess dictionaries for each guesser
         '''
-        num_guesses = len(dicts[0])
+        length = len(dicts)
+        n_guesses = sum(len(x) for x in dicts[0])
+        prev_vec = [0. for _ in range(n_guesses)]
         vecs = []
-        prev_vec = [0 for _ in range(num_guesses)]
-        prev_dict = {}
-
-        for curr_dict in dicts:
-            if len(curr_dict) != num_guesses:
-                raise ValueError("Inconsistent number of guesses")
-            curr_vec = sorted(curr_dict.items(), key=lambda x: x[1])
-            diff_vec, isnew_vec = [], []
-            for guess, score in curr_vec:
-                if guess not in prev_dict:
-                    diff_vec.append(score)
-                    isnew_vec.append(1)
-                else:
-                    diff_vec.append(score - prev_dict[guess])
-                    isnew_vec.append(0)
-            curr_vec = [x[1] for x in curr_vec]
-            vec = curr_vec + prev_vec + diff_vec + isnew_vec
-            vecs.append(vec)
-            prev_vec = curr_vec
-            prev_dict = curr_dict
-        return vecs
-
-    def sparse_vector(self, dicts: List[Dict[str, float]]) -> List[List[float]]:
-        '''Generate sparse vectors from a sequence of guess dictionaries.
-        '''
-        vecs = []
-        prev_vec = [0 for _ in range(len(self.option2id) + 1)]
-        for curr_dict in dicts:
-            vec = [0 for _ in range(len(self.option2id) + 1)]
-            for guess, score in curr_dict.items():
-                guess = self.option2id.get(guess, len(self.option2id))
-                vec[guess] = score
-            vecs.append(vec + prev_vec)
+        for i in range(length):
+            if len(dicts[i]) != self.n_guessers:
+                raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
+                    self.n_guessers, len(dicts)))
+            vec = []
+            diff_vec = []
+            isnew_vec = []
+            for j in range(self.n_guessers):
+                dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
+                for guess, score in dic:
+                    vec.append(score)
+                    if i > 0 and guess in dicts[i-1][j]:
+                        diff_vec.append(score - dicts[i-1][j][guess])
+                        isnew_vec.append(0)
+                    else:
+                        diff_vec.append(score) 
+                        isnew_vec.append(1)
+            vecs.append(vec + diff_vec + isnew_vec + prev_vec)
             prev_vec = vec
         return vecs
 
@@ -73,27 +61,56 @@ class QuestionIterator(object):
         bucket_size = self.bucket_size
         self.batches = []
         buckets = defaultdict(list)
+        # shape of results: (n_guessers, length)
+        self.n_guessers = len(self.dataset[0][3])
         for example in self.dataset:
             # pad the sequence of predictions
             qid, answer, vecs, results = example
-            length = len(vecs)
+            
+            results = np.asarray(results, dtype=np.int32).T
+            length, n_guessers = results.shape
 
-            if self.only_hopeful and not any(np.asarray(results) == 1):
+            if n_guessers != self.n_guessers:
+                raise ValueError(
+                    "Inconsistent number of guessers ({0}, {1}.".format(
+                        self.n_guessers, len(results)))
+
+            # hopeful means any guesser guesses correct any time step
+            hopeful = np.any(results == 1)
+            if self.only_hopeful and not hopeful:
                 continue
 
-            vecs = self.dense_vector(vecs)
+            # append the not buzzing action to each time step
+            # not buzzing = 1 when no guesser is correct
+            new_results = []
+            for i in range(length):
+                not_buzz = int(not any(results[i] == 1))
+                new_results.append(np.append(results[i], not_buzz))
+            results = np.asarray(new_results, dtype=np.int32)
 
+            vecs = list(zip(*vecs))
+            if len(vecs) != length or len(vecs[0]) != self.n_guessers:
+                raise ValueError("Inconsistant shape of results and vecs.")
+            vecs = np.asarray(self.dense_vector(vecs), dtype=np.float32)
             self.n_input = len(vecs[0])
+
             padded_length = -((-length) // bucket_size) * bucket_size
             vecs_padded = np.zeros((padded_length, self.n_input))
             vecs_padded[:length,:self.n_input] = vecs
-            results += [0 for _ in range(padded_length - length)]
+
+            results_padded = np.zeros((padded_length, (self.n_guessers + 1)))
+            results_padded[:length, :(self.n_guessers + 1)] = results
+
             mask = [1 for _ in range(length)] + \
                    [0 for _ in range(padded_length - length)]
-            buckets[padded_length].append((qid, answer, mask, vecs_padded, results))
+
+            buckets[padded_length].append((qid, answer, mask, vecs_padded,
+                results_padded))
+
         for examples in buckets.values():
             for i in range(0, len(examples), self.batch_size):
-                qids, answers, mask, vecs, results = zip(*examples[i : i + self.batch_size])
+                qids, answers, mask, vecs, results = \
+                        zip(*examples[i : i + self.batch_size])
                 batch = Batch(qids, answers, mask, vecs, results)
                 self.batches.append(batch)
 
@@ -117,8 +134,8 @@ class QuestionIterator(object):
         qids, answers, mask, vecs, results = self.batches[self.batch_index]
 
         vecs = xp.asarray(vecs, dtype=xp.float32).swapaxes(0, 1) # length * batch_size * dim
+        results = xp.asarray(results, dtype=xp.int32).swapaxes(0, 1) # length * batch_size * n_guessers
         mask = xp.asarray(mask, dtype=xp.float32).T # length * batch_size
-        results = xp.asarray(results, dtype=xp.int32).T # length * batch_size
         # results = results * 2 - 1 # convert from (0, 1) to (-1, 1)
 
         self.batch_index = (self.batch_index + 1) % self.size
@@ -128,5 +145,3 @@ class QuestionIterator(object):
     @property
     def epoch_detail(self):
         return self.iteration, self.iteration * 1.0 / self.size
-
-

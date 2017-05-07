@@ -27,16 +27,17 @@ def main():
 
     option2id, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses['dev'], 
-            option2id, batch_size=cfg.batch_size, only_hopeful=True)
+            option2id, batch_size=cfg.batch_size, only_hopeful=False)
     eval_iter = QuestionIterator(all_guesses['test'], 
             option2id, batch_size=cfg.batch_size, only_hopeful=False)
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=eval_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=2, n_layers=cfg.n_layers, dropout=cfg.dropout)
+                n_output=eval_iter.n_guessers + 1, n_layers=cfg.n_layers, 
+                dropout=cfg.dropout)
 
     if isinstance(cfg, configs.rnn):
-        model = RNN(eval_iter.n_input, cfg.n_hidden, 2)
+        model = RNN(eval_iter.n_input, cfg.n_hidden, eval_iter.n_guessers + 1)
 
     gpu = conf['buzzer']['gpu']
     if gpu != -1 and chainer.cuda.available:
