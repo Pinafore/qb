@@ -27,7 +27,7 @@ class Answer(DocType):
 
 class ElasticSearchIndex:
     @staticmethod
-    def build(documents: Dict[str, str], use_all_wikipedia=False, n_cores=4):
+    def build(documents: Dict[str, str], use_all_wikipedia=False, use_wiki=True, use_qb=True, n_cores=4):
         try:
             Index('qb').delete()
         except elasticsearch.exceptions.NotFoundError:
@@ -37,7 +37,17 @@ class ElasticSearchIndex:
         log.info('Indexing questions and corresponding wikipedia pages...')
         bar = progressbar.ProgressBar()
         for page in bar(documents):
-            answer = Answer(page=page, wiki_content=cw[page].content, qb_content=documents[page])
+            if use_wiki:
+                wiki_content = cw[page].content
+            else:
+                wiki_content = ''
+
+            if use_qb:
+                qb_content = documents[page]
+            else:
+                qb_content = ''
+
+            answer = Answer(page=page, wiki_content=wiki_content, qb_content=qb_content)
             answer.save()
 
         if use_all_wikipedia:

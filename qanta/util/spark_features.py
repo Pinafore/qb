@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession, Row, DataFrame
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 
 from qanta import logging
-from qanta.util.constants import VW_FOLDS, FEATURE_NAMES
+from qanta.util.constants import BUZZ_FOLDS, FEATURE_NAMES
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.preprocess import format_guess
 

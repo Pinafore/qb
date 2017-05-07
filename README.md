@@ -50,13 +50,12 @@ nodes can communicate via SSH
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
 ##### Installed Software
-* Python 3.6
+* Python 3.5
 * Apache Spark 2.1.0
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
-* Postgres
 * KenLM
-* Redis (latest stable)
+* CUDA and Nvidia drivers if using a GPU instance
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
@@ -71,14 +70,13 @@ internet.
 * SSH keys generated from `bin/generate-ssh-keys.sh` are copied to each instance. Each instance
 receives its own ssh key and all other instances have SSH access to every other instance.
 * AWS keys are copied to `/home/ubuntu/.bashrc`,
-`/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh`, and
+`/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.6/conf/spark-env.sh`, and
 `/home/ubuntu/.aws/credentials`.
 * **Warning**: AWS keys are printed during `terraform apply`, we plan
 on fixing this, but haven't yet.
 * Configure the 2 SSD drives attached to `r3.8xlarge` instances for use
 * Clone the `Pinafore/qb` to `/ssd-c/qanta/qb` and set it as the quiz bowl root
 * Download bootstrap AWS files to get the system running faster
-* TODO: based on variables download data from latest run to continue work on.
 
 #### Run AWS/Terraform/Packer Scripts
 
@@ -135,9 +133,12 @@ scripts that Packer and Terraform run to install and configure a running qanta s
 3. `aws.tf`: Terraform configuration
 4. `terraform/`: Bash scripts and configuration scripts
 
-## Environment Variables
-The majority of QANTA configuration is done through environment variables. These are set
-appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults.
+## Configuration
+QANTA configuration is done through a combination of environment variables and the `qanta-defaults.hcl` file. These are set
+appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults. QANTA will read a `qanta.hcl`
+first if it exists, otherwise it will fall back to reading `qanta-defaults.hcl`. This is meant to allow for custom
+configuration of `qanta.hcl` after copying it via `cp qanta-defaults.hcl qanta.hcl` without having a chance for configs
+to accidentally become defaults unless that is on purpose.
 
 Reference `conf/qb-env.sh.template` for a list of available configuration variables
 
@@ -147,40 +148,19 @@ Reference `conf/qb-env.sh.template` for a list of available configuration variab
 #### Accessing Resources on EC2
 
 For security reasons, the AWS machines qanta creates are only accessible to the internet via SSH
-to the master node. To gain access to the various web UIs (Spark, Luigi, Ganglia) and other services
-running on the cluster there are three options:
+to the master node. To gain access to the various web UIs (Spark, Luigi, Tensorboard) and other services
+running on the cluster there are two options:
 
-* Create an SSH VPN with `sshuttle`. This forwards all traffic from your machine through the master
-node, and gives access to AWS internal routing
 * Create an SSH tunnel to forward specific ports on the master to localhost
 * In the EC2 Console create a security group which whitelists your IP address and add it to the
 instance
-
-`sshuttle` gets you working off the ground the fastest but routes all your traffic to AWS. SSH
-tunneling doesn't give access to everything. EC2 Security Groups is the overall most convenient
-solution since it requires only adding your custom group to the instance after it starts
-
-The reason for these security precautions is that allowing access to the Spark application master
-or the spark master web UI would in principle expose a way for an attacker to gain access to your
-AWS credentials.
-
-##### SSH VPN
-
-**Warning:** The following steps guide you through creating an SSH VPN to the master node. This
-means **all** traffic will be redirected through the master node while the SSH VPN is running. AWS
-charges for bandwidth which is outgoing from AWS so avoid downloading large files/videos to your
-machine while the VPN is active (AWS does not charge for incoming bandwidth).
-
-We recommend that before you work with Qanta that you run:
-
-`sshuttle -N -H --dns -r ubuntu@public-ip 0/0`
 
 ##### SSH Tunnel
 
 The following SSH command will forward all the important UIs running on the master node to
 `localhost`:
 
-`ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 ubuntu@instance-ip`
+`ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 -L 6006:localhost:6006 ubuntu@instance-ip`
 
 This can be made easier by adding an entry like below in `~/.ssh/config`. Note that the example
 domain `example.com` is mapped to the master ip address outputed by terraform. This can be
@@ -194,6 +174,7 @@ Host qanta
   User ubuntu
   LocalForward 8082 127.0.0.1:8082
   LocalForward 8080 127.0.0.1:8080
+  LocalForward 6006 127.0.0.1:6006
 ```
 
 Now you can simply do `ssh qanta` and navigating to `localhost:8082` will access the EC2 instance.
@@ -234,6 +215,11 @@ $ python3 setup.py download
 $ make clm
 ```
 
+### Qanta on Path
+
+In addition to these steps you need to either run `python setup.py develop` or include the qanta directory in your
+`PYTHONPATH` environment variable. We intend to fix path issues in the future by fixing absolute/relative paths.
+
 ### Qanta Running Summary
 QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
 large batches of questions at a time. Running the batch pipeline is managed by
@@ -261,7 +247,7 @@ you wish to rerun.
 
 ### Running Streaming Mode
 
-**Warning: This mode is highly experimental**
+**Warning: This mode is highly experimental and/or deprecated. It almost certainly doesn't work anymore**
 
 Again, Apache Spark needs to be running at the url specified in the environment variable
 `QB_SPARK_MASTER`.
@@ -426,3 +412,40 @@ If the above approaches cannot solve page assignments, then the last
 resort is to explicitly assign questions to pages based on either
 Protobowl or NAQT id.  These files have four fields but only use the
 first three.
+
+# Wikipedia Dumps
+
+As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
+dumps created on 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/
+
+Of these we use the following
+
+* [Wikipedia page text](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-pages-articles-multistream.xml.bz2): This is used to get the text, title, and id of wikipedia pages
+* [Wikipedia titles](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-all-titles.gz): This is used for more convenient access to wikipedia page titles
+* [Wikipedia redirects](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-redirect.sql.gz): DB dump for wikipedia redirects, used for resolving different ways of referencing the same wikipedia entity
+* [Wikipedia page to ids](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-page.sql.gz): Contains a mapping of wikipedia page and ids, necessary for making the redirect table useful
+
+NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
+
+All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
+
+After setting that up, read any relevant SQL dumps into MySQL using these instructions https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
+
+After these are loaded the following SQL commands will create a CSV file containing a source page id, source page title, and target page title. This can be interpretted as the source page redirecting to the target page
+
+## Queries to produce redirect table/csv
+
+With the `redirect` and `page` table in MySQL, these queries will fetch the appropriate data.
+
+To query for a table with a redirect going from a source page to a destination page
+
+```sql
+SELECT
+p.page_title AS source_page,
+r.rd_title AS dest_page
+FROM page p
+INNER JOIN (SELECT rd_title, rd_from FROM redirect) r
+ON p.page_id = r.rd_from
+```
+
+To write this to a csv you can reference http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format

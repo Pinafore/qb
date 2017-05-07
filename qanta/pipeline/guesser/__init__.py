@@ -1,4 +1,3 @@
-import os
 import importlib
 import pickle
 import time
@@ -8,8 +7,7 @@ from luigi import LocalTarget, Task, WrapperTask
 
 from qanta.config import conf
 from qanta.util import constants as c
-from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.io import safe_path
+from qanta.guesser.abstract import AbstractGuesser, n_guesser_report
 from qanta.pipeline.preprocess import DownloadData
 from qanta import logging
 
@@ -20,11 +18,6 @@ def get_class(instance_module: str, instance_class: str):
     py_instance_module = importlib.import_module(instance_module)
     py_instance_class = getattr(py_instance_module, instance_class)
     return py_instance_class
-
-
-def output_path(guesser_module: str, guesser_class: str, file: str):
-    guesser_path = '{}.{}'.format(guesser_module, guesser_class)
-    return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
 
 
 class EmptyTask(luigi.Task):
@@ -51,10 +44,10 @@ class TrainGuesser(Task):
         start_time = time.time()
         guesser_instance.train(qb_dataset.training_data())
         end_time = time.time()
-        guesser_instance.save(output_path(self.guesser_module, self.guesser_class, ''))
+        guesser_instance.save(AbstractGuesser.output_path(self.guesser_module, self.guesser_class, ''))
         params = guesser_instance.parameters()
         params['training_time'] = end_time - start_time
-        params_path = output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle')
+        params_path = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle')
         with open(params_path, 'wb') as f:
             pickle.dump(params, f)
 
@@ -63,13 +56,13 @@ class TrainGuesser(Task):
         guesser_targets = [
             LocalTarget(file)
             for file in guesser_class.files(
-                output_path(self.guesser_module, self.guesser_class, '')
+                AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
             )]
 
         return [
-            LocalTarget(output_path(self.guesser_module, self.guesser_class, '')),
+            LocalTarget(AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')),
             LocalTarget(
-                output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle'))
+                AbstractGuesser.output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle'))
         ] + guesser_targets
 
 
@@ -91,13 +84,10 @@ class GenerateGuesses(Task):
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
-        guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
+        guesser_directory = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
-        for fold in c.ALL_FOLDS:
-            if fold == 'train' and not conf['generate_train_guesses']:
-                log.info('Skipping generation of train fold guesses')
-                continue
+        for fold in c.BUZZ_FOLDS:
             log.info('Generating and saving guesses for {} fold'.format(fold))
             log.info('Starting guess generation...')
             start_time = time.time()
@@ -114,10 +104,8 @@ class GenerateGuesses(Task):
 
     def output(self):
         targets = []
-        for fold in c.ALL_FOLDS:
-            if fold == 'train' and not conf['generate_train_guesses']:
-                continue
-            targets.append(LocalTarget(output_path(
+        for fold in c.BUZZ_FOLDS:
+            targets.append(LocalTarget(AbstractGuesser.output_path(
                 self.guesser_module, self.guesser_class, 'guesses_{}.pickle'.format(fold))))
         return targets
 
@@ -138,73 +126,66 @@ class GuesserReport(Task):
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
-        guesser_directory = output_path(self.guesser_module, self.guesser_class, '')
+        guesser_directory = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
         guesser_instance = guesser_class()
         guesser_instance.create_report(guesser_directory)
 
     def output(self):
-        return [LocalTarget(output_path(
+        return [LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
             'guesser_report.pdf')
-        ), LocalTarget(output_path(
+        ), LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
             'guesser_report.pickle'
         ))]
 
 
+class AllGuesserReports(WrapperTask):
+    def requires(self):
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            yield GuesserReport(
+                guesser_module=g_spec.guesser_module,
+                guesser_class=g_spec.guesser_class,
+                dependency_module=g_spec.dependency_module,
+                dependency_class=g_spec.dependency_class
+            )
+
+
+class CompareGuessers(Task):
+    fold = luigi.Parameter()  # type: str
+
+    def requires(self):
+        yield AllGuesserReports()
+
+    def run(self):
+        n_guesser_report(c.COMPARE_GUESSER_REPORT_PATH.format(self.fold), self.fold)
+
+    def output(self):
+        return LocalTarget(c.COMPARE_GUESSER_REPORT_PATH.format(self.fold))
+
+
+class CompareGuessersAllFolds(WrapperTask):
+    def requires(self):
+        for fold in c.BUZZ_FOLDS:
+            yield CompareGuessers(fold=fold)
+
+
 class AllGuessers(WrapperTask):
     def requires(self):
-        guessers = conf['guessers']
-        for g in guessers.values():
-            if g['enabled']:
-                guesser = g['class']
-                dependency = g['luigi_dependency']
-                parts = guesser.split('.')
-                guesser_module = '.'.join(parts[:-1])
-                guesser_class = parts[-1]
-
-                if dependency is None:
-                    dependency_module = None
-                    dependency_class = None
-                else:
-                    parts = dependency.split('.')
-                    dependency_module = '.'.join(parts[:-1])
-                    dependency_class = parts[-1]
-
-                yield GuesserReport(
-                    guesser_module=guesser_module,
-                    guesser_class=guesser_class,
-                    dependency_module=dependency_module,
-                    dependency_class=dependency_class
-                )
+        yield AllGuesserReports()
+        yield CompareGuessersAllFolds()
 
 
 class AllWordLevelGuesses(WrapperTask):
     def requires(self):
-        guessers = conf['guessers']
-        for g in guessers.values():
-            if g['enabled']:
-                guesser = g['class']
-                dependency = g['luigi_dependency']
-                parts = guesser.split('.')
-                guesser_module = '.'.join(parts[:-1])
-                guesser_class = parts[-1]
-
-                if dependency is None:
-                    dependency_module = None
-                    dependency_class = None
-                else:
-                    parts = dependency.split('.')
-                    dependency_module = '.'.join(parts[:-1])
-                    dependency_class = parts[-1]
-
-                yield GenerateGuesses(
-                    guesser_module=guesser_module,
-                    guesser_class=guesser_class,
-                    dependency_module=dependency_module,
-                    dependency_class=dependency_class,
-                    word_skip=1,
-                    n_guesses=25
-                )
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            yield GenerateGuesses(
+                guesser_module=g_spec.guesser_module,
+                guesser_class=g_spec.guesser_module,
+                dependency_module=g_spec.dependency_module,
+                dependency_class=g_spec.dependency_class,
+                word_skip=1,
+                n_guesses=25
+            )

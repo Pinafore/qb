@@ -31,13 +31,15 @@ guessers "ElasticSearch" {
   min_appearances = 1
   # Whether or not to index all Wikipedia articles for guessing
   use_all_wikipedia = false
+  use_wiki = true
+  use_qb = true
 }
 
 guessers "DAN" {
   class = "qanta.guesser.dan.DANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = true
-  min_answers = 2
+  min_answers = 1
   expand_we = true
   n_hidden_layers = 1
   n_hidden_units = 1000
@@ -51,13 +53,14 @@ guessers "DAN" {
   activation_function = "elu"
   train_on_q_runs = false
   train_on_full_q = false
+  decay_lr_on_plateau = false
 }
 
 guessers "RNN" {
   class = "qanta.guesser.rnn.RNNGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
-  min_answers = 2
+  min_answers = 1
   expand_we = true
   rnn_cell = "gru"
   n_rnn_units = 300
