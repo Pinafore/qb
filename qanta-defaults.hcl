@@ -31,6 +31,8 @@ guessers "ElasticSearch" {
   min_appearances = 1
   # Whether or not to index all Wikipedia articles for guessing
   use_all_wikipedia = false
+  use_wiki = true
+  use_qb = true
 }
 
 guessers "DAN" {

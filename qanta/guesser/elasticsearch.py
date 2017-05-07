@@ -25,6 +25,8 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.use_all_wikipedia = guesser_conf['use_all_wikipedia']
         self.min_appearances = guesser_conf['min_appearances']
         self.n_cores = guesser_conf['n_cores']
+        self.use_wiki = guesser_conf['use_wiki']
+        self.use_qb = guesser_conf['use_qb']
 
     def qb_dataset(self):
         return QuizBowlDataset(self.min_appearances)
@@ -33,7 +35,9 @@ class ElasticSearchGuesser(AbstractGuesser):
         return {
             'use_all_wikipedia': self.use_all_wikipedia,
             'min_appearances': self.min_appearances,
-            'n_cores': self.n_cores
+            'n_cores': self.n_cores,
+            'use_wiki': self.use_wiki,
+            'use_qb': self.use_qb
         }
 
     def train(self, training_data):
@@ -46,7 +50,13 @@ class ElasticSearchGuesser(AbstractGuesser):
             else:
                 documents[page] = paragraph
 
-        ElasticSearchIndex.build(documents, use_all_wikipedia=self.use_all_wikipedia, n_cores=self.n_cores)
+        ElasticSearchIndex.build(
+            documents,
+            use_all_wikipedia=self.use_all_wikipedia,
+            n_cores=self.n_cores,
+            use_qb=self.use_qb,
+            use_wiki=self.use_wiki
+        )
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
         sc = create_spark_context(configs=[('spark.executor.cores', self.n_cores), ('spark.executor.memory', '4g')])
