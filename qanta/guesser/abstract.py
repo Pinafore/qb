@@ -799,7 +799,7 @@ def n_guesser_report(report_path, fold, n_samples=10):
             tk.set_rotation('horizontal')
     fig.legend(handles, labels, bbox_to_anchor=(.8, .75))
     fig.suptitle('Accuracy Breakdown by Guesser')
-    accuracy_by_n_correct_plot_path = '/tmp/accuracy_by_n_correct.png'
+    accuracy_by_n_correct_plot_path = '/tmp/accuracy_by_n_correct_{}.png'.format(fold)
     fig.savefig(accuracy_by_n_correct_plot_path, dpi=200)
 
     sampled_questions_by_correct = sample_n_guesser_correct_questions(
