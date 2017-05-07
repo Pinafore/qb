@@ -20,7 +20,7 @@ from qanta import logging
 
 from keras import backend as K
 from keras.models import Sequential, Model, load_model
-from keras.layers import Concatenate, Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, dot, multiply, add, pooling, Lambda
+from keras.layers import Add, Concatenate, Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, dot, multiply, add, pooling, Lambda
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -286,21 +286,18 @@ class MemNNGuesser(AbstractGuesser):
         qb_encoder.add(AverageWords())
         qb_input_encoded = qb_encoder(qb_input)
 
-        # Compute the attention based on match between memory addresses and question input
-        def similarity(inputs):
-            memories, embedding = inputs
-            return tf.reduce_sum(memories * K.expand_dims(embedding, 1), axis=-1)
+        layer_out = qb_input_encoded
+        for _ in range(self.n_hops):
+            match_probability = BatchMatmul(self.n_memories)([wiki_input_encoded_m, layer_out])
+            match_probability = Activation('softmax')(match_probability)
+            print('In shape:', match_probability.shape.as_list()[1:] + [1])
+            match_probability = Reshape(tuple(match_probability.shape.as_list()[1:] + [1]))(match_probability)
+            memories = multiply([match_probability, wiki_input_encoded_c])
+            memories = pooling.GlobalAveragePooling1D()(memories)
+            layer_out = Add()([memories, layer_out])
 
-        # match_probability = Lambda(similarity, output_shape=lambda input_shape: (None, self.n_memories))([wiki_input_encoded_m, qb_input_encoded])
-        match_probability = BatchMatmul(self.n_memories)([wiki_input_encoded_m, qb_input_encoded])
-        # match_probability = K.sum(match_probability, axis=-1)
-        match_probability = Activation('softmax')(match_probability)
-        match_probability = Reshape(match_probability.shape.as_list()[1:] + [1])(match_probability)
-        memories = multiply([(match_probability), wiki_input_encoded_c])
-        memories = pooling.GlobalAveragePooling1D()(memories)
-
-        # memories_and_question = K.concat([memories, qb_input_encoded], axis=1)
-        memories_and_question = Concatenate(1)([memories, qb_input_encoded])
+        print(layer_out.shape)
+        memories_and_question = Concatenate(1)([layer_out, qb_input_encoded])
 
         hidden = Dense(self.n_hidden_units)(memories_and_question)
         hidden = Activation('relu')(hidden)
@@ -348,7 +345,7 @@ class MemNNGuesser(AbstractGuesser):
         classes = set(i_to_class)
         wiki_sentences = build_wikipedia_sentences(classes, self.n_wiki_sentences)
         log.info('Building Memory Index...')
-        # MemoryIndex.build(wiki_sentences)
+        MemoryIndex.build(wiki_sentences)
 
         log.info('Fetching most relevant {} memories per question in train and test...'.format(self.n_memories))
         log.info('Fetching train memories...')
@@ -375,6 +372,8 @@ class MemNNGuesser(AbstractGuesser):
                 wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_memories))
             tokenized_train_memories[i] = we_memories
 
+        print('Wiki max len:', wiki_max_len)
+        wiki_max_len = min(wiki_max_len, 60)
         self.wiki_max_len = wiki_max_len
         tokenized_train_memories = [
             pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
