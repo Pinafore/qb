@@ -675,15 +675,16 @@ def n_train_vs_fold_plot(output, counts, fold):
     plt.close()
 
 
-def n_guesser_report(output, fold, n_samples=2):
+def n_guesser_report(report_path, fold, n_samples=10):
     qdb = QuestionDatabase()
-    questions = [q for q in qdb.all_questions().values() if q.fold == fold]
+    question_lookup = qdb.all_questions()
+    questions = [q for q in question_lookup.values() if q.fold == fold]
     guess_dataframes = []
     folds = [fold]
     for g_spec in AbstractGuesser.list_enabled_guessers():
         path = AbstractGuesser.output_path(g_spec.guesser_module, g_spec.guesser_class, '')
         guess_dataframes.append(AbstractGuesser.load_guesses(path, folds=folds))
-    df = pd.concat(guess_dataframes) # type: pd.DataFrame
+    df = pd.concat(guess_dataframes)  # type: pd.DataFrame
     guessers = set(df['guesser'].unique())
     n_guessers = len(guessers)
     guesses = []
@@ -703,6 +704,7 @@ def n_guesser_report(output, fold, n_samples=2):
     for q in questions:
         page = format_guess(q.page)
         positions = [(sent, token) for sent, token, _ in q.partials()]
+        # Since partials() passes word_skip=-1 each entry is guaranteed to be a sentence
         n_sentences = len(positions)
         q_positions = {
             'start': 1,
@@ -714,14 +716,20 @@ def n_guesser_report(output, fold, n_samples=2):
         question_positions[q.qnum] = q_positions
         for sent, token in positions:
             key = (q.qnum, sent, token)
-            n_guessers_correct = [0] * (n_guessers + 1)
             if key in guess_lookup:
-                n_correct = (guess_lookup[key].guess == page).sum()
+                guesses = guess_lookup[key]
+                n_correct = (guesses.guess == page).sum()
                 n_correct_samples[n_correct].append(key)
+                if n_correct == 0:
+                    correct_guessers = 'None'
+                elif n_correct == n_guessers:
+                    correct_guessers = 'All'
+                else:
+                    correct_guessers = '/'.join(sorted(guesses[guesses.guess == page].guesser.values))
             else:
                 n_correct = 0
-            n_guessers_correct[n_correct] += 1
-            performance[key] = n_guessers_correct
+                correct_guessers = 'None'
+            performance[key] = (n_correct, correct_guessers)
 
     start_accuracies = []
     p_25_accuracies = []
@@ -737,55 +745,93 @@ def n_guesser_report(output, fold, n_samples=2):
         p_75_pos = question_positions[qnum]['p_75']
         end_pos = question_positions[qnum]['end']
 
-        start_accuracies.append(performance[(qnum, start_pos, 0)])
-        p_25_accuracies.append(performance[(qnum, p_25_pos, 0)])
-        p_50_accuracies.append(performance[(qnum, p_50_pos, 0)])
-        p_75_accuracies.append(performance[(qnum, p_75_pos, 0)])
-        end_accuracies.append(performance[(qnum, end_pos, 0)])
+        start_accuracies.append((*performance[(qnum, start_pos, 0)], 'start'))
+        p_25_accuracies.append((*performance[(qnum, p_25_pos, 0)], 'p_25'))
+        p_50_accuracies.append((*performance[(qnum, p_50_pos, 0)], 'p_50'))
+        p_75_accuracies.append((*performance[(qnum, p_75_pos, 0)], 'p_75'))
+        end_accuracies.append((*performance[(qnum, end_pos, 0)], 'end'))
 
-    start_accuracies = np.array(start_accuracies)
-    p_25_accuracies = np.array(p_25_accuracies)
-    p_50_accuracies = np.array(p_50_accuracies)
-    p_75_accuracies = np.array(p_75_accuracies)
-    end_accuracies = np.array(end_accuracies)
+    all_accuracies = start_accuracies + p_25_accuracies + p_50_accuracies + p_75_accuracies + end_accuracies
 
-    start_perf = start_accuracies.sum(axis=0)
-    start_perf = start_perf / start_perf.sum()
+    perf_df = pd.DataFrame.from_records(all_accuracies, columns=['n_guessers_correct', 'correct_guessers', 'position'])
+    perf_df['count'] = 1
+    n_questions = len(questions)
 
-    p_25_perf = p_25_accuracies.sum(axis=0)
-    p_25_perf = p_25_perf / p_25_perf.sum()
+    aggregate_df = (
+        perf_df.groupby(['position', 'n_guessers_correct', 'correct_guessers']).count() / n_questions
+    ).reset_index()
 
-    p_50_perf = p_50_accuracies.sum(axis=0)
-    p_50_perf = p_50_perf / p_50_perf.sum()
+    fig, ax = plt.subplots(figsize=(12, 8), nrows=2, ncols=3, sharey=True, sharex=True)
 
-    p_75_perf = p_75_accuracies.sum(axis=0)
-    p_75_perf = p_75_perf / p_75_perf.sum()
+    positions = {
+        'start': (0, 0),
+        'p_25': (0, 1),
+        'p_50': (1, 0),
+        'p_75': (1, 1),
+        'end': (1, 2)
+    }
 
-    end_perf = end_accuracies.sum(axis=0)
-    end_perf = end_perf / end_perf.sum()
+    position_labels = {
+        'start': 'Start',
+        'p_25': '25%',
+        'p_50': '50%',
+        'p_75': '75%',
+        'end': '100%'
+    }
+    ax[(0, 2)].axis('off')
 
-    all_perf = []
-    for i in range(n_guessers + 1):
-        all_perf.append((i, 'start', start_perf[i]))
-        all_perf.append((i, 'p_25', p_25_perf[i]))
-        all_perf.append((i, 'p_50', p_50_perf[i]))
-        all_perf.append((i, 'p_75', p_75_perf[i]))
-        all_perf.append((i, 'end', end_perf[i]))
+    for p, key in positions.items():
+        data = aggregate_df[aggregate_df.position == p].pivot(
+            index='n_guessers_correct',
+            columns='correct_guessers'
+        ).fillna(0)['count']
+        plot_ax = ax[key]
+        data.plot.bar(stacked=True, ax=plot_ax, title='Question Position: {}'.format(position_labels[p]))
+        handles, labels = plot_ax.get_legend_handles_labels()
+        ax_legend = plot_ax.legend()
+        ax_legend.set_visible(False)
+        plot_ax.set(xlabel='Number of Correct Guessers', ylabel='Accuracy')
 
-    all_perf_df = pd.DataFrame.from_records(all_perf, columns=['n_guessers_correct', 'position', 'percent'])
+    for plot_ax in list(ax.flatten()):
+        for tk in plot_ax.get_yticklabels():
+            tk.set_visible(True)
+        for tk in plot_ax.get_xticklabels():
+            tk.set_rotation('horizontal')
+    fig.legend(handles, labels, bbox_to_anchor=(.8, .75))
+    fig.suptitle('Accuracy Breakdown by Guesser')
+    accuracy_by_n_correct_plot_path = '/tmp/accuracy_by_n_correct.png'
+    fig.savefig(accuracy_by_n_correct_plot_path, dpi=200)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sb.barplot(x='position', y='percent', hue='n_guessers_correct', data=all_perf_df, ax=ax)
-    ax.set(
-        title='Fraction of Questions Answered Correctly by N guessers on {} fold'.format(fold),
-        xlabel='Position', ylabel='Percent'
+    sampled_questions_by_correct = sample_n_guesser_correct_questions(
+        question_lookup, guess_lookup, n_correct_samples, n_samples=n_samples
     )
-    ax.set_xticklabels(['Start', '25%', '50%', '75%', 'End'])
-    fig.savefig(output, dpi=100)
+
+    report = ReportGenerator({
+        'dev_accuracy_by_n_correct_plot': accuracy_by_n_correct_plot_path,
+        'sampled_questions_by_correct': sampled_questions_by_correct
+    }, 'compare_guessers.md')
+    report.create(safe_path(report_path))
 
 
-def sample_n_guesser_correct_questions(guess_lookup, n_correct_samples):
-    for n_correct, keys in n_correct_samples:
-        samples = random.sample(keys, min(n_correct, len(keys)))
+def sample_n_guesser_correct_questions(question_lookup, guess_lookup, n_correct_samples, n_samples=10):
+    sampled_questions_by_correct = defaultdict(list)
+    dataset = QuizBowlDataset(1)
+    training_data = dataset.training_data()
+    answer_counts = defaultdict(int)
+    for ans in training_data[1]:
+        answer_counts[format_guess(ans)] += 1
+
+    for n_correct, keys in n_correct_samples.items():
+        samples = random.sample(keys, min(n_samples, len(keys)))
         for key in samples:
+            qnum, sent, token = key
+            page = format_guess(question_lookup[qnum].page)
+            text = question_lookup[qnum].get_text(sent, token)
             guesses = guess_lookup[key]
+            correct_guessers = tuple(guesses[guesses.guess == page].guesser)
+            wrong_guessers = tuple(guesses[guesses.guess != page].guesser)
+            sampled_questions_by_correct[n_correct].append(
+                (text, key, page, answer_counts[page], correct_guessers, wrong_guessers)
+            )
+
+    return sampled_questions_by_correct

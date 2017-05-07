@@ -7,7 +7,7 @@ from luigi import LocalTarget, Task, WrapperTask
 
 from qanta.config import conf
 from qanta.util import constants as c
-from qanta.guesser.abstract import AbstractGuesser
+from qanta.guesser.abstract import AbstractGuesser, n_guesser_report
 from qanta.pipeline.preprocess import DownloadData
 from qanta import logging
 
@@ -87,10 +87,7 @@ class GenerateGuesses(Task):
         guesser_directory = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
-        for fold in c.ALL_FOLDS:
-            if fold == 'train' and not conf['generate_train_guesses']:
-                log.info('Skipping generation of train fold guesses')
-                continue
+        for fold in c.BUZZ_FOLDS:
             log.info('Generating and saving guesses for {} fold'.format(fold))
             log.info('Starting guess generation...')
             start_time = time.time()
@@ -107,9 +104,7 @@ class GenerateGuesses(Task):
 
     def output(self):
         targets = []
-        for fold in c.ALL_FOLDS:
-            if fold == 'train' and not conf['generate_train_guesses']:
-                continue
+        for fold in c.BUZZ_FOLDS:
             targets.append(LocalTarget(AbstractGuesser.output_path(
                 self.guesser_module, self.guesser_class, 'guesses_{}.pickle'.format(fold))))
         return targets
@@ -147,7 +142,7 @@ class GuesserReport(Task):
         ))]
 
 
-class AllGuessers(WrapperTask):
+class AllGuesserReports(WrapperTask):
     def requires(self):
         for g_spec in AbstractGuesser.list_enabled_guessers():
             yield GuesserReport(
@@ -156,6 +151,31 @@ class AllGuessers(WrapperTask):
                 dependency_module=g_spec.dependency_module,
                 dependency_class=g_spec.dependency_class
             )
+
+
+class CompareGuessers(Task):
+    fold = luigi.Parameter()  # type: str
+
+    def requires(self):
+        yield AllGuesserReports()
+
+    def run(self):
+        n_guesser_report(c.COMPARE_GUESSER_REPORT_PATH.format(self.fold), self.fold)
+
+    def output(self):
+        return LocalTarget(c.COMPARE_GUESSER_REPORT_PATH.format(self.fold))
+
+
+class CompareGuessersAllFolds(WrapperTask):
+    def requires(self):
+        for fold in c.BUZZ_FOLDS:
+            yield CompareGuessers(fold=fold)
+
+
+class AllGuessers(WrapperTask):
+    def requires(self):
+        yield AllGuesserReports()
+        yield CompareGuessersAllFolds()
 
 
 class AllWordLevelGuesses(WrapperTask):
