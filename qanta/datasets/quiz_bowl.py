@@ -171,15 +171,19 @@ class QuestionDatabase:
         for ii in questions:
             yield questions[ii]
 
-    def questions_with_pages(self) -> Dict[str, List[Question]]:
+    def questions_with_pages(self, normalize_titles=False) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
 
         questions = self.query('from questions where page != ""', ()).values()
 
         for row in sorted(questions, key=lambda x: x.answer):
+            if normalize_titles:
+                page = format_guess(row.page)
+            else:
+                page = row.page
             if row.page not in page_map:
-                page_map[row.page] = []
-            page_map[row.page].append(row)
+                page_map[page] = []
+            page_map[page].append(row)
         return page_map
 
     def prune_text(self):

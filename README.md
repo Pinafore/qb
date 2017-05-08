@@ -427,25 +427,43 @@ Of these we use the following
 
 NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
 
-All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
+## Wikipedia Redirect Mapping Creation
 
-After setting that up, read any relevant SQL dumps into MySQL using these instructions https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
+All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps. For this task we will need these tables:
 
-After these are loaded the following SQL commands will create a CSV file containing a source page id, source page title, and target page title. This can be interpretted as the source page redirecting to the target page
+* Redirect table: https://www.mediawiki.org/wiki/Manual:Redirect_table
+* Page table: https://www.mediawiki.org/wiki/Manual:Page_table
+* The namespace page is also helpful: https://www.mediawiki.org/wiki/Manual:Namespace
 
-## Queries to produce redirect table/csv
+To install, prepare MySQL, and read in the Wikipedia SQL dumps execute the following:
 
-With the `redirect` and `page` table in MySQL, these queries will fetch the appropriate data.
+1. Install MySQL `sudo apt-get install mysql-server` and `sudo mysql_secure_installation`
+2. Configure MySQL to allow file access by changing `/etc/mysql/my.conf` per http://stackoverflow.com/questions/32737478/how-should-i-tackle-secure-file-priv-in-mysql
+3. Login with something like `mysql --user=root --password=something`
+4. Create a database and use it with `create database wikipedia;` and `use wikipedia;`
+5. `source enwiki-20170401-redirect.sql;` (in MySQL session)
+6. `source enwiki-20170401-page.sql;` (in MySQL session)
+7. This will take quite a long time, so wait it out...
+8. Finally run the query to fetch the redirect mapping with the SQL command below
+9. The result of that query is CSV file containing a source page id, source page title, and target page title. This can be
+interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
 
-To query for a table with a redirect going from a source page to a destination page
+These references may be useful and are the source for these instructions:
+
+* https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
+* https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
+* http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
 
 ```sql
 SELECT
 p.page_title AS source_page,
 r.rd_title AS dest_page
 FROM page p
-INNER JOIN (SELECT rd_title, rd_from FROM redirect) r
+WHERE p.page_namespace=0
+INNER JOIN (SELECT rd_title, rd_from FROM redirect WHERE rd_namespace=0) r
 ON p.page_id = r.rd_from
+INTO OUTFILE 'redirect.csv'
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n';
 ```
-
-To write this to a csv you can reference http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
