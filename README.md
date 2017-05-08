@@ -438,14 +438,13 @@ All the wikipedia database dumps are provided in MySQL sql files. This guide has
 To install, prepare MySQL, and read in the Wikipedia SQL dumps execute the following:
 
 1. Install MySQL `sudo apt-get install mysql-server` and `sudo mysql_secure_installation`
-2. Configure MySQL to allow file access by changing `/etc/mysql/my.conf` per http://stackoverflow.com/questions/32737478/how-should-i-tackle-secure-file-priv-in-mysql
-3. Login with something like `mysql --user=root --password=something`
-4. Create a database and use it with `create database wikipedia;` and `use wikipedia;`
-5. `source enwiki-20170401-redirect.sql;` (in MySQL session)
-6. `source enwiki-20170401-page.sql;` (in MySQL session)
-7. This will take quite a long time, so wait it out...
-8. Finally run the query to fetch the redirect mapping with the SQL command below
-9. The result of that query is CSV file containing a source page id, source page title, and target page title. This can be
+2. Login with something like `mysql --user=root --password=something`
+3. Create a database and use it with `create database wikipedia;` and `use wikipedia;`
+4. `source enwiki-20170401-redirect.sql;` (in MySQL session)
+5. `source enwiki-20170401-page.sql;` (in MySQL session)
+6. This will take quite a long time, so wait it out...
+7. Finally run the query to fetch the redirect mapping and write it to a CSV by executing `bin/redirect.sql` with `source bin/redirect.sql`. The file will be located in `/var/lib/mysql/redirect.csv` which requires `sudo` access to copy
+8. The result of that query is CSV file containing a source page id, source page title, and target page title. This can be
 interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
 
 These references may be useful and are the source for these instructions:
@@ -453,17 +452,3 @@ These references may be useful and are the source for these instructions:
 * https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
 * https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
 * http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
-
-```sql
-SELECT
-p.page_title AS source_page,
-r.rd_title AS dest_page
-FROM page p
-WHERE p.page_namespace=0
-INNER JOIN (SELECT rd_title, rd_from FROM redirect WHERE rd_namespace=0) r
-ON p.page_id = r.rd_from
-INTO OUTFILE 'redirect.csv'
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n';
-```
