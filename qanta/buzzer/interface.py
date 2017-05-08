@@ -48,12 +48,11 @@ def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]],
                 predf.append([weight, qnum, sent, token])
                 metaf.append([qnum, sent, token, x.guess])
                 guess = x.guess if ',' not in x.guess else '"' + x.guess + '"'
-                buzzf.append([qnum, sent, token, guess, '', final, score])
+                buzzf.append([qnum, sent, token, guess, x.guesser, final, score])
                 if final:
                     finalf.append([x.qnum, guess])
     queue.put(qnum)
     return buzzf, predf, metaf, finalf
-
 
 def buzzer2vwexpo(guesses_df: pd.DataFrame, 
         buzzes: Dict[int, Tuple[int, int]], fold: str) -> None:
