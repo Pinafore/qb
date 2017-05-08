@@ -83,10 +83,10 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
     result = result.get()
     buzzf, predf, metaf, finalf = list(map(list, zip(*result)))
 
-    with codecs.open(c.PRED_TARGET.format(fold), 'w', 'utf-8') as pred_file, \
-         codecs.open(c.META_TARGET.format(fold), 'w', 'utf-8') as meta_file, \
-         codecs.open(c.EXPO_BUZZ.format(fold), 'w', 'utf-8') as buzz_file, \
-         codecs.open(c.EXPO_FINAL.format(fold), 'w', 'utf-8') as final_file:
+    with codecs.open(safe_path(c.PRED_TARGET.format(fold)), 'w', 'utf-8') as pred_file, \
+         codecs.open(safe_path(c.META_TARGET.format(fold)), 'w', 'utf-8') as meta_file, \
+         codecs.open(safe_path(c.EXPO_BUZZ.format(fold)), 'w', 'utf-8') as buzz_file, \
+         codecs.open(safe_path(c.EXPO_FINAL.format(fold)), 'w', 'utf-8') as final_file:
 
         buzz_file.write('question,sentence,word,page,evidence,final,weight\n')
         final_file.write('question,answer\n')

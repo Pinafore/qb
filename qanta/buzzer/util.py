@@ -12,17 +12,10 @@ from qanta.datasets.quiz_bowl import Question, QuestionDatabase, QuizBowlDataset
 from qanta.preprocess import format_guess
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
+from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
 from qanta import logging
-
-NUM_GUESSES = 20
-MIN_ANSWERS = 1
-
-BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward',
-    'reward_hopeful', 'buzz', 'correct', 'rush', 'late'])
-
-OPTIONS_DIR = 'output/buzzer/options.pkl'
-GUESSES_DIR = 'output/guesser/'
+from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
 
@@ -109,22 +102,22 @@ def _process_question(option2id: Dict[str, int],
 def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list]]: 
     log.info('Loading data')
     question_db = QuestionDatabase()
-    quizbowl_db = QuizBowlDataset(MIN_ANSWERS)
+    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS)
     all_questions = question_db.all_questions()
-    if not os.path.isfile(OPTIONS_DIR):
+    if not os.path.isfile(bc.OPTIONS_DIR):
         log.info('Loading the set of options')
-        all_fold_guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=c.ALL_FOLDS)
-        all_options = set(all_fold_guesses.guess)
+        dev_guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['dev'])
+        all_options = set(dev_guesses.guess)
 
         folds = quizbowl_db.questions_by_fold()
         train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
         all_options.update({format_guess(q.page) for q in train_dev_questions})
 
         id2option = list(all_options)
-        with open(OPTIONS_DIR, 'wb') as outfile:
+        with open(safe_path(bc.OPTIONS_DIR), 'wb') as outfile:
             pickle.dump(id2option, outfile)
     else:
-        with open(OPTIONS_DIR, 'rb') as infile:
+        with open(safe_path(bc.OPTIONS_DIR), 'rb') as infile:
             id2option = pickle.load(infile)
     option2id = {o: i for i, o in enumerate(id2option)}
     num_options = len(id2option)
@@ -132,15 +125,15 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
 
     guesses_by_fold = dict()
     for fold in folds:
-        save_dir = '%s_processed.pickle' % (GUESSES_DIR + fold)
+        save_dir = '%s_processed.pickle' % (bc.GUESSES_DIR + fold)
         if os.path.isfile(save_dir):
-            with open(save_dir, 'rb') as infile:
+            with open(safe_path(save_dir), 'rb') as infile:
                 guesses_by_fold[fold] = pickle.load(infile)
             log.info('Loading {0} guesses'.format(fold))
             continue
 
         log.info('Processing {0} guesses'.format(fold))
-        guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=[fold])
+        guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
         pool = Pool(conf['buzzer']['n_cores'])
         manager = Manager()
@@ -162,7 +155,7 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
 
         log.info('Processed {0} guesses saved to {1}'.format(fold, save_dir))
         guesses_by_fold[fold] = result.get()
-        with open(save_dir, 'wb') as outfile:
+        with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)
     return option2id, guesses_by_fold
 
