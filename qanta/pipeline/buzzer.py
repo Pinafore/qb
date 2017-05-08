@@ -1,13 +1,31 @@
+import os
 import luigi
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.util.io import call, shell, make_dirs, safe_path
 from qanta.reporting.vw_audit import parse_audit, audit_report
 from qanta.pipeline.spark import SparkMergeFeatures
+from qanta.guesser.abstract import AbstractGuesser
 
 BUZZER_MODEL = 'output/buzzer/mlp_buzzer.npz'
+GUESSES_DIR = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
+
+class MergeGuesserDFs(Task):
+
+    def output(self):
+        return [LocalTarget(AbstractGuesser.guess_path(GUESSES_DIR, fold) for
+            fold in ['dev', 'test']]
+        
+    def run(self):
+        shell(
+            'python qanta/buzzer/merge_dfs.py'
+        )
+
 
 class BuzzerModel(Task):
+
+    def requires(self):
+        yield MergeGuesserDFs()
 
     def output(self):
         return LocalTarget(BUZZER_MODEL)
