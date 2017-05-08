@@ -77,6 +77,7 @@ def _process_question(option2id: Dict[str, int],
     '''
     (qnum, question), queue = inputs
 
+    qnum = int(qnum)
     answer = format_guess(all_questions[qnum].page)
     if answer in option2id:
         answer_id = option2id[answer]
@@ -109,8 +110,8 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
         dev_guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['dev'])
         all_options = set(dev_guesses.guess)
 
-        folds = quizbowl_db.questions_by_fold()
-        train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
+        by_folds = quizbowl_db.questions_by_fold()
+        train_dev_questions = quizbowl_db.questions_in_by_folds(['train', 'dev'])
         all_options.update({format_guess(q.page) for q in train_dev_questions})
 
         id2option = list(all_options)
@@ -125,7 +126,7 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
 
     guesses_by_fold = dict()
     for fold in folds:
-        save_dir = '%s_processed.pickle' % (bc.GUESSES_DIR + fold)
+        save_dir = '%s_processed.pickle' % (os.path.join(bc.GUESSES_DIR, fold))
         if os.path.isfile(save_dir):
             with open(safe_path(save_dir), 'rb') as infile:
                 guesses_by_fold[fold] = pickle.load(infile)

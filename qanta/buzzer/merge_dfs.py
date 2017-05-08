@@ -13,7 +13,7 @@ guessers = ['qanta.guesser.dan.DANGuesser',
 log.info("Merging guesser DataFrames.")
 for fold in ['dev', 'test']:
     new_guesses = pd.DataFrame(columns=['fold', 'guess', 'guesser', 'qnum',
-        'score', 'sentence', 'token'])
+        'score', 'sentence', 'token'], dtype='object')
     for guesser in guessers:
         guesser_dir = os.path.join(c.GUESSER_TARGET_PREFIX, guesser)
         guesses = AbstractGuesser.load_guesses(guesser_dir, folds=[fold])
