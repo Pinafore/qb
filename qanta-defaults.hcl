@@ -159,3 +159,8 @@ guessers "ElasticSearchWikiSentences" {
   n_cores = 15
   min_appearances = 1
 }
+
+buzzer {
+  n_cores=16
+  gpu=1
+}
