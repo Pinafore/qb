@@ -1,6 +1,7 @@
 from typing import List, Dict, Iterable, Tuple
 import sqlite3
 from collections import defaultdict, OrderedDict, Counter
+import re
 
 from functional import seq
 
@@ -11,21 +12,25 @@ from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PUNCTUATION
 from qanta.config import conf
 
+kPAREN = re.compile(r'\([^)]*\)')
+kBRACKET = re.compile(r'\[[^)]*\]')
+kMULT_SPACE = re.compile(r'\s+')
+kANGLE = re.compile(r'<[^>]*>')
+
 log = logging.get(__name__)
 
 
 class Question:
-    def __init__(self, qnum, answer, category, naqt,
-                 tournaments, page, ans_type, fold, gender):
+    def __init__(self, qnum, answer, category, naqt, protobowl,
+                 tournaments, page, fold):
         self.qnum = qnum
         self.answer = answer
         self.category = category
         self.naqt = naqt
+        self.protobowl = protobowl
         self.tournaments = tournaments
         self.page = page
-        self.ans_type = ans_type
         self.fold = fold
-        self.gender = gender
         self.text = {}
         self._last_query = None
 
@@ -35,6 +40,9 @@ class Question:
             self.page,
             self.flatten_text()[0:20]
         )
+
+    def normalized_answer(self):
+        return QuestionDatabase.normalize_answer(self.answer)
 
     def raw_words(self):
         """
@@ -87,26 +95,26 @@ class Question:
         sentence_list = [self.text[i] for i in range(len(self.text))]
         properties = {
             'ans_type': self.ans_type,
-            'category': self.category.split(':')[0],
-            'gender': self.gender
+            'category': self.category.split(':')[0]
         }
         return sentence_list, self.page, properties
 
 
 class QuestionDatabase:
     def __init__(self, location=QB_QUESTION_DB):
+        log.info("Opening database at %s" % location)
         self._conn = sqlite3.connect(location)
 
     def query(self, command: str, arguments) -> Dict[str, Question]:
         questions = {}
         c = self._conn.cursor()
         command = 'select id, page, category, answer, ' + \
-            'tournament, type, naqt, fold, gender ' + command
+            'tournament, naqt, protobowl, fold' + command
         c.execute(command, arguments)
 
-        for qnum, page, category, answer, tournaments, ans_type, naqt, fold, gender in c:
-            questions[qnum] = Question(qnum, answer, category, naqt, tournaments, page, ans_type,
-                                       fold, gender)
+        for qnum, page, category, answer, tournaments, naqt, protobowl, fold,in c:
+            questions[qnum] = Question(qnum, answer, category, naqt, protobowl,
+                                       tournaments, page, fold)
 
         for qnum in questions:
             command = 'select sent, raw from text where question=? order by sent asc'
@@ -118,9 +126,9 @@ class QuestionDatabase:
 
     def all_questions(self, unfiltered=False):
         if unfiltered:
-            return self.query('FROM questions', ())
+            return self.query(' FROM questions', ())
         else:
-            return self.query('FROM questions where page != ""', ())
+            return self.query(' FROM questions where page != ""', ())
 
     def answer_map(self):
         c = self._conn.cursor()
@@ -133,6 +141,38 @@ class QuestionDatabase:
             d[answer][page] += 1
 
         return d
+
+    @staticmethod
+    def normalize_answer(answer):
+        answer = answer.lower().replace("_ ", " ").replace(" _", " ").replace("_", "")
+        answer = answer.replace("{", "").replace("}", "")
+        answer = kPAREN.sub('', answer)
+        answer = kBRACKET.sub('', answer)
+        answer = kANGLE.sub('', answer)
+        answer = kMULT_SPACE.sub(' ', answer)
+        answer = " ".join(Question.split_and_remove_punc(answer))
+        return answer
+
+    def normalized_answers(self):
+        """
+        Return a dictionary with the most unmatched pages
+        """
+
+        c = self._conn.cursor()
+        command = 'select answer, page from questions '
+        c.execute(command)
+
+        answers = defaultdict(list)
+        for aa, page in c:
+            normalized = self.normalize_answer(aa)
+            answers[normalized].append((aa, page))
+        return answers
+
+    def questions_by_answer(self, answer):
+        questions = self.query('from questions where answer == ?', (answer,))
+
+        for ii in questions:
+            yield questions[ii]
 
     def questions_with_pages(self) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
