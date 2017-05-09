@@ -45,7 +45,6 @@ configuration section for a summary of how the Terraform install scripts treat t
 10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
 and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
 nodes can communicate via SSH
-11. [Install sshuttle](https://github.com/apenwarr/sshuttle/) which is used to create an SSH VPN
 
 #### What do the Packer/Terraform scripts install and configure?
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
@@ -364,3 +363,72 @@ normal instance. This instance uses a different AMI that has GPU enabled Tensorf
 default r3.8xlarge
 * `naqt_db.tf.tftemplate`: Configure qanta to use the private NAQT dataset
 * `eip.tf.template`: Configure terraform to add a pre-made elastic IP to the instance
+
+# Page Assignment and Data Ingestion
+
+We use Wikipedia as our inventory of possible answers.  Because we
+also use questions for training data, we need to map individual
+questions to Wikipedia pages.  We have three systems for doing this
+(the code that does the mapping lives in ingestion/create_db.py, which
+produces a database of questions based on protobowl and NAQT input).
+
+As per our agreement with NAQT, we cannot distribute the NAQT data,
+but we include the ingestion data in the interest of scientific transparency.
+
+## Unambiguous Page Assignments
+
+These are the easiest pages to handle.  Given an answer string to a quiz bowl question, we directly map it to a Wikipedia page.
+
+Unambiguous pages are unambiguous on the Wikipedia side.  There can be multiple answer lines associated with an answer:
+ * adlai e stevenson ii    Adlai Stevenson II
+ * adlai e stevenson jr    Adlai Stevenson II
+ * adlai ewingstevensonii  Adlai Stevenson II
+ * adlai stevenson ii      Adlai Stevenson II
+ * buddha	Gautama Buddha
+ * buddha or siddhartha gautama	Gautama Buddha
+ * buddhism	Buddhism
+
+However, some answers should not be in this list
+ * byte	Byte
+ * buffer	Buffer solution
+ * britain	Battle of Britain
+
+## Easy Ambiguous Page Assignments
+
+Often, the same answer string can refer to multiple Wikipedia
+entities.  If we can use words in the question to easily differentiate
+them, then the page assignment can be done automatically.
+
+For instance "Java" can refer to an island in Indonesia or a
+programming language.
+* java	Java	island
+* java	Java (programming language)	language
+
+Unlike above, where there were only two fields in our tab delimited
+file, there are now three fields.  The first two fields are the same;
+the last is a word that, if it appears in the question, says that the
+question should be assigned to the page.
+
+The order that pages appear in the ambiguous page list matters.  For
+example, most questions with the answer "Paris" will be about the city
+in France.  However, there are also many questions about "Paris
+(mythology)".  In this case, we create a rule
+* paris	Paris (mythology)	aphrodite
+* paris	Paris
+
+If it finds a question with "Paris" as the answer line and the workd
+"aphrodite" in the question, it will assign the question to "Paris
+(mythology)".  Every other question, however, will be assigned to
+"Paris" (the city).
+
+We do not use ambiguous page assignments for closely related concepts
+for example, "Orion (mythology)" and "Orion (constellation)" are so
+tightly coupled that individual words cannot separate the concepts.
+These cases have to be resolved individually for questions.
+
+## Specific Question Assignments
+
+If the above approaches cannot solve page assignments, then the last
+resort is to explicitly assign questions to pages based on either
+Protobowl or NAQT id.  These files have four fields but only use the
+first three.
