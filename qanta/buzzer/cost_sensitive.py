@@ -19,7 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, default='mlp')
     parser.add_argument('-l', '--load', action='store_true', default=False)
-    parser.add_argument('-e', '--epochs', type=int, default=3)
+    parser.add_argument('-e', '--epochs', type=int, default=6)
     return parser.parse_args()
 
 def main():

@@ -4,9 +4,9 @@ from qanta.util import constants as c
 
 N_GUESSES = 50
 MIN_ANSWERS = 1
-MIN_SCORE = 0
 GUESSERS = ['DANGuesser', 'ElasticSearchGuesser']
 N_GUESSERS = len(GUESSERS)
+NEG_WEIGHT = 0.1 # weight of negative (not buzzing) class
 
 BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward',
     'reward_hopeful', 'buzz', 'correct', 'rush', 'late'])

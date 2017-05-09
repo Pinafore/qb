@@ -87,7 +87,7 @@ class QuestionIterator(object):
             # not buzzing = 1 when no guesser is correct
             new_results = []
             for i in range(length):
-                not_buzz = int(not any(results[i] == 1))
+                not_buzz = int(not any(results[i] == 1)) * bc.NEG_WEIGHT
                 new_results.append(np.append(results[i], not_buzz))
             results = np.asarray(new_results, dtype=np.int32)
 
