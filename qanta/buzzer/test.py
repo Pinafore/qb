@@ -10,9 +10,10 @@ from qanta.config import conf
 from qanta.buzzer import configs
 from qanta.buzzer.interface import buzzer2vwexpo
 from qanta.buzzer.iterator import QuestionIterator
-from qanta.buzzer.util import load_quizbowl, GUESSES_DIR
+from qanta.buzzer.util import load_quizbowl
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.models import MLP, RNN
+from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
 
@@ -37,7 +38,7 @@ def main():
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=test_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=2, n_layers=cfg.n_layers, dropout=cfg.dropout)
+                n_output=bc.N_GUESSERS+1, n_layers=cfg.n_layers, dropout=cfg.dropout)
 
     if isinstance(cfg, configs.rnn):
         model = RNN(test_iter.n_input, cfg.n_hidden, 2)
@@ -55,7 +56,7 @@ def main():
     buzzes = trainer.test(test_iter)
     log.info('Buzzes generated')
 
-    guesses_df = AbstractGuesser.load_guesses(GUESSES_DIR, folds=[fold])
+    guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
     buzzer2vwexpo(guesses_df, buzzes, fold)
     # preds, metas = buzzer2predsmetas(guesses_df, buzzes)
     # log.info('preds and metas generated')

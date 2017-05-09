@@ -73,7 +73,8 @@ class Trainer(object):
             ys = F.reshape(ys, (length, batch_size, -1))
             actions = self.take_actions(ys)
             for qnum, action in zip(batch.qids, actions):
-                qnum = qnum.tolist()
+                if isinstance(qnum, np.ndarray):
+                    qnum = qnum.tolist()
                 buzzes[qnum] = [-1, -1]
                 for i, a in enumerate(action):
                     if a < bc.N_GUESSERS:

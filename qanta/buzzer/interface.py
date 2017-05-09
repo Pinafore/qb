@@ -10,6 +10,7 @@ from multiprocessing import Pool, Manager
 from typing import List, Dict, Tuple, Optional
 
 from qanta.util import constants as c
+from qanta.util.io import safe_path
 from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
