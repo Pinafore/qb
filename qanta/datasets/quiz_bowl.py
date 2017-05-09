@@ -181,7 +181,7 @@ class QuestionDatabase:
                 page = format_guess(row.page)
             else:
                 page = row.page
-            if row.page not in page_map:
+            if page not in page_map:
                 page_map[page] = []
             page_map[page].append(row)
         return page_map
