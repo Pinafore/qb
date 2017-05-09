@@ -86,16 +86,21 @@ def _process_question(option2id: Dict[str, int],
 
     guess_dicts = []
     results = []
-    for guesser, guesser_group in question.groupby('guesser', sort=True):
+    for pos, pos_group in question.groupby(['sentence', 'token']):
+        pos_group = pos_group.groupby('guesser')
         guess_dicts.append([])
         results.append([])
-        for pos, sent_token in guesser_group.groupby(['sentence', 'token'], sort=True):
-            # check if top guess is correct
-            top_guess = sent_token.sort_values('score',
-                    ascending=False).iloc[0].guess
-            results[-1].append(int(top_guess == answer))
-            vec = {x.guess: x.score for x in sent_token.itertuples()}
-            guess_dicts[-1].append(vec)
+        for guesser in bc.GUESSERS:
+            if guesser not in pos_group.groups:
+                guess_dicts[-1].append({})
+                results[-1].append(0)
+            else:
+                guesses = pos_group.get_group(guesser)
+                guesses = guesses.sort_values('score', ascending=False)
+                top_guess = guesses.iloc[0].guess
+                results[-1].append(int(top_guess == answer))
+                dic = {x.guess: x.score for x in guesses.itertuples()}
+                guess_dicts[-1].append(dic)
 
     queue.put(qnum)
     return qnum, answer_id, guess_dicts, results

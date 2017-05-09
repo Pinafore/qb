@@ -11,6 +11,7 @@ from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.iterator import QuestionIterator
 from qanta.buzzer.util import load_quizbowl
 from qanta.buzzer.models import MLP, RNN
+from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
 
@@ -33,11 +34,11 @@ def main():
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=eval_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=eval_iter.n_guessers + 1, n_layers=cfg.n_layers, 
+                n_output=bc.N_GUESSERS + 1, n_layers=cfg.n_layers, 
                 dropout=cfg.dropout)
 
     if isinstance(cfg, configs.rnn):
-        model = RNN(eval_iter.n_input, cfg.n_hidden, eval_iter.n_guessers + 1)
+        model = RNN(eval_iter.n_input, cfg.n_hidden, bc.N_GUESSERS + 1)
 
     gpu = conf['buzzer']['gpu']
     if gpu != -1 and chainer.cuda.available:

@@ -2,8 +2,11 @@ import os
 from collections import namedtuple
 from qanta.util import constants as c
 
-NUM_GUESSES = 20
+N_GUESSES = 50
 MIN_ANSWERS = 1
+MIN_SCORE = 0
+GUESSERS = ['DANGuesser', 'ElasticSearchGuesser']
+N_GUESSERS = len(GUESSERS)
 
 BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward',
     'reward_hopeful', 'buzz', 'correct', 'rush', 'late'])

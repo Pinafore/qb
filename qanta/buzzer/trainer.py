@@ -12,6 +12,7 @@ from chainer import cuda
 
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
+from qanta.buzzer import constants as bc
 
 from qanta.buzzer.progress import ProgressBar
 
@@ -75,7 +76,7 @@ class Trainer(object):
                 qnum = qnum.tolist()
                 buzzes[qnum] = [-1, -1]
                 for i, a in enumerate(action):
-                    if a < test_iter.n_guessers:
+                    if a < bc.N_GUESSERS:
                         buzzes[qnum] = (i, a)
                         break
             progress_bar(*test_iter.epoch_detail)
