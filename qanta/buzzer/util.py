@@ -99,7 +99,9 @@ def _process_question(option2id: Dict[str, int],
                 guesses = guesses.sort_values('score', ascending=False)
                 top_guess = guesses.iloc[0].guess
                 results[-1].append(int(top_guess == answer))
-                dic = {x.guess: x.score for x in guesses.itertuples()}
+                # normalize score to 0-1 at each time step
+                s = sum(guesses.score)
+                dic = {x.guess: x.score / s for x in guesses.itertuples()}
                 guess_dicts[-1].append(dic)
 
     queue.put(qnum)
