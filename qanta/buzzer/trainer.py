@@ -94,7 +94,7 @@ class Trainer(object):
             ys = self.model(batch.vecs, train=False)
             ts = F.reshape(batch.results, (length * batch_size, -1))
             mask = F.reshape(batch.mask, (length * batch_size, ))
-            stats['loss'] -= self.loss(ys, ts, mask).data.tolist()
+            stats['loss'] = self.loss(ys, ts, mask).data.tolist()
             batch_stats = self.metric(ys.data, ts.data, mask.data)
             for k, v in batch_stats.items():
                 stats[k] += v
@@ -117,7 +117,7 @@ class Trainer(object):
             mask = F.reshape(batch.mask, (length * batch_size, ))
             loss = self.loss(ys, ts, mask)
             self.backprop(loss)
-            stats['loss'] -= loss.data.tolist()
+            stats['loss'] = loss.data.tolist()
             batch_stats = self.metric(ys.data, ts.data, mask.data)
             for k, v in batch_stats.items():
                 stats[k] += v

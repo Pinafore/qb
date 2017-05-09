@@ -94,7 +94,7 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
         
         log.info('\n\n[buzzer2vwexpo] writing to files')
 
-        buzz_out = '\n'.join('{0},{1},{2},{3}{4}{5}{6}'.format(*r) for r in
+        buzz_out = '\n'.join('{0},{1},{2},{3},{4},{5},{6}'.format(*r) for r in
                 itertools.chain(*buzzf))
         buzz_file.write(buzz_out)
         log.info('buzz file written')
