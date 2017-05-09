@@ -6,14 +6,12 @@ from qanta.util.io import call, shell, make_dirs, safe_path
 from qanta.reporting.vw_audit import parse_audit, audit_report
 from qanta.pipeline.spark import SparkMergeFeatures
 from qanta.guesser.abstract import AbstractGuesser
-
-BUZZER_MODEL = 'output/buzzer/mlp_buzzer.npz'
-GUESSES_DIR = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
+from qanta.buzzer import constants as bc
 
 class MergeGuesserDFs(Task):
 
     def output(self):
-        return [LocalTarget(AbstractGuesser.guess_path(GUESSES_DIR, fold) for
+        return [LocalTarget(AbstractGuesser.guess_path(bc.GUESSES_DIR, fold) for
             fold in ['dev', 'test']]
         
     def run(self):
@@ -28,13 +26,14 @@ class BuzzerModel(Task):
         yield MergeGuesserDFs()
 
     def output(self):
-        return LocalTarget(BUZZER_MODEL)
+        return LocalTarget(bc.BUZZER_MODEL)
 
     def run(self):
         make_dirs(safe_path('output/buzzers/'))
         shell(
             'python qanta/buzzer/cost_sensitive.py'
         )
+
 
 class BuzzerBuzzes(Task):
     fold = luigi.Parameter()

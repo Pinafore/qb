@@ -13,3 +13,5 @@ BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward',
 
 OPTIONS_DIR = 'output/buzzer/options.pkl'
 GUESSES_DIR = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
+
+BUZZER_MODEL = 'output/buzzer/mlp_buzzer.npz'

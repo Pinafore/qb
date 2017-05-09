@@ -17,14 +17,7 @@ from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--fold', required=True)
-    parser.add_argument('-c', '--config', type=str, default='mlp')
-    return parser.parse_args()
-
-def main():
-    args = parse_args()
+def main(args):
     cfg = getattr(configs, args.config)()
     fold = args.fold
 
@@ -62,5 +55,12 @@ def main():
     # log.info('preds and metas generated')
     # performance.generate(2, preds, metas, 'output/summary/{}_1.json'.format(fold))
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--fold', required=True)
+    parser.add_argument('-c', '--config', type=str, default='mlp')
+    return parser.parse_args()
+
 if __name__ == '__main__':
+    args = parse_args()
     main()
