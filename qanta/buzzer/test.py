@@ -47,7 +47,7 @@ def main(args):
 
     trainer = Trainer(model, cfg.model_dir)
     buzzes = trainer.test(test_iter)
-    log.info('Buzzes generated')
+    log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
 
     guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
     buzzer2vwexpo(guesses_df, buzzes, fold)
@@ -63,4 +63,4 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    main()
+    main(args)

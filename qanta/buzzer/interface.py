@@ -36,22 +36,33 @@ def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]],
     qnum = int(qnum)
     buzz_pos, buzz_guesser = buzzes[qnum]
     buzzf, predf, metaf, finalf = [], [], [], []
+    finaled = False
+    last_guess = None
     for i, (g, guesser_group) in enumerate(question.groupby('guesser', sort=True)):
         guesser_group = guesser_group.groupby(['sentence', 'token'], sort=True)
         for pos, (sent_token, group) in enumerate(guesser_group):
             sent, token = sent_token
             group = group.sort_values('score', ascending=False)
             for rank, x in enumerate(group.itertuples()):
-                final = int((rank == 0) and (pos == buzz_pos) and i == buzz_guesser)
+                final = int((rank == 0) and (pos == buzz_pos) \
+                        and i == buzz_guesser)
+
                 score = x.score.tolist()
                 # force negative weight for guesses that are not chosen
                 weight = score if final else score - 1
                 predf.append([weight, qnum, sent, token])
                 metaf.append([qnum, sent, token, x.guess])
                 guess = x.guess if ',' not in x.guess else '"' + x.guess + '"'
+                if rank == 0:
+                    last_guess = guess
                 buzzf.append([qnum, sent, token, guess, x.guesser, final, score])
                 if final:
-                    finalf.append([x.qnum, guess])
+                    if finaled:
+                        raise ValueError("Multiple finals for {0}.".format(qnum))
+                    finalf.append([qnum, guess])
+                    finaled = True
+    if not finaled:
+        finalf.append([qnum, last_guess])
     queue.put(qnum)
     return buzzf, predf, metaf, finalf
 
