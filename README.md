@@ -373,7 +373,7 @@ questions to Wikipedia pages.  We have three systems for doing this
 produces a database of questions based on protobowl and NAQT input).
 
 As per our agreement with NAQT, we cannot distribute the NAQT data,
-but we include the ingestion data in the interest of scientific transparency.
+but we include the ingestion code in the interest of scientific transparency.
 
 ## Unambiguous Page Assignments
 
@@ -409,7 +409,7 @@ file, there are now three fields.  The first two fields are the same;
 the last is a word that, if it appears in the question, says that the
 question should be assigned to the page.
 
-The order that pages appear in the ambiguous page list matters.  For
+Sometimes there's a reasonable default answer.  For
 example, most questions with the answer "Paris" will be about the city
 in France.  However, there are also many questions about "Paris
 (mythology)".  In this case, we create a rule
