@@ -70,7 +70,8 @@ def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]],
     return buzzf, predf, metaf, finalf
 
 def buzzer2vwexpo(guesses_df: pd.DataFrame, 
-        buzzes: Dict[int, Tuple[int, int]], finals: Dict[int, int], fold: str) -> None:
+        buzzes: Dict[int, Tuple[int, int]],
+        finals: Dict[int, int], fold: str) -> None:
     '''Given buzzing positions, generate vw_pred, vw_meta, buzz and final files
     guesses_df: pd.DataFrame of guesses
     buzzes: dictionary of qnum -> buzzing position
