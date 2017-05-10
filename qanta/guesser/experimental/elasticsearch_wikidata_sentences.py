@@ -23,6 +23,32 @@ log = logging.get(__name__)
 connections.create_connection(hosts=['localhost'])
 
 
+# Hand selected properties from most frequently occurring
+WIKIDATA_PROPERTIES = {
+    'instance of',
+    'sex or gender',
+    'occupation',
+    'country',
+    'country of citizenship',
+    'located in the administrative territorial entity',
+    'place of birth',
+    'place of death',
+    'sport'
+    'subclass of',
+    'cast member',
+    'shares border with',
+    'educated at',
+    'award received',
+    'position held',
+    'location',
+    'country of origin',
+    'part of',
+    'member of political party',
+    'member of',
+    'author'
+}
+
+
 class Answer(DocType):
     page = Text(fields={'raw': Keyword()})
     wiki_content = Text()
@@ -35,7 +61,8 @@ class Answer(DocType):
 
 class ElasticSearchIndex:
     @staticmethod
-    def build(documents: Dict[str, Tuple[str, str]], wiki_sentences_enabled=True, wiki_page_enabled=True):
+    def build(documents: Dict[str, Tuple[str, str]],
+              wiki_sentences_enabled=True, wiki_page_enabled=True, qb_train_enabled=True):
         try:
             Index('qb').delete()
         except elasticsearch.exceptions.NotFoundError:
@@ -48,6 +75,10 @@ class ElasticSearchIndex:
             qb_content, wikidata_sentences = documents[page]
             if not wiki_sentences_enabled:
                 wikidata_sentences = ''
+
+            if not qb_train_enabled:
+                qb_content = ''
+
             if wiki_page_enabled:
                 wiki_page = cw[page].content
             else:
@@ -78,6 +109,7 @@ class ElasticSearchWikiSentencesGuesser(AbstractGuesser):
         self.n_cores = guesser_conf['n_cores']
         self.wiki_page_enabled = guesser_conf['wiki_page_enabled']
         self.wiki_sentences_enabled = guesser_conf['wiki_sentences_enabled']
+        self.qb_train_enabled = guesser_conf['qb_train_enabled']
 
     def qb_dataset(self):
         return QuizBowlDataset(self.min_appearances)
@@ -87,7 +119,8 @@ class ElasticSearchWikiSentencesGuesser(AbstractGuesser):
             'min_appearances': self.min_appearances,
             'n_cores': self.n_cores,
             'wiki_page_enabled': self.wiki_page_enabled,
-            'wiki_sentences_enabled': self.wiki_sentences_enabled
+            'wiki_sentences_enabled': self.wiki_sentences_enabled,
+            'qb_train_enabled': self.qb_train_enabled
         }
 
     def train(self, training_data):
@@ -107,8 +140,7 @@ class ElasticSearchWikiSentencesGuesser(AbstractGuesser):
         for page in documents:
             if page in page_sentences:
                 n += 1
-                w_sentences = ' '.join(page_sentences[page])
-                w_sentences = ' '.join(set(w_sentences.lower().split()))
+                w_sentences = page_sentences[page]
             else:
                 w_sentences = ''
             documents[page] = (documents[page], w_sentences)
@@ -118,7 +150,8 @@ class ElasticSearchWikiSentencesGuesser(AbstractGuesser):
         ElasticSearchIndex.build(
             documents,
             wiki_sentences_enabled=self.wiki_sentences_enabled,
-            wiki_page_enabled=self.wiki_page_enabled
+            wiki_page_enabled=self.wiki_page_enabled,
+            qb_train_enabled=self.qb_train_enabled
         )
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
@@ -142,6 +175,7 @@ class ElasticSearchWikiSentencesGuesser(AbstractGuesser):
         guesser.n_cores = params['n_cores']
         guesser.wiki_page_enabled = params['wiki_page_enabled']
         guesser.wiki_sentences_enabled = params['wiki_sentences_enabled']
+        guesser.qb_train_enabled = params['qb_train_enabled']
         return guesser
 
     def save(self, directory: str):
@@ -150,5 +184,6 @@ class ElasticSearchWikiSentencesGuesser(AbstractGuesser):
                 'min_appearances': self.min_appearances,
                 'n_cores': self.n_cores,
                 'wiki_page_enabled': self.wiki_page_enabled,
-                'wiki_sentences_enabled': self.wiki_sentences_enabled
+                'wiki_sentences_enabled': self.wiki_sentences_enabled,
+                'qb_train_enabled': self.qb_train_enabled
             }, f)

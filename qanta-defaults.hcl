@@ -157,6 +157,7 @@ guessers "ElasticSearchWikiSentences" {
   enabled = false
   wiki_page_enabled = true
   wiki_sentences_enabled = true
+  qb_train_enabled = true
   # Set the level of parallelism for guess generation
   n_cores = 15
   min_appearances = 1
