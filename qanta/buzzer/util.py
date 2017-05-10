@@ -120,8 +120,7 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
         dev_guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['dev'])
         all_options = set(dev_guesses.guess)
 
-        by_folds = quizbowl_db.questions_by_fold()
-        train_dev_questions = quizbowl_db.questions_in_by_folds(['train', 'dev'])
+        train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
         all_options.update({format_guess(q.page) for q in train_dev_questions})
 
         id2option = list(all_options)
@@ -184,7 +183,9 @@ def merge_dfs():
             new_guesses = new_guesses.append(guesses)
         for col in ['qnum', 'sentence', 'token', 'score']:
             new_guesses[col] = pd.to_numeric(new_guesses[col], downcast='integer')
-        merged_dir = safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, 'merged'))
+        merged_dir = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
+        if not os.path.exists(merged_dir):
+            os.makedirs(merged_dir)
         AbstractGuesser.save_guesses(new_guesses, merged_dir, folds=[fold])
         log.info("Merging: {0} finished.".format(fold))
 
