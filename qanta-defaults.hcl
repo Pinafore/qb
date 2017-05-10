@@ -162,5 +162,7 @@ guessers "ElasticSearchWikiSentences" {
 
 buzzer {
   n_cores=16
+  n_guesses=50
   gpu=1
+  config="mlp"
 }

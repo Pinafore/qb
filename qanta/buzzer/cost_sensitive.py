@@ -4,30 +4,19 @@ import chainer
 
 from qanta import logging
 from qanta.config import conf
-from qanta.guessers.abstract import AbstractGuesser
+from qanta.guesser.abstract import AbstractGuesser
 
 from qanta.buzzer import configs
 from qanta.buzzer.progress import ProgressBar
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.iterator import QuestionIterator
-from qanta.buzzer.util import load_quizbowl
+from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.models import MLP, RNN
-from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
 
-GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
-N_GUESSERS = len(GUESSERS)
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='mlp')
-    parser.add_argument('-l', '--load', action='store_true', default=False)
-    parser.add_argument('-e', '--epochs', type=int, default=6)
-    return parser.parse_args()
-
-def main():
-    args = parse_args()
+def train_cost_sensitive(args):
+    N_GUESSERS = len(GUESSERS)
     cfg = getattr(configs, args.config)()
 
     option2id, all_guesses = load_quizbowl()
@@ -57,5 +46,13 @@ def main():
     trainer = Trainer(model, cfg.model_dir)
     trainer = trainer.run(train_iter, eval_iter, args.epochs)
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', type=str, default='mlp')
+    parser.add_argument('-l', '--load', action='store_true', default=False)
+    parser.add_argument('-e', '--epochs', type=int, default=6)
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    main(args)

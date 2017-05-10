@@ -10,14 +10,17 @@ from qanta.config import conf
 from qanta.buzzer import configs
 from qanta.buzzer.interface import buzzer2vwexpo
 from qanta.buzzer.iterator import QuestionIterator
-from qanta.buzzer.util import load_quizbowl
+from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
 
+
 log = logging.get(__name__)
 
-def main(args):
+def generate(args):
+    N_GUESSERS = len(GUESSERS)
+
     cfg = getattr(configs, args.config)()
     fold = args.fold
 
@@ -31,7 +34,7 @@ def main(args):
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=test_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=bc.N_GUESSERS+1, n_layers=cfg.n_layers, dropout=cfg.dropout)
+                n_output=N_GUESSERS+1, n_layers=cfg.n_layers, dropout=cfg.dropout)
 
     if isinstance(cfg, configs.rnn):
         model = RNN(test_iter.n_input, cfg.n_hidden, 2)

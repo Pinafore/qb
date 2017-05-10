@@ -3,6 +3,7 @@ import sys
 import time
 import pickle
 import numpy as np
+import pandas as pd
 from collections import namedtuple
 from multiprocessing import Pool, Manager
 from functools import partial
@@ -168,6 +169,24 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
         with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)
     return option2id, guesses_by_fold
+
+def merge_dfs():
+    GUESSERS = ["{0}.{1}".format(
+        x.guesser_module, x.guesser_class) \
+        for x in AbstractGuesser.list_enabled_guessers()]
+    log.info("Merging guesser DataFrames.")
+    for fold in ['dev', 'test']:
+        new_guesses = pd.DataFrame(columns=['fold', 'guess', 'guesser', 'qnum',
+            'score', 'sentence', 'token'], dtype='object')
+        for guesser in GUESSERS:
+            guesser_dir = os.path.join(c.GUESSER_TARGET_PREFIX, guesser)
+            guesses = AbstractGuesser.load_guesses(guesser_dir, folds=[fold])
+            new_guesses = new_guesses.append(guesses)
+        for col in ['qnum', 'sentence', 'token', 'score']:
+            new_guesses[col] = pd.to_numeric(new_guesses[col], downcast='integer')
+        merged_dir = safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, 'merged'))
+        AbstractGuesser.save_guesses(new_guesses, merged_dir, folds=[fold])
+        log.info("Merging: {0} finished.".format(fold))
 
 if __name__ == "__main__":
     option2id, guesses_by_fold = load_quizbowl(['dev', 'test'])

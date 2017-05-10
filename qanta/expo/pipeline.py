@@ -4,6 +4,7 @@ from argparse import Namespace
 import luigi
 from luigi import LocalTarget, Task, ExternalTask, WrapperTask
 
+from qanta.config import conf
 from qanta.reporting.performance import load_data, load_audit
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.preprocess import format_guess
@@ -106,9 +107,9 @@ class GenerateExpoBuzzer(Task):
 
     def run(self):
         args = Namespace
-        args.config = 'mlp'
+        args.config = conf['buzzer']['config']
         args.fold = self.fold
-        qanta.buzzer.test.main(args)
+        qanta.buzzer.test.generate(args)
 
 class AllExpo(WrapperTask):
     def requires(self):

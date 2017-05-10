@@ -2,7 +2,6 @@ import os
 from collections import namedtuple
 from qanta.util import constants as c
 
-N_GUESSES = 50
 MIN_ANSWERS = 1
 NEG_WEIGHT = 0.2 # weight of negative (not buzzing) class
 
