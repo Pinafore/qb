@@ -17,8 +17,8 @@ from qanta.buzzer.util import merge_dfs
 class MergeGuesserDFs(Task):
 
     def output(self):
-        return [LocalTarget(AbstractGuesser.guess_path(bc.GUESSES_DIR, fold) for
-            fold in c.BUZZ_FOLDS]
+        return [LocalTarget(AbstractGuesser.guess_path(bc.GUESSES_DIR, fold)) \
+                for fold in c.BUZZ_FOLDS]
         
     def run(self):
         merge_dfs()
