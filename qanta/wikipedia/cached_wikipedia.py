@@ -58,7 +58,8 @@ def web_initialize_file_cache(path):
 
 
 class CachedWikipedia:
-    def __init__(self, location=QB_WIKI_LOCATION, country_list=COUNTRY_LIST_PATH, write_dummy=True):
+    def __init__(self, location=QB_WIKI_LOCATION, country_list=COUNTRY_LIST_PATH,
+                 write_dummy=True, remote_fallback=conf['cached_wikipedia_remote_fallback']):
         """
         @param write_dummy If this is true, it writes an empty pickle if there
         is an error accessing a page in Wikipedia.  This will speed up future
@@ -68,7 +69,7 @@ class CachedWikipedia:
         self.cache = {}
         self.write_dummy = write_dummy
         self.countries = dict()
-        self.cached_wikipedia_remote_fallback = conf['cached_wikipedia_remote_fallback']
+        self.cached_wikipedia_remote_fallback = remote_fallback
         if country_list:
             with open(country_list) as f:
                 for line in f:

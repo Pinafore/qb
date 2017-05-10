@@ -6,6 +6,8 @@ generate_train_guesses = false
 
 guessers_train_on_dev = false
 
+expo_questions = "data/external/expo.csv"
+
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
 use_pretrained_embeddings = true

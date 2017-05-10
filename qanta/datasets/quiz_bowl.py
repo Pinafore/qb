@@ -1,15 +1,19 @@
-from typing import List, Dict, Iterable, Tuple
+from typing import List, Dict, Iterable, Tuple, Set
+import csv
+import os
 import sqlite3
 from collections import defaultdict, OrderedDict, Counter
 import re
 
 from functional import seq
+import nltk
 
 from qanta import logging
 from qanta.preprocess import format_guess
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PUNCTUATION
+from qanta.util.io import file_backed_cache_decorator, safe_path
 from qanta.config import conf
 
 kPAREN = re.compile(r'\([^)]*\)')
@@ -99,9 +103,46 @@ class Question:
         return sentence_list, self.page, properties
 
 
+@file_backed_cache_decorator(safe_path('data/external/preprocess_expo_questions.cache'))
+def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum=50000) -> List[Question]:
+    """
+    This function takes the expo fold and converts it to a list of questions in the same output format as the database.
+    
+    The start_qnum parameter was determined by looking at the distribution of qnums and finding a range where there are
+    no keys. Nonetheless for safety we still skip qnums if they clash with existing qnums
+    :param expo_csv: 
+    :param database: 
+    :param start_qnum: 
+    :return: 
+    """
+    db = QuestionDatabase(location=QB_QUESTION_DB)
+    qnums = {q.qnum for q in db.all_questions(unfiltered=True).values()}
+    while start_qnum in qnums:
+        start_qnum += 1
+    curr_qnum = start_qnum
+
+    with open(expo_csv) as f:
+        csv_questions = list(csv.DictReader(f))
+
+    questions = []
+    for q in csv_questions:
+        q['sentences'] = nltk.sent_tokenize(q['text'])
+        while curr_qnum in qnums:
+            curr_qnum += 1
+        questions.append(Question(
+            curr_qnum, None, None, None, None, q['answer'], None, 'expo', None
+        ))
+        curr_qnum += 1
+
+    return questions
+
 class QuestionDatabase:
-    def __init__(self, location=QB_QUESTION_DB):
+    def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions']):
         self._conn = sqlite3.connect(location)
+        if os.path.exists(expo_csv):
+            pass
+        else:
+            pass
 
     def query(self, command: str, arguments) -> Dict[str, Question]:
         questions = {}
@@ -176,7 +217,7 @@ class QuestionDatabase:
 
         questions = self.query('from questions where page != ""', ()).values()
 
-        for row in sorted(questions, key=lambda x: x.answer):
+        for row in sorted(questions):
             if normalize_titles:
                 page = format_guess(row.page)
             else:
