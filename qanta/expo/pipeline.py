@@ -65,6 +65,22 @@ class GenerateExpoBuzzer(Task):
         args.fold = self.fold
         qanta.buzzer.test.generate(args)
 
+class GenerateExpoBuzzer(Task):
+    fold = luigi.Parameter()
+
+    def requires(self):
+        yield Prerequisites(fold=self.fold)
+
+    def output(self):
+        return [LocalTarget(EXPO_BUZZ.format(self.fold)),
+                LocalTarget(EXPO_FINAL.format(self.fold))]
+
+    def run(self):
+        args = Namespace
+        args.config = conf['buzzer']['config']
+        args.fold = self.fold
+        qanta.buzzer.test.generate(args)
+
 class AllExpo(WrapperTask):
     def requires(self):
         yield GenerateExpoBuzzer(fold='expo')
