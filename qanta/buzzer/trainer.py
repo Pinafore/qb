@@ -71,15 +71,15 @@ class Trainer(object):
             ys.to_cpu()
             ys = ys.data
             actions = np.argmax(ys, axis=2).tolist() # length, batch
-            for qnum, action in zip(batch.qids, actions):
+            for i, (qnum, action) in enumerate(zip(batch.qids, actions)):
                 if isinstance(qnum, np.ndarray):
                     qnum = qnum.tolist()
+                finals[qnum] = np.argmax(ys[i][-1][:N_GUESSERS]).tolist()
                 buzzes[qnum] = [-1, -1]
-                for i, a in enumerate(action):
-                    if a < N_GUESSERS:
-                        buzzes[qnum] = (i, a)
+                for pos, chosen in enumerate(action):
+                    if chosen < N_GUESSERS:
+                        buzzes[qnum] = (pos, chosen)
                         break
-                finals[qnum] = np.argmax(ys[-1][:N_GUESSERS]).tolist()
             progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
         progress_bar.finalize()
