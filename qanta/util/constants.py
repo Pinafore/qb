@@ -11,7 +11,8 @@ QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "`
 STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 ALPHANUMERIC = re.compile(r'[\W_]+')
 PUNCTUATION = string.punctuation
-BUZZ_FOLDS = ['dev', 'test']
+GUESSER_REPORT_FOLDS = ['dev', 'test']
+BUZZ_FOLDS = ['dev', 'test', 'expo']
 ALL_FOLDS = ['train', 'dev', 'test']
 
 STATS = 'stats'

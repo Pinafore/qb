@@ -16,7 +16,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from qanta import logging
-from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.datasets.quiz_bowl import QuestionDatabase, QuizBowlDataset
 from qanta.preprocess import format_guess
 from qanta.util.io import safe_path
 
@@ -236,7 +236,7 @@ def plot(summary_only, stats_dir, output):
 
 
 @cli.command()
-@click.option('--min-count', default=2)
+@click.option('--min-count', default=1)
 @click.argument('pred_file')
 @click.argument('meta_file')
 @click.argument('output')

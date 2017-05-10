@@ -35,7 +35,7 @@ class Summary(Task):
 
 class AllSummaries(WrapperTask):
     def requires(self):
-        for fold in c.VW_FOLDS:
+        for fold in c.BUZZ_FOLDS:
             yield Summary(fold=fold)
 
 

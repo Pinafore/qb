@@ -115,7 +115,7 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
     :param start_qnum: 
     :return: 
     """
-    db = QuestionDatabase(location=QB_QUESTION_DB)
+    db = QuestionDatabase(location=QB_QUESTION_DB, load_expo=False)
     qnums = {q.qnum for q in db.all_questions(unfiltered=True).values()}
     while start_qnum in qnums:
         start_qnum += 1
@@ -129,20 +129,23 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
         q['sentences'] = nltk.sent_tokenize(q['text'])
         while curr_qnum in qnums:
             curr_qnum += 1
-        questions.append(Question(
+        qb_question = Question(
             curr_qnum, None, None, None, None, q['answer'], None, 'expo', None
-        ))
+        )
+        for i, sent in enumerate(q['sentences']):
+            qb_question.add_text(i, sent)
+        questions.append(qb_question)
         curr_qnum += 1
 
     return questions
 
 class QuestionDatabase:
-    def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions']):
+    def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
         self._conn = sqlite3.connect(location)
-        if os.path.exists(expo_csv):
-            pass
+        if os.path.exists(expo_csv) and load_expo:
+            self.expo_questions = preprocess_expo_questions(expo_csv)
         else:
-            pass
+            self.expo_questions = []
 
     def query(self, command: str, arguments) -> Dict[str, Question]:
         questions = {}
@@ -154,6 +157,9 @@ class QuestionDatabase:
         for qnum, page, category, answer, tournaments, ans_type, naqt, fold, gender in c:
             questions[qnum] = Question(qnum, answer, category, naqt, tournaments, page, ans_type,
                                        fold, gender)
+
+        for q in self.expo_questions:
+            questions[q.qnum] = q
 
         for qnum in questions:
             command = 'select sent, raw from text where question=? order by sent asc'
@@ -181,7 +187,8 @@ class QuestionDatabase:
 
         return d
 
-    def normalize_answer(self, answer):
+    @staticmethod
+    def normalize_answer(answer):
         answer = answer.lower().replace("_ ", " ").replace(" _", " ").replace("_", "")
         answer = answer.replace("{", "").replace("}", "")
         answer = kPAREN.sub('', answer)
@@ -293,6 +300,9 @@ class QuestionDatabase:
 
         for qid, page in c:
             answers[int(qid)] = page
+
+        for q in self.expo_questions:
+            answers[q.qnum] = q.page
         return answers
 
 
@@ -343,12 +353,14 @@ class QuizBowlDataset(AbstractDataset):
         dev_questions = all_questions.filter(lambda q: q.fold == 'dev').list()
         test_questions = all_questions.filter(lambda q: q.fold == 'test').list()
         devtest_questions = all_questions.filter(lambda q: q.fold == 'devtest').list()
+        expo_questions = all_questions.filter(lambda q: q.fold == 'expo').list()
 
         return {
             'train': train_questions,
             'dev': dev_questions,
             'test': test_questions,
-            'devtest': devtest_questions
+            'devtest': devtest_questions,
+            'expo': expo_questions
         }
 
     def questions_in_folds(self, folds: Iterable[str]) -> List[Question]:

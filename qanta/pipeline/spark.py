@@ -116,7 +116,7 @@ class ExtractFastFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.VW_FOLDS, c.FAST_FEATURES):
+        for fold, feature in product(c.BUZZ_FOLDS, c.FAST_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
@@ -134,7 +134,7 @@ class ExtractComputeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.VW_FOLDS, c.COMPUTE_OPT_FEATURES):
+        for fold, feature in product(c.BUZZ_FOLDS, c.COMPUTE_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
@@ -151,7 +151,7 @@ class ExtractDeepFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.VW_FOLDS, c.DEEP_OPT_FEATURES):
+        for fold, feature in product(c.BUZZ_FOLDS, c.DEEP_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
@@ -169,7 +169,7 @@ class ExtractLMFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.VW_FOLDS, c.LM_OPT_FEATURES):
+        for fold, feature in product(c.BUZZ_FOLDS, c.LM_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
@@ -187,7 +187,7 @@ class ExtractMentionsFeatures(Task):
 
     def output(self):
         targets = []
-        for fold, feature in product(c.VW_FOLDS, c.MENTIONS_OPT_FEATURES):
+        for fold, feature in product(c.BUZZ_FOLDS, c.MENTIONS_OPT_FEATURES):
             targets.append(
                 LocalTarget('output/features/{0}/{1}.parquet/'.format(fold, feature)))
         return targets
@@ -204,7 +204,7 @@ class ExtractGuesserFeatures(Task):
 
     def output(self):
         targets = []
-        for fold in c.VW_FOLDS:
+        for fold in c.BUZZ_FOLDS:
             targets.append(
                 LocalTarget('output/features/{0}/guessers.parquet'.format(fold))
             )
@@ -231,7 +231,7 @@ class SparkMergeFeatures(Task):
 
     def output(self):
         targets = []
-        for fold in c.VW_FOLDS:
+        for fold in c.BUZZ_FOLDS:
             targets.append(LocalTarget('output/vw_input/{0}.vw/'.format(fold)))
         return targets
 
