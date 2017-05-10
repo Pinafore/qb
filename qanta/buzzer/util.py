@@ -190,4 +190,5 @@ def merge_dfs():
         log.info("Merging: {0} finished.".format(fold))
 
 if __name__ == "__main__":
+    merge_dfs()
     option2id, guesses_by_fold = load_quizbowl(c.BUZZ_FOLDS)
