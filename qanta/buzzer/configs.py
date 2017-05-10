@@ -1,4 +1,4 @@
-class mlp(config):
+class mlp():
     optimizer = 'Adam'
     lr = 1e-3
     max_grad_norm = 5
@@ -9,7 +9,7 @@ class mlp(config):
     log_dir = 'mlp_buzzer.log'
     model_dir = 'output/buzzer/mlp_buzzer.npz'
 
-class rnn(config):
+class rnn():
     optimizer = 'Adam'
     lr = 1e-3
     max_grad_norm = 5
