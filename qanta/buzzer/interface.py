@@ -20,6 +20,7 @@ from qanta import logging
 log = logging.get(__name__)
 
 def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]], 
+        finals: Dict[int, int],
         inputs: tuple) -> Tuple[list, list, list, list]:
     '''Multiprocessing worker for buzzer2vwexpo
     buzzes: dictionary of qnum -> buzzing position
@@ -42,36 +43,34 @@ def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]],
     for i, (g, guesser_group) in enumerate(question.groupby('guesser', sort=True)):
         guesser_class = g
         guesser_group = guesser_group.groupby(['sentence', 'token'], sort=True)
+        last_guess = None
         for pos, (sent_token, group) in enumerate(guesser_group):
             sent, token = sent_token
             group = group.sort_values('score', ascending=False)
+            # normalize scores
             _sum = sum(group.score)
             scores = [(r.score / _sum, r.guess) for r in group.itertuples()]
+            last_guess = scores[0][1]
+
             for rank, (score, guess) in enumerate(scores):
-                final = int((rank == 0) and (pos == buzz_pos) \
+                buzzing = int((rank == 0) and (pos == buzz_pos) \
                         and i == buzz_guesser)
                 if isinstance(score, np.float):
                     score = score.tolist()
                 # force negative weight for guesses that are not chosen
-                weight = score if final else score - 1
+                weight = score if buzzing else score - 1
                 predf.append([weight, qnum, sent, token])
                 metaf.append([qnum, sent, token, guess])
+                # manually do what csv.DictWriter does
                 guess = guess if ',' not in guess else '"' + guess + '"'
-                if rank == 0:
-                    last_guess = guess
-                buzzf.append([qnum, sent, token, guess, guesser_class, final, score])
-                if final:
-                    if finaled:
-                        raise ValueError("Multiple finals for {0}.".format(qnum))
-                    finalf.append([qnum, guess])
-                    finaled = True
-    if not finaled:
-        finalf.append([qnum, last_guess])
+                buzzf.append([qnum, sent, token, guess, guesser_class, buzzing, score])
+        if i == finals[qnum]:
+            finalf.append([qnum, last_guess])
     queue.put(qnum)
     return buzzf, predf, metaf, finalf
 
 def buzzer2vwexpo(guesses_df: pd.DataFrame, 
-        buzzes: Dict[int, Tuple[int, int]], fold: str) -> None:
+        buzzes: Dict[int, Tuple[int, int]], finals: Dict[int, int], fold: str) -> None:
     '''Given buzzing positions, generate vw_pred, vw_meta, buzz and final files
     guesses_df: pd.DataFrame of guesses
     buzzes: dictionary of qnum -> buzzing position
@@ -82,7 +81,7 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
     queue = manager.Queue()
     inputs = [(question, queue) for question in guesses_df.groupby('qnum')]
     total_size = len(inputs)
-    worker = partial(_buzzer2vwexpo, buzzes)
+    worker = partial(_buzzer2vwexpo, buzzes, finals)
     result = pool.map_async(worker, inputs)
 
     # monitor loop

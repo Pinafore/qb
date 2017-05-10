@@ -43,13 +43,6 @@ class Trainer(object):
         loss = -F.sum(F.sum(ys * ts, axis=1) * mask.data) / mask.data.sum()
         return loss
 
-    def take_actions(self, ys):
-        # ys: [length, batch_size, n_guessers]
-        # actions: [length, batch_size]
-        actions = F.argmax(ys, axis=2).data # length, batch
-        actions = actions.T.tolist()
-        return actions
-
     def metric(self, ys, ts, mask):
         # shapes are length * batch_size * n_guessers
         if ys.shape != ts.shape:
@@ -68,13 +61,16 @@ class Trainer(object):
 
     def test(self, test_iter):
         buzzes = dict()
+        finals = dict()
         progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
         for i in range(test_iter.size):
             batch = test_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=False)
-            ys = F.reshape(ys, (length, batch_size, -1))
-            actions = self.take_actions(ys)
+            ys = F.swapaxes(F.reshape(ys, (length, batch_size, -1)), 0, 1)
+            ys.to_cpu()
+            ys = ys.data
+            actions = np.argmax(ys, axis=2).tolist() # length, batch
             for qnum, action in zip(batch.qids, actions):
                 if isinstance(qnum, np.ndarray):
                     qnum = qnum.tolist()
@@ -83,10 +79,11 @@ class Trainer(object):
                     if a < N_GUESSERS:
                         buzzes[qnum] = (i, a)
                         break
+                finals[qnum] = np.argmax(ys[-1][:N_GUESSERS]).tolist()
             progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
         progress_bar.finalize()
-        return buzzes
+        return buzzes, finals
 
     def evaluate(self, eval_iter):
         stats = defaultdict(lambda: 0)
