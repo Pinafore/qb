@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-python qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.buzz --output=output/expo/competition.csv --finals=output/expo/test.final --skip 200
+python qanta/expo/buzzer.py --questions=output/expo/expo.questions.csv --buzzes=output/expo/expo.buzz --output=output/expo/competition.csv --finals=output/expo/expo.final

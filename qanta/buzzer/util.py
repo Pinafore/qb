@@ -64,7 +64,7 @@ def stupid_buzzer(iterator) -> Dict[int, int]:
             qid = qid.tolist()
             buzz_dict[qid] = buzz
     tot_reward /= iterator.size
-    log.info('[stupid] {0} {1} {2} {3}'.format(
+    log.info('[stupid] {0} {1} {2}'.format(
         num_hopeful, num_results, tot_reward))
     return buzz_dict
 
@@ -110,7 +110,7 @@ def _process_question(option2id: Dict[str, int],
     queue.put(qnum)
     return qnum, answer_id, guess_dicts, results
 
-def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list]]: 
+def load_quizbowl(folds=c.BUZZ_FOLDS) -> Tuple[Dict[str, int], Dict[str, list]]:
     log.info('Loading data')
     question_db = QuestionDatabase()
     quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS)
@@ -174,7 +174,7 @@ def merge_dfs():
         x.guesser_module, x.guesser_class) \
         for x in AbstractGuesser.list_enabled_guessers()]
     log.info("Merging guesser DataFrames.")
-    for fold in ['dev', 'test']:
+    for fold in c.BUZZ_FOLDS:
         new_guesses = pd.DataFrame(columns=['fold', 'guess', 'guesser', 'qnum',
             'score', 'sentence', 'token'], dtype='object')
         for guesser in GUESSERS:
@@ -190,4 +190,4 @@ def merge_dfs():
         log.info("Merging: {0} finished.".format(fold))
 
 if __name__ == "__main__":
-    option2id, guesses_by_fold = load_quizbowl(['dev', 'test'])
+    option2id, guesses_by_fold = load_quizbowl(c.BUZZ_FOLDS)

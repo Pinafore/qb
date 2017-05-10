@@ -1,4 +1,3 @@
-import os
 import luigi
 from argparse import Namespace
 from luigi import LocalTarget, Task, WrapperTask
@@ -59,3 +58,8 @@ class BuzzerBuzzes(Task):
         make_dirs(safe_path('output/vw_input/'))
         args = Namespace(fold=self.fold, config=conf['buzzer']['config'])
         buzzer_test.generate(args)
+
+class AllBuzzes(WrapperTask):
+    def requires(self):
+        for fold in c.BUZZ_FOLDS:
+            yield BuzzerBuzzes(fold=fold)

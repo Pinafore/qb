@@ -21,18 +21,20 @@ def find_final(lines):
     return -1, -1, lines[-1].guess
 
 
-class CreateTestQuestions(Task):
+class CreateQuestions(Task):
+    fold = luigi.Parameter()
+
     def output(self):
-        return LocalTarget(safe_path(EXPO_QUESTIONS))
+        return LocalTarget(safe_path(EXPO_QUESTIONS.format(self.fold)))
 
     def run(self):
         db = QuestionDatabase(QB_QUESTION_DB)
         questions = db.all_questions()
-        with open(safe_path(EXPO_QUESTIONS), 'w', newline='') as f:
+        with open(safe_path(EXPO_QUESTIONS.format(self.fold)), 'w', newline='') as f:
             f.write('id,answer,sent,text\n')
             writer = csv.writer(f, delimiter=',')
             for q in questions.values():
-                if q.fold != 'test':
+                if q.fold != self.fold:
                     continue
                 max_sent = max(q.text.keys())
                 for i in range(max_sent + 1):
@@ -45,54 +47,6 @@ class Prerequisites(ExternalTask):
     def output(self):
         return [LocalTarget(PRED_TARGET.format(self.fold)),
                 LocalTarget(META_TARGET.format(self.fold))]
-
-
-class GenerateExpo(Task):
-    fold = luigi.Parameter()
-
-    def requires(self):
-        yield Prerequisites(fold=self.fold)
-
-    def output(self):
-        return [LocalTarget(EXPO_BUZZ.format(self.fold)),
-                LocalTarget(EXPO_FINAL.format(self.fold))]
-
-    def run(self):
-        db = QuestionDatabase(QB_QUESTION_DB)
-        data = load_data(PRED_TARGET.format(self.fold),
-                         META_TARGET.format(self.fold), db)
-        audit_data = load_audit(VW_AUDIT.format(self.fold), META_TARGET.format(self.fold))
-        buzz_file = open(safe_path(EXPO_BUZZ.format(self.fold)), 'w', newline='')
-        buzz_file.write('question,sentence,word,page,evidence,final,weight\n')
-        buzz_writer = csv.writer(buzz_file, delimiter=',')
-
-        final_file = open(safe_path(EXPO_FINAL.format(self.fold)), 'w', newline='')
-        final_file.write('question,answer\n')
-        final_writer = csv.writer(final_file, delimiter=',')
-
-        for qnum, lines in data:
-            final_sentence, final_token, final_guess = find_final(lines)
-            if final_sentence == -1 and final_token == -1:
-                final_writer.writerow([qnum, final_guess])
-
-            for l in lines:
-                i = 0
-                is_final = False
-                if l.sentence == final_sentence and l.token == final_token:
-                    final_writer.writerow([qnum, l.guess])
-                    is_final = True
-
-                for g in l.all_guesses:
-                    evidence = audit_data[(l.question, l.sentence, l.token, g.guess)]
-                    buzz_writer.writerow([
-                        l.question, l.sentence, l.token, g.guess, evidence,
-                        int(is_final and g.guess == l.guess), g.score
-                    ])
-                    i += 1
-                    if i > 4:
-                        break
-        buzz_file.close()
-        final_file.close()
 
 
 class GenerateExpoBuzzer(Task):
@@ -113,5 +67,7 @@ class GenerateExpoBuzzer(Task):
 
 class AllExpo(WrapperTask):
     def requires(self):
+        yield GenerateExpoBuzzer(fold='expo')
+        yield CreateQuestions(fold='expo')
         yield GenerateExpoBuzzer(fold='test')
-        yield CreateTestQuestions()
+        yield CreateQuestions(fold='test')

@@ -58,7 +58,7 @@ META_TARGET = 'output/vw_input/{0}.meta'
 
 EXPO_BUZZ = 'output/expo/{}.buzz'
 EXPO_FINAL = 'output/expo/{}.final'
-EXPO_QUESTIONS = 'output/expo/test.questions.csv'
+EXPO_QUESTIONS = 'output/expo/{}.questions.csv'
 
 KEN_LM = 'output/kenlm.binary'
 
