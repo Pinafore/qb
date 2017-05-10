@@ -55,7 +55,7 @@ class QuestionIterator(object):
                         isnew_vec.append(1)
                 if len(dic) < bc.N_GUESSES:
                     for k in range(max(bc.N_GUESSES - len(dic), 0)):
-                        vec.append(bc.MIN_SCORE)
+                        vec.append(0)
                         diff_vec.append(0)
                         isnew_vec.append(0)
             vecs.append(vec + diff_vec + isnew_vec + prev_vec)

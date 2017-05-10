@@ -12,7 +12,7 @@ class MergeGuesserDFs(Task):
 
     def output(self):
         return [LocalTarget(AbstractGuesser.guess_path(bc.GUESSES_DIR, fold) for
-            fold in ['dev', 'test']]
+            fold in c.BUZZ_FOLDS]
         
     def run(self):
         shell(

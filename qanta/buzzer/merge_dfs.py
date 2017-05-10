@@ -8,14 +8,13 @@ from qanta import logging
 
 log = logging.get(__name__)
 
-guessers = ['qanta.guesser.dan.DANGuesser', 
-            'qanta.guesser.elasticsearch.ElasticSearchGuesser']
+GUESSERS = [x.guesser_module for x in AbstractGuesser.list_enabled_guessers()]
 
 log.info("Merging guesser DataFrames.")
 for fold in ['dev', 'test']:
     new_guesses = pd.DataFrame(columns=['fold', 'guess', 'guesser', 'qnum',
         'score', 'sentence', 'token'], dtype='object')
-    for guesser in guessers:
+    for guesser in GUESSERS:
         guesser_dir = os.path.join(c.GUESSER_TARGET_PREFIX, guesser)
         guesses = AbstractGuesser.load_guesses(guesser_dir, folds=[fold])
         new_guesses = new_guesses.append(guesses)

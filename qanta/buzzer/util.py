@@ -19,6 +19,8 @@ from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
 
+GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
+
 def stupid_buzzer(iterator) -> Dict[int, int]:
     '''Buzz by several heuristics.
     '''
@@ -90,7 +92,7 @@ def _process_question(option2id: Dict[str, int],
         pos_group = pos_group.groupby('guesser')
         guess_dicts.append([])
         results.append([])
-        for guesser in bc.GUESSERS:
+        for guesser in GUESSERS:
             if guesser not in pos_group.groups:
                 guess_dicts[-1].append({})
                 results[-1].append(0)

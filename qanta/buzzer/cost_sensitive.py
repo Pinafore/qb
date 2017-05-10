@@ -4,6 +4,7 @@ import chainer
 
 from qanta import logging
 from qanta.config import conf
+from qanta.guessers.abstract import AbstractGuesser
 
 from qanta.buzzer import configs
 from qanta.buzzer.progress import ProgressBar
@@ -14,6 +15,9 @@ from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
+
+GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
+N_GUESSERS = len(GUESSERS)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -34,11 +38,11 @@ def main():
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=eval_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=bc.N_GUESSERS + 1, n_layers=cfg.n_layers, 
+                n_output=N_GUESSERS + 1, n_layers=cfg.n_layers, 
                 dropout=cfg.dropout)
 
     if isinstance(cfg, configs.rnn):
-        model = RNN(eval_iter.n_input, cfg.n_hidden, bc.N_GUESSERS + 1)
+        model = RNN(eval_iter.n_input, cfg.n_hidden, N_GUESSERS + 1)
 
     gpu = conf['buzzer']['gpu']
     if gpu != -1 and chainer.cuda.available:
