@@ -10,20 +10,17 @@ from qanta.config import conf
 from qanta.buzzer import configs
 from qanta.buzzer.interface import buzzer2vwexpo
 from qanta.buzzer.iterator import QuestionIterator
-from qanta.buzzer.util import load_quizbowl, GUESSES_DIR
+from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.models import MLP, RNN
+from qanta.buzzer import constants as bc
+
 
 log = logging.get(__name__)
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--fold', required=True)
-    parser.add_argument('-c', '--config', type=str, default='mlp')
-    return parser.parse_args()
+def generate(args):
+    N_GUESSERS = len(GUESSERS)
 
-def main():
-    args = parse_args()
     cfg = getattr(configs, args.config)()
     fold = args.fold
 
@@ -37,7 +34,7 @@ def main():
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=test_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=2, n_layers=cfg.n_layers, dropout=cfg.dropout)
+                n_output=N_GUESSERS+1, n_layers=cfg.n_layers, dropout=cfg.dropout)
 
     if isinstance(cfg, configs.rnn):
         model = RNN(test_iter.n_input, cfg.n_hidden, 2)
@@ -53,13 +50,20 @@ def main():
 
     trainer = Trainer(model, cfg.model_dir)
     buzzes = trainer.test(test_iter)
-    log.info('Buzzes generated')
+    log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
 
-    guesses_df = AbstractGuesser.load_guesses(GUESSES_DIR, folds=[fold])
+    guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
     buzzer2vwexpo(guesses_df, buzzes, fold)
     # preds, metas = buzzer2predsmetas(guesses_df, buzzes)
     # log.info('preds and metas generated')
     # performance.generate(2, preds, metas, 'output/summary/{}_1.json'.format(fold))
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--fold', required=True)
+    parser.add_argument('-c', '--config', type=str, default='mlp')
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    generate(args)

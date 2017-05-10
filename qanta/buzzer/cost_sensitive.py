@@ -4,25 +4,19 @@ import chainer
 
 from qanta import logging
 from qanta.config import conf
+from qanta.guesser.abstract import AbstractGuesser
 
 from qanta.buzzer import configs
 from qanta.buzzer.progress import ProgressBar
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.iterator import QuestionIterator
-from qanta.buzzer.util import load_quizbowl
+from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.models import MLP, RNN
 
 log = logging.get(__name__)
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='mlp')
-    parser.add_argument('-l', '--load', action='store_true', default=False)
-    parser.add_argument('-e', '--epochs', type=int, default=3)
-    return parser.parse_args()
-
-def main():
-    args = parse_args()
+def train_cost_sensitive(args):
+    N_GUESSERS = len(GUESSERS)
     cfg = getattr(configs, args.config)()
 
     option2id, all_guesses = load_quizbowl()
@@ -33,11 +27,11 @@ def main():
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=eval_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=eval_iter.n_guessers + 1, n_layers=cfg.n_layers, 
+                n_output=N_GUESSERS + 1, n_layers=cfg.n_layers, 
                 dropout=cfg.dropout)
 
     if isinstance(cfg, configs.rnn):
-        model = RNN(eval_iter.n_input, cfg.n_hidden, eval_iter.n_guessers + 1)
+        model = RNN(eval_iter.n_input, cfg.n_hidden, N_GUESSERS + 1)
 
     gpu = conf['buzzer']['gpu']
     if gpu != -1 and chainer.cuda.available:
@@ -52,5 +46,13 @@ def main():
     trainer = Trainer(model, cfg.model_dir)
     trainer = trainer.run(train_iter, eval_iter, args.epochs)
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', type=str, default='mlp')
+    parser.add_argument('-l', '--load', action='store_true', default=False)
+    parser.add_argument('-e', '--epochs', type=int, default=6)
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    main(args)

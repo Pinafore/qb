@@ -12,9 +12,13 @@ from chainer import cuda
 
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
+from qanta.buzzer.util import GUESSERS
+from qanta import logging
 
 from qanta.buzzer.progress import ProgressBar
 
+N_GUESSERS = len(GUESSERS)
+log = logging.get(__name__)
 
 class Trainer(object):
 
@@ -72,10 +76,11 @@ class Trainer(object):
             ys = F.reshape(ys, (length, batch_size, -1))
             actions = self.take_actions(ys)
             for qnum, action in zip(batch.qids, actions):
-                qnum = qnum.tolist()
+                if isinstance(qnum, np.ndarray):
+                    qnum = qnum.tolist()
                 buzzes[qnum] = [-1, -1]
                 for i, a in enumerate(action):
-                    if a < test_iter.n_guessers:
+                    if a < N_GUESSERS:
                         buzzes[qnum] = (i, a)
                         break
             progress_bar(*test_iter.epoch_detail)
@@ -92,7 +97,7 @@ class Trainer(object):
             ys = self.model(batch.vecs, train=False)
             ts = F.reshape(batch.results, (length * batch_size, -1))
             mask = F.reshape(batch.mask, (length * batch_size, ))
-            stats['loss'] -= self.loss(ys, ts, mask).data.tolist()
+            stats['loss'] = self.loss(ys, ts, mask).data.tolist()
             batch_stats = self.metric(ys.data, ts.data, mask.data)
             for k, v in batch_stats.items():
                 stats[k] += v
@@ -115,7 +120,7 @@ class Trainer(object):
             mask = F.reshape(batch.mask, (length * batch_size, ))
             loss = self.loss(ys, ts, mask)
             self.backprop(loss)
-            stats['loss'] -= loss.data.tolist()
+            stats['loss'] = loss.data.tolist()
             batch_stats = self.metric(ys.data, ts.data, mask.data)
             for k, v in batch_stats.items():
                 stats[k] += v
@@ -133,18 +138,18 @@ class Trainer(object):
     def run(self, train_iter=None, eval_iter=None, n_epochs=1):
         progress_bar = ProgressBar(n_epochs, unit_iteration=False)
         for epoch in range(n_epochs):
-            print('\nepoch {0}'.format(epoch))
+            log.info('\nepoch {0}'.format(epoch))
             if train_iter is not None:
                 train_stats = self.train_one_epoch(train_iter, progress_bar)
                 output = 'train '
                 for k, v in train_stats.items():
                     output += '{0}: {1:.2f}  '.format(k, v)
-                print(output)
+                log.info(output)
             if eval_iter is not None:
                 output = 'eval '
                 eval_stats = self.evaluate(eval_iter)
                 for k, v in eval_stats.items():
                     output += '{0}: {1:.2f}  '.format(k, v)
-                print(output)
+                log.info(output)
             if self.model_dir is not None:
                 chainer.serializers.save_npz(self.model_dir, self.model)

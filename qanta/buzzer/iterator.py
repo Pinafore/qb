@@ -2,8 +2,14 @@ import random
 import numpy as np
 from collections import defaultdict, namedtuple
 from typing import List, Dict, Tuple, Optional
+from qanta.config import conf
+from qanta.buzzer import constants as bc
+from qanta.buzzer.util import GUESSERS
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
+
+N_GUESSERS = len(GUESSERS)
+N_GUESSES = conf['buzzer']['n_guesses']
 
 class QuestionIterator(object):
     '''Each batch contains:
@@ -33,17 +39,16 @@ class QuestionIterator(object):
         dicts: a sequence of guess dictionaries for each guesser
         '''
         length = len(dicts)
-        n_guesses = sum(len(x) for x in dicts[0])
-        prev_vec = [0. for _ in range(n_guesses)]
+        prev_vec = [0. for _ in range(N_GUESSERS * N_GUESSES)]
         vecs = []
         for i in range(length):
-            if len(dicts[i]) != self.n_guessers:
+            if len(dicts[i]) != N_GUESSERS:
                 raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
-                    self.n_guessers, len(dicts)))
+                    N_GUESSERS, len(dicts)))
             vec = []
             diff_vec = []
             isnew_vec = []
-            for j in range(self.n_guessers):
+            for j in range(N_GUESSERS):
                 dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
                 for guess, score in dic:
                     vec.append(score)
@@ -53,6 +58,11 @@ class QuestionIterator(object):
                     else:
                         diff_vec.append(score) 
                         isnew_vec.append(1)
+                if len(dic) < N_GUESSES:
+                    for k in range(max(N_GUESSES - len(dic), 0)):
+                        vec.append(0)
+                        diff_vec.append(0)
+                        isnew_vec.append(0)
             vecs.append(vec + diff_vec + isnew_vec + prev_vec)
             prev_vec = vec
         return vecs
@@ -61,19 +71,17 @@ class QuestionIterator(object):
         bucket_size = self.bucket_size
         self.batches = []
         buckets = defaultdict(list)
-        # shape of results: (n_guessers, length)
-        self.n_guessers = len(self.dataset[0][3])
         for example in self.dataset:
             # pad the sequence of predictions
             qid, answer, vecs, results = example
             
-            results = np.asarray(results, dtype=np.int32).T
+            results = np.asarray(results, dtype=np.int32)
             length, n_guessers = results.shape
 
-            if n_guessers != self.n_guessers:
+            if n_guessers != N_GUESSERS:
                 raise ValueError(
                     "Inconsistent number of guessers ({0}, {1}.".format(
-                        self.n_guessers, len(results)))
+                        N_GUESSERS, len(n_guessers)))
 
             # hopeful means any guesser guesses correct any time step
             hopeful = np.any(results == 1)
@@ -84,22 +92,22 @@ class QuestionIterator(object):
             # not buzzing = 1 when no guesser is correct
             new_results = []
             for i in range(length):
-                not_buzz = int(not any(results[i] == 1))
+                not_buzz = int(not any(results[i] == 1)) * bc.NEG_WEIGHT
                 new_results.append(np.append(results[i], not_buzz))
             results = np.asarray(new_results, dtype=np.int32)
 
-            vecs = list(zip(*vecs))
-            if len(vecs) != length or len(vecs[0]) != self.n_guessers:
+            if len(vecs) != length:
                 raise ValueError("Inconsistant shape of results and vecs.")
-            vecs = np.asarray(self.dense_vector(vecs), dtype=np.float32)
+            vecs = self.dense_vector(vecs)
+            vecs = np.asarray(vecs, dtype=np.float32)
             self.n_input = len(vecs[0])
 
             padded_length = -((-length) // bucket_size) * bucket_size
             vecs_padded = np.zeros((padded_length, self.n_input))
             vecs_padded[:length,:self.n_input] = vecs
 
-            results_padded = np.zeros((padded_length, (self.n_guessers + 1)))
-            results_padded[:length, :(self.n_guessers + 1)] = results
+            results_padded = np.zeros((padded_length, (N_GUESSERS + 1)))
+            results_padded[:length, :(N_GUESSERS + 1)] = results
 
             mask = [1 for _ in range(length)] + \
                    [0 for _ in range(padded_length - length)]

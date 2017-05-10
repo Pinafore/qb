@@ -1,22 +1,43 @@
+import os
 import luigi
+from argparse import Namespace
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
+from qanta.config import conf
 from qanta.util.io import call, shell, make_dirs, safe_path
 from qanta.reporting.vw_audit import parse_audit, audit_report
-from qanta.pipeline.spark import SparkMergeFeatures
+from qanta.guesser.abstract import AbstractGuesser
+from qanta.buzzer import test as buzzer_test
+from qanta.buzzer import constants as bc
+from qanta.buzzer import configs as buzzer_configs
+from qanta.buzzer.cost_sensitive import train_cost_sensitive
+from qanta.buzzer.util import merge_dfs
 
-BUZZER_MODEL = 'output/buzzer/mlp_buzzer.npz'
+
+class MergeGuesserDFs(Task):
+
+    def output(self):
+        return [LocalTarget(AbstractGuesser.guess_path(bc.GUESSES_DIR, fold)) \
+                for fold in c.BUZZ_FOLDS]
+        
+    def run(self):
+        merge_dfs()
+
 
 class BuzzerModel(Task):
 
+    def requires(self):
+        yield MergeGuesserDFs()
+
     def output(self):
-        return LocalTarget(BUZZER_MODEL)
+        cfg = getattr(buzzer_configs, conf['buzzer']['config'])
+        return LocalTarget(cfg.model_dir)
 
     def run(self):
         make_dirs(safe_path('output/buzzers/'))
-        shell(
-            'python qanta/buzzer/cost_sensitive.py'
-        )
+        args = Namespace(config=conf['buzzer']['config'], epochs=6, load=False)
+        train_cost_sensitive(args)
+
 
 class BuzzerBuzzes(Task):
     fold = luigi.Parameter()
@@ -36,6 +57,5 @@ class BuzzerBuzzes(Task):
         make_dirs(safe_path('output/predictions/'))
         make_dirs(safe_path('output/expo/'))
         make_dirs(safe_path('output/vw_input/'))
-        shell(
-            'python qanta/buzzer/test.py -f {0}'.format(fold)
-        )
+        args = Namespace(fold=self.fold, config=conf['buzzer']['config'])
+        buzzer_test.generate(args)

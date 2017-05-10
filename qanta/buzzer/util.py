@@ -3,6 +3,7 @@ import sys
 import time
 import pickle
 import numpy as np
+import pandas as pd
 from collections import namedtuple
 from multiprocessing import Pool, Manager
 from functools import partial
@@ -12,19 +13,14 @@ from qanta.datasets.quiz_bowl import Question, QuestionDatabase, QuizBowlDataset
 from qanta.preprocess import format_guess
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
+from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
 from qanta import logging
-
-NUM_GUESSES = 20
-MIN_ANSWERS = 1
-
-BuzzStats = namedtuple('BuzzStats', ['num_total', 'num_hopeful', 'reward',
-    'reward_hopeful', 'buzz', 'correct', 'rush', 'late'])
-
-OPTIONS_DIR = 'output/buzzer/options.pkl'
-GUESSES_DIR = 'output/guesser/'
+from qanta.buzzer import constants as bc
 
 log = logging.get(__name__)
+
+GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
 
 def stupid_buzzer(iterator) -> Dict[int, int]:
     '''Buzz by several heuristics.
@@ -84,6 +80,7 @@ def _process_question(option2id: Dict[str, int],
     '''
     (qnum, question), queue = inputs
 
+    qnum = int(qnum)
     answer = format_guess(all_questions[qnum].page)
     if answer in option2id:
         answer_id = option2id[answer]
@@ -92,16 +89,23 @@ def _process_question(option2id: Dict[str, int],
 
     guess_dicts = []
     results = []
-    for guesser, guesser_group in question.groupby('guesser', sort=True):
+    for pos, pos_group in question.groupby(['sentence', 'token']):
+        pos_group = pos_group.groupby('guesser')
         guess_dicts.append([])
         results.append([])
-        for pos, sent_token in guesser_group.groupby(['sentence', 'token'], sort=True):
-            # check if top guess is correct
-            top_guess = sent_token.sort_values('score',
-                    ascending=False).iloc[0].guess
-            results[-1].append(int(top_guess == answer))
-            vec = {x.guess: x.score for x in sent_token.itertuples()}
-            guess_dicts[-1].append(vec)
+        for guesser in GUESSERS:
+            if guesser not in pos_group.groups:
+                guess_dicts[-1].append({})
+                results[-1].append(0)
+            else:
+                guesses = pos_group.get_group(guesser)
+                guesses = guesses.sort_values('score', ascending=False)
+                top_guess = guesses.iloc[0].guess
+                results[-1].append(int(top_guess == answer))
+                # normalize score to 0-1 at each time step
+                s = sum(guesses.score)
+                dic = {x.guess: x.score / s for x in guesses.itertuples()}
+                guess_dicts[-1].append(dic)
 
     queue.put(qnum)
     return qnum, answer_id, guess_dicts, results
@@ -109,22 +113,21 @@ def _process_question(option2id: Dict[str, int],
 def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list]]: 
     log.info('Loading data')
     question_db = QuestionDatabase()
-    quizbowl_db = QuizBowlDataset(MIN_ANSWERS)
+    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS)
     all_questions = question_db.all_questions()
-    if not os.path.isfile(OPTIONS_DIR):
+    if not os.path.isfile(bc.OPTIONS_DIR):
         log.info('Loading the set of options')
-        all_fold_guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=c.ALL_FOLDS)
-        all_options = set(all_fold_guesses.guess)
+        dev_guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['dev'])
+        all_options = set(dev_guesses.guess)
 
-        folds = quizbowl_db.questions_by_fold()
         train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
         all_options.update({format_guess(q.page) for q in train_dev_questions})
 
         id2option = list(all_options)
-        with open(OPTIONS_DIR, 'wb') as outfile:
+        with open(safe_path(bc.OPTIONS_DIR), 'wb') as outfile:
             pickle.dump(id2option, outfile)
     else:
-        with open(OPTIONS_DIR, 'rb') as infile:
+        with open(safe_path(bc.OPTIONS_DIR), 'rb') as infile:
             id2option = pickle.load(infile)
     option2id = {o: i for i, o in enumerate(id2option)}
     num_options = len(id2option)
@@ -132,15 +135,15 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
 
     guesses_by_fold = dict()
     for fold in folds:
-        save_dir = '%s_processed.pickle' % (GUESSES_DIR + fold)
+        save_dir = '%s_processed.pickle' % (os.path.join(bc.GUESSES_DIR, fold))
         if os.path.isfile(save_dir):
-            with open(save_dir, 'rb') as infile:
+            with open(safe_path(save_dir), 'rb') as infile:
                 guesses_by_fold[fold] = pickle.load(infile)
             log.info('Loading {0} guesses'.format(fold))
             continue
 
         log.info('Processing {0} guesses'.format(fold))
-        guesses = AbstractGuesser.load_guesses(GUESSES_DIR, folds=[fold])
+        guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
         pool = Pool(conf['buzzer']['n_cores'])
         manager = Manager()
@@ -162,9 +165,29 @@ def load_quizbowl(folds=['dev', 'test']) -> Tuple[Dict[str, int], Dict[str, list
 
         log.info('Processed {0} guesses saved to {1}'.format(fold, save_dir))
         guesses_by_fold[fold] = result.get()
-        with open(save_dir, 'wb') as outfile:
+        with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)
     return option2id, guesses_by_fold
+
+def merge_dfs():
+    GUESSERS = ["{0}.{1}".format(
+        x.guesser_module, x.guesser_class) \
+        for x in AbstractGuesser.list_enabled_guessers()]
+    log.info("Merging guesser DataFrames.")
+    for fold in ['dev', 'test']:
+        new_guesses = pd.DataFrame(columns=['fold', 'guess', 'guesser', 'qnum',
+            'score', 'sentence', 'token'], dtype='object')
+        for guesser in GUESSERS:
+            guesser_dir = os.path.join(c.GUESSER_TARGET_PREFIX, guesser)
+            guesses = AbstractGuesser.load_guesses(guesser_dir, folds=[fold])
+            new_guesses = new_guesses.append(guesses)
+        for col in ['qnum', 'sentence', 'token', 'score']:
+            new_guesses[col] = pd.to_numeric(new_guesses[col], downcast='integer')
+        merged_dir = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
+        if not os.path.exists(merged_dir):
+            os.makedirs(merged_dir)
+        AbstractGuesser.save_guesses(new_guesses, merged_dir, folds=[fold])
+        log.info("Merging: {0} finished.".format(fold))
 
 if __name__ == "__main__":
     option2id, guesses_by_fold = load_quizbowl(['dev', 'test'])
