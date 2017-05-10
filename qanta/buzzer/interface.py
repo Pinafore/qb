@@ -1,6 +1,7 @@
 import sys
 import time
 import pickle
+import numpy as np
 import codecs
 import pandas as pd
 import itertools
@@ -39,23 +40,26 @@ def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]],
     finaled = False
     last_guess = None
     for i, (g, guesser_group) in enumerate(question.groupby('guesser', sort=True)):
+        guesser_class = g
         guesser_group = guesser_group.groupby(['sentence', 'token'], sort=True)
         for pos, (sent_token, group) in enumerate(guesser_group):
             sent, token = sent_token
             group = group.sort_values('score', ascending=False)
-            for rank, x in enumerate(group.itertuples()):
+            _sum = sum(group.score)
+            scores = [(r.score / _sum, r.guess) for r in group.itertuples()]
+            for rank, (score, guess) in enumerate(scores):
                 final = int((rank == 0) and (pos == buzz_pos) \
                         and i == buzz_guesser)
-
-                score = x.score.tolist()
+                if isinstance(score, np.float):
+                    score = score.tolist()
                 # force negative weight for guesses that are not chosen
                 weight = score if final else score - 1
                 predf.append([weight, qnum, sent, token])
-                metaf.append([qnum, sent, token, x.guess])
-                guess = x.guess if ',' not in x.guess else '"' + x.guess + '"'
+                metaf.append([qnum, sent, token, guess])
+                guess = guess if ',' not in guess else '"' + guess + '"'
                 if rank == 0:
                     last_guess = guess
-                buzzf.append([qnum, sent, token, guess, x.guesser, final, score])
+                buzzf.append([qnum, sent, token, guess, guesser_class, final, score])
                 if final:
                     if finaled:
                         raise ValueError("Multiple finals for {0}.".format(qnum))
