@@ -140,8 +140,7 @@ class Word2Vec:
     def get_zero_vec(self):
         return np.zeros(self.wordvec_dim, dtype=np.float32)
 
-
-def load_quizbowl(folds=c.BUZZ_FOLDS, use_word2vec=False, multiprocessing=False)\
+def load_quizbowl(folds=c.BUZZ_FOLDS, word2vec=None, multiprocessing=False)\
         -> Tuple[Dict[str, int], Dict[str, list]]:
     log.info('Loading data')
     question_db = QuestionDatabase()
@@ -165,18 +164,9 @@ def load_quizbowl(folds=c.BUZZ_FOLDS, use_word2vec=False, multiprocessing=False)
     num_options = len(id2option)
     log.info('Number of options {0}'.format(len(id2option)))
 
-
-    processed_dirs = ['%s_processed.pickle' % (os.path.join(bc.GUESSES_DIR,
-        fold)) for fold in folds]
-    if not all(os.path.isfile(d) for d in processed_dirs) and use_word2vec:
-        log.info('Loading {0}'.format(bc.WORDVEC_DIR))
-        word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
-    else:
-        word2vec = None
-
     guesses_by_fold = dict()
-    for k, fold in enumerate(folds):
-        save_dir = processed_dirs[k]
+    for fold in folds:
+        save_dir = '%s_processed.pickle' % (os.path.join(bc.GUESSES_DIR, fold))
         if os.path.isfile(save_dir):
             with open(safe_path(save_dir), 'rb') as infile:
                 guesses_by_fold[fold] = pickle.load(infile)
@@ -229,7 +219,13 @@ def merge_dfs():
         x.guesser_module, x.guesser_class) \
         for x in AbstractGuesser.list_enabled_guessers()]
     log.info("Merging guesser DataFrames.")
+    merged_dir = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
+    if not os.path.exists(merged_dir):
+        os.makedirs(merged_dir)
     for fold in c.BUZZ_FOLDS:
+        if os.path.exists(AbstractGuesser.guess_path(merged_dir, fold)):
+            log.info("Merged {0} exists, skipping.".format(fold))
+            continue
         new_guesses = pd.DataFrame(columns=['fold', 'guess', 'guesser', 'qnum',
             'score', 'sentence', 'token'], dtype='object')
         for guesser in GUESSERS:
@@ -238,12 +234,16 @@ def merge_dfs():
             new_guesses = new_guesses.append(guesses)
         for col in ['qnum', 'sentence', 'token', 'score']:
             new_guesses[col] = pd.to_numeric(new_guesses[col], downcast='integer')
-        merged_dir = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
-        if not os.path.exists(merged_dir):
-            os.makedirs(merged_dir)
         AbstractGuesser.save_guesses(new_guesses, merged_dir, folds=[fold])
         log.info("Merging: {0} finished.".format(fold))
 
 if __name__ == "__main__":
     merge_dfs()
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZ_FOLDS, use_word2vec=True)
+    processed_dirs = ['%s_processed.pickle' % (os.path.join(
+        bc.GUESSES_DIR, fold)) for fold in c.BUZZ_FOLDS]
+    if not all(os.path.isfile(d) for d in processed_dirs):
+        log.info('Loading {0}'.format(bc.WORDVEC_DIR))
+        word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
+    else:
+        word2vec = None
+    option2id, guesses_by_fold = load_quizbowl(c.BUZZ_FOLDS, word2vec)
