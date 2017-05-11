@@ -2,7 +2,6 @@ import click
 
 from qanta import logging
 from qanta.util.environment import ENVIRONMENT
-from qanta.util.vw import format_audit
 from qanta.wikipedia.cached_wikipedia import web_initialize_file_cache
 
 
@@ -23,11 +22,6 @@ def main():
 def init_wiki_cache(wiki_cache):
     web_initialize_file_cache(wiki_cache)
 
-
-@main.command()
-@click.option('--n_features', type=int, default=20)
-def format_vw_audit(n_features):
-    format_audit(n_features)
 
 if __name__ == '__main__':
     main()

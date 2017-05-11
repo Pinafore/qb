@@ -1,8 +1,12 @@
 from math import log
 
 from fuzzywuzzy import fuzz
-from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.features.abstract import AbstractFeatureExtractor
 from qanta.util.constants import ENGLISH_STOP_WORDS
+import warnings
+
+
+warnings.warn('old features extractors are deprecated and need to be rewritten', DeprecationWarning)
 
 
 class AnswerPresent(AbstractFeatureExtractor):

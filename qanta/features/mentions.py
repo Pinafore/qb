@@ -7,7 +7,7 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import wordnet as wn
 
 from qanta.pattern3 import pluralize
-from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.features.abstract import AbstractFeatureExtractor
 from qanta.util.constants import KEN_LM
 from qanta.util.environment import data_path
 from qanta.datasets.quiz_bowl import QuizBowlDataset
@@ -16,6 +16,10 @@ from qanta import logging
 from qanta.preprocess import format_guess
 
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
+import warnings
+
+
+warnings.warn('old features extractors are deprecated and need to be rewritten', DeprecationWarning)
 
 
 log = logging.get(__name__)

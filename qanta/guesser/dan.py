@@ -10,7 +10,7 @@ from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import AverageWords, WordDropout
+from qanta.keras import AverageWords
 from qanta import logging
 
 from keras.models import Sequential, load_model
@@ -150,7 +150,7 @@ class DANGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(WordDropout(self.word_dropout_rate))
+        model.add(Dropout(self.word_dropout_rate, noise_shape=(self.max_len, 1)))
         model.add(AverageWords())
         if self.l2_normalize_averaged_words:
             model.add(Lambda(lambda x: K.l2_normalize(x, 1)))

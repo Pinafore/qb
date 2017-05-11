@@ -1,7 +1,11 @@
-from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.features.abstract import AbstractFeatureExtractor
 from qanta.util.environment import data_path
 from qanta.util.constants import CLM_PATH
 from clm.lm_wrapper import LanguageModelReader
+import warnings
+
+
+warnings.warn('old features extractors are deprecated and need to be rewritten', DeprecationWarning)
 
 
 class LanguageModel(AbstractFeatureExtractor):

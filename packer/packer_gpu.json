@@ -66,10 +66,6 @@
     },
     {
       "type": "shell",
-      "script": "bin/install-xgboost.sh"
-    },
-    {
-      "type": "shell",
       "script": "bin/install-cuda.sh"
     },
     {

@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, List, Dict, Optional
+from typing import Tuple, List
 
 QuestionText = str
 Answer = str
-TrainingData = Tuple[List[List[QuestionText]], List[Answer], Optional[List[Dict]]]
+TrainingData = Tuple[List[List[QuestionText]], List[Answer]]
 
 
 class AbstractDataset(metaclass=ABCMeta):

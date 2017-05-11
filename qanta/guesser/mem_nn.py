@@ -1,4 +1,3 @@
-from pathlib import Path
 import pickle
 import os
 import shutil
@@ -9,18 +8,17 @@ from qanta.datasets.abstract import TrainingData, Answer, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser import nn
-from qanta.preprocess import preprocess_dataset, tokenize_question, format_guess
+from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import AverageWords, BatchMatmul, WordDropout
+from qanta.keras import AverageWords, BatchMatmul
 from qanta.spark import create_spark_context
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta import logging
 
 
-from keras import backend as K
 from keras.models import Sequential, Model, load_model
-from keras.layers import Add, Concatenate, Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, dot, multiply, add, pooling, Lambda
+from keras.layers import Add, Concatenate, Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, multiply, pooling
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -32,7 +30,6 @@ from elasticsearch_dsl.connections import connections
 import progressbar
 
 import numpy as np
-import tensorflow as tf
 
 
 log = logging.get(__name__)
@@ -459,7 +456,6 @@ class MemNNGuesser(AbstractGuesser):
             os.path.join(directory, MEM_MODEL_TARGET),
             custom_objects={
                 'AverageWords': AverageWords,
-                'WordDropout': WordDropout,
                 'BatchMatmul': BatchMatmul
             }
         )

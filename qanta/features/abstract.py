@@ -1,5 +1,9 @@
 import abc
 from typing import List
+import warnings
+
+
+warnings.warn('old features extractors are deprecated and need to be rewritten', DeprecationWarning)
 
 
 class AbstractFeatureExtractor(metaclass=abc.ABCMeta):

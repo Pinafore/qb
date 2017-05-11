@@ -93,14 +93,9 @@ class Question:
     def flatten_text(self):
         return " ".join(self.text[x] for x in sorted(self.text))
 
-    def to_example(self) -> Tuple[List[QuestionText], Answer, Dict]:
+    def to_example(self) -> Tuple[List[QuestionText], Answer]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
-        properties = {
-            'ans_type': self.ans_type,
-            'category': self.category.split(':')[0],
-            'gender': self.gender
-        }
-        return sentence_list, self.page, properties
+        return sentence_list, self.page
 
 
 @file_backed_cache_decorator(safe_path('data/external/preprocess_expo_questions.cache'))
@@ -138,6 +133,7 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
         curr_qnum += 1
 
     return questions
+
 
 class QuestionDatabase:
     def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
@@ -330,16 +326,14 @@ class QuizBowlDataset(AbstractDataset):
             .map(lambda q: q.to_example())
         training_examples = []
         training_answers = []
-        training_properties = []
-        for example, answer, properties in filtered_questions:
+        for example, answer in filtered_questions:
             training_examples.append(example)
             if normalize_guess:
                 training_answers.append(format_guess(answer))
             else:
                 training_answers.append(answer)
-            training_properties.append(properties)
 
-        return training_examples, training_answers, training_properties
+        return training_examples, training_answers
 
     def questions_by_fold(self) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())

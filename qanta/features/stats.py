@@ -1,11 +1,15 @@
 import numpy as np
 import pickle
 
-from qanta.extractors.abstract import AbstractFeatureExtractor
+from qanta.features.abstract import AbstractFeatureExtractor
 from qanta.util.constants import SENTENCE_STATS
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.io import safe_open
 from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
+import warnings
+
+
+warnings.warn('old features extractors are deprecated and need to be rewritten', DeprecationWarning)
 
 
 class StatsExtractor(AbstractFeatureExtractor):

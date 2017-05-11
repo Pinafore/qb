@@ -4,8 +4,7 @@ from argparse import Namespace
 from luigi import LocalTarget, Task, WrapperTask
 from qanta.util import constants as c
 from qanta.config import conf
-from qanta.util.io import call, shell, make_dirs, safe_path
-from qanta.reporting.vw_audit import parse_audit, audit_report
+from qanta.util.io import make_dirs, safe_path
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.buzzer import test as buzzer_test
 from qanta.buzzer import constants as bc
