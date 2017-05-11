@@ -599,10 +599,8 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
-    ir_dataset = QuizBowlDataset(1)
-    ir_answer_set = {format_guess(g) for g in ir_dataset.training_data()[1]}
-    dan_dataset = QuizBowlDataset(2)
-    dan_answer_set = {format_guess(g) for g in dan_dataset.training_data()[1]}
+    qb_dataset = QuizBowlDataset(1)
+    qb_answer_set = {format_guess(g) for g in qb_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
 
@@ -646,14 +644,10 @@ if __name__ == "__main__":
                   (ii, power_mark, str(ii in power._power_marks.keys())))
 
         correct_answer = format_guess(questions.answer(ii))
-        if correct_answer in dan_answer_set and correct_answer in ir_answer_set:
-            answerable = 'ir+dan'
-        elif correct_answer in ir_answer_set:
-            answerable = 'ir'
-        elif correct_answer in dan_answer_set:
-            answerable = 'dan'
+        if correct_answer in qb_answer_set:
+            answerable = 'answerable'
         else:
-            answerable = 'neither'
+            answerable = 'not answerable'
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),

@@ -5,12 +5,11 @@ import luigi
 from luigi import LocalTarget, Task, ExternalTask, WrapperTask
 
 from qanta.config import conf
-from qanta.reporting.performance import load_data, load_audit
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.preprocess import format_guess
 from qanta.util.io import safe_path
 from qanta.util.environment import QB_QUESTION_DB
-from qanta.util.constants import (PRED_TARGET, META_TARGET, EXPO_BUZZ, EXPO_FINAL, VW_AUDIT,
+from qanta.util.constants import (PRED_TARGET, META_TARGET, EXPO_BUZZ, EXPO_FINAL,
                                   EXPO_QUESTIONS)
 import qanta.buzzer.test
 

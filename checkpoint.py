@@ -70,11 +70,8 @@ SUMMARIES = {'output/summary'}
 
 REPORTING = {'output/reporting'}
 
-fold = os.environ.get('QB_FOLD', 'test')
 EXPO = {
-    'output/expo/test.questions.csv',
-    'output/expo/{}.buzz'.format(fold),
-    'output/expo/{}.final'.format(fold)
+    'output/expo',
 }
 
 
