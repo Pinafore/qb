@@ -34,7 +34,8 @@ class QuestionIterator(object):
         self.is_end_epoch = False
         self.create_batches()
 
-    def dense_vector(self, dicts: List[List[Dict[str, float]]]) -> List[List[float]]:
+    def dense_vector(self, dicts: List[List[Dict[str, float]]],
+            wordvecs: List[List[np.ndarray]]) -> List[List[float]]:
         '''Generate dense vectors from a sequence of guess dictionaries.
         dicts: a sequence of guess dictionaries for each guesser
         '''
@@ -48,6 +49,7 @@ class QuestionIterator(object):
             vec = []
             diff_vec = []
             isnew_vec = []
+            word_vec = []
             for j in range(N_GUESSERS):
                 dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
                 for guess, score in dic:
@@ -63,7 +65,9 @@ class QuestionIterator(object):
                         vec.append(0)
                         diff_vec.append(0)
                         isnew_vec.append(0)
-            vecs.append(vec + diff_vec + isnew_vec + prev_vec)
+                if wordvecs is not None:
+                    word_vec += wordvecs[i][j].tolist()
+            vecs.append(vec + diff_vec + isnew_vec + prev_vec + word_vec)
             prev_vec = vec
         return vecs
 
@@ -73,7 +77,7 @@ class QuestionIterator(object):
         buckets = defaultdict(list)
         for example in self.dataset:
             # pad the sequence of predictions
-            qid, answer, vecs, results = example
+            qid, answer, dicts, results, wordvecs = example
             
             results = np.asarray(results, dtype=np.int32)
             length, n_guessers = results.shape
@@ -96,9 +100,9 @@ class QuestionIterator(object):
                 new_results.append(np.append(results[i], not_buzz))
             results = np.asarray(new_results, dtype=np.int32)
 
-            if len(vecs) != length:
+            if len(dicts) != length:
                 raise ValueError("Inconsistant shape of results and vecs.")
-            vecs = self.dense_vector(vecs)
+            vecs = self.dense_vector(dicts, wordvecs)
             vecs = np.asarray(vecs, dtype=np.float32)
             self.n_input = len(vecs[0])
 
