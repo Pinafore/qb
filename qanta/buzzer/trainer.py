@@ -135,7 +135,7 @@ class Trainer(object):
     def run(self, train_iter=None, eval_iter=None, n_epochs=1):
         progress_bar = ProgressBar(n_epochs, unit_iteration=False)
         for epoch in range(n_epochs):
-            log.info('\nepoch {0}'.format(epoch))
+            log.info('epoch {0}'.format(epoch))
             if train_iter is not None:
                 train_stats = self.train_one_epoch(train_iter, progress_bar)
                 output = 'train '

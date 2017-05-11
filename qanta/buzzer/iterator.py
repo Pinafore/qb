@@ -35,12 +35,13 @@ class QuestionIterator(object):
         self.create_batches()
 
     def dense_vector(self, dicts: List[List[Dict[str, float]]],
-            wordvecs: List[List[np.ndarray]]) -> List[List[float]]:
+            wordvecs: List[List[np.ndarray]], steps=1) -> List[List[float]]:
         '''Generate dense vectors from a sequence of guess dictionaries.
         dicts: a sequence of guess dictionaries for each guesser
         '''
         length = len(dicts)
-        prev_vec = [0. for _ in range(N_GUESSERS * N_GUESSES)]
+        prev_vecs = [[0. for _ in range(N_GUESSERS * N_GUESSES)] \
+                for i in range(steps)]
         vecs = []
         for i in range(length):
             if len(dicts[i]) != N_GUESSERS:
@@ -67,8 +68,12 @@ class QuestionIterator(object):
                         isnew_vec.append(0)
                 if wordvecs is not None:
                     word_vec += wordvecs[i][j].tolist()
-            vecs.append(vec + diff_vec + isnew_vec + prev_vec + word_vec)
-            prev_vec = vec
+            vecs.append(vec + diff_vec + isnew_vec + word_vec)
+            for j in range(1, steps + 1):
+                vecs[-1] += prev_vecs[-j]
+            prev_vecs.append(vec)
+            if steps > 0:
+                prev_vecs = prev_vecs[-steps:]
         return vecs
 
     def create_batches(self):
@@ -102,7 +107,7 @@ class QuestionIterator(object):
 
             if len(dicts) != length:
                 raise ValueError("Inconsistant shape of results and vecs.")
-            vecs = self.dense_vector(dicts, wordvecs)
+            vecs = self.dense_vector(dicts, wordvecs, step=1)
             vecs = np.asarray(vecs, dtype=np.float32)
             self.n_input = len(vecs[0])
 
