@@ -1,6 +1,7 @@
 import os
 import argparse
 import chainer
+import pickle
 
 from qanta import logging
 from qanta.config import conf

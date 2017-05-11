@@ -1,6 +1,6 @@
 import os
 import argparse
-
+import pickle
 import chainer
 
 from qanta.guesser.abstract import AbstractGuesser
