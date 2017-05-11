@@ -1,6 +1,3 @@
-import pydevd
-pydevd.settrace('localhost', port=9999, stdoutToServer=True, stderrToServer=True)
-
 import pickle
 import json
 import os
