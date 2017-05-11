@@ -32,9 +32,12 @@ def generate(args):
         log.info('Model {0} not available'.format(cfg.model_dir))
         exit(0)
 
+    cfg = pickle.load(open(cfg.ckp_dir, 'rb'))
+
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=test_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=N_GUESSERS+1, n_layers=cfg.n_layers, dropout=cfg.dropout)
+                n_output=N_GUESSERS+1, n_layers=cfg.n_layers,
+                dropout=cfg.dropout, batch_norm=cfg.batch_norm)
 
     if isinstance(cfg, configs.rnn):
         model = RNN(test_iter.n_input, cfg.n_hidden, 2)

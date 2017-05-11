@@ -6,14 +6,19 @@ from chainer import cuda
 
 class MLP(chainer.ChainList):
 
-    def __init__(self, n_input, n_hidden, n_output, n_layers, dropout=0):
-        self.n_layers = n_layers + 2
+    def __init__(self, n_input, n_hidden, n_output, n_layers, dropout=0,
+            batch_norm=False):
         self.dropout = dropout
         layers = []
         layers.append(L.Linear(n_input, n_hidden))
         for i in range(n_layers):
+            if batch_norm:
+                layers.append(L.BatchNormalization(size=n_hidden))
             layers.append(L.Linear(n_hidden, n_hidden))
+        layers.append(L.BatchNormalization(size=n_hidden))
         layers.append(L.Linear(n_hidden, n_output))
+        self.n_layers = n_layers * 2 + 3
+        self.batch_norm = batch_norm
         super(MLP, self).__init__(*layers)
 
     @property
@@ -31,7 +36,7 @@ class MLP(chainer.ChainList):
         length, batch_size, _ = xs.shape
         xs = F.reshape(xs, (length * batch_size, -1))
         for i in range(self.n_layers):
-            if self.dropout > 0:
+            if not self.batch_norm and self.dropout > 0:
                 xs = F.dropout(xs, ratio=self.dropout, train=train)
             xs = self[i](xs)
         return xs
