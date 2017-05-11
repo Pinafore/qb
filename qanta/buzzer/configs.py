@@ -6,7 +6,7 @@ class mlp():
     n_hidden = 200
     n_layers = 3
     dropout = 0.3
-    batch_norm = True
+    batch_norm = False
     log_dir = 'mlp_buzzer.log'
     ckp_dir = 'mlp_buzzer.ckp'
     model_dir = 'output/buzzer/mlp_buzzer.npz'
