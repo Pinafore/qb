@@ -100,7 +100,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
             x_train.append(q_text)
             y_train.append(class_to_i[ans])
 
-    for q, ans, prop in test:
+    for q, ans in test:
         q_text = []
         for sentence in q:
             t_question = tokenize_question(sentence)
