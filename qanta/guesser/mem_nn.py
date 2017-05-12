@@ -291,23 +291,24 @@ class MemNNGuesser(AbstractGuesser):
             match_probability = Reshape(tuple(match_probability.shape.as_list()[1:] + [1]))(match_probability)
             memories = multiply([match_probability, wiki_input_encoded_c])
             memories = pooling.GlobalAveragePooling1D()(memories)
+            memories = Dense(wiki_we_dimension, use_bias=False)(memories)
             layer_out = Add()([memories, layer_out])
 
         print(layer_out.shape)
         memories_and_question = Concatenate(1)([layer_out, qb_input_encoded])
 
-        hidden = Dense(self.n_hidden_units)(memories_and_question)
-        hidden = Activation('relu')(hidden)
-        hidden = BatchNormalization()(hidden)
-        hidden = Dropout(self.nn_dropout_rate)(hidden)
+        # hidden = Dense(self.n_hidden_units)(memories_and_question)
+        # hidden = Activation('relu')(hidden)
+        # hidden = BatchNormalization()(hidden)
+        # hidden = Dropout(self.nn_dropout_rate)(hidden)
+        # actions = Dense(self.n_classes)(hidden)
 
-        actions = Dense(self.n_classes)(hidden)
+        actions = Dense(self.n_classes)(memories_and_question)
         actions = BatchNormalization()(actions)
         actions = Dropout(self.nn_dropout_rate)(actions)
         actions = Activation('softmax')(actions)
 
         adam = Adam()
-        # model = Model(inputs=[qb_input, wiki_input], outputs=actions)
         model = Model(inputs=[qb_input, wiki_input], outputs=actions)
         model.compile(
             loss=sparse_categorical_crossentropy, optimizer=adam,
@@ -317,7 +318,7 @@ class MemNNGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train_text, y_train, _, x_test_text, y_test, _, qb_vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
+        x_train_text, y_train, x_test_text, y_test, qb_vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.qb_vocab = qb_vocab

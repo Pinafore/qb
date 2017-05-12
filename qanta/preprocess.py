@@ -66,21 +66,19 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
 
     x_train = []
     y_train = []
-    properties_train = []
     x_test = []
     y_test = []
-    properties_test = []
     if vocab is None:
         vocab = set()
 
-    question_runs_with_answer = list(zip(data[0], data[1], data[2]))
+    question_runs_with_answer = list(zip(data[0], data[1]))
     if train_size != 1:
         train, test = train_test_split(question_runs_with_answer, train_size=train_size)
     else:
         train = question_runs_with_answer
         test = []
 
-    for q, ans, prop in train:
+    for q, ans in train:
         q_text = []
         for sentence in q:
             t_question = tokenize_question(sentence)
@@ -98,11 +96,9 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
 
                 if not full_question:
                     y_train.append(class_to_i[ans])
-                    properties_train.append(prop)
         if full_question:
             x_train.append(q_text)
             y_train.append(class_to_i[ans])
-            properties_train.append(prop)
 
     for q, ans, prop in test:
         q_text = []
@@ -117,12 +113,10 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
                 x_test.append(q_text)
             if not full_question:
                 y_test.append(class_to_i[ans])
-                properties_test.append(prop)
         if full_question:
             x_test.append(q_text)
             y_test.append(class_to_i[ans])
-            properties_test.append(prop)
 
-    return (x_train, y_train, properties_train,
-            x_test, y_test, properties_test,
+    return (x_train, y_train,
+            x_test, y_test,
             vocab, class_to_i, i_to_class)

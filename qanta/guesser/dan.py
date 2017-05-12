@@ -175,7 +175,7 @@ class DANGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
+        x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
