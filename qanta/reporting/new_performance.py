@@ -27,10 +27,10 @@ STAT_KEYS_0 = [
         'choose_hopeful', # did the buzzer choose a hopeful guesser
         'rush', # did the buzzer rush (w.r.t to all guessers)
         'late', # did the buzzer buzz too late (w.r.t to all guessers)
-        'hopeful', # is the question hopeful (w.r.t to all guessers)
-        'correct', # how many correct buzzers
         'not_buzzing_when_shouldnt', 
-        'reward'
+        'reward',
+        'hopeful', # is the question hopeful (w.r.t to all guessers)
+        'correct' # how many correct buzzers
         ]
 
 # discrete valued statistics

@@ -21,10 +21,12 @@ def train_cost_sensitive(args):
     cfg = getattr(configs, args.config)()
 
     option2id, all_guesses = load_quizbowl()
-    train_iter = QuestionIterator(all_guesses['dev'], 
-            option2id, batch_size=cfg.batch_size, only_hopeful=False)
-    eval_iter = QuestionIterator(all_guesses['test'], 
-            option2id, batch_size=cfg.batch_size, only_hopeful=False)
+    train_iter = QuestionIterator(all_guesses['dev'], option2id,
+            batch_size=cfg.batch_size, step_size=cfg.step_size,
+            neg_weight=cfg.neg_weight)
+    eval_iter = QuestionIterator(all_guesses['test'], option2id,
+            batch_size=cfg.batch_size, step_size=cfg.step_size,
+            neg_weight=cfg.neg_weight)
 
     if os.path.exists(cfg.model_dir) and args.load:
         cfg = pickle.load(open(cfg.ckp_dir, 'rb'))

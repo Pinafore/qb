@@ -25,7 +25,7 @@ class Trainer(object):
     def __init__(self, model, model_dir=None):
         self.model = model
         self.model_dir = model_dir
-        self.optimizer = chainer.optimizers.Adam()
+        self.optimizer = chainer.optimizers.Adam(alpha=1e-4)
         self.optimizer.setup(self.model)
         self.optimizer.add_hook(chainer.optimizer.GradientClipping(5))
 
@@ -146,3 +146,4 @@ class Trainer(object):
                 log.info(output)
             if self.model_dir is not None:
                 chainer.serializers.save_npz(self.model_dir, self.model)
+        train_iter.finalize(reset=True)

@@ -3,7 +3,6 @@ import numpy as np
 from collections import defaultdict, namedtuple
 from typing import List, Dict, Tuple, Optional
 from qanta.config import conf
-from qanta.buzzer import constants as bc
 from qanta.buzzer.util import GUESSERS
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
@@ -21,11 +20,14 @@ class QuestionIterator(object):
     '''
 
     def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
-            bucket_size=4, shuffle=True, only_hopeful=False):
+            bucket_size=4, step_size=1, neg_weight=1, shuffle=True,
+            only_hopeful=False):
         self.dataset = dataset
         self.option2id = option2id
         self.batch_size = batch_size
         self.bucket_size = bucket_size
+        self.step_size = step_size
+        self.neg_weight = neg_weight
         self.shuffle = shuffle
         self.only_hopeful = only_hopeful
         self.epoch = 0
@@ -101,13 +103,13 @@ class QuestionIterator(object):
             # not buzzing = 1 when no guesser is correct
             new_results = []
             for i in range(length):
-                not_buzz = int(not any(results[i] == 1)) * bc.NEG_WEIGHT
+                not_buzz = int(not any(results[i] == 1)) * self.neg_weight
                 new_results.append(np.append(results[i], not_buzz))
             results = np.asarray(new_results, dtype=np.int32)
 
             if len(dicts) != length:
                 raise ValueError("Inconsistant shape of results and vecs.")
-            vecs = self.dense_vector(dicts, wordvecs, step_size=1)
+            vecs = self.dense_vector(dicts, wordvecs, self.step_size)
             vecs = np.asarray(vecs, dtype=np.float32)
             assert length == vecs.shape[0]
             self.n_input = len(vecs[0])
