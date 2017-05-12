@@ -52,11 +52,11 @@ def generate(args):
         model.to_gpu(gpu)
 
     trainer = Trainer(model, cfg.model_dir)
-    buzzes, finals = trainer.test(test_iter)
+    buzzes = trainer.test(test_iter)
     log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
 
     guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
-    buzzer2vwexpo(guesses_df, buzzes, finals, fold)
+    buzzer2vwexpo(guesses_df, buzzes, fold)
     # preds, metas = buzzer2predsmetas(guesses_df, buzzes)
     # log.info('preds and metas generated')
     # performance.generate(2, preds, metas, 'output/summary/{}_1.json'.format(fold))

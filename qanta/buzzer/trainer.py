@@ -61,7 +61,6 @@ class Trainer(object):
 
     def test(self, test_iter):
         buzzes = dict()
-        finals = dict()
         progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
         for i in range(test_iter.size):
             batch = test_iter.next_batch(self.model.xp)
@@ -69,21 +68,14 @@ class Trainer(object):
             ys = self.model(batch.vecs, train=False)
             ys = F.swapaxes(F.reshape(ys, (length, batch_size, -1)), 0, 1)
             ys.to_cpu()
-            ys = ys.data
-            actions = np.argmax(ys, axis=2).tolist() # length, batch
-            for i, (qnum, action) in enumerate(zip(batch.qids, actions)):
+            for i, (qnum, scores) in enumerate(zip(batch.qids, ys.data)):
                 if isinstance(qnum, np.ndarray):
                     qnum = qnum.tolist()
-                finals[qnum] = np.argmax(ys[i][-1][:N_GUESSERS]).tolist()
-                buzzes[qnum] = [-1, -1]
-                for pos, chosen in enumerate(action):
-                    if chosen < N_GUESSERS:
-                        buzzes[qnum] = (pos, chosen)
-                        break
+                buzzes[qnum] = scores.tolist()
             progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
         progress_bar.finalize()
-        return buzzes, finals
+        return buzzes
 
     def evaluate(self, eval_iter):
         stats = defaultdict(lambda: 0)

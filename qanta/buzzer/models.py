@@ -15,9 +15,13 @@ class MLP(chainer.ChainList):
             if batch_norm:
                 layers.append(L.BatchNormalization(size=n_hidden))
             layers.append(L.Linear(n_hidden, n_hidden))
-        layers.append(L.BatchNormalization(size=n_hidden))
+        if batch_norm:
+            layers.append(L.BatchNormalization(size=n_hidden))
         layers.append(L.Linear(n_hidden, n_output))
-        self.n_layers = n_layers * 2 + 3
+        if batch_norm:
+            self.n_layers = n_layers * 2 + 3
+        else:
+            self.n_layers = n_layers + 2
         self.batch_norm = batch_norm
         super(MLP, self).__init__(*layers)
 
