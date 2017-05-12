@@ -20,19 +20,26 @@ from qanta.buzzer.util import GUESSERS
 log = logging.get(__name__)
 MAXINT = 99999
 
-STAT_KEYS_0 = ['buzz', 'choose_best', 'choose_hopeful', 'rush',
-        'late', 'hopeful', 'not_buzzing_when_shouldnt']
-STAT_KEYS_1 = ['choose_guesser', 'best_guesser']
+# continuous valued statistics
+STAT_KEYS_0 = [
+        'buzz', # did the buzzer buzz
+        'choose_best', # did the buzzer choose the best guesser (earliest correct)
+        'choose_hopeful', # did the buzzer choose a hopeful guesser
+        'rush', # did the buzzer rush (w.r.t to all guessers)
+        'late', # did the buzzer buzz too late (w.r.t to all guessers)
+        'hopeful', # is the question hopeful (w.r.t to all guessers)
+        'not_buzzing_when_shouldnt', 
+        'reward'
+        ]
+
+# discrete valued statistics
+STAT_KEYS_1 = [
+        'choose_guesser', # the guesser chosen by the buzzer
+        'best_guesser' # the best guesser
+        ]
 
 def _examine_question(buzzes: Dict[int, List[List[float]]], 
         answers: Dict[int, str], inputs):
-    '''
-    0. Which guesser did the buzzer choose?
-    1. Did the buzzer choose the best guesser (correct earliest)?
-    2. Did it choose the hopeful guesser? (weaker than 1.)
-    3. Did it rush w.r.t. to all the guessers, if so how much?
-    4. Did it buzz too late w.r.t. to all the guessers, if so how much?
-    '''
     (qnum, question), queue = inputs
     buzz = buzzes[qnum]
     answer = answers[qnum]
@@ -77,12 +84,14 @@ def _examine_question(buzzes: Dict[int, List[List[float]]],
     if pos == -1:
         # not buzzing
         stats['buzz'] = 0
+        stats['reward'] = 0
         stats['not_buzzing_when_shouldnt'] = int(not hopeful)
     else:
         stats['buzz'] = 1
         stats['choose_guesser'] = chosen
         stats['choose_best'] = int(chosen == best_guesser)
         stats['choose_hopeful'] = int(correct[chosen] != MAXINT)
+        stats['reward'] = 10 if pos >= correct[chosen] else -5
         if hopeful:
             stats['late'] = max(0, pos - correct[best_guesser])
             stats['rush'] = max(0, correct[best_guesser] - pos)
@@ -139,12 +148,15 @@ def generate(fold):
     for key in STAT_KEYS_0:
         vs = [x for x in stats[key] if x != -1]
         v = sum(vs) / len(vs)
-        print(key, v)
+        output = "{0} {1}".format(key, v)
+        print(output)
 
     for key in STAT_KEYS_1:
         vs = [x for x in stats[key] if x != -1]
-        print(key, GUESSERS[0], vs.count(0), GUESSERS[1], vs.count(1))
-        
+        output = key
+        for i in range(len(GUESSERS)):
+            output += " {0}: {1}".format(GUESSERS[i], vs.count(i))
+        print(output)
 
 if __name__ == '__main__':
     fold = 'test'
