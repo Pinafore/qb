@@ -8,7 +8,7 @@ class mlp():
     dropout = 0.3
     batch_norm = False
     log_dir = 'mlp_buzzer.log'
-    ckp_dir = 'mlp_buzzer.ckp'
+    ckp_dir = 'output/buzzer/mlp_buzzer.ckp'
     model_dir = 'output/buzzer/mlp_buzzer.npz'
 
 class rnn():
@@ -18,5 +18,5 @@ class rnn():
     batch_size = 128
     n_hidden = 128
     log_dir = 'rnn_buzzer.log'
-    ckp_dir = 'rnn_buzzer.ckp'
+    ckp_dir = 'output/buzzer/rnn_buzzer.ckp'
     model_dir = 'output/buzzer/rnn_buzzer.npz'
