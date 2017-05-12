@@ -109,6 +109,7 @@ class QuestionIterator(object):
                 raise ValueError("Inconsistant shape of results and vecs.")
             vecs = self.dense_vector(dicts, wordvecs, step_size=1)
             vecs = np.asarray(vecs, dtype=np.float32)
+            assert length == vecs.shape[0]
             self.n_input = len(vecs[0])
 
             padded_length = -((-length) // bucket_size) * bucket_size

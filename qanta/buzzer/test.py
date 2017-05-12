@@ -55,6 +55,11 @@ def generate(args):
     buzzes = trainer.test(test_iter)
     log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
 
+    buzzes_dir = bc.BUZZES_DIR.format(fold)
+    with open(buzzes_dir, 'wb') as outfile:
+        pickle.dump(buzzes, outfile)
+    log.info('Buzzes saved to {0}.'.format(buzzes_dir))
+
     guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
     buzzer2vwexpo(guesses_df, buzzes, fold)
     # preds, metas = buzzer2predsmetas(guesses_df, buzzes)

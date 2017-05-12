@@ -70,7 +70,7 @@ def stupid_buzzer(iterator) -> Dict[int, int]:
     return buzz_dict
 
 def _process_question(option2id: Dict[str, int], 
-        all_questions: List[Question], 
+        all_questions: Dict[int, Question], 
         word2vec, inputs: Tuple) -> \
             Tuple[int, int, List[List[Dict[str, int]]], List[List[int]]]:
     '''Process one question.
@@ -102,6 +102,7 @@ def _process_question(option2id: Dict[str, int],
             wordvecs.append([])
         for guesser in GUESSERS:
             if guesser not in pos_group.groups:
+                log.info("{0} missing guesser {1}.".format(qnum, guesser))
                 guess_dicts[-1].append({})
                 results[-1].append(0)
                 if word2vec is not None:
@@ -118,7 +119,8 @@ def _process_question(option2id: Dict[str, int],
                 if word2vec is not None:
                     wordvecs[-1].append(word2vec.get_avg_vec(top_guess))
 
-    # queue.put(qnum)
+    if queue is not None:
+        queue.put(qnum)
     return qnum, answer_id, guess_dicts, results, wordvecs
 
 class Word2Vec:

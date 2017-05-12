@@ -66,12 +66,16 @@ class Trainer(object):
             batch = test_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=False)
+            ys = F.softmax(ys) # length * batch_size, n_guessers
             ys = F.swapaxes(F.reshape(ys, (length, batch_size, -1)), 0, 1)
             ys.to_cpu()
-            for i, (qnum, scores) in enumerate(zip(batch.qids, ys.data)):
+            masks = batch.mask.T.tolist()
+            assert len(masks) == batch_size
+            for qnum, scores, mask in zip(batch.qids, ys.data, masks):
                 if isinstance(qnum, np.ndarray):
                     qnum = qnum.tolist()
-                buzzes[qnum] = scores.tolist()
+                total = int(sum(mask))
+                buzzes[qnum] = scores[:total].tolist()
             progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
         progress_bar.finalize()

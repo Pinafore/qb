@@ -6,7 +6,6 @@ import codecs
 import pandas as pd
 import itertools
 from functools import partial
-from functional import seq
 from multiprocessing import Pool, Manager
 from typing import List, Dict, Tuple, Optional
 
@@ -42,6 +41,7 @@ def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]],
     buzzf, predf, metaf, finalf = [], [], [], []
     final_guesses = []
     for i, (g_class, g_group) in enumerate(question.groupby('guesser')):
+        # FIXME there might be missing guesses so the length might vary
         g_group = g_group.groupby(['sentence', 'token'])
         for pos, (sent_token, p_group) in enumerate(g_group):
             sent, token = sent_token
@@ -91,7 +91,7 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
             break
         else:
             size = queue.qsize()
-            sys.stderr.write('\rbuzzer2vwexpo done: {0}/{1}'.format(
+            sys.stderr.write('\r[buzzer2vwexpo] done: {0}/{1}'.format(
                 size, total_size))
             time.sleep(0.1)
     sys.stderr.write('\n')
