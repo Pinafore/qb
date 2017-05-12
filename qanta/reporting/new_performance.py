@@ -28,6 +28,7 @@ STAT_KEYS_0 = [
         'rush', # did the buzzer rush (w.r.t to all guessers)
         'late', # did the buzzer buzz too late (w.r.t to all guessers)
         'hopeful', # is the question hopeful (w.r.t to all guessers)
+        'correct', # how many correct buzzers
         'not_buzzing_when_shouldnt', 
         'reward'
         ]
@@ -68,9 +69,10 @@ def _examine_question(buzzes: Dict[int, List[List[float]]],
     # the first correct position of each guesser
     correct = [g.index(answer) if answer in g else MAXINT for g in top_guesses]
     best_guesser = -1 if np.all(correct == MAXINT) else np.argmin(correct)
-    hopeful = sum(x != MAXINT for x in correct)
     stats['best_guesser'] = best_guesser
-    stats['hopeful'] = hopeful
+    stats['correct'] = sum(x != MAXINT for x in correct)
+    stats['hopeful'] = stats['correct'] > 0
+    hopeful = stats['hopeful']
 
     # the buzzing position and chosen guesser
     pos, chosen = -1, -1
@@ -101,16 +103,7 @@ def _examine_question(buzzes: Dict[int, List[List[float]]],
 
     return stats
 
-def generate(fold):
-    buzzes_dir = bc.BUZZES_DIR.format(fold)
-    with open(buzzes_dir, 'rb') as infile:
-        buzzes = pickle.load(infile)
-    log.info('Buzzes loaded from {0}.'.format(buzzes_dir))
-
-    all_questions = QuestionDatabase().all_questions()
-    answers = {k: format_guess(v.page) for k, v in all_questions.items()}
-
-    guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
+def generate(buzzes, answers, guesses_df, fold):
     questions = guesses_df.groupby('qnum')
     total_size = len(questions)
     stats = defaultdict(lambda: [])
@@ -145,19 +138,33 @@ def generate(fold):
             sys.stderr.write('\r[performance] done: {0}/{1}'.format(i, total_size))
         sys.stderr.write('\n')
 
+    all_output = ""
     for key in STAT_KEYS_0:
         vs = [x for x in stats[key] if x != -1]
-        v = sum(vs) / len(vs)
-        output = "{0} {1}".format(key, v)
-        print(output)
+        v = sum(vs) / len(vs) if len(vs) > 0 else 0
+        output = "{0} {1:.3f}".format(key, v)
+        all_output += output + '\n'
+        log.info(output)
 
     for key in STAT_KEYS_1:
         vs = [x for x in stats[key] if x != -1]
         output = key
         for i in range(len(GUESSERS)):
-            output += " {0}: {1}".format(GUESSERS[i], vs.count(i))
-        print(output)
+            output += " {0} {1}".format(GUESSERS[i], vs.count(i))
+        all_output += output + '\n'
+        log.info(output)
+
+    return all_output
 
 if __name__ == '__main__':
     fold = 'test'
-    generate(fold)
+    buzzes_dir = bc.BUZZES_DIR.format(fold)
+    with open(buzzes_dir, 'rb') as infile:
+        buzzes = pickle.load(infile)
+    log.info('Buzzes loaded from {0}.'.format(buzzes_dir))
+
+    all_questions = QuestionDatabase().all_questions()
+    answers = {k: format_guess(v.page) for k, v in all_questions.items()}
+
+    guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
+    generate(buzzes, answers, guesses_df, fold)

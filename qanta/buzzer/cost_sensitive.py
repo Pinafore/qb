@@ -49,7 +49,7 @@ def train_cost_sensitive(args):
 
     pickle.dump(cfg, open(cfg.ckp_dir, 'wb'))
     trainer = Trainer(model, cfg.model_dir)
-    trainer = trainer.run(train_iter, eval_iter, args.epochs)
+    trainer.run(train_iter, eval_iter, args.epochs)
 
 def parse_args():
     parser = argparse.ArgumentParser()
