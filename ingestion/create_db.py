@@ -1,5 +1,6 @@
 from collections import Counter, defaultdict
 from itertools import chain
+import re
 
 import nltk
 
@@ -7,6 +8,7 @@ from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from ingestion.title_finder import TitleFinder
+from ingestion.page_assigner import PageAssigner
 
 log = logging.get(__name__)
 
@@ -15,13 +17,16 @@ sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
 def add_question(connection, question_id, tournament, category, page,
                  content, answer, ans_type="", naqt=-1, protobowl="", fold="train"):
     c = connection.cursor()
-
+    sentences = list(enumerate(sent_detector.tokenize(content)))
     c.executemany('INSERT INTO text VALUES (?, ?, ?)',
                   [(question_id, x, y) for x, y in
-                   enumerate(sent_detector.tokenize(content))])
+                   sentences])
     c.execute('INSERT INTO questions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
               (question_id, category, page, answer, tournament, ans_type, naqt, protobowl, fold))
     connection.commit()
+
+    return sentences
+
 
 # Protobowl category mapping
 kCATS = set(["Fine_Arts", "History", "Literature", "Other", "Science", "Social_Science"])
@@ -48,6 +53,8 @@ kNAQT_MAP["PH"] = "Social Studies"
 kNAQT_MAP["L"] = "Literature"
 kNAQT_MAP["H"] = "History"
 kNAQT_MAP["FA:"] = "Fine Arts"
+
+kYEAR = re.compile("[0-9]+")
 
 kANSWER_PATTERN = ["\nanswer:", "\nAnswer:", "answer:", "Answer:", "asnwer:",
                    "answr:", "anwer:", "\nanswer"]
@@ -99,6 +106,35 @@ class NaqtQuestion:
             title, rest = rest.split('"', 1)
             self.topics[int(id)] = title
 
+    def year(self):
+        years = []
+
+        for ii in [int(x) for x in kYEAR.findall(self.tournaments)]:
+            if ii < 40:
+                ii += 2000
+
+            if ii > 70 and ii < 100:
+                ii += 1900
+
+            years.append(ii)
+
+
+
+        if len(years) == 0:
+            log.info("Bad year from %s" % self.tournaments)
+            return 0
+        elif "invitational series" in self.tournaments.lower():
+            return years[0] / 10 + 1997
+
+        elif len(years) > 2:
+            years = years[:2]
+
+
+        val = max(years)
+        if val > 2016 and "invitational series" not in self.tournaments.lower():
+            log.info("Crazy year %i" % val)
+        return val
+
     @staticmethod
     def map_naqt(old_category):
         val = "Other"
@@ -132,28 +168,38 @@ class NaqtQuestion:
                         continue
                     yield q
 
+
 def assign_fold(tournament, year):
     # Default assumption is that questions are (guesser) training data
-    fold = "train"
+    fold = "guesstrain"
+
+    # Goal: 70% guess, 20% buzzer, 10% dev/test
 
     tourn = tournament.lower()
+
+    # Years get messed up for invitational
+    if "invitational series" in tourn:
+        return "guesstrain"
+
+    if "intramurals" in tourn or "winter" in tourn:
+        fold = "guessdev"
+
     # ACF Fall, PACE, etc. are for training the buzzer
-    if "acf" in tourn and ("fall" in tourn or "novice" in tourn):
-        fold = "buzzer"
+    if "acf" in tourn or "invitational" in tourn or "novice" in tourn:
+        fold = "buzzertrain"
 
-    if "pace" in tourn and "nsc" in tourn:
-        fold = "buzzer"
+    if "nasat" in tourn or "bowl" in tourn or "open" in tourn:
+        fold = "buzzertrain"
 
-    if "nasat" in tourn:
-        fold = "buzzer"
+    if "pace" in tourn or "nsc" in tourn or "acf fall" in tourn:
+        fold = "buzzerdev"
 
     # 2016 hsnct tournaments are dev
-    if int(year) > 2015 or "high school championship" in tourn:
+    if int(year) >= 2015:
         fold = "dev"
 
-    # HSNCT 2016 is test
-    if int(year) == 2016 and "high school championship" in tourn:
-        fold = "test"
+        if "high school championship" in tourn or "pace" in tourn or "nasat" in tourn:
+            fold = "test"
 
     return fold
 
@@ -197,92 +243,6 @@ def create_db(location):
 
     return conn
 
-class PageAssigner:
-    def __init__(self, normalize_func=lambda x: x):
-        from collections import defaultdict
-
-        self._unambiguous = {}
-        self._ambiguous = defaultdict(dict)
-        self._direct = defaultdict(dict)
-
-        self._normalize = normalize_func
-
-    def load_unambiguous(self, filename):
-        with open(filename) as infile:
-            for ii in infile:
-                if not ii.strip():
-                    continue
-                try:
-                    answer, page = ii.strip().split('\t')
-                except ValueError:
-                    log.info("Bad unambiguous line in %s: %s" % (filename, ii))
-                self._unambiguous[answer] = page
-
-    def load_ambiguous(self, filename):
-        with open(filename) as infile:
-            for ii in infile:
-                if not ii.strip():
-                    continue
-                fields = ii.strip().split('\t')
-
-                if not (len(fields) == 2 or len(fields) == 3):
-                    log.info("Bad ambiguous line in %s: %s" % (filename, ii))
-                    continue
-                if len(fields) == 3:
-                    answer, page, words = fields
-                else:
-                    answer, page = fields
-                    words = ""
-
-                words = words.split(":")
-                self._ambiguous[answer][page] = words
-
-    def load_direct(self, filename):
-        with open(filename) as infile:
-            for ii in infile:
-                if not ii.strip():
-                    continue
-                try:
-                    ext_id, page, answer = ii.strip().split('\t')
-                except ValueError:
-                    log.info("Bad direct line in %s: %s" % (filename, ii))
-                self._direct[ext_id] = page
-
-    def __call__(self, answer, text, pb="", naqt=-1):
-        normalize = self._normalize(answer)
-
-        if pb in self._direct:
-            return self._direct[pb]
-
-        if naqt in self._direct:
-            return self._direct[naqt]
-
-        if normalize in self._unambiguous:
-            return self._unambiguous[normalize]
-
-        if normalize in self._ambiguous:
-            default = [x for x in self._ambiguous[normalize] if
-                       len(self._ambiguous[normalize]) == 0]
-            assert len(default) <= 1, "%s has more than one default" % normalize
-            assert len(default) < len(self._ambiguous[normalize]), "%s only has default" % normalize
-
-            # See if any words match
-            words = None
-            for jj in self._ambiguous[normalize]:
-                for ww in self._ambiguous[normalize][jj]:
-                    if words is None:
-                        words = set(text)
-                    if ww in [x.lower() for x in words]:
-                        return jj
-
-            # Return default if there is one
-            if len(default) == 1:
-                return default[0]
-            else:
-                return ''
-
-        # Give up if we can't find answer
-        return ''
 
 
 if __name__ == "__main__":
@@ -309,10 +269,11 @@ if __name__ == "__main__":
     parser.add_argument('--wiki_title',
                         default="data/enwiki-latest-all-titles-in-ns0.gz",
                         type=str)
+    parser.add_argument('--csv_out', default="protobowl.csv", type=str)
 
     flags = parser.parse_args()
-    tf = TitleFinder(flags.wiki_title, CachedWikipedia(),
-                     QuestionDatabase.normalize_answer)
+
+    conn = create_db(flags.db)
 
     # Load page assignment information
     pa = PageAssigner(QuestionDatabase.normalize_answer)
@@ -323,9 +284,8 @@ if __name__ == "__main__":
     for ii in glob("%s/*" % flags.direct_path):
         pa.load_direct(ii)
 
-    conn = create_db(flags.db)
-
     unmapped = Counter()
+    folds = Counter()
     last_id = 0
     num_skipped = 0
     if flags.naqt_path:
@@ -335,12 +295,16 @@ if __name__ == "__main__":
                 num_skipped += 1
 
             page = pa(qq.answer, tk(qq.text), naqt=qq.metadata["ID"])
+            fold = assign_fold(qq.tournaments, qq.year())
             if page == "":
                 unmapped[QuestionDatabase.normalize_answer(qq.answer)] += 1
+                folds[fold] += 1
+
             add_question(conn, last_id, qq.tournaments,
                          NaqtQuestion.map_naqt(qq.metadata["SUBJECT"]),
                          page, qq.text, qq.answer, naqt=qq.metadata["ID"],
-                         fold=assign_fold(qq.tournament, qq.year))
+                         fold=fold)
+
             last_id += 1
 
             if last_id % 1000 == 0:
@@ -349,10 +313,18 @@ if __name__ == "__main__":
                                               page,
                                               qq.text))
                 log.info(str(qq.tournaments))
+                progress = pa.get_counts()
+                for ii in progress:
+                    log.info("MAP %s: %s" % (ii, progress[ii].most_common(5)))
+                for ii in folds:
+                    log.info("NAQT FOLD %s: %i" % (ii, folds[ii]))
 
     if flags.protobowl:
-        with open(flags.protobowl) as infile:
+        with open(flags.protobowl) as infile, open(flags.csv_out, 'w') as outfile:
             import json
+            from csv import DictWriter
+            o = DictWriter(outfile, ["id", "sent", "text", "ans", "page", "fold"])
+            o.writeheader()
             for ii in infile:
                 try:
                     question = json.loads(ii)
@@ -366,19 +338,43 @@ if __name__ == "__main__":
                 category = map_protobowl(question['category'],
                                          question.get('subcategory', ''))
                 page = pa(ans, tk(question["question"]), pb=pid)
-                add_question(conn, last_id, question["tournament"], category,
+                fold = assign_fold(question["tournament"],
+                                   question["year"])
+                sents = add_question(conn, last_id, question["tournament"], category,
                              page, question["question"], ans, protobowl=pid,
-                             fold=assign_fold(question["tournament"],
-                                              question["year"]))
+                             fold=fold)
+
+                for ii, ss in sents:
+                    o.writerow({"id": pid,
+                                 "sent": ii,
+                                 "text": ss,
+                                 "ans": ans,
+                                 "page": page,
+                                 "fold": fold})
+
                 if page == "":
                     norm = QuestionDatabase.normalize_answer(ans)
                     unmapped[norm] += 1
+                else:
+                    folds[fold] += 1
                 last_id += 1
+
+                if last_id % 1000 == 0:
+                    progress = pa.get_counts()
+                    for ii in progress:
+                        log.info("MAP %s: %s" % (ii, progress[ii].most_common(5)))
+                    for ii in folds:
+                        log.info("PB FOLD %s: %i" % (ii, folds[ii]))
+
     log.info("Added %i, skipped %i" % (last_id, num_skipped))
 
     if not os.path.exists(flags.wiki_title):
         urllib.request.urlretrieve("http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-all-titles-in-ns0.gz",
                                    flags.wiki_title)
+
+    tf = TitleFinder(flags.wiki_title, CachedWikipedia(),
+                     pa.known_pages(),
+                     QuestionDatabase.normalize_answer)
 
     guesses = tf.best_guess(unmapped)
 
@@ -397,4 +393,5 @@ if __name__ == "__main__":
         for pp, cc in wiki_total.most_common():
             for kk in wiki_answers[pp]:
                 # TODO: sort by frequency
-                outfile.write("%s\t%s\n" % (kk, pp))
+                outfile.write("%s\t%s\t%i\t%i\t%i\n" % (kk, pp, cc,
+                                                        unmapped[kk]))
