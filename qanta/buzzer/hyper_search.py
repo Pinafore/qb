@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import pickle
 import chainer
@@ -44,6 +45,10 @@ def run(cfg, fold, all_guesses, option2id):
 
     buzzes = trainer.test(test_iter)
     log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
+
+    buzzes_dir = bc.BUZZES_DIR.format(fold)
+    with open(buzzes_dir, 'wb') as outfile:
+        pickle.dump(buzzes, outfile)
     return buzzes
 
 def hyper_search(fold):
@@ -55,16 +60,12 @@ def hyper_search(fold):
     answers = {k: format_guess(v.page) for k, v in all_questions.items()}
     guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
-    outfile = open('n_layers.txt', 'w')
-    for i in [1,2,3,4,5]:
-        cfg.n_layers = i
-        outfile.write("n_layers: {0}\n".format(i))
-        buzzes = run(cfg, fold, all_guesses, option2id)
-        output = generate_report(buzzes, answers, guesses_df, fold)
-        outfile.write(output + '\n')
-        outfile.flush()
-    outfile.close()
+    buzzes = run(cfg, fold, all_guesses, option2id)
+    output = generate_report(buzzes, answers, guesses_df, fold)
+    with open('example.txt', 'w') as outfile:
+        outfile.write(output)
+    print(output)
 
 if __name__ == '__main__':
-    fold = 'test'
+    fold = sys.argv[1]
     hyper_search(fold)

@@ -15,9 +15,10 @@ from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.buzzer.util import GUESSERS
-N_GUESSERS = len(GUESSERS)
-
+from qanta.util.multiprocess import _multiprocess
 from qanta import logging
+
+N_GUESSERS = len(GUESSERS)
 log = logging.get(__name__)
 
 
@@ -77,26 +78,9 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
     buzzes: dictionary of qnum -> buzzing position
     fold: string indicating the data fold
     '''
-    pool = Pool(conf['buzzer']['n_cores'])
-    manager = Manager()
-    queue = manager.Queue()
-    inputs = [(question, queue) for question in guesses_df.groupby('qnum')]
-    total_size = len(inputs)
+    inputs = guesses_df.groupby('qnum')
     worker = partial(_buzzer2vwexpo, buzzes)
-    result = pool.map_async(worker, inputs)
-
-    # monitor loop
-    while True:
-        if result.ready():
-            break
-        else:
-            size = queue.qsize()
-            sys.stderr.write('\r[buzzer2vwexpo] done: {0}/{1}'.format(
-                size, total_size))
-            time.sleep(0.1)
-    sys.stderr.write('\n')
-
-    result = result.get()
+    result = _multiprocess(worker, inputs, info='buzzer2vwexpo')
     buzzf, predf, metaf, finalf = list(map(list, zip(*result)))
 
     with codecs.open(safe_path(c.PRED_TARGET.format(fold)), 'w', 'utf-8') as pred_file, \
