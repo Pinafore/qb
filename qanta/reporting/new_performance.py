@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import pickle
+import argparse
 import numpy as np
 from collections import defaultdict
 from functools import partial
@@ -16,6 +17,7 @@ from qanta.buzzer import constants as bc
 from qanta.config import conf
 from qanta import logging
 from qanta.buzzer.util import GUESSERS
+from qanta.reporting.report_generator import ReportGenerator
 
 log = logging.get(__name__)
 MAXINT = 99999
@@ -39,11 +41,7 @@ STAT_KEYS_1 = [
         'best_guesser' # the best guesser
         ]
 
-def _examine_question(buzzes: Dict[int, List[List[float]]], 
-        answers: Dict[int, str], inputs):
-    (qnum, question), queue = inputs
-    buzz = buzzes[qnum]
-    answer = answers[qnum]
+def get_top_guesses(question):
     top_guesses = [] # length * n_guessers
     # FIXME because there can be missing guessers, must iterate position first
     for _, position in question.groupby(['sentence', 'token']):
@@ -57,7 +55,15 @@ def _examine_question(buzzes: Dict[int, List[List[float]]],
                         'score', ascending=False)
                 top_guesses[-1].append(guesses.iloc[0].guess)
     # transpose top_guesses -> n_guessers * length
-    top_guesses = list(map(list, zip(*top_guesses)))
+    return list(map(list, zip(*top_guesses)))
+
+def end_of_pipeline(buzzes: Dict[int, List[List[float]]],
+                    answers: Dict[int, str], inputs):
+    (qnum, question), queue = inputs
+    buzz = buzzes[qnum]
+    answer = answers[qnum]
+
+    top_guesses = get_top_guesses(question)
     
     length = len(top_guesses[0])
     if len(buzz) != length:
@@ -91,29 +97,29 @@ def _examine_question(buzzes: Dict[int, List[List[float]]],
     else:
         stats['buzz'] = 1
         stats['choose_guesser'] = chosen
-        stats['choose_best'] = int(chosen == best_guesser)
         stats['choose_hopeful'] = int(correct[chosen] != MAXINT)
         stats['reward'] = 10 if pos >= correct[chosen] else -5
         if hopeful:
+            stats['choose_best'] = int(chosen == best_guesser)
             stats['late'] = max(0, pos - correct[best_guesser])
             stats['rush'] = max(0, correct[best_guesser] - pos)
 
     if queue is not None:
         queue.put(qnum)
 
-    return stats
+    return qnum, stats
 
-def generate(buzzes, answers, guesses_df, fold):
+def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
+        multiprocessing=True):
     questions = guesses_df.groupby('qnum')
     total_size = len(questions)
-    stats = defaultdict(lambda: [])
 
-    if True:
+    if multiprocessing:
         pool = Pool(conf['buzzer']['n_cores'])
         manager = Manager()
         queue = manager.Queue()
         inputs = [(question, queue) for question in questions]
-        worker = partial(_examine_question, buzzes, answers)
+        worker = partial(end_of_pipeline, buzzes, answers)
         result = pool.map_async(worker, inputs)
         # monitor loop
         while True:
@@ -125,46 +131,76 @@ def generate(buzzes, answers, guesses_df, fold):
                     size, total_size))
                 time.sleep(0.1)
         sys.stderr.write('\n')
-        result = result.get()
-        for s in result:
-            for k, v in s.items():
-                stats[k].append(v)
+        stats = result.get()
 
     else:
+        stats = []
         for i, question in enumerate(questions):
-            s = _examine_question(buzzes, answers, (question, None))
-            for k, v in s.items():
-                stats[k].append(v)
+            qnum = question[0]
+            s = end_of_pipeline(buzzes, answers, (question, None))
+            stats.append((qnum, s))
             sys.stderr.write('\r[performance] done: {0}/{1}'.format(i, total_size))
         sys.stderr.write('\n')
 
+    stats = {k: v for k, v in stats}
+    if checkpoint_dir is not None:
+        checkpoint = {'buzzes': buzzes, 'stats': stats}
+        with open(checkpoint_dir, 'wb') as outfile:
+            pickle.dump(checkpoint, outfile)
+
     all_output = ""
+    new_stats = defaultdict(lambda: [])
+    for qnum, stat in stats.items():
+        for key in STAT_KEYS_0 + STAT_KEYS_1:
+            if stat[key] != -1:
+                new_stats[key].append(stat[key])
+
     for key in STAT_KEYS_0:
-        vs = [x for x in stats[key] if x != -1]
-        v = sum(vs) / len(vs) if len(vs) > 0 else 0
-        output = "{0} {1:.3f}".format(key, v)
+        values = new_stats[key]
+        value = sum(values) / len(values) if len(values) > 0 else 0
+        output = "{0} {1:.3f}".format(key, value)
         all_output += output + '\n'
         log.info(output)
 
     for key in STAT_KEYS_1:
-        vs = [x for x in stats[key] if x != -1]
         output = key
+        values = new_stats[key]
         for i in range(len(GUESSERS)):
-            output += " {0} {1}".format(GUESSERS[i], vs.count(i))
+            output += " {0} {1}".format(GUESSERS[i], values.count(i))
         all_output += output + '\n'
         log.info(output)
 
     return all_output
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--fold', default=None)
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    fold = 'test'
-    buzzes_dir = bc.BUZZES_DIR.format(fold)
-    with open(buzzes_dir, 'rb') as infile:
-        buzzes = pickle.load(infile)
-    log.info('Buzzes loaded from {0}.'.format(buzzes_dir))
+    args = parse_args()
+    if args.fold != None:
+        folds = [args.fold]
+    else:
+        folds = c.BUZZ_FOLDS
 
     all_questions = QuestionDatabase().all_questions()
     answers = {k: format_guess(v.page) for k, v in all_questions.items()}
 
-    guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
-    generate(buzzes, answers, guesses_df, fold)
+    variables = dict()
+    for fold in folds:
+        guesses_df = AbstractGuesser.load_guesses(
+                bc.GUESSES_DIR, folds=[fold])
+
+        buzzes_dir = bc.BUZZES_DIR.format(fold)
+        with open(buzzes_dir, 'rb') as infile:
+            buzzes = pickle.load(infile)
+        log.info('Buzzes loaded from {0}.'.format(buzzes_dir))
+
+        checkpoint_dir = "output/summary/{}_performance.ckp".format(fold)
+        output = generate(buzzes, answers, guesses_df, fold, checkpoint_dir)
+
+        variables['{0}_output'.format(fold)] = output
+    output = 'new_performance.pdf'
+    report_generator = ReportGenerator('new_performance.md')
+    report_generator.create(variables, output)

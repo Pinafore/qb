@@ -241,6 +241,7 @@ def merge_dfs():
 
 if __name__ == "__main__":
     merge_dfs()
+
     processed_dirs = ['%s_processed.pickle' % (os.path.join(
         bc.GUESSES_DIR, fold)) for fold in c.BUZZ_FOLDS]
     if not all(os.path.isfile(d) for d in processed_dirs):
@@ -248,4 +249,5 @@ if __name__ == "__main__":
         word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
     else:
         word2vec = None
+
     option2id, guesses_by_fold = load_quizbowl(c.BUZZ_FOLDS, word2vec)
