@@ -4,6 +4,7 @@ import time
 import pickle
 import argparse
 import numpy as np
+import pandas as pd
 from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool, Manager
@@ -18,6 +19,7 @@ from qanta.config import conf
 from qanta import logging
 from qanta.buzzer.util import GUESSERS
 from qanta.reporting.report_generator import ReportGenerator
+from qanta.util.multiprocess import _multiprocess
 
 log = logging.get(__name__)
 MAXINT = 99999
@@ -41,30 +43,13 @@ STAT_KEYS_1 = [
         'best_guesser' # the best guesser
         ]
 
-def get_top_guesses(question):
-    top_guesses = [] # length * n_guessers
-    # FIXME because there can be missing guessers, must iterate position first
-    for _, position in question.groupby(['sentence', 'token']):
-        top_guesses.append([])
-        position = position.groupby('guesser')
-        for guesser in GUESSERS:
-            if guesser not in position.groups:
-                top_guesses[-1].append(None)
-            else:
-                guesses = position.get_group(guesser).sort_values(
-                        'score', ascending=False)
-                top_guesses[-1].append(guesses.iloc[0].guess)
-    # transpose top_guesses -> n_guessers * length
-    return list(map(list, zip(*top_guesses)))
 
 def end_of_pipeline(buzzes: Dict[int, List[List[float]]],
                     answers: Dict[int, str], inputs):
-    (qnum, question), queue = inputs
+    (qnum, top_guesses), queue = inputs
     buzz = buzzes[qnum]
     answer = answers[qnum]
 
-    top_guesses = get_top_guesses(question)
-    
     length = len(top_guesses[0])
     if len(buzz) != length:
         raise ValueError("Length of buzzes {0} does not match with \
@@ -109,38 +94,38 @@ def end_of_pipeline(buzzes: Dict[int, List[List[float]]],
 
     return qnum, stats
 
+def get_top_guesses(inputs):
+    (qnum, question), queue = inputs
+    top_guesses = [] # length * n_guessers
+    # FIXME because there can be missing guessers, must iterate position first
+    for _, position in question.groupby(['sentence', 'token']):
+        top_guesses.append([])
+        position = position.groupby('guesser')
+        for guesser in GUESSERS:
+            if guesser not in position.groups:
+                top_guesses[-1].append(None)
+            else:
+                guesses = position.get_group(guesser).sort_values(
+                        'score', ascending=False)
+                top_guesses[-1].append(guesses.iloc[0].guess)
+    if queue is not None:
+        queue.put(qnum)
+    # transpose top_guesses -> n_guessers * length
+    return qnum, list(map(list, zip(*top_guesses)))
+
 def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
         multiprocessing=True):
     questions = guesses_df.groupby('qnum')
-    total_size = len(questions)
 
-    if multiprocessing:
-        pool = Pool(conf['buzzer']['n_cores'])
-        manager = Manager()
-        queue = manager.Queue()
-        inputs = [(question, queue) for question in questions]
-        worker = partial(end_of_pipeline, buzzes, answers)
-        result = pool.map_async(worker, inputs)
-        # monitor loop
-        while True:
-            if result.ready():
-                break
-            else:
-                size = queue.qsize()
-                sys.stderr.write('\r[performance] done: {0}/{1}'.format(
-                    size, total_size))
-                time.sleep(0.1)
-        sys.stderr.write('\n')
-        stats = result.get()
+    # [qnum, top_guesses]
+    top_guesses = _multiprocess(get_top_guesses, questions, 
+        info='Top guesses', multi=multiprocessing)
+    top_guesses = {k: v for k, v in top_guesses}
 
-    else:
-        stats = []
-        for i, question in enumerate(questions):
-            qnum = question[0]
-            s = end_of_pipeline(buzzes, answers, (question, None))
-            stats.append((qnum, s))
-            sys.stderr.write('\r[performance] done: {0}/{1}'.format(i, total_size))
-        sys.stderr.write('\n')
+    inputs = top_guesses.items()
+    worker = partial(end_of_pipeline, buzzes, answers)
+    stats = _multiprocess(worker, inputs, info='End-of-pipeline stats',
+            multi=multiprocessing)
 
     stats = {k: v for k, v in stats}
     if checkpoint_dir is not None:

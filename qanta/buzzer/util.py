@@ -18,6 +18,7 @@ from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
 from qanta import logging
 from qanta.buzzer import constants as bc
+from qanta.util.multiprocess import _multiprocess
 
 log = logging.get(__name__)
 
@@ -142,7 +143,7 @@ class Word2Vec:
     def get_zero_vec(self):
         return np.zeros(self.wordvec_dim, dtype=np.float32)
 
-def load_quizbowl(folds=c.BUZZ_FOLDS, word2vec=None, multiprocessing=False)\
+def load_quizbowl(folds=c.BUZZ_FOLDS, word2vec=None, multiprocessing=True)\
         -> Tuple[Dict[str, int], Dict[str, list]]:
     log.info('Loading data')
     question_db = QuestionDatabase()
@@ -178,36 +179,9 @@ def load_quizbowl(folds=c.BUZZ_FOLDS, word2vec=None, multiprocessing=False)\
         log.info('Processing {0} guesses'.format(fold))
         guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
-        if multiprocessing:
-            pool = Pool(conf['buzzer']['n_cores'])
-            manager = Manager()
-            queue = manager.Queue()
-            worker = partial(_process_question, option2id, all_questions, word2vec)
-            inputs = [(question, queue) for question in guesses.groupby('qnum')]
-            total_size = len(inputs)
-            result = pool.map_async(worker, inputs)
-
-            # monitor loop
-            while True:
-                if result.ready():
-                    break
-                else:
-                    size = queue.qsize()
-                    sys.stderr.write('\r[df data] done: {0}/{1}'.format(
-                        size, total_size))
-                    time.sleep(0.1)
-            sys.stderr.write('\n')
-            guesses_by_fold[fold] = result.get()
-
-        else:
-            returns = []
-            guesses = guesses.groupby('qnum')
-            total_size = len(guesses)
-            for i, question in enumerate(guesses):
-                returns.append(_process_question(
-                    option2id, all_questions, word2vec, (question, None)))
-                sys.stderr.write('\r[df data] done: {0}/{1}'.format(i, total_size))
-            guesses_by_fold[fold] = returns
+        worker = partial(_process_question, option2id, all_questions, word2vec)
+        inputs = guesses.groupby('qnum')
+        guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data')
 
         with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)
