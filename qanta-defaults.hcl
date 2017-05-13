@@ -155,6 +155,6 @@ guessers "VowpalWabbit" {
 buzzer {
   n_cores=16
   n_guesses=50
-  gpu=1
+  gpu=0
   config="mlp"
 }

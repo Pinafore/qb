@@ -6,7 +6,6 @@ import codecs
 import pandas as pd
 import itertools
 from functools import partial
-from functional import seq
 from multiprocessing import Pool, Manager
 from typing import List, Dict, Tuple, Optional
 
@@ -15,12 +14,14 @@ from qanta.util.io import safe_path
 from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
-from qanta import logging
+from qanta.buzzer.util import GUESSERS
+N_GUESSERS = len(GUESSERS)
 
+from qanta import logging
 log = logging.get(__name__)
 
-def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]], 
-        finals: Dict[int, int],
+
+def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]], 
         inputs: tuple) -> Tuple[list, list, list, list]:
     '''Multiprocessing worker for buzzer2vwexpo
     buzzes: dictionary of qnum -> buzzing position
@@ -36,25 +37,24 @@ def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]],
     '''
     (qnum, question), queue = inputs
     qnum = int(qnum)
-    buzz_pos, buzz_guesser = buzzes[qnum]
+    buzz = buzzes[qnum]
     buzzf, predf, metaf, finalf = [], [], [], []
-    finaled = False
-    last_guess = None
-    for i, (g, guesser_group) in enumerate(question.groupby('guesser', sort=True)):
-        guesser_class = g
-        guesser_group = guesser_group.groupby(['sentence', 'token'], sort=True)
-        last_guess = None
-        for pos, (sent_token, group) in enumerate(guesser_group):
+    final_guesses = []
+    for i, (g_class, g_group) in enumerate(question.groupby('guesser')):
+        # FIXME there might be missing guesses so the length might vary
+        g_group = g_group.groupby(['sentence', 'token'])
+        for pos, (sent_token, p_group) in enumerate(g_group):
             sent, token = sent_token
-            group = group.sort_values('score', ascending=False)
+            p_group = p_group.sort_values('score', ascending=False)
             # normalize scores
-            _sum = sum(group.score)
-            scores = [(r.score / _sum, r.guess) for r in group.itertuples()]
-            last_guess = scores[0][1]
-
+            _sum = sum(p_group.score)
+            scores = [(r.score / _sum, r.guess) for r in p_group.itertuples()]
+            final_guesses.append(scores[0][1])
             for rank, (score, guess) in enumerate(scores):
-                buzzing = int((rank == 0) and (pos == buzz_pos) \
-                        and i == buzz_guesser)
+                if np.argmax(buzz[pos]) == i and rank == 0:
+                    buzzing = 1
+                else:
+                    buzzing = 0
                 if isinstance(score, np.float):
                     score = score.tolist()
                 # force negative weight for guesses that are not chosen
@@ -63,15 +63,15 @@ def _buzzer2vwexpo(buzzes: Dict[int, Tuple[int, int]],
                 metaf.append([qnum, sent, token, guess])
                 # manually do what csv.DictWriter does
                 guess = guess if ',' not in guess else '"' + guess + '"'
-                buzzf.append([qnum, sent, token, guess, guesser_class, buzzing, score])
-        if i == finals[qnum]:
-            finalf.append([qnum, last_guess])
+                buzzf.append([qnum, sent, token, guess, g_class, buzzing, score])
+    final_guess = final_guesses[np.argmax(buzz[-1][:N_GUESSERS])]
+    final_guess = final_guess if ',' not in final_guess else '"' + final_guess + '"'
+    finalf.append([qnum, final_guess])
     queue.put(qnum)
     return buzzf, predf, metaf, finalf
 
 def buzzer2vwexpo(guesses_df: pd.DataFrame, 
-        buzzes: Dict[int, Tuple[int, int]],
-        finals: Dict[int, int], fold: str) -> None:
+        buzzes: Dict[int, List[List[float]]], fold: str) -> None:
     '''Given buzzing positions, generate vw_pred, vw_meta, buzz and final files
     guesses_df: pd.DataFrame of guesses
     buzzes: dictionary of qnum -> buzzing position
@@ -82,7 +82,7 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
     queue = manager.Queue()
     inputs = [(question, queue) for question in guesses_df.groupby('qnum')]
     total_size = len(inputs)
-    worker = partial(_buzzer2vwexpo, buzzes, finals)
+    worker = partial(_buzzer2vwexpo, buzzes)
     result = pool.map_async(worker, inputs)
 
     # monitor loop
@@ -91,7 +91,7 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
             break
         else:
             size = queue.qsize()
-            sys.stderr.write('\rbuzzer2vwexpo done: {0}/{1}'.format(
+            sys.stderr.write('\r[buzzer2vwexpo] done: {0}/{1}'.format(
                 size, total_size))
             time.sleep(0.1)
     sys.stderr.write('\n')
