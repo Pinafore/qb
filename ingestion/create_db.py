@@ -393,5 +393,5 @@ if __name__ == "__main__":
         for pp, cc in wiki_total.most_common():
             for kk in wiki_answers[pp]:
                 # TODO: sort by frequency
-                outfile.write("%s\t%s\t%i\t%i\t%i\n" % (kk, pp, cc,
-                                                        unmapped[kk]))
+                outfile.write("%s\t%s\t%i\t%i\n" %
+                              (kk, pp, cc, unmapped[kk]))
