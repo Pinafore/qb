@@ -1,12 +1,22 @@
-## End-of-pipeline Report
+# End-of-pipeline Report
+## Buzzer
 
-### Buzzer
+### End-of-pipeline
+{{ eop_dev_output }}
 
-#### Dev
-{{ dev_output }}
+{{ eop_test_output }}
 
-#### Test
-{{ test_output }}
+{{ eop__expo_output }}
 
-#### Expo
-{{ expo_output }}
+#### Histogram
+{{ his_dev_output }}
+
+{{ his_test_output }}
+
+{{ his_expo_output }}
+
+![Dev histogram]({{ his_dev_plot }}){width=100%}
+
+![Test histogram]({{ his_test_plot }}){width=100%}
+
+![Expo histogram]({{ his_expo_plot }}){width=100%}
