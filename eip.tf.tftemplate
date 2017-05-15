@@ -1,9 +1,9 @@
 variable "allocation_ids" {
-  default = ["", ""]
+  default = [""]
 }
 
 resource "aws_eip_association" "qanta_ip" {
   instance_id = "${element(aws_spot_instance_request.qanta.*.spot_instance_id, count.index)}"
   allocation_id = "${element(var.allocation_ids, count.index)}"
-  count = 2
+  count = "${var.instance_count}"
 }

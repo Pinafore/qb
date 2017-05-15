@@ -10,14 +10,14 @@ from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import AverageWords, WordDropout
+from qanta.keras import AverageWords
 from qanta import logging
 
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
+from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras import backend as K
 
 import numpy as np
@@ -53,6 +53,7 @@ class DANGuesser(AbstractGuesser):
         self.activation_function = guesser_conf['activation_function']
         self.train_on_q_runs = guesser_conf['train_on_q_runs']
         self.train_on_full_q = guesser_conf['train_on_full_q']
+        self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -84,7 +85,8 @@ class DANGuesser(AbstractGuesser):
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
             'activation_function': self.activation_function,
             'train_on_q_runs': self.train_on_q_runs,
-            'train_on_full_q': self.train_on_full_q
+            'train_on_full_q': self.train_on_full_q,
+            'decay_lr_on_plateau': self.decay_lr_on_plateau
         }
 
     def load_parameters(self, params):
@@ -108,6 +110,7 @@ class DANGuesser(AbstractGuesser):
         self.activation_function = params['activation_function']
         self.train_on_q_runs = params['train_on_q_runs']
         self.train_on_full_q = params['train_on_full_q']
+        self.decay_lr_on_plateau = params['decay_lr_on_plateau']
 
     def parameters(self):
         return {
@@ -127,7 +130,8 @@ class DANGuesser(AbstractGuesser):
             'epochs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
             'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
             'train_on_q_runs': self.train_on_q_runs,
-            'train_on_full_q': self.train_on_full_q
+            'train_on_full_q': self.train_on_full_q,
+            'decay_lr_on_plateau': self.decay_lr_on_plateau
         }
 
     def qb_dataset(self):
@@ -146,7 +150,7 @@ class DANGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(WordDropout(self.word_dropout_rate))
+        model.add(Dropout(self.word_dropout_rate, noise_shape=(self.max_len, 1)))
         model.add(AverageWords())
         if self.l2_normalize_averaged_words:
             model.add(Lambda(lambda x: K.l2_normalize(x, 1)))
@@ -171,7 +175,7 @@ class DANGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
+        x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -203,6 +207,8 @@ class DANGuesser(AbstractGuesser):
                 monitor='val_sparse_categorical_accuracy'
             )
         ]
+        if self.decay_lr_on_plateau:
+            callbacks.append(ReduceLROnPlateau(monitor='val_sparse_categorical_accuracy', factor=.5, patience=5))
         history = self.model.fit(
             x_train, y_train,
             validation_data=(x_test, y_test),

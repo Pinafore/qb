@@ -1,15 +1,19 @@
-from typing import List, Dict, Iterable, Tuple
+from typing import List, Dict, Iterable, Tuple, Set
+import csv
+import os
 import sqlite3
 from collections import defaultdict, OrderedDict, Counter
 import re
 
 from functional import seq
+import nltk
 
 from qanta import logging
 from qanta.preprocess import format_guess
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import PUNCTUATION
+from qanta.util.io import file_backed_cache_decorator, safe_path
 from qanta.config import conf
 
 kPAREN = re.compile(r'\([^)]*\)')
@@ -91,8 +95,52 @@ class Question:
     def flatten_text(self):
         return " ".join(self.text[x] for x in sorted(self.text))
 
-    def to_example(self) -> Tuple[List[QuestionText], Answer, Dict]:
+    def to_example(self) -> Tuple[List[QuestionText], Answer]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
+<<<<<<< HEAD
+        return sentence_list, self.page
+
+
+@file_backed_cache_decorator(safe_path('data/external/preprocess_expo_questions.cache'))
+def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum=50000) -> List[Question]:
+    """
+    This function takes the expo fold and converts it to a list of questions in the same output format as the database.
+    
+    The start_qnum parameter was determined by looking at the distribution of qnums and finding a range where there are
+    no keys. Nonetheless for safety we still skip qnums if they clash with existing qnums
+    :param expo_csv: 
+    :param database: 
+    :param start_qnum: 
+    :return: 
+    """
+    db = QuestionDatabase(location=QB_QUESTION_DB, load_expo=False)
+    qnums = {q.qnum for q in db.all_questions(unfiltered=True).values()}
+    while start_qnum in qnums:
+        start_qnum += 1
+    curr_qnum = start_qnum
+
+    with open(expo_csv) as f:
+        csv_questions = list(csv.DictReader(f))
+
+    questions = []
+    for q in csv_questions:
+        q['sentences'] = nltk.sent_tokenize(q['text'])
+        while curr_qnum in qnums:
+            curr_qnum += 1
+        qb_question = Question(
+            curr_qnum, None, None, None, None, q['answer'], None, 'expo', None
+        )
+        for i, sent in enumerate(q['sentences']):
+            qb_question.add_text(i, sent)
+        questions.append(qb_question)
+        curr_qnum += 1
+
+    return questions
+
+
+class QuestionDatabase:
+    def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
+=======
         properties = {
             'ans_type': self.ans_type,
             'category': self.category.split(':')[0]
@@ -103,7 +151,12 @@ class Question:
 class QuestionDatabase:
     def __init__(self, location=QB_QUESTION_DB):
         log.info("Opening database at %s" % location)
+>>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         self._conn = sqlite3.connect(location)
+        if os.path.exists(expo_csv) and load_expo:
+            self.expo_questions = preprocess_expo_questions(expo_csv)
+        else:
+            self.expo_questions = []
 
     def query(self, command: str, arguments) -> Dict[str, Question]:
         questions = {}
@@ -115,6 +168,9 @@ class QuestionDatabase:
         for qnum, page, category, answer, tournaments, naqt, protobowl, fold,in c:
             questions[qnum] = Question(qnum, answer, category, naqt, protobowl,
                                        tournaments, page, fold)
+
+        for q in self.expo_questions:
+            questions[q.qnum] = q
 
         for qnum in questions:
             command = 'select sent, raw from text where question=? order by sent asc'
@@ -174,15 +230,23 @@ class QuestionDatabase:
         for ii in questions:
             yield questions[ii]
 
+<<<<<<< HEAD
+    def questions_with_pages(self, normalize_titles=False) -> Dict[str, List[Question]]:
+=======
     def questions_with_pages(self) -> Dict[str, List[Question]]:
+>>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         page_map = OrderedDict()
 
         questions = self.query('from questions where page != ""', ()).values()
 
-        for row in sorted(questions, key=lambda x: x.answer):
-            if row.page not in page_map:
-                page_map[row.page] = []
-            page_map[row.page].append(row)
+        for row in sorted(questions):
+            if normalize_titles:
+                page = format_guess(row.page)
+            else:
+                page = row.page
+            if page not in page_map:
+                page_map[page] = []
+            page_map[page].append(row)
         return page_map
 
     def prune_text(self):
@@ -251,6 +315,9 @@ class QuestionDatabase:
 
         for qid, page in c:
             answers[int(qid)] = page
+
+        for q in self.expo_questions:
+            answers[q.qnum] = q.page
         return answers
 
 
@@ -278,16 +345,14 @@ class QuizBowlDataset(AbstractDataset):
             .map(lambda q: q.to_example())
         training_examples = []
         training_answers = []
-        training_properties = []
-        for example, answer, properties in filtered_questions:
+        for example, answer in filtered_questions:
             training_examples.append(example)
             if normalize_guess:
                 training_answers.append(format_guess(answer))
             else:
                 training_answers.append(answer)
-            training_properties.append(properties)
 
-        return training_examples, training_answers, training_properties
+        return training_examples, training_answers
 
     def questions_by_fold(self) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())
@@ -301,12 +366,14 @@ class QuizBowlDataset(AbstractDataset):
         dev_questions = all_questions.filter(lambda q: q.fold == 'dev').list()
         test_questions = all_questions.filter(lambda q: q.fold == 'test').list()
         devtest_questions = all_questions.filter(lambda q: q.fold == 'devtest').list()
+        expo_questions = all_questions.filter(lambda q: q.fold == 'expo').list()
 
         return {
             'train': train_questions,
             'dev': dev_questions,
             'test': test_questions,
-            'devtest': devtest_questions
+            'devtest': devtest_questions,
+            'expo': expo_questions
         }
 
     def questions_in_folds(self, folds: Iterable[str]) -> List[Question]:

@@ -485,7 +485,7 @@ class CNNGuesser(AbstractGuesser):
     def train(self,
               training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
+        x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -493,7 +493,7 @@ class CNNGuesser(AbstractGuesser):
 
         if self.use_wiki:
             wiki_training_data = WikipediaDataset(self.min_answers).training_data()
-            x_train_wiki, y_train_wiki, _, _, _, _, _, _, _ = preprocess_dataset(
+            x_train_wiki, y_train_wiki, _, _, _, _, _ = preprocess_dataset(
                 wiki_training_data, train_size=1, vocab=vocab, class_to_i=class_to_i,
                 i_to_class=i_to_class)
 

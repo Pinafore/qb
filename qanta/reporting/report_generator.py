@@ -3,14 +3,13 @@ import pypandoc
 
 
 class ReportGenerator:
-    def __init__(self, variables, template):
-        self.variables = variables
+    def __init__(self, template):
         self.template = template
 
-    def create(self, output):
+    def create(self, variables, output):
         env = Environment(loader=PackageLoader('qanta', 'reporting/templates'))
         template = env.get_template(self.template)
-        markdown = template.render(self.variables)
+        markdown = template.render(variables)
         pypandoc.convert_text(
             markdown,
             'pdf',
