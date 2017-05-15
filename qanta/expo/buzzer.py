@@ -476,13 +476,14 @@ def interpret_keypress():
     press.
     """
     press = getch()
+
+    if press == 'Q':
+        raise Exception('Exiting expo by user request from pressing Q')
+
     if press == '\x1b':
         getch()
         getch()
         press = "direction"
-
-    if press == 'Q':
-        raise Exception('Exiting expo by user request from pressing Q')
 
     if press != "direction" and press != " ":
         try:
@@ -642,7 +643,7 @@ if __name__ == "__main__":
         if skipped < flags.skip:
             skipped += 1
             continue
-        
+
         question_num += 1
         power_mark = power(ii)
         if power_mark == "10":

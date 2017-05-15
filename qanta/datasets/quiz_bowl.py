@@ -25,17 +25,16 @@ log = logging.get(__name__)
 
 
 class Question:
-    def __init__(self, qnum, answer, category, naqt,
-                 tournaments, page, ans_type, fold, gender):
+    def __init__(self, qnum, answer, category, naqt, protobowl,
+                 tournaments, page, fold):
         self.qnum = qnum
         self.answer = answer
         self.category = category
         self.naqt = naqt
+        self.protobowl = protobowl
         self.tournaments = tournaments
         self.page = page
-        self.ans_type = ans_type
         self.fold = fold
-        self.gender = gender
         self.text = {}
         self._last_query = None
 
@@ -45,6 +44,9 @@ class Question:
             self.page,
             self.flatten_text()[0:20]
         )
+
+    def normalized_answer(self):
+        return QuestionDatabase.normalize_answer(self.answer)
 
     def raw_words(self):
         """
@@ -95,6 +97,7 @@ class Question:
 
     def to_example(self) -> Tuple[List[QuestionText], Answer]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
+<<<<<<< HEAD
         return sentence_list, self.page
 
 
@@ -137,6 +140,18 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
 
 class QuestionDatabase:
     def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
+=======
+        properties = {
+            'ans_type': self.ans_type,
+            'category': self.category.split(':')[0]
+        }
+        return sentence_list, self.page, properties
+
+
+class QuestionDatabase:
+    def __init__(self, location=QB_QUESTION_DB):
+        log.info("Opening database at %s" % location)
+>>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         self._conn = sqlite3.connect(location)
         if os.path.exists(expo_csv) and load_expo:
             self.expo_questions = preprocess_expo_questions(expo_csv)
@@ -147,12 +162,12 @@ class QuestionDatabase:
         questions = {}
         c = self._conn.cursor()
         command = 'select id, page, category, answer, ' + \
-            'tournament, type, naqt, fold, gender ' + command
+            'tournament, naqt, protobowl, fold' + command
         c.execute(command, arguments)
 
-        for qnum, page, category, answer, tournaments, ans_type, naqt, fold, gender in c:
-            questions[qnum] = Question(qnum, answer, category, naqt, tournaments, page, ans_type,
-                                       fold, gender)
+        for qnum, page, category, answer, tournaments, naqt, protobowl, fold,in c:
+            questions[qnum] = Question(qnum, answer, category, naqt, protobowl,
+                                       tournaments, page, fold)
 
         for q in self.expo_questions:
             questions[q.qnum] = q
@@ -167,9 +182,9 @@ class QuestionDatabase:
 
     def all_questions(self, unfiltered=False):
         if unfiltered:
-            return self.query('FROM questions', ())
+            return self.query(' FROM questions', ())
         else:
-            return self.query('FROM questions where page != ""', ())
+            return self.query(' FROM questions where page != ""', ())
 
     def answer_map(self):
         c = self._conn.cursor()
@@ -215,7 +230,11 @@ class QuestionDatabase:
         for ii in questions:
             yield questions[ii]
 
+<<<<<<< HEAD
     def questions_with_pages(self, normalize_titles=False) -> Dict[str, List[Question]]:
+=======
+    def questions_with_pages(self) -> Dict[str, List[Question]]:
+>>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         page_map = OrderedDict()
 
         questions = self.query('from questions where page != ""', ()).values()
