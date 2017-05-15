@@ -196,6 +196,7 @@ def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
     for key in EOP_STAT_KEYS_0:
         values = _eop_stats[key]
         value = sum(values) / len(values) if len(values) > 0 else 0
+        _eop_stats[key] = value
         output = "{0} {1:.3f}".format(key, value)
         eop_output += output + '\n'
         print(output)
@@ -203,8 +204,10 @@ def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
     for key in EOP_STAT_KEYS_1:
         output = key
         values = _eop_stats[key]
-        for i in range(len(GUESSERS)):
-            output += " {0} {1}".format(GUESSERS[i], values.count(i))
+        _eop_stats[key] = dict()
+        for i, guesser in enumerate(GUESSERS):
+            output += " {0} {1}".format(guesser, values.count(i))
+            _eop_stats[key][guesser] = values.count(i)
         eop_output += output + '\n'
         print(output)
 
@@ -260,7 +263,7 @@ def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
         with open(checkpoint_dir, 'wb') as outfile:
             pickle.dump(checkpoint, outfile)
 
-    return eop_output, his_output
+    return _eop_stats, _his_stats
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -289,10 +292,10 @@ if __name__ == '__main__':
 
         checkpoint_dir = "output/summary/performance_{}.pkl".format(fold)
         plot_dir = "output/summary/performance_{}_his.png".format(fold)
-        eop_output, his_output = generate(buzzes, answers, guesses_df, fold,
+        eop_stats, his_stats = generate(buzzes, answers, guesses_df, fold,
                 checkpoint_dir, plot_dir)
-        variables['eop_{}_output'.format(fold)] = eop_output
-        variables['his_{}_output'.format(fold)] = his_output
+        variables['eop_{}_stats'.format(fold)] = eop_stats
+        variables['his_{}_stats'.format(fold)] = his_stats
         variables['his_{}_plot'.format(fold)] = plot_dir
 
     output = 'output/summary/new_performance.pdf'
