@@ -1,5 +1,5 @@
 import textwrap
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, namedtuple
 import argparse
 from csv import DictReader
 from time import sleep
@@ -333,12 +333,7 @@ def show_score(left_score, right_score,
         print(" ")
 
 
-class Guess:
-    def __init__(self, page, evidence, final, weight):
-        self.page = page
-        self.evidence = evidence
-        self.final = final
-        self.weight = weight
+Guess = namedtuple('Guess', 'page evidence final weight')
 
 
 class Buzzes:
@@ -350,8 +345,19 @@ class Buzzes:
             question, sent, word = int(r["question"]), int(r["sentence"]), int(r["word"])
             if not (sent, word) in self._buzzes[question]:
                 self._buzzes[question][(sent, word)] = {}
-            self._buzzes[question][(sent, word)][r["page"]] = \
-                Guess(r["page"], r["evidence"], int(r["final"]), float(r["weight"]))
+            if r['page'] in self._buzzes[question][(sent, word)]:
+                curr_guess = self._buzzes[question][(sent, word)][r['page']]
+                new_guess = Guess(
+                    curr_guess.page,
+                    curr_guess.evidence + ' ' + r['evidence'],
+                    max(int(r['final']), curr_guess.final),
+                    max(float(r['weight']), curr_guess.weight)
+                )
+                self._buzzes[question][(sent, word)][r['page']] = new_guess
+            else:
+                self._buzzes[question][(sent, word)][r["page"]] = Guess(
+                    r["page"], r["evidence"], int(r["final"]), float(r["weight"])
+                )
 
     def current_guesses(self, question, sent, word):
         try:
@@ -599,10 +605,8 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
-    ir_dataset = QuizBowlDataset(1)
-    ir_answer_set = {format_guess(g) for g in ir_dataset.training_data()[1]}
-    dan_dataset = QuizBowlDataset(2)
-    dan_answer_set = {format_guess(g) for g in dan_dataset.training_data()[1]}
+    qb_dataset = QuizBowlDataset(1)
+    qb_answer_set = {format_guess(g) for g in qb_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
 
@@ -646,14 +650,10 @@ if __name__ == "__main__":
                   (ii, power_mark, str(ii in power._power_marks.keys())))
 
         correct_answer = format_guess(questions.answer(ii))
-        if correct_answer in dan_answer_set and correct_answer in ir_answer_set:
-            answerable = 'ir+dan'
-        elif correct_answer in ir_answer_set:
-            answerable = 'ir'
-        elif correct_answer in dan_answer_set:
-            answerable = 'dan'
+        if correct_answer in qb_answer_set:
+            answerable = 'answerable'
         else:
-            answerable = 'neither'
+            answerable = 'not answerable'
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),

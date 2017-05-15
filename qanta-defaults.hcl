@@ -6,6 +6,8 @@ generate_train_guesses = false
 
 guessers_train_on_dev = false
 
+expo_questions = "data/external/expo.csv"
+
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
 use_pretrained_embeddings = true
@@ -31,13 +33,15 @@ guessers "ElasticSearch" {
   min_appearances = 1
   # Whether or not to index all Wikipedia articles for guessing
   use_all_wikipedia = false
+  use_wiki = true
+  use_qb = true
 }
 
 guessers "DAN" {
   class = "qanta.guesser.dan.DANGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = true
-  min_answers = 2
+  min_answers = 1
   expand_we = true
   n_hidden_layers = 1
   n_hidden_units = 1000
@@ -51,13 +55,14 @@ guessers "DAN" {
   activation_function = "elu"
   train_on_q_runs = false
   train_on_full_q = false
+  decay_lr_on_plateau = false
 }
 
 guessers "RNN" {
   class = "qanta.guesser.rnn.RNNGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
-  min_answers = 2
+  min_answers = 1
   expand_we = true
   rnn_cell = "gru"
   n_rnn_units = 300
@@ -101,7 +106,7 @@ guessers "AuxDan" {
 }
 
 guessers "ElasticSearchWikidata" {
-  class = "qanta.guesser.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
+  class = "qanta.guesser.experimental.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
   luigi_dependency = "qanta.pipeline.guesser.wikidata.DownloadWikidata"
   enabled = false
   # Set the level of parallelism for guess generation
@@ -144,4 +149,12 @@ guessers "VowpalWabbit" {
   learning_rate = 0.1
   decay_learning_rate = 0.95
   bits = 30
+}
+
+
+buzzer {
+  n_cores=16
+  n_guesses=50
+  gpu=0
+  config="mlp"
 }
