@@ -5,6 +5,7 @@ import pickle
 import argparse
 import numpy as np
 import pandas as pd
+from itertools import cycle
 from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool, Manager
@@ -53,9 +54,11 @@ HISTO_KEYS = ['acc', 'buzz']  + \
         ['acc_{}'.format(g) for g in GUESSERS] + \
         ['buzz_{}'.format(g) for g in GUESSERS]
 
-LINE_STYLES = {'acc': '--', 'buzz': '--'}
-LINE_STYLES.update({'acc_{}'.format(g):'_' for g in GUESSERS})
-LINE_STYLES.update({'buzz_{}'.format(g):'_' for g in GUESSERS})
+LINE_STYLES = {'acc': '-', 'buzz': '-'}
+_STYLES = [':', '--', '-.']
+for guesser, style in zip(GUESSERS, cycle(_STYLES)):
+    LINE_STYLES['acc_{}'.format(guesser)] = style
+    LINE_STYLES['buzz_{}'.format(guesser)] = style
 
 def get_top_guesses(inputs):
     (qnum, question), queue = inputs
