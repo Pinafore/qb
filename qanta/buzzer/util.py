@@ -145,6 +145,7 @@ class Word2Vec:
 
 def load_quizbowl(folds=c.BUZZ_FOLDS, word2vec=None, multiprocessing=True)\
         -> Tuple[Dict[str, int], Dict[str, list]]:
+    merge_dfs()
     log.info('Loading data')
     question_db = QuestionDatabase()
     quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS)
