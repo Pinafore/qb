@@ -1,4 +1,3 @@
-from pathlib import Path
 import pickle
 import os
 import shutil
@@ -9,18 +8,17 @@ from qanta.datasets.abstract import TrainingData, Answer, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser import nn
-from qanta.preprocess import preprocess_dataset, tokenize_question, format_guess
+from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import AverageWords, BatchMatmul, WordDropout
+from qanta.keras import AverageWords, BatchMatmul
 from qanta.spark import create_spark_context
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta import logging
 
 
-from keras import backend as K
 from keras.models import Sequential, Model, load_model
-from keras.layers import Add, Concatenate, Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, dot, multiply, add, pooling, Lambda
+from keras.layers import Add, Concatenate, Dense, Dropout, Embedding, BatchNormalization, Activation, Reshape, Input, multiply, pooling
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
@@ -32,7 +30,6 @@ from elasticsearch_dsl.connections import connections
 import progressbar
 
 import numpy as np
-import tensorflow as tf
 
 
 log = logging.get(__name__)
@@ -63,17 +60,24 @@ class Memory(DocType):
 
 class MemoryIndex:
     @staticmethod
-    def build(documents: Dict[str, List[str]]):
-        try:
-            Index('mem_nn').delete()
-        except elasticsearch.exceptions.NotFoundError:
-            log.info('Could not delete non-existent index, continuing to creating new index...')
-        Memory.init()
-        bar = progressbar.ProgressBar()
-        for page in bar(documents):
-            for m_text in documents[page]:
-                memory = Memory(page=page.replace('_', ' '), text=m_text)
-                memory.save()
+    def build(documents: Dict[str, List[str]], rebuild_index=False):
+        ix = Index('mem_nn')
+        if rebuild_index:
+            try:
+                Index('mem_nn').delete()
+            except elasticsearch.exceptions.NotFoundError:
+                log.info('Could not delete non-existent index')
+        else:
+            if ix.exists():
+                log.info('Found existing index, skipping building the index')
+            else:
+                log.info('Did not find an index, building the index...')
+                Memory.init()
+                bar = progressbar.ProgressBar()
+                for page in bar(documents):
+                    for m_text in documents[page]:
+                        memory = Memory(page=page.replace('_', ' '), text=m_text)
+                        memory.save()
 
     @staticmethod
     def search(text: str, max_n_memories: int, include_page=False):
@@ -87,13 +91,38 @@ class MemoryIndex:
 
     @staticmethod
     def search_parallel(text_list: List[List[str]], max_n_memories: int, include_page=False):
+        if os.path.exists('/tmp/qanta/mem_nn_es.cache'):
+            log.info('Loading memory cache...')
+            with open('/tmp/qanta/mem_nn_es.cache', 'rb') as f:
+                cached_memories = pickle.load(f)
+        else:
+            cached_memories = {}
         n_cores = conf['guessers']['MemNN']['n_cores']
+        log.info('Request spark to use n_cores={}'.format(n_cores))
         sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '4g')])
+        b_cached_memories = sc.broadcast(cached_memories)
 
         def es_search(query: List[str]):
-            return MemoryIndex.search(' '.join(query), max_n_memories, include_page=include_page)
+            loaded_cached_memories = b_cached_memories.value
+            str_query = ' '.join(query)
+            if str_query in loaded_cached_memories:
+                return loaded_cached_memories[str_query]
+            else:
+                return MemoryIndex.search(str_query, max_n_memories, include_page=include_page)
 
-        return sc.parallelize(text_list, 400 * n_cores).map(es_search).collect()
+        memory_list = sc.parallelize(text_list, 400 * n_cores).map(es_search).collect()
+        sc.stop()
+        if len(memory_list) != len(text_list):
+            raise ValueError('Bad match between number of text queries and memories')
+        log.info('Updating memory cache...')
+        for query, memories in zip(text_list, memory_list):
+            str_query = ' '.join(query)
+            if str_query not in cached_memories:
+                cached_memories[str_query] = memories
+        with open('/tmp/qanta/mem_nn_es.cache', 'wb') as f:
+            pickle.dump(cached_memories, f)
+
+        return memory_list
 
 
 def build_wikipedia_sentences(pages, n_sentences):
@@ -121,6 +150,7 @@ NMemories = List[Sentence]
 def preprocess_wikipedia(question_memories: List[NMemories], create_vocab):
     if create_vocab:
         vocab = set()
+        vocab.add(PAD_TOKEN)
     else:
         vocab = None
 
@@ -294,23 +324,24 @@ class MemNNGuesser(AbstractGuesser):
             match_probability = Reshape(tuple(match_probability.shape.as_list()[1:] + [1]))(match_probability)
             memories = multiply([match_probability, wiki_input_encoded_c])
             memories = pooling.GlobalAveragePooling1D()(memories)
+            memories = Dense(wiki_we_dimension, use_bias=False)(memories)
             layer_out = Add()([memories, layer_out])
 
         print(layer_out.shape)
         memories_and_question = Concatenate(1)([layer_out, qb_input_encoded])
 
-        hidden = Dense(self.n_hidden_units)(memories_and_question)
-        hidden = Activation('relu')(hidden)
-        hidden = BatchNormalization()(hidden)
-        hidden = Dropout(self.nn_dropout_rate)(hidden)
+        # hidden = Dense(self.n_hidden_units)(memories_and_question)
+        # hidden = Activation('relu')(hidden)
+        # hidden = BatchNormalization()(hidden)
+        # hidden = Dropout(self.nn_dropout_rate)(hidden)
+        # actions = Dense(self.n_classes)(hidden)
 
-        actions = Dense(self.n_classes)(hidden)
+        actions = Dense(self.n_classes)(memories_and_question)
         actions = BatchNormalization()(actions)
         actions = Dropout(self.nn_dropout_rate)(actions)
         actions = Activation('softmax')(actions)
 
         adam = Adam()
-        # model = Model(inputs=[qb_input, wiki_input], outputs=actions)
         model = Model(inputs=[qb_input, wiki_input], outputs=actions)
         model.compile(
             loss=sparse_categorical_crossentropy, optimizer=adam,
@@ -320,7 +351,11 @@ class MemNNGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train_text, y_train, _, x_test_text, y_test, _, qb_vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
+        x_train_text, y_train, x_test_text, y_test, qb_vocab, class_to_i, i_to_class = preprocess_dataset(
+            training_data, train_size=.9
+        )
+        y_train = np.array(y_train)
+        y_test = np.array(y_test)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.qb_vocab = qb_vocab
@@ -354,7 +389,10 @@ class MemNNGuesser(AbstractGuesser):
         log.info('Fetching test memories...')
         test_memories = MemoryIndex.search_parallel(x_test_text, self.n_memories)
 
+        log.info('Preprocessing train memories...')
         tokenized_train_memories, wiki_vocab = preprocess_wikipedia(train_memories, True)
+
+        log.info('Preprocessing test memories...')
         tokenized_test_memories, _ = preprocess_wikipedia(test_memories, False)
 
         log.info('Creating wiki embeddings...')
@@ -366,8 +404,12 @@ class MemNNGuesser(AbstractGuesser):
         wiki_max_len = 0
         for i in range(len(tokenized_train_memories)):
             memories = tokenized_train_memories[i]
-            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup)
-                for m in memories + [[PAD_TOKEN]] * (self.n_memories - len(memories))]
+            while len(memories) < self.n_memories:
+                memories.append([PAD_TOKEN])
+            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
+            for we_m in we_memories:
+                if len(we_m) == 0:
+                    we_m.append(wiki_embedding_lookup[PAD_TOKEN])
             if len(we_memories) != 0:
                 wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_memories))
             tokenized_train_memories[i] = we_memories
@@ -380,24 +422,30 @@ class MemNNGuesser(AbstractGuesser):
             for mem in tokenized_train_memories]
 
         tokenized_train_memories = np.array(tokenized_train_memories)
+        log.info('Train memory array shape: {}'.format(tokenized_train_memories.shape))
 
         for i in range(len(tokenized_test_memories)):
             memories = tokenized_test_memories[i]
-            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup)
-                for m in memories + [['٩(◕‿◕｡)۶']] * (self.n_memories - len(memories))]
+            while len(memories) < self.n_memories:
+                memories.append([PAD_TOKEN])
+            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
+            for we_m in we_memories:
+                if len(we_m) == 0:
+                    we_m.append(wiki_embedding_lookup[PAD_TOKEN])
             tokenized_test_memories[i] = we_memories
 
         tokenized_test_memories = [
             pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
             for mem in tokenized_test_memories]
         tokenized_test_memories = np.array(tokenized_test_memories)
+        log.info('Test memory array shape: {}'.format(tokenized_test_memories.shape))
 
         log.info('Building keras model...')
         self.model = self.build_model()
 
         log.info('Training model with %d examples...', len(x_train))
         callbacks = [
-            TensorBoard(),
+            TensorBoard(histogram_freq=1),
             EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy'),
             ModelCheckpoint(
                 safe_path(MEM_MODEL_TMP_TARGET),
@@ -405,10 +453,22 @@ class MemNNGuesser(AbstractGuesser):
                 monitor='val_sparse_categorical_accuracy'
             )
         ]
-        history = self.model.fit(
-            [x_train, tokenized_train_memories], y_train,
-            validation_data=([x_test, tokenized_test_memories], y_test),
-            batch_size=self.batch_size, epochs=self.max_n_epochs,
+        n_train_batches = int(len(x_train) / self.batch_size)
+        log.info('Training on {} batches of size {}'.format(n_train_batches, self.batch_size))
+        train_batch_generator = nn.batch_generator(
+            [x_train, tokenized_train_memories], y_train, self.batch_size, n_train_batches
+        )
+        n_test_batches = int(len(x_test) / self.batch_size)
+        log.info('Testing on {} batches of size {}'.format(n_test_batches, self.batch_size))
+        test_batch_generator = nn.batch_generator(
+            [x_test, tokenized_test_memories], y_test, self.batch_size, n_test_batches
+        )
+        history = self.model.fit_generator(
+            train_batch_generator,
+            n_train_batches,
+            validation_data=test_batch_generator,
+            validation_steps=n_test_batches,
+            epochs=self.max_n_epochs,
             callbacks=callbacks, verbose=2
         )
         log.info('Done training')
@@ -419,7 +479,7 @@ class MemNNGuesser(AbstractGuesser):
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
         tokenized_x = [tokenize_question(q) for q in questions]
         x_test = [nn.convert_text_to_embeddings_indices(q, self.qb_embedding_lookup) for q in tokenized_x]
-        x_test = np.array(nn.tf_format(x_test, self.qb_max_len, 0))
+        x_test = np.array(pad_sequences(x_test, maxlen=self.qb_max_len, value=0, padding='post', truncating='post'))
 
         test_memories = MemoryIndex.search_parallel(tokenized_x, self.n_memories)
 
@@ -427,8 +487,12 @@ class MemNNGuesser(AbstractGuesser):
 
         for i in range(len(tokenized_test_memories)):
             memories = tokenized_test_memories[i]
-            we_memories = [nn.convert_text_to_embeddings_indices(m, self.wiki_embedding_lookup)
-                for m in memories + [[PAD_TOKEN]] * (self.n_memories - len(memories))]
+            while len(memories) < self.n_memories:
+                memories.append([PAD_TOKEN])
+            we_memories = [nn.convert_text_to_embeddings_indices(m, self.wiki_embedding_lookup) for m in memories]
+            for we_m in we_memories:
+                if len(we_m) == 0:
+                    we_m.append(self.wiki_embedding_lookup[PAD_TOKEN])
             tokenized_test_memories[i] = we_memories
 
         tokenized_test_memories = [
@@ -459,7 +523,6 @@ class MemNNGuesser(AbstractGuesser):
             os.path.join(directory, MEM_MODEL_TARGET),
             custom_objects={
                 'AverageWords': AverageWords,
-                'WordDropout': WordDropout,
                 'BatchMatmul': BatchMatmul
             }
         )

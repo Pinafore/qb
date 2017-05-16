@@ -168,7 +168,7 @@ class CompareGuessers(Task):
 
 class CompareGuessersAllFolds(WrapperTask):
     def requires(self):
-        for fold in c.BUZZ_FOLDS:
+        for fold in c.GUESSER_REPORT_FOLDS:
             yield CompareGuessers(fold=fold)
 
 

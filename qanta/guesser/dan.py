@@ -11,7 +11,7 @@ from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path
 from qanta.config import conf
-from qanta.keras import AverageWords, WordDropout
+from qanta.keras import AverageWords
 from qanta import logging
 
 from keras.models import Sequential, load_model
@@ -155,7 +155,7 @@ class DANGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(WordDropout(self.word_dropout_rate))
+        model.add(Dropout(self.word_dropout_rate, noise_shape=(self.max_len, 1)))
         model.add(AverageWords())
         if self.l2_normalize_averaged_words:
             model.add(Lambda(lambda x: K.l2_normalize(x, 1)))
@@ -180,7 +180,7 @@ class DANGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
-        x_train, y_train, _, x_test, y_test, _, vocab, class_to_i, i_to_class = preprocess_dataset(
+        x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q)
         if self.wiki_data_frac > 0:
             wiki_data = FilteredWikipediaDataset().training_data()

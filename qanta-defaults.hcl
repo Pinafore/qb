@@ -6,6 +6,8 @@ generate_train_guesses = false
 
 guessers_train_on_dev = false
 
+expo_questions = "data/external/expo.csv"
+
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
 use_pretrained_embeddings = true
@@ -106,7 +108,7 @@ guessers "AuxDan" {
 }
 
 guessers "ElasticSearchWikidata" {
-  class = "qanta.guesser.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
+  class = "qanta.guesser.experimental.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
   luigi_dependency = "qanta.pipeline.guesser.wikidata.DownloadWikidata"
   enabled = false
   # Set the level of parallelism for guess generation
@@ -151,13 +153,10 @@ guessers "VowpalWabbit" {
   bits = 30
 }
 
-guessers "ElasticSearchWikiSentences" {
-  class = "qanta.guesser.experimental.elasticsearch_wikidata_sentences.ElasticSearchWikiSentencesGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-  wiki_page_enabled = true
-  wiki_sentences_enabled = true
-  # Set the level of parallelism for guess generation
-  n_cores = 15
-  min_appearances = 1
+
+buzzer {
+  n_cores=16
+  n_guesses=50
+  gpu=0
+  config="mlp"
 }

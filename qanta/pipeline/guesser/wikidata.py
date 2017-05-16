@@ -1,6 +1,7 @@
 import luigi
+
+from qanta.guesser.experimental.elasticsearch_wikidata import WIKIDATA_PICKLE
 from qanta.util.io import shell
-from qanta.guesser.elasticsearch_wikidata import WIKIDATA_PICKLE
 
 
 class DownloadWikidata(luigi.Task):
