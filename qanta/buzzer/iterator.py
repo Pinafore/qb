@@ -3,7 +3,6 @@ import numpy as np
 from collections import defaultdict, namedtuple
 from typing import List, Dict, Tuple, Optional
 from qanta.config import conf
-from qanta.buzzer import constants as bc
 from qanta.buzzer.util import GUESSERS
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
@@ -21,11 +20,14 @@ class QuestionIterator(object):
     '''
 
     def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
-            bucket_size=4, shuffle=True, only_hopeful=False):
+            bucket_size=4, step_size=1, neg_weight=1, shuffle=True,
+            only_hopeful=False):
         self.dataset = dataset
         self.option2id = option2id
         self.batch_size = batch_size
         self.bucket_size = bucket_size
+        self.step_size = step_size
+        self.neg_weight = neg_weight
         self.shuffle = shuffle
         self.only_hopeful = only_hopeful
         self.epoch = 0
@@ -34,12 +36,14 @@ class QuestionIterator(object):
         self.is_end_epoch = False
         self.create_batches()
 
-    def dense_vector(self, dicts: List[List[Dict[str, float]]]) -> List[List[float]]:
+    def dense_vector(self, dicts: List[List[Dict[str, float]]],
+            wordvecs: List[List[np.ndarray]], step_size=1) -> List[List[float]]:
         '''Generate dense vectors from a sequence of guess dictionaries.
         dicts: a sequence of guess dictionaries for each guesser
         '''
         length = len(dicts)
-        prev_vec = [0. for _ in range(N_GUESSERS * N_GUESSES)]
+        prev_vecs = [[0. for _ in range(N_GUESSERS * N_GUESSES)] \
+                for i in range(step_size)]
         vecs = []
         for i in range(length):
             if len(dicts[i]) != N_GUESSERS:
@@ -48,6 +52,7 @@ class QuestionIterator(object):
             vec = []
             diff_vec = []
             isnew_vec = []
+            word_vec = []
             for j in range(N_GUESSERS):
                 dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
                 for guess, score in dic:
@@ -63,8 +68,14 @@ class QuestionIterator(object):
                         vec.append(0)
                         diff_vec.append(0)
                         isnew_vec.append(0)
-            vecs.append(vec + diff_vec + isnew_vec + prev_vec)
-            prev_vec = vec
+                if wordvecs is not None:
+                    word_vec += wordvecs[i][j].tolist()
+            vecs.append(vec + diff_vec + isnew_vec + word_vec)
+            for j in range(1, step_size + 1):
+                vecs[-1] += prev_vecs[-j]
+            prev_vecs.append(vec)
+            if step_size > 0:
+                prev_vecs = prev_vecs[-step_size:]
         return vecs
 
     def create_batches(self):
@@ -73,7 +84,7 @@ class QuestionIterator(object):
         buckets = defaultdict(list)
         for example in self.dataset:
             # pad the sequence of predictions
-            qid, answer, vecs, results = example
+            qid, answer, dicts, results, wordvecs = example
             
             results = np.asarray(results, dtype=np.int32)
             length, n_guessers = results.shape
@@ -92,14 +103,15 @@ class QuestionIterator(object):
             # not buzzing = 1 when no guesser is correct
             new_results = []
             for i in range(length):
-                not_buzz = int(not any(results[i] == 1)) * bc.NEG_WEIGHT
+                not_buzz = int(not any(results[i] == 1)) * self.neg_weight
                 new_results.append(np.append(results[i], not_buzz))
             results = np.asarray(new_results, dtype=np.int32)
 
-            if len(vecs) != length:
+            if len(dicts) != length:
                 raise ValueError("Inconsistant shape of results and vecs.")
-            vecs = self.dense_vector(vecs)
+            vecs = self.dense_vector(dicts, wordvecs, self.step_size)
             vecs = np.asarray(vecs, dtype=np.float32)
+            assert length == vecs.shape[0]
             self.n_input = len(vecs[0])
 
             padded_length = -((-length) // bucket_size) * bucket_size

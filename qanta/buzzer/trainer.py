@@ -25,7 +25,7 @@ class Trainer(object):
     def __init__(self, model, model_dir=None):
         self.model = model
         self.model_dir = model_dir
-        self.optimizer = chainer.optimizers.Adam()
+        self.optimizer = chainer.optimizers.Adam(alpha=1e-4)
         self.optimizer.setup(self.model)
         self.optimizer.add_hook(chainer.optimizer.GradientClipping(5))
 
@@ -61,29 +61,25 @@ class Trainer(object):
 
     def test(self, test_iter):
         buzzes = dict()
-        finals = dict()
         progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
         for i in range(test_iter.size):
             batch = test_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=False)
+            ys = F.softmax(ys) # length * batch_size, n_guessers
             ys = F.swapaxes(F.reshape(ys, (length, batch_size, -1)), 0, 1)
             ys.to_cpu()
-            ys = ys.data
-            actions = np.argmax(ys, axis=2).tolist() # length, batch
-            for i, (qnum, action) in enumerate(zip(batch.qids, actions)):
+            masks = batch.mask.T.tolist()
+            assert len(masks) == batch_size
+            for qnum, scores, mask in zip(batch.qids, ys.data, masks):
                 if isinstance(qnum, np.ndarray):
                     qnum = qnum.tolist()
-                finals[qnum] = np.argmax(ys[i][-1][:N_GUESSERS]).tolist()
-                buzzes[qnum] = [-1, -1]
-                for pos, chosen in enumerate(action):
-                    if chosen < N_GUESSERS:
-                        buzzes[qnum] = (pos, chosen)
-                        break
+                total = int(sum(mask))
+                buzzes[qnum] = scores[:total].tolist()
             progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
         progress_bar.finalize()
-        return buzzes, finals
+        return buzzes
 
     def evaluate(self, eval_iter):
         stats = defaultdict(lambda: 0)
@@ -135,7 +131,7 @@ class Trainer(object):
     def run(self, train_iter=None, eval_iter=None, n_epochs=1):
         progress_bar = ProgressBar(n_epochs, unit_iteration=False)
         for epoch in range(n_epochs):
-            log.info('\nepoch {0}'.format(epoch))
+            log.info('epoch {0}'.format(epoch))
             if train_iter is not None:
                 train_stats = self.train_one_epoch(train_iter, progress_bar)
                 output = 'train '
@@ -150,3 +146,4 @@ class Trainer(object):
                 log.info(output)
             if self.model_dir is not None:
                 chainer.serializers.save_npz(self.model_dir, self.model)
+        train_iter.finalize(reset=True)
