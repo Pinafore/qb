@@ -14,6 +14,8 @@ use_pretrained_embeddings = true
 # performing a remote call to Wikipedia if a page doesn't exist
 cached_wikipedia_remote_fallback = true
 
+wiki_data_frac = 0.0
+
 clm {
   min_appearances = 2
 }
@@ -37,7 +39,7 @@ guessers "ElasticSearch" {
 
 guessers "DAN" {
   class = "qanta.guesser.dan.DANGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  luigi_dependency = "qanta.pipeline.wiki_questions.SelectWikiQuestions"
   enabled = true
   min_answers = 1
   expand_we = true

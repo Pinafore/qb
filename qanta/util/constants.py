@@ -69,3 +69,8 @@ VW_META = 'output/vw_input/{0}.meta'
 VW_AUDIT_REGRESSOR = 'output/reporting/vw_audit_regressor.txt'
 VW_AUDIT_REGRESSOR_CSV = 'output/reporting/vw_audit_regressor.csv'
 VW_AUDIT_REGRESSOR_REPORT = 'output/reporting/audit_regressor.pdf'
+
+DOMAIN_TARGET_PREFIX = 'output/deep/domain_data'
+DOMAIN_MODEL_FORMAT = 'output/deep/domain_clf{}.vw'
+DOMAIN_PREDICTIONS_PREFIX = 'output/deep/domain_preds'
+DOMAIN_OUTPUT = 'output/deep/filtered_domain_data'
