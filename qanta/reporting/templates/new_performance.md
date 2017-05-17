@@ -4,7 +4,7 @@ This report contains two end-of-pipeline analysis of the qanta guesser and
 buzzer. The first is a buzzer performance analysis; the second is the
 performance of guesser and buzzer plotted against time axis.
 
-### End-of-pipeline
+## End-of-pipeline
 
 - buzz: how frequent does the the buzzer buzz
 - choose_best: did the buzzer choose the best guesser (earliest correct)
@@ -18,18 +18,38 @@ performance of guesser and buzzer plotted against time axis.
 - choose_guesser: the guesser chosen by the buzzer
 - best_guesser: the best guesser (earliest correct)
 
+### Configs
 
-#### Histogram
+{% for name, config in hype_configs['dev'] %}
+- Config {{name}}
+    - n_layers: {{ config.n_layers }}
+    - n_hidden: {{ config.n_hidden }}
+    - batch_norm: {{ config.batch_norm }}
+    - neg_weight: {{ config.neg_weight }}
+{% endfor %}
+
+### Buzzing Too Early or Too Late
+{% for fold, plot in rush_late_plot.items() %}
+![{{fold}} rush & late]({{ plot }}){width=100%}
+{% endfor %}
+
+## Histogram
 
 The numbers we report in this section are the accuracy of the guessers at
 different positions and the buzzing behaviour of the buzzer. Ideally the overall
 buzzing behaviour should match the accuracy curve, and the buzzer's selection of
 guessers should reflect the difference in performance of different guessers.
 
+### Lines
+
 In this following figures, same line style indicates same guesser.
 
-![Dev histogram]({{ his_dev_lines }}){width=100%}
+{% for fold, plot in his_lines.items() %}
+![{{fold}} histogram]({{ plot }}){width=100%}
+{% endfor %}
 
-![Test histogram]({{ his_test_lines }}){width=100%}
+### Stacked Aread Charts
 
-![Expo histogram]({{ his_expo_lines }}){width=100%}
+{% for fold, plot in his_stacked.items() %}
+![{{fold}} histogram]({{ plot }}){width=100%}
+{% endfor %}
