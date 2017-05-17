@@ -5,6 +5,7 @@ from typing import List, Tuple, Optional
 
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser import nn
 from qanta.preprocess import preprocess_dataset, tokenize_question
@@ -54,6 +55,7 @@ class DANGuesser(AbstractGuesser):
         self.train_on_q_runs = guesser_conf['train_on_q_runs']
         self.train_on_full_q = guesser_conf['train_on_full_q']
         self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
+        self.wiki_data_frac = conf['wiki_data_frac']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -86,7 +88,8 @@ class DANGuesser(AbstractGuesser):
             'activation_function': self.activation_function,
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
-            'decay_lr_on_plateau': self.decay_lr_on_plateau
+            'decay_lr_on_plateau': self.decay_lr_on_plateau,
+            'wiki_data_frac': self.wiki_data_frac
         }
 
     def load_parameters(self, params):
@@ -111,6 +114,7 @@ class DANGuesser(AbstractGuesser):
         self.train_on_q_runs = params['train_on_q_runs']
         self.train_on_full_q = params['train_on_full_q']
         self.decay_lr_on_plateau = params['decay_lr_on_plateau']
+        self.wiki_data_frac = params['wiki_data_frac']
 
     def parameters(self):
         return {
@@ -131,7 +135,8 @@ class DANGuesser(AbstractGuesser):
             'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
-            'decay_lr_on_plateau': self.decay_lr_on_plateau
+            'decay_lr_on_plateau': self.decay_lr_on_plateau,
+            'wiki_data_frac': self.wiki_data_frac
         }
 
     def qb_dataset(self):
@@ -177,6 +182,17 @@ class DANGuesser(AbstractGuesser):
         log.info('Preprocessing training data...')
         x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q)
+        if self.wiki_data_frac > 0:
+            wiki_data = FilteredWikipediaDataset().training_data()
+            results = preprocess_dataset(
+                wiki_data,
+                train_size=1,
+                vocab=vocab,
+                class_to_i=class_to_i,
+                i_to_class=i_to_class)
+            x_train.extend(results[0])
+            y_train.extend(results[1])
+
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
