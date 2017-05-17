@@ -27,6 +27,7 @@ def add_question(connection, question_id, tournament, category, page,
 
     return sentences
 
+kPRON = re.compile(r" \[[^\]]*\] ")
 
 # Protobowl category mapping
 kCATS = set(["Fine_Arts", "History", "Literature", "Other", "Science", "Social_Science"])
@@ -75,9 +76,13 @@ class NaqtQuestion:
         # Extract metadata
         for ii in header.split('" '):
             field, val = ii.split('="')
-            self.metadata[field] = val
+            if field=="ID":
+                self.metadata[field] = int(val)
+            else:
+                self.metadata[field] = val
 
-        raw, rest = rest.split("<PACKETSETS>", 1)
+        if "<PACKETSETS>" in rest:
+            raw, rest = rest.split("<PACKETSETS>", 1)
 
         self.text = ""
         self.answer = ""
@@ -91,20 +96,25 @@ class NaqtQuestion:
                 self.text = self.text.strip()
                 break
 
-        packets, topics = rest.split("</PACKETSETS>", 1)
+        if "</PACKETSETS>" in rest:
+            packets, topics = rest.split("</PACKETSETS>", 1)
+        else:
+            packets = ""
+            topics = rest
 
         self.tournaments = "|".join(x for x in packets.split("\n")
                                     if x.strip())
 
-        topics = topics.replace("</TOPICS>", "").strip()
-        self.topics = {}
-        for ii in topics.split("\n"):
-            if ii.startswith("<TOPICS>") or ii.strip()=="":
-                continue
-            first, rest = ii.split('ID="', 1)
-            id, rest = rest.split('" TITLE="', 1)
-            title, rest = rest.split('"', 1)
-            self.topics[int(id)] = title
+        if "<TOPICS>" in rest:
+            topics = topics.replace("</TOPICS>", "").strip()
+            self.topics = {}
+            for ii in topics.split("\n"):
+                if ii.startswith("<TOPICS>") or ii.strip()=="":
+                    continue
+                first, rest = ii.split('ID="', 1)
+                id, rest = rest.split('" TITLE="', 1)
+                title, rest = rest.split('"', 1)
+                self.topics[int(id)] = title
 
     def year(self):
         years = []
@@ -149,6 +159,8 @@ class NaqtQuestion:
 
     @staticmethod
     def naqt_reader(path):
+        import os
+        from glob import glob
         if os.path.isdir(path):
             files = glob("%s/*" % path)
         else:
@@ -160,14 +172,27 @@ class NaqtQuestion:
                     if not 'KIND="TOSSUP"' in jj:
                         continue
 
+                    if "<PACKETSET " in jj:
+                        jj = jj.split("</PACKETSET>", 1)[1].strip()
+
 
                     q = NaqtQuestion(jj)
 
                     # Exclude computational questions
-                    if q.metadata["SUBJECT"].startswith("S:CO:"):
+                    if "SUBJECT" in q.metadata and q.metadata["SUBJECT"].startswith("S:CO:"):
                         continue
                     yield q
 
+    # TODO: handle NAQT special characters better
+    @staticmethod
+    def clean_naqt(text):
+        if "<QUESTION" in text:
+            text = text.split(">", 1)[1].strip()
+        text = kPRON.sub(" ", text)
+        text = text.replace("{", "").replace("}", "").replace(" (*) ", " ")
+        text = text.replace("~", "")
+        return text
+        
 
 def assign_fold(tournament, year):
     # Default assumption is that questions are (guesser) training data
@@ -258,6 +283,7 @@ if __name__ == "__main__":
     parser.add_argument('--protobowl', type=str,
                         default='data/questions/protobowl/questions-05-05-2017.json')
     parser.add_argument('--unmapped_report', type=str, default="unmapped.txt")
+    parser.add_argument('--ambig_report', type=str, default="ambiguous.txt")    
     parser.add_argument('--direct_path', type=str,
                         default='data/internal/page_assignment/direct/')
     parser.add_argument('--ambiguous_path', type=str,
@@ -269,12 +295,21 @@ if __name__ == "__main__":
     parser.add_argument('--wiki_title',
                         default="data/enwiki-latest-all-titles-in-ns0.gz",
                         type=str)
+    feature_parser = parser.add_mutually_exclusive_group(required=False)
+    feature_parser.add_argument('--guess', dest='guess', action='store_true')
+    feature_parser.add_argument('--no-guess', dest='guess', action='store_false')
+    parser.set_defaults(guess=True)
     parser.add_argument('--csv_out', default="protobowl.csv", type=str)
 
     flags = parser.parse_args()
 
+    if flags.guess:
+        log.info("Will guess page assignments")
+    else:
+        log.info("Will not guess page assignments")
+        
     conn = create_db(flags.db)
-
+    
     # Load page assignment information
     pa = PageAssigner(QuestionDatabase.normalize_answer)
     for ii in glob("%s/*" % flags.ambiguous_path):
@@ -284,6 +319,7 @@ if __name__ == "__main__":
     for ii in glob("%s/*" % flags.direct_path):
         pa.load_direct(ii)
 
+    ambiguous = defaultdict(dict)
     unmapped = Counter()
     folds = Counter()
     last_id = 0
@@ -297,8 +333,14 @@ if __name__ == "__main__":
             page = pa(qq.answer, tk(qq.text), naqt=qq.metadata["ID"])
             fold = assign_fold(qq.tournaments, qq.year())
             if page == "":
-                unmapped[QuestionDatabase.normalize_answer(qq.answer)] += 1
+                norm = QuestionDatabase.normalize_answer(qq.answer)
                 folds[fold] += 1
+
+                if pa.is_ambiguous(norm):
+                    ambiguous[norm][int(qq.metadata["ID"])] = qq.text
+                else:
+                    unmapped[norm] += 1
+
 
             add_question(conn, last_id, qq.tournaments,
                          NaqtQuestion.map_naqt(qq.metadata["SUBJECT"]),
@@ -354,7 +396,10 @@ if __name__ == "__main__":
 
                 if page == "":
                     norm = QuestionDatabase.normalize_answer(ans)
-                    unmapped[norm] += 1
+                    if pa.is_ambiguous(norm):
+                        ambiguous[norm][pid] = question["question"]
+                    else:
+                        unmapped[norm] += 1
                 else:
                     folds[fold] += 1
                 last_id += 1
@@ -368,15 +413,18 @@ if __name__ == "__main__":
 
     log.info("Added %i, skipped %i" % (last_id, num_skipped))
 
-    if not os.path.exists(flags.wiki_title):
-        urllib.request.urlretrieve("http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-all-titles-in-ns0.gz",
-                                   flags.wiki_title)
+    if flags.guess:
+        if not os.path.exists(flags.wiki_title):
+            urllib.request.urlretrieve("http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-all-titles-in-ns0.gz",
+                                    flags.wiki_title)
 
-    tf = TitleFinder(flags.wiki_title, CachedWikipedia(),
-                     pa.known_pages(),
-                     QuestionDatabase.normalize_answer)
+        tf = TitleFinder(flags.wiki_title, CachedWikipedia(),
+                        pa.known_pages(),
+                        QuestionDatabase.normalize_answer)
 
-    guesses = tf.best_guess(unmapped)
+        guesses = tf.best_guess(unmapped)
+    else:
+        guesses = dict((x, "") for x in unmapped)
 
     wiki_total = Counter()
     wiki_answers = defaultdict(set)
@@ -388,10 +436,15 @@ if __name__ == "__main__":
     for ii in [x for x in unmapped if not x in guesses]:
         wiki_answers[''].add(ii)
 
-    # Todo: sort by (redirected) wikipedia page frequency
     with open(flags.unmapped_report, 'w') as outfile:
         for pp, cc in wiki_total.most_common():
             for kk in wiki_answers[pp]:
-                # TODO: sort by frequency
-                outfile.write("%s\t%s\t%i\t%i\n" %
-                              (kk, pp, cc, unmapped[kk]))
+                if not pa.is_ambiguous(kk):
+                    # TODO: sort by frequency
+                    outfile.write("%s\t%s\t%i\t%i\n" %
+                                  (kk, pp, cc, unmapped[kk]))
+
+    with open(flags.ambig_report, 'w') as outfile:
+        for aa in sorted(ambiguous, key=lambda x: len(ambiguous[x]), reverse=True):
+            for ii in ambiguous[aa]:
+                outfile.write("%s\t%s\t%s\n" % (str(ii), aa, ambiguous[aa][ii]))

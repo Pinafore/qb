@@ -50,7 +50,7 @@ class PageAssigner:
                     answer, page = fields
                     words = ""
 
-                words = words.split(":")
+                words = [x for x in words.split(":") if x != '']
                 self._ambiguous[answer][page] = words
 
     def load_direct(self, filename):
@@ -60,9 +60,10 @@ class PageAssigner:
                     continue
                 try:
                     ext_id, page, answer = ii.strip().split('\t')
+                    self._direct[ext_id] = page
                 except ValueError:
                     log.info("Bad direct line in %s: %s" % (filename, ii))
-                self._direct[ext_id] = page
+                
 
     def known_pages(self):
         pages = set(self._direct.values())
@@ -71,9 +72,15 @@ class PageAssigner:
         pages |= set(self._unambiguous.values())
         return pages
 
+    def is_ambiguous(self, answer):
+        return self._normalize(answer) in self._ambiguous
+    
     def __call__(self, answer, text, pb="", naqt=-1):
         normalize = self._normalize(answer)
 
+        assert isinstance(pb, str)
+        assert isinstance(naqt, int)
+        
         if pb in self._direct:
             val = self._direct[pb]
             self._counts["D-P"][val] += 1
@@ -91,7 +98,7 @@ class PageAssigner:
 
         if normalize in self._ambiguous:
             default = [x for x in self._ambiguous[normalize] if
-                       len(self._ambiguous[normalize]) == 0]
+                       len(self._ambiguous[normalize][x]) == 0]
             assert len(default) <= 1, "%s has more than one default" % normalize
             assert len(default) < len(self._ambiguous[normalize]), "%s only has default" % normalize
 
@@ -104,6 +111,10 @@ class PageAssigner:
                     if ww in [x.lower() for x in words]:
                         val = jj
                         self._counts["A"][val] += 1
+                        return val
+
+            print(self._ambiguous[normalize])
+            log.info("Match not found, looking for %s default (%i)" % (normalize, len(default)))
 
             # Return default if there is one
             if len(default) == 1:
@@ -118,3 +129,40 @@ class PageAssigner:
 
     def get_counts(self):
         return self._counts
+
+
+if __name__ == "__main__":
+    import argparse
+    from glob import glob
+    from qanta.datasets.quiz_bowl import QuestionDatabase
+
+    parser = argparse.ArgumentParser(description='Test page assignment')
+    parser.add_argument('--direct_path', type=str,
+                        default='data/internal/page_assignment/direct/')
+    parser.add_argument('--ambiguous_path', type=str,
+                        default='data/internal/page_assignment/ambiguous/')
+    parser.add_argument('--unambiguous_path', type=str,
+                        default='data/internal/page_assignment/unambiguous/')
+    flags = parser.parse_args()
+
+
+    # Load page assignment information
+    pa = PageAssigner(QuestionDatabase.normalize_answer)
+    for ii in glob("%s/*" % flags.ambiguous_path):
+        pa.load_ambiguous(ii)
+    for ii in glob("%s/*" % flags.unambiguous_path):
+        pa.load_unambiguous(ii)
+    for ii in glob("%s/*" % flags.direct_path):
+        pa.load_direct(ii)
+        
+    for title, words, pp, nn in [("Chicago", "the city of big shoulders".split(), "", -1),
+                                 ("Chicago", "the city of deep pizza".split(), "", -1),
+                                 ("Alcohol", "chemistry".split(), "5476da9dea23cca90551b95f", -1),
+                                 ("Oklahoma", "sooner".split(), "", -1),
+                                 ("o henry", "playwright hair".split(), "", -1),
+                                 ("The _Iceman Cometh_", "eugene play".split(), "", 4817)]:
+        print("-------------------")
+        print(title, words, "|%s|" % pa(title, words, pp, nn))
+        counts = pa.get_counts()
+        for ii in counts:
+            print(ii, counts[ii])

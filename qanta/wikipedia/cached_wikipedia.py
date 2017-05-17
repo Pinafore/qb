@@ -1,11 +1,8 @@
 import os
 import pickle
 from multiprocessing import Pool
-<<<<<<< HEAD
-=======
 from itertools import chain
 import time
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
 
 import wikipedia
 
@@ -15,23 +12,11 @@ from qanta.util.constants import COUNTRY_LIST_PATH
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.preprocess import format_guess
 from qanta.config import conf
-<<<<<<< HEAD
-from qanta.spark import create_spark_session
-=======
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
 
 log = logging.get(__name__)
 
 COUNTRY_SUB = ["History of ", "Geography of "]
 
-<<<<<<< HEAD
-
-class WikipediaPage:
-    def __init__(self, title, content, wiki_id=None, url=None):
-        self.title = title
-        self.content = content
-        self.wiki_id = wiki_id
-=======
 class WikipediaPage:
     def __init__(self, title, content, links=set(), categories=set(), wiki_id=None, url=None):
         self.title = title
@@ -39,17 +24,11 @@ class WikipediaPage:
         self.wiki_id = wiki_id
         self.links = links
         self.categories = categories
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         self.url = url
 
-
 def access_page(title, cached_wiki):
-<<<<<<< HEAD
-    # accessing the page forces it to fetch from wikipedia if it isn't cached so this is not a no-op
-=======
     # accessing the page forces it to fetch from wikipedia if it isn't
     # cached so this is not a no-op
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
     cached_wiki[title].content
     return None
 
@@ -57,14 +36,9 @@ def access_page(title, cached_wiki):
 def spark_initialize_file_cache():
     """
     Initialize the cache using spark and the full wikipedia dump
-<<<<<<< HEAD
-    :return: 
-    """
-=======
     :return:
     """
     from qanta.spark import create_spark_session
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
     spark = create_spark_session()
     wiki_path = 's3a://pinafore-us-west-2/public/wikipedia-json/*/*'
     wiki_df = spark.read.json(wiki_path)
@@ -87,13 +61,8 @@ def web_initialize_file_cache(path):
 
 
 class CachedWikipedia:
-<<<<<<< HEAD
     def __init__(self, location=QB_WIKI_LOCATION, country_list=COUNTRY_LIST_PATH,
                  write_dummy=True, remote_fallback=conf['cached_wikipedia_remote_fallback']):
-=======
-    def __init__(self, location=QB_WIKI_LOCATION,
-                 country_list=COUNTRY_LIST_PATH, write_dummy=True):
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         """
         @param write_dummy If this is true, it writes an empty pickle if there
         is an error accessing a page in Wikipedia.  This will speed up future
@@ -105,21 +74,14 @@ class CachedWikipedia:
         self.cache = {}
         self.write_dummy = write_dummy
         self.countries = dict()
-<<<<<<< HEAD
         self.cached_wikipedia_remote_fallback = remote_fallback
-=======
 
-        # If we don't fine a page locally, pull it from the we
-        self.cached_wikipedia_remote_fallback = conf.get('cached_wikipedia_remote_fallback', True)
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         if country_list:
             with open(country_list) as f:
                 for line in f:
                     k, v = line.split('\t')
                     self.countries[k] = v.strip()
 
-<<<<<<< HEAD
-=======
         self._redirect_pickle_filename = "%s_redirect.pkl" % location
         try:
             with open(self._redirect_pickle_filename, 'rb') as f:
@@ -165,7 +127,6 @@ class CachedWikipedia:
             log.info("Writing file to %s" % filename)
             pickle.dump(page, f)
 
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
     @staticmethod
     def _wiki_request_page(key: str):
         log.info('Loading {}'.format(key))
@@ -191,12 +152,6 @@ class CachedWikipedia:
             return pickle.load(f)
 
     def _load_remote_page(self, key, filename):
-<<<<<<< HEAD
-        if key in self.countries:
-            raw = [self._wiki_request_page("%s%s" % (x, self.countries[key])) for x in COUNTRY_SUB]
-            raw.append(self._wiki_request_page(key))
-            log.info("%s is a country!" % key)
-=======
         # Don't be a jerk
         time.sleep(2)
 
@@ -206,13 +161,11 @@ class CachedWikipedia:
                 raw.append(self._wiki_request_page(ii))
 
             log.info("%s is a polity!" % key)
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         else:
             raw = [self._wiki_request_page(key)]
 
         raw = [x for x in raw if x is not None]
         if raw:
-<<<<<<< HEAD
             if len(raw) > 1:
                 log.info("%i pages for %s" % (len(raw), key))
             page = WikipediaPage(key, "\n".join(x.content for x in raw))
@@ -220,7 +173,6 @@ class CachedWikipedia:
             log.info("Writing file to %s" % filename)
             with open(filename, 'wb') as f:
                 pickle.dump(page, f)
-=======
             if raw[0].title != key:
                 self._redirects[key] = raw[0].title
                 log.info("%s redirects to %s" % (key, raw[0].title))
@@ -234,20 +186,15 @@ class CachedWikipedia:
                                  categories=set(chain(*[x.categories for x in raw])))
 
             self.write_page(page)
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         else:
             log.info("Dummy page for %s" % key)
             page = WikipediaPage(key, '')
             if self.write_dummy:
-<<<<<<< HEAD
                 with open(filename, 'wb') as f:
                     pickle.dump(page, f)
         return page
 
-=======
-                self.write_page(page)
-        return page
-
+        
     def redirect(self, key):
         """
         Check to see if if this is a known redirect.  If so, return that
@@ -255,7 +202,6 @@ class CachedWikipedia:
         """
         return self._redirects.get(key, key)
 
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
     def __getitem__(self, key: str):
         # Look to see if this is a redirect page we know about.  If
         # so, follow redirect instead of original key

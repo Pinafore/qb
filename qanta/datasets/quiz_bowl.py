@@ -97,7 +97,6 @@ class Question:
 
     def to_example(self) -> Tuple[List[QuestionText], Answer]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
-<<<<<<< HEAD
         return sentence_list, self.page
 
 
@@ -140,18 +139,6 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
 
 class QuestionDatabase:
     def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
-=======
-        properties = {
-            'ans_type': self.ans_type,
-            'category': self.category.split(':')[0]
-        }
-        return sentence_list, self.page, properties
-
-
-class QuestionDatabase:
-    def __init__(self, location=QB_QUESTION_DB):
-        log.info("Opening database at %s" % location)
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         self._conn = sqlite3.connect(location)
         if os.path.exists(expo_csv) and load_expo:
             self.expo_questions = preprocess_expo_questions(expo_csv)
@@ -230,11 +217,7 @@ class QuestionDatabase:
         for ii in questions:
             yield questions[ii]
 
-<<<<<<< HEAD
     def questions_with_pages(self, normalize_titles=False) -> Dict[str, List[Question]]:
-=======
-    def questions_with_pages(self) -> Dict[str, List[Question]]:
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
         page_map = OrderedDict()
 
         questions = self.query('from questions where page != ""', ()).values()
