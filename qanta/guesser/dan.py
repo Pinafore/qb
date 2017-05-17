@@ -56,6 +56,7 @@ class DANGuesser(AbstractGuesser):
         self.train_on_full_q = guesser_conf['train_on_full_q']
         self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
         self.wiki_data_frac = conf['wiki_data_frac']
+        self.generate_mentions = conf['generate_mentions']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None
@@ -89,7 +90,8 @@ class DANGuesser(AbstractGuesser):
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
             'decay_lr_on_plateau': self.decay_lr_on_plateau,
-            'wiki_data_frac': self.wiki_data_frac
+            'wiki_data_frac': self.wiki_data_frac,
+            'generate_mentions': self.generate_mentions
         }
 
     def load_parameters(self, params):
@@ -115,6 +117,7 @@ class DANGuesser(AbstractGuesser):
         self.train_on_full_q = params['train_on_full_q']
         self.decay_lr_on_plateau = params['decay_lr_on_plateau']
         self.wiki_data_frac = params['wiki_data_frac']
+        self.generate_mentions = params['generate_mentions']
 
     def parameters(self):
         return {
@@ -136,7 +139,8 @@ class DANGuesser(AbstractGuesser):
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
             'decay_lr_on_plateau': self.decay_lr_on_plateau,
-            'wiki_data_frac': self.wiki_data_frac
+            'wiki_data_frac': self.wiki_data_frac,
+            'generate_mentions': self.generate_mentions
         }
 
     def qb_dataset(self):
@@ -181,7 +185,8 @@ class DANGuesser(AbstractGuesser):
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
         x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q)
+            training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q,
+            generate_mentions=self.generate_mentions)
         if self.wiki_data_frac > 0:
             wiki_data = FilteredWikipediaDataset().training_data()
             results = preprocess_dataset(
@@ -236,7 +241,9 @@ class DANGuesser(AbstractGuesser):
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         log.info('Generating {} guesses for each of {} questions'.format(max_n_guesses, len(questions)))
-        x_test = [nn.convert_text_to_embeddings_indices(tokenize_question(q), self.embedding_lookup) for q in questions]
+        x_test = [nn.convert_text_to_embeddings_indices(
+            tokenize_question(q, generate_mentions=self.generate_mentions), self.embedding_lookup)
+            for q in questions]
         x_test = np.array(nn.tf_format(x_test, self.max_len, 0))
         class_probabilities = self.model.predict_proba(x_test, batch_size=self.batch_size)
         guesses = []

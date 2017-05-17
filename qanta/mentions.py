@@ -19,7 +19,6 @@ def get_states():
     return states
 
 
-@lru_cache()
 def find_references(sentence, padding=0):
     tags = nltk.pos_tag(word_tokenize(sentence))
     tags.append(("END", "V"))
