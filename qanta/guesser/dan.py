@@ -56,7 +56,7 @@ class DANGuesser(AbstractGuesser):
         self.train_on_full_q = guesser_conf['train_on_full_q']
         self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
         self.wiki_data_frac = conf['wiki_data_frac']
-        self.generate_mentions = conf['generate_mentions']
+        self.generate_mentions = guesser_conf['generate_mentions']
         self.embeddings = None
         self.embedding_lookup = None
         self.max_len = None

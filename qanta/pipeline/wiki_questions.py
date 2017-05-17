@@ -1,7 +1,6 @@
 import luigi
 from luigi import LocalTarget, Task
 from qanta.config import conf
-from qanta.guesser.tf.experiments import experiments
 from qanta.guesser.util.wiki_questions import generate_domain_classifier_data, get_best_wiki_questions
 from qanta.util import constants as c
 from qanta.util.io import call
