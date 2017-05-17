@@ -33,6 +33,11 @@ performance of guesser and buzzer plotted against time axis.
 ![{{fold}} rush & late]({{ plot }}){width=100%}
 {% endfor %}
 
+### Buzzer Choosing Hopeful and Best Guesser
+{% for fold, plot in choice_plot.items() %}
+![{{fold}} choosing hopeful & best]({{ plot }}){width=100%}
+{% endfor %}
+
 ## Histogram
 
 The numbers we report in this section are the accuracy of the guessers at

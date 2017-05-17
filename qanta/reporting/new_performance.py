@@ -299,31 +299,61 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     n_configs = len(cfg_buzzes)
     
     configs, rushs, lates = [], [], []
+    choose_best, choose_hopeful  = [], []
     for config, buzzes in cfg_buzzes:
         s = get_eop_stats(top_guesses, buzzes, answers, None, fold, save_dir)
         configs.append(config)
         rushs.append(s['rush'])
         lates.append(s['late'])
+        choose_best.append(s['choose_best'])
+        choose_hopeful.append(s['choose_hopeful'])
 
     config_names = list(range(n_configs))
         
+    ##### plot rush and late #####
     pos = list(range(n_configs))
-    width = 0.25
+    width = 0.5
     fig, ax = plt.subplots(figsize=(10,5))
-    plt.bar(pos, rushs, width, alpha=0.5, color='#EE3224')
-    plt.bar(pos, lates, width, bottom=rushs, alpha=0.5, color='#F78F1E')
+    bars = []
+    bars.append(plt.bar(pos, rushs, width, alpha=0.5, color='#EE3224')[0])
+    bars.append(plt.bar(pos, lates, width, bottom=rushs, alpha=0.5,
+        color='#F78F1E')[0])
+    plt.legend(bars, ('rush', 'late'))
 
     ax.set_ylabel('%')
-    ax.set_title('Test Subject Scores')
+    ax.set_title('Rush and Late')
     ax.set_xticks([p + 1.42 * width for p in pos])
     ax.set_xticklabels(config_names)
 
     plt.grid()
     rush_late_dir = os.path.join(save_dir, 'rush_late_{}.png'.format(fold))
     plt.savefig(rush_late_dir, format='png')
+    plt.clf()
+
+    ##### plot choose best and choose hopeful #####
+    pos = list(range(n_configs))
+    width = 0.5
+    fig, ax = plt.subplots(figsize=(10,5))
+    bars1 = []
+    bars1.append(plt.bar(pos, choose_best, width, alpha=0.5,
+        color='#EE3224')[0])
+    bars1.append(plt.bar(pos, choose_hopeful, width, alpha=0.5,
+        color='#F78F1E')[0])
+    plt.legend(bars1, ('choose_best', 'choose_hopeful'))
+
+    ax.set_ylabel('%')
+    ax.set_title('Choose hopeful and best')
+    ax.set_xticks([p + 1.42 * width for p in pos])
+    ax.set_xticklabels(config_names)
+
+    plt.grid()
+    choice_dir = os.path.join(save_dir, 'choose_{}.png'.format(fold))
+    plt.savefig(choice_dir, format='png')
+    plt.clf()
 
     if variables is not None:
         variables['rush_late_plot'][fold] = rush_late_dir
+        variables['choice_plot'][fold] = choice_dir
         variables['hype_configs']['dev'] = list(zip(config_names, configs))
 
 def generate(buzzes, answers, guesses_df, variables, fold, save_dir=None,
@@ -386,7 +416,8 @@ def main(folds, checkpoint_dir=None):
 
 def report(variables, save_dir):
     # use this to have jinja skip non-existent features
-    jinja_keys = ['his_lines', 'his_stacked', 'rush_late_plot', 'hype_configs']
+    jinja_keys = ['his_lines', 'his_stacked', 'rush_late_plot', 'choice_plot',
+            'hype_configs']
     _variables = {k: dict() for k in jinja_keys}
     _variables.update(variables)
     output = os.path.join(save_dir, 'new_performance.pdf')
