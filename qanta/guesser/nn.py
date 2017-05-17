@@ -108,6 +108,13 @@ def parametric_relu(_x):
 
 
 def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[str, int]):
+    """
+    Convert a list of word tokens to embedding indices
+    :param words: 
+    :param embedding_lookup: 
+    :param mentions: 
+    :return: 
+    """
     w_indices = []
     for w in words:
         if w in embedding_lookup:
