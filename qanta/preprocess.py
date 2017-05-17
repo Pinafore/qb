@@ -49,7 +49,20 @@ def format_guess(guess):
 
 def preprocess_dataset(data: TrainingData, train_size=.9,
                        vocab=None, class_to_i=None, i_to_class=None,
-                       create_runs=False, full_question=False):
+                       create_runs=False, full_question=False,
+                       generate_mentions=False):
+    """
+    
+    :param data: 
+    :param train_size: 
+    :param vocab: 
+    :param class_to_i: 
+    :param i_to_class: 
+    :param create_runs: 
+    :param full_question: 
+    :param generate_mentions: Whether or not to generate and include special mention tokens
+    :return: 
+    """
     if full_question and create_runs:
         raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
             create_runs, full_question))
