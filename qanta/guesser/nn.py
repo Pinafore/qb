@@ -108,6 +108,13 @@ def parametric_relu(_x):
 
 
 def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[str, int]):
+    """
+    Convert a list of word tokens to embedding indices
+    :param words: 
+    :param embedding_lookup: 
+    :param mentions: 
+    :return: 
+    """
     w_indices = []
     for w in words:
         if w in embedding_lookup:
@@ -191,19 +198,38 @@ def create_batches(batch_size,
             break
 
 
-def batch_iterables(batch_size, iterables, shuffle=True):
-    n = len(iterables[0])
-    zipped = list(zip(*iterables))
-    if shuffle:
-        random.shuffle(zipped)
-
-    shuffled_iterables = [list() for _ in range(len(iterables))]
-    for row in zipped:
-        for i, element in enumerate(row):
-            shuffled_iterables[i].append(element)
-
-    for i in range(0, n, batch_size):
-        yield [it[i:i + batch_size] for it in shuffled_iterables]
+def batch_generator(x: List[np.ndarray], y: np.ndarray, batch_size, n_batches, shuffle=True):
+    """
+    Create batches of size batch_size for each numpy array in data for n_batches then repeat
+    """
+    n_rows = len(y)
+    for i, arr in enumerate(x):
+        if type(arr) != np.ndarray:
+            raise ValueError('An element of x in position {} is not a numpy array'.format(i))
+    if type(y) != np.ndarray:
+        raise ValueError('y must be a numpy array')
+    if len(x) == 0:
+        raise ValueError('There is no x data to batch')
+    if n_rows == 0:
+        raise ValueError('There are no rows to batch')
+    if n_batches == 0:
+        raise ValueError('Cannot iterate on batches when n_batches=0')
+    if type(n_batches) != int:
+        raise ValueError('n_batches must be of type int but was "{}"'.format(type(n_batches)))
+    while True:
+        order = np.array(list(range(n_rows)))
+        if shuffle:
+            np.random.shuffle(order)
+        for i in range(n_batches):
+            i_start = int(i * batch_size)
+            i_end = int((i + 1) * batch_size)
+            if len(x) > 1:
+                x_batch = []
+                for arr in x:
+                    x_batch.append(arr[order[i_start:i_end]])
+            else:
+                x_batch = x[0][order[i_start:i_end]]
+            yield x_batch, y[order[i_start:i_end]]
 
 
 def compute_n_classes(labels: List[str]):

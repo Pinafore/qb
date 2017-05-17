@@ -35,3 +35,8 @@ EXPO_FINAL = 'output/expo/{}.final'
 EXPO_QUESTIONS = 'output/expo/{}.questions.csv'
 
 KEN_LM = 'output/kenlm.binary'
+
+DOMAIN_TARGET_PREFIX = 'output/deep/domain_data'
+DOMAIN_MODEL_FORMAT = 'output/deep/domain_clf{}.vw'
+DOMAIN_PREDICTIONS_PREFIX = 'output/deep/domain_preds'
+DOMAIN_OUTPUT = 'output/deep/filtered_domain_data'

@@ -3,6 +3,7 @@ from typing import List
 import string
 
 from qanta import logging
+from qanta.mentions import find_references
 from nltk import word_tokenize
 from sklearn.cross_validation import train_test_split
 
@@ -39,8 +40,13 @@ def clean_question(question: str):
     return re.sub(regex_pattern, '', question.strip().lower())
 
 
-def tokenize_question(text: str) -> List[str]:
-    return word_tokenize(clean_question(text))
+def tokenize_question(text: str, generate_mentions=False) -> List[str]:
+    if generate_mentions:
+        tokens = word_tokenize(clean_question(text))
+        tokens.extend([m for _, m, _ in find_references(text)])
+        return tokens
+    else:
+        return word_tokenize(clean_question(text))
 
 
 def format_guess(guess):
@@ -49,7 +55,20 @@ def format_guess(guess):
 
 def preprocess_dataset(data: TrainingData, train_size=.9,
                        vocab=None, class_to_i=None, i_to_class=None,
-                       create_runs=False, full_question=False):
+                       create_runs=False, full_question=False,
+                       generate_mentions=False):
+    """
+    
+    :param data: 
+    :param train_size: 
+    :param vocab: 
+    :param class_to_i: 
+    :param i_to_class: 
+    :param create_runs: 
+    :param full_question: 
+    :param generate_mentions: Whether or not to generate and include special mention tokens
+    :return: 
+    """
     if full_question and create_runs:
         raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
             create_runs, full_question))
@@ -81,7 +100,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
     for q, ans in train:
         q_text = []
         for sentence in q:
-            t_question = tokenize_question(sentence)
+            t_question = tokenize_question(sentence, generate_mentions=generate_mentions)
             if create_runs or full_question:
                 q_text.extend(t_question)
             else:
@@ -103,7 +122,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
     for q, ans in test:
         q_text = []
         for sentence in q:
-            t_question = tokenize_question(sentence)
+            t_question = tokenize_question(sentence, generate_mentions=generate_mentions)
             if create_runs or full_question:
                 q_text.extend(t_question)
                 if not full_question:
