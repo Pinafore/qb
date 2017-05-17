@@ -7,7 +7,7 @@ class mlp():
     dropout = 0.3
     step_size = 1
     neg_weight = 1
-    batch_norm = True
+    batch_norm = False
     ckp_dir = 'output/buzzer/mlp_buzzer.ckp'
     model_dir = 'output/buzzer/mlp_buzzer.npz'
 

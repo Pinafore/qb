@@ -128,22 +128,25 @@ class Trainer(object):
             stats[k] = v / train_iter.size
         return stats
 
-    def run(self, train_iter=None, eval_iter=None, n_epochs=1):
+    def run(self, train_iter=None, eval_iter=None, n_epochs=1, verbose=True):
         progress_bar = ProgressBar(n_epochs, unit_iteration=False)
         for epoch in range(n_epochs):
-            log.info('epoch {0}'.format(epoch))
+            if verbose:
+                log.info('epoch {0}'.format(epoch))
             if train_iter is not None:
                 train_stats = self.train_one_epoch(train_iter, progress_bar)
-                output = 'train '
-                for k, v in train_stats.items():
-                    output += '{0}: {1:.2f}  '.format(k, v)
-                log.info(output)
+                if verbose:
+                    output = 'train '
+                    for k, v in train_stats.items():
+                        output += '{0}: {1:.2f}  '.format(k, v)
+                    log.info(output)
             if eval_iter is not None:
-                output = 'eval '
                 eval_stats = self.evaluate(eval_iter)
-                for k, v in eval_stats.items():
-                    output += '{0}: {1:.2f}  '.format(k, v)
-                log.info(output)
+                if verbose:
+                    output = 'eval '
+                    for k, v in eval_stats.items():
+                        output += '{0}: {1:.2f}  '.format(k, v)
+                    log.info(output)
             if self.model_dir is not None:
                 chainer.serializers.save_npz(self.model_dir, self.model)
         train_iter.finalize(reset=True)

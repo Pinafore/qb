@@ -60,7 +60,7 @@ for guesser, style in zip(GUESSERS, cycle(_STYLES)):
     LINE_STYLES['acc_{}'.format(guesser)] = style
     LINE_STYLES['buzz_{}'.format(guesser)] = style
 
-def get_top_guesses(inputs):
+def _get_top_guesses(inputs):
     (qnum, question), queue = inputs
     top_guesses = [] # length * n_guessers
     # FIXME because there can be missing guessers, must iterate position first
@@ -79,7 +79,7 @@ def get_top_guesses(inputs):
     # transpose top_guesses -> n_guessers * length
     return qnum, list(map(list, zip(*top_guesses)))
 
-def end_of_pipeline(buzzes: Dict[int, List[List[float]]],
+def _get_eop_stats(buzzes: Dict[int, List[List[float]]],
                     answers: Dict[int, str], inputs) \
                 -> Tuple[int, Dict[str, int]]:
     (qnum, top_guesses), queue = inputs
@@ -131,7 +131,7 @@ def end_of_pipeline(buzzes: Dict[int, List[List[float]]],
 
     return qnum, stats
 
-def histogram(buzzes: Dict[int, List[List[float]]],
+def _get_his_stats(buzzes: Dict[int, List[List[float]]],
               answers: Dict[int, str], inputs) \
             -> Tuple[int, Dict[str, List[int]]]:
     (qnum, top_guesses), queue = inputs
@@ -166,21 +166,13 @@ def histogram(buzzes: Dict[int, List[List[float]]],
 
     return qnum, stats
 
-def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
-        plot_dir=None, multiprocessing=True):
-    questions = guesses_df.groupby('qnum')
-
-    # qnum -> n_guessers * length
-    top_guesses = _multiprocess(get_top_guesses, questions, 
-        info='Top guesses', multi=multiprocessing)
-    top_guesses = {k: v for k, v in top_guesses}
-
-    ############# end-of-pipeline stats ############# 
+def get_eop_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
+    log.info('[{}] End-of-pipelin reporting'.format(fold))
 
     inputs = top_guesses.items()
-    worker = partial(end_of_pipeline, buzzes, answers)
+    worker = partial(_get_eop_stats, buzzes, answers)
     eop_stats = _multiprocess(worker, inputs, info='End-of-pipeline stats',
-            multi=multiprocessing)
+            multi=True)
 
     # qnum -> key -> int
     eop_stats = {k: v for k, v in eop_stats}
@@ -199,7 +191,7 @@ def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
         _eop_stats[key] = value
         output = "{0} {1:.3f}".format(key, value)
         eop_output += output + '\n'
-        print(output)
+        # print(output)
 
     for key in EOP_STAT_KEYS_1:
         output = key
@@ -209,13 +201,20 @@ def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
             output += " {0} {1}".format(guesser, values.count(i))
             _eop_stats[key][guesser] = values.count(i)
         eop_output += output + '\n'
-        print(output)
+        # print(output)
 
-    ############# histogram stats ############# 
+    if variables is not None:
+        variables['eop_stats'][fold] = _eop_stats
+
+    return _eop_stats
+
+def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
+    log.info('[{}] Histogram reporting'.format(fold))
+
     inputs = top_guesses.items()
-    worker = partial(histogram, buzzes, answers)
+    worker = partial(_get_his_stats, buzzes, answers)
     his_stats = _multiprocess(worker, inputs, info='Histogram stats',
-            multi=multiprocessing)
+            multi=True)
     # qnum -> key -> list(int)
     his_stats = {k: v for k, v in his_stats}
     # key -> list(int)
@@ -240,47 +239,87 @@ def generate(buzzes, answers, guesses_df, fold, checkpoint_dir=None,
         for key in HISTO_KEYS:
             output += "  {0} {1:.2f}".format(key, _his_stats[key][i])
         his_output += output + '\n'
-        print(output)
-	
-    if plot_dir is not None:
-        lines = []
-        for k, v in _his_stats.items():
-            lines.append(plt.plot(HISTO_RATIOS, v, LINE_STYLES[k], label=k)[0])
-        plt.legend(handles=lines)
-        plt.savefig(plot_dir, dpi=200, format='png')
-        plt.clf()
+        # print(output)
 
-    if checkpoint_dir is not None:
-        checkpoint = {
-                'buzzes': buzzes, 
-                'top_guesses': top_guesses,
-                'eop_keys': EOP_STAT_KEYS_0 + EOP_STAT_KEYS_1,
-                'his_keys': HISTO_KEYS,
-                'eop_stats': eop_stats,
-                'his_stats': his_stats,
-                '_his_stats': _his_stats
-                }
-        with open(checkpoint_dir, 'wb') as outfile:
-            pickle.dump(checkpoint, outfile)
+    his_lines_dir = os.path.join(save_dir, 'his_{}_lines.png'.format(fold))
+    lines = []
+    for k, v in _his_stats.items():
+        lines.append(plt.plot(HISTO_RATIOS, v, LINE_STYLES[k], label=k)[0])
+    plt.legend(handles=lines)
+    plt.savefig(his_lines_dir, dpi=200, format='png')
+    plt.clf()
 
-    return _eop_stats, _his_stats
+    if variables is not None:
+        variables['his_stats'][fold] = _his_stats
+        variables['his_lines'][fold] = his_lines_dir
+
+    return _his_stats
+
+def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
+    log.info('[{}] Hyperparameter search reporting'.format(fold))
+
+    with open('output/buzzer/cfg_buzzes_{}.pkl'.format(fold), 'rb') as infile:
+        cfg_buzzes = pickle.load(infile)
+    n_configs = len(cfg_buzzes)
+    
+    configs, rushs, lates = [], [], []
+    for config, buzzes in cfg_buzzes:
+        eop_stats = get_eop_stats(top_guesses, buzzes, answers, None, fold,
+                save_dir)
+        configs.append(config)
+        rushs.append(eop_stats['rush'])
+        lates.append(eop_stats['late'])
+        
+    pos = list(range(n_configs))
+    width = 0.25
+    fig, ax = plt.subplots(figsize=(10,5))
+    plt.bar(pos, rushs, width, alpha=0.5, color='#EE3224')
+    plt.bar(pos, lates, width, bottom=rushs, alpha=0.5, color='#F78F1E')
+
+    ax.set_ylabel('%')
+    ax.set_title('Test Subject Scores')
+    ax.set_xticks([p + 1.42 * width for p in pos])
+    ax.set_xticklabels(list(range(n_configs)))
+
+    plt.grid()
+    plot_dir = os.path.join(save_dir, 'hype_{}.png'.format(fold))
+    plt.savefig(plot_dir, format='png')
+
+    if variables is not None:
+        variables['hype_plot'][fold] = plot_dir
+        variables['hype_configs'][fold] = configs
+
+def generate(buzzes, answers, guesses_df, variables, fold, save_dir=None,
+        multiprocessing=True):
+
+    questions = guesses_df.groupby('qnum')
+
+    # qnum -> n_guessers * length
+    top_guesses = _multiprocess(_get_top_guesses, questions, 
+        info='Top guesses', multi=True)
+    top_guesses = {k: v for k, v in top_guesses}
+
+    inputs = (top_guesses, buzzes, answers, variables, fold, save_dir)
+
+    get_eop_stats(*inputs)
+    get_his_stats(*inputs)
+    get_hyper_search(*inputs)
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--fold', default=None)
     return parser.parse_args()
 
-if __name__ == '__main__':
-    args = parse_args()
-    if args.fold != None:
-        folds = [args.fold]
-    else:
-        folds = c.BUZZ_FOLDS
-
+def main(folds):
     all_questions = QuestionDatabase().all_questions()
     answers = {k: format_guess(v.page) for k, v in all_questions.items()}
 
-    variables = dict()
+    save_dir = 'output/summary/new_performance/'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    # feature -> fold -> value
+    variables = defaultdict(lambda: defaultdict())
     for fold in folds:
         guesses_df = AbstractGuesser.load_guesses(
                 bc.GUESSES_DIR, folds=[fold])
@@ -290,14 +329,16 @@ if __name__ == '__main__':
             buzzes = pickle.load(infile)
         log.info('Buzzes loaded from {}.'.format(buzzes_dir))
 
-        checkpoint_dir = "output/summary/performance_{}.pkl".format(fold)
-        plot_dir = "output/summary/performance_{}_his.png".format(fold)
-        eop_stats, his_stats = generate(buzzes, answers, guesses_df, fold,
-                checkpoint_dir, plot_dir)
-        variables['eop_{}_stats'.format(fold)] = eop_stats
-        variables['his_{}_stats'.format(fold)] = his_stats
-        variables['his_{}_plot'.format(fold)] = plot_dir
+        generate(buzzes, answers, guesses_df, variables, fold, save_dir)
 
-    output = 'output/summary/new_performance.pdf'
-    report_generator = ReportGenerator('new_performance.md')
-    report_generator.create(variables, output)
+    # output = 'output/summary/new_performance.pdf'
+    # report_generator = ReportGenerator('new_performance.md')
+    # report_generator.create(variables, output)
+
+if __name__ == '__main__':
+    args = parse_args()
+    if args.fold != None:
+        folds = [args.fold]
+    else:
+        folds = c.BUZZ_FOLDS
+    main(folds)

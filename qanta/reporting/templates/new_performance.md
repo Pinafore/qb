@@ -6,7 +6,6 @@ performance of guesser and buzzer plotted against time axis.
 
 ### End-of-pipeline
 
-##### Stats
 - buzz: how frequent does the the buzzer buzz
 - choose_best: did the buzzer choose the best guesser (earliest correct)
 - choose_hopeful: did the buzzer choose a hopeful guesser
@@ -19,53 +18,18 @@ performance of guesser and buzzer plotted against time axis.
 - choose_guesser: the guesser chosen by the buzzer
 - best_guesser: the best guesser (earliest correct)
 
-##### Dev
-{% for key, value in eop_dev_stats.items() %}
-- {{key}}: {{value}}
-{% endfor %}
-
-##### Test
-{% for key, value in eop_test_stats.items() %}
-- {{key}}: {{value}}
-{% endfor %}
-
-##### Expo
-{% for key, value in eop_expo_stats.items() %}
-- {{key}}: {{value}}
-{% endfor %}
 
 #### Histogram
 
-HISTO_KEYS = ['acc', 'buzz']  + \
-        ['acc_{}'.format(g) for g in GUESSERS] + \
-        ['buzz_{}'.format(g) for g in GUESSERS]
-
-##### Stats
 The numbers we report in this section are the accuracy of the guessers at
 different positions and the buzzing behaviour of the buzzer. Ideally the overall
 buzzing behaviour should match the accuracy curve, and the buzzer's selection of
 guessers should reflect the difference in performance of different guessers.
 
-##### Dev
-{% for key, value in his_dev_stats.items() %}
-- {{key}}: {{value}}
-{% endfor %}
-
-##### Test
-{% for key, value in his_test_stats.items() %}
-- {{key}}: {{value}}
-{% endfor %}
-
-##### Expo
-{% for key, value in his_expo_stats.items() %}
-- {{key}}: {{value}}
-{% endfor %}
-
-##### Plots
 In this following figures, same line style indicates same guesser.
 
-![Dev histogram]({{ his_dev_plot }}){width=100%}
+![Dev histogram]({{ his_dev_lines }}){width=100%}
 
-![Test histogram]({{ his_test_plot }}){width=100%}
+![Test histogram]({{ his_test_lines }}){width=100%}
 
-![Expo histogram]({{ his_expo_plot }}){width=100%}
+![Expo histogram]({{ his_expo_lines }}){width=100%}
