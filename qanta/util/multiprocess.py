@@ -20,6 +20,7 @@ def _multiprocess(worker, inputs, n_cores=conf['buzzer']['n_cores'], info='',
             sys.stderr.write(output.format(info, size, total_size))
             time.sleep(0.1)
         sys.stderr.write('\n')
+        pool.close()
         return result.get()
     else:
         result = []

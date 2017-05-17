@@ -272,9 +272,9 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
 
     ##### plot stacked area chart #####
     his_stacked_dir = os.path.join(save_dir, 'his_{}_stacked.png'.format(fold))
-    plt.plot([],[],color='c', label='correct')
-    plt.plot([],[],color='r', label='wrong_hopeful')
-    plt.plot([],[],color='k', label='wrong_hopeless')
+    plt.plot([],[],color='c', alpha=0.5, label='correct')
+    plt.plot([],[],color='r', alpha=0.5, label='wrong_hopeful')
+    plt.plot([],[],color='k', alpha=0.5, label='wrong_hopeless')
 
     plt.stackplot(list(range(len(HISTO_RATIOS))), 
             _his_stats['correct'], _his_stats['wrong_hopeful'],
