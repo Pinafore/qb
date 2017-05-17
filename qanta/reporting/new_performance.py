@@ -268,7 +268,7 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
         lines.append(plt.plot(HISTO_RATIOS, v, LINE_STYLES[k], label=k)[0])
     plt.legend(handles=lines)
     plt.savefig(his_lines_dir, dpi=200, format='png')
-    plt.clf()
+    plt.close()
 
     ##### plot stacked area chart #####
     his_stacked_dir = os.path.join(save_dir, 'his_{}_stacked.png'.format(fold))
@@ -282,7 +282,7 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
             colors=['c','r','k'], alpha=0.5)
     plt.legend()
     plt.savefig(his_stacked_dir, dpi=200, format='png')
-    plt.clf()
+    plt.close()
 
     if variables is not None:
         variables['his_stats'][fold] = _his_stats
@@ -313,7 +313,7 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     ##### plot rush and late #####
     pos = list(range(n_configs))
     width = 0.5
-    fig, ax = plt.subplots(figsize=(10,5))
+    fig, ax = plt.subplots()
     bars = []
     bars.append(plt.bar(pos, rushs, width, alpha=0.5, color='#EE3224')[0])
     bars.append(plt.bar(pos, lates, width, bottom=rushs, alpha=0.5,
@@ -328,12 +328,12 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     plt.grid()
     rush_late_dir = os.path.join(save_dir, 'rush_late_{}.png'.format(fold))
     plt.savefig(rush_late_dir, format='png')
-    plt.clf()
+    plt.close()
 
     ##### plot choose best and choose hopeful #####
     pos = list(range(n_configs))
     width = 0.5
-    fig, ax = plt.subplots(figsize=(10,5))
+    fig, ax = plt.subplots()
     bars1 = []
     bars1.append(plt.bar(pos, choose_best, width, alpha=0.5,
         color='#EE3224')[0])
@@ -349,7 +349,7 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     plt.grid()
     choice_dir = os.path.join(save_dir, 'choose_{}.png'.format(fold))
     plt.savefig(choice_dir, format='png')
-    plt.clf()
+    plt.close()
 
     if variables is not None:
         variables['rush_late_plot'][fold] = rush_late_dir
