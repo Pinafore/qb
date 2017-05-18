@@ -18,6 +18,8 @@ performance of guesser and buzzer plotted against time axis.
 - choose_guesser: the guesser chosen by the buzzer
 - best_guesser: the best guesser (earliest correct)
 
+We compare different buzzer configurations listed below:
+
 ### Configs
 
 {% for name, config in hype_configs['dev'] %}
@@ -29,13 +31,19 @@ performance of guesser and buzzer plotted against time axis.
 {% endfor %}
 
 ### Buzzing Too Early or Too Late
+x-axis corresponds to the configuration number.
+
 {% for fold, plot in rush_late_plot.items() %}
 ![{{fold}} rush & late]({{ plot }}){width=100%}
+\ 
 {% endfor %}
 
 ### Buzzer Choosing Hopeful and Best Guesser
+x-axis corresponds to the configuration number.
+
 {% for fold, plot in choice_plot.items() %}
 ![{{fold}} choosing hopeful & best]({{ plot }}){width=100%}
+\ 
 {% endfor %}
 
 ## Histogram
@@ -51,10 +59,12 @@ In this following figures, same line style indicates same guesser.
 
 {% for fold, plot in his_lines.items() %}
 ![{{fold}} histogram]({{ plot }}){width=100%}
+\ 
 {% endfor %}
 
 ### Stacked Aread Charts
 
 {% for fold, plot in his_stacked.items() %}
 ![{{fold}} histogram]({{ plot }}){width=100%}
+\ 
 {% endfor %}
