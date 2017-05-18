@@ -55,9 +55,11 @@ HISTO_KEYS_0 = ['acc', 'buzz']  + \
         ['acc_{}'.format(g) for g in GUESSERS] + \
         ['buzz_{}'.format(g) for g in GUESSERS]
 
-HISTO_KEYS_1 = ['correct', # buzzer is correct
+HISTO_KEYS_1 = ['correct_hopeful', # buzzer is correct
+         'nobuzz_hopeful', # buzzer never correct when hopeful
          'wrong_hopeful', # buzzer never correct when hopeful
-         'wrong_hopeless' # buzzer never correct when hopeless
+         'wrong_hopeless', # buzzer buzzed when hopeless
+         'correct_hopeless', # buzzer didn't buzz when hopeless
         ]
 
 LINE_STYLES = {'acc': '-', 'buzz': '-'}
@@ -129,8 +131,10 @@ def _get_eop_stats(buzzes: Dict[int, List[List[float]]],
         stats['reward'] = 10 if pos >= correct[chosen] else -5
         if hopeful:
             stats['choose_best'] = int(chosen == best_guesser)
-            stats['late'] = max(0, pos - correct[best_guesser])
-            stats['rush'] = max(0, correct[best_guesser] - pos)
+            # stats['late'] = max(0, pos - correct[best_guesser])
+            # stats['rush'] = max(0, correct[best_guesser] - pos)
+            stats['late'] = int(pos > correct[best_guesser])
+            stats['rush'] = int(correct[best_guesser] > pos)
 
     if queue is not None:
         queue.put(qnum)
@@ -166,21 +170,21 @@ def _get_his_stats(buzzes: Dict[int, List[List[float]]],
 
     for i, r in enumerate(HISTO_RATIOS):
         pos = int(length * r)
-        cor = sum(sum(x) for x in guesser_correct[:pos])
-        buz = sum(np.argmax(x) < N_GUESSERS for x in buzz[:pos])
-        stats['acc'][i] = int(cor > 0)
-        stats['buzz'][i] = int(buz > 0)
         for j, g in enumerate(GUESSERS):
             cor = sum(x[j] for x in guesser_correct[:pos])
             buz = sum(np.argmax(x) == j for x in buzz[:pos])
             stats['acc_{}'.format(g)][i] = int(cor > 0)
             stats['buzz_{}'.format(g)][i] = int(buz > 0)
+        cor = sum(sum(x) for x in guesser_correct[:pos])
+        buz = sum(np.argmax(x) < N_GUESSERS for x in buzz[:pos])
         buz_cor = sum(buzzer_correct[:pos])
-        stats['correct'][i] = int(buz_cor > 0)
-        stats['wrong_hopeless'][i] = int(buz_cor == 0 and cor == 0)
-        stats['wrong_hopeful'][i] = int(buz_cor == 0 and cor > 0)
-        assert stats['correct'][i] + stats['wrong_hopeless'][i] + \
-                stats['wrong_hopeful'][i] == 1
+        stats['acc'][i] = int(cor > 0)
+        stats['buzz'][i] = int(buz > 0)
+        stats['correct_hopeful'][i] = int(buz_cor > 0)
+        stats['nobuzz_hopeful'][i] = int(buz == 0 and cor > 0)
+        stats['wrong_hopeful'][i] = int(buz_cor == 0 and buz > 0 and cor > 0)
+        stats['correct_hopeless'][i] = int(buz == 0 and cor == 0)
+        stats['wrong_hopeless'][i] = int(buz > 0 and cor == 0)
         queue.put(qnum)
 
     return qnum, stats
@@ -263,23 +267,30 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
     ##### plot lines #####
     his_lines_dir = os.path.join(save_dir, 'his_{}_lines.png'.format(fold))
     lines = []
+
+    fig, ax = plt.subplots()
     for k in HISTO_KEYS_0:
         v = _his_stats[k]
         lines.append(plt.plot(HISTO_RATIOS, v, LINE_STYLES[k], label=k)[0])
+
+    ax.set_xticks(HISTO_RATIOS)
     plt.legend(handles=lines)
     plt.savefig(his_lines_dir, dpi=200, format='png')
     plt.close()
 
     ##### plot stacked area chart #####
     his_stacked_dir = os.path.join(save_dir, 'his_{}_stacked.png'.format(fold))
-    plt.plot([],[],color='c', alpha=0.5, label='correct')
+    plt.plot([],[],color='c', alpha=0.5, label='correct_hopeful')
+    plt.plot([],[],color='y', alpha=0.5, label='nobuzz_hopeful')
     plt.plot([],[],color='r', alpha=0.5, label='wrong_hopeful')
-    plt.plot([],[],color='k', alpha=0.5, label='wrong_hopeless')
+    plt.plot([],[],color='m', alpha=0.5, label='wrong_hopeless')
+    plt.plot([],[],color='g', alpha=0.5, label='correct_hopeless')
 
     plt.stackplot(list(range(len(HISTO_RATIOS))), 
-            _his_stats['correct'], _his_stats['wrong_hopeful'],
-            _his_stats['wrong_hopeless'],
-            colors=['c','r','k'], alpha=0.5)
+            _his_stats['correct_hopeful'], _his_stats['nobuzz_hopeful'],
+            _his_stats['wrong_hopeful'], _his_stats['wrong_hopeless'],
+            _his_stats['correct_hopeless'],
+            colors=['c', 'y', 'r', 'm', 'g'], alpha=0.5)
     plt.legend()
     plt.savefig(his_stacked_dir, dpi=200, format='png')
     plt.close()

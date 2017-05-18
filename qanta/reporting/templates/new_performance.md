@@ -64,6 +64,16 @@ In this following figures, same line style indicates same guesser.
 
 ### Stacked Aread Charts
 
+- __correct_hopeful__ buzz and choose a correct guesser
+- __nobuzz_hopeful__: not buzzing when there is a correct guesser
+- __wrong_hopeful__: buzz and choose a wrong guesser when there is a correct one
+- __correct_hopeless__: wait when there is a correct guesser
+- __wrong_hopeless__: buzz when there is no correct guesser
+
+- __green + purple__ is the fault of the guesser.
+- __yellow + red + purple__ is the fault of the buzzer.
+- __yellow + red__ is _purely_ the fault of the buzzer.
+
 {% for fold, plot in his_stacked.items() %}
 ![{{fold}} histogram]({{ plot }}){width=100%}
 \ 

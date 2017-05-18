@@ -54,8 +54,8 @@ def get_cfgs():
     _n_layers = [1,2,3]
     _n_hidden = [50, 100, 200]
     _batch_norm = [True, False]
-    _neg_weight = [1, 0.7, 0.5, 0.2, 0.1]
-    cfgs = [] # 2 * 3 * 2 * 5 = 60 configs
+    _neg_weight = [1, 0.95, 0.9, 0.85, 0.8]
+    cfgs = []
     for n_layers in _n_layers:
         cfg = configs.mlp()
         cfg.n_layers = n_layers
