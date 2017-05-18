@@ -188,6 +188,7 @@ class DANGuesser(AbstractGuesser):
             training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q,
             generate_mentions=self.generate_mentions)
         if self.wiki_data_frac > 0:
+            log.info('Using wikipedia with fraction: {}'.format(self.wiki_data_frac))
             wiki_data = FilteredWikipediaDataset().training_data()
             results = preprocess_dataset(
                 wiki_data,
@@ -265,8 +266,7 @@ class DANGuesser(AbstractGuesser):
         guesser.model = load_model(
             os.path.join(directory, DAN_MODEL_TARGET),
             custom_objects={
-                'AverageWords': AverageWords,
-                'WordDropout': WordDropout
+                'AverageWords': AverageWords
             }
         )
         with open(os.path.join(directory, DAN_PARAMS_TARGET), 'rb') as f:

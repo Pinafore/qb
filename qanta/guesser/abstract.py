@@ -409,7 +409,9 @@ class AbstractGuesser(metaclass=ABCMeta):
         correct_by_n_count_plot('/tmp/test_correct_by_count.png', test_counts, 'test')
         n_train_vs_fold_plot('/tmp/n_train_vs_test.png', test_counts, 'test')
 
-        report = ReportGenerator({
+        output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
+        report = ReportGenerator('guesser.md')
+        report.create({
             'dev_recall_plot': '/tmp/dev_recall.png',
             'test_recall_plot': '/tmp/test_recall.png',
             'dev_accuracy_plot': '/tmp/dev_accuracy.png',
@@ -452,9 +454,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             'test_correct_by_count_plot': '/tmp/test_correct_by_count.png',
             'n_train_vs_dev_plot': '/tmp/n_train_vs_dev.png',
             'n_train_vs_test_plot': '/tmp/n_train_vs_test.png'
-        }, 'guesser.md')
-        output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
-        report.create(output)
+        }, output)
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
                 'dev_accuracy': dev_summary_accuracy,
@@ -807,11 +807,11 @@ def n_guesser_report(report_path, fold, n_samples=10):
         question_lookup, guess_lookup, n_correct_samples, n_samples=n_samples
     )
 
-    report = ReportGenerator({
+    report = ReportGenerator('compare_guessers.md')
+    report.create({
         'dev_accuracy_by_n_correct_plot': accuracy_by_n_correct_plot_path,
         'sampled_questions_by_correct': sampled_questions_by_correct
-    }, 'compare_guessers.md')
-    report.create(safe_path(report_path))
+    }, safe_path(report_path))
 
 
 def sample_n_guesser_correct_questions(question_lookup, guess_lookup, n_correct_samples, n_samples=10):

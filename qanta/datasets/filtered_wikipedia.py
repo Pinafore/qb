@@ -3,6 +3,7 @@ import pickle
 from qanta.util.constants import DOMAIN_OUTPUT
 from qanta.datasets.abstract import AbstractDataset
 
+
 class FilteredWikipediaDataset(AbstractDataset):
     def __init__(self):
         super().__init__()
