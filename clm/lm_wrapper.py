@@ -293,15 +293,41 @@ class LanguageModelReader(LanguageModelBase):
 
         return result
 
-    def feature_line(self, corpus, guess, sentence):
+    def preprocess_and_cache(self, sentece):
         if self._sentence_hash != hash(sentence):
             self._sentence_hash = hash(sentence)
             tokenized = list(self.tokenize_and_censor(sentence))
             self._sentence_length = len(tokenized)
             assert self._sentence_length < kMAX_TEXT_LENGTH
             for ii, ww in enumerate(tokenized):
-                self._sentence[ii] = ww
+                self._sentence[ii] = ww        
 
+    def dict_feat(self, corpus, guess, sentence):
+        """
+        Return a dictionary of the features
+        """
+        
+        self.preprocess_and_cache(sentence)
+        guess_id = self._corpora[norm_title]
+        if guess_id not in self._loaded_lms:
+            self._lm.read_counts("%s/%i" % (self._datafile, guess_id))
+            self._loaded_lms.add(guess_id)
+                
+        feat = self._lm.feature(corpus, guess_id, self._sentence, self._sentence_length)
+
+        d = {}
+        for ii in feat.split():
+            if ":" in ii:
+                key, val = ii.split(":")
+            else:
+                key = ii
+                val = 1
+            d[key] = val
+        return d
+              
+    def feature_line(self, corpus, guess, sentence):
+        self.preprocess_and_cache(sentence)
+        
         norm_title = self.normalize_title(corpus, guess)
         if norm_title not in self._corpora or self._sentence_length == 0:
             return ""

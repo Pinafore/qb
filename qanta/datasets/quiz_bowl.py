@@ -25,17 +25,16 @@ log = logging.get(__name__)
 
 
 class Question:
-    def __init__(self, qnum, answer, category, naqt,
-                 tournaments, page, ans_type, fold, gender):
+    def __init__(self, qnum, answer, category, naqt, protobowl,
+                 tournaments, page, fold):
         self.qnum = qnum
         self.answer = answer
         self.category = category
         self.naqt = naqt
+        self.protobowl = protobowl
         self.tournaments = tournaments
         self.page = page
-        self.ans_type = ans_type
         self.fold = fold
-        self.gender = gender
         self.text = {}
         self._last_query = None
 
@@ -45,6 +44,9 @@ class Question:
             self.page,
             self.flatten_text()[0:20]
         )
+
+    def normalized_answer(self):
+        return QuestionDatabase.normalize_answer(self.answer)
 
     def raw_words(self):
         """
@@ -147,12 +149,12 @@ class QuestionDatabase:
         questions = {}
         c = self._conn.cursor()
         command = 'select id, page, category, answer, ' + \
-            'tournament, type, naqt, fold, gender ' + command
+            'tournament, naqt, protobowl, fold' + command
         c.execute(command, arguments)
 
-        for qnum, page, category, answer, tournaments, ans_type, naqt, fold, gender in c:
-            questions[qnum] = Question(qnum, answer, category, naqt, tournaments, page, ans_type,
-                                       fold, gender)
+        for qnum, page, category, answer, tournaments, naqt, protobowl, fold,in c:
+            questions[qnum] = Question(qnum, answer, category, naqt, protobowl,
+                                       tournaments, page, fold)
 
         for q in self.expo_questions:
             questions[q.qnum] = q
@@ -167,9 +169,9 @@ class QuestionDatabase:
 
     def all_questions(self, unfiltered=False):
         if unfiltered:
-            return self.query('FROM questions', ())
+            return self.query(' FROM questions', ())
         else:
-            return self.query('FROM questions where page != ""', ())
+            return self.query(' FROM questions where page != ""', ())
 
     def answer_map(self):
         c = self._conn.cursor()
