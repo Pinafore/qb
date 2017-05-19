@@ -34,8 +34,8 @@ To execute the AWS scripts you will need to follow these steps (`brew` options a
 2. [Install Terraform 0.7.x](https://www.terraform.io/downloads.html) or run `brew install terraform`
 3. Python 3.5+: If you don't have a preferred distribution,
 [Anaconda Python](https://www.continuum.io/downloads) is a good choice
-4. Install the AWS command line tools via `pip3 install awscli`
-5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-1`
+4. Install the AWS command line tools via `pip3 install awscli`. Run `pip3 install pyhcl`
+5. Run `aws configure` to setup your AWS credentials, set default region to `us-west-2`
 6. Create an [EC2 key pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
 7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
 8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS
@@ -45,18 +45,17 @@ configuration section for a summary of how the Terraform install scripts treat t
 10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
 and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
 nodes can communicate via SSH
-11. [Install sshuttle](https://github.com/apenwarr/sshuttle/) which is used to create an SSH VPN
 
 #### What do the Packer/Terraform scripts install and configure?
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
 ##### Installed Software
 * Python 3.5
-* Apache Spark 1.6.1
+* Apache Spark 2.1.0
 * Vowpal Wabbit 8.1.1
 * Docker 1.11.1
-* Postgres
 * KenLM
+* CUDA and Nvidia drivers if using a GPU instance
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
@@ -71,14 +70,13 @@ internet.
 * SSH keys generated from `bin/generate-ssh-keys.sh` are copied to each instance. Each instance
 receives its own ssh key and all other instances have SSH access to every other instance.
 * AWS keys are copied to `/home/ubuntu/.bashrc`,
-`/home/ubuntu/dependencies/spark-1.6.1-bin-hadoop2.6/conf/spark-env.sh`, and
+`/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.6/conf/spark-env.sh`, and
 `/home/ubuntu/.aws/credentials`.
 * **Warning**: AWS keys are printed during `terraform apply`, we plan
 on fixing this, but haven't yet.
 * Configure the 2 SSD drives attached to `r3.8xlarge` instances for use
 * Clone the `Pinafore/qb` to `/ssd-c/qanta/qb` and set it as the quiz bowl root
 * Download bootstrap AWS files to get the system running faster
-* TODO: based on variables download data from latest run to continue work on.
 
 #### Run AWS/Terraform/Packer Scripts
 
@@ -135,9 +133,12 @@ scripts that Packer and Terraform run to install and configure a running qanta s
 3. `aws.tf`: Terraform configuration
 4. `terraform/`: Bash scripts and configuration scripts
 
-## Environment Variables
-The majority of QANTA configuration is done through environment variables. These are set
-appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults.
+## Configuration
+QANTA configuration is done through a combination of environment variables and the `qanta-defaults.hcl` file. These are set
+appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults. QANTA will read a `qanta.hcl`
+first if it exists, otherwise it will fall back to reading `qanta-defaults.hcl`. This is meant to allow for custom
+configuration of `qanta.hcl` after copying it via `cp qanta-defaults.hcl qanta.hcl` without having a chance for configs
+to accidentally become defaults unless that is on purpose.
 
 Reference `conf/qb-env.sh.template` for a list of available configuration variables
 
@@ -147,40 +148,19 @@ Reference `conf/qb-env.sh.template` for a list of available configuration variab
 #### Accessing Resources on EC2
 
 For security reasons, the AWS machines qanta creates are only accessible to the internet via SSH
-to the master node. To gain access to the various web UIs (Spark, Luigi, Ganglia) and other services
-running on the cluster there are three options:
+to the master node. To gain access to the various web UIs (Spark, Luigi, Tensorboard) and other services
+running on the cluster there are two options:
 
-* Create an SSH VPN with `sshuttle`. This forwards all traffic from your machine through the master
-node, and gives access to AWS internal routing
 * Create an SSH tunnel to forward specific ports on the master to localhost
 * In the EC2 Console create a security group which whitelists your IP address and add it to the
 instance
-
-`sshuttle` gets you working off the ground the fastest but routes all your traffic to AWS. SSH
-tunneling doesn't give access to everything. EC2 Security Groups is the overall most convenient
-solution since it requires only adding your custom group to the instance after it starts
-
-The reason for these security precautions is that allowing access to the Spark application master
-or the spark master web UI would in principle expose a way for an attacker to gain access to your
-AWS credentials.
-
-##### SSH VPN
-
-**Warning:** The following steps guide you through creating an SSH VPN to the master node. This
-means **all** traffic will be redirected through the master node while the SSH VPN is running. AWS
-charges for bandwidth which is outgoing from AWS so avoid downloading large files/videos to your
-machine while the VPN is active (AWS does not charge for incoming bandwidth).
-
-We recommend that before you work with Qanta that you run:
-
-`sshuttle -N -H --dns -r ubuntu@public-ip 0/0`
 
 ##### SSH Tunnel
 
 The following SSH command will forward all the important UIs running on the master node to
 `localhost`:
 
-`ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 ubuntu@instance-ip`
+`ssh -L 8080:localhost:8080 -L 4040:localhost:4040 -L 8082:localhost:8082 -L 6006:localhost:6006 ubuntu@instance-ip`
 
 This can be made easier by adding an entry like below in `~/.ssh/config`. Note that the example
 domain `example.com` is mapped to the master ip address outputed by terraform. This can be
@@ -194,6 +174,7 @@ Host qanta
   User ubuntu
   LocalForward 8082 127.0.0.1:8082
   LocalForward 8080 127.0.0.1:8080
+  LocalForward 6006 127.0.0.1:6006
 ```
 
 Now you can simply do `ssh qanta` and navigating to `localhost:8082` will access the EC2 instance.
@@ -234,6 +215,11 @@ $ python3 setup.py download
 $ make clm
 ```
 
+### Qanta on Path
+
+In addition to these steps you need to either run `python setup.py develop` or include the qanta directory in your
+`PYTHONPATH` environment variable. We intend to fix path issues in the future by fixing absolute/relative paths.
+
 ### Qanta Running Summary
 QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
 large batches of questions at a time. Running the batch pipeline is managed by
@@ -258,43 +244,6 @@ worked as expected).
 
 To rerun any part of the pipeline it is sufficient to delete the target file generated by the task
 you wish to rerun.
-
-### Running Streaming Mode
-
-**Warning: This mode is highly experimental**
-
-Again, Apache Spark needs to be running at the url specified in the environment variable
-`QB_SPARK_MASTER`.
-
-Streaming mode works by coordinating several processes to predict whether or not to buzz given line
-of text (a sentence, partial sentence, paragraph, or anything not containing a new line). The Qanta
-server is responsible for:
-* Creating a socket then waiting until a connection is established
-* The connection is established by starting an Apache Spark streaming job that binds its input to
-that socket
-* Once the connection is established the Qanta server will start streaming questions to Spark until
-its queue is empty.
-* Each question is also stored in a PostgreSQL database with a column reserved for Spark's response
-* The Qanta server will start to poll the database every 100ms to see if Spark completed all the
-questions that were queued.
-
-Spark Streaming will then do the following per input line:
-* Read the input from the socket
-* Extract all features
-* Collect the features, form a Vowpal Wabbit input line, and have VW create predictions. This
-requires that VW is running in daemon mode
-* Save the output to a PostgreSQL database
-
-Once the outputs are saved in the PostgreSQL database
-* The Qanta server reads the results and outputs the desired quantities
-
-With that high-level overview in place, here is how you start the whole system.
-
-1. Start the PostgreSQL database (Docker must be running first): `bin/start-postgres.sh`
-2. Start the Vowpal Wabbit daemon: `bin/start-vw-daemon.sh model-file.vw`
-(eg `data/models/sentence.16.vw`)
-3. Start Qanta server: `python3 cli.py qanta_stream`
-4. Start Spark Streaming job: `python3 cli.py spark_stream`
 
 ### AWS S3 Checkpoint/Restore
 
@@ -344,3 +293,134 @@ Then to finally run the expo
 ```bash
 python3 qanta/expo/buzzer.py --questions=output/expo/test.questions.csv --buzzes=output/expo/test.16.buzz --output=output/expo/competition.csv --finals=output/expo/test.16.final
 ```
+
+## Utility Templates
+
+Terraform works by reading all files ending in `.tf` within the directory that it is run. Unless the
+filename ends with `_override` it will concatenate all these files together. In the case of
+`_override` it will use the contents to override the current configuration. The combination of these
+allows for keeping the root `aws.tf` clean while adding the possibility of customizing the build.
+
+In the repository there are a number of `.tf.tftemplate` files. These are not read by terraform but
+are intended to be copied to the same filename without the `.tftemplate` extension. The extension
+merely serves to make it so that terraform by default does not read it, but to keep it in source
+control (the files ending in `.tf` are in `.gitignore`). Below is a description of these
+
+* `aws_gpu_override.tf.tftemplate`: This configures terraform to start a GPU instance instead of a
+normal instance. This instance uses a different AMI that has GPU enabled Tensorflow/CUDA/etc.
+* `aws_small_override.tf.tftemplate`: This configures terraform to use a smaller CPU instance than the
+default r3.8xlarge
+* `naqt_db.tf.tftemplate`: Configure qanta to use the private NAQT dataset
+* `eip.tf.template`: Configure terraform to add a pre-made elastic IP to the instance
+
+# Page Assignment and Data Ingestion
+
+We use Wikipedia as our inventory of possible answers.  Because we
+also use questions for training data, we need to map individual
+questions to Wikipedia pages.  We have three systems for doing this
+(the code that does the mapping lives in ingestion/create_db.py, which
+produces a database of questions based on protobowl and NAQT input).
+
+As per our agreement with NAQT, we cannot distribute the NAQT data,
+but we include the ingestion code in the interest of scientific transparency.
+
+## Unambiguous Page Assignments
+
+These are the easiest pages to handle.  Given an answer string to a quiz bowl question, we directly map it to a Wikipedia page.
+
+Unambiguous pages are unambiguous on the Wikipedia side.  There can be multiple answer lines associated with an answer:
+ * adlai e stevenson ii    Adlai Stevenson II
+ * adlai e stevenson jr    Adlai Stevenson II
+ * adlai ewingstevensonii  Adlai Stevenson II
+ * adlai stevenson ii      Adlai Stevenson II
+ * buddha	Gautama Buddha
+ * buddha or siddhartha gautama	Gautama Buddha
+ * buddhism	Buddhism
+
+However, some answers should not be in this list
+ * byte	Byte
+ * buffer	Buffer solution
+ * britain	Battle of Britain
+
+## Easy Ambiguous Page Assignments
+
+Often, the same answer string can refer to multiple Wikipedia
+entities.  If we can use words in the question to easily differentiate
+them, then the page assignment can be done automatically.
+
+For instance "Java" can refer to an island in Indonesia or a
+programming language.
+* java	Java	island
+* java	Java (programming language)	language
+
+Unlike above, where there were only two fields in our tab delimited
+file, there are now three fields.  The first two fields are the same;
+the last is a word that, if it appears in the question, says that the
+question should be assigned to the page.
+
+
+Sometimes there's a reasonable default answer.  For
+example, most questions with the answer "Paris" will be about the city
+in France.  However, there are also many questions about "Paris
+(mythology)".  In this case, we create a rule
+* paris	Paris (mythology)	aphrodite
+* paris	Paris
+
+If it finds a question with "Paris" as the answer line and the workd
+"aphrodite" in the question, it will assign the question to "Paris
+(mythology)".  Every other question, however, will be assigned to
+"Paris" (the city).
+
+We do not use ambiguous page assignments for closely related concepts
+for example, "Orion (mythology)" and "Orion (constellation)" are so
+tightly coupled that individual words cannot separate the concepts.
+These cases have to be resolved individually for questions.
+
+## Specific Question Assignments
+
+If the above approaches cannot solve page assignments, then the last
+resort is to explicitly assign questions to pages based on either
+Protobowl or NAQT id.  These files have four fields but only use the
+first three.
+
+# Wikipedia Dumps
+
+As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
+dumps created on 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/
+
+Of these we use the following
+
+* [Wikipedia page text](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-pages-articles-multistream.xml.bz2): This is used to get the text, title, and id of wikipedia pages
+* [Wikipedia titles](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-all-titles.gz): This is used for more convenient access to wikipedia page titles
+* [Wikipedia redirects](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-redirect.sql.gz): DB dump for wikipedia redirects, used for resolving different ways of referencing the same wikipedia entity
+* [Wikipedia page to ids](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-page.sql.gz): Contains a mapping of wikipedia page and ids, necessary for making the redirect table useful
+
+NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
+
+## Wikipedia Redirect Mapping Creation
+
+All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps. For this task we will need these tables:
+
+* Redirect table: https://www.mediawiki.org/wiki/Manual:Redirect_table
+* Page table: https://www.mediawiki.org/wiki/Manual:Page_table
+* The namespace page is also helpful: https://www.mediawiki.org/wiki/Manual:Namespace
+
+To install, prepare MySQL, and read in the Wikipedia SQL dumps execute the following:
+
+1. Install MySQL `sudo apt-get install mysql-server` and `sudo mysql_secure_installation`
+2. Login with something like `mysql --user=root --password=something`
+3. Create a database and use it with `create database wikipedia;` and `use wikipedia;`
+4. `source enwiki-20170401-redirect.sql;` (in MySQL session)
+5. `source enwiki-20170401-page.sql;` (in MySQL session)
+6. This will take quite a long time, so wait it out...
+7. Finally run the query to fetch the redirect mapping and write it to a CSV by executing `bin/redirect.sql` with `source bin/redirect.sql`. The file will be located in `/var/lib/mysql/redirect.csv` which requires `sudo` access to copy
+8. The result of that query is CSV file containing a source page id, source page title, and target page title. This can be
+interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
+
+These references may be useful and are the source for these instructions:
+
+* https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
+* https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
+* http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
+=======
+>>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300

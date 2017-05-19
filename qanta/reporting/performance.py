@@ -13,8 +13,14 @@ from fn import _
 
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
-from qanta.util.qdb import QuestionDatabase
+from qanta import logging
+from qanta.datasets.quiz_bowl import QuestionDatabase, QuizBowlDataset
+from qanta.preprocess import format_guess
+from qanta.util.io import safe_path
+
+log = logging.get(__name__)
 
 
 class Answer(Enum):
@@ -40,8 +46,8 @@ Line = namedtuple('Line',
                   ['question', 'sentence', 'token', 'buzz', 'guess', 'answer', 'all_guesses'])
 ScoredGuess = namedtuple('ScoredGuess', ['score', 'guess'])
 
-SUMMARY_REGEX = re.compile(r'.*sentence\.([0-9]+)\.json')
-ANSWER_REGEX = re.compile(r'.*sentence\.([0-9]+)\.([\-a-z]+)\.answer\.json')
+SUMMARY_REGEX = re.compile(r'test\.json')
+ANSWER_REGEX = re.compile(r'test\.([-+\a-z]+)\.json')
 
 
 def load_predictions(pred_file: str) -> Sequence:
@@ -55,7 +61,7 @@ def load_predictions(pred_file: str) -> Sequence:
                 question, sentence, token = [int(x) for x in tokens[1].split('_')]
             return Prediction(score, question, sentence, token)
         except Exception:
-            print("Error parsing line: {0}".format(line))
+            log.info("Error parsing line: {0}".format(line))
             raise
     return seq.open(pred_file).map(parse_line)
 
@@ -87,7 +93,7 @@ def load_data(pred_file: str, meta_file: str, q_db: QuestionDatabase) -> Sequenc
             st_lines.append(Line(
                 question, st[0], st[1],
                 scored_guesses[0].score > 0,
-                scored_guesses[0].guess, answers[question],
+                scored_guesses[0].guess, format_guess(answers[question]),
                 scored_guesses
             ))
         return question, st_lines
@@ -96,7 +102,7 @@ def load_data(pred_file: str, meta_file: str, q_db: QuestionDatabase) -> Sequenc
         prediction = pm[0]
         meta = pm[1]
         if prediction.question is None or prediction.token is None or prediction.sentence is None:
-            print("WARNING: Prediction malformed, fixing with meta line: {0}".format(prediction))
+            log.info("WARNING: Prediction malformed, fixing with meta line: {0}".format(prediction))
             prediction = Prediction(prediction.score, meta.question, meta.sentence, meta.token)
         assert meta.question == prediction.question
         assert meta.sentence == prediction.sentence
@@ -110,12 +116,22 @@ def load_data(pred_file: str, meta_file: str, q_db: QuestionDatabase) -> Sequenc
         .map(create_line)
 
 
-def load_audit(audit_file: str):
+def load_audit(audit_file: str, meta_file: str):
     audit_data = {}
-    with open(audit_file) as f:
-        for line in f:
-            qid, evidence = line.split('\t')
-            audit_data[qid.strip()] = evidence.strip()
+    with open(audit_file) as audit_f, open(meta_file) as meta_f:
+        for a_line, m_line in zip(audit_f, meta_f):
+            qid, evidence = a_line.split('\t')
+            a_qnum, a_sentence, a_token = qid.split('_')
+            a_qnum = int(a_qnum)
+            a_sentence = int(a_sentence)
+            a_token = int(a_token)
+            m_qnum, m_sentence, m_token, guess = m_line.split()
+            m_qnum = int(m_qnum)
+            m_sentence = int(m_sentence)
+            m_token = int(m_token)
+            if a_qnum != m_qnum or a_sentence != m_sentence or a_token != m_token:
+                raise ValueError('Error occurred in audit and meta file alignment')
+            audit_data[(a_qnum, a_sentence, a_token, guess)] = evidence.strip()
         return audit_data
 
 
@@ -169,29 +185,26 @@ def compute_statistics(questions: Dict[int, Answer]) -> Sequence:
 
 def parse_data(stats_dir):
     def parse_file(file):
-        weight = None
         experiment = None
         base_file = path.basename(file)
         m = SUMMARY_REGEX.match(base_file)
         if m:
-            weight = int(m.group(1))
-            experiment = 'summary'
+            experiment = 'all features'
         m = ANSWER_REGEX.match(base_file)
         if m:
-            weight = int(m.group(1))
-            experiment = m.group(2)
-        if weight is None or experiment is None:
-            raise ValueError('Incorrect file name argument')
+            experiment = m.group(1)
+        if experiment is None:
+            raise ValueError('Incorrect file name argument: {}'.format(base_file))
         with open(file) as f:
             data = json.load(f)
             return seq(data.items()).map(lambda kv: {
                 'experiment': experiment,
-                'weight': weight,
                 'result': kv[0].replace('Answer.', ''),
                 'score': kv[1]
             })
 
-    rows = seq(glob(path.join(stats_dir, '*.json'))).flat_map(parse_file).to_pandas()
+    rows = seq(glob(path.join(stats_dir, 'test*.json')))\
+        .sorted().flat_map(parse_file).to_pandas()
     return rows
 
 
@@ -200,33 +213,41 @@ def cli():
     pass
 
 
-@cli.command()
-@click.argument('stats_dir')
-@click.argument('output')
-def plot(stats_dir, output):
+def plot_summary(summary_only, stats_dir, output):
     import seaborn as sns
     rows = parse_data(stats_dir)
-    g = sns.factorplot(y='result', x='score', row='experiment', col='weight',
-                       data=rows, kind='bar', orient='h', ci=None, margin_titles=True,
-                       order=ANSWER_PLOT_ORDER, size=10)
-    g.savefig(output, format='png')
+    g = sns.factorplot(y='result', x='score', col='experiment',
+                       data=rows, kind='bar', ci=None,
+                       order=ANSWER_PLOT_ORDER, size=4, col_wrap=4, sharex=False)
+    for ax in g.axes.flat:
+        for label in ax.get_xticklabels():
+            label.set_rotation(30)
+    plt.subplots_adjust(top=0.93)
+    g.fig.suptitle('Feature Ablation Study')
+    g.savefig(output, format='png', dpi=200)
 
 
 @cli.command()
-@click.option('--min-count', default=5)
-@click.option('--qdb', default='data/internal/non_naqt.db')
+@click.option('--summary-only', is_flag=False)
+@click.argument('stats_dir')
+@click.argument('output')
+def plot(summary_only, stats_dir, output):
+    plot_summary(summary_only, stats_dir, output)
+
+
+@cli.command()
+@click.option('--min-count', default=1)
 @click.argument('pred_file')
 @click.argument('meta_file')
 @click.argument('output')
-def generate(min_count, qdb, pred_file, meta_file, output):
-    database = QuestionDatabase(qdb)
+def generate(min_count,  pred_file, meta_file, output):
+    database = QuestionDatabase()
     data = load_data(pred_file, meta_file, database)
-    dan_answers = set(database.page_by_count(min_count=min_count, exclude_test=True))
+    dan_answers = set(database.page_by_count(min_count, True))
     answers = compute_answers(data, dan_answers)
     stats = compute_statistics(answers).cache()
-    stats.to_json(output, root_array=False)
-    pp = pprint.PrettyPrinter()
-    pp.pprint(stats)
+    stats.to_json(safe_path(output), root_array=False)
+    pprint.pprint(stats)
 
 
 if __name__ == '__main__':

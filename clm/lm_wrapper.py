@@ -8,14 +8,15 @@
 # Implement guesser interface
 
 from collections import defaultdict
+import zlib
+import gzip
 import time
 import ctypes
 
 from unidecode import unidecode
-from nltk import ngrams
+from nltk import ngrams, bigrams
 
 from qanta import logging
-from qanta.util.build_whoosh import text_iterator
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, QB_STOP_WORDS, \
     MIN_APPEARANCES, CLM_ORDER, CLM_COMPARE, CLM_VOCAB, \
@@ -32,13 +33,77 @@ else:
     from trie import Sentence
 
 from lm_base import LanguageModelBase
+from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION
+from qanta.config import conf
+from qanta.preprocess import format_guess
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.util.environment import data_path
+from qanta.util.constants import COUNTRY_LIST_PATH
+
+from clm import clm
 from qanta.util.io import safe_open
 
 log = logging.get(__name__)
 
 kLEFT_PAD = '<s>'
 
+kMAX_TEXT_LENGTH = 5000
 
+
+def text_iterator(use_wiki, wiki_location,
+                  use_qb, qb_location,
+                  use_source, source_location,
+                  limit=-1,
+                  min_pages=0, country_list=COUNTRY_LIST_PATH):
+    qdb = QuestionDatabase()
+    doc_num = 0
+
+    cw = CachedWikipedia(wiki_location, data_path(country_list))
+    pages = qdb.questions_with_pages()
+
+    for p in sorted(pages, key=lambda k: len(pages[k]), reverse=True):
+        # This bit of code needs to line up with the logic in qdb.py
+        # to have the same logic as the page_by_count function
+        if len(pages[p]) < min_pages:
+            continue
+
+        if use_qb:
+            train_questions = [x for x in pages[p] if x.fold == "train"]
+            question_text = "\n".join(" ".join(x.raw_words()) for x in train_questions)
+        else:
+            question_text = ''
+
+        if use_source:
+            filename = '%s/%s' % (source_location, p)
+            if os.path.isfile(filename):
+                try:
+                    with gzip.open(filename, 'rb') as f:
+                        source_text = f.read()
+                except zlib.error:
+                    log.info("Error reading %s" % filename)
+                    source_text = ''
+            else:
+                source_text = ''
+        else:
+            source_text = u''
+
+        if use_wiki:
+            wikipedia_text = cw[p].content
+        else:
+            wikipedia_text = u""
+
+        total_text = wikipedia_text
+        total_text += "\n"
+        total_text += question_text
+        total_text += "\n"
+        total_text += str(source_text)
+
+        yield p, total_text
+        doc_num += 1
+
+        if 0 < limit < doc_num:
+            break
 
 
 def pretty_debug(name, result, max_width=10):
@@ -182,9 +247,9 @@ class LanguageModelReader(LanguageModelBase):
             self._lm.add_stop(i)
 
         # Load comparisons language model
-        for i in [x for x in self._corpora if x.startswith("compare")]:
-            self._loaded_lms.add(self._corpora[i])
-            filename = "%s/%i" % (self._datafile, self._corpora[i])
+        for ii in [x for x in self._corpora if x.startswith("compare")]:
+            self._loaded_lms.add(self._corpora[ii])
+            filename = "%s/%i" % (self._datafile, self._corpora[ii])
             log.info("reading %s" % filename)
             self._lm.read_counts(filename)
 
@@ -397,6 +462,8 @@ class LanguageModelWriter(LanguageModelBase):
 def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
               max_pages=-1):
     log.info("Training LM with pages appearing %i times" % MIN_APPEARANCES)
+    min_appearances = conf['clm']['min_appearances']
+    log.info("Training language model with pages that appear more than %i times" % min_appearances)
 
     lm = LanguageModelWriter(vocab_size, global_lms, CLM_ORDER)
     num_docs = 0
@@ -406,10 +473,10 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
                                      True, QB_QUESTION_DB,
                                      True, QB_SOURCE_LOCATION,
                                      max_pages,
-                                     min_pages=MIN_APPEARANCES):
+                                     min_pages=min_appearances):
         num_docs += 1
         if num_docs % 500 == 0:
-            log.info("{} {}".format(unidecode(title), num_docs))
+            log.info("{} {}".format(title, num_docs))
             log.info(str(list(lm.tokenize_without_censor(text[100:200]))))
 
         for tt in lm.tokenize_without_censor(text):
@@ -435,7 +502,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=CLM_VOCAB, global_lms=CLM_COMPARE,
                                          qb, QB_QUESTION_DB,
                                          source, QB_SOURCE_LOCATION,
                                          max_pages,
-                                         min_pages=MIN_APPEARANCES):
+                                         min_pages=min_appearances):
             doc_num += 1
             if doc_num % 500 == 0 or time.time() - start > 10:
                 log.info("Adding train doc %i, %s (%s)" %

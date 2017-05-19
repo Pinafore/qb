@@ -1,10 +1,11 @@
 # Script to generate different configurations of LM, train an sklearn
 # classifier, then compare the results
 
-from lm_wrapper import LanguageModelReader, LanguageModelBase, pretty_debug
+from clm.lm_wrapper import LanguageModelReader, LanguageModelBase, pretty_debug
 from csv import DictReader
 from collections import defaultdict
-from math import floor
+from math import floor, exp
+from random import random
 
           # feature: start, min, max, increment
 kFEATS = {"interp": (0.8, 0.0, 1.0, 0.05),
@@ -33,7 +34,7 @@ class Parameters:
         current = self._vals[feature]
 
         delta = self._delta[feature]
-        if delta == "bool"
+        if delta == "bool":
             return not current
         elif isinstance(delta, int):
             return floor(current + (2 * delta) * (0.5 - random()) + 1)
@@ -58,6 +59,7 @@ def build_dataset(lm, db, min_appearances, restrict_frequent=True, seed=1701):
     
         
 def score(lm, train, test):
+    pass
     # generate features from the dataset
 
     # train a classifier on train fold
@@ -76,6 +78,9 @@ if __name__ == "__main__":
     old_score = 0.0
     temperature = 1.0
     params = Parameters(kFEATS)
+    train = None
+    test = None
+    flags = None
     for ii in range(flags.num_passes):
         for ff in kFEATS:
             old = params.propose_new(ff)
@@ -86,5 +91,6 @@ if __name__ == "__main__":
 
             temperature *= flags.schedule
 
-            if logistic(new_score) * temperature > random()
+            if logistic(new_score) * temperature > random():
+                pass
     

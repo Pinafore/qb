@@ -2,9 +2,7 @@ seaborn
 matplotlib
 scipy
 numpy
-unidecode
 wikipedia
-whoosh
 nltk
 scikit-learn
 regex
@@ -28,3 +26,4 @@ boto3
 pypandoc
 slacker
 pyhcl
+chainer

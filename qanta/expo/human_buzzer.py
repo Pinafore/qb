@@ -72,7 +72,7 @@ def present_question(question, state, events, player=-1):
         while not tossup in kALLOWABLE_TOSSUP:
             print("Tossup %i result [%s]:" % (question, kALLOWABLE_TOSSUP),
                   end='')
-            tossup = interpret_keypress(kALLOWABLE_TOSSUP)
+            tossup = interpret_keypress()
 
         if tossup == "P":
             tossup = 15
@@ -108,7 +108,7 @@ def present_question(question, state, events, player=-1):
             while not bonus in kALLOWABLE_BONUS:
                 print("Bonus %i result [%s]:" % (question, kALLOWABLE_BONUS),
                       end='')
-                bonus = interpret_keypress(kALLOWABLE_BONUS)
+                bonus = interpret_keypress()
 
             if bonus == "Z":
                 events[(question, player, "BONUS")] = 0

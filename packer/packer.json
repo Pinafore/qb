@@ -6,16 +6,17 @@
       "source_ami": "ami-746aba14",
       "instance_type": "m4.xlarge",
       "ssh_username": "ubuntu",
-      "ami_name": "qanta {{timestamp}}",
+      "ami_name": "qanta-cpu {{timestamp}}",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
-          "volume_size": 25,
+          "volume_size": 50,
+          "volume_type": "gp2",
           "delete_on_termination": true
         }
       ],
       "tags": {
-        "Image": "qanta"
+        "Image": "qanta-cpu"
       }
     }
   ],
@@ -58,10 +59,6 @@
     },
     {
       "type": "shell",
-      "script": "bin/install-xgboost.sh"
-    },
-    {
-      "type": "shell",
       "script": "bin/install-tensorflow.sh"
     },
     {
@@ -79,7 +76,7 @@
     {
       "type": "file",
       "source": "conf/spark-defaults.conf",
-      "destination": "/home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-defaults.conf"
+      "destination": "/home/ubuntu/dependencies/spark-2.1.0-bin-hadoop2.7/conf/spark-defaults.conf"
     },
     {
       "type": "file",
