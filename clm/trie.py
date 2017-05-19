@@ -11,6 +11,7 @@ from qanta.util.constants import CLM_INT_WORDS
 
 log = logging.get(__name__)
 
+
 class Sentence:
     def __init__(self, max_length):
         self._max = max_length
@@ -23,10 +24,10 @@ class Sentence:
         assert key < self._max, "%i out of range (%i)" % (key, self._max)
         return self._data[key]
 
-    
 
 class TrieLanguageModel(LanguageModelBase):
     def __init__(self, order=3, start_index=2):
+        LanguageModelBase.__init__(self, order)
         self._compare = {}
         self._subtotals = {}
         self._contexts = {}
@@ -40,7 +41,6 @@ class TrieLanguageModel(LanguageModelBase):
         self._censor_slop = True
         self._give_score = True
         self._log_length = True
-        self._stopwords = set()
         self._start_index = start_index
         self._vocab = {}
 
@@ -49,14 +49,14 @@ class TrieLanguageModel(LanguageModelBase):
         assert self._start_index <= order, \
             "index (%i) greater than than order (%i)" % (start_index, order)
 
-    def add_count(self, corpus, ngram, count=1):
+    def add_count(self, corpus, ngram, count=1, propagate=True):
         assert len(ngram) == self._order, "Count %s wrong length (%i)" % \
           (str(ngram), self._order)
 
         if corpus not in self._contexts:
             self._contexts[corpus] = {}
             self._subtotals[corpus] = defaultdict(int)
-            
+
         context = self._contexts[corpus]
         last_index = 0
         for ii in range(self._start_index, self._order + 1):
@@ -66,12 +66,13 @@ class TrieLanguageModel(LanguageModelBase):
             context = context[prefix]
             last_index = ii
 
-        for ii in range(self._order + 1):
-            self._subtotals[corpus][ngram[0:ii]] += count
+        if propagate:
+            for ii in range(self._order + 1):
+                self._subtotals[corpus][ngram[0:ii]] += count
 
     def feature(self, name, corpus, sentence, length):
         compare = self._compare[corpus]
-        
+
         span_length = 0
         num_spans = 0
         max_length = 0
@@ -82,69 +83,69 @@ class TrieLanguageModel(LanguageModelBase):
         history = []
         slop_count = self._slop
         # end of counters for keeping track of spans
-        
+
         index = 0
         res = []
         for ngram in ngrams(sentence, self._order):
-             # trim history if it's too long
-             if len(history) > self._max_span:
-                 history = history[1:]
+            # trim history if it's too long
+            if len(history) > self._max_span:
+                history = history[1:]
 
-             # output the history if we've seen enough
-             if len(history) > self._min_span:
-                 if CLM_INT_WORDS:
+            # output the history if we've seen enough
+            if len(history) > self._min_span:
+                if CLM_INT_WORDS:
                     tokens = "_".join(str(x) for x in history)
-                 else:
+                else:
                     tokens = "_".join(self._vocab[x] for x in history)
-                    
-                 if self._score:
-                     score = self.log_ratio(corpus, compare, history)
-                     res.append("%s:%0.2f" % (tokens, score))
-                 else:
+
+                if self._score:
+                    score = self.log_ratio(corpus, compare, history)
+                    res.append("%s:%0.2f" % (tokens, score))
+                else:
                     res.append("_".join(str(x) for x in history))
-                 
-             seen = self.count(corpus, ngram)
 
-             if seen > 0 and len(history) == 0:
-                 num_spans += 1
-                 span_length += 1
-                 start = index
-                 history = list(ngram)
-             elif seen > 0 and len(history) > 0:
-                 span_length += 1
-                 history.append(ngram[-1])
-             elif seen == 0 and len(history) > 0 and slop_count > 0:
-                 slop_count -= 1
-                 if self._censor_slop:
-                     history.append(QB_LM_SLOP)
-                 else:
-                     history.append(ngram[-1])
-             elif seen == 0 and slop_count == 0:
-                 max_length = max(index - start, max_length)
-                 history = []
-                 slop_count = self._slop
+            seen = self.count(corpus, ngram)
 
-             # Increment the index for keeping track of longest span
-             index += 1
+            if seen > 0 and len(history) == 0:
+                num_spans += 1
+                span_length += 1
+                start = index
+                history = list(ngram)
+            elif seen > 0 and len(history) > 0:
+                span_length += 1
+                history.append(ngram[-1])
+            elif seen == 0 and len(history) > 0 and slop_count > 0:
+                slop_count -= 1
+                if self._censor_slop:
+                    history.append(QB_LM_SLOP)
+                else:
+                    history.append(ngram[-1])
+            elif seen == 0 and slop_count == 0:
+                max_length = max(index - start, max_length)
+                history = []
+                slop_count = self._slop
+
+            # Increment the index for keeping track of longest span
+            index += 1
 
         if self._score:
             res.append("%s-PROB:%f" % (name, self.log_ratio(corpus, compare, sentence)))
             res.append("%s-MAXPROB:%f" % (name, max_prob))
-            
+
         res.append("%s-LEN:%i" % (name, max_length))
         res.append("%s-SPAN:%i" % (name, span_length / float(length)))
         res.append("%s-HITS:%i" % (name, num_spans))
         if self._log_length:
             res.append("%s-LGLEN:%f" % (name, log(max_length)))
         return " ".join(res)
-            
+
     def corpora(self):
         for ii in self._subtotals:
             yield ii
-            
+
     def num_corpora(self):
         return len(self._subtotals)
-            
+
     def count(self, corpus, ngram):
         return self._subtotals[corpus][ngram]
 
@@ -154,16 +155,14 @@ class TrieLanguageModel(LanguageModelBase):
         return self._subtotals[corpus][ngram[:-1]]
 
     def read_vocab(self, filename):
-        """
-        This function doesn't actually do anything, but is included to match C API
-        """
         with open(filename) as infile:
+            # read number corpora even though we don't need it
             num_corpora = infile.readline()
             num_words = infile.readline()
 
             for ii in range(int(num_words)):
                 self._vocab[ii] = infile.readline().strip()
-    
+
     def jm(self, corpus, ngram, theta=None):
         if theta is None:
             theta = self._jm
@@ -184,12 +183,15 @@ class TrieLanguageModel(LanguageModelBase):
                 val += self.kn(corpus, ii)
                 val -= self.kn(compare, ii)
         return val
-    
+
     def add_stop(self, word):
         self._stopwords.add(word)
-            
+
     def mle(self, ngram):
         return self.count(ngram) / self.total(ngram)
+
+    def compare(self, corpus):
+        return self._compare[corpus]
 
     def set_compare(self, corpus, compare):
         self._compare[corpus] = compare
@@ -199,16 +201,18 @@ class TrieLanguageModel(LanguageModelBase):
         Write the LM to a text file
         """
 
-        full_contexts = dict((x, y) for x, y in self._subtotals[corpus_name].items() 
+        full_contexts = dict((x, y) for x, y
+                             in self._subtotals[corpus_name].items()
                              if len(x) == self._order)
-        outfile.write("%i %i %s\n" % (corpus_id, len(full_contexts), corpus_name))
+        outfile.write("%i %i %s\n" % (corpus_id, len(full_contexts),
+                                      corpus_name))
         lines_written = 0
         for context, count in sorted(full_contexts.items(), reverse=True,
                                      key=lambda x: (x[1], len(x[0]))):
             lines_written += 1
             context_string = " ".join(str(x) for x in context)
             outfile.write("%i\t%s\n" % (count, context_string))
-        assert lines_written==len(full_contexts), "Wrong number contexts"
+        assert lines_written == len(full_contexts), "Wrong number contexts"
         return lines_written
 
     def set_jm_interpolation(self, val):
@@ -217,17 +221,27 @@ class TrieLanguageModel(LanguageModelBase):
     # TODO(jbg): The testing inferface expects to be able to read
     # counts as a string.  However, the C API expects to get a
     # filename.
-    def read_counts(self, filename):
+    def read_counts(self, filename, corpus=-1, unique=False):
         """
-        Read the language model from a file
+        Read the language model from a file.  Unless @param corpus is not
+        -1, it will get corpus id from the file.  Unless @param unique
+        is True, will read the true counts from file.  If unique is
+        true, it will give all ngrams a count of 1.
+
         """
 
         num_contexts = -1
         with open(filename, 'r') as infile:
             for ii in infile:
                 if num_contexts < 0:
-                    # Header line
-                    corpus = int(ii.split()[0])
+                    # Header line tells us the corpus; we ignore it if
+                    # the argument to function specified which corpus
+                    # ID this should get (used to merge corpora
+                    # together for guesser)
+                    if corpus == -1:
+                        corpus = int(ii.split()[0])
+                        assert self._corpora[corpus] == corpus
+                        assert corpus == ii.split()[-1]
                     num_contexts = int(ii.split()[1])
                     assert num_contexts > 0, "Empty language model"
                 else:
@@ -235,7 +249,10 @@ class TrieLanguageModel(LanguageModelBase):
                     fields = [int(x) for x in ii.split()]
                     ngram = tuple(fields[1:])
                     assert len(ngram) == self._order, "Bad line %s" % ii
-                    self.add_count(corpus, ngram, fields[0])
+                    if unique:
+                        self.add_count(corpus, ngram, 1)
+                    else:
+                        self.add_count(corpus, ngram, fields[0])
         return num_contexts
 
     def next_word(self, corpus, ngram):
@@ -246,13 +263,9 @@ class TrieLanguageModel(LanguageModelBase):
         if len(ngram) < self._start_index:
             return {}
         else:
-            context = self._contexts[corpus][ngram[:self._start_index]]
+            context = self._contexts.get(ngram[:self._start_index], {})
         for ii in ngram[self._start_index:self._order]:
-            if ii in context:
-                context = context[ii]
-            else:
-                context = {}
-                break
+            context = context.get(ii, {})
         return context
 
     def set_slop(self, val):
@@ -271,7 +284,7 @@ class TrieLanguageModel(LanguageModelBase):
         self._score = val
 
     def set_min_start_rank(self, val):
-        self._min_start_rank = val                
+        self._min_start_rank = val
 
     def set_min_span(self, val):
         self._min_span = val
@@ -280,8 +293,9 @@ class TrieLanguageModel(LanguageModelBase):
         self._max_span = val
 
     def set_unigram_smooth(self, val):
-        self._unigram_smooth = val             
-                
+        self._unigram_smooth = val
+
+
 if __name__ == "__main__":
     tlm = TrieLanguageModel(3)
 

@@ -39,6 +39,10 @@ CLM_END_TOK = "</S>"
 CLM_SLOP_TOK = "<SLOP>"
 CLM_INT_WORDS = False
 CLM_USE_C_VERSION = False
+# how many pages can a phrase be in before we ignore it for guessing?
+CLM_MAX_GLOBAL_GUESS = 25
+# how many times must we see a phrase in a page before we use it for guessing?
+CLM_MIN_LOCAL_GUESS = 2
 
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
