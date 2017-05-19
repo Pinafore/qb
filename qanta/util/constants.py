@@ -55,15 +55,9 @@ COMPARE_GUESSER_REPORT_PATH = 'output/guesser/guesser_comparison_report_{}.pdf'
 PRED_TARGET = 'output/predictions/{0}.pred'
 META_TARGET = 'output/vw_input/{0}.meta'
 
-<<<<<<< HEAD
-EXPO_QUESTIONS = 'data/internal/expo.csv'
-EXPO_BUZZ = 'output/expo/{}.{}.buzz'
-EXPO_FINAL = 'output/expo/{}.{}.final'
-=======
 EXPO_BUZZ = 'output/expo/{}.buzz'
 EXPO_FINAL = 'output/expo/{}.final'
 EXPO_QUESTIONS = 'output/expo/{}.questions.csv'
->>>>>>> 10fe75cba4427b5457cbdcf1ea34263b1c5d3a16
 
 KEN_LM = 'output/kenlm.binary'
 
