@@ -265,7 +265,6 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
         # print(output)
 
     ##### plot lines #####
-    his_lines_dir = os.path.join(save_dir, 'his_{}_lines.png'.format(fold))
     lines = []
 
     fig, ax = plt.subplots()
@@ -275,11 +274,11 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
 
     ax.set_xticks(HISTO_RATIOS)
     plt.legend(handles=lines)
-    plt.savefig(his_lines_dir, dpi=200, format='png')
+    his_lines_dir = os.path.join(save_dir, 'his_{}_lines.pdf'.format(fold))
+    plt.savefig(his_lines_dir, bbox_inches='tight')
     plt.close()
 
     ##### plot stacked area chart #####
-    his_stacked_dir = os.path.join(save_dir, 'his_{}_stacked.png'.format(fold))
     plt.plot([],[],color='c', alpha=0.5, label='correct_hopeful')
     plt.plot([],[],color='y', alpha=0.5, label='nobuzz_hopeful')
     plt.plot([],[],color='r', alpha=0.5, label='wrong_hopeful')
@@ -292,7 +291,8 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
             _his_stats['correct_hopeless'],
             colors=['c', 'y', 'r', 'm', 'g'], alpha=0.5)
     plt.legend()
-    plt.savefig(his_stacked_dir, dpi=200, format='png')
+    his_stacked_dir = os.path.join(save_dir, 'his_{}_stacked.pdf'.format(fold))
+    plt.savefig(his_stacked_dir, bbox_inches='tight')
     plt.close()
 
     if variables is not None:
@@ -337,8 +337,8 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     ax.set_xticklabels(config_names)
 
     plt.grid()
-    rush_late_dir = os.path.join(save_dir, 'rush_late_{}.png'.format(fold))
-    plt.savefig(rush_late_dir, format='png')
+    rush_late_dir = os.path.join(save_dir, 'rush_late_{}.pdf'.format(fold))
+    plt.savefig(rush_late_dir, bbox_inches='tight')
     plt.close()
 
     ##### plot choose best and choose hopeful #####
@@ -358,8 +358,8 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     ax.set_xticklabels(config_names)
 
     plt.grid()
-    choice_dir = os.path.join(save_dir, 'choose_{}.png'.format(fold))
-    plt.savefig(choice_dir, format='png')
+    choice_dir = os.path.join(save_dir, 'choose_{}.pdf'.format(fold))
+    plt.savefig(choice_dir, bbox_inches='tight')
     plt.close()
 
     if variables is not None:
