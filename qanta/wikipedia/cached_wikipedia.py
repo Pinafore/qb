@@ -10,12 +10,12 @@ from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import COUNTRY_LIST_PATH
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
-from qanta.preprocess import format_guess
 from qanta.config import conf
 
 log = logging.get(__name__)
 
 COUNTRY_SUB = ["History of ", "Geography of "]
+
 
 class WikipediaPage:
     def __init__(self, title, content, links=set(), categories=set(), wiki_id=None, url=None):
@@ -25,6 +25,7 @@ class WikipediaPage:
         self.links = links
         self.categories = categories
         self.url = url
+
 
 def access_page(title, cached_wiki):
     # accessing the page forces it to fetch from wikipedia if it isn't
@@ -56,7 +57,7 @@ def web_initialize_file_cache(path):
     cw = CachedWikipedia(path)
     pool = Pool()
 
-    input_data = [(format_guess(title), cw) for title in pages.keys()]
+    input_data = [(title, cw) for title in pages.keys()]
     pool.starmap(access_page, input_data)
 
 

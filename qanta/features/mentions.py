@@ -13,7 +13,6 @@ from qanta.util.environment import data_path
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta import logging
-from qanta.preprocess import format_guess
 
 from clm.lm_wrapper import kTOKENIZER, LanguageModelBase
 import warnings
@@ -44,7 +43,7 @@ def build_lm_data(output):
     with open(output, 'w') as o:
         dataset = QuizBowlDataset(1)
         training_data = dataset.training_data()
-        train_pages = {format_guess(g) for g in training_data[1]}
+        train_pages = {g for g in training_data[1]}
         for i, page in enumerate(train_pages):
             content = cw[page].content
             for sentence in nltk.sent_tokenize(content):
@@ -154,7 +153,7 @@ class Mentions(AbstractFeatureExtractor):
         """
         answer_list = {ans for ans in QuizBowlDataset(1).training_data()[1]}
         for raw_answer in answer_list:
-            page = format_guess(raw_answer)
+            page = raw_answer
             ans = raw_answer.split("_(")[0].lower()
             answer_words = ans.split()
             if len(answer_words) > 1:

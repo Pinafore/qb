@@ -1,9 +1,6 @@
 import pickle
 import click
-import re
-from nltk.corpus import stopwords
 from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.preprocess import format_guess
 
 
 @click.group()
@@ -34,10 +31,10 @@ def preprocess_titles():
     # stop_words = set(stopwords.words('english'))
     titles_file = open('data/titles-sorted.txt')
     db = QuestionDatabase()
-    pages = {format_guess(page) for page in db.questions_with_pages().keys()}
+    pages = {page for page in db.questions_with_pages().keys()}
     with open('data/processed-titles-sorted.txt', 'w') as f:
         for line in titles_file:
-            page = format_guess(line.strip().lower())
+            page = line.strip()
             # if len(page) > 2 and re.match(r"^[a-zA-Z0-9_()']+$", page)\
             #         and page not in stop_words and page[0].isalnum():
             if page in pages:

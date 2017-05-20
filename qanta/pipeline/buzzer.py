@@ -1,4 +1,3 @@
-import os
 import luigi
 from argparse import Namespace
 from luigi import LocalTarget, Task, WrapperTask
@@ -16,8 +15,7 @@ from qanta.buzzer.util import merge_dfs
 class MergeGuesserDFs(Task):
 
     def output(self):
-        return [LocalTarget(AbstractGuesser.guess_path(bc.GUESSES_DIR, fold)) \
-                for fold in c.BUZZ_FOLDS]
+        return [LocalTarget(AbstractGuesser.guess_path(bc.GUESSES_DIR, fold)) for fold in c.BUZZER_INPUT_FOLDS]
         
     def run(self):
         merge_dfs()
@@ -50,7 +48,7 @@ class BuzzerBuzzes(Task):
             LocalTarget(c.EXPO_FINAL.format(self.fold)),
             LocalTarget(c.VW_PREDICTIONS.format(self.fold)),
             LocalTarget(c.VW_META.format(self.fold))
-            ]
+        ]
 
     def run(self):
         make_dirs(safe_path('output/predictions/'))
@@ -58,6 +56,7 @@ class BuzzerBuzzes(Task):
         make_dirs(safe_path('output/vw_input/'))
         args = Namespace(fold=self.fold, config=conf['buzzer']['config'])
         buzzer_test.generate(args)
+
 
 class AllBuzzes(WrapperTask):
     def requires(self):

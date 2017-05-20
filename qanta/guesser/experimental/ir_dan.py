@@ -10,7 +10,6 @@ import progressbar
 from qanta.datasets.abstract import QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.preprocess import format_guess
 from qanta.spark import create_spark_context
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 
@@ -77,7 +76,7 @@ class IrDanGuesser(AbstractGuesser):
         self.use_qb = guesser_conf['use_qb']
 
     def qb_dataset(self):
-        return QuizBowlDataset(self.min_appearances)
+        return QuizBowlDataset(self.min_appearances, guesser_train=True)
 
     def parameters(self):
         return {
@@ -89,8 +88,7 @@ class IrDanGuesser(AbstractGuesser):
 
     def train(self, training_data):
         documents = {}
-        for sentences, ans in zip(training_data[0], training_data[1]):
-            page = format_guess(ans)
+        for sentences, page in zip(training_data[0], training_data[1]):
             paragraph = ' '.join(sentences)
             if page in documents:
                 documents[page] += ' ' + paragraph

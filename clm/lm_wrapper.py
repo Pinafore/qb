@@ -11,7 +11,6 @@ from qanta import logging
 from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
 from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION
 from qanta.config import conf
-from qanta.preprocess import format_guess
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.environment import data_path
@@ -171,7 +170,7 @@ class LanguageModelBase:
 
     @staticmethod
     def normalize_title(corpus, title):
-        norm_title = corpus + format_guess(title)
+        norm_title = corpus + title
         return norm_title
 
     @staticmethod

@@ -10,7 +10,7 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.util.constants import DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT, DOMAIN_TARGET_PREFIX
 from qanta.util.environment import QB_WIKI_LOCATION
 from qanta.util.io import safe_open
-from qanta.preprocess import clean_question, format_guess
+from qanta.preprocess import clean_question
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 
 import nltk
@@ -33,8 +33,8 @@ def generate_domain_classifier_data(weight=150):
 
     interleaving true quiz bowl questions randomly and with higher weight specified by the weight arg.
     """
-    qb_data = QuizBowlDataset(conf['guessers']['DAN']['min_answers']).training_data()
-    real_questions = [('1', str(weight), format_guess(ans), clean_question(sent)) for q, ans in zip(*qb_data) for sent in q]
+    qb_data = QuizBowlDataset(conf['guessers']['DAN']['min_answers'], guesser_train=True).training_data()
+    real_questions = [('1', str(weight), ans, clean_question(sent)) for q, ans in zip(*qb_data) for sent in q]
     pages = set(a for _, _, a, _ in real_questions)
 
     cw = CachedWikipedia(QB_WIKI_LOCATION)
@@ -45,7 +45,7 @@ def generate_domain_classifier_data(weight=150):
     for page in pages:
         for sentence in sentences_from_page(cw[page]):
             q = clean_question(sentence)
-            wiki_questions[use_second].append(('-1', '1', format_guess(page), q))
+            wiki_questions[use_second].append(('-1', '1', page, q))
             use_second = not use_second
 
     vw_line = '{} {} \'{}|text {}\n'

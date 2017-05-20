@@ -1,11 +1,5 @@
 n_guesses = 50
 
-test_fold_word_skip = -1
-
-generate_train_guesses = false
-
-guessers_train_on_dev = false
-
 expo_questions = "data/external/expo.csv"
 
 word_embeddings = "data/external/deep/glove.6B.300d.txt"

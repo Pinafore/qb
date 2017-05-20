@@ -74,7 +74,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
             create_runs, full_question))
 
     for i in range(len(data[1])):
-        data[1][i] = format_guess(data[1][i])
+        data[1][i] = data[1][i]
     classes = set(data[1])
     if class_to_i is None or i_to_class is None:
         class_to_i = {}

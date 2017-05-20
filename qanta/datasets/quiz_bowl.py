@@ -9,10 +9,9 @@ from functional import seq
 import nltk
 
 from qanta import logging
-from qanta.preprocess import format_guess
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
-from qanta.util.constants import PUNCTUATION
+from qanta.util import constants as c
 from qanta.util.io import file_backed_cache_decorator, safe_path
 from qanta.config import conf
 
@@ -60,7 +59,7 @@ class Question:
     @staticmethod
     def split_and_remove_punc(text):
         for i in text.split():
-            word = "".join(x for x in i.lower() if x not in PUNCTUATION)
+            word = "".join(x for x in i.lower() if x not in c.PUNCTUATION)
             if word:
                 yield word
 
@@ -112,7 +111,7 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
     :param start_qnum: 
     :return: 
     """
-    db = QuestionDatabase(location=QB_QUESTION_DB, load_expo=False)
+    db = QuestionDatabase(location=database, load_expo=False)
     qnums = {q.qnum for q in db.all_questions(unfiltered=True).values()}
     while start_qnum in qnums:
         start_qnum += 1
@@ -217,16 +216,13 @@ class QuestionDatabase:
         for ii in questions:
             yield questions[ii]
 
-    def questions_with_pages(self, normalize_titles=False) -> Dict[str, List[Question]]:
+    def questions_with_pages(self) -> Dict[str, List[Question]]:
         page_map = OrderedDict()
 
         questions = self.query('from questions where page != ""', ()).values()
 
         for row in sorted(questions):
-            if normalize_titles:
-                page = format_guess(row.page)
-            else:
-                page = row.page
+            page = row.page
             if page not in page_map:
                 page_map[page] = []
             page_map[page].append(row)
@@ -256,37 +252,6 @@ class QuestionDatabase:
         log.info("Keeping %i Pruning %i" % (len(questions - orphans), len(orphans)))
         self._conn.commit()
 
-    def page_by_count(self, min_count: int, exclude_test: bool):
-        """
-        Return all answers that appear at least the specified number
-        of times in a category.
-        """
-        c = self._conn.cursor()
-        if exclude_test:
-            command = 'select page, count(*) as num from questions where ' + \
-                      'page != "" and fold != "test" and fold != "devtest" and fold != "dev" ' + \
-                      'group by page order by num desc'
-        else:
-            command = 'select page, count(*) as num from questions where ' + \
-                      'page != "" ' + \
-                      'group by page order by num desc'
-        c.execute(command)
-
-        for aa, nn in c:
-            if nn < min_count:
-                continue
-            else:
-                yield aa
-
-    def get_all_pages(self, exclude_test=False):
-        c = self._conn.cursor()
-        if exclude_test:
-            c.execute('select distinct page from questions where page != "" and fold != "devtest" and fold != "test"')
-        else:
-            c.execute('select distinct page from questions where page != ""')
-        for result_tuple in c:
-            yield result_tuple[0]
-
     def all_answers(self):
         """
         Return a lookup from IDs to pages
@@ -305,23 +270,30 @@ class QuestionDatabase:
 
 
 class QuizBowlDataset(AbstractDataset):
-    def __init__(self, min_class_examples: int, qb_question_db: str=QB_QUESTION_DB):
+    def __init__(self, min_class_examples: int, *,
+                 guesser_train=False, buzzer_train=False,
+                 qb_question_db: str=QB_QUESTION_DB):
         """
         Initialize a new quiz bowl data set
         :param min_class_examples: The minimum number of training examples to include an answer class.
         """
         super().__init__()
+        if not guesser_train and not buzzer_train:
+            raise ValueError('Requesting a dataset which produces neither guesser or buzzer training data is invalid')
+
+        if guesser_train and buzzer_train:
+            log.warning(
+                'Using QuizBowlDataset with guesser and buzzer training data, make sure you know what you are doing!')
         self.db = QuestionDatabase(qb_question_db)
         self.min_class_examples = min_class_examples
+        self.guesser_train = guesser_train
+        self.buzzer_train = buzzer_train
+        self.training_fold = c.GUESSER_TRAIN_FOLD if self.guesser_train else c.BUZZER_TRAIN_FOLD
 
-    def training_data(self, normalize_guess=False) -> TrainingData:
+    def training_data(self) -> TrainingData:
         all_questions = seq(self.db.all_questions().values())
-        if conf['guessers_train_on_dev']:
-            fold_condition = lambda q: q.fold == 'train' or q.fold == 'dev'
-        else:
-            fold_condition = lambda q: q.fold == 'train'
         filtered_questions = all_questions\
-            .filter(fold_condition)\
+            .filter(lambda q: q.fold == self.training_fold)\
             .group_by(lambda q: q.page)\
             .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\
@@ -330,39 +302,32 @@ class QuizBowlDataset(AbstractDataset):
         training_answers = []
         for example, answer in filtered_questions:
             training_examples.append(example)
-            if normalize_guess:
-                training_answers.append(format_guess(answer))
-            else:
-                training_answers.append(answer)
+            training_answers.append(answer)
 
         return training_examples, training_answers
 
-    def questions_by_fold(self) -> Dict[str, List[Question]]:
+    def questions_by_fold(self, folds=c.ALL_FOLDS) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())
         train_questions = all_questions\
-            .filter(lambda q: q.fold == 'train')\
+            .filter(lambda q: q.fold == self.training_fold)\
             .group_by(lambda q: q.page)\
             .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\
             .list()
 
-        dev_questions = all_questions.filter(lambda q: q.fold == 'dev').list()
-        test_questions = all_questions.filter(lambda q: q.fold == 'test').list()
-        devtest_questions = all_questions.filter(lambda q: q.fold == 'devtest').list()
-        expo_questions = all_questions.filter(lambda q: q.fold == 'expo').list()
+        question_fold_dict = {self.training_fold: train_questions}
 
-        return {
-            'train': train_questions,
-            'dev': dev_questions,
-            'test': test_questions,
-            'devtest': devtest_questions,
-            'expo': expo_questions
-        }
+        for fold in folds:
+            if fold != self.training_fold:
+                fold_questions = all_questions.filter(lambda q: q.fold == fold).list()
+                question_fold_dict[fold] = fold_questions
+
+        return question_fold_dict
 
     def questions_in_folds(self, folds: Iterable[str]) -> List[Question]:
-        by_fold = self.questions_by_fold()
+        by_fold = self.questions_by_fold(folds=folds)
         questions = []
         for fold in folds:
-            questions += by_fold[fold]
+            questions.extend(by_fold[fold])
 
         return questions
