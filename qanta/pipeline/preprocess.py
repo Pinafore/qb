@@ -4,7 +4,9 @@ from luigi import LocalTarget, Task, WrapperTask, ExternalTask
 
 from qanta.util.io import shell
 from qanta.util.constants import ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE
-from qanta.wikipedia.cached_wikipedia import create_wikipedia_redirect_pickle, create_wikipedia_title_pickle
+from qanta.wikipedia.cached_wikipedia import (
+    create_wikipedia_redirect_pickle, create_wikipedia_title_pickle, create_wikipedia_cache
+)
 
 
 class NLTKDownload(ExternalTask):
@@ -81,18 +83,21 @@ class BuildWikipediaCache(Task):
     def requires(self):
         yield WikipediaDumps()
 
-
-class Wikipedia(Task):
     def run(self):
-        shell('mkdir -p data/external/wikipedia')
-        shell('python3 cli.py init_wiki_cache data/external/wikipedia')
-        shell('touch data/external/wikipedia_SUCCESS')
+        dump_path = os.path.abspath('data/external/wikipedia/parsed-wiki/*/*')
+        create_wikipedia_cache(dump_path)
+        shell('touch data/external/wikipedia/cache_SUCCESS')
 
     def output(self):
-        return LocalTarget('data/external/wikipedia_SUCCESS')
+        return [
+            LocalTarget('data/external/wikipedia/cache_SUCCESS'),
+            LocalTarget('data/external/wikipedia/pages/')
+        ]
 
 
 class DownloadData(WrapperTask):
     def requires(self):
         yield CodeCompile()
-        yield Wikipedia()
+        yield BuildWikipediaCache()
+        yield WikipediaTitles()
+        yield WikipediaRedirectPickle()

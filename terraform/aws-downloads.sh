@@ -8,6 +8,7 @@ cd /ssd-c/qanta/qb
 
 mkdir -p data/external/wikipedia
 /home/ubuntu/anaconda3/bin/aws s3 cp s3://pinafore-us-west-2/public/wiki_redirects.csv data/external/wikipedia/all_wiki_redirects.csv
+
 /home/ubuntu/anaconda3/bin/aws s3 cp s3://pinafore-us-west-2/public/wikipedia-normed.tar.gz /tmp/wikipedia.tar.gz
 tar -xvzf /tmp/wikipedia.tar.gz -C data/external/pages
 touch data/external/wikipedia/pages/wikipedia_page_SUCCESS
