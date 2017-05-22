@@ -91,7 +91,7 @@ class GenerateGuesses(Task):
             word_skip = conf['guesser_word_skip']
         else:
             word_skip = conf['buzzer_word_skip']
-            
+
         log.info('Generating and saving guesses for {} fold with word_skip={}...'.format(self.fold, word_skip))
         start_time = time.time()
         guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], word_skip=word_skip)
