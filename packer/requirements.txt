@@ -27,3 +27,4 @@ pypandoc
 slacker
 pyhcl
 chainer
+unidecode

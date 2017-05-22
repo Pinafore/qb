@@ -1,11 +1,5 @@
 n_guesses = 50
 
-test_fold_word_skip = -1
-
-generate_train_guesses = false
-
-guessers_train_on_dev = false
-
 expo_questions = "data/external/expo.csv"
 
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
@@ -14,7 +8,7 @@ use_pretrained_embeddings = true
 
 # Configure whether qanta.wikipedia.cached_wikipedia.CachedWikipedia should fallback
 # performing a remote call to Wikipedia if a page doesn't exist
-cached_wikipedia_remote_fallback = true
+cached_wikipedia_remote_fallback = false
 
 wiki_data_frac = 0.0
 
@@ -58,6 +52,7 @@ guessers "DAN" {
   train_on_q_runs = false
   train_on_full_q = false
   decay_lr_on_plateau = false
+  generate_mentions = false
 }
 
 guessers "RNN" {

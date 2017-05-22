@@ -8,14 +8,11 @@ from nltk.tokenize import RegexpTokenizer
 from nltk import bigrams
 
 from qanta import logging
-from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
-from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION
+from qanta.util.environment import QB_QUESTION_DB
+from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, WIKI_LOCATION
 from qanta.config import conf
-from qanta.preprocess import format_guess
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.util.environment import data_path
-from qanta.util.constants import COUNTRY_LIST_PATH
 
 from clm import clm
 from qanta.util.io import safe_open
@@ -34,11 +31,11 @@ def text_iterator(use_wiki, wiki_location,
                   use_qb, qb_location,
                   use_source, source_location,
                   limit=-1,
-                  min_pages=0, country_list=COUNTRY_LIST_PATH):
+                  min_pages=0):
     qdb = QuestionDatabase()
     doc_num = 0
 
-    cw = CachedWikipedia(wiki_location, data_path(country_list))
+    cw = CachedWikipedia()
     pages = qdb.questions_with_pages()
 
     for p in sorted(pages, key=lambda k: len(pages[k]), reverse=True):
@@ -171,7 +168,7 @@ class LanguageModelBase:
 
     @staticmethod
     def normalize_title(corpus, title):
-        norm_title = corpus + format_guess(title)
+        norm_title = corpus + title
         return norm_title
 
     @staticmethod
@@ -293,15 +290,41 @@ class LanguageModelReader(LanguageModelBase):
 
         return result
 
-    def feature_line(self, corpus, guess, sentence):
+    def preprocess_and_cache(self, sentence):
         if self._sentence_hash != hash(sentence):
             self._sentence_hash = hash(sentence)
             tokenized = list(self.tokenize_and_censor(sentence))
             self._sentence_length = len(tokenized)
             assert self._sentence_length < kMAX_TEXT_LENGTH
             for ii, ww in enumerate(tokenized):
-                self._sentence[ii] = ww
+                self._sentence[ii] = ww        
 
+    def dict_feat(self, corpus, guess, sentence):
+        """
+        Return a dictionary of the features
+        """
+        
+        self.preprocess_and_cache(sentence)
+        guess_id = self._corpora[norm_title]
+        if guess_id not in self._loaded_lms:
+            self._lm.read_counts("%s/%i" % (self._datafile, guess_id))
+            self._loaded_lms.add(guess_id)
+                
+        feat = self._lm.feature(corpus, guess_id, self._sentence, self._sentence_length)
+
+        d = {}
+        for ii in feat.split():
+            if ":" in ii:
+                key, val = ii.split(":")
+            else:
+                key = ii
+                val = 1
+            d[key] = val
+        return d
+              
+    def feature_line(self, corpus, guess, sentence):
+        self.preprocess_and_cache(sentence)
+        
         norm_title = self.normalize_title(corpus, guess)
         if norm_title not in self._corpora or self._sentence_length == 0:
             return ""
@@ -466,7 +489,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
     num_docs = 0
     background = defaultdict(int)
     # Initialize language models
-    for title, text in text_iterator(True, QB_WIKI_LOCATION,
+    for title, text in text_iterator(True, WIKI_LOCATION,
                                      True, QB_QUESTION_DB,
                                      True, QB_SOURCE_LOCATION,
                                      max_pages,
@@ -495,7 +518,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                      ]:
         # Add training data
         start = time.time()
-        for title, text in text_iterator(wiki, QB_WIKI_LOCATION,
+        for title, text in text_iterator(wiki, WIKI_LOCATION,
                                          qb, QB_QUESTION_DB,
                                          source, QB_SOURCE_LOCATION,
                                          max_pages,

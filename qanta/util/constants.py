@@ -8,9 +8,59 @@ QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "`
 STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
 
 PUNCTUATION = string.punctuation
-GUESSER_REPORT_FOLDS = ['dev', 'test']
+ALL_FOLDS = [
+    # Guessers should train and cross validate on these folds
+    'guesstrain', 'guessdev',
+    # Guessers should produce output for these, only buzzer should train and cross validate on these
+    'buzzertrain', 'buzzerdev',
+    # Parameter tuning of system should be done on dev. This should be reserved for system-wide parameters and not as
+    # a second buzzerdev or guessdev fold test should be reserved for final paper results
+    'dev', 'test',
+    # Produce output for anything in the expo fold
+    'expo'
+]
+
+# Training folds
+GUESSER_TRAIN_FOLD = 'guesstrain'
+BUZZER_TRAIN_FOLD = 'buzzertrain'
+
+# Guesser and buzzers produce reports on these for cross validation
+GUESSER_DEV_FOLD = 'guessdev'
+BUZZER_DEV_FOLD = 'buzzerdev'
+
+# System-wide cross validation and testing
+SYSTEM_DEV_FOLD = 'dev'
+SYSTEM_TEST_FOLD = 'test'
+EXPO_FOLD = 'expo'
+
+# Guessers should produce test-time guesses on these
+GUESSER_GENERATION_FOLDS = [
+    GUESSER_DEV_FOLD,
+    BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
+    SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
+    EXPO_FOLD
+]
+
+BUZZER_INPUT_FOLDS = [
+    BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
+    SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
+    EXPO_FOLD
+]
+
+# Buzzers should produce test-time guesses on these
+BUZZER_GENERATION_FOLDS = [
+    BUZZER_DEV_FOLD,
+    SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
+    EXPO_FOLD
+]
+
+
 BUZZ_FOLDS = ['dev', 'test', 'expo']
-ALL_FOLDS = ['train', 'dev', 'test']
+
+WIKI_LOCATION = 'data/external/wikipedia'
+
+ALL_WIKI_REDIRECTS = 'data/external/wikipedia/all_wiki_redirects.csv'
+WIKI_DUMP_REDIRECT_PICKLE = 'data/external/wikipedia/dump_redirects.pickle'
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 

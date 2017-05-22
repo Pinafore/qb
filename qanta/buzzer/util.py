@@ -84,7 +84,7 @@ def _process_question(option2id: Dict[str, int],
     (qnum, question), queue = inputs
 
     qnum = int(qnum)
-    answer = format_guess(all_questions[qnum].page)
+    answer = all_questions[qnum].page
     if answer in option2id:
         answer_id = option2id[answer]
     else:
@@ -143,20 +143,21 @@ class Word2Vec:
     def get_zero_vec(self):
         return np.zeros(self.wordvec_dim, dtype=np.float32)
 
-def load_quizbowl(folds=c.BUZZ_FOLDS, word2vec=None, multiprocessing=True)\
-        -> Tuple[Dict[str, int], Dict[str, list]]:
+
+def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, int], Dict[str, list]]:
     merge_dfs()
     log.info('Loading data')
     question_db = QuestionDatabase()
-    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS)
+    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS, buzzer_train=True)
     all_questions = question_db.all_questions()
+    # TODO: Change folds to use correct ones
     if not os.path.isfile(bc.OPTIONS_DIR):
         log.info('Loading the set of options')
         dev_guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['dev'])
         all_options = set(dev_guesses.guess)
 
         train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
-        all_options.update({format_guess(q.page) for q in train_dev_questions})
+        all_options.update({q.page for q in train_dev_questions})
 
         id2option = list(all_options)
         with open(safe_path(bc.OPTIONS_DIR), 'wb') as outfile:
@@ -190,6 +191,7 @@ def load_quizbowl(folds=c.BUZZ_FOLDS, word2vec=None, multiprocessing=True)\
         log.info('Processed {0} guesses saved to {1}'.format(fold, save_dir))
 
     return option2id, guesses_by_fold
+
 
 def merge_dfs():
     GUESSERS = ["{0}.{1}".format(

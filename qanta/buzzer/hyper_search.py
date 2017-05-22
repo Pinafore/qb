@@ -1,13 +1,9 @@
-import os
 import sys
-import argparse
 import pickle
 import chainer
 
 from qanta.guesser.abstract import AbstractGuesser
-from qanta import logging
 from qanta.config import conf
-from qanta.preprocess import format_guess
 
 from qanta.buzzer import configs
 from qanta.util import constants as c
@@ -22,6 +18,7 @@ from qanta import logging
 
 N_GUESSERS = len(GUESSERS)
 log = logging.get(__name__)
+
 
 def run(cfg, fold, all_guesses, option2id):
     train_iter = QuestionIterator(all_guesses['dev'], option2id,
@@ -78,7 +75,7 @@ def hyper_search(fold):
     option2id, all_guesses = load_quizbowl()
 
     all_questions = QuestionDatabase().all_questions()
-    answers = {k: format_guess(v.page) for k, v in all_questions.items()}
+    answers = {k: v.page for k, v in all_questions.items()}
     guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
     cfgs = get_cfgs()

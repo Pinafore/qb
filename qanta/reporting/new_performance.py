@@ -1,22 +1,15 @@
-import os
-import sys
-import time
 import pickle
 import argparse
 import numpy as np
-import pandas as pd
 from itertools import cycle
 from collections import defaultdict
 from functools import partial
-from multiprocessing import Pool, Manager
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 
-from qanta.preprocess import format_guess
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util import constants as c
 from qanta.buzzer import constants as bc
-from qanta.config import conf
 from qanta import logging
 from qanta.buzzer.util import GUESSERS
 from qanta.reporting.report_generator import ReportGenerator
@@ -395,7 +388,7 @@ def main(folds, checkpoint_dir=None):
         return
     
     all_questions = QuestionDatabase().all_questions()
-    answers = {k: format_guess(v.page) for k, v in all_questions.items()}
+    answers = {k: v.page for k, v in all_questions.items()}
 
     save_dir = 'output/summary/new_performance/'
     if not os.path.exists(save_dir):

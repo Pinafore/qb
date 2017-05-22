@@ -6,12 +6,12 @@ from luigi import LocalTarget, Task, ExternalTask, WrapperTask
 
 from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.preprocess import format_guess
 from qanta.util.io import safe_path
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util.constants import (PRED_TARGET, META_TARGET, EXPO_BUZZ, EXPO_FINAL,
                                   EXPO_QUESTIONS)
 import qanta.buzzer.test
+
 
 def find_final(lines):
     for l in lines:
@@ -37,7 +37,7 @@ class CreateQuestions(Task):
                     continue
                 max_sent = max(q.text.keys())
                 for i in range(max_sent + 1):
-                    writer.writerow([q.qnum, format_guess(q.page), i, q.text[i]])
+                    writer.writerow([q.qnum, q.page, i, q.text[i]])
 
 
 class Prerequisites(ExternalTask):
@@ -64,9 +64,10 @@ class GenerateExpoBuzzer(Task):
         args.fold = self.fold
         qanta.buzzer.test.generate(args)
 
+
 class AllExpo(WrapperTask):
     def requires(self):
         yield GenerateExpoBuzzer(fold='expo')
         yield CreateQuestions(fold='expo')
-        yield GenerateExpoBuzzer(fold='test')
-        yield CreateQuestions(fold='test')
+        yield GenerateExpoBuzzer(fold='dev')
+        yield CreateQuestions(fold='dev')

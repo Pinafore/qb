@@ -16,8 +16,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from qanta import logging
-from qanta.datasets.quiz_bowl import QuestionDatabase, QuizBowlDataset
-from qanta.preprocess import format_guess
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.io import safe_path
 
 log = logging.get(__name__)
@@ -93,7 +92,7 @@ def load_data(pred_file: str, meta_file: str, q_db: QuestionDatabase) -> Sequenc
             st_lines.append(Line(
                 question, st[0], st[1],
                 scored_guesses[0].score > 0,
-                scored_guesses[0].guess, format_guess(answers[question]),
+                scored_guesses[0].guess, answers[question],
                 scored_guesses
             ))
         return question, st_lines

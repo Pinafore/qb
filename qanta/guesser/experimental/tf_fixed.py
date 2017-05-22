@@ -11,7 +11,6 @@ from typing import Dict, List, Tuple, Union, Set, Optional
 from qanta.datasets.abstract import TrainingData
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset
-from qanta.datasets.wikipedia import WikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import safe_open, safe_path, shell
 from qanta import logging
@@ -450,7 +449,7 @@ class FixedLenGuesser(AbstractGuesser):
         return [DEEP_FIXED_PARAMS_TARGET]
 
     def qb_dataset(self):
-        return QuizBowlDataset(self.min_answers)
+        return QuizBowlDataset(self.min_answers, guesser_train=True)
 
     def train(self,
               training_data: TrainingData) -> None:
@@ -460,12 +459,6 @@ class FixedLenGuesser(AbstractGuesser):
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
-
-        if self.use_wiki:
-            wiki_training_data = WikipediaDataset(self.min_answers).training_data()
-            x_train_wiki, y_train_wiki, _, _, _, _, _ = preprocess_dataset(
-                wiki_training_data, train_size=1, vocab=vocab, class_to_i=class_to_i,
-                i_to_class=i_to_class)
 
         log.info('Creating embeddings...')
         embeddings, embedding_lookup = _load_embeddings(vocab=vocab)

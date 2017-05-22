@@ -6,7 +6,6 @@ import re
 from qanta.datasets.abstract import Answer, TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.preprocess import format_guess
 from qanta.util.io import shell
 from qanta.config import conf
 
@@ -34,7 +33,7 @@ class VWGuesser(AbstractGuesser):
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
     def qb_dataset(self):
-        return QuizBowlDataset(2)
+        return QuizBowlDataset(1, guesser_train=True)
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -110,7 +109,7 @@ class VWGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         questions = training_data[0]
-        answers = [format_guess(g) for g in training_data[1]]
+        answers = set(training_data[1])
 
         x_data = []
         y_data = []

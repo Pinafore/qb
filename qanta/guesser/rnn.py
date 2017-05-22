@@ -138,7 +138,7 @@ class RNNGuesser(AbstractGuesser):
         }
 
     def qb_dataset(self):
-        return QuizBowlDataset(self.min_answers)
+        return QuizBowlDataset(self.min_answers, guesser_train=True)
 
     @classmethod
     def targets(cls) -> List[str]:

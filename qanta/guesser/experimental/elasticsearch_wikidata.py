@@ -14,7 +14,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from qanta.datasets.abstract import QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.preprocess import format_guess
 from qanta.config import conf
 from qanta.util.io import safe_open
 from qanta import logging
@@ -100,7 +99,7 @@ def create_instance_of_map(formatted_answers: Set[str]):
         parsed_item_map = d['parsed_item_map']
         instance_of_map = {}
         for page, properties in parsed_item_map.items():
-            guess = format_guess(page)
+            guess = page
             if 'instance of' in properties and guess in formatted_answers and len(properties['instance of']) > 0:
                 instance_of_map[guess] = set(properties['instance of'])
         return instance_of_map
@@ -124,7 +123,6 @@ def format_human_data(is_human_map, questions: List[List[str]], pages: List[str]
         full_text = ' '.join(q)
         x_data.append(full_text)
 
-        p = format_guess(p)
         if p in is_human_map:
             y_data.append(int(is_human_map[p]))
         else:
@@ -147,10 +145,10 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         self.is_human_model = is_human_model
 
     def qb_dataset(self):
-        return QuizBowlDataset(conf['guessers']['ElasticSearch']['min_appearances'])
+        return QuizBowlDataset(conf['guessers']['ElasticSearch']['min_appearances'], guesser_train=True)
 
     def train(self, training_data):
-        answers = {format_guess(a) for a in training_data[1]}
+        answers = {a for a in training_data[1]}
         log.info('Loading instance of data from wikidata...')
         instance_of_map = create_instance_of_map(answers)
         is_human_map = create_is_human_map(instance_of_map)
@@ -161,8 +159,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
 
         log.info('Building Elastic Search Index...')
         documents = {}
-        for sentences, ans in zip(training_data[0], training_data[1]):
-            page = format_guess(ans)
+        for sentences, page in zip(training_data[0], training_data[1]):
             paragraph = ' '.join(sentences)
             if page in documents:
                 documents[page] += ' ' + paragraph

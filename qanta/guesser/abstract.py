@@ -13,7 +13,6 @@ import seaborn as sb
 import numpy as np
 from functional import seq
 
-from qanta.preprocess import format_guess
 from qanta.reporting.report_generator import ReportGenerator
 from qanta.datasets.abstract import TrainingData, QuestionText, Answer
 from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
@@ -46,7 +45,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     def qb_dataset(self) -> QuizBowlDataset:
-        return QuizBowlDataset(2)
+        return QuizBowlDataset(1, guesser_train=True)
 
     @abstractmethod
     def train(self, training_data: TrainingData) -> None:
@@ -233,7 +232,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             fold_df.to_pickle(output_path)
 
     @staticmethod
-    def load_guesses(directory: str, folds=c.ALL_FOLDS) -> pd.DataFrame:
+    def load_guesses(directory: str, folds=c.GUESSER_GENERATION_FOLDS) -> pd.DataFrame:
         """
         Loads all the guesses pertaining to a guesser inferred from directory
         :param directory: where to load guesses from
@@ -243,8 +242,6 @@ class AbstractGuesser(metaclass=ABCMeta):
         assert len(folds) > 0
         guess_df = None
         for fold in folds:
-            if fold == 'train' and not conf['generate_train_guesses']:
-                continue
             input_path = AbstractGuesser.guess_path(directory, fold)
             if guess_df is None:
                 guess_df = pd.read_pickle(input_path)
@@ -286,73 +283,46 @@ class AbstractGuesser(metaclass=ABCMeta):
         with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
             params = pickle.load(f)
         all_guesses = AbstractGuesser.load_guesses(directory)
-        dev_guesses = all_guesses[all_guesses.fold == 'dev']
-        test_guesses = all_guesses[all_guesses.fold == 'test']
+        dev_guesses = all_guesses[all_guesses.fold == c.GUESSER_DEV_FOLD]
 
         qdb = QuestionDatabase()
         questions = qdb.all_questions()
 
         # Compute recall and accuracy
         dev_recall = compute_fold_recall(dev_guesses, questions)
-        test_recall = compute_fold_recall(test_guesses, questions)
-
-        dev_questions = {qnum: q for qnum, q in questions.items() if q.fold == 'dev'}
-        test_questions = {qnum: q for qnum, q in questions.items() if q.fold == 'test'}
-
+        dev_questions = {qnum: q for qnum, q in questions.items() if q.fold == c.GUESSER_DEV_FOLD}
         dev_recall_stats = compute_recall_at_positions(dev_recall)
-        test_recall_stats = compute_recall_at_positions(test_recall)
-
         dev_summary_accuracy = compute_summary_accuracy(dev_questions, dev_recall_stats)
-        test_summary_accuracy = compute_summary_accuracy(test_questions, test_recall_stats)
-
         dev_summary_recall = compute_summary_recall(dev_questions, dev_recall_stats)
-        test_summary_recall = compute_summary_recall(test_questions, test_recall_stats)
 
-        accuracy_plot('/tmp/dev_accuracy.png', dev_summary_accuracy, 'Dev')
-        accuracy_plot('/tmp/test_accuracy.png', test_summary_accuracy, 'Test')
-        recall_plot('/tmp/dev_recall.png', dev_questions, dev_summary_recall, 'Dev')
-        recall_plot('/tmp/test_recall.png', test_questions, test_summary_recall, 'Test')
+        accuracy_plot('/tmp/dev_accuracy.png', dev_summary_accuracy, 'Guesser Dev')
+        recall_plot('/tmp/dev_recall.png', dev_questions, dev_summary_recall, 'Guesser Dev')
 
         # Obtain metrics on number of answerable questions based on the dataset requested
-        all_answers = {format_guess(g) for g in qdb.all_answers().values()}
+        all_answers = {g for g in qdb.all_answers().values()}
         all_questions = list(qdb.all_questions().values())
-        answer_lookup = {qnum: format_guess(guess) for qnum, guess in qdb.all_answers().items()}
+        answer_lookup = {qnum: guess for qnum, guess in qdb.all_answers().items()}
         dataset = self.qb_dataset()
         training_data = dataset.training_data()
 
-        min_n_answers = {format_guess(g) for g in training_data[1]}
+        min_n_answers = {g for g in training_data[1]}
 
-        train_questions = [q for q in all_questions if q.fold == 'train']
-        train_answers = {format_guess(q.page) for q in train_questions}
+        train_questions = [q for q in all_questions if q.fold == c.GUESSER_TRAIN_FOLD]
+        train_answers = {q.page for q in train_questions}
 
-        dev_questions = [q for q in all_questions if q.fold == 'dev']
-        dev_answers = {format_guess(q.page) for q in dev_questions}
+        dev_questions = [q for q in all_questions if q.fold == c.GUESSER_DEV_FOLD]
+        dev_answers = {q.page for q in dev_questions}
 
-        test_questions = [q for q in all_questions if q.fold == 'test']
-        test_answers = [format_guess(q.page) for q in test_questions]
-
-        min_n_train_questions = [q for q in train_questions if
-                                 format_guess(q.page) in min_n_answers]
+        min_n_train_questions = [q for q in train_questions if q.page in min_n_answers]
 
         all_common_train_dev = train_answers.intersection(dev_answers)
-        all_common_train_test = train_answers.intersection(test_answers)
-
         min_common_train_dev = min_n_answers.intersection(dev_answers)
-        min_common_train_test = min_n_answers.intersection(test_answers)
 
-        all_train_answerable_questions = [q for q in train_questions
-                                          if format_guess(q.page) in train_answers]
-        all_dev_answerable_questions = [q for q in dev_questions
-                                        if format_guess(q.page) in train_answers]
-        all_test_answerable_questions = [q for q in test_questions
-                                         if format_guess(q.page) in train_answers]
+        all_train_answerable_questions = [q for q in train_questions if q.page in train_answers]
+        all_dev_answerable_questions = [q for q in dev_questions if q.page in train_answers]
 
-        min_train_answerable_questions = [q for q in train_questions
-                                          if format_guess(q.page) in min_n_answers]
-        min_dev_answerable_questions = [q for q in dev_questions
-                                        if format_guess(q.page) in min_n_answers]
-        min_test_answerable_questions = [q for q in test_questions
-                                         if format_guess(q.page) in min_n_answers]
+        min_train_answerable_questions = [q for q in train_questions if q.page in min_n_answers]
+        min_dev_answerable_questions = [q for q in dev_questions if q.page in min_n_answers]
 
         # The next section of code generates the percent of questions correct by the number
         # of training examples.
@@ -364,7 +334,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         ])
 
         train_example_count_lookup = seq(train_questions) \
-            .group_by(lambda q: format_guess(q.page)) \
+            .group_by(lambda q: q.page) \
             .smap(lambda page, group: (page, len(group))) \
             .dict()
 
@@ -392,30 +362,15 @@ class AbstractGuesser(metaclass=ABCMeta):
             .groupby('n_examples')\
             .agg({'correct_int': np.mean, 'ones': np.sum})\
             .reset_index()
-        correct_by_n_count_plot('/tmp/dev_correct_by_count.png', dev_counts, 'dev')
-        n_train_vs_fold_plot('/tmp/n_train_vs_dev.png', dev_counts, 'dev')
+        correct_by_n_count_plot('/tmp/dev_correct_by_count.png', dev_counts, 'Guesser Dev')
+        n_train_vs_fold_plot('/tmp/n_train_vs_dev.png', dev_counts, 'Guesser Dev')
 
-        test_data = seq(test_guesses) \
-            .smap(guess_to_row) \
-            .group_by(lambda r: (r.qnum, r.sentence)) \
-            .smap(lambda key, group: seq(group).max_by(lambda q: q.sentence)) \
-            .to_pandas(columns=Row._fields)
-        test_data['correct_int'] = test_data['correct'].astype(int)
-        test_data['ones'] = 1
-        test_counts = dev_data \
-            .groupby('n_examples') \
-            .agg({'correct_int': np.mean, 'ones': np.sum}) \
-            .reset_index()
-        correct_by_n_count_plot('/tmp/test_correct_by_count.png', test_counts, 'test')
-        n_train_vs_fold_plot('/tmp/n_train_vs_test.png', test_counts, 'test')
-
-        report = ReportGenerator({
+        output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
+        report = ReportGenerator('guesser.md')
+        report.create({
             'dev_recall_plot': '/tmp/dev_recall.png',
-            'test_recall_plot': '/tmp/test_recall.png',
             'dev_accuracy_plot': '/tmp/dev_accuracy.png',
-            'test_accuracy_plot': '/tmp/test_accuracy.png',
             'dev_accuracy': dev_summary_accuracy,
-            'test_accuracy': test_summary_accuracy,
             'guesser_name': self.display_name(),
             'guesser_params': params,
             'n_answers_all_folds': len(all_answers),
@@ -423,42 +378,27 @@ class AbstractGuesser(metaclass=ABCMeta):
             'min_class_examples': dataset.min_class_examples,
             'n_train_questions': len(min_n_train_questions),
             'n_dev_questions': len(dev_questions),
-            'n_test_questions': len(test_questions),
             'n_total_train_answers': len(train_answers),
             'n_train_answers': len(min_n_answers),
             'n_dev_answers': len(dev_answers),
-            'n_test_answers': len(test_answers),
             'all_n_common_train_dev': len(all_common_train_dev),
-            'all_n_common_train_test': len(all_common_train_test),
             'all_p_common_train_dev': len(all_common_train_dev) / max(1, len(dev_answers)),
-            'all_p_common_train_test': len(all_common_train_test) / max(1, len(test_answers)),
             'min_n_common_train_dev': len(min_common_train_dev),
-            'min_n_common_train_test': len(min_common_train_test),
             'min_p_common_train_dev': len(min_common_train_dev) / max(1, len(dev_answers)),
-            'min_p_common_train_test': len(min_common_train_test) / max(1, len(test_answers)),
             'all_n_answerable_train': len(all_train_answerable_questions),
             'all_p_answerable_train': len(all_train_answerable_questions) / len(train_questions),
             'all_n_answerable_dev': len(all_dev_answerable_questions),
             'all_p_answerable_dev': len(all_dev_answerable_questions) / len(dev_questions),
-            'all_n_answerable_test': len(all_test_answerable_questions),
-            'all_p_answerable_test': len(all_test_answerable_questions) / len(test_questions),
             'min_n_answerable_train': len(min_train_answerable_questions),
             'min_p_answerable_train': len(min_train_answerable_questions) / len(train_questions),
             'min_n_answerable_dev': len(min_dev_answerable_questions),
             'min_p_answerable_dev': len(min_dev_answerable_questions) / len(dev_questions),
-            'min_n_answerable_test': len(min_test_answerable_questions),
-            'min_p_answerable_test': len(min_test_answerable_questions) / len(test_questions),
             'dev_correct_by_count_plot': '/tmp/dev_correct_by_count.png',
-            'test_correct_by_count_plot': '/tmp/test_correct_by_count.png',
             'n_train_vs_dev_plot': '/tmp/n_train_vs_dev.png',
-            'n_train_vs_test_plot': '/tmp/n_train_vs_test.png'
-        }, 'guesser.md')
-        output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
-        report.create(output)
+        }, output)
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
                 'dev_accuracy': dev_summary_accuracy,
-                'test_accuracy': test_summary_accuracy,
                 'guesser_name': self.display_name(),
                 'guesser_params': params
             }, f)
@@ -497,7 +437,7 @@ QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 
 
 def question_recall(guesses, qst, question_lookup):
     qnum, sentence, token = qst
-    answer = format_guess(question_lookup[qnum].page)
+    answer = question_lookup[qnum].page
     sorted_guesses = sorted(guesses, reverse=True, key=lambda g: g.score)
     for i, guess_row in enumerate(sorted_guesses, 1):
         if answer == guess_row.guess:
@@ -703,7 +643,7 @@ def n_guesser_report(report_path, fold, n_samples=10):
     question_positions = {}
     n_correct_samples = defaultdict(list)
     for q in questions:
-        page = format_guess(q.page)
+        page = q.page
         positions = [(sent, token) for sent, token, _ in q.partials()]
         # Since partials() passes word_skip=-1 each entry is guaranteed to be a sentence
         n_sentences = len(positions)
@@ -807,26 +747,26 @@ def n_guesser_report(report_path, fold, n_samples=10):
         question_lookup, guess_lookup, n_correct_samples, n_samples=n_samples
     )
 
-    report = ReportGenerator({
+    report = ReportGenerator('compare_guessers.md')
+    report.create({
         'dev_accuracy_by_n_correct_plot': accuracy_by_n_correct_plot_path,
         'sampled_questions_by_correct': sampled_questions_by_correct
-    }, 'compare_guessers.md')
-    report.create(safe_path(report_path))
+    }, safe_path(report_path))
 
 
 def sample_n_guesser_correct_questions(question_lookup, guess_lookup, n_correct_samples, n_samples=10):
     sampled_questions_by_correct = defaultdict(list)
-    dataset = QuizBowlDataset(1)
+    dataset = QuizBowlDataset(1, guesser_train=True)
     training_data = dataset.training_data()
     answer_counts = defaultdict(int)
     for ans in training_data[1]:
-        answer_counts[format_guess(ans)] += 1
+        answer_counts[ans] += 1
 
     for n_correct, keys in n_correct_samples.items():
         samples = random.sample(keys, min(n_samples, len(keys)))
         for key in samples:
             qnum, sent, token = key
-            page = format_guess(question_lookup[qnum].page)
+            page = question_lookup[qnum].page
             text = question_lookup[qnum].get_text(sent, token)
             guesses = guess_lookup[key]
             correct_guessers = tuple(guesses[guesses.guess == page].guesser)

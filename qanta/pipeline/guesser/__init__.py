@@ -73,6 +73,7 @@ class GenerateGuesses(Task):
     dependency_class = luigi.Parameter()  # type: str
     word_skip = luigi.IntParameter(default=-1)  # type: int
     n_guesses = luigi.IntParameter(default=conf['n_guesses'])  # type: int
+    fold = luigi.Parameter()  # type: str
 
     def requires(self):
         yield TrainGuesser(
@@ -87,27 +88,32 @@ class GenerateGuesses(Task):
         guesser_directory = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
-        for fold in c.BUZZ_FOLDS:
-            log.info('Generating and saving guesses for {} fold'.format(fold))
-            log.info('Starting guess generation...')
-            start_time = time.time()
-            if fold == 'test' and self.word_skip == -1:
-                guess_df = guesser_instance.generate_guesses(
-                    self.n_guesses, [fold], word_skip=conf['test_fold_word_skip'])
-            else:
-                guess_df = guesser_instance.generate_guesses(self.n_guesses, [fold], word_skip=self.word_skip)
-            end_time = time.time()
-            log.info('Guessing on {} fold took {}s'.format(fold, end_time - start_time))
-            log.info('Starting guess saving...')
-            guesser_class.save_guesses(guess_df, guesser_directory, [fold])
-            log.info('Done saving guesses')
+        log.info('Generating and saving guesses for {} fold with word_skip={}...'.format(self.fold, self.word_skip))
+        start_time = time.time()
+        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], word_skip=self.word_skip)
+        end_time = time.time()
+        log.info('Guessing on {} fold took {}s, saving guesses...'.format(self.fold, end_time - start_time))
+        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold])
+        log.info('Done saving guesses')
 
     def output(self):
-        targets = []
-        for fold in c.BUZZ_FOLDS:
-            targets.append(LocalTarget(AbstractGuesser.output_path(
-                self.guesser_module, self.guesser_class, 'guesses_{}.pickle'.format(fold))))
-        return targets
+        return LocalTarget(AbstractGuesser.output_path(
+            self.guesser_module, self.guesser_class,
+            'guesses_{}.pickle'.format(self.fold)
+        ))
+
+
+class GenerateAllGuesses(WrapperTask):
+    def requires(self):
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            for fold in c.GUESSER_GENERATION_FOLDS:
+                yield GenerateGuesses(
+                    guesser_module=g_spec.guesser_module,
+                    guesser_class=g_spec.guesser_class,
+                    dependency_module=g_spec.dependency_module,
+                    dependency_class=g_spec.dependency_class,
+                    fold=fold
+                )
 
 
 class GuesserReport(Task):
@@ -121,7 +127,8 @@ class GuesserReport(Task):
             guesser_module=self.guesser_module,
             guesser_class=self.guesser_class,
             dependency_module=self.dependency_module,
-            dependency_class=self.dependency_class
+            dependency_class=self.dependency_class,
+            fold=c.GUESSER_DEV_FOLD
         )
 
     def run(self):
@@ -142,7 +149,7 @@ class GuesserReport(Task):
         ))]
 
 
-class AllGuesserReports(WrapperTask):
+class AllSingleGuesserReports(WrapperTask):
     def requires(self):
         for g_spec in AbstractGuesser.list_enabled_guessers():
             yield GuesserReport(
@@ -153,39 +160,24 @@ class AllGuesserReports(WrapperTask):
             )
 
 
-class CompareGuessers(Task):
-    fold = luigi.Parameter()  # type: str
-
+class CompareGuessersReport(Task):
     def requires(self):
         yield AllGuesserReports()
 
     def run(self):
-        n_guesser_report(c.COMPARE_GUESSER_REPORT_PATH.format(self.fold), self.fold)
+        n_guesser_report(c.COMPARE_GUESSER_REPORT_PATH.format(c.GUESSER_DEV_FOLD), c.GUESSER_DEV_FOLD)
 
     def output(self):
-        return LocalTarget(c.COMPARE_GUESSER_REPORT_PATH.format(self.fold))
+        return LocalTarget(c.COMPARE_GUESSER_REPORT_PATH.format(c.GUESSER_DEV_FOLD))
 
 
-class CompareGuessersAllFolds(WrapperTask):
+class AllGuesserReports(WrapperTask):
     def requires(self):
-        for fold in c.GUESSER_REPORT_FOLDS:
-            yield CompareGuessers(fold=fold)
+        yield AllSingleGuesserReports()
+        yield CompareGuessersReport()
 
 
-class AllGuessers(WrapperTask):
+class AllGuesses(WrapperTask):
     def requires(self):
         yield AllGuesserReports()
-        yield CompareGuessersAllFolds()
-
-
-class AllWordLevelGuesses(WrapperTask):
-    def requires(self):
-        for g_spec in AbstractGuesser.list_enabled_guessers():
-            yield GenerateGuesses(
-                guesser_module=g_spec.guesser_module,
-                guesser_class=g_spec.guesser_module,
-                dependency_module=g_spec.dependency_module,
-                dependency_class=g_spec.dependency_class,
-                word_skip=1,
-                n_guesses=25
-            )
+        yield GenerateAllGuesses()

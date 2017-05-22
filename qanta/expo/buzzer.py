@@ -5,7 +5,6 @@ from csv import DictReader
 from time import sleep
 import os
 
-from qanta.preprocess import format_guess
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 
 kSHOW_RIGHT = False
@@ -476,13 +475,14 @@ def interpret_keypress():
     press.
     """
     press = getch()
+
+    if press == 'Q':
+        raise Exception('Exiting expo by user request from pressing Q')
+
     if press == '\x1b':
         getch()
         getch()
         press = "direction"
-
-    if press == 'Q':
-        raise Exception('Exiting expo by user request from pressing Q')
 
     if press != "direction" and press != " ":
         try:
@@ -496,7 +496,7 @@ def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say %s" % ans.replace("'", "").replace('_', '').split("(")[0])
+    os.system("say %s" % ans.replace('_', ' ').split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
@@ -605,8 +605,8 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
-    qb_dataset = QuizBowlDataset(1)
-    qb_answer_set = {format_guess(g) for g in qb_dataset.training_data()[1]}
+    qb_dataset = QuizBowlDataset(1, guesser_train=True)
+    qb_answer_set = {g for g in qb_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
 
@@ -616,8 +616,7 @@ if __name__ == "__main__":
         print("Time for a buzzer check")
         players_needed = [1, 2, 3, 4]
         while len(current_players) < len(players_needed):
-            print("Player %i, please buzz in" % min(x for x in players_needed \
-                                                    if x not in current_players))
+            print("Player %i, please buzz in" % min(x for x in players_needed if x not in current_players))
             press = interpret_keypress()
             if press in players_needed:
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
@@ -642,14 +641,14 @@ if __name__ == "__main__":
         if skipped < flags.skip:
             skipped += 1
             continue
-        
+
         question_num += 1
         power_mark = power(ii)
         if power_mark == "10":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
 
-        correct_answer = format_guess(questions.answer(ii))
+        correct_answer = questions.answer(ii)
         if correct_answer in qb_answer_set:
             answerable = 'answerable'
         else:

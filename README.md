@@ -313,10 +313,16 @@ default r3.8xlarge
 * `naqt_db.tf.tftemplate`: Configure qanta to use the private NAQT dataset
 * `eip.tf.template`: Configure terraform to add a pre-made elastic IP to the instance
 
-# Page Assignment
+# Page Assignment and Data Ingestion
 
 We use Wikipedia as our inventory of possible answers.  Because we
-also use
+also use questions for training data, we need to map individual
+questions to Wikipedia pages.  We have three systems for doing this
+(the code that does the mapping lives in ingestion/create_db.py, which
+produces a database of questions based on protobowl and NAQT input).
+
+As per our agreement with NAQT, we cannot distribute the NAQT data,
+but we include the ingestion code in the interest of scientific transparency.
 
 ## Unambiguous Page Assignments
 
@@ -352,7 +358,8 @@ file, there are now three fields.  The first two fields are the same;
 the last is a word that, if it appears in the question, says that the
 question should be assigned to the page.
 
-The order that pages appear in the ambiguous page list matters.  For
+
+Sometimes there's a reasonable default answer.  For
 example, most questions with the answer "Paris" will be about the city
 in France.  However, there are also many questions about "Paris
 (mythology)".  In this case, we create a rule
@@ -415,3 +422,5 @@ These references may be useful and are the source for these instructions:
 * https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
 * https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
 * http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
+=======
+>>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
