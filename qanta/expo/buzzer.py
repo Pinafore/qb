@@ -1,11 +1,15 @@
 import textwrap
 from collections import defaultdict, Counter, namedtuple
 import argparse
+import itertools
 from csv import DictReader
 from time import sleep
 import os
 
 from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.guesser.abstract import AbstractGuesser
+
+GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
 
 kSHOW_RIGHT = False
 kPAUSE = .25
@@ -348,14 +352,14 @@ class Buzzes:
                 curr_guess = self._buzzes[question][(sent, word)][r['page']]
                 new_guess = Guess(
                     curr_guess.page,
-                    curr_guess.evidence + ' ' + r['evidence'],
+                    curr_guess.evidence + [r['evidence']],
                     max(int(r['final']), curr_guess.final),
                     max(float(r['weight']), curr_guess.weight)
                 )
                 self._buzzes[question][(sent, word)][r['page']] = new_guess
             else:
                 self._buzzes[question][(sent, word)][r["page"]] = Guess(
-                    r["page"], r["evidence"], int(r["final"]), float(r["weight"])
+                    r["page"], [r["evidence"]], int(r["final"]), float(r["weight"])
                 )
 
     def current_guesses(self, question, sent, word):
@@ -421,42 +425,33 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     report += "Question %i: %i points\n%s\n%s\n%s\n\n" % \
         (display_num, points, sep, current_text, sep)
 
-    top_guesses = sorted(current_guesses,
-                         key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]
-    duplicated_feature_counter = Counter()
-    for g in top_guesses:
-        evidence = current_guesses[g].evidence.split()
-        for f in evidence:
-            duplicated_feature_counter[f] += 1
+    guesses = {k: [] for k in GUESSERS}
+    for x in current_guesses.values():
+        for guesser in GUESSERS:
+            if guesser in x.evidence:
+                guesses[guesser].append([x.page, x.weight])
 
-    allowed_features = set()
-    for k, v in duplicated_feature_counter.items():
-        if v == 1:
-            allowed_features.add(k)
+    top_guesses = []
+    for guesser in GUESSERS:
+        top_guesses.append(sorted(guesses[guesser], key=lambda x: x[1],
+            reverse=True)[:guess_limit])
+        top_guesses[-1] = [[x[0], str(x[1])[:5]] for x in top_guesses[-1]]
+        while len(top_guesses[-1]) < guess_limit:
+            top_guesses[-1].append(["", 0.])
 
-    if False and len(top_guesses) > 0:
-        print(top_guesses)
-        print(allowed_features)
-        print(duplicated_feature_counter)
-        raise Exception()
-    for gg in top_guesses:
-        guess = current_guesses[gg]
-        if disable_features:
-            features = ''
-        else:
-            features = select_features(guess.evidence, allowed_features)[:100]
-        if guess.page == answer:
-            report += "%s\t%f\t%s\n" % (
-                "***CORRECT***",
-                guess.weight,
-                features
-            )
-        else:
-            report += "%s\t%f\t%s\n" % (
-                guess.page,
-                guess.weight,
-                features
-            )
+    template = '|'.join("{:30}|{:10}" for _ in GUESSERS) + '\n'
+    header = [[x, "Score"] for x in GUESSERS]
+    header = list(itertools.chain(*header))
+    report += template.format(*header)
+
+    guesses = list(top_guesses)
+    for row in zip(*guesses):
+        for i in range(len(GUESSERS)):
+            if row[i][0] == answer:
+                row[i][0] = "***CORRECT***"
+        row = list(itertools.chain(*row))
+        report += template.format(*row)
+
     return report
 
 
