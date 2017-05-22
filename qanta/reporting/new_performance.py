@@ -266,6 +266,7 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
 
     ##### plot lines #####
     fig, ax = plt.subplots()
+    lines = []
     for k in HISTO_KEYS_0:
         v = _his_stats[k]
         lines.append(plt.plot(HISTO_RATIOS, v, LINE_STYLES[k], label=k)[0])
