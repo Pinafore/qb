@@ -162,7 +162,7 @@ class AllSingleGuesserReports(WrapperTask):
 
 class CompareGuessersReport(Task):
     def requires(self):
-        yield AllGuesserReports()
+        yield AllSingleGuesserReports()
 
     def run(self):
         n_guesser_report(c.COMPARE_GUESSER_REPORT_PATH.format(c.GUESSER_DEV_FOLD), c.GUESSER_DEV_FOLD)

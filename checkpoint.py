@@ -9,7 +9,13 @@ import click
 
 
 PRE_PROCESS_TARGETS = {
-    'output/kenlm.binary'
+    'data/external/wikipedia/cache_SUCCESS',
+    'data/external/wikipedia/dump_redirects.pickle',
+    'data/external/wikipedia/pages',
+    'data/external/wikipedia/parsed-wiki',
+    'data/external/wikipedia/parsed-wiki_SUCCESS',
+    'data/external/wikipedia/wikipedia-titles.pickle',
+    'data/external/wikipedia/all_wiki_redirects.csv'
 }
 
 GUESS_TARGETS = {
@@ -21,44 +27,6 @@ CLM_TARGETS = {
     'output/language_model'
 }
 
-CLASSIFIER_TARGETS = {
-    'output/classifier/gender',
-    'output/classifier/category',
-    'output/classifier/ans_type'
-}
-
-SPARK_CLASSIFIER_TARGETS = {
-    'output/features/dev/classifier.parquet',
-    'output/features/test/classifier.parquet',
-}
-
-SPARK_FAST_TARGETS = {
-    'output/features/dev/answer_present.parquet',
-    'output/features/dev/stats.parquet',
-    'output/features/dev/text.parquet',
-    'output/features/test/answer_present.parquet',
-    'output/features/test/stats.parquet',
-    'output/features/test/text.parquet',
-}
-
-SPARK_LM_TARGETS = {
-    'output/features/dev/lm.parquet',
-    'output/features/devtest/lm.parquet',
-    'output/features/test/lm.parquet'
-}
-
-SPARK_MENTIONS_TARGETS = {
-    'output/features/dev/mentions.parquet',
-    'output/features/test/mentions.parquet'
-}
-
-SPARK_GUESSERS_TARGETS = {
-    'output/features/dev/guessers.parquet',
-    'output/features/test/guessers.parquet'
-}
-
-SPARK_FEATURE_TARGETS = SPARK_FAST_TARGETS | SPARK_LM_TARGETS | SPARK_MENTIONS_TARGETS \
-                        | SPARK_GUESSERS_TARGETS | SPARK_CLASSIFIER_TARGETS
 
 VW_INPUT = {'output/vw_input'}
 
@@ -75,21 +43,15 @@ EXPO = {
 }
 
 
-CHECKPOINT_TARGETS = PRE_PROCESS_TARGETS | GUESS_TARGETS | CLM_TARGETS \
-                     | CLASSIFIER_TARGETS | SPARK_FEATURE_TARGETS | VW_INPUT | VW_MODELS \
-                     | PREDICTIONS | SUMMARIES | REPORTING | EXPO
+CHECKPOINT_TARGETS = (
+    PRE_PROCESS_TARGETS | GUESS_TARGETS | CLM_TARGETS |
+    VW_INPUT | VW_MODELS | PREDICTIONS | SUMMARIES | REPORTING | EXPO
+)
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
-    'guesses': GUESS_TARGETS,
+    'guesser': GUESS_TARGETS,
     'clm': CLM_TARGETS,
-    'classifiers': CLASSIFIER_TARGETS,
-    'spark': SPARK_FEATURE_TARGETS,
-    'spark_fast': SPARK_FAST_TARGETS,
-    'spark_classifier': SPARK_CLASSIFIER_TARGETS,
-    'spark_lm': SPARK_LM_TARGETS,
-    'spark_mentions': SPARK_MENTIONS_TARGETS,
-    'spark_guessers': SPARK_GUESSERS_TARGETS,
     'vw_input': VW_INPUT,
     'vw_models': VW_MODELS,
     'predictions': PREDICTIONS,
