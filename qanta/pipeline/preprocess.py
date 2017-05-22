@@ -1,7 +1,10 @@
+import os
+
 from luigi import LocalTarget, Task, WrapperTask, ExternalTask
+
 from qanta.util.io import shell
-from qanta.util.constants import ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE
-from qanta.wikipedia.cached_wikipedia import create_wikipedia_redirect_pickle
+from qanta.util.constants import ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE
+from qanta.wikipedia.cached_wikipedia import create_wikipedia_redirect_pickle, create_wikipedia_title_pickle
 
 
 class NLTKDownload(ExternalTask):
@@ -49,20 +52,29 @@ class WikipediaRedirectPickle(Task):
 class WikipediaDumps(Task):
     def run(self):
         s3_location = 's3://pinafore-us-west-2/public/wikipedia-dumps/parsed-wiki.tar.lz4'
-        shell('aws s3 cp {} data/external/parsed-wiki.tar.lz4'.format(s3_location))
-        shell('lz4 -d data/external/parsed-wiki.tar.lz4 | tar -x -C data/external/')
-        shell('touch data/external/parsed-wiki_SUCCESS')
+        shell('aws s3 cp {} data/external/wikipedia/parsed-wiki.tar.lz4'.format(s3_location))
+        shell('lz4 -d data/external/wikipedia/parsed-wiki.tar.lz4 | tar -x -C data/external/wikipedia/')
+        shell('rm data/external/wikipedia/parsed-wiki.tar.lz4')
+        shell('touch data/external/wikipedia/parsed-wiki_SUCCESS')
 
     def output(self):
-        return [LocalTarget('data/external/parsed-wiki_SUCCESS'), LocalTarget('data/external/parsed-wiki/')]
+        return [
+            LocalTarget('data/external/wikipedia/parsed-wiki_SUCCESS'),
+            LocalTarget('data/external/wikipedia/parsed-wiki/')
+        ]
 
 
 class WikipediaTitles(Task):
+    def requires(self):
+        yield WikipediaDumps()
+
     def run(self):
-        pass
+        # Spark needs an absolute path for local files
+        dump_path = os.path.abspath('data/external/wikipedia/parsed-wiki/*/*')
+        create_wikipedia_title_pickle(dump_path, WIKI_TITLES_PICKLE)
 
     def output(self):
-        return LocalTarget('data/external/wikipedia-titles.pickle')
+        return LocalTarget(WIKI_TITLES_PICKLE)
 
 
 class BuildWikipediaCache(Task):

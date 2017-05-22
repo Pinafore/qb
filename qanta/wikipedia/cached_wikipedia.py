@@ -68,9 +68,10 @@ def create_wikipedia_title_pickle(dump_path, output_path):
     spark = create_spark_session()
     wiki_df = spark.read.json(dump_path)
     raw_titles = wiki_df.select('title').distinct().collect()
-    clean_titles = {unidecode(r.title.replace(' ', '_') for r in raw_titles)}
+    clean_titles = {unidecode(r.title.replace(' ', '_')) for r in raw_titles}
     with open(output_path, 'wb') as f:
         pickle.dump(clean_titles, f)
+    spark.stop()
 
 
 def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):

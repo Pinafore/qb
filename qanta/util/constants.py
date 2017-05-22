@@ -61,6 +61,7 @@ WIKI_LOCATION = 'data/external/wikipedia'
 
 ALL_WIKI_REDIRECTS = 'data/external/wikipedia/all_wiki_redirects.csv'
 WIKI_DUMP_REDIRECT_PICKLE = 'data/external/wikipedia/dump_redirects.pickle'
+WIKI_TITLES_PICKLE = 'data/external/wikipedia/wikipedia-titles.pickle'
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 
