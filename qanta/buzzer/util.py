@@ -148,16 +148,11 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
     merge_dfs()
     log.info('Loading data')
     question_db = QuestionDatabase()
-    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS, buzzer_train=True)
+    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS, guesser_train=True, buzzer_train=True)
     all_questions = question_db.all_questions()
-    # TODO: Change folds to use correct ones
     if not os.path.isfile(bc.OPTIONS_DIR):
         log.info('Loading the set of options')
-        dev_guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['dev'])
-        all_options = set(dev_guesses.guess)
-
-        train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
-        all_options.update({q.page for q in train_dev_questions})
+        all_options = set(quizbowl_db.training_data()[1])
 
         id2option = list(all_options)
         with open(safe_path(bc.OPTIONS_DIR), 'wb') as outfile:
@@ -201,7 +196,7 @@ def merge_dfs():
     merged_dir = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
     if not os.path.exists(merged_dir):
         os.makedirs(merged_dir)
-    for fold in c.BUZZ_FOLDS:
+    for fold in c.BUZZER_INPUT_FOLDS:
         if os.path.exists(AbstractGuesser.guess_path(merged_dir, fold)):
             log.info("Merged {0} exists, skipping.".format(fold))
             continue
@@ -220,11 +215,11 @@ if __name__ == "__main__":
     merge_dfs()
 
     processed_dirs = ['%s_processed.pickle' % (os.path.join(
-        bc.GUESSES_DIR, fold)) for fold in c.BUZZ_FOLDS]
+        bc.GUESSES_DIR, fold)) for fold in c.BUZZER_INPUT_FOLDS]
     if not all(os.path.isfile(d) for d in processed_dirs):
         log.info('Loading {0}'.format(bc.WORDVEC_DIR))
         word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
     else:
         word2vec = None
 
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZ_FOLDS, word2vec)
+    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS, word2vec)

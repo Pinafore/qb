@@ -60,5 +60,5 @@ class BuzzerBuzzes(Task):
 
 class AllBuzzes(WrapperTask):
     def requires(self):
-        for fold in c.BUZZ_FOLDS:
+        for fold in c.BUZZER_GENERATION_FOLDS:
             yield BuzzerBuzzes(fold=fold)

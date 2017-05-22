@@ -432,5 +432,5 @@ if __name__ == '__main__':
     if args.fold != None:
         folds = [args.fold]
     else:
-        folds = c.BUZZ_FOLDS
+        folds = c.BUZZER_GENERATION_FOLDS
     main(folds)
