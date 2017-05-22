@@ -40,17 +40,18 @@ def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]],
     qnum = int(qnum)
     buzz = buzzes[qnum]
     buzzf, predf, metaf, finalf = [], [], [], []
-    final_guesses = []
+    final_guesses = [None for _ in GUESSERS]
     for i, (g_class, g_group) in enumerate(question.groupby('guesser')):
         # FIXME there might be missing guesses so the length might vary
         g_group = g_group.groupby(['sentence', 'token'])
+
         for pos, (sent_token, p_group) in enumerate(g_group):
             sent, token = sent_token
             p_group = p_group.sort_values('score', ascending=False)
             # normalize scores
             _sum = sum(p_group.score)
             scores = [(r.score / _sum, r.guess) for r in p_group.itertuples()]
-            final_guesses.append(scores[0][1])
+            final_guesses[i] = scores[0][1]
             for rank, (score, guess) in enumerate(scores):
                 if np.argmax(buzz[pos]) == i and rank == 0:
                     buzzing = 1
