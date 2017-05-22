@@ -38,9 +38,7 @@ SUMMARIES = {'output/summary'}
 
 REPORTING = {'output/reporting'}
 
-EXPO = {
-    'output/expo',
-}
+EXPO = {'output/expo'}
 
 
 CHECKPOINT_TARGETS = (

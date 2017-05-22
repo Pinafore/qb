@@ -71,7 +71,6 @@ class GenerateGuesses(Task):
     guesser_class = luigi.Parameter()  # type: str
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
-    word_skip = luigi.IntParameter(default=-1)  # type: int
     n_guesses = luigi.IntParameter(default=conf['n_guesses'])  # type: int
     fold = luigi.Parameter()  # type: str
 
@@ -88,9 +87,14 @@ class GenerateGuesses(Task):
         guesser_directory = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
-        log.info('Generating and saving guesses for {} fold with word_skip={}...'.format(self.fold, self.word_skip))
+        if self.fold in {c.GUESSER_TRAIN_FOLD, c.GUESSER_DEV_FOLD}:
+            word_skip = conf['guesser_word_skip']
+        else:
+            word_skip = conf['buzzer_word_skip']
+            
+        log.info('Generating and saving guesses for {} fold with word_skip={}...'.format(self.fold, word_skip))
         start_time = time.time()
-        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], word_skip=self.word_skip)
+        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], word_skip=word_skip)
         end_time = time.time()
         log.info('Guessing on {} fold took {}s, saving guesses...'.format(self.fold, end_time - start_time))
         guesser_class.save_guesses(guess_df, guesser_directory, [self.fold])

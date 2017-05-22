@@ -1,4 +1,6 @@
 n_guesses = 50
+guesser_word_skip = -1
+buzzer_word_skip = -1
 
 expo_questions = "data/external/expo.csv"
 
