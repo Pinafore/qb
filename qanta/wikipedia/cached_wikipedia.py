@@ -8,11 +8,11 @@ from collections import ChainMap, namedtuple
 from urllib import parse
 
 import wikipedia
-from unidecode import unidecode
 
 from qanta import logging
 from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.util.constants import COUNTRY_LIST_PATH, WIKI_LOCATION, WIKI_DUMP_REDIRECT_PICKLE
+from qanta.util.constants import COUNTRY_LIST_PATH, WIKI_LOCATION, WIKI_DUMP_REDIRECT_PICKLE, WIKI_PAGE_PATH
+from qanta.util.io import safe_path
 from qanta.config import conf
 
 log = logging.get(__name__)
@@ -33,21 +33,6 @@ def access_page(title, cached_wiki):
     return None
 
 
-def spark_initialize_file_cache():
-    """
-    Initialize the cache using spark and the full wikipedia dump
-    :return:
-    """
-    db = QuestionDatabase()
-    answers = set(db.all_answers().values())
-
-    from qanta.spark import create_spark_session
-    spark = create_spark_session()
-    wiki_path = 's3a://pinafore-us-west-2/public/wikipedia-json/*/*'
-    wiki_df = spark.read.json(wiki_path)
-    return wiki_df
-
-
 def web_initialize_file_cache(path, remote_delay=1):
     """
     Initialize the cache by requesting each page with wikipedia package.
@@ -63,14 +48,46 @@ def web_initialize_file_cache(path, remote_delay=1):
     pool.starmap(access_page, input_data)
 
 
+def normalize_wikipedia_title(title):
+    """
+    Normalize wikipedia title coming from raw dumps. This removes non-ascii characters by converting them to their
+    nearest equivalent and replaces spaces with underscores
+    :param title: raw wikipedia title
+    :return: normalized title
+    """
+    return title.replace(' ', '_')
+
+
 def create_wikipedia_title_pickle(dump_path, output_path):
     from qanta.spark import create_spark_session
+
     spark = create_spark_session()
     wiki_df = spark.read.json(dump_path)
     raw_titles = wiki_df.select('title').distinct().collect()
-    clean_titles = {unidecode(r.title.replace(' ', '_') for r in raw_titles)}
+    clean_titles = {normalize_wikipedia_title(r.title) for r in raw_titles}
     with open(output_path, 'wb') as f:
         pickle.dump(clean_titles, f)
+    spark.stop()
+
+
+def create_wikipedia_cache(dump_path):
+    from qanta.spark import create_spark_session
+
+    spark = create_spark_session()
+    db = QuestionDatabase()
+    answers = set(db.all_answers().values())
+    b_answers = spark.sparkContext.broadcast(answers)
+    # Paths used in spark need to be absolute and it needs to exist
+    page_path = os.path.abspath(safe_path(WIKI_PAGE_PATH))
+
+    def create_page(row):
+        title = normalize_wikipedia_title(row.title)
+        filter_answers = b_answers.value
+        if title in filter_answers:
+            page = WikipediaPage(title, row.text, None, None, row.id, row.url)
+            write_page(page, page_path=page_path)
+
+    spark.read.json(dump_path).rdd.foreach(create_page)
 
 
 def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
@@ -89,8 +106,8 @@ def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
         n_selected = 0
         for row in csv.reader(redirect_f, quotechar='"', escapechar='\\'):
             n_total += 1
-            source = unidecode(row[0])
-            target = unidecode(row[1])
+            source = row[0]
+            target = row[1]
             if (target not in pages or source in countries or
                     target.startswith('WikiProject') or
                     target.endswith("_topics") or
@@ -106,8 +123,30 @@ def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
         pickle.dump(redirects, output_f)
 
 
+def title_to_filepath(title: str, page_path=WIKI_PAGE_PATH):
+    """
+    Convert the page title to a safe filepath to either read or write from
+    """
+    filename = parse.quote(title, safe='')
+    return os.path.join(page_path, filename)
+
+
+def write_page(page: WikipediaPage, page_path=WIKI_PAGE_PATH):
+    """
+    Write a WikipediaPage object to the disk cache.
+
+    """
+
+    # We use the title rather than an explicit key to account for redirects. safe='' so that / is url encoded
+    filepath = title_to_filepath(page.title, page_path=page_path)
+
+    with open(filepath, 'wb') as f:
+        log.info("Writing file to %s" % filepath)
+        pickle.dump(page, f)
+
+
 class CachedWikipedia:
-    def __init__(self, location=WIKI_LOCATION, write_dummy=False,
+    def __init__(self, location=WIKI_LOCATION, write_dummy=True,
                  remote_fallback=conf['cached_wikipedia_remote_fallback'], remote_delay=1):
         """
         CachedWikipedia provides a unified way and easy way to access Wikipedia pages. Its design is motivated by:
@@ -140,7 +179,6 @@ class CachedWikipedia:
         False)
         """
         self.root_path = location
-        self.page_path = os.path.join(self.root_path, 'pages')
         self.dump_redirect_path = WIKI_DUMP_REDIRECT_PICKLE
         self.cached_redirect_path = os.path.join(self.root_path, 'cached_redirects.pkl')
         self.cache = {}
@@ -177,28 +215,6 @@ class CachedWikipedia:
         # correctly remain unchanged since it comes from a luigi job
         self._redirects = ChainMap(self._cached_redirects, self._dump_redirects)
 
-    def title_to_filepath(self, title: str):
-        """
-        Convert the page title to a safe filepath to either read or write from
-        :param title: title to convert
-        :return: 
-        """
-        filename = parse.quote(title, safe='')
-        return os.path.join(self.page_path, filename)
-
-    def write_page(self, page: WikipediaPage):
-        """
-        Write a WikipediaPage object to the disk cache.
-        
-        """
-
-        # We use the title rather than an explicit key to account for redirects. safe='' so that / is url encoded
-        filepath = self.title_to_filepath(page.title)
-
-        with open(filepath, 'wb') as f:
-            log.info("Writing file to %s" % filepath)
-            pickle.dump(page, f)
-
     def _wiki_request_page(self, key: str):
         log.info('Loading {}'.format(key))
         try:
@@ -223,7 +239,7 @@ class CachedWikipedia:
         with open(filename, 'rb') as f:
             return pickle.load(f)
 
-    def _load_remote_page(self, key, filename):
+    def _load_remote_page(self, key):
         if key in self.countries:
             raw = [self._wiki_request_page(key)]
             for ii in ["%s%s" % (x, self.countries[key]) for x in COUNTRY_SUB]:
@@ -238,10 +254,8 @@ class CachedWikipedia:
             if len(raw) > 1:
                 log.info("%i pages for %s" % (len(raw), key))
             page = create_wiki_page(key, "\n".join(x.content for x in raw))
+            write_page(page)
 
-            log.info("Writing file to %s" % filename)
-            with open(filename, 'wb') as f:
-                pickle.dump(page, f)
             if raw[0].title != key:
                 self._redirects[key] = raw[0].title
                 log.info("%s redirects to %s" % (key, raw[0].title))
@@ -256,13 +270,12 @@ class CachedWikipedia:
                 categories=set(chain(*[x.categories for x in raw]))
             )
 
-            self.write_page(page)
+            write_page(page)
         else:
             log.info("Dummy page for %s" % key)
             page = create_wiki_page(key, '')
             if self.write_dummy:
-                with open(filename, 'wb') as f:
-                    pickle.dump(page, f)
+                write_page(page)
         return page
 
     def redirect(self, key):
@@ -280,18 +293,18 @@ class CachedWikipedia:
         if title in self.cache:
             page = self.cache[title]
         else:
-            filepath = self.title_to_filepath(title)
+            filepath = title_to_filepath(title)
             if os.path.exists(filepath):
                 page = self._load_from_file_cache(filepath)
             elif self.cached_wikipedia_remote_fallback:
-                page = self._load_remote_page(title, filepath)
+                page = self._load_remote_page(title)
             else:
                 if self.write_dummy:
                     log.info(
                         'Writing dummy page for "{}"->"{}", remote callback disabled and write dummy enabled'.format(
                             key, title))
                     page = create_wiki_page(title, '')
-                    self.write_page(page)
+                    write_page(page)
                 else:
                     raise KeyError('"{}"->"{}" not found and both write dummy and remote callback are disabled'.format(
                         key, title))

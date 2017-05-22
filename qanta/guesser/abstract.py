@@ -282,8 +282,7 @@ class AbstractGuesser(metaclass=ABCMeta):
     def create_report(self, directory: str):
         with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
             params = pickle.load(f)
-        all_guesses = AbstractGuesser.load_guesses(directory)
-        dev_guesses = all_guesses[all_guesses.fold == c.GUESSER_DEV_FOLD]
+        dev_guesses = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
 
         qdb = QuestionDatabase()
         questions = qdb.all_questions()

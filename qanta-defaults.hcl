@@ -1,4 +1,6 @@
 n_guesses = 50
+guesser_word_skip = -1
+buzzer_word_skip = -1
 
 expo_questions = "data/external/expo.csv"
 
@@ -36,7 +38,7 @@ guessers "ElasticSearch" {
 guessers "DAN" {
   class = "qanta.guesser.dan.DANGuesser"
   luigi_dependency = "qanta.pipeline.wiki_questions.SelectWikiQuestions"
-  enabled = true
+  enabled = false
   min_answers = 1
   expand_we = true
   n_hidden_layers = 1
