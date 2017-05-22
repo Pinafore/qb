@@ -26,6 +26,7 @@ class PageAssigner:
                 except ValueError:
                     log.info("Bad unambiguous line in %s: %s" % (filename, ii))
 
+                assert answer not in self._ambiguous, "%s in ambig and unambig" % answer
                 if answer in self._unambiguous:
                     log.info("%s in unambiguous twice" % answer)
                     assert self._unambiguous[answer] == page, \
@@ -51,6 +52,8 @@ class PageAssigner:
                     words = ""
 
                 words = [x for x in words.split(":") if x != '']
+                page = page.replace(" ", "_")
+                assert answer not in self._unambiguous, "%s in ambig and unambig" % answer
                 self._ambiguous[answer][page] = words
 
     def load_direct(self, filename):
@@ -60,7 +63,7 @@ class PageAssigner:
                     continue
                 try:
                     ext_id, page, answer = ii.strip().split('\t')
-                    self._direct[ext_id] = page
+                    self._direct[ext_id] = page.replace(" ", "_")
                 except ValueError:
                     log.info("Bad direct line in %s: %s" % (filename, ii))
                 
@@ -84,17 +87,17 @@ class PageAssigner:
         if pb in self._direct:
             val = self._direct[pb]
             self._counts["D-P"][val] += 1
-            return val
+            return val.replace(" ", "_")
 
         if naqt in self._direct:
             val = self._direct[naqt]
             self._counts["D-N"][val] += 1
-            return val
+            return val.replace(" ", "_")
 
         if normalize in self._unambiguous:
             val = self._unambiguous[normalize]
             self._counts["U"][val] += 1
-            return val
+            return val.replace(" ", "_")
 
         if normalize in self._ambiguous:
             default = [x for x in self._ambiguous[normalize] if
@@ -111,7 +114,7 @@ class PageAssigner:
                     if ww in [x.lower() for x in words]:
                         val = jj
                         self._counts["A"][val] += 1
-                        return val
+                        return val.replace(" ", "_")
 
             print(self._ambiguous[normalize])
             log.info("Match not found, looking for %s default (%i)" % (normalize, len(default)))
@@ -120,7 +123,7 @@ class PageAssigner:
             if len(default) == 1:
                 val = default[0]
                 self._counts["A"][val] += 1
-                return val
+                return val.replace(" ", "_")
             else:
                 return ''
 
