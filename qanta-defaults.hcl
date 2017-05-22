@@ -8,7 +8,7 @@ use_pretrained_embeddings = true
 
 # Configure whether qanta.wikipedia.cached_wikipedia.CachedWikipedia should fallback
 # performing a remote call to Wikipedia if a page doesn't exist
-cached_wikipedia_remote_fallback = true
+cached_wikipedia_remote_fallback = false
 
 wiki_data_frac = 0.0
 

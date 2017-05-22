@@ -104,20 +104,16 @@ class GenerateGuesses(Task):
 
 
 class GenerateAllGuesses(WrapperTask):
-    guesser_module = luigi.Parameter()  # type: str
-    guesser_class = luigi.Parameter()  # type: str
-    dependency_module = luigi.Parameter()  # type: str
-    dependency_class = luigi.Parameter()  # type: str
-
     def requires(self):
-        for fold in c.GUESSER_GENERATION_FOLDS:
-            yield GenerateGuesses(
-                guesser_module=self.guesser_module,
-                guesser_class=self.guesser_class,
-                dependency_module=self.dependency_module,
-                dependency_class=self.dependency_class,
-                fold=fold
-            )
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            for fold in c.GUESSER_GENERATION_FOLDS:
+                yield GenerateGuesses(
+                    guesser_module=g_spec.guesser_module,
+                    guesser_class=g_spec.guesser_class,
+                    dependency_module=g_spec.dependency_module,
+                    dependency_class=g_spec.dependency_class,
+                    fold=fold
+                )
 
 
 class GuesserReport(Task):
@@ -165,7 +161,6 @@ class AllSingleGuesserReports(WrapperTask):
 
 
 class CompareGuessersReport(Task):
-
     def requires(self):
         yield AllGuesserReports()
 
@@ -173,7 +168,7 @@ class CompareGuessersReport(Task):
         n_guesser_report(c.COMPARE_GUESSER_REPORT_PATH.format(c.GUESSER_DEV_FOLD), c.GUESSER_DEV_FOLD)
 
     def output(self):
-        return LocalTarget(c.COMPARE_GUESSER_REPORT_PATH.format(self.fold))
+        return LocalTarget(c.COMPARE_GUESSER_REPORT_PATH.format(c.GUESSER_DEV_FOLD))
 
 
 class AllGuesserReports(WrapperTask):

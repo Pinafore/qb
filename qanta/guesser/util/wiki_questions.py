@@ -8,7 +8,6 @@ from qanta import logging
 from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.util.constants import DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT, DOMAIN_TARGET_PREFIX
-from qanta.util.environment import QB_WIKI_LOCATION
 from qanta.util.io import safe_open
 from qanta.preprocess import clean_question
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
@@ -37,7 +36,7 @@ def generate_domain_classifier_data(weight=150):
     real_questions = [('1', str(weight), ans, clean_question(sent)) for q, ans in zip(*qb_data) for sent in q]
     pages = set(a for _, _, a, _ in real_questions)
 
-    cw = CachedWikipedia(QB_WIKI_LOCATION)
+    cw = CachedWikipedia()
 
     # Split wikipedia questions into two sets
     wiki_questions = ([], [])

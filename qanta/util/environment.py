@@ -1,8 +1,11 @@
 import os
+import multiprocessing
 
 QB_ROOT = os.getenv('QB_ROOT')
 
 QB_SPARK_MASTER = os.getenv('QB_SPARK_MASTER')
+
+QB_MAX_CORES = os.getenv('QB_MAX_CORES', multiprocessing.cpu_count())
 
 
 def data_path(other_path):
@@ -10,8 +13,6 @@ def data_path(other_path):
         return os.path.join(QB_ROOT, other_path)
     else:
         return other_path
-
-QB_WIKI_LOCATION = data_path('data/external/wikipedia')
 
 if os.path.exists('data/internal/naqt.db'):
     QB_QUESTION_DB = data_path('data/internal/naqt.db')

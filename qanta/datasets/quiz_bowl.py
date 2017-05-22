@@ -148,12 +148,11 @@ class QuestionDatabase:
         questions = {}
         c = self._conn.cursor()
         command = 'select id, page, category, answer, ' + \
-            'tournament, naqt, protobowl, fold' + command
+            'tournament, naqt, protobowl, fold ' + command
         c.execute(command, arguments)
 
-        for qnum, page, category, answer, tournaments, naqt, protobowl, fold,in c:
-            questions[qnum] = Question(qnum, answer, category, naqt, protobowl,
-                                       tournaments, page, fold)
+        for qnum, page, _, answer, tournaments, naqt, protobowl, fold in c:
+            questions[qnum] = Question(qnum, answer, None, naqt, protobowl, tournaments, page, fold)
 
         for q in self.expo_questions:
             questions[q.qnum] = q
@@ -168,9 +167,9 @@ class QuestionDatabase:
 
     def all_questions(self, unfiltered=False):
         if unfiltered:
-            return self.query(' FROM questions', ())
+            return self.query('FROM questions', ())
         else:
-            return self.query(' FROM questions where page != ""', ())
+            return self.query('FROM questions where page != ""', ())
 
     def answer_map(self):
         c = self._conn.cursor()
@@ -217,15 +216,15 @@ class QuestionDatabase:
             yield questions[ii]
 
     def questions_with_pages(self) -> Dict[str, List[Question]]:
-        page_map = OrderedDict()
+        page_map = {}
 
         questions = self.query('from questions where page != ""', ()).values()
 
-        for row in sorted(questions):
-            page = row.page
+        for q in questions:
+            page = q.page
             if page not in page_map:
                 page_map[page] = []
-            page_map[page].append(row)
+            page_map[page].append(q)
         return page_map
 
     def prune_text(self):

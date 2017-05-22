@@ -8,13 +8,11 @@ from nltk.tokenize import RegexpTokenizer
 from nltk import bigrams
 
 from qanta import logging
-from qanta.util.environment import QB_QUESTION_DB, QB_WIKI_LOCATION
-from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION
+from qanta.util.environment import QB_QUESTION_DB
+from qanta.util.constants import CLM_PATH, QB_SOURCE_LOCATION, WIKI_LOCATION
 from qanta.config import conf
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.datasets.quiz_bowl import QuestionDatabase
-from qanta.util.environment import data_path
-from qanta.util.constants import COUNTRY_LIST_PATH
 
 from clm import clm
 from qanta.util.io import safe_open
@@ -33,11 +31,11 @@ def text_iterator(use_wiki, wiki_location,
                   use_qb, qb_location,
                   use_source, source_location,
                   limit=-1,
-                  min_pages=0, country_list=COUNTRY_LIST_PATH):
+                  min_pages=0):
     qdb = QuestionDatabase()
     doc_num = 0
 
-    cw = CachedWikipedia(wiki_location, data_path(country_list))
+    cw = CachedWikipedia()
     pages = qdb.questions_with_pages()
 
     for p in sorted(pages, key=lambda k: len(pages[k]), reverse=True):
@@ -292,7 +290,7 @@ class LanguageModelReader(LanguageModelBase):
 
         return result
 
-    def preprocess_and_cache(self, sentece):
+    def preprocess_and_cache(self, sentence):
         if self._sentence_hash != hash(sentence):
             self._sentence_hash = hash(sentence)
             tokenized = list(self.tokenize_and_censor(sentence))
@@ -491,7 +489,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
     num_docs = 0
     background = defaultdict(int)
     # Initialize language models
-    for title, text in text_iterator(True, QB_WIKI_LOCATION,
+    for title, text in text_iterator(True, WIKI_LOCATION,
                                      True, QB_QUESTION_DB,
                                      True, QB_SOURCE_LOCATION,
                                      max_pages,
@@ -520,7 +518,7 @@ def build_clm(lm_out=CLM_PATH, vocab_size=100000, global_lms=5, max_pages=-1):
                                      ]:
         # Add training data
         start = time.time()
-        for title, text in text_iterator(wiki, QB_WIKI_LOCATION,
+        for title, text in text_iterator(wiki, WIKI_LOCATION,
                                          qb, QB_QUESTION_DB,
                                          source, QB_SOURCE_LOCATION,
                                          max_pages,
