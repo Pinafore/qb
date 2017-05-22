@@ -265,8 +265,6 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
         # print(output)
 
     ##### plot lines #####
-    lines = []
-
     fig, ax = plt.subplots()
     for k in HISTO_KEYS_0:
         v = _his_stats[k]
