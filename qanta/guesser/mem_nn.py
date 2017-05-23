@@ -80,17 +80,14 @@ class MemoryIndex:
                         memory.save()
 
     @staticmethod
-    def search(text: str, max_n_memories: int, include_page=False):
+    def search(text: str, max_n_memories: int):
         s = Search(index='mem_nn')[0:max_n_memories].query(
             'multi_match', query=text, fields=['text', 'page']
         )
-        if include_page:
-            return [(r.text, r.page) for r in s.execute()]
-        else:
-            return [r.text for r in s.execute()]
+        return [(r.text, r.page) for r in s.execute()]
 
     @staticmethod
-    def search_parallel(text_list: List[List[str]], max_n_memories: int, include_page=False):
+    def search_parallel(text_list: List[List[str]], max_n_memories: int):
         if os.path.exists('/tmp/qanta/mem_nn_es.cache'):
             log.info('Loading memory cache...')
             with open('/tmp/qanta/mem_nn_es.cache', 'rb') as f:
@@ -99,7 +96,7 @@ class MemoryIndex:
             cached_memories = {}
         n_cores = conf['guessers']['MemNN']['n_cores']
         log.info('Request spark to use n_cores={}'.format(n_cores))
-        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '4g')])
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '10g')])
         b_cached_memories = sc.broadcast(cached_memories)
 
         def es_search(query: List[str]):
@@ -108,7 +105,7 @@ class MemoryIndex:
             if str_query in loaded_cached_memories:
                 return loaded_cached_memories[str_query]
             else:
-                return MemoryIndex.search(str_query, max_n_memories, include_page=include_page)
+                return MemoryIndex.search(str_query, max_n_memories)
 
         memory_list = sc.parallelize(text_list, 400 * n_cores).map(es_search).collect()
         sc.stop()
@@ -154,18 +151,24 @@ def preprocess_wikipedia(question_memories: List[NMemories], create_vocab):
     else:
         vocab = None
 
-    tokenized_question_memories = []
+    tokenized_question_mem_keys = []
+    tokenized_question_mem_vals = []
     for memories in question_memories:
-        tokenized_memories = []
-        for mem in memories:
-            words = tokenize_question(mem)
-            tokenized_memories.append(words)
+        tokenized_mem_keys = []
+        tokenized_mem_vals = []
+        for mem_key, mem_val in memories:
+            words = tokenize_question(mem_key)
+            tokenized_mem_keys.append(words)
+            normed_val = ['KEY:{}'.format(mem_val.replace(' ', ''))]
+            tokenized_mem_vals.append(normed_val)
             if create_vocab:
                 for w in words:
                     vocab.add(w)
-        tokenized_question_memories.append(tokenized_memories)
+                vocab.add(normed_val)
+        tokenized_question_mem_keys.append(tokenized_mem_keys)
+        tokenized_question_mem_vals.append(tokenized_mem_vals)
 
-    return tokenized_question_memories, vocab
+    return tokenized_question_mem_keys, tokenized_question_mem_vals, vocab
 
 
 class MemNNGuesser(AbstractGuesser):
@@ -287,7 +290,8 @@ class MemNNGuesser(AbstractGuesser):
         qb_we_dimension = self.qb_embeddings.shape[1]
 
         # Keras Embeddings only supports 2 dimensional input so we have to do reshape ninjitsu to make this work
-        wiki_input = Input((self.n_memories, self.wiki_max_len,), name='wiki_input')
+        wiki_key_input = Input((self.n_memories, self.wiki_max_len,), name='wiki_key_input')
+        wiki_val_input = Input((self.n_memories, self.wiki_max_len,), name='wiki_val_input')
         qb_input = Input((self.qb_max_len,), name='qb_input')
 
         wiki_embeddings = Embedding(wiki_vocab_size, wiki_we_dimension, weights=[self.wiki_embeddings], mask_zero=True)
@@ -300,14 +304,14 @@ class MemNNGuesser(AbstractGuesser):
         wiki_m_encoder.add(wiki_embeddings)
         wiki_m_encoder.add(Dropout(self.word_dropout_rate, noise_shape=[self.n_memories, self.wiki_max_len, 1]))
         wiki_m_encoder.add(AverageWords())
-        wiki_input_encoded_m = wiki_m_encoder(wiki_input)
+        wiki_input_encoded_m = wiki_m_encoder(wiki_key_input)
 
         # Wikipedia sentence encoder for retrieved memories
         wiki_c_encoder = Sequential()
         wiki_c_encoder.add(wiki_embeddings)
         wiki_c_encoder.add(Dropout(self.word_dropout_rate, noise_shape=[self.n_memories, self.wiki_max_len, 1]))
         wiki_c_encoder.add(AverageWords())
-        wiki_input_encoded_c = wiki_c_encoder(wiki_input)
+        wiki_input_encoded_c = wiki_c_encoder(wiki_val_input)
 
         # Quiz Bowl question encoder
         qb_encoder = Sequential()
@@ -342,7 +346,7 @@ class MemNNGuesser(AbstractGuesser):
         actions = Activation('softmax')(actions)
 
         adam = Adam()
-        model = Model(inputs=[qb_input, wiki_input], outputs=actions)
+        model = Model(inputs=[qb_input, wiki_key_input, wiki_val_input], outputs=actions)
         model.compile(
             loss=sparse_categorical_crossentropy, optimizer=adam,
             metrics=['sparse_categorical_accuracy']
@@ -390,10 +394,10 @@ class MemNNGuesser(AbstractGuesser):
         test_memories = MemoryIndex.search_parallel(x_test_text, self.n_memories)
 
         log.info('Preprocessing train memories...')
-        tokenized_train_memories, wiki_vocab = preprocess_wikipedia(train_memories, True)
+        tokenized_train_mem_keys, tokenized_train_mem_vals, wiki_vocab = preprocess_wikipedia(train_memories, True)
 
         log.info('Preprocessing test memories...')
-        tokenized_test_memories, _ = preprocess_wikipedia(test_memories, False)
+        tokenized_test_mem_keys, tokenized_test_mem_vals, _ = preprocess_wikipedia(test_memories, False)
 
         log.info('Creating wiki embeddings...')
         self.wiki_embeddings, wiki_embedding_lookup = wiki_load_embeddings(
@@ -402,43 +406,76 @@ class MemNNGuesser(AbstractGuesser):
         self.wiki_embedding_lookup = wiki_embedding_lookup
 
         wiki_max_len = 0
-        for i in range(len(tokenized_train_memories)):
-            memories = tokenized_train_memories[i]
-            while len(memories) < self.n_memories:
-                memories.append([PAD_TOKEN])
-            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
-            for we_m in we_memories:
+        for i in range(len(tokenized_train_mem_keys)):
+            mem_keys = tokenized_train_mem_keys[i]
+            mem_vals = tokenized_train_mem_vals[i]
+            while len(mem_keys) < self.n_memories:
+                mem_keys.append([PAD_TOKEN])
+                mem_vals.append([PAD_TOKEN])
+            we_mem_keys = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in mem_keys]
+            we_mem_vals = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in mem_vals]
+
+            for we_m in we_mem_keys:
                 if len(we_m) == 0:
                     we_m.append(wiki_embedding_lookup[PAD_TOKEN])
-            if len(we_memories) != 0:
-                wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_memories))
-            tokenized_train_memories[i] = we_memories
+            if len(we_mem_keys) != 0:
+                wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_mem_keys))
+            tokenized_train_mem_keys[i] = we_mem_keys
+
+            for we_m in we_mem_vals:
+                if len(we_m) == 0:
+                    we_m.append(wiki_embedding_lookup[PAD_TOKEN])
+            if len(we_mem_vals) != 0:
+                wiki_max_len = max(wiki_max_len, max(len(we_m) for we_m in we_mem_vals))
+            tokenized_train_mem_vals[i] = we_mem_vals
 
         print('Wiki max len:', wiki_max_len)
         wiki_max_len = min(wiki_max_len, 60)
         self.wiki_max_len = wiki_max_len
-        tokenized_train_memories = [
+        tokenized_train_mem_keys = [
             pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
-            for mem in tokenized_train_memories]
+            for mem in tokenized_train_mem_keys]
 
-        tokenized_train_memories = np.array(tokenized_train_memories)
-        log.info('Train memory array shape: {}'.format(tokenized_train_memories.shape))
+        tokenized_train_mem_vals = [
+            pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+            for mem in tokenized_train_mem_vals]
 
-        for i in range(len(tokenized_test_memories)):
-            memories = tokenized_test_memories[i]
-            while len(memories) < self.n_memories:
-                memories.append([PAD_TOKEN])
-            we_memories = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in memories]
-            for we_m in we_memories:
+        tokenized_train_mem_keys = np.array(tokenized_train_mem_keys)
+        tokenized_train_mem_vals = np.array(tokenized_train_mem_vals)
+        log.info('Train memory key array shape: {}'.format(tokenized_train_mem_keys.shape))
+        log.info('Train memory val array shape: {}'.format(tokenized_train_mem_vals.shape))
+
+        for i in range(len(tokenized_test_mem_keys)):
+            mem_keys = tokenized_test_mem_keys[i]
+            mem_vals = tokenized_test_mem_vals[i]
+            while len(mem_keys) < self.n_memories:
+                mem_keys.append([PAD_TOKEN])
+                mem_vals.append([PAD_TOKEN])
+
+            we_mem_keys = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in mem_keys]
+            we_mem_vals = [nn.convert_text_to_embeddings_indices(m, wiki_embedding_lookup) for m in mem_vals]
+            for we_m in we_mem_keys:
                 if len(we_m) == 0:
                     we_m.append(wiki_embedding_lookup[PAD_TOKEN])
-            tokenized_test_memories[i] = we_memories
+            tokenized_test_mem_keys[i] = we_mem_keys
 
-        tokenized_test_memories = [
+            for we_m in we_mem_vals:
+                if len(we_m) == 0:
+                    we_m.append(wiki_embedding_lookup[PAD_TOKEN])
+            tokenized_test_mem_vals[i] = we_mem_vals
+
+        tokenized_test_mem_keys = [
             pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
-            for mem in tokenized_test_memories]
-        tokenized_test_memories = np.array(tokenized_test_memories)
-        log.info('Test memory array shape: {}'.format(tokenized_test_memories.shape))
+            for mem in tokenized_test_mem_keys]
+
+        tokenized_test_mem_vals = [
+            pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+            for mem in tokenized_test_mem_vals]
+
+        tokenized_test_mem_keys = np.array(tokenized_test_mem_keys)
+        tokenized_test_mem_vals = np.array(tokenized_test_mem_vals)
+        log.info('Test memory key array shape: {}'.format(tokenized_test_mem_keys.shape))
+        log.info('Test memory val array shape: {}'.format(tokenized_test_mem_vals.shape))
 
         log.info('Building keras model...')
         self.model = self.build_model()
@@ -456,12 +493,12 @@ class MemNNGuesser(AbstractGuesser):
         n_train_batches = int(len(x_train) / self.batch_size)
         log.info('Training on {} batches of size {}'.format(n_train_batches, self.batch_size))
         train_batch_generator = nn.batch_generator(
-            [x_train, tokenized_train_memories], y_train, self.batch_size, n_train_batches
+            [x_train, tokenized_train_mem_keys, tokenized_train_mem_vals], y_train, self.batch_size, n_train_batches
         )
         n_test_batches = int(len(x_test) / self.batch_size)
         log.info('Testing on {} batches of size {}'.format(n_test_batches, self.batch_size))
         test_batch_generator = nn.batch_generator(
-            [x_test, tokenized_test_memories], y_test, self.batch_size, n_test_batches
+            [x_test, tokenized_test_mem_keys, tokenized_test_mem_vals], y_test, self.batch_size, n_test_batches
         )
         history = self.model.fit_generator(
             train_batch_generator,
@@ -483,26 +520,42 @@ class MemNNGuesser(AbstractGuesser):
 
         test_memories = MemoryIndex.search_parallel(tokenized_x, self.n_memories)
 
-        tokenized_test_memories, _ = preprocess_wikipedia(test_memories, False)
+        tokenized_test_mem_keys, tokenized_test_mem_vals, _ = preprocess_wikipedia(test_memories, False)
 
-        for i in range(len(tokenized_test_memories)):
-            memories = tokenized_test_memories[i]
-            while len(memories) < self.n_memories:
-                memories.append([PAD_TOKEN])
-            we_memories = [nn.convert_text_to_embeddings_indices(m, self.wiki_embedding_lookup) for m in memories]
-            for we_m in we_memories:
+        for i in range(len(tokenized_test_mem_keys)):
+            mem_keys = tokenized_test_mem_keys[i]
+            mem_vals = tokenized_test_mem_vals[i]
+            while len(mem_keys) < self.n_memories:
+                mem_keys.append([PAD_TOKEN])
+                mem_vals.append([PAD_TOKEN])
+
+            we_mem_keys = [nn.convert_text_to_embeddings_indices(m, self.wiki_embedding_lookup) for m in mem_keys]
+            for we_m in we_mem_keys:
                 if len(we_m) == 0:
                     we_m.append(self.wiki_embedding_lookup[PAD_TOKEN])
-            tokenized_test_memories[i] = we_memories
+            tokenized_test_mem_keys[i] = we_mem_keys
 
-        tokenized_test_memories = [
+            we_mem_vals = [nn.convert_text_to_embeddings_indices(m, self.wiki_embedding_lookup) for m in mem_vals]
+            for we_m in we_mem_vals:
+                if len(we_m) == 0:
+                    we_m.append(self.wiki_embedding_lookup[PAD_TOKEN])
+            tokenized_test_mem_vals[i] = we_mem_vals
+
+        tokenized_test_mem_keys = [
             pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
-            for mem in tokenized_test_memories]
-        tokenized_test_memories = np.array(tokenized_test_memories)
-        print(np.shape(tokenized_test_memories))
-        print(set(len(m) for m in tokenized_test_memories))
+            for mem in tokenized_test_mem_keys]
 
-        class_probabilities = self.model.predict([x_test, tokenized_test_memories], batch_size=self.batch_size)
+        tokenized_test_mem_vals = [
+            pad_sequences(mem, maxlen=self.wiki_max_len, value=0, padding='post', truncating='post')
+            for mem in tokenized_test_mem_vals]
+
+        tokenized_test_mem_keys = np.array(tokenized_test_mem_keys)
+        tokenized_test_mem_vals = np.array(tokenized_test_mem_vals)
+        print(np.shape(tokenized_test_mem_keys))
+        print(set(len(m) for m in tokenized_test_mem_keys))
+
+        class_probabilities = self.model.predict(
+            [x_test, tokenized_test_mem_keys, tokenized_test_mem_vals], batch_size=self.batch_size)
         guesses = []
         for row in class_probabilities:
             sorted_labels = np.argsort(-row)[:max_n_guesses]
