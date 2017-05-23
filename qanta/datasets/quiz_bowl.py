@@ -1,8 +1,8 @@
-from typing import List, Dict, Iterable, Tuple, Set
+from typing import List, Dict, Iterable, Tuple
 import csv
 import os
 import sqlite3
-from collections import defaultdict, OrderedDict, Counter
+from collections import defaultdict, Counter
 import re
 
 from functional import seq
@@ -126,7 +126,7 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
         while curr_qnum in qnums:
             curr_qnum += 1
         qb_question = Question(
-            curr_qnum, None, None, None, None, q['answer'], None, 'expo', None
+            curr_qnum, None, None, None, None, None, q['answer'], 'expo'
         )
         for i, sent in enumerate(q['sentences']):
             qb_question.add_text(i, sent)

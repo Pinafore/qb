@@ -60,6 +60,10 @@ class Memory(DocType):
 
 class MemoryIndex:
     @staticmethod
+    def delete():
+        Index('mem_nn').delete()
+
+    @staticmethod
     def build(documents: Dict[str, List[str]], rebuild_index=False):
         ix = Index('mem_nn')
         if rebuild_index:

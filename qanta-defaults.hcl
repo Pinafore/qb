@@ -2,7 +2,7 @@ n_guesses = 50
 guesser_word_skip = -1
 buzzer_word_skip = 5
 
-expo_questions = "data/external/expo.csv"
+expo_questions = "data/internal/expo/2015_jennings.csv"
 
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
