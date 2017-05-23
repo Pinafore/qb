@@ -1,10 +1,12 @@
 import json
 import pickle
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple
+from collections import namedtuple, Counter, defaultdict
 
 from pyspark import SparkConf, SparkContext, RDD, Broadcast
 from qanta.util.environment import QB_SPARK_MASTER
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.wikipedia.cached_wikipedia import normalize_wikipedia_title
 
 
 TimeData = namedtuple('TimeData', 'after before calendarmodel precision time timezone')
@@ -338,3 +340,116 @@ def parse_raw_wikidata(output):
         }, f)
 
     sc.stop()
+
+object_blacklist = {
+    'Wikimedia disambiguation page',
+    'common name',
+    'male given name',
+    'Wikimedia list article'
+}
+
+object_merge_map = {
+    'sovereign state': 'country',
+    'member state of the United Nations': 'country',
+    'member state of the European Union': 'country',
+    'member state of the Council of Europe': 'country',
+    'permanent member of the United Nations Security Council': 'country',
+    'landlocked country': 'country',
+    'island nation': 'country',
+    'republic': 'country',
+    'former country': 'country',
+    'unitary state': 'country',
+    'communist state': 'country',
+    'Commonwealth realm': 'country',
+    'secular state': 'country',
+    'social state': 'country',
+    'legal state': 'country',
+    'dominion': 'country',
+    'member state of Mercosur': 'country',
+    'Islamic republic': 'country',
+    'member state of the Union of South American Nations': 'country',
+    'federal republic': 'country',
+    'constitutional republic': 'country',
+    'state': 'country',
+    'city with millions of inhabitants': 'city',
+    'big city': 'city',
+    'capital': 'city',
+    'port city': 'city',
+    'state or insular area capital in the United States': 'city',
+    'metropolis': 'city',
+    'one-act play': 'play',
+    'inner planet': 'planet',
+    'outer planet': 'planet',
+    'vector physical quantity': 'physical quantity',
+    'scalar physical quantity': 'physical quantity',
+    'extensive physical property': 'physical quantity',
+    'intensive property': 'physical quantity',
+    'thermodynamic system property (state function)': 'physical quantity',
+    'conflict': 'war'
+}
+
+
+def is_god(obj):
+    if obj == 'mythological Greek character' or obj == 'Twelve Olympians':
+        return True
+    elif 'deity' in obj or 'deities' in obj or 'god' in obj:
+        return True
+    else:
+        return False
+
+
+def create_instance_of_map(wikidata_claims_instance_of_path, output_path, n_types=50):
+    ds = QuizBowlDataset(1, guesser_train=True)
+    training_data = ds.training_data()
+    answers = set(training_data[1])
+    answer_counts = Counter(training_data[1])
+    with open(wikidata_claims_instance_of_path) as f:
+        claims = defaultdict(set)
+        for line in f:
+            c = json.loads(line)
+            if c['title'] is not None:
+                title = normalize_wikipedia_title(c['title'])
+                if title in answers:
+                    c_object = c['object']
+                    if c_object in object_blacklist:
+                        continue
+                    if c_object in object_merge_map:
+                        claims[title].add(object_merge_map[c_object])
+                    elif is_god(c_object):
+                        claims[title].add('god')
+                    else:
+                        claims[title].add(c_object)
+    for k in claims:
+        if 'literary work' in claims[k] and len(claims[k]) > 1:
+            claims[k].remove('literary work')
+
+    total_counts = defaultdict(int)
+    class_counts = defaultdict(int)
+    answer_types = {}
+    for a in answers:
+        if a in claims:
+            answer_types[a] = claims[a]
+            for obj in claims[a]:
+                total_counts[obj] += answer_counts[a]
+                class_counts[obj] += 1
+
+    sorted_total_counts = sorted(total_counts.items(), reverse=True, key=lambda k: k[1])
+    top_types = {key for key, count in sorted_total_counts[:n_types]}
+    instance_of_map = {}
+    for a in answer_types:
+        top_class_types = top_types.intersection(answer_types[a])
+        if len(top_class_types) == 0:
+            instance_of_map[a] = 'NO MATCH!'
+        elif len(top_class_types) > 1:
+            frequency = 0
+            final_a_type = None
+            for a_type in top_class_types:
+                if class_counts[a_type] > frequency:
+                    frequency = class_counts[a_type]
+                    final_a_type = a_type
+            instance_of_map[a] = final_a_type
+        else:
+            instance_of_map[a] = next(iter(top_class_types))
+
+    with open(output_path, 'wb') as f:
+        pickle.dump(instance_of_map, f)

@@ -57,7 +57,7 @@ class ElasticSearchGuesser(AbstractGuesser):
         )
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
-        sc = create_spark_context(configs=[('spark.executor.cores', self.n_cores), ('spark.executor.memory', '4g')])
+        sc = create_spark_context(configs=[('spark.executor.cores', self.n_cores), ('spark.executor.memory', '20g')])
 
         def es_search(query):
             return es_index.search(query, max_n_guesses)
