@@ -1,6 +1,6 @@
 n_guesses = 50
 guesser_word_skip = -1
-buzzer_word_skip = -1
+buzzer_word_skip = 5
 
 expo_questions = "data/external/expo.csv"
 
@@ -105,19 +105,12 @@ guessers "AuxDan" {
 }
 
 guessers "ESWikidata" {
-  class = "qanta.guesser.experimental.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
+  class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
   # Set the level of parallelism for guess generation
-  n_cores = 15
-  multiclass_one_against_all = false
-  multiclass_online_trees = true
-  l2 = 0.000001
-  l1 = 0
-  passes = 5
-  learning_rate = 0.1
-  decay_learning_rate = 0.95
-  bits = 30
+  n_cores = 20
+  confidence_threshold = 0.5
 }
 
 guessers "FixedLen" {

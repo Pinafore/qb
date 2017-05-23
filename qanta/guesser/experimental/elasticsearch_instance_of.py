@@ -1,5 +1,4 @@
 import pickle
-import random
 import os
 from typing import List, Optional, Dict
 from collections import namedtuple
@@ -7,18 +6,21 @@ import re
 
 import elasticsearch
 from elasticsearch_dsl.connections import connections
-from elasticsearch_dsl import DocType, Text, Keyword, Search, Index, Boolean
+from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 import progressbar
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 from qanta.datasets.abstract import QuestionText
 from qanta.spark import create_spark_context
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.config import conf
-from qanta.util.io import shell
 from qanta import logging
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.util.constants import WIKI_INSTANCE_OF_PICKLE
+from qanta.wikipedia.wikidata import NO_MATCH
 
 
 log = logging.get(__name__)
@@ -28,63 +30,75 @@ connections.create_connection(hosts=['localhost'])
 
 Claim = namedtuple('Claim', 'item property object title')
 
-VW_CLASSIFIER_MODEL = 'vw_classifier.model'
-VW_CLASSIFIER_PICKLE = 'vw_classifier.pickle'
+GUESSER_PICKLE = 'es_wiki_guesser.pickle'
+INDEX_NAME = 'qb_ir_instance_of'
 
 
 class Answer(DocType):
     page = Text(fields={'raw': Keyword()})
     wiki_content = Text()
     qb_content = Text()
-    instance_of = Boolean()
+    instance_of = Keyword()
 
     class Meta:
-        index = 'qb'
+        index = INDEX_NAME
 
 
 class ElasticSearchIndex:
     @staticmethod
-    def build(documents: Dict[str, str], is_human_map):
+    def delete():
         try:
-            Index('qb').delete()
+            Index(INDEX_NAME)
         except elasticsearch.exceptions.NotFoundError:
-            log.info('Could not delete non-existent index, creating new index...')
-        Answer.init()
-        cw = CachedWikipedia()
-        bar = progressbar.ProgressBar()
-        for page in bar(documents):
-            if page in is_human_map:
-                is_human = is_human_map[page]
-            else:
-                is_human = False
-            answer = Answer(
-                page=page,
-                wiki_content=cw[page].content,
-                qb_content=documents[page],
-                is_human=is_human
-            )
-            answer.save()
+            log.info('Could not delete non-existent index')
 
-    def search(self, text: str, is_human_probability: float):
-        if is_human_probability > .8:
-            is_human = True
-            apply_filter = True
-        elif is_human_probability < .2:
-            is_human = False
+    @staticmethod
+    def exists():
+        return Index(INDEX_NAME).exists()
+
+    @staticmethod
+    def build(documents: Dict[str, str], instance_of_map, rebuild_index=False):
+        if rebuild_index or os.getenv('QB_REBUILD_INDEX', False):
+            ElasticSearchIndex.delete()
+
+        if ElasticSearchIndex.exists():
+            log.info('Found existing index, skipping building the index')
+        else:
+            Answer.init()
+            cw = CachedWikipedia()
+            bar = progressbar.ProgressBar()
+            for page in bar(documents):
+                if page in instance_of_map:
+                    instance_of = instance_of_map[page]
+                else:
+                    instance_of = NO_MATCH
+                answer = Answer(
+                    page=page,
+                    wiki_content=cw[page].content,
+                    qb_content=documents[page],
+                    instance_of=instance_of
+                )
+                answer.save()
+
+    def search(self, text: str, predicted_instance_of: str,
+               instance_of_probability: float, confidence_threshold: float):
+        if predicted_instance_of == NO_MATCH:
+            apply_filter = False
+        elif instance_of_probability > confidence_threshold:
             apply_filter = True
         else:
-            is_human = None
             apply_filter = False
+
         if apply_filter:
-            s = Search(index='qb')\
-                .filter('term', is_human=is_human)\
+            s = Search(index=INDEX_NAME)\
+                .filter('term', instance_of=predicted_instance_of)\
                 .query(
                     'multi_match',
                     query=text,
                     fields=['wiki_content', 'qb_content']
                 )
         else:
-            s = Search(index='qb') \
+            s = Search(index=INDEX_NAME) \
                 .query(
                 'multi_match',
                 query=text,
@@ -97,10 +111,6 @@ class ElasticSearchIndex:
 es_index = ElasticSearchIndex()
 
 
-def vw_normalize_string(text):
-    return re.sub('\s', ' ', text.lower().replace(':', '').replace('|', ''))
-
-
 def format_training_data(instance_of_map: Dict[str, str], questions: List[List[str]], pages: List[str]):
     x_data = []
     y_data = []
@@ -110,11 +120,11 @@ def format_training_data(instance_of_map: Dict[str, str], questions: List[List[s
 
     for q, p in zip(questions, pages):
         for sent in q:
-            x_data.append(vw_normalize_string(sent))
+            x_data.append(sent)
             if p in instance_of_map:
                 y_data.append(class_to_i[instance_of_map[p]])
             else:
-                y_data.append(class_to_i['NO MATCH!'])
+                y_data.append(class_to_i[NO_MATCH])
 
     return x_data, y_data, i_to_class, class_to_i
 
@@ -124,128 +134,73 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         super().__init__()
         self.class_to_i = None
         self.i_to_class = None
-        self.max_class = None
+        self.instance_of_model = None
         guesser_conf = conf['guessers']['ESWikidata']
-        self.multiclass_one_against_all = guesser_conf['multiclass_one_against_all']
-        self.multiclass_online_trees = guesser_conf['multiclass_online_trees']
-        self.l1 = guesser_conf['l1']
-        self.l2 = guesser_conf['l2']
-        self.passes = guesser_conf['passes']
-        self.learning_rate = guesser_conf['learning_rate']
-        self.decay_learning_rate = guesser_conf['decay_learning_rate']
-        self.bits = guesser_conf['bits']
-        if not (self.multiclass_one_against_all != self.multiclass_online_trees):
-            raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
+        self.confidence_threshold = guesser_conf['confidence_threshold']
 
     def qb_dataset(self):
         return QuizBowlDataset(1, guesser_train=True)
 
-    @staticmethod
+    @classmethod
     def targets(cls):
-        return [VW_CLASSIFIER_MODEL, VW_CLASSIFIER_PICKLE]
+        return [GUESSER_PICKLE]
 
     def parameters(self):
         return {
-            'multiclass_one_against_all': self.multiclass_one_against_all,
-            'multiclass_online_trees': self.multiclass_online_trees,
-            'l1': self.l1,
-            'l2': self.l2,
-            'passes': self.passes,
-            'learning_rate': self.learning_rate,
-            'decay_learning_rate': self.decay_learning_rate,
-            'bits': self.bits
+            'confidence_threshold': self.confidence_threshold
         }
 
     def save(self, directory: str):
-        model_path = os.path.join(directory, VW_CLASSIFIER_MODEL)
-        shell('cp /tmp/{} {}'.format(VW_CLASSIFIER_MODEL, model_path))
         data = {
             'class_to_i': self.class_to_i,
             'i_to_class': self.i_to_class,
-            'max_class': self.max_class,
-            'multiclass_one_against_all': self.multiclass_one_against_all,
-            'multiclass_online_trees': self.multiclass_online_trees,
-            'l1': self.l1,
-            'l2': self.l2,
-            'passes': self.passes,
-            'learning_rate': self.learning_rate,
-            'decay_learning_rate': self.decay_learning_rate,
-            'bits': self.bits
+            'instance_of_model': self.instance_of_model,
+            'confidence_threshold': self.confidence_threshold
         }
-        data_pickle_path = os.path.join(directory, VW_CLASSIFIER_PICKLE)
+        data_pickle_path = os.path.join(directory, GUESSER_PICKLE)
         with open(data_pickle_path, 'wb') as f:
             pickle.dump(data, f)
 
     @classmethod
     def load(cls, directory: str):
-        model_path = os.path.join(directory, VW_CLASSIFIER_MODEL)
-        shell('cp {} /tmp/{}'.format(model_path, VW_CLASSIFIER_MODEL))
-        data_pickle_path = os.path.join(directory, VW_CLASSIFIER_PICKLE)
+        data_pickle_path = os.path.join(directory, GUESSER_PICKLE)
         with open(data_pickle_path, 'rb') as f:
             data = pickle.load(f)
         guesser = ElasticSearchWikidataGuesser()
         guesser.class_to_i = data['class_to_i']
         guesser.i_to_class = data['i_to_class']
-        guesser.max_class = data['max_class']
-        guesser.multiclass_one_against_all = data['multiclass_one_against_all']
-        guesser.multiclass_online_trees = data['multiclass_online_trees']
-        guesser.l1 = data['l1']
-        guesser.l2 = data['l2']
-        guesser.passes = data['passes']
-        guesser.learning_rate = data['learning_rate']
-        guesser.decay_learning_rate = data['decay_learning_rate']
-        guesser.bits = data['bits']
+        guesser.instance_of_model = data['instance_of_model']
+        guesser.confidence_threshold = data['confidence_threshold']
         return guesser
 
-    def vw_train(self, instance_of_map, training_data):
+    def train_instance_of(self, instance_of_map, training_data):
         log.info('Creating training data...')
         x_data, y_data, i_to_class, class_to_i = format_training_data(
             instance_of_map, training_data[0], training_data[1]
         )
         self.i_to_class = i_to_class
         self.class_to_i = class_to_i
-        self.max_class = len(self.class_to_i)
 
-        with open('/tmp/vw_train.txt', 'w') as f:
-            zipped = list(zip(x_data, y_data))
-            random.shuffle(zipped)
-            for x, y in zipped:
-                f.write('{label} |words {sentence}\n'.format(label=y, sentence=x))
+        log.info('Training instance_of classifier')
+        # These parameters have been separately tuned on cross validated scores, they are not random or merely guesses
+        pipeline = Pipeline([
+            ('tfidf', TfidfVectorizer(min_df=2, ngram_range=(1, 2))),
+            ('classifier', LogisticRegression(C=10))
+        ])
+        self.instance_of_model = pipeline.fit(x_data, y_data)
 
-        if self.multiclass_one_against_all:
-            multiclass_flag = '--oaa'
-        elif self.multiclass_online_trees:
-            multiclass_flag = '--log_multi'
-        else:
-            raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
-
-        log.info('Training VW Model...')
-        shell('vw -k {multiclass_flag} {max_class} -d /tmp/vw_train.txt -f /tmp/{model} --loss_function logistic '
-              '--ngram 1 --ngram 2 --skips 1 -c --passes {passes} -b {bits} '
-              '--l1 {l1} --l2 {l2} -l {learning_rate} --decay_learning_rate {decay_learning_rate}'.format(
-                    max_class=self.max_class, model=VW_CLASSIFIER_MODEL,
-                    multiclass_flag=multiclass_flag, bits=self.bits,
-                    l1=self.l1, l2=self.l2, passes=self.passes,
-                    learning_rate=self.learning_rate, decay_learning_rate=self.decay_learning_rate
-                ))
-
-    def vw_test(self, x_data):
-        with open('/tmp/vw_test.txt', 'w') as f:
-            for x in x_data:
-                f.write('1 |words {text}\n'.format(text=vw_normalize_string(x)))
-        shell('vw -t -i /tmp/{model} -p /tmp/predictions.txt -d /tmp/vw_test.txt')
-        predictions = []
-        with open('/tmp/predictions.txt') as f:
-            for line in f:
-                label = int(line)
-                predictions.append(label)
-        return predictions
+    def test_instance_of(self, x_test):
+        predictions = self.instance_of_model.predict(x_test)
+        probabilities = self.instance_of_model.predict_proba(x_test).max(axis=1)
+        class_with_probability = []
+        for pred, prob in zip(predictions, probabilities):
+            class_with_probability.append((self.i_to_class[pred], prob))
+        return class_with_probability
 
     def train(self, training_data):
         with open(WIKI_INSTANCE_OF_PICKLE, 'rb') as f:
             instance_of_map = pickle.load(f)
 
-        self.vw_train(instance_of_map, training_data)
         log.info('Building Elastic Search Index...')
         documents = {}
         for sentences, page in zip(training_data[0], training_data[1]):
@@ -256,20 +211,22 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
                 documents[page] = paragraph
         ElasticSearchIndex.build(documents, instance_of_map)
 
+        self.train_instance_of(instance_of_map, training_data)
+
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        n_cores = conf['guessers']['ElasticSearch']['n_cores']
+        log.info('Predicting the instance_of attribute for guesses...')
+        class_with_probability = self.test_instance_of(questions)
+
+        n_cores = conf['guessers']['ESWikidata']['n_cores']
         sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '40g')])
-        b_instance_of_model = sc.broadcast(self.instance_of_model)
 
-        def ir_search(query):
-            instance_of_model = b_instance_of_model.value
-            is_human_probability = instance_of_model.predict_proba([query])[0][1]
-            return es_index.search(query, is_human_probability)[:max_n_guesses]
+        def ir_search(query_class_and_prob):
+            query, class_and_prob = query_class_and_prob
+            p_class, prob = class_and_prob
+            return es_index.search(query, p_class, prob, self.confidence_threshold)[:max_n_guesses]
 
-        return sc.parallelize(questions, 4 * n_cores).map(ir_search).collect()
+        spark_input = list(zip(questions, class_with_probability))
 
-    @classmethod
-    def targets(cls):
-        return [INSTANCE_OF_MODEL_PICKLE]
+        return sc.parallelize(spark_input, 4 * n_cores).map(ir_search).collect()
