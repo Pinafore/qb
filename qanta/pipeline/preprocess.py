@@ -3,10 +3,16 @@ import os
 from luigi import LocalTarget, Task, WrapperTask, ExternalTask
 
 from qanta.util.io import shell
-from qanta.util.constants import ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE
+from qanta.util.constants import (
+    ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE, WIKI_INSTANCE_OF_PICKLE
+)
+from qanta.wikipedia.wikidata import create_instance_of_map
 from qanta.wikipedia.cached_wikipedia import (
     create_wikipedia_redirect_pickle, create_wikipedia_title_pickle, create_wikipedia_cache
 )
+
+
+WIKIDATA_CLAIMS = 'data/external/wikidata-claims_instance-of.jsonl'
 
 
 class NLTKDownload(ExternalTask):
@@ -95,9 +101,35 @@ class BuildWikipediaCache(Task):
         ]
 
 
+class WikidataInstanceOfDump(Task):
+    def run(self):
+        s3_location = 's3://entilzha-us-west-2/wikidata/wikidata-claims_instance-of.jsonl'
+        shell('aws s3 cp {} {}'.format(s3_location, WIKIDATA_CLAIMS))
+
+    def output(self):
+        return LocalTarget(WIKIDATA_CLAIMS)
+
+
+class WikidataInstanceOfPickle(Task):
+    def requires(self):
+        yield WikidataInstanceOfDump()
+
+    def run(self):
+        create_instance_of_map(
+            WIKIDATA_CLAIMS,
+            WIKI_INSTANCE_OF_PICKLE
+        )
+
+    def output(self):
+        return LocalTarget(
+            WIKI_INSTANCE_OF_PICKLE
+        )
+
+
 class DownloadData(WrapperTask):
     def requires(self):
         yield CodeCompile()
         yield BuildWikipediaCache()
         yield WikipediaTitles()
         yield WikipediaRedirectPickle()
+        yield WikidataInstanceOfPickle()

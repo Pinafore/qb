@@ -104,13 +104,20 @@ guessers "AuxDan" {
   enabled = false
 }
 
-guessers "ElasticSearchWikidata" {
+guessers "ESWikidata" {
   class = "qanta.guesser.experimental.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.wikidata.DownloadWikidata"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
   # Set the level of parallelism for guess generation
   n_cores = 15
-  min_appearances = 1
+  multiclass_one_against_all = false
+  multiclass_online_trees = true
+  l2 = 0.000001
+  l1 = 0
+  passes = 5
+  learning_rate = 0.1
+  decay_learning_rate = 0.95
+  bits = 30
 }
 
 guessers "FixedLen" {
