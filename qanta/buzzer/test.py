@@ -14,15 +14,15 @@ from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
+from qanta.util import constants as c
 
 
 log = logging.get(__name__)
 
-def generate(args):
+def generate(fold, config):
     N_GUESSERS = len(GUESSERS)
 
-    cfg = getattr(configs, args.config)()
-    fold = args.fold
+    cfg = getattr(configs, config)()
 
     option2id, all_guesses = load_quizbowl([fold])
     test_iter = QuestionIterator(all_guesses[fold], option2id,
@@ -68,10 +68,16 @@ def generate(args):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--fold', required=True)
+    parser.add_argument('-f', '--fold', default=None)
     parser.add_argument('-c', '--config', type=str, default='mlp')
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
-    generate(args)
+    if args.fold is not None:
+        folds = [args.fold]
+    else:
+        folds = c.BUZZER_GENERATION_FOLDS
+    for fold in folds:
+        log.info("Generating {} outputs".format(fold))
+        generate(fold, args.config)

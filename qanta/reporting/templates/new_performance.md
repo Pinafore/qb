@@ -58,7 +58,8 @@ guessers should reflect the difference in performance of different guessers.
 In this following figures, same line style indicates same guesser.
 
 {% for fold, plot in his_lines.items() %}
-![{{fold}} histogram]({{ plot }}){width=100%}
+![]({{ plot }}){width=100%}
+{{ fold }} histogram
 \ 
 {% endfor %}
 
@@ -75,6 +76,7 @@ In this following figures, same line style indicates same guesser.
 - __yellow + red__ is _purely_ the fault of the buzzer.
 
 {% for fold, plot in his_stacked.items() %}
-![{{fold}} histogram]({{ plot }}){width=100%}
+![]({{ plot }}){width=100%}
+{{ fold }} stacked area chart
 \ 
 {% endfor %}

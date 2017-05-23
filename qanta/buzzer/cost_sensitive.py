@@ -13,6 +13,7 @@ from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.iterator import QuestionIterator
 from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.models import MLP, RNN
+from qanta.util import constants as c
 
 log = logging.get(__name__)
 
@@ -21,10 +22,10 @@ def train_cost_sensitive(args):
     cfg = getattr(configs, args.config)()
 
     option2id, all_guesses = load_quizbowl()
-    train_iter = QuestionIterator(all_guesses['dev'], option2id,
+    train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
             batch_size=cfg.batch_size, step_size=cfg.step_size,
             neg_weight=cfg.neg_weight)
-    eval_iter = QuestionIterator(all_guesses['test'], option2id,
+    eval_iter = QuestionIterator(all_guesses[c.BUZZER_DEV_FOLD], option2id,
             batch_size=cfg.batch_size, step_size=cfg.step_size,
             neg_weight=cfg.neg_weight)
 

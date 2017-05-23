@@ -178,7 +178,8 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
 
         worker = partial(_process_question, option2id, all_questions, word2vec)
         inputs = guesses.groupby('qnum')
-        guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data')
+        guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data',
+                multi=False)
 
         with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)

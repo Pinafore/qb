@@ -1,3 +1,4 @@
+import os
 import pickle
 import argparse
 import numpy as np
@@ -297,7 +298,11 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
 def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     log.info('[{}] Hyperparameter search reporting'.format(fold))
 
-    with open('output/buzzer/cfg_buzzes_{}.pkl'.format(fold), 'rb') as infile:
+    cfg_buzzes_dir = 'output/buzzer/cfg_buzzes_{}.pkl'.format(fold)
+    if not os.path.exists(cfg_buzzes_dir):
+        return
+
+    with open(cfg_buzzes_dir, 'rb') as infile:
         cfg_buzzes = pickle.load(infile)
     n_configs = len(cfg_buzzes)
     
@@ -375,10 +380,6 @@ def generate(buzzes, answers, guesses_df, variables, fold, save_dir=None,
     get_his_stats(*inputs)
     get_hyper_search(*inputs)
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--fold', default=None)
-    return parser.parse_args()
 
 def main(folds, checkpoint_dir=None):
     if checkpoint_dir is not None and os.path.exists(checkpoint_dir):
@@ -426,6 +427,11 @@ def report(variables, save_dir):
     output = os.path.join(save_dir, 'new_performance.pdf')
     report_generator = ReportGenerator('new_performance.md')
     report_generator.create(_variables, output)
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--fold', default=None)
+    return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()

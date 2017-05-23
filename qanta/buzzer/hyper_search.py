@@ -21,7 +21,7 @@ log = logging.get(__name__)
 
 
 def run(cfg, fold, all_guesses, option2id):
-    train_iter = QuestionIterator(all_guesses['dev'], option2id,
+    train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
             batch_size=cfg.batch_size, step_size=cfg.step_size,
             neg_weight=cfg.neg_weight)
     test_iter = QuestionIterator(all_guesses[fold], option2id,
