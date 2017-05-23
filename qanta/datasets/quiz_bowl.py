@@ -291,12 +291,14 @@ class QuizBowlDataset(AbstractDataset):
 
     def training_data(self) -> TrainingData:
         all_questions = seq(self.db.all_questions().values())
-        filtered_questions = all_questions\
-            .filter(lambda q: q.fold == self.training_fold)\
-            .group_by(lambda q: q.page)\
-            .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
-            .flat_map(lambda kv: kv[1])\
-            .map(lambda q: q.to_example())
+        filtered_questions = all_questions.filter(lambda q: q.fold == self.training_fold)
+
+        if self.min_class_examples > 1:
+            filtered_questions = filtered_questions\
+                .group_by(lambda q: q.page)\
+                .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
+                .flat_map(lambda kv: kv[1])
+        filtered_questions = filtered_questions.map(lambda q: q.to_example())
         training_examples = []
         training_answers = []
         for example, answer in filtered_questions:
