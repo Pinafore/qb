@@ -805,36 +805,36 @@
 198200	Bagpipes	_bagpipe_s
 7909	Bagpipes	_bagpipe_s
 8579	Bagpipes	_bagpipe_s
-54769931ea23cca90550e2df	Baha'i Faith	{Baha'i}
-5476992fea23cca90550cfcd	Baha'i Faith	{Baha'i} faith
-5476da99ea23cca9055189c5	Baha'i Faith	{Baha'i} faith
-54769933ea23cca905510212	Baha'i Faith	{Bahai}
-54769911ea23cca9055097e2	Baha'i Faith	Baha'I
-5476da96ea23cca905516398	Baha'i Faith	{Baha'i} faith
-5476992dea23cca90550aa42	Baha'i Faith	{Baha'i} Faith [or {Baha'ism}]
-58b0b7b670b9154095717704	Baha'i Faith	Baha'i
-137083	Baha'i Faith	_Bah\'a'\'i_ Faith
-5476a197ea23cca9055112b6	Baha'i Faith	Baha'i
-5476992dea23cca90550b4a6	Baha'i Faith	{Baha'i} Faith
-5476da96ea23cca905516792	Baha'i Faith	{Baha'i} faith (prompt on early "Kitab-i-Aqdas")
-54769931ea23cca90550e4b2	Baha'i Faith	{Baha'i} Faith
-5476da95ea23cca905515aa0	Baha'i Faith	{Baha'i} Faith
-5476daa0ea23cca90551d3e9	Baha'i Faith	{Baha'i} faith
-5476da97ea23cca905516bf9	Baha'i Faith	Baha'i
-58b0b7d370b9154095717a59	Baha'i Faith	Baha'i
-54769932ea23cca90550f463	Baha'i Faith	{Baha'i}
-5476a179ea23cca905510fbf	Baha'i Faith	Baha'i
-58b0b81b70b91540957188e8	Baha'i Faith	Baha'i faith [or Baha'iyyah]
-5476da97ea23cca9055175af	Baha'i Faith	{Bahai}
-285261	Baha'i Faith	_Baha'i_ [bah-HAH-ee]
-54769910ea23cca9055082cd	Baha'i Faith	Baha'i
-54769931ea23cca90550e8b5	Baha'i Faith	{Bahai}
-58b0b7df70b9154095717d1f	Baha'i Faith	Baha'i Faith (accept Bahaism)
-5476992eea23cca90550c322	Baha'i Faith	{Baha'i} faith
-54769930ea23cca90550dd41	Baha'i Faith	{Baha'i}
-316194	Baha'i Faith	_Baha'i_ Faith
-86944	Baha'i Faith	_Baha'i_ faith
-58b0b82670b9154095718b5a	Baha'i Faith	Baha'i [accept Bábism until "Mashriqu'l-Adhkár"]
+54769931ea23cca90550e2df	Bahá'í_Faith	{Baha'i}
+5476992fea23cca90550cfcd	Bahá'í_Faith	{Baha'i} faith
+5476da99ea23cca9055189c5	Bahá'í_Faith	{Baha'i} faith
+54769933ea23cca905510212	Bahá'í_Faith	{Bahai}
+54769911ea23cca9055097e2	Bahá'í_Faith	Baha'I
+5476da96ea23cca905516398	Bahá'í_Faith	{Baha'i} faith
+5476992dea23cca90550aa42	Bahá'í_Faith	{Baha'i} Faith [or {Baha'ism}]
+58b0b7b670b9154095717704	Bahá'í_Faith	Baha'i
+137083	Bahá'í_Faith	_Bah\'a'\'i_ Faith
+5476a197ea23cca9055112b6	Bahá'í_Faith	Baha'i
+5476992dea23cca90550b4a6	Bahá'í_Faith	{Baha'i} Faith
+5476da96ea23cca905516792	Bahá'í_Faith	{Baha'i} faith (prompt on early "Kitab-i-Aqdas")
+54769931ea23cca90550e4b2	Bahá'í_Faith	{Baha'i} Faith
+5476da95ea23cca905515aa0	Bahá'í_Faith	{Baha'i} Faith
+5476daa0ea23cca90551d3e9	Bahá'í_Faith	{Baha'i} faith
+5476da97ea23cca905516bf9	Bahá'í_Faith	Baha'i
+58b0b7d370b9154095717a59	Bahá'í_Faith	Baha'i
+54769932ea23cca90550f463	Bahá'í_Faith	{Baha'i}
+5476a179ea23cca905510fbf	Bahá'í_Faith	Baha'i
+58b0b81b70b91540957188e8	Bahá'í_Faith	Baha'i faith [or Baha'iyyah]
+5476da97ea23cca9055175af	Bahá'í_Faith	{Bahai}
+285261	Bahá'í_Faith	_Baha'i_ [bah-HAH-ee]
+54769910ea23cca9055082cd	Bahá'í_Faith	Baha'i
+54769931ea23cca90550e8b5	Bahá'í_Faith	{Bahai}
+58b0b7df70b9154095717d1f	Bahá'í_Faith	Bahá'í_Faith (accept Bahaism)
+5476992eea23cca90550c322	Bahá'í_Faith	{Baha'i} faith
+54769930ea23cca90550dd41	Bahá'í_Faith	{Baha'i}
+316194	Bahá'í_Faith	_Baha'i_ Faith
+86944	Bahá'í_Faith	_Baha'i_ faith
+58b0b82670b9154095718b5a	Bahá'í_Faith	Baha'i [accept Bábism until "Mashriqu'l-Adhkár"]
 5476da9fea23cca90551d083	Bahia	{Bahia} (prompt on "Brazil")
 299783	Bahrain	(Kingdom of) _Bahrain_ (or Mamlakat al-_Bahrayn_)
 5476992dea23cca90550b4d7	Bahrain	{Bahrain}
@@ -860,7 +860,7 @@
 5476da98ea23cca905517af4	Bahá'í_Faith	{Bahá'í}sm
 54769932ea23cca90550f705	Bahá'í_Faith	{Bahá'í} Faith
 5476da9eea23cca90551c29a	Bahá'í_Faith	{Baha’i}
-54769912ea23cca90550a334	Bahá'í_Faith	The Baha'i Faith
+54769912ea23cca90550a334	Bahá'í_Faith	The Bahá'í_Faith
 5476992eea23cca90550b88a	Bahá'í_Faith	{Bahá'í} faith
 5476da93ea23cca9055142da	Bahá'í_Faith	{Baha’I}
 58b0b7c370b9154095717802	Bahá'í_Faith	Bahá'í Faith

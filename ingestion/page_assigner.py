@@ -1,6 +1,10 @@
 from qanta import logging
+from unidecode import unidecode
 log = logging.get(__name__)
 
+# Answer lines that are differentiated only based on unicode
+# difference from another page.  Hopefully not many of these.
+kALLOWED_UNICODE_MISMATCH = set(["Hermès"])
 
 class PageAssigner:
     def __init__(self, normalize_func=lambda x: x):
@@ -13,6 +17,7 @@ class PageAssigner:
         self._normalize = normalize_func
 
         self._counts = defaultdict(Counter)
+        self._all_pages = Counter()
 
     def load_unambiguous(self, filename):
         with open(filename) as infile:
@@ -34,6 +39,7 @@ class PageAssigner:
                         (answer, page, self._unambiguous[answer])
 
                 self._unambiguous[answer] = page
+                assert self.check_unicode(page), "Unicode mismatch %s" % page
 
     def load_ambiguous(self, filename):
         with open(filename) as infile:
@@ -55,6 +61,7 @@ class PageAssigner:
                 page = page.replace(" ", "_")
                 assert answer not in self._unambiguous, "%s in ambig and unambig" % answer
                 self._ambiguous[answer][page] = words
+                assert self.check_unicode(page), "Unicode mismatch %s" % page
 
     def load_direct(self, filename):
         with open(filename) as infile:
@@ -63,11 +70,32 @@ class PageAssigner:
                     continue
                 try:
                     ext_id, page, answer = ii.strip().split('\t')
-                    self._direct[ext_id] = page.replace(" ", "_")
+                    page = page.replace(" ", "_")
+                    self._direct[ext_id] = page
+                    assert self.check_unicode(page), "Unicode mismatch %s" % page
                 except ValueError:
                     log.info("Bad direct line in %s: %s" % (filename, ii))
                 
 
+    def check_unicode(self, page):
+        """
+        If this is a unicode page, make sure we don't have the non-unicode
+        version already
+        """
+        norm = unidecode(page)
+        if page == norm:
+            val = True
+        else: # Doesn't match normalized form
+            if norm not in self._all_pages:
+                val = True # Seeing it for the first time
+            else:
+                if page in kALLOWED_UNICODE_MISMATCH:
+                    val = True # It's an exception
+                else:
+                    val = False # This is bad outcome
+        self._all_pages[page] = 0
+        return val
+                    
     def known_pages(self):
         pages = set(self._direct.values())
         for ii in self._ambiguous:
@@ -85,19 +113,22 @@ class PageAssigner:
         assert isinstance(naqt, int)
         
         if pb in self._direct:
-            val = self._direct[pb]
+            val = self._direct[pb].replace(" ", "_")
             self._counts["D-P"][val] += 1
-            return val.replace(" ", "_")
+            self._all_pages[val] += 1
+            return val
 
         if naqt in self._direct:
-            val = self._direct[naqt]
+            val = self._direct[naqt].replace(" ", "_")
             self._counts["D-N"][val] += 1
-            return val.replace(" ", "_")
+            self._all_pages[val] += 1            
+            return val
 
         if normalize in self._unambiguous:
-            val = self._unambiguous[normalize]
+            val = self._unambiguous[normalize].replace(" ", "_")
             self._counts["U"][val] += 1
-            return val.replace(" ", "_")
+            self._all_pages[val] += 1             
+            return val
 
         if normalize in self._ambiguous:
             default = [x for x in self._ambiguous[normalize] if
@@ -112,18 +143,20 @@ class PageAssigner:
                     if words is None:
                         words = set(text)
                     if ww in [x.lower() for x in words]:
-                        val = jj
+                        val = jj.replace(" ", "_")
                         self._counts["A"][val] += 1
-                        return val.replace(" ", "_")
+                        self._all_pages[val] += 1            
+                        return val
 
             print(self._ambiguous[normalize])
             log.info("Match not found, looking for %s default (%i)" % (normalize, len(default)))
 
             # Return default if there is one
             if len(default) == 1:
-                val = default[0]
+                val = default[0].replace(" ", "_")
                 self._counts["A"][val] += 1
-                return val.replace(" ", "_")
+                self._all_pages[val] += 1            
+                return val
             else:
                 return ''
 
