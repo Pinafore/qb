@@ -268,4 +268,4 @@ if __name__ == "__main__":
         word2vec = None
 
     option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS, word2vec)
-    # load_protobowl()
+    load_protobowl()

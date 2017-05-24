@@ -107,3 +107,7 @@ Folds:
 ![]({{ plot }}){width=100%}
 \ 
 {% endfor %}
+
+{% for fold, stats in protobowl_stats.items() %}
+- {{ fold }} reward: {{ stats['reward'] }}
+{% endfor %}

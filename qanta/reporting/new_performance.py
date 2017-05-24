@@ -441,21 +441,21 @@ def get_protobowl(variables, folds, save_dir):
                             stats['rush_impossible'] += 1
                         else:
                             stats['rush_possible'] += 1
-                        if opponent.result == 'True':
+                        if opponent.result == True:
                             stats['reward'] -= 10
 
                 else:
                     stats['later_than_op'] += 1
-                    if opponent.result == 'True':
+                    if opponent.result == True:
                         stats['reward'] -= 10
                         if correct_position <= opponent.position:
                             stats['late_possible'] += 1
                         else:
                             stats['late_impossible'] += 1
                     else:
-                        stats['reward'] += 5
                         stats['correct_after_op'] += 1
                         if final_result:
+                            stats['reward'] += 5
                             stats['reward'] += 10
             for k, v in dict(stats).items():
                 avg_stats[k].append(v / n_opponents)
