@@ -48,7 +48,7 @@ class ElasticSearchIndex:
     @staticmethod
     def delete():
         try:
-            Index(INDEX_NAME)
+            Index(INDEX_NAME).delete()
         except elasticsearch.exceptions.NotFoundError:
             log.info('Could not delete non-existent index')
 
