@@ -40,7 +40,6 @@ class DANGuesser(AbstractGuesser):
     def __init__(self):
         super().__init__()
         guesser_conf = conf['guessers']['DAN']
-        self.min_answers = guesser_conf['min_answers']
         self.expand_we = guesser_conf['expand_we']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.n_hidden_units = guesser_conf['n_hidden_units']
@@ -57,9 +56,9 @@ class DANGuesser(AbstractGuesser):
         self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
         self.wiki_data_frac = conf['wiki_data_frac']
         self.generate_mentions = guesser_conf['generate_mentions']
+        self.max_len = guesser_conf['max_len']
         self.embeddings = None
         self.embedding_lookup = None
-        self.max_len = None
         self.i_to_class = None
         self.class_to_i = None
         self.vocab = None
@@ -69,7 +68,6 @@ class DANGuesser(AbstractGuesser):
 
     def dump_parameters(self):
         return {
-            'min_answers': self.min_answers,
             'embeddings': self.embeddings,
             'embedding_lookup': self.embedding_lookup,
             'max_len': self.max_len,
@@ -95,7 +93,6 @@ class DANGuesser(AbstractGuesser):
         }
 
     def load_parameters(self, params):
-        self.min_answers = params['min_answers']
         self.embeddings = params['embeddings']
         self.embedding_lookup = params['embedding_lookup']
         self.max_len = params['max_len']
@@ -121,7 +118,6 @@ class DANGuesser(AbstractGuesser):
 
     def parameters(self):
         return {
-            'min_answers': self.min_answers,
             'max_len': self.max_len,
             'n_classes': self.n_classes,
             'max_n_epochs': self.max_n_epochs,
@@ -144,7 +140,7 @@ class DANGuesser(AbstractGuesser):
         }
 
     def qb_dataset(self):
-        return QuizBowlDataset(self.min_answers, guesser_train=True)
+        return QuizBowlDataset(1, guesser_train=True)
 
     @classmethod
     def targets(cls) -> List[str]:
