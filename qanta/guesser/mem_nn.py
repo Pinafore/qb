@@ -168,7 +168,7 @@ def preprocess_wikipedia(question_memories: List[NMemories], create_vocab):
             if create_vocab:
                 for w in words:
                     vocab.add(w)
-                vocab.add(normed_val)
+                vocab.add(normed_val[0])
         tokenized_question_mem_keys.append(tokenized_mem_keys)
         tokenized_question_mem_vals.append(tokenized_mem_vals)
 
@@ -333,6 +333,7 @@ class MemNNGuesser(AbstractGuesser):
             memories = multiply([match_probability, wiki_input_encoded_c])
             memories = pooling.GlobalAveragePooling1D()(memories)
             memories = Dense(wiki_we_dimension, use_bias=False)(memories)
+            memories = BatchNormalization()(memories)
             layer_out = Add()([memories, layer_out])
 
         print(layer_out.shape)
