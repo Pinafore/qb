@@ -1,5 +1,6 @@
 import sys
 import time
+import json
 import pickle
 import numpy as np
 import codecs
@@ -64,10 +65,11 @@ def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]],
                 metaf.append([qnum, sent, token, guess])
                 # manually do what csv.DictWriter does
                 guess = guess if ',' not in guess else '"' + guess + '"'
-                # buzzer_score = 0
-                # evidence = "{0}|{1}|{2}".format(g_class,
-                #         unnormalized_scores[rank], buzzer_score)
-                evidence = g_class
+                buzzer_score = buzz[pos][i]
+                evidence = {g_class: {
+                            'unnormalized_score': unnormalized_scores[rank], 
+                            'buzzer_score': buzzer_score}}
+                evidence = json.dumps(evidence)
                 buzzf.append([qnum, sent, token, guess, evidence, buzzing, score])
     final_guess = final_guesses[np.argmax(buzz[-1][:N_GUESSERS])]
     final_guess = final_guess if ',' not in final_guess else '"' + final_guess + '"'
@@ -91,12 +93,13 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
          codecs.open(safe_path(c.EXPO_BUZZ.format(fold)), 'w', 'utf-8') as buzz_file, \
          codecs.open(safe_path(c.EXPO_FINAL.format(fold)), 'w', 'utf-8') as final_file:
 
-        buzz_file.write('question,sentence,word,page,evidence,final,weight\n')
+        buzz_file.write('question|sentence|word|page|evidence|final|weight\n')
         final_file.write('question,answer\n')
         
         log.info('\n\n[buzzer2vwexpo] writing to files')
 
-        buzz_out = '\n'.join('{0},{1},{2},{3},{4},{5},{6}'.format(*r) for r in
+        buzz_template = '|'.join(['{}' for _ in range(7)])
+        buzz_out = '\n'.join(buzz_template.format(*r) for r in
                 itertools.chain(*buzzf))
         buzz_file.write(buzz_out)
         log.info('buzz file written')

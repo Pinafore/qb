@@ -34,7 +34,7 @@ def _multiprocess(func, inputs, n_cores=conf['buzzer']['n_cores'], info='',
     else:
         result = []
         for i, inp in enumerate(inputs):
-            result.append(func(inp))
+            result.append(func(*inp))
             sys.stderr.write(output.format(info, 'single', i, total_size))
         sys.stderr.write('\n')
         return result

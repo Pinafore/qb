@@ -359,7 +359,7 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
         variables['choice_plot'][fold] = choice_dir
         variables['hype_configs']['dev'] = list(zip(config_names, configs))
 
-def get_protobowl(folds, variables):
+def get_protobowl(variables, folds, save_dir):
     questions = QuestionDatabase().all_questions()
     answers = {k: v.page for k, v in questions.items()}
     question_texts = {k: v.text for k, v in questions.items()}
@@ -468,22 +468,22 @@ def get_protobowl(folds, variables):
                      'rush_possible', 'rush_impossible', 
                      'late_possible', 'late_impossible',
                      'earlier_than_op', 'later_than_op']
-	plt.clf()
-	ind = 0
-	width = 0.5
-	labels = []
-	for k in plot_keys:
-	    if k not in avg_stats:
-	        continue
-	    plt.bar(ind, avg_stats[k], width)
-	    labels.append(k)
-	    ind += width * 2
-	plt.xticks(list(range(len(bars))), labels, rotation=30)
-	plt.subplots_adjust(bottom=0.3)
-	plt.title('{} stats against Protobowl'.format(fold))
+        plt.clf()
+        ind = 0
+        width = 0.5
+        labels = []
+        for k in plot_keys:
+            if k not in avg_stats:
+                continue
+            plt.bar(ind, avg_stats[k], width)
+            labels.append(k)
+            ind += width * 2
+        plt.xticks(list(range(len(labels))), labels, rotation=30)
+        plt.subplots_adjust(bottom=0.3)
+        plt.title('{} stats against Protobowl'.format(fold))
         plot_dir = os.path.join(save_dir, '{}_protobowl.pdf'.format(fold))
         plt.savefig(plot_dir, bbox_inches='tight')
-	plt.clf() 
+        plt.clf() 
 
         if variables is not None:
             variables['protobowl_plot'][fold] = plot_dir
@@ -529,7 +529,7 @@ def main(folds, checkpoint_dir=None):
         generate(buzzes, answers, guesses_df, variables, fold, save_dir)
 
 
-    get_protobowl(folds, variables)
+    get_protobowl(variables, folds, save_dir)
 
     for key, value in variables.items():
         variables[key] = dict(value)
