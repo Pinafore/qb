@@ -138,8 +138,8 @@ if __name__ == "__main__":
     questions = qdb.all_questions()
 
     ex_gen = ExampleGenerator()
-    # ex_gen.add_feature(GuessFrequency(questions))
-    # ex_gen.add_feature(IrScore())
+    ex_gen.add_feature(GuessFrequency(questions))
+    ex_gen.add_feature(IrScore())
 
-    # train = Reranker.create_train(ex_gen, questions, guesses)
+    train = Reranker.create_train(ex_gen, questions, guesses)
                        
