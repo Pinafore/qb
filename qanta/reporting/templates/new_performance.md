@@ -33,16 +33,26 @@ We compare different buzzer configurations listed below:
 ### Buzzing Too Early or Too Late
 x-axis corresponds to the configuration number.
 
+Folds:
 {% for fold, plot in rush_late_plot.items() %}
-![{{fold}} rush & late]({{ plot }}){width=100%}
+- {{ fold }}
+{% endfor %}
+
+{% for fold, plot in rush_late_plot.items() %}
+![{{ fold }}]({{ plot }}){width=100%}
 \ 
 {% endfor %}
 
 ### Buzzer Choosing Hopeful and Best Guesser
 x-axis corresponds to the configuration number.
 
+Folds:
 {% for fold, plot in choice_plot.items() %}
-![{{fold}} choosing hopeful & best]({{ plot }}){width=100%}
+- {{ fold }}
+{% endfor %}
+
+{% for fold, plot in choice_plot.items() %}
+![{{ fold }}]({{ plot }}){width=100%}
 \ 
 {% endfor %}
 
@@ -57,9 +67,13 @@ guessers should reflect the difference in performance of different guessers.
 
 In this following figures, same line style indicates same guesser.
 
+Folds:
 {% for fold, plot in his_lines.items() %}
-![]({{ plot }}){width=100%}
-{{ fold }} histogram
+- {{ fold }}
+{% endfor %}
+
+{% for fold, plot in his_lines.items() %}
+![{{ fold }}]({{ plot }}){width=100%}
 \ 
 {% endfor %}
 
@@ -75,8 +89,12 @@ In this following figures, same line style indicates same guesser.
 - __yellow + red + purple__ is the fault of the buzzer.
 - __yellow + red__ is _purely_ the fault of the buzzer.
 
+Folds:
 {% for fold, plot in his_stacked.items() %}
-![]({{ plot }}){width=100%}
-{{ fold }} stacked area chart
+- {{ fold }}
+{% endfor %}
+
+{% for fold, plot in his_stacked.items() %}
+![{{ fold }}]({{ plot }}){width=100%}
 \ 
 {% endfor %}

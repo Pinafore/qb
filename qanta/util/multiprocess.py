@@ -12,6 +12,8 @@ def _multiprocess(worker, inputs, n_cores=conf['buzzer']['n_cores'], info='',
         pool = Pool(n_cores)
         manager = Manager()
         queue = manager.Queue()
+        while not queue.empty():
+            queue.get()
         inputs = [(i, queue) for i in inputs]
         result = pool.map_async(worker, inputs)
         # monitor loop

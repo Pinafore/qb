@@ -77,7 +77,7 @@ if __name__ == '__main__':
     if args.fold is not None:
         folds = [args.fold]
     else:
-        folds = c.BUZZER_GENERATION_FOLDS
+        folds = c.BUZZER_INPUT_FOLDS
     for fold in folds:
         log.info("Generating {} outputs".format(fold))
         generate(fold, args.config)

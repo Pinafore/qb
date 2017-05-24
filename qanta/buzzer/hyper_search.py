@@ -92,7 +92,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         folds = [sys.argv[1]]
     else:
-        folds = c.BUZZER_GENERATION_FOLDS
+        folds = c.BUZZER_INPUT_FOLDS
 
     for fold in folds:
         hyper_search(fold)
