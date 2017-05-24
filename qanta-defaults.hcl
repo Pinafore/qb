@@ -2,7 +2,7 @@ n_guesses = 50
 guesser_word_skip = -1
 buzzer_word_skip = 5
 
-expo_questions = "data/internal/expo/2015_jennings.csv"
+expo_questions = "data/internal/expo/2016_hsnct.csv"
 
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
@@ -39,7 +39,6 @@ guessers "DAN" {
   class = "qanta.guesser.dan.DANGuesser"
   luigi_dependency = "qanta.pipeline.wiki_questions.SelectWikiQuestions"
   enabled = false
-  min_answers = 1
   expand_we = true
   n_hidden_layers = 1
   n_hidden_units = 1000
@@ -55,6 +54,7 @@ guessers "DAN" {
   train_on_full_q = false
   decay_lr_on_plateau = false
   generate_mentions = false
+  max_len = 200
 }
 
 guessers "RNN" {
