@@ -10,8 +10,8 @@ elasticity	Elasticity (physics)	stress:deformation:property
 elasticity	Elasticity (economics)	change:quantity:goods
 ethics	Ethics (Spinoza)	bondage:spinoza:baruch
 ethics	Ethics
-georgia	Georgia (U.S. state)	atlanta
-georgia	Georgia (country)	tblisi:stalin:caspian
+georgia	Georgia (U.S. state)	atlanta:oglethorpe:savannah:carter:gingrich:peach:peaches
+georgia	Georgia (country)	stalin:caspian:tbilisi:shevardnadze:caucasus
 hiroshima	Hiroshima (book)	hersey
 hiroshima	Hiroshima
 io	Io (mythology)	zeus:egypt
@@ -43,7 +43,7 @@ the ambassadors	The Ambassadors	henry:james:strether
 tithonus	Tithonus	trojan:troy:eos
 tithonus	Tithonus (poem)	poem:tennyson
 turkey	Turkey (bird)	bird
-turkey	Turkey	ankara:istanbul
+turkey	Turkey	ankara:istanbul:anatolia:kemal:mediterranean:troy:armenian:pamuk:erdoga
 ulysses	Ulysses (poem)	tennyson
 ulysses	Ulysses (novel)	joyce
 ulysses	Odysseus
