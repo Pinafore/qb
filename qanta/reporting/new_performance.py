@@ -62,8 +62,7 @@ for guesser, style in zip(GUESSERS, cycle(_STYLES)):
     LINE_STYLES['acc_{}'.format(guesser)] = style
     LINE_STYLES['buzz_{}'.format(guesser)] = style
 
-def _get_top_guesses(inputs):
-    (qnum, question), queue = inputs
+def _get_top_guesses(qnum, question):
     top_guesses = [] # length * n_guessers
     # FIXME because there can be missing guessers, must iterate position first
     for _, position in question.groupby(['sentence', 'token']):
@@ -76,15 +75,12 @@ def _get_top_guesses(inputs):
                 guesses = position.get_group(guesser).sort_values(
                         'score', ascending=False)
                 top_guesses[-1].append(guesses.iloc[0].guess)
-    if queue is not None:
-        queue.put(qnum)
     # transpose top_guesses -> n_guessers * length
     return qnum, list(map(list, zip(*top_guesses)))
 
 def _get_eop_stats(buzzes: Dict[int, List[List[float]]],
-                    answers: Dict[int, str], inputs) \
+                    answers: Dict[int, str], qnum, top_guesses) \
                 -> Tuple[int, Dict[str, int]]:
-    (qnum, top_guesses), queue = inputs
     buzz = buzzes[qnum]
     answer = answers[qnum]
 
@@ -130,15 +126,11 @@ def _get_eop_stats(buzzes: Dict[int, List[List[float]]],
             stats['late'] = int(pos > correct[best_guesser])
             stats['rush'] = int(correct[best_guesser] > pos)
 
-    if queue is not None:
-        queue.put(qnum)
-
     return qnum, stats
 
 def _get_his_stats(buzzes: Dict[int, List[List[float]]],
-              answers: Dict[int, str], inputs) \
+              answers: Dict[int, str], qnum, top_guesses) \
             -> Tuple[int, Dict[str, List[int]]]:
-    (qnum, top_guesses), queue = inputs
     buzz = buzzes[qnum]
     answer = answers[qnum]
 
@@ -179,7 +171,6 @@ def _get_his_stats(buzzes: Dict[int, List[List[float]]],
         stats['wrong_hopeful'][i] = int(buz_cor == 0 and buz > 0 and cor > 0)
         stats['correct_hopeless'][i] = int(buz == 0 and cor == 0)
         stats['wrong_hopeless'][i] = int(buz > 0 and cor == 0)
-        queue.put(qnum)
 
     return qnum, stats
 
@@ -382,11 +373,6 @@ def generate(buzzes, answers, guesses_df, variables, fold, save_dir=None,
 
 
 def main(folds, checkpoint_dir=None):
-    if checkpoint_dir is not None and os.path.exists(checkpoint_dir):
-        with open(checkpoint_dir, 'rb') as infile:
-            variables = pickle.load(infile)
-        report(variables, save_dir)
-        return
     
     all_questions = QuestionDatabase().all_questions()
     answers = {k: v.page for k, v in all_questions.items()}
@@ -416,15 +402,18 @@ def main(folds, checkpoint_dir=None):
     # with open(checkpoint_dir, 'wb') as outfile:
     #     pickle.dump(variables, outfile)
 
-    report(variables, save_dir)
+    report(variables, save_dir, folds)
 
-def report(variables, save_dir):
+def report(variables, save_dir, folds):
     # use this to have jinja skip non-existent features
     jinja_keys = ['his_lines', 'his_stacked', 'rush_late_plot', 'choice_plot',
             'hype_configs']
     _variables = {k: dict() for k in jinja_keys}
     _variables.update(variables)
-    output = os.path.join(save_dir, 'new_performance.pdf')
+    if len(folds) == 1:
+        output = os.path.join(save_dir, 'report_{}.pdf'.format(folds[0]))
+    else:
+        output = os.path.join(save_dir, 'report_all.pdf')
     report_generator = ReportGenerator('new_performance.md')
     report_generator.create(_variables, output)
 
