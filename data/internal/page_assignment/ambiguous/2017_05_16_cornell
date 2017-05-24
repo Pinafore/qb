@@ -1,6 +1,7 @@
 ariel	Ariel_(Disney)	mermaid
 ariel	Ariel_(moon)	moon
-ariel	Ariel_(The_Tempest)	tempest
+ariel	Ariel_(The_Tempest)	tempest:fathom:sycorax:prospero
+ariel	Ariel_(poetry_collection)	lazarus
 array	Array_data_type	structure:computer
 blindness	Blindness_(novel)	saramago
 the book of mormon	Book_of_Mormon	
@@ -46,7 +47,7 @@ henry iv	Henry_IV_of_France	nantes
 henry iv	Henry_IV,_Holy_Roman_Emperor	canossa:gregory:rudolf
 henry v	Henry_V_of_England	lancaster:agincourt
 henry vi	Henry_VI_of_England	margaret
-ice	Ice	water
+ice	Ice	water:cubes:glaciers
 inheritance	Inheritance	java:object
 john	John_the_Apostle	apostle
 joseph	Joseph_(Genesis)	slavery:egypt:pharaoh
@@ -60,18 +61,18 @@ lotus	Lotus_Software	ibm:spreadsheet:spreadsheets:software
 magic	Magic	
 magic	Magic:_The_Gathering	card
 induction	Mathematical_induction	proof
-matrix	Matrix_(mathematics)	array
+matrix	Matrix_(mathematics)	array:rectangular:numbers:elimination
 monopoly	Monopoly	
 monopoly	Monopoly (game)	hasbro:parker:broadway
 mouse	Mouse	
 night	Night	
 night	Night_(book)	wiesel
 bulls	Papal_bull	pope
-parity	Parity_(physics)	chirality:preserving:rotation
+parity	Parity_(physics)	chirality:preserving:rotation:conserved:invariance
 paul	Paul_the_Apostle	apostle
 peer gynt	Peer_Gynt	ibsen
 peer gynt	Peer_Gynt_(Grieg)	grieg
-pericles	Pericles	athens
+pericles	Pericles	athens:athenian:peloponnesian:parthenon
 pericles	Pericles,_Prince_of_Tyre	shakespeare
 philip ii	Philip_II_of_France	france
 philip ii	Philip_II_of_Macedon	macedonia
@@ -90,15 +91,16 @@ delta	River_delta	river:plain
 rodeo	Rodeo	
 rodeo	Rodeo_(ballet)	copland
 rose	Rose	flower
-salt	Salt	seasoning:nacl:sodium
+salt	Salt	seasoning:nacl:sodium:gandhi:food:ionic:
 saturn	Saturn	rings:planet
 saturn	Saturn (mythology)	
 selma	Selma,_Alabama	alabama
 set	Set_(deity)	egyptian
-shields	Shield	armor:armour:block
+shields	Shield	armor:armour:block:aegis:protective
 sigma	Sigma	letter
 snow	Snow	precipitation
 soma	Soma_(biology)	neuron:nucleus
+soma	Soma_(drink)	vedic:amrita:hindu:drink
 soul	Soul	essence:salvation:immortal
 spheres	Sphere	round:circle:radius
 spheres	Sphere_(novel)	chrichton
