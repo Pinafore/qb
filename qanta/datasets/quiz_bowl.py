@@ -5,7 +5,6 @@ import sqlite3
 from collections import defaultdict, Counter
 import re
 
-from functional import seq
 import nltk
 
 from qanta import logging
@@ -290,6 +289,7 @@ class QuizBowlDataset(AbstractDataset):
         self.training_fold = c.GUESSER_TRAIN_FOLD if self.guesser_train else c.BUZZER_TRAIN_FOLD
 
     def training_data(self) -> TrainingData:
+        from functional import seq
         all_questions = seq(self.db.all_questions().values())
         filtered_questions = all_questions.filter(lambda q: q.fold == self.training_fold)
 
@@ -308,6 +308,7 @@ class QuizBowlDataset(AbstractDataset):
         return training_examples, training_answers
 
     def questions_by_fold(self, folds=c.ALL_FOLDS) -> Dict[str, List[Question]]:
+        from functional import seq
         all_questions = seq(self.db.all_questions().values())
         train_questions = all_questions\
             .filter(lambda q: q.fold == self.training_fold)\
