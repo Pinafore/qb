@@ -15,7 +15,8 @@ PRE_PROCESS_TARGETS = {
     'data/external/wikipedia/parsed-wiki',
     'data/external/wikipedia/parsed-wiki_SUCCESS',
     'data/external/wikipedia/wikipedia-titles.pickle',
-    'data/external/wikipedia/all_wiki_redirects.csv'
+    'data/external/wikipedia/all_wiki_redirects.csv',
+    'data/external/wikidata_instance-of.pickle'
 }
 
 GUESS_TARGETS = {

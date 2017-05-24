@@ -1,107 +1,104 @@
 import pickle
-import json
 import os
 from typing import List, Optional, Dict
-from collections import namedtuple, Counter
-from qanta.spark import create_spark_context
+from collections import namedtuple
+import re
 
 import elasticsearch
 from elasticsearch_dsl.connections import connections
-from elasticsearch_dsl import DocType, Text, Keyword, Search, Index, Boolean
+from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 import progressbar
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 from qanta.datasets.abstract import QuestionText
+from qanta.spark import create_spark_context
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.config import conf
-from qanta.util.io import safe_open
 from qanta import logging
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.util.constants import WIKI_INSTANCE_OF_PICKLE
+from qanta.wikipedia.wikidata import NO_MATCH
 
 
 log = logging.get(__name__)
 
 connections.create_connection(hosts=['localhost'])
 
-WIKIDATA_CLAIMS = 'data/external/wikidata-claims_instance-of.jsonl'
 
 Claim = namedtuple('Claim', 'item property object title')
 
-
-def parse_instance_of_claims():
-    ds = QuizBowlDataset(1, guesser_train=True)
-    training_data = ds.training_data()
-    answer_set = {ans for ans in training_data[1]}
-    claims = []
-    with open(WIKIDATA_CLAIMS) as f:
-        for l in f:
-            c = json.loads(l)
-            if c['property'] == 'instance of' and c['object'] != 'Wikimedia disambiguation page':
-                claims.append(Claim(c['item'], c['property'], c['object'], c['title']))
-
-    instance_of_types = Counter()
-    for c in claims:
-        if type(c.object) == str:
-            if c.title is not None and c.title in answer_set:
-                instance_of_types[c.object] += 1
-            elif c.item in answer_set:
-                instance_of_types[c.object] += 1
-    return claims
+GUESSER_PICKLE = 'es_wiki_guesser.pickle'
+INDEX_NAME = 'qb_ir_instance_of'
 
 
 class Answer(DocType):
     page = Text(fields={'raw': Keyword()})
     wiki_content = Text()
     qb_content = Text()
-    is_human = Boolean()
+    instance_of = Keyword()
 
     class Meta:
-        index = 'qb'
+        index = INDEX_NAME
 
 
 class ElasticSearchIndex:
     @staticmethod
-    def build(documents: Dict[str, str], is_human_map):
+    def delete():
         try:
-            Index('qb').delete()
+            Index(INDEX_NAME)
         except elasticsearch.exceptions.NotFoundError:
-            log.info('Could not delete non-existent index, creating new index...')
-        Answer.init()
-        cw = CachedWikipedia()
-        bar = progressbar.ProgressBar()
-        for page in bar(documents):
-            if page in is_human_map:
-                is_human = is_human_map[page]
-            else:
-                is_human = False
-            answer = Answer(
-                page=page,
-                wiki_content=cw[page].content,
-                qb_content=documents[page],
-                is_human=is_human
-            )
-            answer.save()
+            log.info('Could not delete non-existent index')
 
-    def search(self, text: str, is_human_probability: float):
-        if is_human_probability > .8:
-            is_human = True
-            apply_filter = True
-        elif is_human_probability < .2:
-            is_human = False
+    @staticmethod
+    def exists():
+        return Index(INDEX_NAME).exists()
+
+    @staticmethod
+    def build(documents: Dict[str, str], instance_of_map, rebuild_index=False):
+        if rebuild_index or os.getenv('QB_REBUILD_INDEX', False):
+            ElasticSearchIndex.delete()
+
+        if ElasticSearchIndex.exists():
+            log.info('Found existing index, skipping building the index')
+        else:
+            Answer.init()
+            cw = CachedWikipedia()
+            bar = progressbar.ProgressBar()
+            for page in bar(documents):
+                if page in instance_of_map:
+                    instance_of = instance_of_map[page]
+                else:
+                    instance_of = NO_MATCH
+                answer = Answer(
+                    page=page,
+                    wiki_content=cw[page].content,
+                    qb_content=documents[page],
+                    instance_of=instance_of
+                )
+                answer.save()
+
+    def search(self, text: str, predicted_instance_of: str,
+               instance_of_probability: float, confidence_threshold: float):
+        if predicted_instance_of == NO_MATCH:
+            apply_filter = False
+        elif instance_of_probability > confidence_threshold:
             apply_filter = True
         else:
-            is_human = None
             apply_filter = False
+
         if apply_filter:
-            s = Search(index='qb')\
-                .filter('term', is_human=is_human)\
+            s = Search(index=INDEX_NAME)\
+                .filter('term', instance_of=predicted_instance_of)\
                 .query(
                     'multi_match',
                     query=text,
                     fields=['wiki_content', 'qb_content']
                 )
         else:
-            s = Search(index='qb') \
+            s = Search(index=INDEX_NAME) \
                 .query(
                 'multi_match',
                 query=text,
@@ -114,40 +111,95 @@ class ElasticSearchIndex:
 es_index = ElasticSearchIndex()
 
 
-def format_human_data(is_human_map, questions: List[List[str]], pages: List[str]):
+def format_training_data(instance_of_map: Dict[str, str], questions: List[List[str]], pages: List[str]):
     x_data = []
     y_data = []
+    classes = set(instance_of_map.values())
+    class_to_i = {label: i for i, label in enumerate(classes, 1)}
+    i_to_class = {i: label for label, i in class_to_i.items()}
 
     for q, p in zip(questions, pages):
-        full_text = ' '.join(q)
-        x_data.append(full_text)
+        for sent in q:
+            x_data.append(sent)
+            if p in instance_of_map:
+                y_data.append(class_to_i[instance_of_map[p]])
+            else:
+                y_data.append(class_to_i[NO_MATCH])
 
-        if p in is_human_map:
-            y_data.append(int(is_human_map[p]))
-        else:
-            y_data.append(0)
-
-    return x_data, y_data
-
+    return x_data, y_data, i_to_class, class_to_i
 
 
 class ElasticSearchWikidataGuesser(AbstractGuesser):
-    def __init__(self, is_human_model=None):
+    def __init__(self):
         super().__init__()
-        self.is_human_model = is_human_model
+        self.class_to_i = None
+        self.i_to_class = None
+        self.instance_of_model = None
+        guesser_conf = conf['guessers']['ESWikidata']
+        self.confidence_threshold = guesser_conf['confidence_threshold']
 
     def qb_dataset(self):
-        return QuizBowlDataset(conf['guessers']['ElasticSearch']['min_appearances'], guesser_train=True)
+        return QuizBowlDataset(1, guesser_train=True)
+
+    @classmethod
+    def targets(cls):
+        return [GUESSER_PICKLE]
+
+    def parameters(self):
+        return {
+            'confidence_threshold': self.confidence_threshold
+        }
+
+    def save(self, directory: str):
+        data = {
+            'class_to_i': self.class_to_i,
+            'i_to_class': self.i_to_class,
+            'instance_of_model': self.instance_of_model,
+            'confidence_threshold': self.confidence_threshold
+        }
+        data_pickle_path = os.path.join(directory, GUESSER_PICKLE)
+        with open(data_pickle_path, 'wb') as f:
+            pickle.dump(data, f)
+
+    @classmethod
+    def load(cls, directory: str):
+        data_pickle_path = os.path.join(directory, GUESSER_PICKLE)
+        with open(data_pickle_path, 'rb') as f:
+            data = pickle.load(f)
+        guesser = ElasticSearchWikidataGuesser()
+        guesser.class_to_i = data['class_to_i']
+        guesser.i_to_class = data['i_to_class']
+        guesser.instance_of_model = data['instance_of_model']
+        guesser.confidence_threshold = data['confidence_threshold']
+        return guesser
+
+    def train_instance_of(self, instance_of_map, training_data):
+        log.info('Creating training data...')
+        x_data, y_data, i_to_class, class_to_i = format_training_data(
+            instance_of_map, training_data[0], training_data[1]
+        )
+        self.i_to_class = i_to_class
+        self.class_to_i = class_to_i
+
+        log.info('Training instance_of classifier')
+        # These parameters have been separately tuned on cross validated scores, they are not random or merely guesses
+        pipeline = Pipeline([
+            ('tfidf', TfidfVectorizer(min_df=2, ngram_range=(1, 2))),
+            ('classifier', LogisticRegression(C=10))
+        ])
+        self.instance_of_model = pipeline.fit(x_data, y_data)
+
+    def test_instance_of(self, x_test):
+        predictions = self.instance_of_model.predict(x_test)
+        probabilities = self.instance_of_model.predict_proba(x_test).max(axis=1)
+        class_with_probability = []
+        for pred, prob in zip(predictions, probabilities):
+            class_with_probability.append((self.i_to_class[pred], prob))
+        return class_with_probability
 
     def train(self, training_data):
-        answers = {a for a in training_data[1]}
-        log.info('Loading instance of data from wikidata...')
-        instance_of_map = create_instance_of_map(answers)
-        is_human_map = create_is_human_map(instance_of_map)
-        log.info('Creating training data...')
-        x_data, y_data = format_human_data(is_human_map, training_data[0], training_data[1])
-        log.info('Training is_human model...')
-        self.is_human_model = create_human_model(x_data, y_data)
+        with open(WIKI_INSTANCE_OF_PICKLE, 'rb') as f:
+            instance_of_map = pickle.load(f)
 
         log.info('Building Elastic Search Index...')
         documents = {}
@@ -157,32 +209,24 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
                 documents[page] += ' ' + paragraph
             else:
                 documents[page] = paragraph
-        ElasticSearchIndex.build(documents, is_human_map)
+        ElasticSearchIndex.build(documents, instance_of_map)
+
+        self.train_instance_of(instance_of_map, training_data)
 
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        n_cores = conf['guessers']['ElasticSearch']['n_cores']
+        log.info('Predicting the instance_of attribute for guesses...')
+        class_with_probability = self.test_instance_of(questions)
+
+        n_cores = conf['guessers']['ESWikidata']['n_cores']
         sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '40g')])
-        b_is_human_model = sc.broadcast(self.is_human_model)
 
-        def ir_search(query):
-            is_human_model = b_is_human_model.value
-            is_human_probability = is_human_model.predict_proba([query])[0][1]
-            return es_index.search(query, is_human_probability)[:max_n_guesses]
+        def ir_search(query_class_and_prob):
+            query, class_and_prob = query_class_and_prob
+            p_class, prob = class_and_prob
+            return es_index.search(query, p_class, prob, self.confidence_threshold)[:max_n_guesses]
 
-        return sc.parallelize(questions, 4 * n_cores).map(ir_search).collect()
+        spark_input = list(zip(questions, class_with_probability))
 
-    @classmethod
-    def targets(cls):
-        return [IS_HUMAN_MODEL_PICKLE]
-
-    @classmethod
-    def load(cls, directory: str):
-        with open(os.path.join(directory, IS_HUMAN_MODEL_PICKLE), 'rb') as f:
-            is_human_model = pickle.load(f)['is_human_model']
-        return ElasticSearchWikidataGuesser(is_human_model=is_human_model)
-
-    def save(self, directory: str):
-        with safe_open(os.path.join(directory, IS_HUMAN_MODEL_PICKLE), 'wb') as f:
-            pickle.dump({'is_human_model': self.is_human_model}, f)
+        return sc.parallelize(spark_input, 4 * n_cores).map(ir_search).collect()

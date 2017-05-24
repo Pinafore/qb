@@ -13,6 +13,8 @@ TimeData = namedtuple('TimeData', 'after before calendarmodel precision time tim
 QuantityData = namedtuple('QuantityData', 'amount unit upperbound lowerbound')
 GlobeCoordinateData = namedtuple('GlobeCoordinateData', 'globe latitude longitude altitude precision')
 
+NO_MATCH = 'NO MATCH!'
+
 
 class WikiDatatype(metaclass=ABCMeta):
     @property
@@ -439,7 +441,7 @@ def create_instance_of_map(wikidata_claims_instance_of_path, output_path, n_type
     for a in answer_types:
         top_class_types = top_types.intersection(answer_types[a])
         if len(top_class_types) == 0:
-            instance_of_map[a] = 'NO MATCH!'
+            instance_of_map[a] = NO_MATCH
         elif len(top_class_types) > 1:
             frequency = 0
             final_a_type = None

@@ -1,8 +1,8 @@
 n_guesses = 50
 guesser_word_skip = -1
-buzzer_word_skip = -1
+buzzer_word_skip = 5
 
-expo_questions = "data/external/expo.csv"
+expo_questions = "data/internal/expo/2015_jennings.csv"
 
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
@@ -104,13 +104,13 @@ guessers "AuxDan" {
   enabled = false
 }
 
-guessers "ElasticSearchWikidata" {
-  class = "qanta.guesser.experimental.elasticsearch_wikidata.ElasticSearchWikidataGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.wikidata.DownloadWikidata"
+guessers "ESWikidata" {
+  class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
   # Set the level of parallelism for guess generation
-  n_cores = 15
-  min_appearances = 1
+  n_cores = 20
+  confidence_threshold = 0.5
 }
 
 guessers "FixedLen" {
