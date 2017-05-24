@@ -25,7 +25,7 @@ wikifier {
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = true
+  enabled = false
   # Set the level of parallelism for guess generation
   n_cores = 15
   min_appearances = 1
@@ -107,7 +107,7 @@ guessers "AuxDan" {
 guessers "ESWikidata" {
   class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
+  enabled = true
   # Set the level of parallelism for guess generation
   n_cores = 20
   confidence_threshold = 0.5

@@ -1,9 +1,11 @@
+import sys
 import random
 import numpy as np
 from collections import defaultdict, namedtuple
 from typing import List, Dict, Tuple, Optional
 from qanta.config import conf
 from qanta.buzzer.util import GUESSERS
+from qanta.buzzer import constants as bc
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 
@@ -35,6 +37,8 @@ class QuestionIterator(object):
         self.batch_index = 0
         self.is_end_epoch = False
         self.create_batches()
+        print('Finish creating batches')
+        sys.stdout.flush()
 
     def dense_vector(self, dicts: List[List[Dict[str, float]]],
             wordvecs: List[List[np.ndarray]], step_size=1) -> List[List[float]]:
@@ -52,7 +56,8 @@ class QuestionIterator(object):
             vec = []
             diff_vec = []
             isnew_vec = []
-            word_vec = []
+            word_vec = np.zeros(bc.WORDVEC_DIM, dtype=np.float32)
+            prev_word_vec = np.zeros(bc.WORDVEC_DIM, dtype=np.float32)
             for j in range(N_GUESSERS):
                 dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
                 for guess, score in dic:
@@ -68,9 +73,21 @@ class QuestionIterator(object):
                         vec.append(0)
                         diff_vec.append(0)
                         isnew_vec.append(0)
-                if wordvecs is not None:
-                    word_vec += wordvecs[i][j].tolist()
-            vecs.append(vec + diff_vec + isnew_vec + word_vec)
+                # if wordvecs is not None:
+                #     word_vec += wordvecs[i][j]
+            # vecs.append(vec + diff_vec + isnew_vec + word_vec)
+            
+            # if word_vec.shape != prev_word_vec.shape:
+            #     print(i, word_vec.shape, prev_word_vec.shape)
+            # cosine = np.dot(word_vec, prev_word_vec)
+            # cosine /= (np.linalg.norm(word_vec) * np.linalg.norm(prev_word_vec))
+            features = [sum(isnew_vec), np.average(vec), vec[0], vec[1], vec[2],
+                    isnew_vec[0], isnew_vec[1], vec[0] - vec[1], vec[1] -
+                    vec[2], isnew_vec[2], diff_vec[0], vec[0] -
+                    prev_vecs[-1][0], np.var(vec),
+                    np.var(prev_vecs[-1]), i, int(i < 2)]
+            prev_word_vec = word_vec
+            vecs.append(features)
             for j in range(1, step_size + 1):
                 vecs[-1] += prev_vecs[-j]
             prev_vecs.append(vec)
@@ -92,7 +109,7 @@ class QuestionIterator(object):
             if n_guessers != N_GUESSERS:
                 raise ValueError(
                     "Inconsistent number of guessers ({0}, {1}.".format(
-                        N_GUESSERS, len(n_guessers)))
+                        N_GUESSERS, n_guessers))
 
             # hopeful means any guesser guesses correct any time step
             hopeful = np.any(results == 1)

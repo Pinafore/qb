@@ -37,7 +37,10 @@ def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]],
         finalf: list of final file entries
     '''
     qnum = int(qnum)
-    buzz = buzzes[qnum]
+    try:
+        buzz = buzzes[qnum]
+    except KeyError:
+        return None
     buzzf, predf, metaf, finalf = [], [], [], []
     final_guesses = [None for _ in GUESSERS]
     for i, (g_class, g_group) in enumerate(question.groupby('guesser')):
@@ -86,6 +89,7 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
     inputs = guesses_df.groupby('qnum')
     worker = partial(_buzzer2vwexpo, buzzes)
     result = _multiprocess(worker, inputs, info='buzzer2vwexpo')
+    result = [x for x in result if x is not None]
     buzzf, predf, metaf, finalf = list(map(list, zip(*result)))
 
     with codecs.open(safe_path(c.PRED_TARGET.format(fold)), 'w', 'utf-8') as pred_file, \

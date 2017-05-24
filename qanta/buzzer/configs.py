@@ -2,8 +2,8 @@ class mlp():
     optimizer = 'Adam'
     max_grad_norm = 5
     batch_size = 128
-    n_hidden = 100
-    n_layers = 3
+    n_hidden = 20
+    n_layers = 1
     dropout = 0.3
     step_size = 1
     neg_weight = 1

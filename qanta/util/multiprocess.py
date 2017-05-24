@@ -26,7 +26,7 @@ def _multiprocess(func, inputs, n_cores=conf['buzzer']['n_cores'], info='',
         # monitor loop
         while not result.ready():
             size = queue.qsize()
-            sys.stderr.write(output.format(info, 'multi', size, total_size))
+            sys.stderr.write(output.format(info, n_cores, size, total_size))
             time.sleep(0.1)
         sys.stderr.write('\n')
         pool.close()
@@ -35,7 +35,7 @@ def _multiprocess(func, inputs, n_cores=conf['buzzer']['n_cores'], info='',
         result = []
         for i, inp in enumerate(inputs):
             result.append(func(*inp))
-            sys.stderr.write(output.format(info, 'single', i, total_size))
+            sys.stderr.write(output.format(info, 1, i, total_size))
         sys.stderr.write('\n')
         return result
 

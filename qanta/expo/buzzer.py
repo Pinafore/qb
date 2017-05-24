@@ -7,7 +7,7 @@ from csv import DictReader
 from time import sleep
 import os
 
-from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
 
 GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
@@ -393,9 +393,15 @@ class Questions:
 
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
-        for r in qfile:
-            self._questions[int(r["id"])][int(r["sent"])] = r["text"]
-            self._answers[int(r["id"])] = r["answer"].strip()
+        # for r in qfile:
+        #     self._questions[int(r["id"])][int(r["sent"])] = r["text"]
+        #     self._answers[int(r["id"])] = r["answer"].strip()
+        qbdb = QuizBowlDataset(1, guesser_train=True, buzzer_train=True)
+        questions = qbdb.questions_in_folds(folds=['expo'])
+        for r in questions:
+            for i in r.text:
+                self._questions[int(r.qnum)][int(i)] = r.text[i]
+            self._answers[int(r.qnum)] = '_'.join(r.page.split())
 
     def __iter__(self):
         for qnum in self._questions:
@@ -541,29 +547,30 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                         response = None
             # Don't buzz if anyone else has gotten it wrong
             elif buzz_now and human_delta == 0 and computer_delta == 0:
-                show_score(human + human_delta,
-                           computer + computer_delta,
-                           "HUMAN", "COMPUTER")
-                print(format_display(display_num, question_text, ss, ii + 1,
-                                     current_guesses, answer=correct,
-                                     points=question_value, answerable=answerable))
+
                 answer(buzz_now[0].page)
                 if buzz_now[0].page == correct:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
-                    sleep(1)
-                    print(format_display(display_num, question_text, max(question_text), 0,
-                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
+                    while input('Hit c to continue') != 'c':
+                        pass
+                    print(format_display(display_num, question_text,
+                        max(question_text), 0, current_guesses, answer=correct,
+                        points=question_value, answerable=answerable))
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
-                    sleep(1)
                     computer_delta = -5
                     show_score(human + human_delta,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
-                    print(format_display(display_num, question_text, max(question_text), 0,
-                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
+                    while input('Hit c to continue') != 'c':
+                        pass
+                    print(format_display(display_num, question_text,
+                        max(question_text), 0, current_guesses, answer=correct,
+                        points=question_value, answerable=answerable))
+
+
             else:
                 show_score(human + human_delta,
                            computer + computer_delta,
@@ -571,12 +578,19 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
                                      points=question_value, answerable=answerable))
+
+
     if computer_delta == 0:
         answer(final)
         if final == correct:
+            while input('Hit c to continue') != 'c':
+                pass
             return human + human_delta, computer + 10, final
         else:
             print("Incorrect answer: %s" % final)
+
+        while input('Hit c to continue') != 'c':
+            pass
 
     if human_delta == 0:
         response = None

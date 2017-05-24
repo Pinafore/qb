@@ -43,6 +43,7 @@ class MLP(chainer.ChainList):
             if not self.batch_norm and self.dropout > 0:
                 xs = F.dropout(xs, ratio=self.dropout, train=train)
             xs = self[i](xs)
+            xs = F.relu(xs)
         return xs
 
 

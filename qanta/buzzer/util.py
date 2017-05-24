@@ -84,7 +84,10 @@ def _process_question(option2id: Dict[str, int],
         results: sequence of 0 and 1 for each guesser
     '''
     qnum = int(qnum)
-    answer = all_questions[qnum].page
+    try:
+        answer = all_questions[qnum].page
+    except KeyError:
+        return None
     if answer in option2id:
         answer_id = option2id[answer]
     else:
@@ -178,7 +181,8 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
         worker = partial(_process_question, option2id, all_questions, word2vec)
         inputs = guesses.groupby('qnum')
         guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data',
-                multi=False)
+                multi=True)
+        guesses_by_fold[fold] = [x for x in guesses_by_fold[fold] if x is not None]
 
         with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)
