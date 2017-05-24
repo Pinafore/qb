@@ -32,8 +32,8 @@ jupiter	Jupiter
 jupiter	Jupiter (mythology)	zeus
 Lady Macbeth of the Mtsensk District	Lady_Macbeth_of_the_Mtsensk_District_(novel)	
 Lady Macbeth of the Mtsensk District	Lady_Macbeth_of_the_Mtsensk_District_(opera)	
-mars	Mars	planet
-mars	Mars (mythology)	juno:ares
+mars	Mars	planet:wells
+mars	Mars (mythology)	juno:ares:rhea:remus:equirria
 medea	Medea_(play)	euripides
 medea	Medea	
 mercury	Mercury_(element)	element
@@ -48,22 +48,20 @@ organ symphony	Symphony_No._3_(Saint-Saëns)	saëns:camille:saens:sans
 organ symphony	Organ_symphony	
 plasma	Plasma_(physics)	
 plasma	Blood_plasma	blood
-power	Power	watt
+power	Power	watt:watts
 raphael	Raphael_(Teenage_Mutant_Ninja_Turtles)	turtle:turtles
 raphael	Raphael_(Teenage_Mutant_Ninja_Turtles)	turtle:turtles
 raphael	Raphael	
 resonance	Resonance	
 resonance	Resonance_(chemistry)	ions:lewis:bonds:bond:hybrid
-		
-thebes	Thebes,_Greece	greece:cadmus
+thebes	Thebes,_Greece	greece:cadmus:oedipus:greek:sacred:boeotian:seven
 thebes	Thebes,_Egypt	egypt
 titan	Titan_(rocket_family)	rocket
 titan	Titan	
 velocity	Velocity	
 velocity	Velocity_of_money	money
 venus	Venus	planet
-venus	Venus (mythology)	
-venus	Venus_(mythology)	pantheon:foam:aphrodite
+venus	Venus_(mythology)	pantheon:foam:aphrodite:botticelli:shell:love
 venus	Venus	planet
 work	Work	
 work	Work_(physics)	joule
@@ -73,4 +71,5 @@ yield	Yield_(chemistry)	reaction
 yield	Yield_(engineering)	deformation
 zhuangzi	Zhuangzi_(book)	MUSTBEMANUAL
 zhuangzi	Zhuangzi	MUSTBEMANUAL
-orion		MUSTBEMANUAL
+orion		Orion_(constellation)		constellation:belt
+orion		Orion_(mythology)		artemis:scorpion
