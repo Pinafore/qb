@@ -23,20 +23,18 @@ log = logging.get(__name__)
 
 
 def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]], 
-        inputs: tuple) -> Tuple[list, list, list, list]:
+        qnum, question) -> Tuple[list, list, list, list]:
     '''Multiprocessing worker for buzzer2vwexpo
     buzzes: dictionary of qnum -> buzzing position
-    inputs: (qnum, question), queue:
+    inputs: qnum, question
         qnum: int, question id
         question: pd.group, the corresponding guesses
-        queue: multiprocessing queue for tracking progress
     return:
         buzzf: list of buzz file entries
         predf: list of vw pred file entries
         metaf: list of vw meta file entries
         finalf: list of final file entries
     '''
-    (qnum, question), queue = inputs
     qnum = int(qnum)
     buzz = buzzes[qnum]
     buzzf, predf, metaf, finalf = [], [], [], []
@@ -49,6 +47,7 @@ def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]],
             sent, token = sent_token
             p_group = p_group.sort_values('score', ascending=False)
             # normalize scores
+            unnormalized_scores = list(p_group.score)
             _sum = sum(p_group.score)
             scores = [(r.score / _sum, r.guess) for r in p_group.itertuples()]
             final_guesses[i] = scores[0][1]
@@ -65,11 +64,14 @@ def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]],
                 metaf.append([qnum, sent, token, guess])
                 # manually do what csv.DictWriter does
                 guess = guess if ',' not in guess else '"' + guess + '"'
-                buzzf.append([qnum, sent, token, guess, g_class, buzzing, score])
+                # buzzer_score = 0
+                # evidence = "{0}|{1}|{2}".format(g_class,
+                #         unnormalized_scores[rank], buzzer_score)
+                evidence = g_class
+                buzzf.append([qnum, sent, token, guess, evidence, buzzing, score])
     final_guess = final_guesses[np.argmax(buzz[-1][:N_GUESSERS])]
     final_guess = final_guess if ',' not in final_guess else '"' + final_guess + '"'
     finalf.append([qnum, final_guess])
-    queue.put(qnum)
     return buzzf, predf, metaf, finalf
 
 def buzzer2vwexpo(guesses_df: pd.DataFrame, 

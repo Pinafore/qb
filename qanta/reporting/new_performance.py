@@ -12,7 +12,7 @@ from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util import constants as c
 from qanta.buzzer import constants as bc
 from qanta import logging
-from qanta.buzzer.util import GUESSERS
+from qanta.buzzer.util import GUESSERS, load_protobowl
 from qanta.reporting.report_generator import ReportGenerator
 from qanta.util.multiprocess import _multiprocess
 
@@ -258,6 +258,7 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
 
     ax.set_xticks(HISTO_RATIOS)
     plt.legend(handles=lines)
+    plt.title('{} histogram lines chart'.format(fold))
     his_lines_dir = os.path.join(save_dir, 'his_{}_lines.pdf'.format(fold))
     plt.savefig(his_lines_dir, bbox_inches='tight')
     plt.close()
@@ -275,6 +276,7 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
             _his_stats['correct_hopeless'],
             colors=['c', 'y', 'r', 'm', 'g'], alpha=0.5)
     plt.legend()
+    plt.title('{} stacked area chart'.format(fold))
     his_stacked_dir = os.path.join(save_dir, 'his_{}_stacked.pdf'.format(fold))
     plt.savefig(his_stacked_dir, bbox_inches='tight')
     plt.close()
@@ -325,6 +327,7 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     ax.set_xticklabels(config_names)
 
     plt.grid()
+    plt.title('{} rush & late chart'.format(fold))
     rush_late_dir = os.path.join(save_dir, 'rush_late_{}.pdf'.format(fold))
     plt.savefig(rush_late_dir, bbox_inches='tight')
     plt.close()
@@ -346,6 +349,7 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
     ax.set_xticklabels(config_names)
 
     plt.grid()
+    plt.title('{} choices chart'.format(fold))
     choice_dir = os.path.join(save_dir, 'choose_{}.pdf'.format(fold))
     plt.savefig(choice_dir, bbox_inches='tight')
     plt.close()
@@ -354,6 +358,137 @@ def get_hyper_search(top_guesses, buzzes, answers, variables, fold, save_dir):
         variables['rush_late_plot'][fold] = rush_late_dir
         variables['choice_plot'][fold] = choice_dir
         variables['hype_configs']['dev'] = list(zip(config_names, configs))
+
+def get_protobowl(folds, variables):
+    questions = QuestionDatabase().all_questions()
+    answers = {k: v.page for k, v in questions.items()}
+    question_texts = {k: v.text for k, v in questions.items()}
+    protobowl_ids = {k: questions[k].protobowl 
+        for k in questions if questions[k].protobowl != ''}
+    protobowl_df = load_protobowl().groupby('qid')
+
+    for fold in folds:
+        guesses_df = AbstractGuesser.load_guesses(
+                bc.GUESSES_DIR, folds=[fold])
+        guesses_df = guesses_df.groupby('qnum')
+        buzzes = pickle.load(open(bc.BUZZES_DIR.format(fold), 'rb'))
+
+        top_guesses = _multiprocess(_get_top_guesses, guesses_df, 
+            info='Top guesses', multi=True)
+        top_guesses = {k: v for k, v in top_guesses}
+
+        avg_stats = defaultdict(list)
+        n_questions = 0
+        for qnum, guess_list in top_guesses.items():
+            if qnum not in protobowl_ids:
+                continue
+            protobowl_id = protobowl_ids[qnum]
+            if protobowl_id not in protobowl_df.groups:
+                continue
+            n_questions += 1
+
+            buzz = buzzes[qnum]
+            answer = answers[qnum]
+
+            # position in guesses -> real position
+            position_mapping = []
+            g_group = guesses_df.get_group(qnum)
+            text = question_texts[qnum]
+            g_group = g_group.groupby(['sentence', 'token']).groups
+            _count = 0
+            for sent in text:
+                for word, x in enumerate(text[sent].split()):
+                    if (sent, word) in g_group:
+                        position_mapping.append(_count)
+                    _count += 1
+            position_mapping.append(_count)
+            if len(position_mapping) != len(buzz):
+                print(len(position_mapping), len(buzz))
+                continue
+
+            correct_position = len(buzz)
+            buzzing_result = False
+            for i in range(N_GUESSERS):
+                for j in range(len(buzz)):
+                    if guess_list[i][j] == answer:
+                        if j < correct_position:
+                            correct_position = j
+                            break
+
+            buzzing_position = len(buzz) - 1
+            for i in range(len(buzz)):
+                choice = np.argmax(buzz[i])
+                if choice < N_GUESSERS:
+                    buzzing_position = position_mapping[i]
+                    buzzing_result = (guess_list[choice][i] == answer)
+                    break
+
+            final_choice = np.argmax(buzz[-1][:N_GUESSERS])
+            final_result = guess_list[final_choice][-1] == answer
+
+            stats = defaultdict(lambda: 0)
+            n_opponents = 0
+            for opponent in protobowl_df.get_group(protobowl_id).itertuples():
+                n_opponents += 1
+                if opponent.position > buzzing_position:
+                    stats['earlier_than_op'] += 1
+                    if buzzing_result:
+                        stats['reward'] += 10
+                        stats['correct_before_op'] += 1
+                    else:
+                        stats['reward'] -= 5
+                        if correct_position >= opponent.position:
+                            stats['rush_impossible'] += 1
+                        else:
+                            stats['rush_possible'] += 1
+                        if opponent.result == 'True':
+                            stats['reward'] -= 10
+
+                else:
+                    stats['later_than_op'] += 1
+                    if opponent.result == 'True':
+                        stats['reward'] -= 10
+                        if correct_position <= opponent.position:
+                            stats['late_possible'] += 1
+                        else:
+                            stats['late_impossible'] += 1
+                    else:
+                        stats['reward'] += 5
+                        stats['correct_after_op'] += 1
+                        if final_result:
+                            stats['reward'] += 10
+            for k, v in dict(stats).items():
+                avg_stats[k].append(v / n_opponents)
+        avg_stats = dict(avg_stats)
+        for k, v in avg_stats.items():
+            avg_stats[k] = sum(v) / n_questions
+
+        # plotting
+        plot_keys = ['correct_before_op', 'correct_after_op', 
+                     'rush_possible', 'rush_impossible', 
+                     'late_possible', 'late_impossible',
+                     'earlier_than_op', 'later_than_op']
+	plt.clf()
+	ind = 0
+	width = 0.5
+	labels = []
+	for k in plot_keys:
+	    if k not in avg_stats:
+	        continue
+	    plt.bar(ind, avg_stats[k], width)
+	    labels.append(k)
+	    ind += width * 2
+	plt.xticks(list(range(len(bars))), labels, rotation=30)
+	plt.subplots_adjust(bottom=0.3)
+	plt.title('{} stats against Protobowl'.format(fold))
+        plot_dir = os.path.join(save_dir, '{}_protobowl.pdf'.format(fold))
+        plt.savefig(plot_dir, bbox_inches='tight')
+	plt.clf() 
+
+        if variables is not None:
+            variables['protobowl_plot'][fold] = plot_dir
+            variables['protobowl_stats'][fold] = avg_stats
+        return avg_stats
 
 def generate(buzzes, answers, guesses_df, variables, fold, save_dir=None,
         multiprocessing=True):
@@ -370,7 +505,6 @@ def generate(buzzes, answers, guesses_df, variables, fold, save_dir=None,
     get_eop_stats(*inputs)
     get_his_stats(*inputs)
     get_hyper_search(*inputs)
-
 
 def main(folds, checkpoint_dir=None):
     
@@ -394,6 +528,9 @@ def main(folds, checkpoint_dir=None):
 
         generate(buzzes, answers, guesses_df, variables, fold, save_dir)
 
+
+    get_protobowl(folds, variables)
+
     for key, value in variables.items():
         variables[key] = dict(value)
     variables = dict(variables)
@@ -407,7 +544,7 @@ def main(folds, checkpoint_dir=None):
 def report(variables, save_dir, folds):
     # use this to have jinja skip non-existent features
     jinja_keys = ['his_lines', 'his_stacked', 'rush_late_plot', 'choice_plot',
-            'hype_configs']
+            'hype_configs', 'protobowl_plot', 'protobowl_stats']
     _variables = {k: dict() for k in jinja_keys}
     _variables.update(variables)
     if len(folds) == 1:
@@ -427,5 +564,6 @@ if __name__ == '__main__':
     if args.fold != None:
         folds = [args.fold]
     else:
-        folds = c.BUZZER_INPUT_FOLDS
+        folds = c.BUZZER_INPUT_FOLDS[:-1]
     main(folds)
+

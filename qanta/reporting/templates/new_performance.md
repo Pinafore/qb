@@ -98,3 +98,12 @@ Folds:
 ![{{ fold }}]({{ plot }}){width=100%}
 \ 
 {% endfor %}
+
+## Protobowl
+
+### Bar charts
+
+{% for fold, plot in protobowl_plot.items() %}
+![]({{ plot }}){width=100%}
+\ 
+{% endfor %}

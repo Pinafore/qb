@@ -10,3 +10,4 @@ WORDVEC_DIR = 'data/external/GoogleNews-vectors-negative300.bin'
 WORDVEC_DIM = 300
 
 BUZZES_DIR = 'output/buzzer/buzzes_{0}.pkl'
+PROTOBOWL_DIR = 'data/external/qanta-4may17.log.json'

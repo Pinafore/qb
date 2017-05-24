@@ -1,7 +1,9 @@
 import os
 import sys
+import json
 import time
 import pickle
+import codecs
 import gensim
 import numpy as np
 import pandas as pd
@@ -72,7 +74,7 @@ def stupid_buzzer(iterator) -> Dict[int, int]:
 
 def _process_question(option2id: Dict[str, int], 
         all_questions: Dict[int, Question], 
-        word2vec, inputs: Tuple) -> \
+        word2vec, qnum, question) -> \
             Tuple[int, int, List[List[Dict[str, int]]], List[List[int]]]:
     '''Process one question.
     return:
@@ -81,8 +83,6 @@ def _process_question(option2id: Dict[str, int],
         guess_dicts: a sequence of guess dictionaries for each guesser
         results: sequence of 0 and 1 for each guesser
     '''
-    (qnum, question), queue = inputs
-
     qnum = int(qnum)
     answer = all_questions[qnum].page
     if answer in option2id:
@@ -120,9 +120,8 @@ def _process_question(option2id: Dict[str, int],
                 if word2vec is not None:
                     wordvecs[-1].append(word2vec.get_avg_vec(top_guess))
 
-    if queue is not None:
-        queue.put(qnum)
     return qnum, answer_id, guess_dicts, results, wordvecs
+
 
 class Word2Vec:
 
@@ -188,7 +187,6 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
 
     return option2id, guesses_by_fold
 
-
 def merge_dfs():
     GUESSERS = ["{0}.{1}".format(
         x.guesser_module, x.guesser_class) \
@@ -212,15 +210,62 @@ def merge_dfs():
         AbstractGuesser.save_guesses(new_guesses, merged_dir, folds=[fold])
         log.info("Merging: {0} finished.".format(fold))
 
+def load_protobowl():
+    protobowl_df_dir = bc.PROTOBOWL_DIR + '.df.pkl'
+    if os.path.exists(protobowl_df_dir):
+        with open(protobowl_df_dir, 'rb') as f:
+            return pickle.load(f)
+    
+    def process_line(x):
+        total_time = x['object']['time_elapsed'] + x['object']['time_remaining']
+        ratio = x['object']['time_elapsed'] / total_time
+        position = int(len(x['object']['question_text'].split()) * ratio)
+        return [x['object']['guess'], x['object']['qid'], 
+                position, x['object']['ruling']]
+
+    data = []
+    count = 0
+    with codecs.open(bc.PROTOBOWL_DIR, 'r', 'utf-8') as f:
+        line = f.readline()
+        while line is not None:
+            line = line.strip()
+            if len(line) < 1:
+                break
+            while not line.endswith('}}'):
+                l = f.readline()
+                if l is None:
+                    break
+                line += l.strip()
+            try:
+                line = json.loads(line)
+            except ValueError:
+                line = f.readline()
+                if line == None:
+                    break
+                continue
+            count += 1
+            if count % 10000 == 0:
+                sys.stderr.write('\rdone: {}'.format(count))
+            data.append(process_line(line))
+            line = f.readline()
+
+    protobowl_df = df = pd.DataFrame(data, 
+            columns=['guess', 'qid', 'position', 'result'])
+    with open(protobowl_df_dir, 'wb') as f:
+        pickle.dump(protobowl_df, f)
+
+    return protobowl_df
+
 if __name__ == "__main__":
-    merge_dfs()
+    # merge_dfs()
 
-    processed_dirs = ['%s_processed.pickle' % (os.path.join(
-        bc.GUESSES_DIR, fold)) for fold in c.BUZZER_INPUT_FOLDS]
-    if not all(os.path.isfile(d) for d in processed_dirs):
-        log.info('Loading {0}'.format(bc.WORDVEC_DIR))
-        word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
-    else:
-        word2vec = None
+    # processed_dirs = ['%s_processed.pickle' % (os.path.join(
+    #     bc.GUESSES_DIR, fold)) for fold in c.BUZZER_INPUT_FOLDS]
+    # if not all(os.path.isfile(d) for d in processed_dirs):
+    #     log.info('Loading {0}'.format(bc.WORDVEC_DIR))
+    #     word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
+    # else:
+    #     word2vec = None
 
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS, word2vec)
+    # option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS, word2vec)
+    load_protobowl()
