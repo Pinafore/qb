@@ -10,7 +10,7 @@ from qanta.config import conf
 from qanta.buzzer import configs
 from qanta.buzzer.interface import buzzer2vwexpo
 from qanta.buzzer.iterator import QuestionIterator
-from qanta.buzzer.util import load_quizbowl, GUESSERS
+from qanta.buzzer.util import load_quizbowl, GUESSERS, stupid_buzzer
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
@@ -60,11 +60,9 @@ def generate(fold, config):
         pickle.dump(buzzes, outfile)
     log.info('Buzzes saved to {0}.'.format(buzzes_dir))
 
-    guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
-    buzzer2vwexpo(guesses_df, buzzes, fold)
-    # preds, metas = buzzer2predsmetas(guesses_df, buzzes)
-    # log.info('preds and metas generated')
-    # performance.generate(2, preds, metas, 'output/summary/{}_1.json'.format(fold))
+    if fold == 'expo':
+        guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
+        buzzer2vwexpo(guesses_df, buzzes, fold)
 
 def parse_args():
     parser = argparse.ArgumentParser()

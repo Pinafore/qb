@@ -261,15 +261,15 @@ def load_protobowl():
     return protobowl_df
 
 if __name__ == "__main__":
-    merge_dfs()
+    # merge_dfs()
 
-    processed_dirs = ['%s_processed.pickle' % (os.path.join(
-        bc.GUESSES_DIR, fold)) for fold in c.BUZZER_INPUT_FOLDS]
-    if not all(os.path.isfile(d) for d in processed_dirs):
-        log.info('Loading {0}'.format(bc.WORDVEC_DIR))
-        word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
-    else:
-        word2vec = None
+    # processed_dirs = ['%s_processed.pickle' % (os.path.join(
+    #     bc.GUESSES_DIR, fold)) for fold in c.BUZZER_INPUT_FOLDS]
+    # if not all(os.path.isfile(d) for d in processed_dirs):
+    #     log.info('Loading {0}'.format(bc.WORDVEC_DIR))
+    #     word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
+    # else:
+    #     word2vec = None
 
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS, word2vec)
+    # option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS, word2vec)
     load_protobowl()

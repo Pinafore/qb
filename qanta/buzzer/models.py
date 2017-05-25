@@ -10,18 +10,22 @@ class MLP(chainer.ChainList):
             batch_norm=False):
         self.dropout = dropout
         layers = []
-        layers.append(L.Linear(n_input, n_hidden))
-        for i in range(n_layers):
+        if n_layers == 0:
+            layers.append(L.Linear(n_input, n_output))
+            self.n_layers = 1
+        else:
+            layers.append(L.Linear(n_input, n_hidden))
+            for i in range(n_layers):
+                if batch_norm:
+                    layers.append(L.BatchNormalization(size=n_hidden))
+                layers.append(L.Linear(n_hidden, n_hidden))
             if batch_norm:
                 layers.append(L.BatchNormalization(size=n_hidden))
-            layers.append(L.Linear(n_hidden, n_hidden))
-        if batch_norm:
-            layers.append(L.BatchNormalization(size=n_hidden))
-        layers.append(L.Linear(n_hidden, n_output))
-        if batch_norm:
-            self.n_layers = n_layers * 2 + 3
-        else:
-            self.n_layers = n_layers + 2
+            layers.append(L.Linear(n_hidden, n_output))
+            if batch_norm:
+                self.n_layers = n_layers * 2 + 3
+            else:
+                self.n_layers = n_layers + 2
         self.batch_norm = batch_norm
         super(MLP, self).__init__(*layers)
 
@@ -43,7 +47,7 @@ class MLP(chainer.ChainList):
             if not self.batch_norm and self.dropout > 0:
                 xs = F.dropout(xs, ratio=self.dropout, train=train)
             xs = self[i](xs)
-            xs = F.relu(xs)
+            # xs = F.relu(xs)
         return xs
 
 

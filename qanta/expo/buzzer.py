@@ -551,11 +551,11 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 answer(buzz_now[0].page)
                 if buzz_now[0].page == correct:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
-                    while input('Hit c to continue') != 'c':
-                        pass
                     print(format_display(display_num, question_text,
                         max(question_text), 0, current_guesses, answer=correct,
                         points=question_value, answerable=answerable))
+                    while input('Hit c to continue') != 'c':
+                        pass
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
@@ -564,11 +564,11 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                     show_score(human + human_delta,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
-                    while input('Hit c to continue') != 'c':
-                        pass
                     print(format_display(display_num, question_text,
                         max(question_text), 0, current_guesses, answer=correct,
                         points=question_value, answerable=answerable))
+                    while input('Hit c to continue') != 'c':
+                        pass
 
 
             else:

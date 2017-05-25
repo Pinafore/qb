@@ -49,12 +49,14 @@ HISTO_KEYS_0 = ['acc', 'buzz']  + \
         ['acc_{}'.format(g) for g in GUESSERS] + \
         ['buzz_{}'.format(g) for g in GUESSERS]
 
-HISTO_KEYS_1 = ['correct_hopeful', # buzzer is correct
-         'nobuzz_hopeful', # buzzer never correct when hopeful
-         'wrong_hopeful', # buzzer never correct when hopeful
-         'wrong_hopeless', # buzzer buzzed when hopeless
-         'correct_hopeless', # buzzer didn't buzz when hopeless
-        ]
+HISTO_KEYS_1 = [
+        'buzz_correct',
+        'wait_correct',
+        'wait_wrong',
+        'buzz_wrong',
+        'wait_impossible',
+        'buzz_impossible',
+        'buzz_miss']
 
 LINE_STYLES = {'acc': '-', 'buzz': '-'}
 _STYLES = [':', '--', '-.']
@@ -161,17 +163,24 @@ def _get_his_stats(buzzes: Dict[int, List[List[float]]],
             buz = sum(np.argmax(x) == j for x in buzz[:pos])
             stats['acc_{}'.format(g)][i] = int(cor > 0)
             stats['buzz_{}'.format(g)][i] = int(buz > 0)
-        cor = sum(sum(x) for x in guesser_correct[:pos])
+        cor_before = sum(sum(x) for x in guesser_correct[:pos])
+        cor_after = sum(sum(x) for x in guesser_correct[pos:])
         buz = sum(np.argmax(x) < N_GUESSERS for x in buzz[:pos])
         buz_cor = sum(buzzer_correct[:pos])
-        stats['acc'][i] = int(cor > 0)
+        stats['acc'][i] = int(cor_before > 0)
         stats['buzz'][i] = int(buz > 0)
-        stats['correct_hopeful'][i] = int(buz_cor > 0)
-        stats['nobuzz_hopeful'][i] = int(buz == 0 and cor > 0)
-        stats['wrong_hopeful'][i] = int(buz_cor == 0 and buz > 0 and cor > 0)
-        stats['correct_hopeless'][i] = int(buz == 0 and cor == 0)
-        stats['wrong_hopeless'][i] = int(buz > 0 and cor == 0)
-
+        stats['buzz_correct'][i] = int(buz_cor > 0)
+        stats['wait_correct'][i] = int(buz == 0 and cor_before == 0 and cor_after > 0)
+        stats['wait_impossible'][i] = int(buz == 0 and cor_before == 0 and cor_after == 0)
+        stats['wait_wrong'][i] = int(buz == 0 and cor_before > 0)
+        stats['buzz_wrong'][i] = int(buz > 0 and cor_before == 0 and cor_after > 0)
+        stats['buzz_miss'][i] = int(buz > 0 and cor_before > 0 and buz_cor == 0)
+        stats['buzz_impossible'][i] = int(buz > 0 and cor_before == 0 and cor_after == 0)
+        ssum = stats['buzz_correct'][i] + stats['wait_correct'][i] + \
+               stats['wait_wrong'][i] + stats['buzz_wrong'][i] + \
+               stats['wait_impossible'][i] + stats['buzz_impossible'][i] +\
+               stats['buzz_miss'][i]
+        assert ssum == 1
     return qnum, stats
 
 def get_eop_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
@@ -264,17 +273,20 @@ def get_his_stats(top_guesses, buzzes, answers, variables, fold, save_dir):
     plt.close()
 
     ##### plot stacked area chart #####
-    plt.plot([],[],color='c', alpha=0.5, label='correct_hopeful')
-    plt.plot([],[],color='y', alpha=0.5, label='nobuzz_hopeful')
-    plt.plot([],[],color='r', alpha=0.5, label='wrong_hopeful')
-    plt.plot([],[],color='m', alpha=0.5, label='wrong_hopeless')
-    plt.plot([],[],color='g', alpha=0.5, label='correct_hopeless')
+    plt.plot([],[],color='c', alpha=0.5, label='buzz_correct')
+    plt.plot([],[],color='g', alpha=0.5, label='wait_correct')
+    plt.plot([],[],color='w', alpha=0.5, label='wait_impossible')
+    plt.plot([],[],color='m', alpha=0.5, label='wait_wrong')
+    plt.plot([],[],color='r', alpha=0.5, label='buzz_wrong')
+    plt.plot([],[],color='k', alpha=0.5, label='buzz_impossible')
+    plt.plot([],[],color='y', alpha=0.5, label='buzz_miss')
 
     plt.stackplot(list(range(len(HISTO_RATIOS))), 
-            _his_stats['correct_hopeful'], _his_stats['nobuzz_hopeful'],
-            _his_stats['wrong_hopeful'], _his_stats['wrong_hopeless'],
-            _his_stats['correct_hopeless'],
-            colors=['c', 'y', 'r', 'm', 'g'], alpha=0.5)
+            _his_stats['buzz_correct'], _his_stats['wait_correct'], 
+            _his_stats['wait_impossible'], _his_stats['wait_wrong'], 
+            _his_stats['buzz_wrong'], _his_stats['buzz_impossible'],
+            _his_stats['buzz_miss'],
+            colors=['c', 'g', 'w', 'm', 'r', 'k', 'y'], alpha=0.5)
     plt.legend()
     plt.title('{} stacked area chart'.format(fold))
     his_stacked_dir = os.path.join(save_dir, 'his_{}_stacked.pdf'.format(fold))
@@ -367,6 +379,11 @@ def get_protobowl(variables, folds, save_dir):
         for k in questions if questions[k].protobowl != ''}
     protobowl_df = load_protobowl().groupby('qid')
 
+    protobowl_keys = ['correct_before_op', 'correct_after_op', 
+                 'rush_possible', 'rush_impossible', 
+                 'late_possible', 'late_impossible',
+                 'earlier_than_op', 'later_than_op', 'reward']
+
     for fold in folds:
         guesses_df = AbstractGuesser.load_guesses(
                 bc.GUESSES_DIR, folds=[fold])
@@ -377,7 +394,7 @@ def get_protobowl(variables, folds, save_dir):
             info='Top guesses', multi=True)
         top_guesses = {k: v for k, v in top_guesses}
 
-        avg_stats = defaultdict(list)
+        avg_stats = {k: [] for k in protobowl_keys}
         n_questions = 0
         for qnum, guess_list in top_guesses.items():
             if qnum not in protobowl_ids:
@@ -426,7 +443,7 @@ def get_protobowl(variables, folds, save_dir):
             final_choice = np.argmax(buzz[-1][:N_GUESSERS])
             final_result = guess_list[final_choice][-1] == answer
 
-            stats = defaultdict(lambda: 0)
+            stats = {k: 0 for k in protobowl_keys}
             n_opponents = 0
             for opponent in protobowl_df.get_group(protobowl_id).itertuples():
                 n_opponents += 1
@@ -459,15 +476,11 @@ def get_protobowl(variables, folds, save_dir):
                             stats['reward'] += 10
             for k, v in dict(stats).items():
                 avg_stats[k].append(v / n_opponents)
-        avg_stats = dict(avg_stats)
         for k, v in avg_stats.items():
             avg_stats[k] = sum(v) / n_questions
 
         # plotting
-        plot_keys = ['correct_before_op', 'correct_after_op', 
-                     'rush_possible', 'rush_impossible', 
-                     'late_possible', 'late_impossible',
-                     'earlier_than_op', 'later_than_op']
+        plot_keys = protobowl_keys[:-1]
         plt.clf()
         ind = 0
         width = 0.5
@@ -502,9 +515,9 @@ def generate(buzzes, answers, guesses_df, variables, fold, save_dir=None,
 
     inputs = (top_guesses, buzzes, answers, variables, fold, save_dir)
 
-    get_eop_stats(*inputs)
+    # get_eop_stats(*inputs)
     get_his_stats(*inputs)
-    get_hyper_search(*inputs)
+    # get_hyper_search(*inputs)
 
 def main(folds, checkpoint_dir=None):
     

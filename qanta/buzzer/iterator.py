@@ -75,8 +75,6 @@ class QuestionIterator(object):
                         isnew_vec.append(0)
                 # if wordvecs is not None:
                 #     word_vec += wordvecs[i][j]
-            # vecs.append(vec + diff_vec + isnew_vec + word_vec)
-            
             # if word_vec.shape != prev_word_vec.shape:
             #     print(i, word_vec.shape, prev_word_vec.shape)
             # cosine = np.dot(word_vec, prev_word_vec)
@@ -86,8 +84,9 @@ class QuestionIterator(object):
                     vec[2], isnew_vec[2], diff_vec[0], vec[0] -
                     prev_vecs[-1][0], np.var(vec),
                     np.var(prev_vecs[-1]), i, int(i < 2)]
-            prev_word_vec = word_vec
+            # vecs.append(vec + diff_vec + isnew_vec)
             vecs.append(features)
+            prev_word_vec = word_vec
             for j in range(1, step_size + 1):
                 vecs[-1] += prev_vecs[-j]
             prev_vecs.append(vec)

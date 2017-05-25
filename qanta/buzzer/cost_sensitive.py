@@ -13,6 +13,7 @@ from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.iterator import QuestionIterator
 from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.models import MLP, RNN
+from qanta.buzzer import constants as bc
 from qanta.util import constants as c
 
 log = logging.get(__name__)
@@ -53,6 +54,16 @@ def train_cost_sensitive(args):
     pickle.dump(cfg, open(cfg.ckp_dir, 'wb'))
     trainer = Trainer(model, cfg.model_dir)
     trainer.run(train_iter, eval_iter, args.epochs)
+
+    for fold in c.BUZZER_GENERATION_FOLDS:
+        test_iter = QuestionIterator(all_guesses[fold], option2id,
+                batch_size=cfg.batch_size)
+        buzzes = trainer.test(test_iter)
+        log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
+        buzzes_dir = bc.BUZZES_DIR.format(fold)
+        with open(buzzes_dir, 'wb') as outfile:
+            pickle.dump(buzzes, outfile)
+        log.info('Buzzes saved to {0}.'.format(buzzes_dir))
 
 def parse_args():
     parser = argparse.ArgumentParser()
