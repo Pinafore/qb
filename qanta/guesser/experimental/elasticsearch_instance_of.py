@@ -57,12 +57,14 @@ class ElasticSearchIndex:
 
     @staticmethod
     def build(documents: Dict[str, str], instance_of_map, rebuild_index=False):
-        if rebuild_index or os.getenv('QB_REBUILD_INDEX', False):
+        if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
+            log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
 
         if ElasticSearchIndex.exists():
-            log.info('Found existing index, skipping building the index')
+            log.info('Index {} exists, skipping building index'.format(INDEX_NAME))
         else:
+            log.info('Index {} does not exist, building index...'.format(INDEX_NAME))
             Answer.init()
             cw = CachedWikipedia()
             bar = progressbar.ProgressBar()
@@ -224,7 +226,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         class_with_probability = self.test_instance_of(questions)
 
         n_cores = conf['guessers']['ESWikidata']['n_cores']
-        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '40g')])
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '20g')])
 
         def ir_search(query_class_and_prob):
             query, class_and_prob = query_class_and_prob
@@ -235,5 +237,6 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
             )[:max_n_guesses]
 
         spark_input = list(zip(questions, class_with_probability))
+        log.info('Filtering when classification probability > {}'.format(self.confidence_threshold))
 
         return sc.parallelize(spark_input, 32 * n_cores).map(ir_search).collect()

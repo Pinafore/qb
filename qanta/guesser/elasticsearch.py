@@ -53,23 +53,23 @@ class ElasticSearchIndex:
             log.info('Index {} exists'.format(INDEX_NAME))
         else:
             log.info('Index {} does not exist'.format(INDEX_NAME))
-        Answer.init()
-        cw = CachedWikipedia()
-        log.info('Indexing questions and corresponding wikipedia pages as large docs...')
-        bar = progressbar.ProgressBar()
-        for page in bar(documents):
-            if use_wiki:
-                wiki_content = cw[page].content
-            else:
-                wiki_content = ''
+            Answer.init()
+            cw = CachedWikipedia()
+            log.info('Indexing questions and corresponding wikipedia pages as large docs...')
+            bar = progressbar.ProgressBar()
+            for page in bar(documents):
+                if use_wiki:
+                    wiki_content = cw[page].content
+                else:
+                    wiki_content = ''
 
-            if use_qb:
-                qb_content = documents[page]
-            else:
-                qb_content = ''
+                if use_qb:
+                    qb_content = documents[page]
+                else:
+                    qb_content = ''
 
-            answer = Answer(page=page, wiki_content=wiki_content, qb_content=qb_content)
-            answer.save()
+                answer = Answer(page=page, wiki_content=wiki_content, qb_content=qb_content)
+                answer.save()
 
     @staticmethod
     def build_many_docs(pages, documents, use_wiki=True, use_qb=True, rebuild_index=False):
@@ -81,25 +81,24 @@ class ElasticSearchIndex:
             log.info('Index {} exists'.format(INDEX_NAME))
         else:
             log.info('Index {} does not exist'.format(INDEX_NAME))
+            Answer.init()
+            log.info('Indexing questions and corresponding pages as many docs...')
+            if use_qb:
+                log.info('Indexing questions...')
+                bar = progressbar.ProgressBar()
+                for page, doc in bar(documents):
+                    Answer(page=page, qb_content=doc).save()
 
-        Answer.init()
-        log.info('Indexing questions and corresponding pages as many docs...')
-        if use_qb:
-            log.info('Indexing questions...')
-            bar = progressbar.ProgressBar()
-            for page, doc in bar(documents):
-                Answer(page=page, qb_content=doc).save()
-
-        if use_wiki:
-            log.info('Indexing wikipedia...')
-            cw = CachedWikipedia()
-            bar = progressbar.ProgressBar()
-            for page in bar(pages):
-                content = word_tokenize(cw[page].content)
-                for i in range(0, len(content), 200):
-                    chunked_content = content[i:i + 200]
-                    if len(chunked_content) > 0:
-                        Answer(page=page, wiki_content=' '.join(chunked_content)).save()
+            if use_wiki:
+                log.info('Indexing wikipedia...')
+                cw = CachedWikipedia()
+                bar = progressbar.ProgressBar()
+                for page in bar(pages):
+                    content = word_tokenize(cw[page].content)
+                    for i in range(0, len(content), 200):
+                        chunked_content = content[i:i + 200]
+                        if len(chunked_content) > 0:
+                            Answer(page=page, wiki_content=' '.join(chunked_content)).save()
 
     @staticmethod
     def search(text: str, max_n_guesses: int,
