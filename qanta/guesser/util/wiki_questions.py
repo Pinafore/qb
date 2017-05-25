@@ -5,7 +5,6 @@ import pickle
 import random
 
 from qanta import logging
-from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.util.constants import DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT, DOMAIN_TARGET_PREFIX
 from qanta.util.io import safe_open
@@ -32,7 +31,7 @@ def generate_domain_classifier_data(weight=150):
 
     interleaving true quiz bowl questions randomly and with higher weight specified by the weight arg.
     """
-    qb_data = QuizBowlDataset(conf['guessers']['DAN']['min_answers'], guesser_train=True).training_data()
+    qb_data = QuizBowlDataset(1, guesser_train=True).training_data()
     real_questions = [('1', str(weight), ans, clean_question(sent)) for q, ans in zip(*qb_data) for sent in q]
     pages = set(a for _, _, a, _ in real_questions)
 

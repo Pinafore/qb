@@ -32,8 +32,9 @@ guessers "ElasticSearch" {
   use_all_wikipedia = false
   use_wiki = true
   use_qb = true
+  use_source = true
   many_docs = false
-  normalize_score_by_length = false
+  normalize_score_by_length = true
   wiki_boost = 1
   qb_boost = 1
 }
@@ -113,7 +114,7 @@ guessers "ESWikidata" {
   enabled = false
   # Set the level of parallelism for guess generation
   n_cores = 20
-  confidence_threshold = 0.5
+  confidence_threshold = 0.7
   normalize_score_by_length = true
 }
 
@@ -124,9 +125,22 @@ guessers "FixedLen" {
 }
 
 guessers "CNN" {
-  class = "qanta.guesser.experimental.cnn.CNNGuesser"
+  class = "qanta.guesser.cnn.CNNGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
+  expand_we = true
+  n_filter_list = [10]
+  filter_sizes = [2, 3, 4]
+  nn_dropout_rate = 0.5
+  batch_size = 512
+  learning_rate = 0.001
+  max_n_epochs = 100
+  max_patience = 10
+  activation_function = "relu"
+  train_on_q_runs = false
+  train_on_full_q = false
+  decay_lr_on_plateau = false
+  max_len = 200
 }
 
 guessers "BinarizedSiamese" {

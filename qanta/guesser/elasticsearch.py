@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Dict
 import os
 import pickle
 
@@ -14,6 +14,7 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.spark import create_spark_context
 from qanta.config import conf
+from qanta.source import Source
 from qanta import logging
 
 
@@ -26,6 +27,7 @@ class Answer(DocType):
     page = Text(fields={'raw': Keyword()})
     wiki_content = Text()
     qb_content = Text()
+    source_content = Text()
 
     class Meta:
         index = INDEX_NAME
@@ -44,7 +46,7 @@ class ElasticSearchIndex:
         return Index(INDEX_NAME).exists()
 
     @staticmethod
-    def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, rebuild_index=False):
+    def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, use_source=True, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
             log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
@@ -55,6 +57,7 @@ class ElasticSearchIndex:
             log.info('Index {} does not exist'.format(INDEX_NAME))
             Answer.init()
             cw = CachedWikipedia()
+            source = Source()
             log.info('Indexing questions and corresponding wikipedia pages as large docs...')
             bar = progressbar.ProgressBar()
             for page in bar(documents):
@@ -68,11 +71,19 @@ class ElasticSearchIndex:
                 else:
                     qb_content = ''
 
-                answer = Answer(page=page, wiki_content=wiki_content, qb_content=qb_content)
+                if use_source:
+                    source_content = source[page]
+                else:
+                    source_content = ''
+
+                answer = Answer(
+                    page=page,
+                    wiki_content=wiki_content, qb_content=qb_content, source_content=source_content
+                )
                 answer.save()
 
     @staticmethod
-    def build_many_docs(pages, documents, use_wiki=True, use_qb=True, rebuild_index=False):
+    def build_many_docs(pages, documents, use_wiki=True, use_qb=True, use_source=True, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
             log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
@@ -115,7 +126,7 @@ class ElasticSearchIndex:
             qb_field = 'qb_content'
 
         s = Search(index='qb')[0:max_n_guesses].query(
-            'multi_match', query=text, fields=[wiki_field, qb_field])
+            'multi_match', query=text, fields=[wiki_field, qb_field, 'source_content'])
         results = s.execute()
         guess_set = set()
         guesses = []
