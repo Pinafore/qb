@@ -46,7 +46,7 @@ class ElasticSearchIndex:
         return Index(INDEX_NAME).exists()
 
     @staticmethod
-    def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, use_source=True, rebuild_index=False):
+    def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, use_source=False, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
             log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
@@ -83,7 +83,7 @@ class ElasticSearchIndex:
                 answer.save()
 
     @staticmethod
-    def build_many_docs(pages, documents, use_wiki=True, use_qb=True, use_source=True, rebuild_index=False):
+    def build_many_docs(pages, documents, use_wiki=True, use_qb=True, use_source=False, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
             log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()

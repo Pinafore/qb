@@ -14,6 +14,9 @@ cached_wikipedia_remote_fallback = false
 
 wiki_data_frac = 0.0
 
+# The guesser will train on all folds, this is a mega hack for the expo
+expo_mega_hack = false
+
 clm {
   min_appearances = 2
 }
