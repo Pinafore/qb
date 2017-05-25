@@ -72,7 +72,7 @@ class ElasticSearchIndex:
                     qb_content = ''
 
                 if use_source:
-                    source_content = source[page][:10000]
+                    source_content = source[page][:50000]
                 else:
                     source_content = ''
 

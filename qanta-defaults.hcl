@@ -32,7 +32,7 @@ guessers "ElasticSearch" {
   use_all_wikipedia = false
   use_wiki = true
   use_qb = true
-  use_source = true
+  use_source = false
   many_docs = false
   normalize_score_by_length = true
   wiki_boost = 1
