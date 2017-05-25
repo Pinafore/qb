@@ -45,8 +45,14 @@ class ElasticSearchIndex:
 
     @staticmethod
     def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, rebuild_index=False):
-        if rebuild_index:
+        if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
+            log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
+
+        if ElasticSearchIndex.exists():
+            log.info('Index {} exists'.format(INDEX_NAME))
+        else:
+            log.info('Index {} does not exist'.format(INDEX_NAME))
         Answer.init()
         cw = CachedWikipedia()
         log.info('Indexing questions and corresponding wikipedia pages as large docs...')
@@ -67,8 +73,14 @@ class ElasticSearchIndex:
 
     @staticmethod
     def build_many_docs(pages, documents, use_wiki=True, use_qb=True, rebuild_index=False):
-        if rebuild_index:
+        if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
+            log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
+
+        if ElasticSearchIndex.exists():
+            log.info('Index {} exists'.format(INDEX_NAME))
+        else:
+            log.info('Index {} does not exist'.format(INDEX_NAME))
 
         Answer.init()
         log.info('Indexing questions and corresponding pages as many docs...')
@@ -79,7 +91,7 @@ class ElasticSearchIndex:
                 Answer(page=page, qb_content=doc).save()
 
         if use_wiki:
-            log.info('Indexing wikipedia')
+            log.info('Indexing wikipedia...')
             cw = CachedWikipedia()
             bar = progressbar.ProgressBar()
             for page in bar(pages):
@@ -90,17 +102,34 @@ class ElasticSearchIndex:
                         Answer(page=page, wiki_content=' '.join(chunked_content)).save()
 
     @staticmethod
-    def search(text: str, max_n_guesses: int):
+    def search(text: str, max_n_guesses: int,
+               normalize_score_by_length=False,
+               wiki_boost=1, qb_boost=1):
+        if wiki_boost != 1:
+            wiki_field = 'wiki_content^{}'.format(wiki_boost)
+        else:
+            wiki_field = 'wiki_content'
+
+        if qb_boost != 1:
+            qb_field = 'qb_content^{}'.format(qb_boost)
+        else:
+            qb_field = 'qb_content'
+
         s = Search(index='qb')[0:max_n_guesses].query(
-            'multi_match', query=text, fields=['wiki_content', 'qb_content'])
+            'multi_match', query=text, fields=[wiki_field, qb_field])
         results = s.execute()
         guess_set = set()
         guesses = []
+        if normalize_score_by_length:
+            query_length = len(text.split())
+        else:
+            query_length = 1
+
         for r in results:
             if r.page in guess_set:
                 continue
             else:
-                guesses.append((r.page, r.meta.score))
+                guesses.append((r.page, r.meta.score / query_length))
         return guesses
 
 ES_PARAMS = 'es_params.pickle'
@@ -115,6 +144,9 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.use_wiki = guesser_conf['use_wiki']
         self.use_qb = guesser_conf['use_qb']
         self.many_docs = guesser_conf['many_docs']
+        self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
+        self.qb_boost = guesser_conf['qb_boost']
+        self.wiki_boost = guesser_conf['wiki_boost']
 
     def qb_dataset(self):
         return QuizBowlDataset(1, guesser_train=True)
@@ -124,7 +156,10 @@ class ElasticSearchGuesser(AbstractGuesser):
             'n_cores': self.n_cores,
             'use_wiki': self.use_wiki,
             'use_qb': self.use_qb,
-            'many_docs': self.many_docs
+            'many_docs': self.many_docs,
+            'normalize_score_by_length': self.normalize_score_by_length,
+            'qb_boost': self.qb_boost,
+            'wiki_boost': self.wiki_boost
         }
 
     def train(self, training_data):
@@ -154,7 +189,9 @@ class ElasticSearchGuesser(AbstractGuesser):
         sc = create_spark_context(configs=[('spark.executor.cores', self.n_cores), ('spark.executor.memory', '20g')])
 
         def es_search(query):
-            return es_index.search(query, max_n_guesses)
+            return es_index.search(query, max_n_guesses,
+                                   normalize_score_by_length=self.normalize_score_by_length,
+                                   wiki_boost=self.wiki_boost, qb_boost=self.qb_boost)
 
         return sc.parallelize(questions, 16 * self.n_cores).map(es_search).collect()
 
@@ -167,17 +204,17 @@ class ElasticSearchGuesser(AbstractGuesser):
         with open(os.path.join(directory, ES_PARAMS), 'rb') as f:
             params = pickle.load(f)
         guesser = ElasticSearchGuesser()
-        guesser.n_cores = params['n_cores']
         guesser.use_wiki = params['use_wiki']
         guesser.use_qb = params['use_qb']
         guesser.many_docs = params['many_docs']
+        guesser.normalize_score_by_length = params['normalize_score_by_length']
         return guesser
 
     def save(self, directory: str):
         with open(os.path.join(directory, ES_PARAMS), 'wb') as f:
             pickle.dump({
-                'n_cores': self.n_cores,
                 'use_wiki': self.use_wiki,
                 'use_qb': self.use_qb,
-                'many_docs': self.many_docs
+                'many_docs': self.many_docs,
+                'normalize_score_by_length': self.normalize_score_by_length
             }, f)

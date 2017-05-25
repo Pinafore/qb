@@ -1,6 +1,6 @@
 n_guesses = 50
 guesser_word_skip = -1
-buzzer_word_skip = 1
+buzzer_word_skip = 2
 
 expo_questions = "data/internal/expo/2016_hsnct.csv"
 
@@ -32,6 +32,10 @@ guessers "ElasticSearch" {
   use_all_wikipedia = false
   use_wiki = true
   use_qb = true
+  many_docs = false
+  normalize_score_by_length = false
+  wiki_boost = 1
+  qb_boost = 1
 }
 
 guessers "DAN" {
@@ -110,6 +114,7 @@ guessers "ESWikidata" {
   # Set the level of parallelism for guess generation
   n_cores = 20
   confidence_threshold = 0.5
+  normalize_score_by_length = true
 }
 
 guessers "FixedLen" {

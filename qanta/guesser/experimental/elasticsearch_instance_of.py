@@ -80,13 +80,19 @@ class ElasticSearchIndex:
                 answer.save()
 
     def search(self, text: str, predicted_instance_of: str,
-               instance_of_probability: float, confidence_threshold: float):
+               instance_of_probability: float, confidence_threshold: float,
+               normalize_score_by_length=True):
         if predicted_instance_of == NO_MATCH:
             apply_filter = False
         elif instance_of_probability > confidence_threshold:
             apply_filter = True
         else:
             apply_filter = False
+
+        if normalize_score_by_length:
+            query_length = len(text.split())
+        else:
+            query_length = 1
 
         if apply_filter:
             s = Search(index=INDEX_NAME)\
@@ -104,7 +110,7 @@ class ElasticSearchIndex:
                 fields=['wiki_content', 'qb_content']
             )
         results = s.execute()
-        return [(r.page, r.meta.score) for r in results]
+        return [(r.page, r.meta.score / query_length) for r in results]
 
 
 es_index = ElasticSearchIndex()
@@ -136,6 +142,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         self.instance_of_model = None
         guesser_conf = conf['guessers']['ESWikidata']
         self.confidence_threshold = guesser_conf['confidence_threshold']
+        self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
 
     def qb_dataset(self):
         return QuizBowlDataset(1, guesser_train=True)
@@ -153,8 +160,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         data = {
             'class_to_i': self.class_to_i,
             'i_to_class': self.i_to_class,
-            'instance_of_model': self.instance_of_model,
-            'confidence_threshold': self.confidence_threshold
+            'instance_of_model': self.instance_of_model
         }
         data_pickle_path = os.path.join(directory, GUESSER_PICKLE)
         with open(data_pickle_path, 'wb') as f:
@@ -169,7 +175,6 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         guesser.class_to_i = data['class_to_i']
         guesser.i_to_class = data['i_to_class']
         guesser.instance_of_model = data['instance_of_model']
-        guesser.confidence_threshold = data['confidence_threshold']
         return guesser
 
     def train_instance_of(self, instance_of_map, training_data):
@@ -224,7 +229,10 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         def ir_search(query_class_and_prob):
             query, class_and_prob = query_class_and_prob
             p_class, prob = class_and_prob
-            return es_index.search(query, p_class, prob, self.confidence_threshold)[:max_n_guesses]
+            return es_index.search(
+                query, p_class, prob, self.confidence_threshold,
+                normalize_score_by_length=self.normalize_score_by_length
+            )[:max_n_guesses]
 
         spark_input = list(zip(questions, class_with_probability))
 
