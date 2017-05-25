@@ -153,6 +153,7 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.n_cores = guesser_conf['n_cores']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_qb = guesser_conf['use_qb']
+        self.use_source = guesser_conf['use_source']
         self.many_docs = guesser_conf['many_docs']
         self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
         self.qb_boost = guesser_conf['qb_boost']
@@ -166,6 +167,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             'n_cores': self.n_cores,
             'use_wiki': self.use_wiki,
             'use_qb': self.use_qb,
+            'use_source': self.use_source,
             'many_docs': self.many_docs,
             'normalize_score_by_length': self.normalize_score_by_length,
             'qb_boost': self.qb_boost,
@@ -216,6 +218,7 @@ class ElasticSearchGuesser(AbstractGuesser):
         guesser = ElasticSearchGuesser()
         guesser.use_wiki = params['use_wiki']
         guesser.use_qb = params['use_qb']
+        guesser.use_source = params['use_source']
         guesser.many_docs = params['many_docs']
         guesser.normalize_score_by_length = params['normalize_score_by_length']
         return guesser
@@ -225,6 +228,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             pickle.dump({
                 'use_wiki': self.use_wiki,
                 'use_qb': self.use_qb,
+                'use_source': self.use_source,
                 'many_docs': self.many_docs,
                 'normalize_score_by_length': self.normalize_score_by_length
             }, f)
