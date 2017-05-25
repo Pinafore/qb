@@ -2,7 +2,6 @@ import pickle
 import os
 from typing import List, Optional, Dict
 from collections import namedtuple
-import re
 
 import elasticsearch
 from elasticsearch_dsl.connections import connections
@@ -229,4 +228,4 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
 
         spark_input = list(zip(questions, class_with_probability))
 
-        return sc.parallelize(spark_input, 4 * n_cores).map(ir_search).collect()
+        return sc.parallelize(spark_input, 32 * n_cores).map(ir_search).collect()
