@@ -72,7 +72,7 @@ class ElasticSearchIndex:
                     qb_content = ''
 
                 if use_source:
-                    source_content = source[page]
+                    source_content = source[page][:1000]
                 else:
                     source_content = ''
 
@@ -181,7 +181,10 @@ class ElasticSearchGuesser(AbstractGuesser):
             for sentences, page in zip(training_data[0], training_data[1]):
                 paragraph = ' '.join(sentences)
                 documents.append((page, paragraph))
-            ElasticSearchIndex.build_many_docs(pages, documents, use_qb=self.use_qb, use_wiki=self.use_wiki)
+            ElasticSearchIndex.build_many_docs(
+                pages, documents,
+                use_qb=self.use_qb, use_wiki=self.use_wiki, use_source=self.use_source
+            )
         else:
             documents = {}
             for sentences, page in zip(training_data[0], training_data[1]):
@@ -194,7 +197,8 @@ class ElasticSearchGuesser(AbstractGuesser):
             ElasticSearchIndex.build_large_docs(
                 documents,
                 use_qb=self.use_qb,
-                use_wiki=self.use_wiki
+                use_wiki=self.use_wiki,
+                use_source=self.use_source
             )
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
