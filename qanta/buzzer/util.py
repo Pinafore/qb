@@ -215,20 +215,26 @@ def merge_dfs():
         log.info("Merging: {0} finished.".format(fold))
 
 def load_protobowl():
-    protobowl_df_dir = bc.PROTOBOWL_DIR + '.df.pkl'
-    if os.path.exists(protobowl_df_dir):
-        with open(protobowl_df_dir, 'rb') as f:
-            return pickle.load(f)
     
+    protobowl_df_dir = bc.PROTOBOWL_DIR + '.df.pkl'
+    protobowl_user_dir = bc.PROTOBOWL_DIR + '.user.pkl'
+    if os.path.exists(protobowl_df_dir) and os.path.exists(protobowl_df_dir):
+        with open(protobowl_df_dir, 'rb') as f:
+            protobowl_df = pickle.load(f)
+        with open(protobowl_user_dir, 'rb') as f:
+            user_count = pickle.load(f)
+        return protobowl_df, user_count
+
     def process_line(x):
         total_time = x['object']['time_elapsed'] + x['object']['time_remaining']
         ratio = x['object']['time_elapsed'] / total_time
         position = int(len(x['object']['question_text'].split()) * ratio)
         return [x['object']['guess'], x['object']['qid'], 
-                position, x['object']['ruling']]
+                position, x['object']['ruling'], x['object']['user']['id']]
 
     data = []
     count = 0
+    user_count = defaultdict(lambda: 0)
     with codecs.open(bc.PROTOBOWL_DIR, 'r', 'utf-8') as f:
         line = f.readline()
         while line is not None:
@@ -247,18 +253,31 @@ def load_protobowl():
                 if line == None:
                     break
                 continue
+                
             count += 1
             if count % 10000 == 0:
-                sys.stderr.write('\rdone: {}'.format(count))
-            data.append(process_line(line))
+                sys.stderr.write('\rdone: {}/9707590'.format(count))
+            
+            x = process_line(line)
+            user_count[x[-1]] += 1
+            data.append(x)
             line = f.readline()
+    
+    for x in data:
+        x[-1] = user_count[x[-1]]
 
     protobowl_df = df = pd.DataFrame(data, 
-            columns=['guess', 'qid', 'position', 'result'])
+            columns=['guess', 'qid', 'position', 
+                     'result', 'user_answers'])
+    
     with open(protobowl_df_dir, 'wb') as f:
         pickle.dump(protobowl_df, f)
-
-    return protobowl_df
+    
+    user_count = dict(user_count)
+    with open(protobowl_user_dir, 'wb') as f:
+        pickle.dump(user_count, f)
+        
+    return protobowl_df, user_count
 
 if __name__ == "__main__":
     merge_dfs()

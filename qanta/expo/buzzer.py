@@ -458,7 +458,7 @@ def format_display(display_num, question_text, sent, word, current_guesses,
         top_guesses.append(gs)
 
     template = '|'.join("{:30}|{:10}|{:10}" for _ in GUESSERS) + '\n'
-    header = [[x + ' ' + buzzer_scores[i], 'normalized', 'unnormalized'] for i, x in enumerate(GUESSERS)]
+    header = [[x[:15] + ' ' + buzzer_scores[i], 'normalized', 'unnormalized'] for i, x in enumerate(GUESSERS)]
     header = list(itertools.chain(*header))
     report += template.format(*header)
 
@@ -583,14 +583,9 @@ def present_question(display_num, question_id, question_text, buzzes, final,
     if computer_delta == 0:
         answer(final)
         if final == correct:
-            while input('Hit c to continue') != 'c':
-                pass
             return human + human_delta, computer + 10, final
         else:
             print("Incorrect answer: %s" % final)
-
-        while input('Hit c to continue') != 'c':
-            pass
 
     if human_delta == 0:
         response = None
