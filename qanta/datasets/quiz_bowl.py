@@ -291,7 +291,11 @@ class QuizBowlDataset(AbstractDataset):
     def training_data(self) -> TrainingData:
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
-        filtered_questions = all_questions.filter(lambda q: q.fold == self.training_fold)
+        if conf['expo_mega_hack']:
+            log.warn('USAGE OF EXPO MEGA HACK DETECTED, HERE BE DRAGONS!')
+            filtered_questions = all_questions.filter(lambda q: q.fold != 'expo')
+        else:
+            filtered_questions = all_questions.filter(lambda q: q.fold == self.training_fold)
 
         if self.min_class_examples > 1:
             filtered_questions = filtered_questions\

@@ -181,6 +181,19 @@ class AllGuesserReports(WrapperTask):
         yield CompareGuessersReport()
 
 
+class GuesserExpo(WrapperTask):
+    def requires(self):
+        yield AllSingleGuesserReports()
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            yield GenerateGuesses(
+                guesser_module=g_spec.guesser_module,
+                guesser_class=g_spec.guesser_class,
+                dependency_module=g_spec.dependency_module,
+                dependency_class=g_spec.dependency_class,
+                fold='expo'
+            )
+
+
 class AllGuesses(WrapperTask):
     def requires(self):
         yield AllGuesserReports()

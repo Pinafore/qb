@@ -2,7 +2,6 @@ import pickle
 import os
 from typing import List, Optional, Dict
 from collections import namedtuple
-import re
 
 import elasticsearch
 from elasticsearch_dsl.connections import connections
@@ -58,12 +57,14 @@ class ElasticSearchIndex:
 
     @staticmethod
     def build(documents: Dict[str, str], instance_of_map, rebuild_index=False):
-        if rebuild_index or os.getenv('QB_REBUILD_INDEX', False):
+        if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
+            log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
 
         if ElasticSearchIndex.exists():
-            log.info('Found existing index, skipping building the index')
+            log.info('Index {} exists, skipping building index'.format(INDEX_NAME))
         else:
+            log.info('Index {} does not exist, building index...'.format(INDEX_NAME))
             Answer.init()
             cw = CachedWikipedia()
             bar = progressbar.ProgressBar()
@@ -81,13 +82,19 @@ class ElasticSearchIndex:
                 answer.save()
 
     def search(self, text: str, predicted_instance_of: str,
-               instance_of_probability: float, confidence_threshold: float):
+               instance_of_probability: float, confidence_threshold: float,
+               normalize_score_by_length=True):
         if predicted_instance_of == NO_MATCH:
             apply_filter = False
         elif instance_of_probability > confidence_threshold:
             apply_filter = True
         else:
             apply_filter = False
+
+        if normalize_score_by_length:
+            query_length = len(text.split())
+        else:
+            query_length = 1
 
         if apply_filter:
             s = Search(index=INDEX_NAME)\
@@ -105,7 +112,7 @@ class ElasticSearchIndex:
                 fields=['wiki_content', 'qb_content']
             )
         results = s.execute()
-        return [(r.page, r.meta.score) for r in results]
+        return [(r.page, r.meta.score / query_length) for r in results]
 
 
 es_index = ElasticSearchIndex()
@@ -137,6 +144,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         self.instance_of_model = None
         guesser_conf = conf['guessers']['ESWikidata']
         self.confidence_threshold = guesser_conf['confidence_threshold']
+        self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
 
     def qb_dataset(self):
         return QuizBowlDataset(1, guesser_train=True)
@@ -154,8 +162,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         data = {
             'class_to_i': self.class_to_i,
             'i_to_class': self.i_to_class,
-            'instance_of_model': self.instance_of_model,
-            'confidence_threshold': self.confidence_threshold
+            'instance_of_model': self.instance_of_model
         }
         data_pickle_path = os.path.join(directory, GUESSER_PICKLE)
         with open(data_pickle_path, 'wb') as f:
@@ -170,7 +177,6 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         guesser.class_to_i = data['class_to_i']
         guesser.i_to_class = data['i_to_class']
         guesser.instance_of_model = data['instance_of_model']
-        guesser.confidence_threshold = data['confidence_threshold']
         return guesser
 
     def train_instance_of(self, instance_of_map, training_data):
@@ -220,13 +226,17 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         class_with_probability = self.test_instance_of(questions)
 
         n_cores = conf['guessers']['ESWikidata']['n_cores']
-        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '40g')])
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores), ('spark.executor.memory', '20g')])
 
         def ir_search(query_class_and_prob):
             query, class_and_prob = query_class_and_prob
             p_class, prob = class_and_prob
-            return es_index.search(query, p_class, prob, self.confidence_threshold)[:max_n_guesses]
+            return es_index.search(
+                query, p_class, prob, self.confidence_threshold,
+                normalize_score_by_length=self.normalize_score_by_length
+            )[:max_n_guesses]
 
         spark_input = list(zip(questions, class_with_probability))
+        log.info('Filtering when classification probability > {}'.format(self.confidence_threshold))
 
-        return sc.parallelize(spark_input, 4 * n_cores).map(ir_search).collect()
+        return sc.parallelize(spark_input, 32 * n_cores).map(ir_search).collect()
