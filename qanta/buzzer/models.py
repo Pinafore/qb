@@ -73,4 +73,5 @@ class RNN(chainer.Chain):
         self.rnn.reset_state()
         ys = F.stack([self.rnn(x) for x in xs], axis=0)
         ys = F.reshape(ys, (length * batch_size, -1))
+        ys = self.linear(ys)
         return ys

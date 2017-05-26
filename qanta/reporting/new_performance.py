@@ -576,4 +576,3 @@ if __name__ == '__main__':
     else:
         folds = c.BUZZER_GENERATION_FOLDS[:-1]
     main(folds, args.model)
-

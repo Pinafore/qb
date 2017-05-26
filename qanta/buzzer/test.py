@@ -21,13 +21,13 @@ log = logging.get(__name__)
 
 def generate(folds, config):
     N_GUESSERS = len(GUESSERS)
-    option2id, all_guesses = load_quizbowl([fold])
+    option2id, all_guesses = load_quizbowl(folds)
 
     cfg = getattr(configs, config)()
     cfg = pickle.load(open(cfg.ckp_dir, 'rb'))
 
     iterators = dict()
-    for fold in c.BUZZER_INPUT_FOLDS:
+    for fold in folds:
         iterators[fold] = QuestionIterator(all_guesses[fold], option2id,
             batch_size=cfg.batch_size)
     
@@ -36,12 +36,12 @@ def generate(folds, config):
         exit(0)
 
     if isinstance(cfg, configs.mlp):
-        model = MLP(n_input=test_iter.n_input, n_hidden=cfg.n_hidden,
+        model = MLP(n_input=iterators[folds[0]].n_input, n_hidden=cfg.n_hidden,
                 n_output=N_GUESSERS+1, n_layers=cfg.n_layers,
                 dropout=cfg.dropout, batch_norm=cfg.batch_norm)
 
     if isinstance(cfg, configs.rnn):
-        model = RNN(test_iter.n_input, cfg.n_hidden, N_GUESSERS + 1)
+        model = RNN(iterators[folds[0]].n_input, cfg.n_hidden, N_GUESSERS + 1)
 
     log.info('Loading model {0}'.format(cfg.model_dir))
     chainer.serializers.load_npz(cfg.model_dir, model)
@@ -69,7 +69,7 @@ def generate(folds, config):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--fold', default=None)
-    parser.add_argument('-c', '--config', type=str, default='mlp')
+    parser.add_argument('-c', '--config', type=str, default='rnn')
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -79,4 +79,4 @@ if __name__ == '__main__':
     else:
         folds = c.BUZZER_INPUT_FOLDS
         log.info("Generating {} outputs".format(folds))
-        generate(folds, args.config)
+    generate(folds, args.config)

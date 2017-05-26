@@ -18,34 +18,10 @@ N_GUESSES = conf['buzzer']['n_guesses']
 
 log = logging.get(__name__)
 
-class QuestionIterator(object):
-    '''Each batch contains:
-        qids: list, (batch_size,)
-        answers: list, (batch_size,)
-        mask: list, (length, batch_size,)
-        vecs: xp.float32, (length, batch_size, 4 * NUM_GUESSES)
-        results: xp.int32, (length, batch_size)
-    '''
+def dense_vector(dicts: List[List[Dict[str, float]]],
+        wordvecs: List[List[np.ndarray]], step_size=1) -> List[List[float]]:
 
-    def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
-            bucket_size=4, step_size=1, neg_weight=1, shuffle=True):
-        self.dataset = dataset
-        self.option2id = option2id
-        self.batch_size = batch_size
-        self.bucket_size = bucket_size
-        self.step_size = step_size
-        self.neg_weight = neg_weight
-        self.shuffle = shuffle
-        self.epoch = 0
-        self.iteration = 0
-        self.batch_index = 0
-        self.is_end_epoch = False
-        sys.stdout.flush()
-        log.info('Creating batches')
-        self.create_batches()
-        log.info('Finish creating batches')
-
-    def get_guesser_acc(self, i, length):
+    def get_guesser_acc(i, length):
         if i == length:
             return bc.GUESSER_ACC[-1]
         if i == 0:
@@ -60,53 +36,76 @@ class QuestionIterator(object):
                 bc.GUESSER_ACC[pos] * (bc.GUESSER_ACC_POS[pos] - ratio)
         return acc
 
-    def dense_vector(self, dicts: List[List[Dict[str, float]]],
-            wordvecs: List[List[np.ndarray]], step_size=1) -> List[List[float]]:
-        '''Generate dense vectors from a sequence of guess dictionaries.
-        dicts: a sequence of guess dictionaries for each guesser
-        '''
-        length = len(dicts)
-        prev_vecs = [[0. for _ in range(N_GUESSERS * N_GUESSES)] \
-                for i in range(step_size)]
-        vecs = []
-        for i in range(length):
-            if len(dicts[i]) != N_GUESSERS:
-                raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
-                    N_GUESSERS, len(dicts)))
-            vec = []
-            diff_vec = []
-            isnew_vec = []
-            for j in range(N_GUESSERS):
-                dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
-                for guess, score in dic:
-                    vec.append(score)
-                    if i > 0 and guess in dicts[i-1][j]:
-                        diff_vec.append(score - dicts[i-1][j][guess])
-                        isnew_vec.append(0)
-                    else:
-                        diff_vec.append(score) 
-                        isnew_vec.append(1)
-                if len(dic) < N_GUESSES:
-                    for k in range(max(N_GUESSES - len(dic), 0)):
-                        vec.append(0)
-                        diff_vec.append(0)
-                        isnew_vec.append(0)
-            # guesser_acc = self.get_guesser_acc(i, length)
-            features = [sum(isnew_vec), np.average(vec), vec[0], vec[1], vec[2],
-                    isnew_vec[0], isnew_vec[1], vec[0] - vec[1], vec[1] -
-                    vec[2], isnew_vec[2], diff_vec[0], 
-                    vec[0] - prev_vecs[-1][0], np.var(vec),
-                    np.var(prev_vecs[-1])]
-                    # i, int(i < 10), int(i < 20), int(i > 30),
-                    # guesser_acc]
+    length = len(dicts)
+    prev_vecs = [[0. for _ in range(N_GUESSERS * N_GUESSES)] \
+            for i in range(step_size)]
+    vecs = []
+    for i in range(length):
+        if len(dicts[i]) != N_GUESSERS:
+            raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
+                N_GUESSERS, len(dicts)))
+        vec = []
+        diff_vec = []
+        isnew_vec = []
+        for j in range(N_GUESSERS):
+            dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
+            for guess, score in dic:
+                vec.append(score)
+                if i > 0 and guess in dicts[i-1][j]:
+                    diff_vec.append(score - dicts[i-1][j][guess])
+                    isnew_vec.append(0)
+                else:
+                    diff_vec.append(score) 
+                    isnew_vec.append(1)
+            if len(dic) < N_GUESSES:
+                for k in range(max(N_GUESSES - len(dic), 0)):
+                    vec.append(0)
+                    diff_vec.append(0)
+                    isnew_vec.append(0)
+        # guesser_acc = get_guesser_acc(i, length)
+        features = [sum(isnew_vec), np.average(vec), vec[0], vec[1], vec[2],
+                isnew_vec[0], isnew_vec[1], vec[0] - vec[1], vec[1] -
+                vec[2], isnew_vec[2], diff_vec[0], 
+                vec[0] - prev_vecs[-1][0], np.var(vec),
+                np.var(prev_vecs[-1])]
+                # i, int(i < 10), int(i < 20), int(i > 30),
+                # guesser_acc]
 
-            vecs.append(features)
-            # for j in range(1, step_size + 1):
-            #     vecs[-1] += prev_vecs[-j]
-            prev_vecs.append(vec)
-            if step_size > 0:
-                prev_vecs = prev_vecs[-step_size:]
-        return vecs
+        vecs.append(features)
+        # for j in range(1, step_size + 1):
+        #     vecs[-1] += prev_vecs[-j]
+        prev_vecs.append(vec)
+        if step_size > 0:
+            prev_vecs = prev_vecs[-step_size:]
+    return vecs
+
+class QuestionIterator(object):
+    '''Each batch contains:
+        qids: list, (batch_size,)
+        answers: list, (batch_size,)
+        mask: list, (length, batch_size,)
+        vecs: xp.float32, (length, batch_size, 4 * NUM_GUESSES)
+        results: xp.int32, (length, batch_size)
+    '''
+
+    def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
+            make_vector=dense_vector, bucket_size=4, step_size=1, neg_weight=1, shuffle=True):
+        self.dataset = dataset
+        self.option2id = option2id
+        self.batch_size = batch_size
+        self.make_vector = make_vector
+        self.bucket_size = bucket_size
+        self.step_size = step_size
+        self.neg_weight = neg_weight
+        self.shuffle = shuffle
+        self.epoch = 0
+        self.iteration = 0
+        self.batch_index = 0
+        self.is_end_epoch = False
+        sys.stdout.flush()
+        log.info('Creating batches')
+        self.create_batches()
+        log.info('Finish creating batches')
 
     def _process_example(self, qid, answer, dicts, results, wordvecs):
         
@@ -128,7 +127,7 @@ class QuestionIterator(object):
 
         if len(dicts) != length:
             raise ValueError("Inconsistant shape of results and vecs.")
-        vecs = self.dense_vector(dicts, wordvecs, self.step_size)
+        vecs = self.make_vector(dicts, wordvecs, self.step_size)
         vecs = np.asarray(vecs, dtype=np.float32)
         assert length == vecs.shape[0]
         self.n_input = len(vecs[0])

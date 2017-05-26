@@ -2,6 +2,8 @@ import os
 import argparse
 import chainer
 import pickle
+from collections import defaultdict, namedtuple
+from typing import List, Dict, Tuple, Optional
 
 from qanta import logging
 from qanta.config import conf
@@ -15,6 +17,14 @@ from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
 from qanta.util import constants as c
+from qanta import logging
+
+import os
+import sys
+import random
+import numpy as np
+import pickle
+
 
 log = logging.get(__name__)
 
