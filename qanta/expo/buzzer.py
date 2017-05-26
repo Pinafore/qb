@@ -527,7 +527,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             if str.lower(ww).startswith(str.lower(power)):
                 question_value = 10
             press = interpret_keypress()
-            current_guesses = buzzes.current_guesses(question_id, ss, ii - 2)
+            current_guesses = buzzes.current_guesses(question_id, ss, ii)
             buzz_now = [x for x in current_guesses.values() if x.final]
             assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
             if isinstance(press, int):

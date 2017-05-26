@@ -185,6 +185,7 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None, normalize=False) \
         guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data',
                 multi=True)
         guesses_by_fold[fold] = [x for x in guesses_by_fold[fold] if x is not None]
+        print(len(guesses_by_fold[fold]))
 
         with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)

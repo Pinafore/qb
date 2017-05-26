@@ -3,7 +3,7 @@ guesser_word_skip = -1
 buzzer_word_skip = 2
 
 expo_mega_hack = true # yes really
-expo_questions = "data/external/2017.hsnct.csv
+expo_questions = "data/external/2017_hsnct.csv"
 
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300

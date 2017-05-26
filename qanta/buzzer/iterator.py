@@ -105,7 +105,7 @@ class QuestionIterator(object):
         sys.stdout.flush()
         log.info('Creating batches')
         self.create_batches()
-        log.info('Finish creating batches')
+        # log.info('Finish creating batches {}'.format(self.n_input))
 
     def _process_example(self, qid, answer, dicts, results, wordvecs):
         

@@ -14,7 +14,7 @@ class mlp():
 class rnn():
     max_grad_norm = 5
     batch_size = 128
-    n_hidden = 10
+    n_hidden = 200
     dropout = 0
     step_size = 1
     neg_weight = 1
