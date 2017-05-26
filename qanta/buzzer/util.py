@@ -74,7 +74,7 @@ def stupid_buzzer(iterator) -> Dict[int, int]:
 
 def _process_question(option2id: Dict[str, int], 
         all_questions: Dict[int, Question], 
-        word2vec, qnum, question) -> \
+        word2vec, normalize, qnum, question) -> \
             Tuple[int, int, List[List[Dict[str, int]]], List[List[int]]]:
     '''Process one question.
     return:
@@ -116,9 +116,10 @@ def _process_question(option2id: Dict[str, int],
                 guesses = guesses.sort_values('score', ascending=False)
                 top_guess = guesses.iloc[0].guess
                 results[-1].append(int(top_guess == answer))
-                # normalize score to 0-1 at each time step
-                s = sum(guesses.score)
+                
+                s = sum(guesses.score) if normalize else 1
                 dic = {x.guess: x.score / s for x in guesses.itertuples()}
+                
                 guess_dicts[-1].append(dic)
                 if word2vec is not None:
                     wordvecs[-1].append(word2vec.get_avg_vec(top_guess))
@@ -146,7 +147,8 @@ class Word2Vec:
         return np.zeros(self.wordvec_dim, dtype=np.float32)
 
 
-def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, int], Dict[str, list]]:
+def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None, normalize=False) \
+                    -> Tuple[Dict[str, int], Dict[str, list]]:
     merge_dfs()
     log.info('Loading data')
     question_db = QuestionDatabase()
@@ -178,7 +180,7 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
         log.info('Processing {0} guesses'.format(fold))
         guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
-        worker = partial(_process_question, option2id, all_questions, word2vec)
+        worker = partial(_process_question, option2id, all_questions, word2vec, normalize)
         inputs = guesses.groupby('qnum')
         guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data',
                 multi=True)

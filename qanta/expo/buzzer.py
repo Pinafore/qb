@@ -458,7 +458,8 @@ def format_display(display_num, question_text, sent, word, current_guesses,
         top_guesses.append(gs)
 
     template = '|'.join("{:30}|{:10}|{:10}" for _ in GUESSERS) + '\n'
-    header = [[x[:15] + ' ' + buzzer_scores[i], 'normalized', 'unnormalized'] for i, x in enumerate(GUESSERS)]
+    header = [[x[:17] + '  ' + buzzer_scores[i], 'normalized', 'unnormalized'] 
+            for i, x in enumerate(GUESSERS)]
     header = list(itertools.chain(*header))
     report += template.format(*header)
 
@@ -550,11 +551,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
 
                 answer(buzz_now[0].page)
                 if buzz_now[0].page == correct:
+                    show_score(human + human_delta,
+                               computer + computer_delta,
+                               "HUMAN", "COMPUTER")
+                    print(format_display(display_num, question_text,
+                        ss, ii + 1, current_guesses, answer=correct,
+                        points=question_value, answerable=answerable))
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(2)
-                    print(format_display(display_num, question_text,
-                        max(question_text), 0, current_guesses, answer=correct,
-                        points=question_value, answerable=answerable))
 
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
@@ -566,7 +570,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
                     print(format_display(display_num, question_text,
-                        max(question_text), 0, current_guesses, answer=correct,
+                        ss, ii + 1, current_guesses, answer=correct,
                         points=question_value, answerable=answerable))
 
 
