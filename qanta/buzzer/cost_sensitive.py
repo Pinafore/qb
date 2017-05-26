@@ -23,15 +23,10 @@ def train_cost_sensitive(args):
     cfg = getattr(configs, args.config)()
 
     option2id, all_guesses = load_quizbowl()
-    train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
-            batch_size=cfg.batch_size, step_size=cfg.step_size,
-            neg_weight=cfg.neg_weight)
-    eval_iter = QuestionIterator(all_guesses[c.BUZZER_DEV_FOLD], option2id,
-            batch_size=cfg.batch_size, step_size=cfg.step_size,
-            neg_weight=cfg.neg_weight)
-
-    if os.path.exists(cfg.model_dir) and args.load:
-        cfg = pickle.load(open(cfg.ckp_dir, 'rb'))
+    iterators = dict()
+    for fold in c.BUZZER_INPUT_FOLDS:
+        iterators[fold] = QuestionIterator(all_guesses[fold], option2id,
+            batch_size=cfg.batch_size)
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=eval_iter.n_input, n_hidden=cfg.n_hidden,
@@ -53,23 +48,20 @@ def train_cost_sensitive(args):
 
     pickle.dump(cfg, open(cfg.ckp_dir, 'wb'))
     trainer = Trainer(model, cfg.model_dir)
-    trainer.run(train_iter, eval_iter, args.epochs)
+    trainer.run(iterators[c.BUZZER_TRAIN_FOLD], iterators[c.BUZZER_DEV_FOLD], 25)
 
     for fold in c.BUZZER_GENERATION_FOLDS:
-        test_iter = QuestionIterator(all_guesses[fold], option2id,
-                batch_size=cfg.batch_size)
+        test_iter = iterators[fold]
         buzzes = trainer.test(test_iter)
-        log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
-        buzzes_dir = bc.BUZZES_DIR.format(fold)
+        log.info('{0} buzzes generated. Size {1}.'.format(fold, len(buzzes)))
+        buzzes_dir = bc.BUZZES_DIR.format(fold, cfg.model_name)
         with open(buzzes_dir, 'wb') as outfile:
             pickle.dump(buzzes, outfile)
         log.info('Buzzes saved to {0}.'.format(buzzes_dir))
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='mlp')
-    parser.add_argument('-l', '--load', action='store_true', default=False)
-    parser.add_argument('-e', '--epochs', type=int, default=6)
+    parser.add_argument('-c', '--config', type=str, default='rnn')
     return parser.parse_args()
 
 if __name__ == '__main__':

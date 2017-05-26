@@ -25,7 +25,7 @@ class Trainer(object):
     def __init__(self, model, model_dir=None):
         self.model = model
         self.model_dir = model_dir
-        self.optimizer = chainer.optimizers.Adam(alpha=1e-4)
+        self.optimizer = chainer.optimizers.Adam()
         self.optimizer.setup(self.model)
         self.optimizer.add_hook(chainer.optimizer.GradientClipping(5))
 
@@ -61,7 +61,7 @@ class Trainer(object):
 
     def test(self, test_iter):
         buzzes = dict()
-        progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
+        # progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
         for i in range(test_iter.size):
             batch = test_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
@@ -76,14 +76,21 @@ class Trainer(object):
                     qnum = qnum.tolist()
                 total = int(sum(mask))
                 buzzes[qnum] = scores[:total].tolist()
-            progress_bar(*test_iter.epoch_detail)
+
+                # for t in range(total):
+                #     q = buzzes[qnum][t][0]
+                #     if q < 0.6 and q > 0.5:
+                #         buzzes[qnum][t][0] -= 0.1
+                #         buzzes[qnum][t][1] += 0.1
+                            
+            # progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
-        progress_bar.finalize()
+        # progress_bar.finalize()
         return buzzes
 
     def evaluate(self, eval_iter):
         stats = defaultdict(lambda: 0)
-        progress_bar = ProgressBar(eval_iter.size, unit_iteration=True)
+        # progress_bar = ProgressBar(eval_iter.size, unit_iteration=True)
         for i in range(eval_iter.size):
             batch = eval_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
@@ -95,9 +102,9 @@ class Trainer(object):
             for k, v in batch_stats.items():
                 stats[k] += v
 
-            progress_bar(*eval_iter.epoch_detail)
+            # progress_bar(*eval_iter.epoch_detail)
         eval_iter.finalize(reset=True)
-        progress_bar.finalize()
+        # progress_bar.finalize()
 
         for k, v in stats.items():
             stats[k] = v / eval_iter.size
@@ -129,7 +136,8 @@ class Trainer(object):
         return stats
 
     def run(self, train_iter=None, eval_iter=None, n_epochs=1, verbose=True):
-        progress_bar = ProgressBar(n_epochs, unit_iteration=False)
+        # progress_bar = ProgressBar(n_epochs, unit_iteration=False)
+        progress_bar = None
         for epoch in range(n_epochs):
             if verbose:
                 log.info('epoch {0}'.format(epoch))

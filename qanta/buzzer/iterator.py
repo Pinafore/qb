@@ -1,16 +1,22 @@
+import os
 import sys
 import random
 import numpy as np
+import pickle
 from collections import defaultdict, namedtuple
 from typing import List, Dict, Tuple, Optional
 from qanta.config import conf
 from qanta.buzzer.util import GUESSERS
 from qanta.buzzer import constants as bc
+from qanta.util.multiprocess import _multiprocess
+from qanta import logging
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 
 N_GUESSERS = len(GUESSERS)
 N_GUESSES = conf['buzzer']['n_guesses']
+
+log = logging.get(__name__)
 
 class QuestionIterator(object):
     '''Each batch contains:
@@ -22,8 +28,7 @@ class QuestionIterator(object):
     '''
 
     def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
-            bucket_size=4, step_size=1, neg_weight=1, shuffle=True,
-            only_hopeful=False):
+            bucket_size=4, step_size=1, neg_weight=1, shuffle=True):
         self.dataset = dataset
         self.option2id = option2id
         self.batch_size = batch_size
@@ -31,14 +36,29 @@ class QuestionIterator(object):
         self.step_size = step_size
         self.neg_weight = neg_weight
         self.shuffle = shuffle
-        self.only_hopeful = only_hopeful
         self.epoch = 0
         self.iteration = 0
         self.batch_index = 0
         self.is_end_epoch = False
-        self.create_batches()
-        print('Finish creating batches')
         sys.stdout.flush()
+        log.info('Creating batches')
+        self.create_batches()
+        log.info('Finish creating batches')
+
+    def get_guesser_acc(self, i, length):
+        if i == length:
+            return bc.GUESSER_ACC[-1]
+        if i == 0:
+            return bc.GUESSER_ACC[0]
+        ratio = i / length
+        pos = 0
+        for i, r in enumerate(bc.GUESSER_ACC_POS):
+            if r > ratio:
+                pos = i
+                break
+        acc = bc.GUESSER_ACC[pos - 1] * (ratio - bc.GUESSER_ACC_POS[pos - 1]) +\
+                bc.GUESSER_ACC[pos] * (bc.GUESSER_ACC_POS[pos] - ratio)
+        return acc
 
     def dense_vector(self, dicts: List[List[Dict[str, float]]],
             wordvecs: List[List[np.ndarray]], step_size=1) -> List[List[float]]:
@@ -56,8 +76,6 @@ class QuestionIterator(object):
             vec = []
             diff_vec = []
             isnew_vec = []
-            word_vec = np.zeros(bc.WORDVEC_DIM, dtype=np.float32)
-            prev_word_vec = np.zeros(bc.WORDVEC_DIM, dtype=np.float32)
             for j in range(N_GUESSERS):
                 dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
                 for guess, score in dic:
@@ -73,75 +91,69 @@ class QuestionIterator(object):
                         vec.append(0)
                         diff_vec.append(0)
                         isnew_vec.append(0)
-                # if wordvecs is not None:
-                #     word_vec += wordvecs[i][j]
-            # if word_vec.shape != prev_word_vec.shape:
-            #     print(i, word_vec.shape, prev_word_vec.shape)
-            # cosine = np.dot(word_vec, prev_word_vec)
-            # cosine /= (np.linalg.norm(word_vec) * np.linalg.norm(prev_word_vec))
+            # guesser_acc = self.get_guesser_acc(i, length)
             features = [sum(isnew_vec), np.average(vec), vec[0], vec[1], vec[2],
                     isnew_vec[0], isnew_vec[1], vec[0] - vec[1], vec[1] -
-                    vec[2], isnew_vec[2], diff_vec[0], vec[0] -
-                    prev_vecs[-1][0], np.var(vec),
-                    np.var(prev_vecs[-1]), i, int(i < 2)]
-            # vecs.append(vec + diff_vec + isnew_vec)
+                    vec[2], isnew_vec[2], diff_vec[0], 
+                    vec[0] - prev_vecs[-1][0], np.var(vec),
+                    np.var(prev_vecs[-1])]
+                    # i, int(i < 10), int(i < 20), int(i > 30),
+                    # guesser_acc]
+
             vecs.append(features)
-            prev_word_vec = word_vec
-            for j in range(1, step_size + 1):
-                vecs[-1] += prev_vecs[-j]
+            # for j in range(1, step_size + 1):
+            #     vecs[-1] += prev_vecs[-j]
             prev_vecs.append(vec)
             if step_size > 0:
                 prev_vecs = prev_vecs[-step_size:]
         return vecs
 
+    def _process_example(self, qid, answer, dicts, results, wordvecs):
+        
+        results = np.asarray(results, dtype=np.int32)
+        length, n_guessers = results.shape
+
+        if n_guessers != N_GUESSERS:
+            raise ValueError(
+                "Inconsistent number of guessers ({0}, {1}.".format(
+                    N_GUESSERS, n_guessers))
+
+        # append the not buzzing action to each time step
+        # not buzzing = 1 when no guesser is correct
+        new_results = []
+        for i in range(length):
+            not_buzz = int(not any(results[i] == 1)) * self.neg_weight
+            new_results.append(np.append(results[i], not_buzz))
+        results = np.asarray(new_results, dtype=np.int32)
+
+        if len(dicts) != length:
+            raise ValueError("Inconsistant shape of results and vecs.")
+        vecs = self.dense_vector(dicts, wordvecs, self.step_size)
+        vecs = np.asarray(vecs, dtype=np.float32)
+        assert length == vecs.shape[0]
+        self.n_input = len(vecs[0])
+
+        padded_length = -((-length) // self.bucket_size) * self.bucket_size
+        vecs_padded = np.zeros((padded_length, self.n_input))
+        vecs_padded[:length,:self.n_input] = vecs
+
+        results_padded = np.zeros((padded_length, (N_GUESSERS + 1)))
+        results_padded[:length, :(N_GUESSERS + 1)] = results
+
+        mask = [1 for _ in range(length)] + \
+               [0 for _ in range(padded_length - length)]
+
+        example = (qid, answer, mask, vecs_padded, results_padded)
+        return example, padded_length
+
     def create_batches(self):
-        bucket_size = self.bucket_size
         self.batches = []
         buckets = defaultdict(list)
-        for example in self.dataset:
-            # pad the sequence of predictions
-            qid, answer, dicts, results, wordvecs = example
-            
-            results = np.asarray(results, dtype=np.int32)
-            length, n_guessers = results.shape
-
-            if n_guessers != N_GUESSERS:
-                raise ValueError(
-                    "Inconsistent number of guessers ({0}, {1}.".format(
-                        N_GUESSERS, n_guessers))
-
-            # hopeful means any guesser guesses correct any time step
-            hopeful = np.any(results == 1)
-            if self.only_hopeful and not hopeful:
-                continue
-
-            # append the not buzzing action to each time step
-            # not buzzing = 1 when no guesser is correct
-            new_results = []
-            for i in range(length):
-                not_buzz = int(not any(results[i] == 1)) * self.neg_weight
-                new_results.append(np.append(results[i], not_buzz))
-            results = np.asarray(new_results, dtype=np.int32)
-
-            if len(dicts) != length:
-                raise ValueError("Inconsistant shape of results and vecs.")
-            vecs = self.dense_vector(dicts, wordvecs, self.step_size)
-            vecs = np.asarray(vecs, dtype=np.float32)
-            assert length == vecs.shape[0]
-            self.n_input = len(vecs[0])
-
-            padded_length = -((-length) // bucket_size) * bucket_size
-            vecs_padded = np.zeros((padded_length, self.n_input))
-            vecs_padded[:length,:self.n_input] = vecs
-
-            results_padded = np.zeros((padded_length, (N_GUESSERS + 1)))
-            results_padded[:length, :(N_GUESSERS + 1)] = results
-
-            mask = [1 for _ in range(length)] + \
-                   [0 for _ in range(padded_length - length)]
-
-            buckets[padded_length].append((qid, answer, mask, vecs_padded,
-                results_padded))
+        total = len(self.dataset)
+        returns = _multiprocess(self._process_example, self.dataset,
+                info="creat batches", multi=False)
+        for example, padded_length in returns:
+            buckets[padded_length].append(example)
 
         for examples in buckets.values():
             for i in range(0, len(examples), self.batch_size):

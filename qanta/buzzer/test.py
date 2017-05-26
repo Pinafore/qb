@@ -19,20 +19,21 @@ from qanta.util import constants as c
 
 log = logging.get(__name__)
 
-def generate(fold, config):
+def generate(folds, config):
     N_GUESSERS = len(GUESSERS)
+    option2id, all_guesses = load_quizbowl([fold])
 
     cfg = getattr(configs, config)()
+    cfg = pickle.load(open(cfg.ckp_dir, 'rb'))
 
-    option2id, all_guesses = load_quizbowl([fold])
-    test_iter = QuestionIterator(all_guesses[fold], option2id,
+    iterators = dict()
+    for fold in c.BUZZER_INPUT_FOLDS:
+        iterators[fold] = QuestionIterator(all_guesses[fold], option2id,
             batch_size=cfg.batch_size)
     
     if not os.path.exists(cfg.model_dir):
         log.info('Model {0} not available'.format(cfg.model_dir))
         exit(0)
-
-    cfg = pickle.load(open(cfg.ckp_dir, 'rb'))
 
     if isinstance(cfg, configs.mlp):
         model = MLP(n_input=test_iter.n_input, n_hidden=cfg.n_hidden,
@@ -40,7 +41,7 @@ def generate(fold, config):
                 dropout=cfg.dropout, batch_norm=cfg.batch_norm)
 
     if isinstance(cfg, configs.rnn):
-        model = RNN(test_iter.n_input, cfg.n_hidden, 2)
+        model = RNN(test_iter.n_input, cfg.n_hidden, N_GUESSERS + 1)
 
     log.info('Loading model {0}'.format(cfg.model_dir))
     chainer.serializers.load_npz(cfg.model_dir, model)
@@ -52,17 +53,18 @@ def generate(fold, config):
         model.to_gpu(gpu)
 
     trainer = Trainer(model, cfg.model_dir)
-    buzzes = trainer.test(test_iter)
-    log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
 
-    buzzes_dir = bc.BUZZES_DIR.format(fold)
-    with open(buzzes_dir, 'wb') as outfile:
-        pickle.dump(buzzes, outfile)
-    log.info('Buzzes saved to {0}.'.format(buzzes_dir))
+    for fold in folds:
+        buzzes = trainer.test(iterators[fold])
+        log.info('{0} buzzes generated. Size {1}.'.format(fold, len(buzzes)))
+        buzzes_dir = bc.BUZZES_DIR.format(fold, cfg.model_name)
+        with open(buzzes_dir, 'wb') as f:
+            pickle.dump(buzzes, f)
+        log.info('Buzzes saved to {0}.'.format(buzzes_dir))
 
-    if fold == 'expo':
-        guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
-        buzzer2vwexpo(guesses_df, buzzes, fold)
+        if fold == 'expo':
+            guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
+            buzzer2vwexpo(guesses_df, buzzes, fold)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -76,6 +78,5 @@ if __name__ == '__main__':
         folds = [args.fold]
     else:
         folds = c.BUZZER_INPUT_FOLDS
-    for fold in folds:
-        log.info("Generating {} outputs".format(fold))
-        generate(fold, args.config)
+        log.info("Generating {} outputs".format(folds))
+        generate(folds, args.config)

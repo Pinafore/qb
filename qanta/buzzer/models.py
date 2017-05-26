@@ -54,8 +54,8 @@ class MLP(chainer.ChainList):
 class RNN(chainer.Chain):
     def __init__(self, n_input, n_hidden, n_output):
         super(RNN, self).__init__(
-                rnn=L.LSTM(n_input, n_hidden),
-                linear=L.Linear(n_hidden, n_output))
+            rnn=L.LSTM(n_input, n_hidden),
+            linear=L.Linear(n_hidden, n_output))
 
     @property
     def xp(self):

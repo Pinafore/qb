@@ -1,20 +1,23 @@
 class mlp():
-    optimizer = 'Adam'
     max_grad_norm = 5
     batch_size = 128
-    n_hidden = 5
+    n_hidden = 25
     n_layers = 0
     dropout = 0
     step_size = 1
     neg_weight = 1
     batch_norm = False
-    ckp_dir = 'output/buzzer/mlp_buzzer.ckp'
-    model_dir = 'output/buzzer/mlp_buzzer.npz'
+    model_name = 'mlp_{}'.format(n_hidden)
+    ckp_dir = 'output/buzzer/.ckp'.format(model_name)
+    model_dir = 'output/buzzer/.npz'.format(model_name)
 
 class rnn():
-    optimizer = 'Adam'
     max_grad_norm = 5
     batch_size = 128
-    n_hidden = 128
-    ckp_dir = 'output/buzzer/rnn_buzzer.ckp'
-    model_dir = 'output/buzzer/rnn_buzzer.npz'
+    n_hidden = 10
+    dropout = 0
+    step_size = 1
+    neg_weight = 1
+    model_name = 'rnn_{}'.format(n_hidden)
+    ckp_dir = 'output/buzzer/.ckp'.format(model_name)
+    model_dir = 'output/buzzer/.npz'.format(model_name)

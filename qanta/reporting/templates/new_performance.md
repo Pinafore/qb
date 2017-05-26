@@ -109,5 +109,7 @@ Folds:
 {% endfor %}
 
 {% for fold, stats in protobowl_stats.items() %}
-- {{ fold }} reward: {{ stats['reward'] }}
+{% for key, value in stats.items() %}
+- {{ key }}: {{ value }}
+{% endfor %}
 {% endfor %}
