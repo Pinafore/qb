@@ -565,13 +565,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
                     computer_delta = -5
-                    sleep(2)
+
                     show_score(human + human_delta,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
                     print(format_display(display_num, question_text,
                         ss, ii + 1, current_guesses, answer=correct,
                         points=question_value, answerable=answerable))
+                    sleep(2)
 
 
 

@@ -2,7 +2,8 @@ n_guesses = 50
 guesser_word_skip = -1
 buzzer_word_skip = 5
 
-expo_questions = "data/internal/expo/2016_hsnct.csv"
+expo_mega_hack = true # yes really
+expo_questions = "data/external/2017.hsnct.csv
 
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
@@ -155,5 +156,5 @@ buzzer {
   n_cores=16
   n_guesses=50
   gpu=0
-  config="mlp"
+  config="rnn"
 }

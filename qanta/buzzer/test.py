@@ -19,7 +19,7 @@ from qanta.util import constants as c
 
 log = logging.get(__name__)
 
-def generate(folds, config):
+def generate(config, folds):
     N_GUESSERS = len(GUESSERS)
     option2id, all_guesses = load_quizbowl(folds)
 
@@ -77,6 +77,6 @@ if __name__ == '__main__':
     if args.fold is not None:
         folds = [args.fold]
     else:
-        folds = c.BUZZER_INPUT_FOLDS
+        folds = c.BUZZER_GENERATION_FOLDS
         log.info("Generating {} outputs".format(folds))
-    generate(folds, args.config)
+    generate(args.config, folds)

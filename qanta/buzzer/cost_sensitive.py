@@ -28,9 +28,9 @@ import pickle
 
 log = logging.get(__name__)
 
-def train_cost_sensitive(args):
+def train_cost_sensitive(config, folds):
     N_GUESSERS = len(GUESSERS)
-    cfg = getattr(configs, args.config)()
+    cfg = getattr(configs, config)()
 
     option2id, all_guesses = load_quizbowl()
     iterators = dict()
@@ -52,15 +52,11 @@ def train_cost_sensitive(args):
         chainer.cuda.get_device(gpu).use()
         model.to_gpu(gpu)
 
-    if os.path.exists(cfg.model_dir) and args.load:
-        log.info('Loading model {0}'.format(cfg.model_dir))
-        chainer.serializers.load_npz(cfg.model_dir, model)
-
     pickle.dump(cfg, open(cfg.ckp_dir, 'wb'))
     trainer = Trainer(model, cfg.model_dir)
     trainer.run(iterators[c.BUZZER_TRAIN_FOLD], iterators[c.BUZZER_DEV_FOLD], 25)
 
-    for fold in c.BUZZER_GENERATION_FOLDS:
+    for fold in folds:
         test_iter = iterators[fold]
         buzzes = trainer.test(test_iter)
         log.info('{0} buzzes generated. Size {1}.'.format(fold, len(buzzes)))
@@ -72,8 +68,13 @@ def train_cost_sensitive(args):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, default='rnn')
+    parser.add_argument('-f', '--fold', type=str, default=None)
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
-    train_cost_sensitive(args)
+    if args.fold is None:
+        folds = c.BUZZER_GENERATION_FOLDS
+    else:
+        folds = [args.fold]
+    train_cost_sensitive(args.config, folds)
