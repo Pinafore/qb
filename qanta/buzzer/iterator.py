@@ -18,8 +18,8 @@ N_GUESSES = conf['buzzer']['n_guesses']
 
 log = logging.get(__name__)
 
-def dense_vector(dicts: List[List[Dict[str, float]]],
-        wordvecs: List[List[np.ndarray]], step_size=1) -> List[List[float]]:
+def dense_vector_0(dicts: List[List[Dict[str, float]]], 
+        step_size=1) -> List[List[float]]:
 
     def get_guesser_acc(i, length):
         if i == length:
@@ -79,6 +79,49 @@ def dense_vector(dicts: List[List[Dict[str, float]]],
             prev_vecs = prev_vecs[-step_size:]
     return vecs
 
+def dense_vector_1(dicts: List[List[Dict[str, float]]],
+        step_size=1) -> List[List[float]]:
+
+    length = len(dicts)
+    prev_vec = [0.02 for _ in range(N_GUESSERS * N_GUESSES)]
+    vecs = []
+    for i in range(length):
+        if len(dicts[i]) != N_GUESSERS:
+            raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
+                N_GUESSERS, len(dicts)))
+        vec = []
+        diff_vec = []
+        isnew_vec = []
+        for j in range(N_GUESSERS):
+            dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
+            for guess, score in dic:
+                vec.append(score)
+                if i > 0 and guess in dicts[i-1][j]:
+                    diff_vec.append(score - dicts[i-1][j][guess])
+                    isnew_vec.append(0)
+                else:
+                    diff_vec.append(score) 
+                    isnew_vec.append(1)
+            if len(dic) < N_GUESSES:
+                for k in range(max(N_GUESSES - len(dic), 0)):
+                    vec.append(0)
+                    diff_vec.append(0)
+                    isnew_vec.append(0)
+        features = [vec[0], vec[1], vec[2],
+                    np.average(vec[:10]), np.average(prev_vec[:10]),
+                    np.var(vec[:10]), np.var(prev_vec[:10]),
+                    sum(isnew_vec[:10]),
+                    isnew_vec[0], isnew_vec[1], isnew_vec[2],
+                    diff_vec[0], diff_vec[1],
+                    vec[0] - vec[1], vec[1] - vec[2], 
+                    vec[0] / vec[1], vec[0] / prev_vec[0],
+                    vec[0] - prev_vec[0], vec[1] - prev_vec[1]
+                    ]
+
+        vecs.append(features)
+        prev_vec = vec
+    return vecs
+
 class QuestionIterator(object):
     '''Each batch contains:
         qids: list, (batch_size,)
@@ -89,7 +132,7 @@ class QuestionIterator(object):
     '''
 
     def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
-            make_vector=dense_vector, bucket_size=4, step_size=1, neg_weight=1, shuffle=True):
+            make_vector=dense_vector_1, bucket_size=4, step_size=1, neg_weight=1, shuffle=True):
         self.dataset = dataset
         self.option2id = option2id
         self.batch_size = batch_size
@@ -107,7 +150,7 @@ class QuestionIterator(object):
         self.create_batches()
         # log.info('Finish creating batches {}'.format(self.n_input))
 
-    def _process_example(self, qid, answer, dicts, results, wordvecs):
+    def _process_example(self, qid, answer, dicts, results):
         
         results = np.asarray(results, dtype=np.int32)
         length, n_guessers = results.shape
@@ -127,7 +170,7 @@ class QuestionIterator(object):
 
         if len(dicts) != length:
             raise ValueError("Inconsistant shape of results and vecs.")
-        vecs = self.make_vector(dicts, wordvecs, self.step_size)
+        vecs = self.make_vector(dicts, self.step_size)
         vecs = np.asarray(vecs, dtype=np.float32)
         assert length == vecs.shape[0]
         self.n_input = len(vecs[0])

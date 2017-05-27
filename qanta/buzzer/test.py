@@ -9,6 +9,7 @@ from qanta.config import conf
 
 from qanta.buzzer import configs
 from qanta.buzzer.interface import buzzer2vwexpo
+from qanta.buzzer import iterator
 from qanta.buzzer.iterator import QuestionIterator
 from qanta.buzzer.util import load_quizbowl, GUESSERS, stupid_buzzer
 from qanta.buzzer.trainer import Trainer
@@ -24,24 +25,19 @@ def generate(config, folds):
     option2id, all_guesses = load_quizbowl(folds)
 
     cfg = getattr(configs, config)()
-    cfg = pickle.load(open(cfg.ckp_dir, 'rb'))
+    # cfg = pickle.load(open(cfg.ckp_dir, 'rb'))
+    make_vector = getattr(iterator, cfg.make_vector)
 
     iterators = dict()
     for fold in folds:
         iterators[fold] = QuestionIterator(all_guesses[fold], option2id,
-            batch_size=cfg.batch_size)
+            batch_size=cfg.batch_size, make_vector=make_vector)
     
     if not os.path.exists(cfg.model_dir):
         log.info('Model {0} not available'.format(cfg.model_dir))
         exit(0)
 
-    if isinstance(cfg, configs.mlp):
-        model = MLP(n_input=iterators[folds[0]].n_input, n_hidden=cfg.n_hidden,
-                n_output=N_GUESSERS+1, n_layers=cfg.n_layers,
-                dropout=cfg.dropout, batch_norm=cfg.batch_norm)
-
-    if isinstance(cfg, configs.rnn):
-        model = RNN(iterators[folds[0]].n_input, cfg.n_hidden, N_GUESSERS + 1)
+    model = RNN(iterators[folds[0]].n_input, cfg.n_hidden, N_GUESSERS + 1)
 
     log.info('Loading model {0}'.format(cfg.model_dir))
     chainer.serializers.load_npz(cfg.model_dir, model)

@@ -13,38 +13,26 @@ from qanta.buzzer import configs
 from qanta.buzzer.progress import ProgressBar
 from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.iterator import QuestionIterator
+from qanta.buzzer import iterator 
 from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
 from qanta.util import constants as c
-from qanta import logging
-
-import os
-import sys
-import random
-import numpy as np
-import pickle
-
 
 log = logging.get(__name__)
 
 def train_cost_sensitive(config, folds):
     N_GUESSERS = len(GUESSERS)
     cfg = getattr(configs, config)()
+    make_vector = getattr(iterator, cfg.make_vector)
 
     option2id, all_guesses = load_quizbowl()
     iterators = dict()
     for fold in c.BUZZER_INPUT_FOLDS:
         iterators[fold] = QuestionIterator(all_guesses[fold], option2id,
-            batch_size=cfg.batch_size)
+            batch_size=cfg.batch_size, make_vector=make_vector)
 
-    if isinstance(cfg, configs.mlp):
-        model = MLP(n_input=eval_iter.n_input, n_hidden=cfg.n_hidden,
-                n_output=N_GUESSERS + 1, n_layers=cfg.n_layers, 
-                dropout=cfg.dropout, batch_norm=cfg.batch_norm)
-
-    if isinstance(cfg, configs.rnn):
-        model = RNN(eval_iter.n_input, cfg.n_hidden, N_GUESSERS + 1)
+    model = RNN(eval_iter.n_input, cfg.n_hidden, N_GUESSERS + 1)
 
     gpu = conf['buzzer']['gpu']
     if gpu != -1 and chainer.cuda.available:
@@ -65,9 +53,12 @@ def train_cost_sensitive(config, folds):
             pickle.dump(buzzes, outfile)
         log.info('Buzzes saved to {0}.'.format(buzzes_dir))
 
+        if fold == 'expo':
+            buzzer2vwexpo(all_guesses['expo'], buzzes, fold)
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='rnn')
+    parser.add_argument('-c', '--config', type=str, default='rnn_200_1')
     parser.add_argument('-f', '--fold', type=str, default=None)
     return parser.parse_args()
 

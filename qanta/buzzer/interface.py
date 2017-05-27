@@ -11,6 +11,7 @@ from multiprocessing import Pool, Manager
 from typing import List, Dict, Tuple, Optional
 
 from qanta.util import constants as c
+from qanta.buzzer import constants as bc
 from qanta.util.io import safe_path
 from qanta.config import conf
 from qanta.datasets.quiz_bowl import QuestionDatabase
@@ -122,3 +123,11 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
                 itertools.chain(*metaf))
         meta_file.write(meta_out)
         log.info('vw_meta file written')
+
+if __name__ == '__main__':
+    model_name = 'neo_0'
+    guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['expo'])
+    expo_buzzes_dir = 'output/buzzer/neo/expo_buzzes.{}.pkl'.format(model_name)
+    with open(expo_buzzes_dir, 'rb') as f:
+        expo_buzzes = pickle.load(f)
+    buzzer2vwexpo(guesses_df, expo_buzzes, 'expo')

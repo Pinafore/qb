@@ -73,8 +73,7 @@ def stupid_buzzer(iterator) -> Dict[int, int]:
     return buzz_dict
 
 def _process_question(option2id: Dict[str, int], 
-        all_questions: Dict[int, Question], 
-        word2vec, normalize, qnum, question) -> \
+        all_questions: Dict[int, Question], qnum, question) -> \
             Tuple[int, int, List[List[Dict[str, int]]], List[List[int]]]:
     '''Process one question.
     return:
@@ -95,61 +94,32 @@ def _process_question(option2id: Dict[str, int],
 
     guess_dicts = []
     results = []
-    wordvecs = None
-    if word2vec is not None:
-        wordvecs = []
     for pos, pos_group in question.groupby(['sentence', 'token']):
         pos_group = pos_group.groupby('guesser')
         guess_dicts.append([])
         results.append([])
-        if word2vec is not None:
-            wordvecs.append([])
         for guesser in GUESSERS:
             if guesser not in pos_group.groups:
                 log.info("{0} missing guesser {1}.".format(qnum, guesser))
                 guess_dicts[-1].append({})
                 results[-1].append(0)
-                if word2vec is not None:
-                    wordvecs[-1].append(word2vec.get_zero_vec())
             else:
                 guesses = pos_group.get_group(guesser)
                 guesses = guesses.sort_values('score', ascending=False)
                 top_guess = guesses.iloc[0].guess
                 results[-1].append(int(top_guess == answer))
                 
-                s = sum(guesses.score) if normalize else 1
+                # s = sum(guesses.score)
+                s = 1
                 dic = {x.guess: x.score / s for x in guesses.itertuples()}
                 
                 guess_dicts[-1].append(dic)
-                if word2vec is not None:
-                    wordvecs[-1].append(word2vec.get_avg_vec(top_guess))
 
-    return qnum, answer_id, guess_dicts, results, wordvecs
+    return qnum, answer_id, guess_dicts, results
 
-
-class Word2Vec:
-
-    def __init__(self, wordvec_dir, wordvec_dim):
-        self.word2vec = gensim.models.KeyedVectors.load_word2vec_format(
-                wordvec_dir, binary=True)
-        self.wordvec_dim = wordvec_dim
-
-    def get_avg_vec(self, guess):
-        vecs = []
-        for word in guess.split('_'):
-            if word in self.word2vec:
-                vecs.append(self.word2vec[word])
-        if len(vecs) > 0:
-            return sum(vecs) / len(vecs)
-        return self.get_zero_vec()
-
-    def get_zero_vec(self):
-        return np.zeros(self.wordvec_dim, dtype=np.float32)
-
-
-def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None, normalize=False) \
+def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, normalize=True) \
                     -> Tuple[Dict[str, int], Dict[str, list]]:
-    merge_dfs()
+    # merge_dfs()
     log.info('Loading data')
     question_db = QuestionDatabase()
     quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS, guesser_train=True, buzzer_train=True)
@@ -180,7 +150,7 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None, normalize=False) \
         log.info('Processing {0} guesses'.format(fold))
         guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
-        worker = partial(_process_question, option2id, all_questions, word2vec, normalize)
+        worker = partial(_process_question, option2id, all_questions)
         inputs = guesses.groupby('qnum')
         guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data',
                 multi=True)
@@ -285,13 +255,6 @@ def load_protobowl():
 if __name__ == "__main__":
     merge_dfs()
 
-    processed_dirs = ['%s_processed.pickle' % (os.path.join(
-        bc.GUESSES_DIR, fold)) for fold in c.BUZZER_INPUT_FOLDS]
-    # if not all(os.path.isfile(d) for d in processed_dirs):
-    #     log.info('Loading {0}'.format(bc.WORDVEC_DIR))
-    #     word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
-    # else:
-    word2vec = None
-
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS, word2vec)
-    load_protobowl()
+    # option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
+    # load_protobowl()
+    option2id, guesses_by_fold = load_quizbowl()
