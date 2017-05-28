@@ -117,7 +117,7 @@ def _process_question(option2id: Dict[str, int],
 
     return qnum, answer_id, guess_dicts, results
 
-def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, normalize=True) \
+def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS) \
                     -> Tuple[Dict[str, int], Dict[str, list]]:
     # merge_dfs()
     log.info('Loading data')

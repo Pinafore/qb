@@ -47,11 +47,11 @@ def report(buzzes_dir):
         p_inputs = [question_texts, protobowl_ids, pdf1.groupby('qid'), questions] + inputs
         pstats = get_protobowl(p_inputs)
         threshold_stats.append(pstats)
-        print(threshold, stats)
+        print(threshold, pstats)
     with open(buzzes_dir + '.pstats', 'wb') as f:
         pickle.dump(threshold_stats, f)
     print([x['reward'] for x in threshold_stats])
 
 if __name__ == '__main__':
-    buzzes_dir = 'output/buzzer/neo/dev_buzzes.neo_0.pkl'
+    buzzes_dir = 'output/buzzer/neo/dev_buzzes.neo_1.pkl'
     report(buzzes_dir)

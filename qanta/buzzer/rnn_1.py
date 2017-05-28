@@ -78,7 +78,7 @@ def main():
     expo_iter = QuestionIterator(all_guesses['expo'], option2id,
             batch_size=128, make_vector=dense_vector)
 
-    n_hidden = 300
+    n_hidden = 100
     model_name = 'neo_1'
     model_dir = 'output/buzzer/neo/{}.npz'.format(model_name)
     model = RNN(train_iter.n_input, n_hidden, N_GUESSERS + 1)
