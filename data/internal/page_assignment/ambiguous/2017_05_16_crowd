@@ -2,7 +2,7 @@
 911	Porsche_911	car:porsche
 a midsummer nights dream	A_Midsummer_Night's_Dream_(Mendelssohn)	mendelssohn
 a midsummer nights dream	A_Midsummer_Night's_Dream	
-a streetcar named desire	A_Streetcar_Named_Desire (play)	
+a streetcar named desire	A_Streetcar_Named_Desire
 a streetcar named desire	A_Streetcar_Named_Desire_(1951_film)	kazan:brando:leigh
 airplane	Airplane!	zucker:nielsen:shirley:ethel
 airplane	Airplane	
@@ -71,5 +71,5 @@ yield	Yield_(chemistry)	reaction
 yield	Yield_(engineering)	deformation
 zhuangzi	Zhuangzi_(book)	MUSTBEMANUAL
 zhuangzi	Zhuangzi	MUSTBEMANUAL
-orion		Orion_(constellation)		constellation:belt
-orion		Orion_(mythology)		artemis:scorpion
+orion	Orion_(constellation)	constellation:belt
+orion	Orion_(mythology)	artemis:scorpion

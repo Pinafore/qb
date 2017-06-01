@@ -1,6 +1,7 @@
 from collections import Counter, defaultdict
 from itertools import chain
 import re
+import pickle
 
 import nltk
 
@@ -192,7 +193,7 @@ class NaqtQuestion:
         text = text.replace("{", "").replace("}", "").replace(" (*) ", " ")
         text = text.replace("~", "")
         return text
-        
+
 
 def assign_fold(tournament, year):
     # Default assumption is that questions are (guesser) training data
@@ -283,7 +284,9 @@ if __name__ == "__main__":
     parser.add_argument('--protobowl', type=str,
                         default='data/questions/protobowl/questions-05-05-2017.json')
     parser.add_argument('--unmapped_report', type=str, default="unmapped.txt")
-    parser.add_argument('--ambig_report', type=str, default="ambiguous.txt")    
+    parser.add_argument('--ambig_report', type=str, default="ambiguous.txt")
+    parser.add_argument('--limit_set', type=str,
+                        default="data/external/wikipedia-titles.pickle")
     parser.add_argument('--direct_path', type=str,
                         default='data/internal/page_assignment/direct/')
     parser.add_argument('--ambiguous_path', type=str,
@@ -307,11 +310,19 @@ if __name__ == "__main__":
         log.info("Will guess page assignments")
     else:
         log.info("Will not guess page assignments")
-        
+
     conn = create_db(flags.db)
-    
+
+    limit = None
+    try:
+        limit = pickle.load(open(flags.limit_set, 'rb'))
+    except IOError:
+        log.info("Failed to load limit set from %s" % flags.limit_set)
+        limit = None
+
     # Load page assignment information
-    pa = PageAssigner(QuestionDatabase.normalize_answer)
+    pa = PageAssigner(QuestionDatabase.normalize_answer,
+                      limit)
     for ii in glob("%s/*" % flags.ambiguous_path):
         pa.load_ambiguous(ii)
     for ii in glob("%s/*" % flags.unambiguous_path):

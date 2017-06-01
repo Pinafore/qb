@@ -1,4 +1,4 @@
-ajax	Ajax (Sophocles)	sophocles
+ajax	Ajax_(play)	sophocles
 ajax	Ajax (mythology)	achilles:armor
 bones	Bones (TV series)	brennan:deschanel
 bones	Bone

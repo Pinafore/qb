@@ -141,19 +141,9 @@
 42524	Delta (letter)	_delta_
 42423	Delta (letter)	_delta_
 63785	Delta (letter)	_delta_
-34584	Dido	_Dido_ (or _Elissa_)
-41528	Dido	_Dido_ [DY-doh]
-23723	Dido (Queen of Carthage)	_Dido_
-54565	Dido (Queen of Carthage)	_Dido_
-24921	Dido (Queen of Carthage)	_Dido_
-1396	Dido (Queen of Carthage)	_Dido_
-70330	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_ before "Elissa")
-59249	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_ early)
-10562	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_)
 63458	Dog	_dog_s [accept _Canis_ lupus _familiaris_]
 17716	Don Juan	_Don Juan_ (accept _Don Giovanni_)
 47231	Don Juan	_Don Juan_ (prompt on "Juan")
-23406	Dwarf (Germanic mythology)	_dwarves_
 37534	Dwarf (Middle-earth)	_dwarves_ (or _Naugrim_)
 35322	Dwarf (Middle-earth)	_dwarves_ (or _dwarf_)
 10189	Ethics	_ethics_
@@ -183,9 +173,6 @@
 57261	Europa (mythology)	_Europa_
 7844	Europa (mythology)	_Europa_
 10095	Europa (mythology)	_Europa_
-21587	Even function	_even_
-26908	Even function	_even_
-10912	Even number	_even_
 38113	Franz Ferdinand (band)	_Franz Ferdinand_
 38669	Franz Ferdinand (band)	_Franz Ferdinand_
 32809	Galileo (spacecraft)	_Galileo_
@@ -355,15 +342,6 @@
 56035	Lyndon B. Johnson	Lyndon Baines _Johnson_ (or _LBJ_)
 35090	Lyndon B. Johnson	_L_yndon Baines _Johnson_ (accept _LBJ_)
 57167	Lyndon B. Johnson	_L_yndon Baines _Johnson_ (or _LBJ_; prompt on "Johnson")
-16709	Macbeth	_Macbeth_
-2734	Macbeth	_Macbeth_
-7566	Macbeth (Gargoyles)	_Macbeth_
-16160	Macbeth (Gargoyles)	_Macbeth_
-45098	Macbeth (character)	_Macbeth_
-17626	Macbeth (character)	_Macbeth_
-16928	Macbeth (character)	_Macbeth_
-37639	Macbeth (character)	_Macbeth_
-10162	Macbeth (character)	_Macbeth_
 42876	Madama Butterfly	_Madame Butterfly_ (or _Madama Butterfly_)
 39906	Madama Butterfly	_Madame Butterfly_ (or _Madama Butterfly_)
 11525	Madame Butterfly (short story)	_Madame Butterfly_ (or _Madama Butterfly_)
@@ -389,17 +367,11 @@
 40466	Monopoly (game)	_Monopoly_
 64100	Monopoly (game)	_Monopoly_
 7992	Monopoly (game)	_Monopoly_
-49	Mouse (computing)	_mouse_
-12527	Mouse (computing)	_mouse_
-41358	Mouse (computing)	_mouse_
-25046	Mouse (computing)	_mouse_
-26128	Mouse (computing)	_mouse_
 59059	Night of the Long Knives	_Night of the Long Knives_ (accept _R\:ohm Putsch_ before his name is mentioned)
 41281	Night of the Long Knives	_Night of the Long Knives_ (or _Nacht der langen Messer_ or _Reichsmordwoche_)
 56731	Night of the Long Knives	_Night of the Long Knives_ (or _Nacht der langen Messer_)
 51011	Night of the Long Knives	_Night of the Long Knives_ (or _Operation Hummingbird_ or _Nacht der langen Messer_; accept _R\:ohm-putsch_ early)
 22857	Night of the Long Knives	_Night of the Long Knives_ (or die _Nacht der langen Messer_)
-63649	Night of the Long Knives (Arthurian)	_Night of the Long Knives_
 7676	Nirvana	_Nirvana_
 5781	Nirvana	_Nirvana_
 59829	Nirvana	_nirvana_
@@ -504,7 +476,6 @@
 29248	Rhinoceros (play)	_Rhinoceros_
 430	River delta	_delta_
 15025	River delta	_delta_
-59207	Set (mythology)	_Seth_ (accept _Set_ or _Sheth_ or _Sutekh_ or _Seteh_ or _Setan_)
 14881	Seth	_Seth_
 24532	Seth	_Seth_
 9447	Sierra Leone	Republic of _Sierra Leone_
@@ -553,7 +524,6 @@
 12656	Tibet	_Tibet_ (Autonomous Region)
 31261	Tibet	_Tibet_ (accept _Lhasa_ until "land")
 62231	Tibet	_Tibet_ (or _Xizang_)
-55521	Tibet (1912-51)	_Tibet_ (accept _Xizang_ Autonomous Region)
 55485	Tree	_tree_ (accept _World Tree_ or _fig tree_ until _Siris_)
 60227	Tree	_tree_ (do not accept specific types of tree)
 60882	Tree	_tree_(s)

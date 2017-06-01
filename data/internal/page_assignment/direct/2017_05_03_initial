@@ -30,9 +30,9 @@
 241449	Birmingham, Alabama	_Birmingham_
 8018	Birmingham, Alabama	_Birmingham_
 29388	Birmingham, Alabama	_Birmingham_
-35091	Blindness	_blind_ness (accept clear-knowledge equivalents)
-190580	Blindness	_blindness_ (accept equivalents)
-73699	Blindness	_blind_ness (accept equivalents)
+35091	Visual_impairment	_blind_ness (accept clear-knowledge equivalents)
+190580	Visual_impairment	_blindness_ (accept equivalents)
+73699	Visual_impairment	_blind_ness (accept equivalents)
 330112	Bone	_bone_s
 315366	Bone	_bone_s
 338984	Bone	(human) _bone_s (do not prompt on "skeleton")
@@ -172,15 +172,6 @@
 68759	Delta (letter)	_delta_
 291350	Delta (letter)	_delta_
 163663	Delta (letter)	_delta_
-113419	Dido	_Dido_ (or _Elissa_)
-160158	Dido	_Dido_ [DY-doh]
-12688	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_)
-315858	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_ before "Elissa")
-159117	Dido (Queen of Carthage)	_Dido_
-27210	Dido (Queen of Carthage)	_Dido_
-258812	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_ early)
-238170	Dido (Queen of Carthage)	_Dido_
-49773	Dido (Queen of Carthage)	_Dido_
 298528	Doctor Zhivago (novel)	_Doctor Zhivago_
 266132	Doctor Zhivago (novel)	_Doctor Zhivago_
 364000	Don Juan	_Don Juan_ [dohn JOO-uhn]
@@ -226,7 +217,6 @@
 232183	Ethics	_ethics_ (accept _Logic and Ethics_)
 25662	Ethics (Spinoza)	_Ethics_ (Demonstrated in a Geometrical Manner)
 25663	Ethics (Spinoza)	_Ethics_ (Demonstrated in a Geometrical Manner)
-237082	Ethics (book)	_Ethics_
 338539	Ethiopia	Federal Democratic Republic of _Ethiopia_ (or _Ityop'iya_ Federalawi Demokrasiyawi Ripeblik)
 238308	Ethiopia	Federal Democratic Republic of _Ethiopia_ (accept _Abyssinia_ early)
 208231	Ethiopia	Federal Democratic Republic of _Ethiopia_
@@ -252,9 +242,6 @@
 10306	Europa (mythology)	_Europa_
 10300	Europa (mythology)	_Europa_
 253810	Europa (mythology)	_Europa_
-73953	Even function	_even_
-49226	Even function	_even_
-16456	Even number	_even_
 77646	Falstaff	_Falstaff_
 18496	Fargo, North Dakota	_Fargo_
 19602	Fargo, North Dakota	_Fargo_
@@ -374,20 +361,20 @@
 272203	Amaterasu	_Amaterasu_
 54769930ea23cca90550d818	Amaterasu	{Amaterasu}
 54769910ea23cca905508372	Amaterasu	Amaterasu
-54769931ea23cca90550e50c	Amaterasu	Amaterasu 
+54769931ea23cca90550e50c	Amaterasu	Amaterasu
 307744	Amaterasu	_Amaterasu_
 5476da94ea23cca905515329	Amaterasu	{Amaterasu}
 5476992dea23cca90550a999	Anabaptism	{anabaptists}
-5476a18aea23cca90551117a	Anabaptism	Anabaptists
-58b0b7ac70b91540957174e9	Anabaptism	Anabaptists
-5476da9aea23cca905519643	Anabaptism	{Anabaptist}s
-5476a258ea23cca9055124e7	Anabaptism	Anabaptists [accept word forms; anti-prompt on "Amish" and "Mennonite" before Simons is mentioned]
-58b0b83f70b91540957190e2	Anabaptism	Anabaptists [or Anabaptism]
-5476992fea23cca90550cf09	Anabaptism	{Anabaptists}
-26760	Anabaptist	_Anabaptist_s
-139928	Anabaptist	_Anabaptist_s (accept word forms; prompt on "Re-baptist"; do not accept "baptist")
-7792	Anabaptists	_Anabaptist_s
-82660	Anabaptists	_Anabaptist_s (accept _Rebaptizer_s before "Baptism")
+5476a18aea23cca90551117a	Anabaptism	Anabaptism
+58b0b7ac70b91540957174e9	Anabaptism	Anabaptism
+5476da9aea23cca905519643	Anabaptism	{Anabaptism}s
+5476a258ea23cca9055124e7	Anabaptism	Anabaptism [accept word forms; anti-prompt on "Amish" and "Mennonite" before Simons is mentioned]
+58b0b83f70b91540957190e2	Anabaptism	Anabaptism [or Anabaptism]
+5476992fea23cca90550cf09	Anabaptism	{Anabaptism}
+26760	Anabaptism	_Anabaptism_s
+139928	Anabaptism	_Anabaptism_s (accept word forms; prompt on "Re-baptist"; do not accept "baptist")
+7792	Anabaptism	_Anabaptism_s
+82660	Anabaptism	_Anabaptism_s (accept _Rebaptizer_s before "Baptism")
 141038	Andersonville (novel)	_Andersonville_
 23944	Andersonville (novel)	_Andersonville_
 237650	Andersonville National Historic Site	_Andersonville_ (accept _Camp Sumter_ before it is mentioned)
@@ -404,18 +391,6 @@
 38468	Andromeda (mythology)	_Andromeda_
 314240	Andromeda (mythology)	_Andromeda_ (or _Androm\'ede_)
 10303	Andromeda (mythology)	_Andromeda_
-58b0b7a370b915409571732b	Anemoi#Boreas	Boreas (accept North Wind until the end)
-54769912ea23cca90550a1ae	Anemoi#Boreas	Boreas (accept Hyperboreans before "this god" is read)
-54769930ea23cca90550d96a	Anemoi#Boreas	{Boreas}
-5476da92ea23cca905513da3	Anemoi#Boreas	Boreas
-13561	Anemoi#Boreas	_Boreas_
-85031	Anemoi#Boreas	_Boreas_ [BOH-ree-us]
-5476992fea23cca90550d073	Anemoi#Boreas	{Boreas}
-54769910ea23cca9055081dc	Anemoi#Boreas	Boreas
-335682	Anemoi#Boreas	_Boreas_ (prompt on "north wind" before the end)
-5476a23cea23cca905512268	Anemoi#Boreas	Boreas
-5476da9cea23cca90551af76	Anemoi#Boreas	{Boreas} [prompt on “the {north wind}” before it is read]
-5476da9eea23cca90551bdbd	Anemoi#Boreas	{Boreas}
 302623	Arby's	_Arby's_
 54769910ea23cca90550858a	Arby's	Arby's
 241933	Arcadia (play)	_Arcadia_
@@ -750,10 +725,10 @@
 23239	Badminton	_badminton_
 23204	Badminton	_badminton_
 85812	Badminton	_badminton_
-58b0b7d270b9154095717a28	Baeyer-Villiger oxidation	Baeyer-Villiger oxidation
-54769910ea23cca9055086bc	Baeyer-Villiger oxidation	Baeyer-Villiger oxidation
-5476a061ea23cca9055109d1	Baeyer-Villiger oxidation	Baeyer-Villiger oxidation
-5476a265ea23cca905512611	Baeyer-Villiger oxidation	Baeyer-Villiger oxidation [or Baeyer-Villiger rearrangement]
+58b0b7d270b9154095717a28	Baeyer–Villiger oxidation	Baeyer–Villiger oxidation
+54769910ea23cca9055086bc	Baeyer–Villiger oxidation	Baeyer–Villiger oxidation
+5476a061ea23cca9055109d1	Baeyer–Villiger oxidation	Baeyer–Villiger oxidation
+5476a265ea23cca905512611	Baeyer–Villiger oxidation	Baeyer–Villiger oxidation [or Baeyer–Villiger rearrangement]
 139122	Baffin Island	_Baffin_ Island
 326064	Baffin Island	_Baffin_ Island
 66506	Baffin Island	_Baffin_ Island
@@ -1252,7 +1227,7 @@
 5476da99ea23cca905518420	Barry Goldwater	Barry Goldwater
 58b0b81870b9154095718858	Barry Goldwater	Barry [Morris] Goldwater
 5476992dea23cca90550aa10	Barry Goldwater	Barry {Goldwater}
-23071	Barry Goldwater, Jr.	Barry (Morris) _Goldwater_, Sr.
+23071	Barry Goldwater	Barry (Morris) _Goldwater_, Sr.
 5476da97ea23cca905516c26	Barry Lyndon	Barry Lyndon
 54769930ea23cca90550dcad	Barry Lyndon	{Barry Lyndon}
 5476da9cea23cca90551a620	Barry Lyndon	Barry Lyndon
@@ -1273,11 +1248,11 @@
 75505	Bartleby, the Scrivener	_Bartleby the Scrivener_
 58b0b83c70b9154095719068	Bartleby, the Scrivener	Bartleby
 5476da9eea23cca90551bc17	Bartleby, the Scrivener	{Bartleby, the Scrivener}
-54769910ea23cca90550846a	Bartolome Esteban Murillo	Bartolome Esteban Murillo
-5476992fea23cca90550c817	Bartolome Mitre	Bartolome {Mitre}
-335581	Bartolome de las Casas	Bartolom\'e de _Las Casas_ (prompt on "Casas")
-228793	Bartolome de las Casas	Bartolom\'e de _Las Casas_
-61987	Bartolome de las Casas	Bartolom\'e de _Las Casas_
+54769910ea23cca90550846a	Bartolomé Esteban Murillo	Bartolomé Esteban Murillo
+5476992fea23cca90550c817	Bartolomé Mitre	Bartolomé {Mitre}
+335581	Bartolomé de las Casas	Bartolom\'e de _Las Casas_ (prompt on "Casas")
+228793	Bartolomé de las Casas	Bartolom\'e de _Las Casas_
+61987	Bartolomé de las Casas	Bartolom\'e de _Las Casas_
 285346	Bartolomeu Dias	Bartolomeu _Dias_
 21807	Bartolomeu Dias	Bartolomeu _Dias_
 120577	Bartolomeu Dias	Bartolomeu _Dias_
@@ -1393,15 +1368,15 @@
 314426	Basis (linear algebra)	_basis_ (set) (or _bases_; accept _Gr\"obner basis_ or _topological basis_; accept _base_)
 5476992eea23cca90550be3e	Basis (linear algebra)	{basis}
 227277	Basis (linear algebra)	_basis_
-5476da93ea23cca9055145c3	Basque people	Basque (also accept Euskarian or Euskera before “Euskal”)
-122219	Basque people	_Basque_ (or _Euskara_)
-58b0b85070b915409571944a	Basque people	Basque [or Euskara; or El Vasco; or Navarrese; or Biscayan; or Vascuence]
-5476992fea23cca90550c88a	Basque people	{Basque} [or {Euskara}]
-65989	Basque people	_Basque_(s) (or _Vascongado Basque Euskaldunak_ or _Euskotarak_ or _Vasco_)
-24626	Basque people	_Basque_(s)
-150312	Basque people	_Basque_(s) [BASK(S)] (or _Euskaldunak_)
-54769910ea23cca905507f75	Basque people	Basque (or euskara before mentioned)
-77716	Basque people	_Basque_
+5476da93ea23cca9055145c3	Basques	Basque (also accept Euskarian or Euskera before “Euskal”)
+122219	Basques	_Basque_ (or _Euskara_)
+58b0b85070b915409571944a	Basques	Basque [or Euskara; or El Vasco; or Navarrese; or Biscayan; or Vascuence]
+5476992fea23cca90550c88a	Basques	{Basque} [or {Euskara}]
+65989	Basques	_Basque_(s) (or _Vascongado Basque Euskaldunak_ or _Euskotarak_ or _Vasco_)
+24626	Basques	_Basque_(s)
+150312	Basques	_Basque_(s) [BASK(S)] (or _Euskaldunak_)
+54769910ea23cca905507f75	Basques	Basque (or euskara before mentioned)
+77716	Basques	_Basque_
 62031	Bass Strait	_Bass_ Strait
 148638	Bastet	_Bast_ or _Bastet_
 330482	Bastille	(the) _Bastille_ (Saint-Antoine) (accept _Bastille Day_)
@@ -1421,8 +1396,8 @@
 291193	Bataan Death March	_Bataan Death March_
 9381	Bataan Death March	_Bataan_ Death March
 316837	Bataan Death March	_Bataan Death March_ (prompt on "Death March")
-5476992fea23cca90550d262	Bathers at Asnieres	{Bathers} at {Asnieres} [or {Bathing} at {Asnieres} or {Une Baignade}, {Asnières}; Prompt on “{Bathers}”, accept “{Seurat's Bathers}” or equivalents before “{Seurat}”]
-58b0b7da70b9154095717c1b	Bathers at Asnieres	Bathers at Asnieres [or Une Baignade, Asnières]
+5476992fea23cca90550d262	Bathers_at_Asnières	{Bathers} at {Asnieres} [or {Bathing} at {Asnieres} or {Une Baignade}, {Asnières}; Prompt on “{Bathers}”, accept “{Seurat's Bathers}” or equivalents before “{Seurat}”]
+58b0b7da70b9154095717c1b	Bathers_at_Asnières	Bathers_at_Asnières [or Une Baignade, Asnières]
 167735	Baths of Caracalla	_Baths of Caracalla_ (or _Terme di Caracalla_ or the _Thermae Antoninianae_ or the _Antonine Baths_)
 280300	Bathsheba	_Bathsheba_ (or _Bethsabee_)
 54769930ea23cca90550dfbf	Bathsheba	Bathsheba
@@ -1686,14 +1661,14 @@
 5476da99ea23cca905518bab	Battle of Cowpens	Battle of Cowpens
 336005	Battle of Cowpens	Battle of _Cowpens_
 143991	Battle of Cowpens	Battle of _Cowpens_
-54769930ea23cca90550d861	Battle of Crecy	Battle of {Crécy}
-58b0b7d070b91540957179c6	Battle of Crecy	Battle of Crécy
-154930	Battle of Crecy	Battle of _Cr\'ecy_ [KRAY-see] (or _Cr\'ecy_-en-Ponthieu)
-5476da9fea23cca90551d2ed	Battle of Crecy	Battle of {Crecy} [or {Cressy}]
-29091	Battle of Crecy	Battle of _Crecy_
-5476da95ea23cca905515db9	Battle of Crecy	Battle of {Crécy}
-5476da9eea23cca90551c634	Battle of Crecy	Battle of Crécy
-82106	Battle of Crecy	Battle of _Cr\'ecy_ [KRAY-see]
+54769930ea23cca90550d861	Battle_of_Crécy	Battle of {Crécy}
+58b0b7d070b91540957179c6	Battle_of_Crécy	Battle of Crécy
+154930	Battle_of_Crécy	Battle of _Cr\'ecy_ [KRAY-see] (or _Cr\'ecy_-en-Ponthieu)
+5476da9fea23cca90551d2ed	Battle_of_Crécy	Battle of {Crecy} [or {Cressy}]
+29091	Battle_of_Crécy	Battle of _Crecy_
+5476da95ea23cca905515db9	Battle_of_Crécy	Battle of {Crécy}
+5476da9eea23cca90551c634	Battle_of_Crécy	Battle of Crécy
+82106	Battle_of_Crécy	Battle of _Cr\'ecy_ [KRAY-see]
 54769911ea23cca905509b0b	Battle of Culloden	Battle of Culloden Moor
 5476992fea23cca90550d243	Battle of Culloden	Battle of {Culloden} Moor
 240237	Battle of Culloden	Battle of _Culloden_ Moor (or Battle of _Drummossie_)
@@ -1998,9 +1973,8 @@
 54769912ea23cca90550a2b1	Battle of Okinawa	Battle of Okinawa
 5476990fea23cca9055074a4	Battle of Okinawa	Battle of Okinawa
 5476da97ea23cca9055172b1	Battle of Okinawa	Battle of Okinawa
-126263	Battle of Panipat (1556)	Battles of _Panipat_
-5476992cea23cca90550a7bb	Battle of Panipat (1761)	( {Third} ) Battle of {Panipat}
-5476da98ea23cca905517f31	Battle of Panipat (1761)	(Third) Battle of {Panipat}
+5476992cea23cca90550a7bb	Third_Battle_of_Panipat	( {Third} ) Battle of {Panipat}
+5476da98ea23cca905517f31	Third_Battle_of_Panipat	(Third) Battle of {Panipat}
 5476da97ea23cca905516b44	Battle of Pavia	Battle of {Pavia}
 234730	Battle of Pavia	Battle of _Pavia_
 5476990fea23cca905507d5c	Battle of Pavia	Battle of Pavia
@@ -2066,14 +2040,6 @@
 5476da9bea23cca905519afd	Battle of San Jacinto	Battle of {San Jacinto}
 54769933ea23cca90550fe66	Battle of San Jacinto	Battle of {San Jacinto}
 58b0b7da70b9154095717c0c	Battle of San Jacinto	Battle of San Jacinto
-5476990fea23cca905507634	Battle of Sedan (1870)	Battle of Sedan
-5476da98ea23cca905518189	Battle of Sedan (1870)	Battle of {Sedan}
-58b0b7ef70b9154095718006	Battle of Sedan (1870)	Battle of Sedan
-54769930ea23cca90550db03	Battle of Sedan (1870)	Battle of {Sedan}
-36855	Battle of Sedan (1870)	Battle of _Sedan_
-5476da97ea23cca9055171d2	Battle of Sedan (1870)	Battle of Sedan
-5476992eea23cca90550ba79	Battle of Sedan (1870)	Battle of {Sedan}
-5476da9fea23cca90551d124	Battle of Sedan (1870)	Battle of {Sedan}
 5476a24fea23cca90551240a	Battle of Shiloh	Battle of Shiloh [accept Battle of Pittsburg Landing before read]
 5476daa0ea23cca90551d77e	Battle of Shiloh	Battle of {Shiloh} [accept Battle of {Pittsburg Landing} before it is read]
 5476a089ea23cca905510c1f	Battle of Shiloh	Battle of {Shiloh} [or Battle of Pittsburg {Landing}]
@@ -2701,8 +2667,6 @@
 213856	Beirut	_Beirut_ (or _Bayrut_)
 17898	Beirut	_Beirut_
 5476a2b9ea23cca905512d6f	Beirut	Beirut
-5476990fea23cca90550734d	Bela Kun	Bela Kun
-5476da9eea23cca90551c103	Bela Kun	Bela {Kun}
 309587	Belarus	(Republic of) _Belarus_ (or Respublika _Byelarus_)
 313787	Belarus	(Republic of) _Belarus_ (or Respublika _Byelarus_)
 54769930ea23cca90550d52c	Belarus	{Belarus}
@@ -2948,7 +2912,7 @@
 5476992fea23cca90550d15b	Bengal	{Bengal} [Prompt on {West Bengal} or {Bangladesh}]
 5476daa0ea23cca90551d9d6	Bengal	Bengal
 136108	Bengal	_Bengal_ (or _Bangla_ or _Banga_ or _Bongo_; accept _Bengal tiger_)
-136770	Benigno Aquino, Jr.	_B_enigno _Aquino_ (prompt on "Aquino")
+136770	Benigno Aquino III	_B_enigno _Aquino_ (prompt on "Aquino")
 5476da9aea23cca905519267	Benin	Benin
 54769912ea23cca905509c15	Benin	Benin
 147510	Benin	_Benin_ (accept Republic of _Benin_)
@@ -2963,12 +2927,6 @@
 80652	Benito Cereno	_Benito Cereno_ [bay-NEE-toh thay-RAY-noh]
 5476da9dea23cca90551b86b	Benito Cereno	{Benito Cereno}
 5476990eea23cca905506fa6	Benito Cereno	"Benito Cereno"
-5476da93ea23cca90551405a	Benito Juarez	Benito {Juárez}
-5476992dea23cca90550ab9f	Benito Juarez	Benito Pablo {Juarez}
-58b0b80870b9154095718502	Benito Juarez	Benito Juárez
-54769912ea23cca90550a503	Benito Juarez	Benito Pablo Juarez
-5476992dea23cca90550acd5	Benito Juarez	Benito {Juárez}
-54769910ea23cca905508d66	Benito Juarez	Benito Pablo Juarez
 56582	Benito_Mussolini	Benito (Amilcare Andrea) _Mussolini_ or Il _Duce_ [DOO-chay]
 265281	Benito_Mussolini	Benito (Amilcare Andrea) _Mussolini_
 315611	Benito_Mussolini	Benito (Amilcare Andrea) _Mussolini_
@@ -3027,7 +2985,6 @@
 235640	Benjamin Banneker	Benjamin _Banneker_
 11825	Benjamin Banneker	Benjamin _Banneker_
 8070	Benjamin Bonneville	Benjamin de _Bonneville_
-123791	Benjamin Butler (politician)	Benjamin (Franklin) _Butler_
 5476992fea23cca90550cfc1	Benjamin Disraeli	Benjamin {Disraeli} [or {Viscount Beaconsfield}; or {Lord Beaconsfield}; or Earl {Hughenden}; or {Lord Hughenden}]
 5476da94ea23cca905515453	Benjamin Disraeli	Benjamin {Disraeli}
 5476992eea23cca90550ba58	Benjamin Disraeli	Benjamin {Disraeli}
@@ -3084,7 +3041,7 @@
 5476a177ea23cca905510f95	Benjamin Harrison	Benjamin Harrison [prompt on "Harrison"]
 54769931ea23cca90550e7ac	Benjamin Harrison	{Benjamin Harrison} [prompt on Harrison]
 54769911ea23cca905509bbf	Benjamin Harrison	Benjamin Harrison (prompt on just last name)
-54769931ea23cca90550ea32	Benjamin Harrison	{Benjamin Harrison} 
+54769931ea23cca90550ea32	Benjamin Harrison	{Benjamin Harrison}
 302240	Benjamin Harrison	_B_enjamin _Harrison_ (prompt on "Harrison")
 59097	Benjamin Henry Latrobe	Benjamin Henry _Latrobe_
 5476992cea23cca90550a68e	Benjamin Henry Latrobe	Benjamin Henry ( Boneval ) {Latrobe}
@@ -3441,19 +3398,6 @@
 54769931ea23cca90550e7ce	Bernard Malamud	Bernard {Malamud}
 5476992fea23cca90550cc90	Bernard Malamud	Bernard {Malamud}
 260744	Bernard Malamud	Bernard _Malamud_
-3599	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard (Law) _Montgomery_
-339678	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard (Law) _Montgomery_(, 1st Viscount Montgomery of Alamein) (prompt on "Monty")
-9425	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard (Law) _Montgomery_
-189745	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard Law _Montgomery_(, 1st Viscount Montgomery) (prompt on "Monty")
-205321	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard (Law) _Montgomery_
-219770	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard Law _Montgomery_, 1st Viscount Montgomery of Alamein (prompt on "Monty")
-54769931ea23cca90550e278	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard Law {Montgomery}
-5414	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard Law _Montgomery_, 1st Viscount Montgomery of Alamein
-290972	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard (Law) _Montgomery_(, 1st Viscount Montgomery of Alamein) (prompt on "Monty")
-33705	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard Law _Montgomery_ (or 1st Viscount _Montgomery_ of Alamein)
-5476da9eea23cca90551c3c3	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard Law {Montgomery}
-45046	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard (Law) _Montgomery_(, 1st Viscount Montgomery of El Alamein)
-291005	Bernard Montgomery, 1st Viscount Montgomery of Alamein	Bernard (Law) _Montgomery_(, 1st Viscount Montgomery of Alamein) (prompt on "Monty")
 5476da99ea23cca905518b7b	Bernardo O'Higgins	Bernardo O'Higgins
 54769910ea23cca905508a51	Bernardo O'Higgins	Bernardo O'Higgins
 336907	Bernardo O'Higgins	Bernardo _O'Higgins_ (Riquelme)
@@ -3795,15 +3739,6 @@
 3503	Biafra	_Biafra_
 5476da9cea23cca90551a68f	Biedermeier	{Biedermeier }(4) [DL]
 5476da9fea23cca90551ccfd	Biff Tannen	{Biff} Tannen
-8582	Bifrost	_Bifrost_ (or _Asbru_)
-5476da93ea23cca905514250	Bifrost	Bifrost [accept Rainbow Bridge]
-74174	Bifrost	_Bifrost_ (accept _rainbow bridge_ until "rainbow")
-106366	Bifrost	_Bifrost_ (accept _Asbru_; accept _Rainbow Bridge_ early)
-5476992eea23cca90550bc3d	Bifrost	{Bifrost} [accept {Asbru} before mentioned]
-77659	Bifrost	_Bifrost_ (prompt on early "Rainbow Bridge")
-133733	Bifrost	_Bifrost_ (or _Bilr\:ost_ or _\'Asbr\'u_; prompt on "rainbow bridge" or equivalent early)
-56041	Bifrost	_Bifrost_ (accept _Asbru_ on early buzz; prompt on "rainbow bridge")
-139049	Bifrost	_Bifrost_
 25178	Big Bang	_big bang_
 46248	Big Bang	_big bang_
 115937	Big Bang	_Big Bang_
@@ -3819,10 +3754,6 @@
 291429	Big Brother (Nineteen Eighty-Four)	_Big Brother_ (accept _Big Brother Is Watching You_)
 79518	Big Dipper	_Big Dipper_ (accept "Ursa Major" or "Charles's Wain" or the "Wagon" or the "Plough")
 71947	Big Dipper	_Big Dipper_ (accept _Ursa Major_ or _Great Bear_ before "wagon")
-67187	Bigger Thomas	_Bigger_ _Thomas_ (accept either)
-5476da99ea23cca905518952	Bigger Thomas	{Bigger} {Thomas} [accept either underlined answer]
-5476a2aeea23cca905512c6c	Bigger Thomas	Bigger Thomas (accept either)
-111336	Bigger Thomas	_Bigger_ _Thomas_ (accept either)
 8009	Bighorn sheep	_bighorn sheep_ (accept _mountain sheep_)
 221358	Bikini Atoll	_Bikini_
 122393	Bikini Atoll	_Bikini_ Atoll (or _Pikinni_ Atoll)
@@ -3883,11 +3814,11 @@
 67228	Bill of attainder	_bill(s) of attainder_
 257467	Bill of attainder	bill of _attainder_
 118169	Bill_Onus	_onus_
-5476da93ea23cca905513fc2	Billiards at Half-past Nine	{Billiards at Half-Past Nine} [or {Billard um halb zehn}]
-5476da9cea23cca90551a6d6	Billiards at Half-past Nine	{Billiards at Half-Past Nine} (1) [AH]
-58b0b83b70b9154095719004	Billiards at Half-past Nine	Billiards at Half-Past Nine [or Billiard um halb zehn]
-54769933ea23cca90550fc3d	Billiards at Half-past Nine	{Billiards} at {Half}-{Past Nine}
-58b0b84370b91540957191d6	Billiards at Half-past Nine	Billiards at Half-past Nine [or Billard um halb zehn]
+5476da93ea23cca905513fc2	Billiards at Half-Past Nine	{Billiards at Half-Past Nine} [or {Billard um halb zehn}]
+5476da9cea23cca90551a6d6	Billiards at Half-Past Nine	{Billiards at Half-Past Nine} (1) [AH]
+58b0b83b70b9154095719004	Billiards at Half-Past Nine	Billiards at Half-Past Nine [or Billiard um halb zehn]
+54769933ea23cca90550fc3d	Billiards at Half-Past Nine	{Billiards} at {Half}-{Past Nine}
+58b0b84370b91540957191d6	Billiards at Half-Past Nine	Billiards at Half-Past Nine [or Billard um halb zehn]
 5476da98ea23cca905517ac6	Billie Holiday	Billie {Holiday}
 113381	Billie Holiday	Billie _Holiday_
 323577	Billie Holiday	Billie _Holiday_ (or Elinore _Harris_ or Eleanora _Fagan_)
@@ -3959,13 +3890,13 @@
 26197	Biosphere 2	_Biosphere 2_
 85935	Biosphere 2	_Biosphere 2_ (prompt on "Biosphere")
 115248	Biosphere 2	_Biosphere 2_ (prompt on "_Biosphere_")
-21503	Biot-Savart law	_Biot-Savart_ Law [BEE-o suh-VAR]
-35928	Biot-Savart law	_Biot-Savart_ law
-5476da9cea23cca90551a502	Biot-Savart law	{Biot-Savart Law}
-5476da9fea23cca90551ce4d	Biot-Savart law	{Biot-Savart} law
-5476da92ea23cca905513c60	Biot-Savart law	{Biot-Savart} Law
-5476da96ea23cca90551609f	Biot-Savart law	{Biot-Savart} Law
-122009	Biot-Savart law	_Biot-Savart_ [bee-oh suh-var] Law
+21503	Biot–Savart law	_Biot-Savart_ Law [BEE-o suh-VAR]
+35928	Biot–Savart law	_Biot-Savart_ law
+5476da9cea23cca90551a502	Biot–Savart law	{Biot-Savart Law}
+5476da9fea23cca90551ce4d	Biot–Savart law	{Biot-Savart} law
+5476da92ea23cca905513c60	Biot–Savart law	{Biot-Savart} Law
+5476da96ea23cca90551609f	Biot–Savart law	{Biot-Savart} Law
+122009	Biot–Savart law	_Biot-Savart_ [bee-oh suh-var] Law
 240202	Bipolar disorder	_bipolar_ (affective) disorder (prompt on "manic depression" or "manic depressive disorder"; do not prompt on "mania" or "depression")
 54769910ea23cca90550852d	Bipolar disorder	bipolar disorder [accept manic depression before it is mentioned]
 5476da9cea23cca90551a9e9	Bipolar disorder	{bipolar} disorder (I or II)
@@ -4151,14 +4082,14 @@
 32758	Black Sea	_Black_ Sea
 5476a1baea23cca90551161b	Black Sea	Black Sea
 5476da9dea23cca90551b534	Black Sea	{Black} Sea
-54769910ea23cca905508640	Black September (group)	Black September (or Aylul Aswad)
-129233	Black September (group)	_Black September_ (accept _BSO_)
-5472	Black September (group)	_Black September_ (or _Ailulal Aswad_ or _September al-Aswad_)
+54769910ea23cca905508640	Black September Organization	Black September (or Aylul Aswad)
+129233	Black September Organization	_Black September_ (accept _BSO_)
+5472	Black September Organization	_Black September_ (or _Ailulal Aswad_ or _September al-Aswad_)
 5476990fea23cca905507d6a	Black Skin, White Masks	Black Skin White Masks
 54769930ea23cca90550d42b	Black Skin, White Masks	Black {Skin}, {White Masks}
 5476da96ea23cca9055160de	Black Skin, White Masks	{Black Skin, White Masks}
 54769930ea23cca90550dc2f	Black Warrior Affair	{Black Warrior Affair}
-33389	Black Widow (Natalia Romanova)	_black widow_
+33389	Black_Widow_(Natasha_Romanova)	_black widow_
 260845	Black body	_black body_
 295282	Black body	_black body_ (accept _blackbody radiation_)
 158020	Black body	_black body_ (accept _blackbody spectrum_ or _blackbody radiation_)
@@ -4256,7 +4187,7 @@
 108577	Black hole	_black hole_
 54769930ea23cca90550d780	Black hole	{black holes}
 25177	Black hole	_black hole_s
-54769930ea23cca90550d281	Black-Scholes model	{Black}-{Scholes} model
+54769930ea23cca90550d281	Black–Scholes model	{Black}-{Scholes} model
 147497	BlackBerry	_BlackBerry_
 5476992fea23cca90550cef9	Blackbeard	{Blackbeard} [or Edward Teach; or Edward {Thatch}]
 1468	Blackbeard	_Blackbeard_  (accept early Edward _Teach_ or _Thatch_)
@@ -4284,7 +4215,6 @@
 23264	Blade Runner	_Blade Runner_
 5476a28aea23cca905512948	Blade Runner	Blade Runner
 54769910ea23cca90550837d	Blade Runner	Blade Runner
-24629	Blair House	_Blair_ House
 115729	Blaise_Pascal	Blaise _Pascal_
 219442	Blaise_Pascal	Blaise _Pascal_ (accept _Pascal's lima\,con_, _Pascal's line_s, _Pascal's Wager_, or _Pascal's triangle_)
 5476992dea23cca90550b233	Blaise_Pascal	Blaise {Pascal}
@@ -4337,10 +4267,10 @@
 66500	Blanche DuBois	_Blanche_ DuBois (prompt on "DuBois" alone)
 5476da93ea23cca90551474c	Blanche of Castile	{Blanche of Castile} (or {Blanca de Castilla}; prompt on "The White Queen" before mentioned) [4]
 5476da92ea23cca905513210	Blanche of Castile	{Blanche of Castile} (or {Blanca de Castilla}; prompt on partial answers)
-5476da93ea23cca905514522	Bland-Allison Act	Bland-Allison Act
-169481	Bland-Allison Act	_Bland-Allison_ Act
-5476da98ea23cca905517790	Bland-Allison Act	{Bland-Allison} Act
-54769911ea23cca905509744	Bland-Allison Act	Bland-Allison Act
+5476da93ea23cca905514522	Bland–Allison Act	Bland-Allison Act
+169481	Bland–Allison Act	_Bland-Allison_ Act
+5476da98ea23cca905517790	Bland–Allison Act	{Bland-Allison} Act
+54769911ea23cca905509744	Bland–Allison Act	Bland-Allison Act
 77937	Blank verse	_Blank Verse_
 5476da9eea23cca90551bd76	Blank verse	{blank verse}
 54769932ea23cca90550f197	Blastula	{blastula}
@@ -4374,9 +4304,9 @@
 107909	Blenheim Palace	_Blenheim_ [BLEN-hem] Palace
 5476990fea23cca905507561	Blenheim Palace	Blenheim Palace [prompt on "Palace of Woodstock" or obvious equivalents]
 5476daa0ea23cca90551d4ad	Blenheim Palace	Blenheim Palace
-190580	Blindness	_blindness_ (accept equivalents)
-35091	Blindness	_blind_ness (accept clear-knowledge equivalents)
-73699	Blindness	_blind_ness (accept equivalents)
+190580	Visual_impairment	_blindness_ (accept equivalents)
+35091	Visual_impairment	_blind_ness (accept clear-knowledge equivalents)
+73699	Visual_impairment	_blind_ness (accept equivalents)
 58b0b87570b9154095719cd1	Blithe Spirit (play)	Blithe Spirit
 5476992eea23cca90550c10d	Blithe Spirit (play)	{Blithe Spirit}
 5476da99ea23cca905518ce7	Blithe Spirit (play)	{Blithe Spirit}
@@ -4391,13 +4321,7 @@
 5476da94ea23cca905514da2	Blood Meridian	{Blood Meridian}
 5476990eea23cca905506f81	Blood Meridian	Blood Meridian
 54769912ea23cca905509c4e	Blood Meridian	Blood Meridian
-5476da94ea23cca9055153c2	Blood Wedding (play)	{Blood Wedding} (or {Bodas de Sangre})
-54769911ea23cca90550970e	Blood Wedding (play)	Blood Wedding
-54769930ea23cca90550d52a	Blood Wedding (play)	{Blood Wedding} [or {Bodas} de {Sangre}]
-5476a29aea23cca905512abd	Blood Wedding (play)	Blood Wedding [or Bodas de Sangre]
-5476da9eea23cca90551beaf	Blood Wedding (play)	{Blood Wedding}
-5476da9dea23cca90551ba87	Blood Wedding (play)	{Blood Wedding} (or {Bodas de Sangre})
-58b0b86870b91540957199d7	Blood Wedding (play)	Blood Wedding [or Bodas de sangre]
+5476da94ea23cca9055153c2	Blood Wedding	{Blood Wedding} (or {Bodas de Sangre})
 288405	Blood and Iron (speech)	_Blood and Iron_ (or _Blut und Eisen_; accept _Iron and Blood_ or _Eisen und Blut_)
 54769933ea23cca90550fc10	Blood on the Forge	{Blood} on the {Forge}
 287873	Bloody Assizes	_Bloody Assizes_
@@ -4503,23 +4427,14 @@
 5476da9fea23cca90551ce52	Bodhisattva	{Bodhisattva}
 149229	Body mass index	_body-mass index_ (accept _BMI_ early)
 63893	Boer	_Boer_s (accept "Afrikaaners" before "Afrikaaner" is read)
-275641	Boer Wars	(Second Anglo-)_Boer_ War
-281773	Boer Wars	(Second Anglo-)_Boer_ War (accept _South African_ War)
-298912	Boer Wars	(Second Anglo-)_Boer_ War (accept _South African_ War before "South African")
-54769931ea23cca90550e063	Boer Wars	{Boer} War [accept {Second Boer} War, {South African} War, or {Anglo}-{Boer} War; do not accept First {Boer} War]
-337813	Boer Wars	(Second Anglo-)_Boer_ War (accept _South African_ War before "South")
-212766	Boer Wars	(Second Anglo-)_Boer_ War (accept _South African_ War before it is mentioned)
-232543	Boer Wars	(Anglo-)_Boer_ Wars (do not accept or prompt on "South African War")
-6742	Boer Wars	_Boer_ War
-5476da9cea23cca90551a630	Boer Wars	Boer War
-299806	Boer Wars	(Second Anglo-)_Boer_ War (accept _South African_ War before "South African")
-1832	Boer Wars	(Second Anglo-)_Boer War_ (prompt on "South African" War)
-54769910ea23cca905508e24	Boer Wars	Boer Wars
-25783	Boer Wars	_Boer_ War
-5476a1f8ea23cca905511c03	Boer Wars	Boer Wars [or Vryheidsoorloë; prompt on Freedom Wars]
-33371	Boer Wars	_Boer_ War(s)
-312779	Boer Wars	(Anglo-)_Boer_ ["bore"] Wars
-257354	Boer Wars	(Anglo-)_Boer_ Wars
+275641	Second_Boer_War	(Second Anglo-)_Boer_ War
+281773	Second_Boer_War	(Second Anglo-)_Boer_ War (accept _South African_ War)
+298912	Second_Boer_War	(Second Anglo-)_Boer_ War (accept _South African_ War before "South African")
+54769931ea23cca90550e063	Second_Boer_War	{Boer} War [accept {Second Boer} War, {South African} War, or {Anglo}-{Boer} War; do not accept First {Boer} War]
+337813	Second_Boer_War	(Second Anglo-)_Boer_ War (accept _South African_ War before "South")
+212766	Second_Boer_War	(Second Anglo-)_Boer_ War (accept _South African_ War before it is mentioned)
+299806	Second_Boer_War	(Second Anglo-)_Boer_ War (accept _South African_ War before "South African")
+1832	Second_Boer_War	(Second Anglo-)_Boer War_ (prompt on "South African" War)
 33625	Boethius	_Boethius_ (or Anicius Manlius _Severinus_)
 206959	Boethius	(Anicius Manlius Severinus) _Boethius_ [boh-EE-thee-us]
 364006	Boethius	_Boethius_
@@ -4530,9 +4445,9 @@
 54769930ea23cca90550d443	Bogomilism	{Bogomils} [accept {variants} like {Bogomillism}]
 5476990fea23cca905507c12	Bogomilism	Bogomils [or Bogomilism or other word forms]
 5476da9cea23cca90551aaf2	Bogomilism	{Bogomils} (Accept {Bogomilism})
-105811	Bogota	_Bogot\'a_
-312169	Bogota	_Bogot\'a_ (Distrito Capital)
-5476992fea23cca90550d138	Bogota	{Bogota}
+105811	Bogotá	_Bogot\'a_
+312169	Bogotá	_Bogot\'a_ (Distrito Capital)
+5476992fea23cca90550d138	Bogotá	{Bogota}
 17899	Bohemia	_Bohemia_
 80472	Bohemia	_Bohemia_
 54769912ea23cca905509cc8	Bohemia	Bohemia
@@ -4579,7 +4494,7 @@
 158818	Bolero	_Bolero_
 54769910ea23cca905508a95	Bolero	Bolero
 164025	Bolero	_Bol\'ero_ [boh-LAY-roh]
-5476da96ea23cca9055169e8	Boleslaw Prus	Boleslaw {Prus} [or Aleksander {Glowacki}]
+5476da96ea23cca9055169e8	Bolesław_Prus	Boleslaw {Prus} [or Aleksander {Glowacki}]
 69992	Bolivia	(Republic of) _Bolivia_
 5476992fea23cca90550d0a1	Bolivia	{Bolivia}
 5476da93ea23cca905514441	Bolivia	Bolivia
@@ -4833,7 +4748,7 @@
 122011	Boomerang	_boomerang_
 136780	Boomerang	_boomerang_
 115746	Boomerang	_boomerang_
-24705	Bootes	_Bo\"otes_ (prompt on early "Herdsman")
+24705	Boötes	_Bo\"otes_ (prompt on early "Herdsman")
 265956	Booth Tarkington	Booth _Tarkington_
 5476da9aea23cca905518d6f	Booth Tarkington	Booth{ Tarkington}
 139153	Booth Tarkington	(Newton) Booth _Tarkington_
@@ -4880,14 +4795,14 @@
 253708	Boris Yeltsin	Boris (Nikolayevich) _Yeltsin_
 299738	Boris Yeltsin	Boris (Nikolayevich) _Yeltsin_ [KAL 007 was a Korean Air Lines flight shot down by the Soviet Union in 1983.]
 59120	Boris Yeltsin	Boris Nikolayevich _Yeltsin_
-5476da9eea23cca90551c127	Born-Oppenheimer approximation	{Born-Oppenheimer} approximation
-5476da94ea23cca9055153e7	Born-Oppenheimer approximation	{Born-Oppenheimer} approximation
-254549	Born-Oppenheimer approximation	_Born-Oppenheimer approximation_
-54769910ea23cca9055082b5	Born-Oppenheimer approximation	Born-Oppenheimer approximation
-5476da93ea23cca905514272	Born-Oppenheimer approximation	Born-Oppenheimer Approximation
-54769930ea23cca90550d2bb	Born-Oppenheimer approximation	{Born}-{Oppenheimer approximation}
-5476992fea23cca90550c970	Born-Oppenheimer approximation	{Born}-{Oppenheimer} approximation
-122168	Born-Oppenheimer approximation	_Born-Oppenheimer_ approximation (prompt on partial answers)
+5476da9eea23cca90551c127	Born–Oppenheimer approximation	{Born–Oppenheimer} approximation
+5476da94ea23cca9055153e7	Born–Oppenheimer approximation	{Born–Oppenheimer} approximation
+254549	Born–Oppenheimer approximation	_Born–Oppenheimer approximation_
+54769910ea23cca9055082b5	Born–Oppenheimer approximation	Born–Oppenheimer approximation
+5476da93ea23cca905514272	Born–Oppenheimer approximation	Born–Oppenheimer Approximation
+54769930ea23cca90550d2bb	Born–Oppenheimer approximation	{Born}-{Oppenheimer approximation}
+5476992fea23cca90550c970	Born–Oppenheimer approximation	{Born}-{Oppenheimer} approximation
+122168	Born–Oppenheimer approximation	_Born–Oppenheimer_ approximation (prompt on partial answers)
 54769911ea23cca905509aee	Borneo	Borneo
 238087	Borneo	_Borneo_ (accept _Kalimantan_)
 17902	Borneo	_Borneo_
@@ -4938,7 +4853,7 @@
 5476a241ea23cca9055122d5	Boron	boron [or B]
 5476990fea23cca9055076db	Boron	Boron
 320461	Boron	_boron_ (accept _boron trihydride_ or _BH|3|_)
-5476992fea23cca90550c5d4	Boron	boron 
+5476992fea23cca90550c5d4	Boron	boron
 299640	Boron	_boron_
 5476da94ea23cca905515321	Boron	{Boron}
 54769910ea23cca905508661	Boron	boron
@@ -5183,17 +5098,17 @@
 1013	Braille	_Braille_
 146214	Braille	_Braille_
 79663	Braille	_Braille_
-191356	Brain Trust	_Brain Trust_ (or _Brains Trust_)
+191356	The_Brains_Trust	_Brain Trust_ (or _Brains Trust_)
 5476da93ea23cca905514492	Bram Stoker	Bram Stoker
 73727	Bram Stoker	Bram (Abraham) _Stoker_
 56768	Bram Stoker	Bram _Stoker_
 214712	Bram Stoker	(Abraham) "Bram" _Stoker_
 211458	Bram Stoker	(Abraham) Bram _Stoker_
 106455	Bram Stoker	Bram (Abraham) _Stoker_
-5476da97ea23cca905516c13	Bran the Blessed	Bran (not the fiber)
-5476daa0ea23cca90551d531	Bran the Blessed	Bran
-54769910ea23cca90550871e	Bran the Blessed	Bran
-58b0b7a370b915409571732a	Bran the Blessed	Bran
+5476da97ea23cca905516c13	Brân_the_Blessed	Bran (not the fiber)
+5476daa0ea23cca90551d531	Brân_the_Blessed	Bran
+54769910ea23cca90550871e	Brân_the_Blessed	Bran
+58b0b7a370b915409571732a	Brân_the_Blessed	Bran
 5476a2bbea23cca905512d9a	Brancacci Chapel	{Brancacci Chapel} [or {Cappella dei Brancacci;} prompt on {\"Church of Santa Maria del Carmine\"}]
 68527	Branch Davidians	_Branch Davidian_s
 34938	Branch Davidians	_Branch Davidian_s
@@ -5242,20 +5157,20 @@
 146459	Branson, Missouri	_Branson_, Missouri
 126005	Branson, Missouri	_Branson_, Missouri
 137460	Branson, Missouri	_Branson_, Missouri
-5476da96ea23cca905516820	Brasilia	{Brasilia} (accept “Itamaraty Palace” if someone actually buzzes before the *)
-79943	Brasilia	_Brasilia_ (prompt on "Brazil" before the words "this city's")
-209701	Brasilia	_Bras\'ilia_
-106545	Brasilia	_Bras\'ilia_
-102298	Brasilia	_Brasilia_
-336489	Brasilia	_Bras\'ilia_
-112889	Brasilia	_Bras\'ilia_
-285116	Brasilia	_Brasilia_
-54769932ea23cca90550ef75	Brasilia	Brasilia
-106544	Brasilia	_Brasilia_
-115825	Brasilia	_Bras\'ilia_
-112890	Brasilia	_Bras\'ilia_
-327889	Brasilia	_Bras\'ilia_
-107653	Brasilia	_Bras\'ilia_
+5476da96ea23cca905516820	Brasília	{Brasília} (accept “Itamaraty Palace” if someone actually buzzes before the *)
+79943	Brasília	_Brasília_ (prompt on "Brazil" before the words "this city's")
+209701	Brasília	_Bras\'ilia_
+106545	Brasília	_Bras\'ilia_
+102298	Brasília	_Brasília_
+336489	Brasília	_Bras\'ilia_
+112889	Brasília	_Bras\'ilia_
+285116	Brasília	_Brasília_
+54769932ea23cca90550ef75	Brasília	Brasília
+106544	Brasília	_Brasília_
+115825	Brasília	_Bras\'ilia_
+112890	Brasília	_Bras\'ilia_
+327889	Brasília	_Bras\'ilia_
+107653	Brasília	_Bras\'ilia_
 54769910ea23cca905508d47	Brave New World	Brave New World
 5476990eea23cca9055070ca	Brave New World	Brave New World
 54769932ea23cca90550eff5	Brave New World	{Brave New World}
@@ -5560,8 +5475,8 @@
 148939	Britney Spears	Britney (Jean) _Spears_
 179395	Broadway (Manhattan)	_Broadway_
 160029	Broadway (Manhattan)	_Broadway_
-54769930ea23cca90550df13	Broadway Boogie-Woogie	{Broadway Boogie}-{Woogie}
-54769910ea23cca905508674	Broadway Boogie-Woogie	Broadway Boogie-Woogie
+54769930ea23cca90550df13	Broadway Boogie Woogie	{Broadway Boogie}-{Woogie}
+54769910ea23cca905508674	Broadway Boogie Woogie	Broadway Boogie Woogie
 5476da96ea23cca90551667f	Broken windows theory	Broken Windows theory
 5476990fea23cca905507178	Broken windows theory	broken windows theory
 5476992dea23cca90550b71a	Broken windows theory	{broken windows} theory
@@ -5817,16 +5732,6 @@
 5476da93ea23cca9055143f1	Bucharest	Bucharest
 8126	Bucharest	_Bucharest_
 54769911ea23cca905509474	Bucharest	Bucharest
-85324	Buck (dog)	_Buck_
-5476da9aea23cca90551953b	Buck (dog)	{Buck }
-5476a1e8ea23cca905511a6c	Buck (dog)	Buck
-101408	Buck (dog)	_Buck_
-162771	Buck (dog)	_Buck_
-257862	Buck (dog)	_Buck_
-10053	Buck (dog)	_Buck_
-60727	Buck (dog)	_Buck_
-14047	Buck (dog)	_Buck_
-5476da95ea23cca905515ad7	Buck (dog)	{Buck}
 5476990fea23cca905507783	Buck v. Bell	Buck v. Bell [or Bell v. Buck]
 46351	Buckwheat	_buckwheat_
 5476da9cea23cca90551ae78	Budapest	{Budapest}
@@ -5967,38 +5872,38 @@
 54769930ea23cca90550ddbb	Buried Child	{Buried Child}
 54769930ea23cca90550dfe9	Burj Khalifa	{Burj Khalifa} [accept {Burj Dubai} ]
 5476992fea23cca90550d15e	Burj Khalifa	Burj {Khalifa} (accept {Burj Dubai} until read)
-5476da9bea23cca905519a31	Burma	{Burma} (accept {“Myanmar”})
-5476990fea23cca905507a53	Burma	Burma [or Myanmar]
-5476da98ea23cca905517d20	Burma	Burma [accept Republic of the Union of Myanmar]
-58b0b85770b9154095719622	Burma	Burma [or Myanmar]
-5476da9eea23cca90551bf41	Burma	{Burma} [or {Myanmar}]
-5476da9eea23cca90551c324	Burma	{Burma} [or {Myanmar}]
-54769933ea23cca905510110	Burma	{Burma} [or Union of {Myanmar}]
-58b0b7f270b91540957180b2	Burma	Burma [accept Myanmar]
-5476a291ea23cca9055129ec	Burma	Burma [or the Republic of the Union of Myanmar]
-58b0b88470b915409571a04a	Burma	Burma [or Myanmar]
-54769932ea23cca90550ef4f	Burma	{Burma} [or {Myanmar}]
-54769933ea23cca905510046	Burma	{Burma} [or {Myanmar}]
-5476daa0ea23cca90551da09	Burma	Burma [or Republic of the Union of Myanmar]
-58b0b7c370b91540957177fb	Burma	Burma [accept Myanmar]
-5476da9aea23cca9055193e3	Burma	{Burma} [accept {Myanmar}]
-5476da9cea23cca90551ac35	Burma	{Burma} [or {Myanmar}]
-58b0b81470b9154095718775	Burma	Burma (accept Myanmar before mentioned)
-16039	Burma Road	_Burma_ Road
-54769933ea23cca90550fc41	Burma Road	{Burma} Road
-158719	Burma Road	_Burma Road_
+5476da9bea23cca905519a31	Myanmar	{Myanmar} (accept {“Myanmar”})
+5476990fea23cca905507a53	Myanmar	Myanmar [or Myanmar]
+5476da98ea23cca905517d20	Myanmar	Myanmar [accept Republic of the Union of Myanmar]
+58b0b85770b9154095719622	Myanmar	Myanmar [or Myanmar]
+5476da9eea23cca90551bf41	Myanmar	{Myanmar} [or {Myanmar}]
+5476da9eea23cca90551c324	Myanmar	{Myanmar} [or {Myanmar}]
+54769933ea23cca905510110	Myanmar	{Myanmar} [or Union of {Myanmar}]
+58b0b7f270b91540957180b2	Myanmar	Myanmar [accept Myanmar]
+5476a291ea23cca9055129ec	Myanmar	Myanmar [or the Republic of the Union of Myanmar]
+58b0b88470b915409571a04a	Myanmar	Myanmar [or Myanmar]
+54769932ea23cca90550ef4f	Myanmar	{Myanmar} [or {Myanmar}]
+54769933ea23cca905510046	Myanmar	{Myanmar} [or {Myanmar}]
+5476daa0ea23cca90551da09	Myanmar	Myanmar [or Republic of the Union of Myanmar]
+58b0b7c370b91540957177fb	Myanmar	Myanmar [accept Myanmar]
+5476da9aea23cca9055193e3	Myanmar	{Myanmar} [accept {Myanmar}]
+5476da9cea23cca90551ac35	Myanmar	{Myanmar} [or {Myanmar}]
+58b0b81470b9154095718775	Myanmar	Myanmar (accept Myanmar before mentioned)
+16039	Burma_Road	_Myanmar_ Road
+54769933ea23cca90550fc41	Burma_Road	{Myanmar} Road
+158719	Burma_Road	_Myanmar Road_
 5476daa0ea23cca90551d3f6	Burmese Days	{Burmese Days}
 54769910ea23cca905508b96	Burmese Days	Burmese Days
 58b0b85370b9154095719538	Burnt Norton	"Burnt Norton" [prompt on "the Four Quartets"]
 5476da93ea23cca90551439f	Burundi	Burundi
 54769910ea23cca905508bc8	Burundi	Burundi
 295107	Burundi	(Republic of) _Burundi_ (or R\'epublique du _Burundi_ or Republika y'u _Burundi_) [The Ruvyironza River is considered the remotest source of the Nile.]
-54769910ea23cca905508422	Bus Stop (play)	Bus Stop
-5476da99ea23cca905518ae9	Bus Stop (play)	Bus Stop
-32500	Bus Stop (play)	_Bus Stop_
-5476da96ea23cca9055160a6	Bus Stop (play)	{Bus Stop}
-5476990fea23cca90550779c	Bus Stop (play)	Bus Stop
-51045	Bus Stop (play)	_Bus Stop_
+54769910ea23cca905508422	Bus_Stop_(William_Inge_play)	Bus Stop
+5476da99ea23cca905518ae9	Bus_Stop_(William_Inge_play)	Bus Stop
+32500	Bus_Stop_(William_Inge_play)	_Bus Stop_
+5476da96ea23cca9055160a6	Bus_Stop_(William_Inge_play)	{Bus Stop}
+5476990fea23cca90550779c	Bus_Stop_(William_Inge_play)	Bus Stop
+51045	Bus_Stop_(William_Inge_play)	_Bus Stop_
 142795	Bush v. Gore	_Bush v. Gore_ or _George W. Bush, et al. v. Albert Gore, Jr., et al_
 54384	Bushido	_bushido_
 77890	Bushido	_bushido_
@@ -6160,7 +6065,7 @@
 76837	Camille_Saint-Saëns	Charles Camille _Saint-Sa\:ens_
 307335	Camille_Saint-Saëns	(Charles-)Camille _Saint-Sa\"ens_ [san-SAWNZ]
 48327	Camp (style)	_camp_
-316218	Canada-United States border	_border_ between the _United States_ and _Canada_ (accept all parts in any order; accept _U.S._A. or _America_ for "United States"; accept equivalents such as _boundary_ for "border"; accept _Maine_-_New Brunswick_ boundary or border before "Pig"; prompt on "International Boundary"; do not accept answers involving "Minnesota")
+316218	Canada–United States border	_border_ between the _United States_ and _Canada_ (accept all parts in any order; accept _U.S._A. or _America_ for "United States"; accept equivalents such as _boundary_ for "border"; accept _Maine_-_New Brunswick_ boundary or border before "Pig"; prompt on "International Boundary"; do not accept answers involving "Minnesota")
 274595	Cancer	_cancer_
 72037	Cancer (constellation)	_Cancer_
 54769933ea23cca90550feb0	Caravaggio	{Caravaggio} [or {Michelangelo Merisi}]
@@ -6555,9 +6460,9 @@
 280447	Charon (mythology)	_Charon_ [KAIR-un]
 38899	Charon (mythology)	_Charon_
 9338	Charon (mythology)	_Charon_
-172489	Chateau Louis XIV	_Louis XIV_
-289959	Chateau Louis XIV	_Louis XIV_ ["the fourteenth"] (prompt on "Louis")
-170713	Chateau Louis XIV	_Louis XIV_
+172489	Louis_XIV_of_France	_Louis XIV_
+289959	Louis_XIV_of_France	_Louis XIV_ ["the fourteenth"] (prompt on "Louis")
+170713	Louis_XIV_of_France	_Louis XIV_
 5476da92ea23cca9055137b0	Chattanooga Campaign	Battle of {Chattanooga}
 54769911ea23cca905509034	Chattanooga Campaign	Battle of Chattanooga
 54769910ea23cca905508166	Chattanooga Campaign	Battle of Chattanooga
@@ -7868,13 +7773,13 @@
 5476992cea23cca90550a947	Dick_Cheney	Richard "Dick" {Cheney}
 160158	Dido	_Dido_ [DY-doh]
 113419	Dido	_Dido_ (or _Elissa_)
-159117	Dido (Queen of Carthage)	_Dido_
-27210	Dido (Queen of Carthage)	_Dido_
-12688	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_)
-258812	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_ early)
-315858	Dido (Queen of Carthage)	_Dido_ (accept _Elissa_ before "Elissa")
-238170	Dido (Queen of Carthage)	_Dido_
-49773	Dido (Queen of Carthage)	_Dido_
+159117	Dido	_Dido_
+27210	Dido	_Dido_
+12688	Dido	_Dido_ (accept _Elissa_)
+258812	Dido	_Dido_ (accept _Elissa_ early)
+315858	Dido	_Dido_ (accept _Elissa_ before "Elissa")
+238170	Dido	_Dido_
+49773	Dido	_Dido_
 54769912ea23cca905509cdd	Diels–Alder_reaction	{Diels}-{Alder Reaction} (accept {diene synthesis} before it is mentioned)
 58b0b7d870b9154095717b83	Diels–Alder_reaction	Diels-Alder reaction
 54769912ea23cca905509f69	Diels–Alder_reaction	Diels-Alder reaction (accept diene synthesis on early buzz)
@@ -8193,7 +8098,7 @@
 304132	Duke of Wellington (title)	(Arthur _Wellesley_, 1st) Duke of _Wellington_ (accept either underlined name)
 228454	Duke of Wellington (title)	(Arthur _Wellesley_, 1st) Duke of _Wellington_ (accept either underlined name)
 327007	Duke of Wellington (title)	(Arthur _Wellesley_, 1st) Duke of _Wellington_ (accept either underlined name)
-52427	Dwarf (Germanic mythology)	_dwarves_
+52427	Dwarf (mythology)	_dwarves_
 101193	Dwarf (Middle-earth)	_dwarves_ (or _Naugrim_)
 101202	Dwarf (Middle-earth)	_dwarves_ (or _dwarf_)
 5476da9fea23cca90551ca11	Dwyane_Wade	Dwyane Wade
@@ -8996,7 +8901,7 @@
 58b0b80970b915409571854c	Electronegativity	Electronegativity
 294265	Electronegativity	_electronegativity_ (accept word forms)
 54769932ea23cca90550eea2	Electronegativity	{electronegativity}
-54769930ea23cca90550d30f	Electronegativity	electronegativity 
+54769930ea23cca90550d30f	Electronegativity	electronegativity
 54769931ea23cca90550e7a8	Electronegativity	electronegativity
 54769931ea23cca90550e9ad	Electronegativity	electronegativity
 95635	Electronegativity	_electronegativity_ (accept word forms)
@@ -9031,13 +8936,13 @@
 54769931ea23cca90550eb59	Electronegativity	{electronegativity}
 5476992eea23cca90550b9c5	Electronegativity	{electronegativity}
 159221	Ellas	_Greece_ or _Ellas_ or the _Hellenic Republic_
-294963	Emily Bronte	_Bront\:e_ [BRON-tay]
-241914	Emily Bronte	_Bront\:e_ (accept Anne _Bronte_ before 'Nelly Dean')
-5476da9aea23cca9055196d4	Emily Bronte	{Bronte}
-5476da9dea23cca90551b64a	Emily Bronte	{Bronte} [accept Anne {Bronte}, Charlotte {Bronte}, or Emily {Bronte}; accept {Bell} before read]
-31384	Emily Bronte	_Bront\"e_(s)
-39095	Emily Bronte	_Bront\:e_ (Charlotte, Emily, and Anne)
-290019	Emily Bronte	_Bront\"e_ [the sisters are Anne, Charlotte, and Emily Bront\"e]
+294963	Emily_Brontë	_Bront\:e_ [BRON-tay]
+241914	Emily_Brontë	_Bront\:e_ (accept Anne _Bronte_ before 'Nelly Dean')
+5476da9aea23cca9055196d4	Emily_Brontë	{Bronte}
+5476da9dea23cca90551b64a	Emily_Brontë	{Bronte} [accept Anne {Bronte}, Charlotte {Bronte}, or Emily {Bronte}; accept {Bell} before read]
+31384	Emily_Brontë	_Bront\"e_(s)
+39095	Emily_Brontë	_Bront\:e_ (Charlotte, Emily, and Anne)
+290019	Emily_Brontë	_Bront\"e_ [the sisters are Anne, Charlotte, and Emily Bront\"e]
 39159	Emma_Orczy	Baroness Emmuska _Orczy_ [ORT-see]
 58b0b86d70b9154095719ad1	Endoplasmic_reticulum	endoplasmic reticulum [or sarcoplasmic reticulum; or ER; or SR; or smooth endoplasmic reticulum; or smooth ER; or SER; or rough endoplasmic reticulum; or rough ER; or RER]
 54769931ea23cca90550ebb0	Endoplasmic_reticulum	{endoplasmic} reticulum [or ER]
@@ -9355,10 +9260,10 @@
 5476da9fea23cca90551d27a	Ether	{ether}s
 54769933ea23cca90550faef	Ether	ethers
 5476da98ea23cca905517728	Ether	{ether}s
-54769930ea23cca90550d395	Ether	ethers 
+54769930ea23cca90550d395	Ether	ethers
 136779	Ether	_ether_s
 54769910ea23cca9055085e8	Ether	ethers
-54769933ea23cca90551053d	Ether	ethers 
+54769933ea23cca90551053d	Ether	ethers
 5476990fea23cca905507e3a	Ether	ethers
 54769912ea23cca90550a100	Ether	ethers
 5476a195ea23cca905511285	Ether	ethers [accept epoxides before "acetal" but ask for a less specific answer afterwards]
@@ -9391,7 +9296,6 @@
 15834	Ethics	_ethics_
 25662	Ethics (Spinoza)	_Ethics_ (Demonstrated in a Geometrical Manner)
 25663	Ethics (Spinoza)	_Ethics_ (Demonstrated in a Geometrical Manner)
-237082	Ethics (book)	_Ethics_
 254474	Ethiopia	Federal Democratic Republic of _Ethiopia_
 338539	Ethiopia	Federal Democratic Republic of _Ethiopia_ (or _Ityop'iya_ Federalawi Demokrasiyawi Ripeblik)
 313494	Ethiopia	Federal Democratic Republic of _Ethiopia_ (or _Ityop'iya_ Federalawi Demokrasiyawi Ripeblik)
@@ -9614,9 +9518,6 @@
 4008	Europa (mythology)	_Europa_
 10300	Europa (mythology)	_Europa_
 10306	Europa (mythology)	_Europa_
-49226	Even function	_even_
-73953	Even function	_even_
-16456	Even number	_even_
 5476a1acea23cca9055114d4	Ezra_Pound	Ezra Weston Loomis Pound
 5476990fea23cca9055071a1	Ezra_Pound	Ezra Weston Loomis Pound
 54769931ea23cca90550e7d8	Ezra_Pound	Ezra {Pound}
@@ -10239,7 +10140,7 @@
 82197	Friction	(kinetic or static) _friction_(al force) (prompt on "resistance" on early buzz)
 5476990fea23cca9055079f1	Friction	friction
 5476a276ea23cca905512794	Friction	friction [accept word forms]
-54769930ea23cca90550d309	Friction	friction 
+54769930ea23cca90550d309	Friction	friction
 5476992eea23cca90550bc7d	Friction	friction
 54769931ea23cca90550e6b3	Friction	friction
 54769931ea23cca90550e8c3	Friction	friction
@@ -10786,11 +10687,11 @@
 279831	Monopoly (game)	_Monopoly_
 6234	Monopoly (game)	_Monopoly_
 309535	Monopoly (game)	_Monopoly_
-173091	Mouse (computing)	_mouse_
-71875	Mouse (computing)	_mouse_
-61036	Mouse (computing)	_mouse_
-170278	Mouse (computing)	_mouse_
-18343	Mouse (computing)	_mouse_
+173091	Computer_mouse	_mouse_
+71875	Computer_mouse	_mouse_
+61036	Computer_mouse	_mouse_
+170278	Computer_mouse	_mouse_
+18343	Computer_mouse	_mouse_
 186153	Nirvana	_nirvana_ (do not accept "moksha," "bodhi," or "enlightenment")
 258334	Nirvana	_nirvana_
 56658	Nirvana	_nirvana_
@@ -10928,7 +10829,7 @@
 189810	Second Boer War	(Second) _Boer_ [bor] War (accept _Anglo-Boer_ War; prompt on "South African War")
 207411	Second Boer War	(Second Anglo-)_Boer_ [bohr] War (prompt on "South African War" early)
 212769	Second Boer War	(Second Anglo-)_Boer War_ (accept _South African_ War before "South Africa")
-262615	Set (mythology)	_Seth_ (accept _Set_ or _Sheth_ or _Sutekh_ or _Seteh_ or _Setan_)
+262615	Set_(deity)	_Seth_ (accept _Set_ or _Sheth_ or _Sutekh_ or _Seteh_ or _Setan_)
 37680	Seth	_Seth_
 25785	Seth	_Seth_
 316848	Song of Solomon (novel)	_Song of Solomon_
@@ -11018,10 +10919,10 @@
 194638	Vulcan (hypothetical planet)	_Vulcan_
 203398	Vulcan (mythology)	_Vulcan_ (do not prompt on "Hephaestus")
 56719	Vulcan (mythology)	_Vulcan_
-208233	Winds	_wind_s (accept _eolian process_es)
-266490	Winds	_wind_s (accept katabatic _wind_s or _wind_ shear)
-291515	Winds	_wind_s (accept katabatic _wind_s, etc.)
-246398	Winds	(Greek) _wind_s
+208233	Wind	_wind_s (accept _eolian process_es)
+266490	Wind	_wind_s (accept katabatic _wind_s or _wind_ shear)
+291515	Wind	_wind_s (accept katabatic _wind_s, etc.)
+246398	Wind	(Greek) _wind_s
 288769	Zimbabwe	Republic of _Zimbabwe_
 71811	Zimbabwe	Republic of _Zimbabwe_
 188133	Zimbabwe	Republic of _Zimbabwe_
@@ -11295,7 +11196,7 @@
 54769910ea23cca905508920	Georg_Wilhelm_Friedrich_Hegel	Georg Wilhelm Friedrich Hegel
 54769931ea23cca90550e4a3	Georg_Wilhelm_Friedrich_Hegel	Georg Wilhelm Friedrich {Hegel}
 54769932ea23cca90550f1a5	Georg_Wilhelm_Friedrich_Hegel	Georg Wilhelm Friedrich {Hegel}
-5476992dea23cca90550b3b6	Georg_Wilhelm_Friedrich_Hegel	Georg Wilhelm Friedrich {Hegel} 
+5476992dea23cca90550b3b6	Georg_Wilhelm_Friedrich_Hegel	Georg Wilhelm Friedrich {Hegel}
 5476da9aea23cca905519662	Georg_Wilhelm_Friedrich_Hegel	G(eorg) W(ilhelm) F(riedrich) {Hegel}
 54769933ea23cca90550fc8c	Georg_Wilhelm_Friedrich_Hegel	Georg {Hegel}
 5476da9cea23cca90551aa97	Georg_Wilhelm_Friedrich_Hegel	Georg Wilhelm Friedrich {Hegel}
@@ -12892,19 +12793,6 @@
 5476992fea23cca90550c4b3	Henrik_Ibsen	Henrik {Ibsen}
 5476da98ea23cca905517d59	Henrik_Ibsen	Henrik Ibsen
 5476daa0ea23cca90551da21	Henrik_Ibsen	Henrik {Ibsen}
-58b0b88470b915409571a030	Henry Cabot Lodge	Henry Cabot Lodge
-58b0b88470b915409571a02f	Henry Cabot Lodge	Henry Cabot Lodge
-120487	Henry Cabot Lodge	Henry Cabot _Lodge_
-4283	Henry Cabot Lodge	Henry Cabot _Lodge_
-54769911ea23cca905509ab8	Henry Cabot Lodge	Henry Cabot Lodge
-112793	Henry Cabot Lodge	Henry Cabot _Lodge_ (do not accept "Henry Cabot Lodge, Jr.", who was his grandson)
-112794	Henry Cabot Lodge	Henry Cabot _Lodge_
-146250	Henry Cabot Lodge	Henry Cabot _Lodge_
-54769912ea23cca90550a33f	Henry Cabot Lodge	Henry Cabot Lodge
-15926	Henry Cabot Lodge	Henry Cabot _Lodge_
-2353	Henry Cabot Lodge	Henry Cabot _Lodge_
-119427	Henry Cabot Lodge, Jr.	Henry Cabot _Lodge_
-2649	Henry Cabot Lodge, Jr.	Henry Cabot _Lodge_
 6200	Henry IV of England	_Henry IV_
 241824	Henry IV of France	_Henry IV_ (prompt on "Henry"; prompt on "Henry the Impotent" or "Henry the Liberal" before "Holy Roman Empire"; do not prompt on any other bynames after "Holy Roman Empire")
 38951	Henry IV of France	_Henry IV_ (_Henry of Navarre_) (_Henry of Bourbon_) (_Henri De Navarre_) (_Henri De Bourbon_)
@@ -15888,7 +15776,6 @@
 146046	Large intestine	_colon_
 257409	Large intestine	_colon_
 118221	Large intestine	_colon_
-5476da98ea23cca905517c22	Late String Quartets (Beethoven)	{Beethoven string quartets}
 5476da95ea23cca905515ab0	Lazzaro_Spallanzani	Lazzaro {Spallanzani}
 5476daa0ea23cca90551d5d0	Le_Chatelier's_principle	{Le Chatelier}'s principle
 256492	Le_Chatelier's_principle	Le _Ch\^atelier_'s [luh CHAHT(-uh)-lee-yay's] principle
@@ -16320,7 +16207,7 @@
 58b0b82770b9154095718b83	Liver	liver
 261999	Liver	_liver_
 5476da94ea23cca905514ebd	Liver	{liver}
-54769930ea23cca90550d300	Liver	liver 
+54769930ea23cca90550d300	Liver	liver
 329435	Liver	_liver_
 5476992dea23cca90550abe8	Liver	{liver}
 58b0b7b670b9154095717736	Liver	liver
@@ -16545,18 +16432,6 @@
 54769932ea23cca90550eeeb	Ludwig_Wittgenstein	Ludwig {Wittgenstein}
 5476a1faea23cca905511c2a	Ludwig_Wittgenstein	Ludwig Wittgenstein
 5476a04eea23cca9055107fe	Ludwig_Wittgenstein	Ludwig Josef Johann Wittgenstein
-54769932ea23cca90550f531	Luftbrucke	{Berlin Airlift} [prompt on Operation Viddles before mentioned]
-5476da9eea23cca90551bf80	Luftbrucke	{Berlin Airlift}
-143025	Luftbrucke	_Berlin Airlift_
-279803	Luftbrucke	_Berlin Airlift_
-213101	Luftbrucke	_Berlin Airlift_
-205319	Luftbrucke	_Berlin Airlift_  (prompt on "Berlin" or "Berlin blockade")
-6739	Luftbrucke	_Berlin Airlift_
-280251	Luftbrucke	_Berlin Airlift_ (accept _Operation Vittles_ before it is mentioned)
-293018	Luftbrucke	(the) _Berlin Airlift_
-5476da97ea23cca905516eb6	Luftbrucke	{Berlin Airlift} [prompt on {Operation Vittles} until mentioned]
-7442	Luftbrucke	_Berlin Airlift_
-64663	Luftbrucke	_Berlin Airlift_
 110886	Luge	_luge_ing
 5476992fea23cca90550caba	Luigi_Pirandello	Luigi Pirandello
 5476a1cdea23cca9055117e4	Luigi_Pirandello	Luigi Pirandello
@@ -16649,7 +16524,7 @@
 58b0b80870b9154095718506	Lysosome	Lysosomes
 5476da9bea23cca905519d67	Lysosome	{lysosomes}
 5476990eea23cca905506f76	Lysosome	lysosomes
-5476992eea23cca90550c42f	Lysosome	Lysosomes 
+5476992eea23cca90550c42f	Lysosome	Lysosomes
 285126	Lysosome	_lysosome_s [LYE-suh-zohms] (accept _lysosomal_ storage disorder)
 101529	Léon_Foucault	_Foucault's Pendulum_ [foo-KOH] or Il _pendolo di Foucault_
 19231	Léon_Foucault	Jean Bernard Leon _Foucault_ [foo-KOH]
@@ -16667,15 +16542,6 @@
 46232	M*A*S*H	_MASH _
 31549	M*A*S*H (TV series)	_MASH_
 219391	M*A*S*H (TV series)	_MASH_
-28869	Macbeth	_Macbeth_
-75400	Macbeth	_Macbeth_
-27769	Macbeth (Gargoyles)	_Macbeth_
-2940	Macbeth (Gargoyles)	_Macbeth_
-15720	Macbeth (character)	_Macbeth_
-31070	Macbeth (character)	_Macbeth_
-107420	Macbeth (character)	_Macbeth_
-28867	Macbeth (character)	_Macbeth_
-157034	Macbeth (character)	_Macbeth_
 5476da99ea23cca905518721	Maccabees	Books of {Maccabees}
 58b0b87370b9154095719c2c	Madagascar	Madagascar
 58b0b80e70b915409571866e	Madagascar	Madagascar
@@ -17522,12 +17388,12 @@
 27842	Mass (music)	_mass_
 54769933ea23cca905510324	Matchbox_Twenty	{Matchbox Twenty}
 54769930ea23cca90550ddc1	Mateo_Falcone	"{Mateo Falcone}"
-100278	Matsuo Basho	_Basho_ Matsuo (accept _Munefusa_ Matsuo on early buzz)
-5476daa0ea23cca90551d818	Matsuo Basho	{Basho} Matsuo
-117907	Matsuo Basho	_Basho_ Matsuo (or _Munefusa_ Matsuo)
-5476da98ea23cca905517fb0	Matsuo Basho	{Basho} Matsuo (or {Munefusa} Matsuo)
-85418	Matsuo Basho	_Basho_ Matsuo (or _Munefusa_ Matsuo)
-5476daa0ea23cca90551d955	Matsuo Basho	{Basho} Matsuo
+100278	Matsuo Bashō	_Bashō_ Matsuo (accept _Munefusa_ Matsuo on early buzz)
+5476daa0ea23cca90551d818	Matsuo Bashō	{Bashō} Matsuo
+117907	Matsuo Bashō	_Bashō_ Matsuo (or _Munefusa_ Matsuo)
+5476da98ea23cca905517fb0	Matsuo Bashō	{Bashō} Matsuo (or {Munefusa} Matsuo)
+85418	Matsuo Bashō	_Bashō_ Matsuo (or _Munefusa_ Matsuo)
+5476daa0ea23cca90551d955	Matsuo Bashō	{Bashō} Matsuo
 54769933ea23cca905510543	Maurice_Ravel	Maurice {Ravel}
 5476da94ea23cca905514dcb	Maurice_Ravel	Maurice {Ravel}
 58b0b81770b915409571881d	Maurice_Ravel	Maurice Ravel [or Joseph-Maurice Ravel]
@@ -18091,11 +17957,11 @@
 314788	Monopoly (game)	_Monopoly_
 5476da93ea23cca9055144af	Morarji_Desai	Morarji Desai
 5476da92ea23cca905513af8	Mount_Kailash	Mount {Kailash}
-61036	Mouse (computing)	_mouse_
-170278	Mouse (computing)	_mouse_
-71875	Mouse (computing)	_mouse_
-18343	Mouse (computing)	_mouse_
-173091	Mouse (computing)	_mouse_
+61036	Computer_mouse	_mouse_
+170278	Computer_mouse	_mouse_
+71875	Computer_mouse	_mouse_
+18343	Computer_mouse	_mouse_
+173091	Computer_mouse	_mouse_
 5476da92ea23cca905513b64	Mr._Tambourine_Man	“Mr. Tambourine Man”
 54769930ea23cca90550db7b	Mughal_Empire	{Mughal} empire/dynasty
 58b0b7ea70b9154095717f18	Mughal_Empire	Mughal Empire [accept Mughal Dynasty]
@@ -18171,43 +18037,43 @@
 141100	Mustafa_Kemal_Atatürk	Mustafa _Kemal_ _Atat\:urk_ (accept either)
 141099	Mustafa_Kemal_Atatürk	Mustafa _Kemal_ _Atat\:urk_ (accept either)
 5476992dea23cca90550b5c8	Mustafa_Kemal_Atatürk	{Mustafa Kemal Ataturk} [accept either]
-314553	Myanmar	(Union of) _Burma_ or (Union of) _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
-283972	Myanmar	Union of _Myanmar_ (accept _Burma_ before it is mentioned)
-213402	Myanmar	Union of _Myanmar_ or Union of _Burma_
-190038	Myanmar	Union of _Myanmar_ or Union of _Burma_
-5476da9fea23cca90551c861	Myanmar	Union of {Myanmar} or {Burma } or Pyidaungzu {Myanma} Naingngandaw
-170837	Myanmar	Union of _Myanmar_, _Burma_, Burmese _Myanmar_, or Pyidaungzu _Myanma_ Naingngandaw
-121237	Myanmar	Union of _Myanmar_ or _Burma_
-291279	Myanmar	Republic of the Union of _Myanmar_ (accept _Burma_ before it is mentioned)
-337042	Myanmar	Union of _Myanmar_ (or Union of _Burma_ or Pyidaungzu _Myanma_ Naingngandaw)
-222876	Myanmar	Union of _Burma_ or Union of _Myanmar_
-5476da93ea23cca9055144bf	Myanmar	Burma or Myanmar
-245843	Myanmar	Union of _Myanmar_ or Union of _Burma_
-5476da98ea23cca905517c2c	Myanmar	{Burma} or {Myanmar}
-335752	Myanmar	Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw; accept Union of _Burma_ before it is read)
-5476da97ea23cca905517339	Myanmar	Republic of the Union of {Myanmar} (or {Burma})
-173095	Myanmar	Union of _Myanmar_ or Union of _Burma_
-56193	Myanmar	Union of _Myanmar_ or _Burma_
-276081	Myanmar	Union of _Burma_ or Union of _Myanmar_ early
-325107	Myanmar	Union of _Burma_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
-5476990fea23cca9055076e9	Myanmar	Union of Myanmar; or Burma
-54769933ea23cca90550fdfd	Myanmar	Union of {Myanmar} [or {Burma}]
-5476da93ea23cca9055140f1	Myanmar	{Burma} or {Myanmar}
-5476a055ea23cca9055108b6	Myanmar	Union of Myanmar [or Pyidaunzu My?ma Nainngandaw; accept Burma before mentioned]
-5476da9cea23cca90551aa46	Myanmar	Union of {Myanmar} [or Thammada {Myanmar} Naingngandaw; prompt on Burma]
-327692	Myanmar	Union of _Burma_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
-5476992dea23cca90550b2b7	Myanmar	Republic of the Union of {Myanmar} [accept {Burma} before mention]
-231989	Myanmar	Union of _Myanmar_ or Union of _Burma_
-162346	Myanmar	_Myanmar_ or _Burma_
-211766	Myanmar	Union of _Burma_ or Union of _Myanmar_
-5476da93ea23cca9055146d2	Myanmar	{Burma} or {Myanmar} (or accept {Pagan} kingdom before mentioned)
-300984	Myanmar	(Union of) _Burma_ or (Union of) _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
-173839	Myanmar	Union of _Myanmar_ or Union of _Burma_
-339392	Myanmar	Union of _Burma_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
-310155	Myanmar	Union of _Burma_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
-173645	Myanmar	Union of _Myanmar_ (or Union of _Myanma_ or Union of _Burma_)
-200351	Myanmar	Union of _Myanmar_ (accept Union of _Burma_ early)
-54769932ea23cca90550f5f8	Myanmar	Union of {Myanmar} [or {Burma}]
+314553	Myanmar	(Union of) _Myanmar_ or (Union of) _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
+283972	Myanmar	Union of _Myanmar_ (accept _Myanmar_ before it is mentioned)
+213402	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+190038	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+5476da9fea23cca90551c861	Myanmar	Union of {Myanmar} or {Myanmar } or Pyidaungzu {Myanma} Naingngandaw
+170837	Myanmar	Union of _Myanmar_, _Myanmar_, Burmese _Myanmar_, or Pyidaungzu _Myanma_ Naingngandaw
+121237	Myanmar	Union of _Myanmar_ or _Myanmar_
+291279	Myanmar	Republic of the Union of _Myanmar_ (accept _Myanmar_ before it is mentioned)
+337042	Myanmar	Union of _Myanmar_ (or Union of _Myanmar_ or Pyidaungzu _Myanma_ Naingngandaw)
+222876	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+5476da93ea23cca9055144bf	Myanmar	Myanmar or Myanmar
+245843	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+5476da98ea23cca905517c2c	Myanmar	{Myanmar} or {Myanmar}
+335752	Myanmar	Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw; accept Union of _Myanmar_ before it is read)
+5476da97ea23cca905517339	Myanmar	Republic of the Union of {Myanmar} (or {Myanmar})
+173095	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+56193	Myanmar	Union of _Myanmar_ or _Myanmar_
+276081	Myanmar	Union of _Myanmar_ or Union of _Myanmar_ early
+325107	Myanmar	Union of _Myanmar_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
+5476990fea23cca9055076e9	Myanmar	Union of Myanmar; or Myanmar
+54769933ea23cca90550fdfd	Myanmar	Union of {Myanmar} [or {Myanmar}]
+5476da93ea23cca9055140f1	Myanmar	{Myanmar} or {Myanmar}
+5476a055ea23cca9055108b6	Myanmar	Union of Myanmar [or Pyidaunzu My?ma Nainngandaw; accept Myanmar before mentioned]
+5476da9cea23cca90551aa46	Myanmar	Union of {Myanmar} [or Thammada {Myanmar} Naingngandaw; prompt on Myanmar]
+327692	Myanmar	Union of _Myanmar_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
+5476992dea23cca90550b2b7	Myanmar	Republic of the Union of {Myanmar} [accept {Myanmar} before mention]
+231989	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+162346	Myanmar	_Myanmar_ or _Myanmar_
+211766	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+5476da93ea23cca9055146d2	Myanmar	{Myanmar} or {Myanmar} (or accept {Pagan} kingdom before mentioned)
+300984	Myanmar	(Union of) _Myanmar_ or (Union of) _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
+173839	Myanmar	Union of _Myanmar_ or Union of _Myanmar_
+339392	Myanmar	Union of _Myanmar_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
+310155	Myanmar	Union of _Myanmar_ or Union of _Myanmar_ (or Pyidaungzu _Myanma_ Naingngandaw)
+173645	Myanmar	Union of _Myanmar_ (or Union of _Myanma_ or Union of _Myanmar_)
+200351	Myanmar	Union of _Myanmar_ (accept Union of _Myanmar_ early)
+54769932ea23cca90550f5f8	Myanmar	Union of {Myanmar} [or {Myanmar}]
 5476da9aea23cca905518e2b	Nadine_Gordimer	Nadine {Gordimer}
 5476a1b2ea23cca90551155e	Nadine_Gordimer	Nadine Gordimer
 5476a17bea23cca905510ffb	Nadine_Gordimer	Nadine Gordimer
@@ -18684,7 +18550,7 @@
 240110	Night of the Long Knives	_Night of the Long Knives_ (accept _R\:ohm Putsch_ before his name is mentioned)
 212907	Night of the Long Knives	_Night of the Long Knives_ (or _Nacht der langen Messer_)
 33739	Night of the Long Knives	_Night of the Long Knives_ (or die _Nacht der langen Messer_)
-212906	Night of the Long Knives (Arthurian)	_Night of the Long Knives_
+212906	Treachery_of_the_Long_Knives	_Night of the Long Knives_
 295894	Nikita_Khrushchev	Nikita (Sergeyevich) _Khrushchev_ [kroosh-CHOFF]
 5476990fea23cca90550711d	Nikita_Khrushchev	Nikita Sergeyevich Khrushchev
 54769933ea23cca9055101c1	Nikita_Khrushchev	Nikita {Khrushchev}
@@ -19660,13 +19526,13 @@
 291182	Pericles	_Pericles_
 1224	Pericles	_Pericles_
 189817	Pericles	_Pericles_
-4729	Persuasion (1971 series)	_Persuasion_
-273450	Persuasion (1971 series)	_Persuasion_
-172714	Persuasion (1971 series)	_Persuasion_
-49707	Persuasion (1971 series)	_Persuasion_
-35135	Persuasion (1971 series)	_Persuasion_
-284709	Persuasion (1971 series)	_Persuasion_
-363128	Persuasion (1971 series)	_Persuasion_
+4729	Persuasion_(novel)	_Persuasion_
+273450	Persuasion_(novel)	_Persuasion_
+172714	Persuasion_(novel)	_Persuasion_
+49707	Persuasion_(novel)	_Persuasion_
+35135	Persuasion_(novel)	_Persuasion_
+284709	Persuasion_(novel)	_Persuasion_
+363128	Persuasion_(novel)	_Persuasion_
 5476da9fea23cca90551cac0	Peter_Paul_Rubens	Peter Paul {Rubens}
 265867	Peter_Paul_Rubens	Peter Paul _Rubens_
 5476da9aea23cca9055193c3	Peter_Paul_Rubens	Peter Paul {Rubens}
@@ -21860,10 +21726,9 @@
 5476da92ea23cca9055137ee	Sergei_Rachmaninoff	Sergei {Rachmaninoff}
 5476da9aea23cca90551934d	Sergei_Rachmaninoff	Sergei Vasilyevich {Rachmaninoff}
 34411	Sergei_Rachmaninoff	Sergei (Vasilyevich) _Rachmaninoff_
-262615	Set (mythology)	_Seth_ (accept _Set_ or _Sheth_ or _Sutekh_ or _Seteh_ or _Setan_)
+262615	Set_(deity)	_Seth_ (accept _Set_ or _Sheth_ or _Sutekh_ or _Seteh_ or _Setan_)
 25785	Seth	_Seth_
 37680	Seth	_Seth_
-5476da97ea23cca90551752f	Sherman Silver Purchase Act	{Bland-Allison} Silver Purchase Act
 9138	Shirley_Povich	_S_hirley _Povich_
 5476da9dea23cca90551b17c	Siege of Yorktown	Battle of Yorktown [Accept Siege of Yorktown.]
 5476990fea23cca905507a07	Siege of Yorktown	Battle of Yorktown [accept Siege of Yorktown]
@@ -22136,7 +22001,7 @@
 212866	Sofoklis_Schortsanitis	_Sophocles_ [SAH-fuh-kleez]
 5476da9eea23cca90551c294	Sofoklis_Schortsanitis	{Sophocles}
 53341	Sofoklis_Schortsanitis	_Sophocles_
-5476992fea23cca90550c59e	Sofoklis_Schortsanitis	{Sophocles} 
+5476992fea23cca90550c59e	Sofoklis_Schortsanitis	{Sophocles}
 187157	Sofoklis_Schortsanitis	_Sophocles_ [SOF-uh-kleez]
 169758	Sofoklis_Schortsanitis	_Sophocles_ [SAH-fuh-kleez]
 321577	Sofoklis_Schortsanitis	_Sophocles_
@@ -22414,7 +22279,7 @@
 5476da99ea23cca905518740	St. Peter's Basilica	{Basilica of Saint Peter} (accept: {St. Peter’s Basilica} or {Basilica di San Pietro in Vaticano})
 5476da91ea23cca9055131af	Stanislao_Cannizzaro	Stanislao {Cannizaro}
 54769910ea23cca905508683	Stationary_front	stationary front
-5476da9cea23cca90551ab22	Stephen Bathory	{Bathory} (accept Stephan Bathory before Tigress)
+5476da9cea23cca90551ab22	Stephen Báthory	{Bathory} (accept Stephan Bathory before Tigress)
 77871	Stephen_Crane	Stephen _Crane_
 5476992dea23cca90550b079	Stephen_Crane	Stephen {Crane}
 54769932ea23cca90550f02a	Stephen_Crane	Stephen Crane
@@ -22492,7 +22357,7 @@
 36892	Stoicism	_Stoic_ism
 5476da9aea23cca905519461	Stoicism	{Stoicism}
 5476da91ea23cca905512fa6	Stoicism	Stoicism (accept word forms like Stoics)
-54769932ea23cca90550f6a0	Stoicism	Stoicism 
+54769932ea23cca90550f6a0	Stoicism	Stoicism
 54769910ea23cca9055084ab	Stoicism	Stoicism
 54769930ea23cca90550e01f	Stoicism	Stoicism
 58b0b84170b9154095719173	Stoicism	Stoicism
@@ -24048,14 +23913,14 @@
 2742	Tibet	_Tibet_ (Autonomous Region)
 202663	Tibet	_Tibet_
 281722	Tibet	_Tibet_
-242151	Tibet (1912-51)	_Tibet_ (accept _Xizang_ Autonomous Region)
+242151	Tibet	_Tibet_ (accept _Xizang_ Autonomous Region)
 253809	Tithonus	_Tithonus_
 109311	Tithonus	_Tithonus_
 107421	Tithonus (poem)	_Tithonus_
-190216	Titius-Bode law	_Bode_'s law or Titius-_Bode_ law
-8054	Titius-Bode law	_Bode's_ Law or _Titius-Bode_ Law
-59041	Titius-Bode law	_Bode_'s law or Titius-_Bode_ law
-76723	Titius-Bode law	_Bode_'s law or Titius-_Bode_ law
+190216	Titius–Bode law	_Bode_'s law or Titius-_Bode_ law
+8054	Titius–Bode law	_Bode's_ Law or _Titius-Bode_ Law
+59041	Titius–Bode law	_Bode_'s law or Titius-_Bode_ law
+76723	Titius–Bode law	_Bode_'s law or Titius-_Bode_ law
 54769930ea23cca90550d383	Titration	({acid}-{base}) {titration} [accept {zeta potential} or {complexometric titration} early]
 5476da97ea23cca905516f26	Titration	{Titration}
 5476992eea23cca90550b80e	Titration	{titration}
@@ -24822,7 +24687,7 @@
 331383	Viscosity	_viscosity_
 58b0b7b170b91540957175df	Viscosity	viscosity [accept kinetic viscosity before "poise"]
 5476992dea23cca90550b138	Viscosity	{viscosity}
-5476992dea23cca90550abb1	Viscosity	viscosity 
+5476992dea23cca90550abb1	Viscosity	viscosity
 58b0b80d70b9154095718631	Viscosity	viscosity [do not accept word forms]
 5476992fea23cca90550cad7	Viscosity	{viscosity}
 182219	Viscosity	_viscosity_ (accept word forms)
@@ -25333,7 +25198,6 @@
 363884	Western_Athletic_Conference	_W_estern _A_thletic _C_onference or _WAC_
 5476a05eea23cca905510994	Wh-movement	wh-movement [or wh-extraction; or wh-fronting; prompt on A-bar movement]
 235253	Wheaties	_Wheaties_
-193202	White_phosphorus	_white phosphorus_ (accept _yellow phosphorus_; prompt on "phosphorus" early)
 54769911ea23cca9055091ae	Willa_Cather	Willa Cather
 174939	Willa_Cather	Willa (Sibert) _Cather_
 337051	Willa_Cather	Willa (Sibert) _Cather_
@@ -25649,22 +25513,22 @@
 5476da96ea23cca90551626e	William_Wordsworth_(composer)	William Wordsworth
 5476992dea23cca90550b1dc	William_Wordsworth_(composer)	William {Wordsworth}
 58b0b7f770b91540957181da	William_Wordsworth_(composer)	William Wordsworth
-5476da97ea23cca90551735f	Winds	{wind}s
-340307	Winds	_wind_s
-5476da9cea23cca90551adce	Winds	{wind}s
-5476da95ea23cca905515df2	Winds	{Wind}s
-120596	Winds	_wind_s
-5476992cea23cca90550a80e	Winds	{winds}
-291515	Winds	_wind_s (accept katabatic _wind_s, etc.)
-226305	Winds	_wind_s
-208233	Winds	_wind_s (accept _eolian process_es)
-266490	Winds	_wind_s (accept katabatic _wind_s or _wind_ shear)
-54769933ea23cca905510141	Winds	{winds}
-58b0b7ce70b9154095717912	Winds	Winds
-58b0b81370b915409571874f	Winds	winds
-33296	Winds	_wind_s
-329078	Winds	_wind_s
-246398	Winds	(Greek) _wind_s
+5476da97ea23cca90551735f	Wind	{wind}s
+340307	Wind	_wind_s
+5476da9cea23cca90551adce	Wind	{wind}s
+5476da95ea23cca905515df2	Wind	{Wind}s
+120596	Wind	_wind_s
+5476992cea23cca90550a80e	Wind	{winds}
+291515	Wind	_wind_s (accept katabatic _wind_s, etc.)
+226305	Wind	_wind_s
+208233	Wind	_wind_s (accept _eolian process_es)
+266490	Wind	_wind_s (accept katabatic _wind_s or _wind_ shear)
+54769933ea23cca905510141	Wind	{winds}
+58b0b7ce70b9154095717912	Wind	Winds
+58b0b81370b915409571874f	Wind	winds
+33296	Wind	_wind_s
+329078	Wind	_wind_s
+246398	Wind	(Greek) _wind_s
 31425	Winslow_Homer	Winslow _Homer_
 5476a073ea23cca905510b9f	Winslow_Homer	Winslow Homer
 5476da96ea23cca90551633e	Winslow_Homer	Winslow {Homer}
