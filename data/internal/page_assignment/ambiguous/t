@@ -5,8 +5,8 @@ the ambassadors	The Ambassadors	henry:james:strether
 the ambassadors	The Ambassadors	james
 the ambassadors	The Ambassadors (Holbein)	holbein:skull
 the ambassadors	The Ambassadors (Holbein)	holbein
-tempest	The Tempest	miranda:sycorax
 tempest	The Tempest	shakespeare
+tempest	The Tempest	miranda:sycorax
 tempest	The Tempest (Giorgione)	giorgione
 the book of mormon	The_Book_of_Mormon (musical)	parker:rudin:uganda
 the english patient	The_English_Patient
@@ -28,8 +28,8 @@ titan	Titan
 titian	Titan_(moon)	moon
 titian	Titan_(mythology)
 titan	Titan_(rocket_family)	rocket
-tithonus	Tithonus	trojan:troy:eos
 tithonus	Tithonus
+tithonus	Tithonus	trojan:troy:eos
 tithonus	Tithonus (poem)	poem:tennyson
 square	Town_square	towns:town:city:cities
 transformer	Transformer
@@ -45,6 +45,6 @@ triton	Triton (mythology)
 tropic of cancer	Tropic_of_Cancer
 tropic of cancer	Tropic_of_Cancer_(novel)	miller
 tropic of capricorn	Tropic_of_Capricorn	Growth_factor
-turkey	Turkey	ankara:istanbul:anatolia:kemal:mediterranean:troy:armenian:pamuk:erdoga
 turkey	Turkey
+turkey	Turkey	ankara:istanbul:anatolia:kemal:mediterranean:troy:armenian:pamuk:erdoga
 turkey	Turkey (bird)	bird

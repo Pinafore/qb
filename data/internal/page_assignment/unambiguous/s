@@ -24,14 +24,14 @@ saint stephen	Saint_Stephen
 saint thomas	Saint_Thomas
 timothy	Saint_Timothy
 st valentines day massacre	Saint_Valentine's_Day_Massacre
-sakhalin	Sakhalin
 sakhalin island	Sakhalin
-saki also accept h h munro	Saki
-saki h munro	Saki
+sakhalin	Sakhalin
+saki or h h munro	Saki
+h h munro or saki	Saki
 saki or hector hugh munro	Saki
 saki	Saki
-h h munro or saki	Saki
-saki or h h munro	Saki
+saki also accept h h munro	Saki
+saki h munro	Saki
 saladin	Saladin
 salamis	Salamis
 salem witch trials	Salem_witch_trials
@@ -42,9 +42,9 @@ saliva	Saliva
 salivary glands	Salivary_gland
 sally hemings	Sally_Hemings
 ahmed salman rushdie	Salman Rushdie
-sir ahmed salman rushdie	Salman_Rushdie
-salmon rushdie	Salman_Rushdie
 salman rushdie	Salman_Rushdie
+salmon rushdie	Salman_Rushdie
+sir ahmed salman rushdie	Salman_Rushdie
 sir salman rushdie	Salman_Rushdie
 salmon	Salmon
 salmon portland chase	Salmon_P._Chase
@@ -53,13 +53,13 @@ salmonella	Salmonella
 salome	Salome
 1863 salon de refuses	Salon_des_Refusés
 salt march to dandi	Salt_March
-salt march	Salt_March
 gandhis salt march	Salt_March
+salt march	Salt_March
 salton sea	Salton_Sea
 salvador allende	Salvador_Allende
 salvador allende gossens	Salvador_Allende
-salvador dalí	Salvador_Dalí
 salvador dalí y domenech	Salvador_Dalí
+salvador dalí	Salvador_Dalí
 salvador dali	Salvador_Dalí
 samuel houston	Sam_Houston
 sam shepard	Sam_Shepard
@@ -77,8 +77,8 @@ samuel colt	Samuel_Colt
 samuel gompers	Samuel_Gompers
 samuel jones tilden	Samuel_J._Tilden
 samuel j tilden	Samuel_J._Tilden
-dr samuel johnson	Samuel_Johnson
 samuel johnson	Samuel_Johnson
+dr samuel johnson	Samuel_Johnson
 samuel pepys	Samuel_Pepys
 samuel richardson	Samuel_Richardson
 samuel taylor coleridge	Samuel_Taylor_Coleridge
@@ -148,8 +148,8 @@ schmalkaldic league	Schmalkaldic_League
 scholasticism	Scholasticism
 buddhism or buddhist religion	Schools_of_Buddhism
 schrodingers cat	Schrödinger's_cat
-schrodinger equation	Schrödinger_equation
 schrodingers equation	Schrödinger_equation
+schrodinger equation	Schrödinger_equation
 beethoven piano sonatas	Schubert's last sonatas
 franz schubert	Schubert_Thematic_Catalogue
 schuyler colfax	Schuyler_Colfax
@@ -174,29 +174,29 @@ seagram building	Seagram_Building
 sealab 2021	Sealab_2021
 seamus heaney	Seamus_Heaney
 searching	Searching
-seattle washington	Seattle
 seattle	Seattle
+seattle washington	Seattle
 seattle mariners	Seattle_Mariners
 seattle seahawks	Seattle_Seahawks
 secant	Secant
-bank of the united states	Second Bank of the United States
 2nd bank of the united states	Second Bank of the United States
+bank of the united states	Second Bank of the United States
 angloboer war	Second Boer War
 2nd crusade	Second Crusade
 second bank of the united states	Second_Bank_of_the_United_States
 the second battle of saint albans	Second_Battle_of_St_Albans
-the second angloboer war	Second_Boer_War
-second boer war	Second_Boer_War
-second boer war or angloboer war or tweede boereoorlog or	Second_Boer_War
 the second boer war	Second_Boer_War
+second boer war or angloboer war or tweede boereoorlog or	Second_Boer_War
 second angloboer war	Second_Boer_War
+second boer war	Second_Boer_War
+the second angloboer war	Second_Boer_War
 second crusade	Second_Crusade
 second great awakening	Second_Great_Awakening
 second punic war	Second_Punic_War
 second seminole war	Second_Seminole_War
 second triumvirate	Second_Triumvirate
-second vatican council	Second_Vatican_Council
 vatican ii or second vatican council	Second_Vatican_Council
+second vatican council	Second_Vatican_Council
 second law of thermodynamics	Second_law_of_thermodynamics
 the second law of thermodynamics	Second_law_of_thermodynamics
 secretary of the interior	Secretary_of_the_Interior
@@ -214,48 +214,48 @@ selim ii	Selim_II
 seljuk turks	Seljuq_dynasty
 semantics	Semantics
 semicolon	Semicolon
-semiconductors	Semiconductor
 semiconductor	Semiconductor
-seminoles	Seminole
+semiconductors	Semiconductor
 seminole	Seminole
 the seminoles	Seminole
 seminoles seminole war	Seminole
-the seminole wars	Seminole_Wars
+seminoles	Seminole
 seminole wars	Seminole_Wars
+the seminole wars	Seminole_Wars
 semiotics	Semiotics
 seneca falls convention	Seneca_Falls_Convention
 lucius annaeus seneca	Seneca_the_Younger
-senegal	Senegal
 republic of senegal	Senegal
+senegal	Senegal
 sennacherib	Sennacherib
 sense and sensibility	Sense_and_Sensibility
 a sentimental education	Sentimental Education
 seoul	Seoul
-september 1 193 9	September_1,_1939
 September 1 1939	September_1,_1939
-lucius septimius severus	Septimius_Severus
+september 1 193 9	September_1,_1939
 lucius septimius severus pertinax	Septimius_Severus
+lucius septimius severus	Septimius_Severus
 serapis	Serapis
 serenade	Serenade
-emancipation of the serfs	Serfdom
 serfs	Serfdom
-sergei sergeievich prokofiev	Sergei_Prokofiev
+emancipation of the serfs	Serfdom
 sergei sergeyevich prokofiev	Sergei_Prokofiev
-sergey prokofiev	Sergei_Prokofiev
-sergey sergeyevich prokofiev	Sergei_Prokofiev
 sergei prokofiev	Sergei_Prokofiev
-sergei vassilyevich rachmaninov or rachmaninoff	Sergei_Rachmaninoff
-sergei rachmaninoff	Sergei_Rachmaninoff
-sergei vasilyevich rachmaninoff	Sergei_Rachmaninoff
-sergei rachmaninov	Sergei_Rachmaninoff
-sergey vasileyvich rachmaninoff	Sergei_Rachmaninoff
+sergei sergeievich prokofiev	Sergei_Prokofiev
+sergey sergeyevich prokofiev	Sergei_Prokofiev
+sergey prokofiev	Sergei_Prokofiev
 sergei vasilievich rachmaninoff	Sergei_Rachmaninoff
-sergey vasilyevich rachmaninoff	Sergei_Rachmaninoff
 sergey rachmaninoff	Sergei_Rachmaninoff
+sergei vasilyevich rachmaninoff	Sergei_Rachmaninoff
 sergei vasilevich rachmaninoff	Sergei_Rachmaninoff
+sergei rachmaninoff	Sergei_Rachmaninoff
+sergey vasileyvich rachmaninoff	Sergei_Rachmaninoff
+sergei rachmaninov	Sergei_Rachmaninoff
+sergei vassilyevich rachmaninov or rachmaninoff	Sergei_Rachmaninoff
+sergey vasilyevich rachmaninoff	Sergei_Rachmaninoff
 series	Series
-sermon on the mount	Sermon_on_the_Mount
 the sermon on the mount	Sermon_on_the_Mount
+sermon on the mount	Sermon_on_the_Mount
 serotonin	Serotonin
 snakes or serpents	Serpent_(symbolism)
 sesame street	Sesame_Street
@@ -264,8 +264,8 @@ set or seth	Set_(deity)
 sets	Set_(mathematics)
 seth	Seth
 archangels	Seven Archangels
-seven against thebes	Seven_Against_Thebes
 the seven against thebes	Seven_Against_Thebes
+seven against thebes	Seven_Against_Thebes
 the seven samurai	Seven_Samurai
 seventh amendment	Seventh_Amendment
 seville or sevilla	Seville
@@ -280,28 +280,28 @@ shah jahan	Shah_Jahan
 shaka zulu	Shaka
 shaka	Shaka
 shakers	Shakers
-sonnets by shakespeare	Shakespeare's_sonnets
 shakespeares sonnets	Shakespeare's_sonnets
-william shakespeares sonnets prompt on sonnets prompt on poems by shakespeare	Shakespeare's_sonnets
-sonnets of william shakespeare	Shakespeare's_sonnets
-the sonnets of william shakespeare	Shakespeare's_sonnets
 the sonnets of shakespeare	Shakespeare's_sonnets
+the sonnets of william shakespeare	Shakespeare's_sonnets
+sonnets by shakespeare	Shakespeare's_sonnets
+sonnets of william shakespeare	Shakespeare's_sonnets
+william shakespeares sonnets prompt on sonnets prompt on poems by shakespeare	Shakespeare's_sonnets
 shale	Shale
-shang dynasty	Shang_dynasty
 shang dynasty accept yin	Shang_dynasty
+shang dynasty	Shang_dynasty
 shang	Shang_dynasty
-xanadu or shangtu	Shangdu
 xanadu	Shangdu
+xanadu or shangtu	Shangdu
 shanghai	Shanghai
 shaquille oneal	Shaquille_O'Neal
 sharia	Sharia
 sharks	Shark
 shavuot	Shavuot
-shayss rebellion	Shays'_Rebellion
 shays’ rebellion	Shays'_Rebellion
 shays rebellion	Shays'_Rebellion
-she stoops to conquer or the mistakes of a night	She_Stoops_to_Conquer
+shayss rebellion	Shays'_Rebellion
 she stoops to conquer	She_Stoops_to_Conquer
+she stoops to conquer or the mistakes of a night	She_Stoops_to_Conquer
 she walks in beauty	She_Walks_in_Beauty
 sheep	Sheep
 shel silverstein	Shel_Silverstein
@@ -313,8 +313,8 @@ sherman antitrust act	Sherman_Antitrust_Act
 sherwood anderson	Sherwood_Anderson
 shetland islands	Shetland
 shining path	Shining_Path
-shintoism	Shinto
 shinto	Shinto
+shintoism	Shinto
 shinto or shintoism	Shinto
 shinto shrines	Shinto_shrine
 shinzo abe	Shinzō_Abe
@@ -337,8 +337,8 @@ shylock	Shylock
 siberia	Siberia
 sic et non	Sic_et_Non
 sicilian vespers	Sicilian_Vespers
-sicily or sicilia	Sicily
 sicily	Sicily
+sicily or sicilia	Sicily
 sickle cell anemia or sickle cell disease	Sickle-cell_disease
 sickle cell anemia	Sickle-cell_disease
 sicklecell anemia	Sickle_Cell_Disease_Association_of_America
@@ -346,19 +346,19 @@ sidney crosby	Sidney_Crosby
 sidney james	Sidney_James
 sidney lanier	Sidney_Lanier
 acre	Siege of Acre (1291)
-battle or siege of yorktown	Siege of Yorktown
 battle of yorktown	Siege of Yorktown
+battle or siege of yorktown	Siege of Yorktown
 siege of jerusalem of 1099	Siege_of_Jerusalem_(1099)
 siegfried	Siegfried
 siegfried sassoon	Siegfried_Sassoon
 siena	Siena
-republic of sierra leone	Sierra_Leone
 sierra leone	Sierra_Leone
+republic of sierra leone	Sierra_Leone
 sierra nevada	Sierra_Nevada_(U.S.)
-sigmund schlomo freud	Sigmund_Freud
-sigmund freud	Sigmund_Freud
 freud	Sigmund_Freud
 sigismund schlomo freud	Sigmund_Freud
+sigmund schlomo freud	Sigmund_Freud
+sigmund freud	Sigmund_Freud
 sigrid undset	Sigrid_Undset
 sigurd	Sigurd
 sikh gurus	Sikh_gurus
@@ -370,8 +370,8 @@ silent letters	Silent_letter
 silesia	Silesia
 silicon	Silicon
 silk	Silk
-silk road or silk route	Silk_Road
 silk road	Silk_Road
+silk road or silk route	Silk_Road
 silurian period	Silurian
 silver	Silver
 silvio berlusconi	Silvio_Berlusconi
@@ -380,28 +380,28 @@ simple machines	Simple_machine
 simplicissimus	Simplicius_Simplicissimus
 simpson’s paradox	Simpson's_paradox
 simpsons rule	Simpson's_rule
-simón bolívar	Simón_Bolívar
 simon bolivar	Simón_Bolívar
+simón bolívar	Simón_Bolívar
 sinai peninsula	Sinai_Peninsula
 sinbad the sailor	Sinbad_the_Sailor
-sinclair lewis	Sinclair_Lewis
 harry sinclair lewis	Sinclair_Lewis
-sine function	Sine
+sinclair lewis	Sinclair_Lewis
 sine	Sine
+sine function	Sine
 republic of singapore	Singapore
 sinners in the hands of an angry god	Sinners_in_the_Hands_of_an_Angry_God
 sioux	Sioux
-sir gawain and the green knight	Sir_Gawain_and_the_Green_Knight
-sir gawain	Sir_Gawain_and_the_Green_Knight
 sir gawaine and the greek knight or sir gawayne and the grene knight	Sir_Gawain_and_the_Green_Knight
 the green knight	Sir_Gawain_and_the_Green_Knight
+sir gawain and the green knight	Sir_Gawain_and_the_Green_Knight
+sir gawain	Sir_Gawain_and_the_Green_Knight
 sir george downing	Sir_George_Downing,_1st_Baronet
 george gabriel stokes	Sir_George_Stokes,_1st_Baronet
 sir kay	Sir_Kay
 sirens	Siren
 mobydick or the whale	Sirenoscincus_mobydick
-sirius	Sirius
 sirius a	Sirius
+sirius	Sirius
 sister carrie	Sister_Carrie
 sister mary ignatius	Sister_Mary_Ignatius_Davies
 sistine chapel	Sistine_Chapel
@@ -419,15 +419,15 @@ skin	Skin
 skulls	Skull
 cranium	Skull
 skylab	Skylab
-slaughterhousefive or the childrens crusade a dutydance with death	Slaughterhouse-Five
 slaughterhousefive	Slaughterhouse-Five
+slaughterhousefive or the childrens crusade a dutydance with death	Slaughterhouse-Five
 slave narratives	Slave_narrative
 slave revolts	Slave_rebellion
-slaves	Slavery
 slavery	Slavery
+slaves	Slavery
 slavoj zizek	Slavoj_Žižek
-sleep	Sleep
 sleeping	Sleep
+sleep	Sleep
 sleepy hollow	Sleepy_Hollow
 sleipnir	Sleipnir
 slide rule	Slide_rule
@@ -440,9 +440,9 @@ slumdog millionaire	Slumdog_Millionaire
 small intestine or small bowel	Small_intestine
 small intestine	Small_intestine
 smallpox	Smallpox
+snake or serpent python or python between florida and cobra prompt on cobra between hood and cobra	Snake
 snakes	Snake
 snake	Snake
-snake or serpent python or python between florida and cobra prompt on cobra between hood and cobra	Snake
 snake river	Snake River
 snells law	Snell's_law
 snopes	Snopes.com
@@ -466,21 +466,21 @@ solar wind	Solar_wind
 solipsism	Solipsism
 soliton	Soliton
 solitons	Soliton
-king solomon	Solomon
 solomon	Solomon
+king solomon	Solomon
 solomon asch	Solomon_Asch
 solomon islands	Solomon_Islands
-solomon r guggenheim museum	Solomon_R._Guggenheim_Museum
 guggenheim museum	Solomon_R._Guggenheim_Museum
+solomon r guggenheim museum	Solomon_R._Guggenheim_Museum
 solon	Solon
 solubility	Solubility
 somalia or somali republic	Somalia
 somalia	Somalia
-republic of somalia	Somalia
-somalia or somali democratic republic	Somalia
-somalia or soomaaliya	Somalia
 federal republic of somalia	Somalia
 somalia or soomaaliya or assumal	Somalia
+somalia or somali democratic republic	Somalia
+republic of somalia	Somalia
+somalia or soomaaliya	Somalia
 sonatas	Sonata
 sonata	Sonata
 sonata form or sonataallegro form	Sonata_form
@@ -501,8 +501,8 @@ sonoluminescence	Sonoluminescence
 sonora	Sonora
 sons and lovers	Sons_and_Lovers
 sons of liberty	Sons_of_Liberty
-sorting	Sorting_algorithm
 sorting algorithms	Sorting_algorithm
+sorting	Sorting_algorithm
 soul mountain	Soul_Mountain
 soundgarden	Soundgarden
 sousaphone	Sousaphone
@@ -514,14 +514,14 @@ south sudan	South Sudan
 south sea bubble	South_Sea_Company
 union of soviet socialist republics	Soviet_Union
 space needle	Space_Needle
-kingdom of spain	Spain
 spain	Spain
+kingdom of spain	Spain
 spanish	Spanish
 spanish armada	Spanish_Armada
-spanish inquisition	Spanish_Inquisition
 the spanish inquisition	Spanish_Inquisition
-spanishamerican war	Spanish–American_War
+spanish inquisition	Spanish_Inquisition
 the spanishamerican war	Spanish–American_War
+spanishamerican war	Spanish–American_War
 sparta	Sparta
 spartacus	Spartacus
 speaker of the house	Speaker_(politics)
@@ -529,9 +529,9 @@ speaker of the house of representatives	Speaker_of_the_House_of_Representatives
 speaker of the united states house of representatives	Speaker_of_the_United_States_House_of_Representatives
 spear	Spear
 spears	Spear
+special theory of relativity	Special_relativity
 special relativity	Special_relativity
 special relativity or special theory of relativity	Special_relativity
-special theory of relativity	Special_relativity
 right triangles	Special_right_triangle
 speciation	Speciation
 specie circular	Specie_Circular
@@ -545,8 +545,8 @@ spherical coordinates	Spherical_coordinate_system
 sphinx	Sphinx
 spider	Spider
 spiderman	Spider-Man
-spin angular momentum	Spin_(physics)
 spin	Spin_(physics)
+spin angular momentum	Spin_(physics)
 spinal cord	Spinal_cord
 spirals	Spiral
 spiral jetty	Spiral_Jetty
@@ -554,17 +554,17 @@ spiral galaxies	Spiral_galaxy
 spiral galaxy	Spiral_galaxy
 the spirit of st louis	Spirit_of_St._Louis
 spiritual exercises	Spiritual_exercises
+spiro theodore agnew	Spiro_Agnew
 spiro agnew	Spiro_Agnew
 spiro t agnew	Spiro_Agnew
-spiro theodore agnew	Spiro_Agnew
 spleen	Spleen
-phylum porifera	Sponge
-sponge or porifera	Sponge
-sponges or porifera	Sponge
-porifera or poriferans	Sponge
 porifera accept sponges before end	Sponge
 sponges	Sponge
+porifera or poriferans	Sponge
+sponge or porifera	Sponge
 porifera	Sponge
+phylum porifera	Sponge
+sponges or porifera	Sponge
 spontaneous symmetry breaking	Spontaneous_symmetry_breaking
 spoon river	Spoon_River
 spoon river anthology	Spoon_River_Anthology
@@ -575,8 +575,8 @@ square planar	Square_planar_molecular_geometry
 square root	Square_root
 squaring the circle	Squaring_the_circle
 the democratic socialist republic of sri lanka	Sri_Lanka
-sri lanka	Sri_Lanka
 lanka or democratic socialist republic of sri lanka	Sri_Lanka
+sri lanka	Sri_Lanka
 democratic socialist republic of sri lanka	Sri_Lanka
 ceylon or sri lanka	Sri_Lanka
 sri lanka or ceylon	Sri_Lanka
@@ -608,10 +608,10 @@ staten island	Staten_Island
 static electricity	Static_electricity
 statins	Statin
 stationary front	Stationary_front
-the statue of liberty	Statue_of_Liberty
+the statue of liberty or liberty enlightening the world	Statue_of_Liberty
 statue of liberty	Statue_of_Liberty
 statue of liberty or liberty enlightening the world	Statue_of_Liberty
-the statue of liberty or liberty enlightening the world	Statue_of_Liberty
+the statue of liberty	Statue_of_Liberty
 steam engine	Steam_engine
 steel	Steel
 stellar wind	Stellar_wind
@@ -621,9 +621,9 @@ steny hoyer	Steny_Hoyer
 stephen	Stephen
 bathory	Stephen Báthory
 stephen of blois	Stephen,_King_of_England
+stephen a douglas	Stephen_A._Douglas
 stephen arnold douglas	Stephen_A._Douglas
 stephen douglas	Stephen_A._Douglas
-stephen a douglas	Stephen_A._Douglas
 stephen colbert	Stephen_Colbert
 stephen crane	Stephen_Crane
 stephen decatur	Stephen_Decatur
@@ -643,8 +643,8 @@ steve reich	Steve_Reich
 stigmata	Stigmata
 stimulated emission	Stimulated_emission
 stockholm	Stockholm
-stoicism	Stoicism
 stoics	Stoicism
+stoicism	Stoicism
 stoicism or stoic	Stoicism
 stokely carmichael	Stokely_Carmichael
 stomata	Stoma
@@ -665,8 +665,8 @@ stratosphere	Stratosphere
 stream of consciousness	Stream_of_consciousness
 string	String
 ludwig van beethovens string quartets	String_Quartet_No._10_(Beethoven)
-string quartets	String_quartet
 string quartet	String_quartet
+string quartets	String_quartet
 strom thurmond	Strom_Thurmond
 strong force	Strong_interaction
 strontium	Strontium
@@ -682,17 +682,17 @@ subjunctive mood	Subjunctive_mood
 sublimation	Sublimation
 sublime	Sublime
 the sublime	Sublime_(philosophy)
-submarines	Submarine
 submarine	Submarine
+submarines	Submarine
 subrahmanyan chandrasekhar	Subrahmanyan_Chandrasekhar
-republic of the sudan	Sudan
 republic of sudan	Sudan
 the sudan	Sudan
+republic of the sudan	Sudan
 sudetenland	Sudetenland
 gaius suetonius tranquillus	Suetonius
 suez canal	Suez_Canal
-suez canal crisis	Suez_Crisis
 suez crisis	Suez_Crisis
+suez canal crisis	Suez_Crisis
 sufism	Sufism
 abbot suger	Suger
 suharto	Suharto
@@ -703,27 +703,27 @@ sukkoth	Sukkot
 sukkot	Sukkot
 sula	Sula
 sulawesi	Sulawesi
-suleiman i	Suleiman_the_Magnificent
 suleiman i or suleiman the great or suleiman the lawgiver	Suleiman_the_Magnificent
-süleiman i the magnificent of the ottoman empire	Suleiman_the_Magnificent
 ostap suleiman berta maria benderbey	Suleiman_the_Magnificent
 suleyman i	Suleiman_the_Magnificent
-suleiman the magnificent	Suleiman_the_Magnificent
+süleiman i the magnificent of the ottoman empire	Suleiman_the_Magnificent
 suleiman muhtesem i	Suleiman_the_Magnificent
-sulfur	Sulfur
-sulfur or sulphur	Sulfur
+suleiman i	Suleiman_the_Magnificent
+suleiman the magnificent	Suleiman_the_Magnificent
 sulfur or s	Sulfur
+sulfur or sulphur	Sulfur
+sulfur	Sulfur
 sulfur dioxide or so2	Sulfur_dioxide
 mustard gas	Sulfur_mustard
-sulfuric acid or sulphuric acid or oil of vitriol or hydrogen sulfate or oleum	Sulfuric_acid
-sulfuric acid	Sulfuric_acid
 sulfuric acid or vitriolic acid or oil of vitriol	Sulfuric_acid
 sulfuric acid or h2so4	Sulfuric_acid
-sulfuric acid or hydrogen sulfate or h2so4	Sulfuric_acid
-sulfuric acid or sulfuric acid	Sulfuric_acid
 sulfuric acid or h2so4 early	Sulfuric_acid
-lucius cornelius sulla felix	Sulla
+sulfuric acid or hydrogen sulfate or h2so4	Sulfuric_acid
+sulfuric acid	Sulfuric_acid
+sulfuric acid or sulfuric acid	Sulfuric_acid
+sulfuric acid or sulphuric acid or oil of vitriol or hydrogen sulfate or oleum	Sulfuric_acid
 lucius cornelius sulla	Sulla
+lucius cornelius sulla felix	Sulla
 sulpicia	Sulpicia
 blue mosque	Sultan Ahmed Mosque
 sumacs	Sumac
@@ -741,14 +741,14 @@ sundiata keita	Sundiata_Keita
 sunni islam	Sunni_Islam
 sunspots	Sunspot
 sunspot	Sunspot
-superconductors	Superconductivity
-superconductivity	Superconductivity
 superconductor	Superconductivity
+superconductivity	Superconductivity
+superconductors	Superconductivity
 superfluidity	Superfluidity
 superfluid	Superfluidity
 superman	Superman
-supernovas or supernovae	Supernova
 supernova	Supernova
+supernovas or supernovae	Supernova
 supernovae	Supernova
 supernovas	Supernova
 supersaturated solutions	Supersaturation
@@ -759,18 +759,18 @@ supreme court of the united states	Supreme_Court_of_the_United_States
 answer surface tension	Surface_tension
 surface tension	Surface_tension
 surfactants	Surfactant
-republic of suriname or republiek suriname	Suriname
 suriname	Suriname
-republiek suriname or republic of suriname	Suriname
 republic of suriname	Suriname
+republiek suriname or republic of suriname	Suriname
+republic of suriname or republiek suriname	Suriname
 surrealism	Surrealism
 susan brownell anthony	Susan_B._Anthony
 susan sontag	Susan_Sontag
 susanoo	Susanoo-no-Mikoto
 sushi	Sushi
 susquehanna river	Susquehanna_River
-sutra	Sutra
 sutras	Sutra
+sutra	Sutra
 sutton hoo	Sutton_Hoo
 suzanne valadon	Suzanne_Valadon
 svante arrhenius	Svante_Arrhenius
@@ -794,140 +794,140 @@ sydney	Sydney
 sydney carton	Sydney_Carton
 sydney opera house	Sydney_Opera_House
 syllogism	Syllogism
-sylvia plaths father	Sylvia_Plath
 sylvia plath	Sylvia_Plath
+sylvia plaths father	Sylvia_Plath
 symbolic interactionism	Symbolic_interactionism
 symmetric	Symmetry
-symphonie fantastique or op 14	Symphonie_fantastique
-symphonie fantastique épisode de la vie dun artisteen cinq parties	Symphonie_fantastique
 symphonie fantastique op 14	Symphonie_fantastique
-symphonie fantastique	Symphonie_fantastique
-symphonie fantastique 3	Symphonie_fantastique
-symphonie fantastique épisode de la vie dun artiste en cinq parties	Symphonie_fantastique
 symphonie fantastique épisode de la vie dun artiste en cinq parties	Symphonie_fantastique
+symphonie fantastique épisode de la vie dun artiste en cinq parties	Symphonie_fantastique
+symphonie fantastique épisode de la vie dun artisteen cinq parties	Symphonie_fantastique
+symphonie fantastique or op 14	Symphonie_fantastique
+symphonie fantastique 3	Symphonie_fantastique
+symphonie fantastique	Symphonie_fantastique
 symphonies of anton bruckner	Symphonies_(Bruckner)
 the symphonies of anton bruckner	Symphonies_(Bruckner)
-symphonies by piotr ilich tchaikovsky	Symphonies_by_Pyotr_Ilyich_Tchaikovsky
-symphonies by pyotr ilyich tchaikovsky	Symphonies_by_Pyotr_Ilyich_Tchaikovsky
 symphonies by peter ilyich tchaikovsky	Symphonies_by_Pyotr_Ilyich_Tchaikovsky
+symphonies by pyotr ilyich tchaikovsky	Symphonies_by_Pyotr_Ilyich_Tchaikovsky
+symphonies by piotr ilich tchaikovsky	Symphonies_by_Pyotr_Ilyich_Tchaikovsky
 9th symphony	Symphony
-symphony	Symphony
 5th symphony	Symphony
+symphony	Symphony
 brahmss symphony no 1	Symphony No. 4 (Brahms)
-beethovens ninth symphony	Symphony No. 9 (Beethoven)
 beethovens fifth symphony	Symphony No. 9 (Beethoven)
+beethovens ninth symphony	Symphony No. 9 (Beethoven)
 pyotr ilyich tchaikovskys symphony no 1 in g minor	Symphony_No._1_(Tchaikovsky)
-resurrection symphony or mahler’s second symphony in c minor	Symphony_No._2_(Mahler)
-resurrection symphony or symphony no 2 in cminor	Symphony_No._2_(Mahler)
-resurrection symphony	Symphony_No._2_(Mahler)
-resurrection or auferstehung accept mahler’s symphony no 2 in c	Symphony_No._2_(Mahler)
 resurrection symphony or mahlers second symphony	Symphony_No._2_(Mahler)
-resurrection or symphony no 2 in c minor	Symphony_No._2_(Mahler)
-symphony no 2 in c minor resurrection	Symphony_No._2_(Mahler)
 resurrection symphony or symphony number 2 in cminor	Symphony_No._2_(Mahler)
-ludwig van beethovens symphony no 3 in eflat major	Symphony_No._3_(Beethoven)
-beethovens symphony no 3 in e flat major eroica	Symphony_No._3_(Beethoven)
-eroica or beethovens third symphony	Symphony_No._3_(Beethoven)
-eroica symphony	Symphony_No._3_(Beethoven)
-beethovens symphony no 3 in eflat major or eroica or beethovens opus 55	Symphony_No._3_(Beethoven)
-beethovens third symphony or the eroica symphony	Symphony_No._3_(Beethoven)
+resurrection or auferstehung accept mahler’s symphony no 2 in c	Symphony_No._2_(Mahler)
+resurrection symphony or mahler’s second symphony in c minor	Symphony_No._2_(Mahler)
+resurrection symphony	Symphony_No._2_(Mahler)
+resurrection or symphony no 2 in c minor	Symphony_No._2_(Mahler)
+resurrection symphony or symphony no 2 in cminor	Symphony_No._2_(Mahler)
+symphony no 2 in c minor resurrection	Symphony_No._2_(Mahler)
 beethovens symphony no 3 in eflat major eroica	Symphony_No._3_(Beethoven)
+eroica or beethovens third symphony	Symphony_No._3_(Beethoven)
+beethovens symphony no 3 in eflat major or eroica or beethovens opus 55	Symphony_No._3_(Beethoven)
 beethoven’s third symphony	Symphony_No._3_(Beethoven)
+beethovens symphony no 3 in e flat major eroica	Symphony_No._3_(Beethoven)
+beethovens third symphony or the eroica symphony	Symphony_No._3_(Beethoven)
+ludwig van beethovens symphony no 3 in eflat major	Symphony_No._3_(Beethoven)
+eroica symphony	Symphony_No._3_(Beethoven)
 divine poem or scriabins symphony no 3 in c minor	Symphony_No._3_(Scriabin)
 wolfgang amadeus mozarts symphony no 40 in g minor	Symphony_No._40_(Mozart)
-mozarts symphony no 41 in c major k 551 jupiter	Symphony_No._41_(Mozart)
-symphony no 41 in c “jupiter”	Symphony_No._41_(Mozart)
 the jupiter symphony	Symphony_No._41_(Mozart)
-symphony no 41	Symphony_No._41_(Mozart)
 jupiter symphony	Symphony_No._41_(Mozart)
+mozarts symphony no 41 in c major k 551 jupiter	Symphony_No._41_(Mozart)
 jupiter symphony or k 551	Symphony_No._41_(Mozart)
+symphony no 41	Symphony_No._41_(Mozart)
+symphony no 41 in c “jupiter”	Symphony_No._41_(Mozart)
 bruckner’s symphony no 4 in e flat	Symphony_No._4_(Bruckner)
 felix mendelssohns symphony no 4 in a major op 90 italian	Symphony_No._4_(Mendelssohn)
 symphony no 3 in c minor or the organ symphony	Symphony_No._4_(Shostakovich)
 pyotr tchaikovskys symphony no 4	Symphony_No._4_(Tchaikovsky)
-beethoven’s 5 th symphony	Symphony_No._5_(Beethoven)
-beethoven’s symphony number 5 in c minor	Symphony_No._5_(Beethoven)
+beethovens symphony no 5 in c minor	Symphony_No._5_(Beethoven)
 beethoven’s symphony no 5 in c minor op 67	Symphony_No._5_(Beethoven)
-beethovens symphony no 5 in c minor op 67 or beethovens fifth symphony	Symphony_No._5_(Beethoven)
 beethovens fifth symphony in c minor	Symphony_No._5_(Beethoven)
+beethoven’s 5 th symphony	Symphony_No._5_(Beethoven)
+beethovens symphony no 5 in c minor op 67 or beethovens fifth symphony	Symphony_No._5_(Beethoven)
 beethoven‘s 5th symphony	Symphony_No._5_(Beethoven)
+beethoven’s symphony number 5 in c minor	Symphony_No._5_(Beethoven)
 beethovens symphony no 5 in c minor opus 67 accept any underlined part or combination of parts	Symphony_No._5_(Beethoven)
 beethovens symphony number five in c minor	Symphony_No._5_(Beethoven)
-ludwig van beethovens symphony no 5 in c minor op 67	Symphony_No._5_(Beethoven)
-beethovens symphony no 5 in c minor	Symphony_No._5_(Beethoven)
 ludwig von beethovens fifth symphony in c minor op 67	Symphony_No._5_(Beethoven)
-“reformation” symphony	Symphony_No._5_(Mendelssohn)
+ludwig van beethovens symphony no 5 in c minor op 67	Symphony_No._5_(Beethoven)
 symphony no 5 in dmajor	Symphony_No._5_(Mendelssohn)
+“reformation” symphony	Symphony_No._5_(Mendelssohn)
 tchaikovsky symphony no 5	Symphony_No._5_(Tchaikovsky)
-pastoral symphony or beethoven’s sixth symphony	Symphony_No._6_(Beethoven)
-the pastoral symphony	Symphony_No._6_(Beethoven)
 pastoral symphony accept beethovens sixth symphony in fmajor before read accept	Symphony_No._6_(Beethoven)
-ludwig van beethovens symphony no 6 in f major	Symphony_No._6_(Beethoven)
-pastoral symphony or symphony no 6 in f major pastoral op 68	Symphony_No._6_(Beethoven)
-pastoral symphony	Symphony_No._6_(Beethoven)
-pastoral symphony or symphony no 6 in f major op 68	Symphony_No._6_(Beethoven)
-beethovens symphony no 6	Symphony_No._6_(Beethoven)
 beethovens symphony no 6 in f major op 68	Symphony_No._6_(Beethoven)
-tragic symphony	Symphony_No._6_(Mahler)
+pastoral symphony or symphony no 6 in f major pastoral op 68	Symphony_No._6_(Beethoven)
+beethovens symphony no 6	Symphony_No._6_(Beethoven)
+the pastoral symphony	Symphony_No._6_(Beethoven)
+pastoral symphony or beethoven’s sixth symphony	Symphony_No._6_(Beethoven)
+ludwig van beethovens symphony no 6 in f major	Symphony_No._6_(Beethoven)
+pastoral symphony or symphony no 6 in f major op 68	Symphony_No._6_(Beethoven)
+pastoral symphony	Symphony_No._6_(Beethoven)
+mahlers sixth symphony in a minor	Symphony_No._6_(Mahler)
 tragic symphony or tragische symphonie accept mahler’s symphony no 6 and equivalents	Symphony_No._6_(Mahler)
 symphony no 6 or tragic symphony	Symphony_No._6_(Mahler)
-mahlers sixth symphony in a minor	Symphony_No._6_(Mahler)
+tragic symphony	Symphony_No._6_(Mahler)
+symphony no 6 pathetique op 74 or pateticeskaya	Symphony_No._6_(Tchaikovsky)
+symphony no 6 in b minor pathetique	Symphony_No._6_(Tchaikovsky)
 pathetique symphony	Symphony_No._6_(Tchaikovsky)
+symphony no 6 in b minor pathetique op 64	Symphony_No._6_(Tchaikovsky)
+symphony no 6 in b minor op74 pathetique	Symphony_No._6_(Tchaikovsky)
 pyotr ilyich tchaikovsky’s symphony no 6 in b minor	Symphony_No._6_(Tchaikovsky)
 pathetique or symphony no 6 in b minor	Symphony_No._6_(Tchaikovsky)
-symphony no 6 in b minor pathetique	Symphony_No._6_(Tchaikovsky)
-symphonie pathetique	Symphony_No._6_(Tchaikovsky)
-symphony no 6 in b minor op74 pathetique	Symphony_No._6_(Tchaikovsky)
-symphony no 6 in b minor pathetique op 64	Symphony_No._6_(Tchaikovsky)
-symphony no 6 pathetique op 74 or pateticeskaya	Symphony_No._6_(Tchaikovsky)
 symphonie pathetique or pathetic symphony	Symphony_No._6_(Tchaikovsky)
+symphonie pathetique	Symphony_No._6_(Tchaikovsky)
 symphony pathétique	Symphony_No._6_(Tchaikovsky)
 beethovens symphony no 7 in a major op 92	Symphony_No._7_(Beethoven)
-ludwig van beethovens symphony no 7	Symphony_No._7_(Beethoven)
 ludwig van beethovens symphony no 7 in a major	Symphony_No._7_(Beethoven)
-shostakovich’s symphony no 7 in c major op 60	Symphony_No._7_(Shostakovich)
+ludwig van beethovens symphony no 7	Symphony_No._7_(Beethoven)
 leningrad symphony accept shostakovich’s symphony no 7 in c major before “ seventh ” is	Symphony_No._7_(Shostakovich)
+shostakovich’s symphony no 7 in c major op 60	Symphony_No._7_(Shostakovich)
 sibeliuss symphony no 7	Symphony_No._7_(Sibelius)
 ludwig van beethovens symphony no 8 in f major op 93	Symphony_No._8_(Beethoven)
+symphony of a thousand or mahler’s eighth symphony	Symphony_No._8_(Mahler)
 symphony of a thousand or symphony 8	Symphony_No._8_(Mahler)
 symphony no 8 in e flat major or symphony of a thousand	Symphony_No._8_(Mahler)
-symphony of a thousand or mahler’s eighth symphony	Symphony_No._8_(Mahler)
-mahlers symphony no 8 in eflat major or symphony of a thousand	Symphony_No._8_(Mahler)
 symphony of a thousand or mahlers eighth symphony in e flat major	Symphony_No._8_(Mahler)
+mahlers symphony no 8 in eflat major or symphony of a thousand	Symphony_No._8_(Mahler)
 symphony of a thousand	Symphony_No._8_(Mahler)
-schuberts unfinished symphony	Symphony_No._8_(Schubert)
-schuberts unfinished symphony or schuberts eighth symphony accept equivalents such as	Symphony_No._8_(Schubert)
 schubert’s 8th “unfinished” symphony	Symphony_No._8_(Schubert)
+schuberts unfinished symphony	Symphony_No._8_(Schubert)
+symphony no 8 in b minor d 759	Symphony_No._8_(Schubert)
 symphony in b minor unfinished	Symphony_No._8_(Schubert)
 unfinished symphony or symphony no 8 in b minor	Symphony_No._8_(Schubert)
-symphony no 8 in b minor d 759	Symphony_No._8_(Schubert)
 franz schuberts symphony no 8 in b minor	Symphony_No._8_(Schubert)
+schuberts unfinished symphony or schuberts eighth symphony accept equivalents such as	Symphony_No._8_(Schubert)
 symphony no 8 in bminor or the unfinished symphony	Symphony_No._8_(Schubert)
 surprise symphony	Symphony_No._94_(Haydn)
+symphony no 9 in d minor or symphony with final chorus on schiller’s ode to joy	Symphony_No._9_(Beethoven)
+beethoven’s 9th	Symphony_No._9_(Beethoven)
+symphony no 9 in d minor op 125	Symphony_No._9_(Beethoven)
+ludwig van beethovens ninth symphony	Symphony_No._9_(Beethoven)
+beethoven’s symphony no 9 in d minor op 125	Symphony_No._9_(Beethoven)
+beethoven’s fifth symphony	Symphony_No._9_(Beethoven)
+beethovens choral symphony	Symphony_No._9_(Beethoven)
+beethovens ninth symphony in d minor choral	Symphony_No._9_(Beethoven)
+beethoven’s symphony no 9	Symphony_No._9_(Beethoven)
+beethovens symphony no 9 in d minor	Symphony_No._9_(Beethoven)
+beethovens ninth symphony or symphony no 9 in d minor opus 125	Symphony_No._9_(Beethoven)
 beethovens ninth symphony or beethovens symphony no 9 in d minor choral	Symphony_No._9_(Beethoven)
 beethovens symphony no 9 or beethovens ninth symphony symphony	Symphony_No._9_(Beethoven)
-beethoven’s symphony no 9	Symphony_No._9_(Beethoven)
-beethovens choral symphony	Symphony_No._9_(Beethoven)
-beethovens symphony no 9 in d minor op 125 choral	Symphony_No._9_(Beethoven)
-beethoven’s fifth symphony	Symphony_No._9_(Beethoven)
-beethovens 9th symphony	Symphony_No._9_(Beethoven)
-beethovens 9th symphony in d minor opus 125	Symphony_No._9_(Beethoven)
-ludwig van beethovens 9th symphony or “choral” symphony	Symphony_No._9_(Beethoven)
-beethovens symphony no 9 in d minor	Symphony_No._9_(Beethoven)
-beethoven’s symphony no 9 in d minor	Symphony_No._9_(Beethoven)
-symphony no 9 in d minor op 125	Symphony_No._9_(Beethoven)
-symphony no 9 in d minor or symphony with final chorus on schiller’s ode to joy	Symphony_No._9_(Beethoven)
 ludwig van beethovens symphony no 9	Symphony_No._9_(Beethoven)
-beethovens ninth symphony in d minor choral	Symphony_No._9_(Beethoven)
-beethoven’s symphony no 9 in d minor op 125	Symphony_No._9_(Beethoven)
-ludwig van beethovens ninth symphony	Symphony_No._9_(Beethoven)
-beethovens ninth symphony or symphony no 9 in d minor opus 125	Symphony_No._9_(Beethoven)
-beethoven’s 9th	Symphony_No._9_(Beethoven)
-symphony no 9 in e minor “from the new world”	Symphony_No._9_(Dvořák)
+beethovens 9th symphony in d minor opus 125	Symphony_No._9_(Beethoven)
+beethovens symphony no 9 in d minor op 125 choral	Symphony_No._9_(Beethoven)
+beethovens 9th symphony	Symphony_No._9_(Beethoven)
+ludwig van beethovens 9th symphony or “choral” symphony	Symphony_No._9_(Beethoven)
+beethoven’s symphony no 9 in d minor	Symphony_No._9_(Beethoven)
 dvoraks symphony no 9 or from the new world	Symphony_No._9_(Dvořák)
 dvorak’s symphony no 9 from the new world	Symphony_No._9_(Dvořák)
-symphony no 9 in e minor “from the new world”by antonin dvorak	Symphony_No._9_(Dvořák)
+symphony no 9 in e minor “from the new world”	Symphony_No._9_(Dvořák)
 symphony no 9 in e minor from the new world	Symphony_No._9_(Dvořák)
+symphony no 9 in e minor “from the new world”by antonin dvorak	Symphony_No._9_(Dvořák)
 franz schuberts symphony no 9 in c major d 944 great	Symphony_No._9_(Schubert)
 symphony of psalms	Symphony_of_Psalms
 symposium	Symposium
@@ -936,11 +936,11 @@ synchrotron radiation	Synchrotron_radiation
 syngman rhee	Syngman_Rhee
 syphilis	Syphilis
 syracuse	Syracuse
-syria	Syria
 syrian arab republic	Syria
+syria	Syria
 syria or syrian arab republic	Syrian_Republic_(1930–58)
-søren kierkegaard	Søren_Kierkegaard
 søren aabye kierkegaard	Søren_Kierkegaard
-soren aabye kierkegaard	Søren_Kierkegaard
-soren abaye kierkegaard	Søren_Kierkegaard
 soren kierkegaard	Søren_Kierkegaard
+soren abaye kierkegaard	Søren_Kierkegaard
+søren kierkegaard	Søren_Kierkegaard
+soren aabye kierkegaard	Søren_Kierkegaard
