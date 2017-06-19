@@ -56,20 +56,28 @@ def dense_vector(dicts: List[List[Dict[str, float]]],
                     vec.append(0)
                     diff_vec.append(0)
                     isnew_vec.append(0)
-        # guesser_acc = get_guesser_acc(i, length)
-        features = [sum(isnew_vec), np.average(vec), vec[0], vec[1], vec[2],
-                isnew_vec[0], isnew_vec[1], vec[0] - vec[1], vec[1] -
-                vec[2], isnew_vec[2], diff_vec[0], 
-                vec[0] - prev_vec[0], np.var(vec),
-                np.var(prev_vec)]
-                # i, int(i < 10), int(i < 20), int(i > 30),
-                # guesser_acc]
+        features = [
+                vec[0], vec[1],
+                isnew_vec[0], isnew_vec[1],
+                diff_vec[0], diff_vec[1],
+                vec[0] - vec[1],
+                vec[0] - prev_vec[0],
+                np.average(vec[:5]), np.average(prev_vec[:5]),
+                np.var(vec[:5]), np.var(prev_vec[:5])
+                ]
 
         vecs.append(features)
         prev_vec = vec
     return vecs
 
 def main():
+    np.random.seed(0)
+    try: 
+        import cupy
+        cupy.random.seed(0)
+    except Exception:
+        pass
+
     option2id, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
             batch_size=128, make_vector=dense_vector)
@@ -78,16 +86,16 @@ def main():
     expo_iter = QuestionIterator(all_guesses['expo'], option2id,
             batch_size=128, make_vector=dense_vector)
 
-    n_hidden = 100
+    n_hidden = 300
     model_name = 'neo_1'
     model_dir = 'output/buzzer/neo/{}.npz'.format(model_name)
     model = RNN(train_iter.n_input, n_hidden, N_GUESSERS + 1)
 
-    chainer.cuda.get_device(1).use()
-    model.to_gpu(1)
+    chainer.cuda.get_device(0).use()
+    model.to_gpu(0)
 
     trainer = Trainer(model, model_dir)
-    trainer.run(train_iter, dev_iter, 20)
+    trainer.run(train_iter, dev_iter, 25)
 
     dev_buzzes = trainer.test(dev_iter)
     dev_buzzes_dir = 'output/buzzer/neo/dev_buzzes.{}.pkl'.format(model_name)

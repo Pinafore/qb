@@ -252,6 +252,21 @@ def load_protobowl():
         
     return protobowl_df, user_count
 
+def ultimate_buzzer(test_iter):
+    buzzes = dict()
+    for i in range(test_iter.size):
+        batch = test_iter.next_batch(np)
+        masks = batch.mask.T.tolist()
+        results = np.swapaxes(batch.results, 0, 1).tolist()
+        for qnum, mask, result in zip(batch.qids, masks, results):
+            if isinstance(qnum, np.ndarray):
+                qnum = qnum.tolist()
+            length = int(sum(mask))
+            scores = result[:length]
+            buzzes[qnum] = scores
+    print(list(buzzes.values())[0])
+    return buzzes
+
 if __name__ == "__main__":
     merge_dfs()
 

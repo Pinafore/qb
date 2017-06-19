@@ -18,68 +18,8 @@ N_GUESSES = conf['buzzer']['n_guesses']
 
 log = logging.get(__name__)
 
-def dense_vector_0(dicts: List[List[Dict[str, float]]], 
-        step_size=1) -> List[List[float]]:
 
-    def get_guesser_acc(i, length):
-        if i == length:
-            return bc.GUESSER_ACC[-1]
-        if i == 0:
-            return bc.GUESSER_ACC[0]
-        ratio = i / length
-        pos = 0
-        for i, r in enumerate(bc.GUESSER_ACC_POS):
-            if r > ratio:
-                pos = i
-                break
-        acc = bc.GUESSER_ACC[pos - 1] * (ratio - bc.GUESSER_ACC_POS[pos - 1]) +\
-                bc.GUESSER_ACC[pos] * (bc.GUESSER_ACC_POS[pos] - ratio)
-        return acc
-
-    length = len(dicts)
-    prev_vecs = [[0. for _ in range(N_GUESSERS * N_GUESSES)] \
-            for i in range(step_size)]
-    vecs = []
-    for i in range(length):
-        if len(dicts[i]) != N_GUESSERS:
-            raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
-                N_GUESSERS, len(dicts)))
-        vec = []
-        diff_vec = []
-        isnew_vec = []
-        for j in range(N_GUESSERS):
-            dic = sorted(dicts[i][j].items(), key=lambda x: x[1], reverse=True)
-            for guess, score in dic:
-                vec.append(score)
-                if i > 0 and guess in dicts[i-1][j]:
-                    diff_vec.append(score - dicts[i-1][j][guess])
-                    isnew_vec.append(0)
-                else:
-                    diff_vec.append(score) 
-                    isnew_vec.append(1)
-            if len(dic) < N_GUESSES:
-                for k in range(max(N_GUESSES - len(dic), 0)):
-                    vec.append(0)
-                    diff_vec.append(0)
-                    isnew_vec.append(0)
-        # guesser_acc = get_guesser_acc(i, length)
-        features = [sum(isnew_vec), np.average(vec), vec[0], vec[1], vec[2],
-                isnew_vec[0], isnew_vec[1], vec[0] - vec[1], vec[1] -
-                vec[2], isnew_vec[2], diff_vec[0], 
-                vec[0] - prev_vecs[-1][0], np.var(vec),
-                np.var(prev_vecs[-1])]
-                # i, int(i < 10), int(i < 20), int(i > 30),
-                # guesser_acc]
-
-        vecs.append(features)
-        # for j in range(1, step_size + 1):
-        #     vecs[-1] += prev_vecs[-j]
-        prev_vecs.append(vec)
-        if step_size > 0:
-            prev_vecs = prev_vecs[-step_size:]
-    return vecs
-
-def dense_vector_1(dicts: List[List[Dict[str, float]]],
+def dense_vector(dicts: List[List[Dict[str, float]]],
         step_size=1) -> List[List[float]]:
 
     length = len(dicts)
@@ -132,7 +72,7 @@ class QuestionIterator(object):
     '''
 
     def __init__(self, dataset: list, option2id: Dict[str, int], batch_size:int,
-            make_vector=dense_vector_1, bucket_size=4, step_size=1, neg_weight=1, shuffle=True):
+            make_vector=dense_vector, bucket_size=4, step_size=1, neg_weight=1, shuffle=True):
         self.dataset = dataset
         self.option2id = option2id
         self.batch_size = batch_size

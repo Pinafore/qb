@@ -34,15 +34,15 @@ def dense_vector(dicts: List[List[Dict[str, float]]],
             
     vecs = []
     for i in range(length):
+        if len(dicts[i]) != N_GUESSERS:
+            raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
+                N_GUESSERS, len(dicts)))
         vec = []
         diff_vec = []
         isnew_vec = []
         for j in range(N_GUESSERS):
             dic = sorted(dicts[i][j].items(), key=lambda x: x[1],
                     reverse=True)[:N_GUESSES]
-            s = sum([x[1] for x in dic])
-            dic_n = [x[1] / s for x in dic]
-
             for guess, score in dic:
                 vec.append(score)
                 if i > 0 and guess in dicts[i-1][j]:
@@ -56,17 +56,14 @@ def dense_vector(dicts: List[List[Dict[str, float]]],
                     vec.append(0)
                     diff_vec.append(0)
                     isnew_vec.append(0)
-                    dic_n.append(0)
         features = [
-                sum(isnew_vec), 
-                isnew_vec[0], isnew_vec[1], isnew_vec[2], 
-                vec[0], vec[1], vec[2],
-                vec[0] - vec[1], vec[1] - vec[2], 
+                vec[0], vec[1],
+                isnew_vec[0], isnew_vec[1],
+                diff_vec[0], diff_vec[1],
+                vec[0] - vec[1],
                 vec[0] - prev_vec[0],
-                diff_vec[0], 
-                np.var(vec), np.average(vec), 
-                np.var(prev_vec), np.average(prev_vec),
-                dic_n[0], dic_n[1],
+                np.average(vec[:3]), np.average(prev_vec[:3]),
+                np.var(vec[:3]), np.var(prev_vec[:3])
                 ]
 
         vecs.append(features)
@@ -74,6 +71,13 @@ def dense_vector(dicts: List[List[Dict[str, float]]],
     return vecs
 
 def main():
+    np.random.seed(0)
+    try: 
+        import cupy
+        cupy.random.seed(0)
+    except Exception:
+        pass
+
     option2id, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
             batch_size=128, make_vector=dense_vector)
@@ -82,16 +86,16 @@ def main():
     expo_iter = QuestionIterator(all_guesses['expo'], option2id,
             batch_size=128, make_vector=dense_vector)
 
-    n_hidden = 200
-    model_name = 'neo_0'
+    n_hidden = 300
+    model_name = 'neo_2'
     model_dir = 'output/buzzer/neo/{}.npz'.format(model_name)
     model = RNN(train_iter.n_input, n_hidden, N_GUESSERS + 1)
 
-    chainer.cuda.get_device(0).use()
-    model.to_gpu(0)
+    chainer.cuda.get_device(2).use()
+    model.to_gpu(2)
 
     trainer = Trainer(model, model_dir)
-    trainer.run(train_iter, dev_iter, 20)
+    trainer.run(train_iter, dev_iter, 25)
 
     dev_buzzes = trainer.test(dev_iter)
     dev_buzzes_dir = 'output/buzzer/neo/dev_buzzes.{}.pkl'.format(model_name)
