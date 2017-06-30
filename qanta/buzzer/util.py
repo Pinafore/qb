@@ -4,7 +4,6 @@ import json
 import time
 import pickle
 import codecs
-import gensim
 import numpy as np
 import pandas as pd
 from collections import namedtuple
@@ -268,8 +267,9 @@ def ultimate_buzzer(test_iter):
     return buzzes
 
 if __name__ == "__main__":
-    merge_dfs()
+    pass
+    # merge_dfs()
 
     # option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
     # load_protobowl()
-    option2id, guesses_by_fold = load_quizbowl()
+    # option2id, guesses_by_fold = load_quizbowl()

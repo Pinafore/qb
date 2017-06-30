@@ -86,6 +86,8 @@ def main():
             batch_size=128, make_vector=dense_vector)
     dev_iter = QuestionIterator(all_guesses[c.BUZZER_DEV_FOLD], option2id,
             batch_size=128, make_vector=dense_vector)
+    devtest_iter = QuestionIterator(all_guesses['test'], option2id,
+            batch_size=128, make_vector=dense_vector)
     expo_iter = QuestionIterator(all_guesses['expo'], option2id,
             batch_size=128, make_vector=dense_vector)
 
@@ -111,6 +113,18 @@ def main():
     with open(expo_buzzes_dir, 'wb') as f:
         pickle.dump(expo_buzzes, f)
     print('Expo buzz {} saved to {}'.format(len(expo_buzzes), expo_buzzes_dir))
+
+    dev_buzzes = trainer.test(dev_iter)
+    dev_buzzes_dir = 'output/buzzer/neo/dev_buzzes.{}.pkl'.format(model_name)
+    with open(dev_buzzes_dir, 'wb') as f:
+        pickle.dump(dev_buzzes, f)
+    print('Dev buzz {} saved to {}'.format(len(dev_buzzes), dev_buzzes_dir))
+
+    devtest_buzzes = trainer.test(devtest_iter)
+    devtest_buzzes_dir = 'output/buzzer/neo/devtest_buzzes.{}.pkl'.format(model_name)
+    with open(devtest_buzzes_dir, 'wb') as f:
+        pickle.dump(devtest_buzzes, f)
+    print('Devtest buzz {} saved to {}'.format(len(devtest_buzzes), devtest_buzzes_dir))
 
     report(dev_buzzes_dir)
 

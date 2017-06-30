@@ -18,6 +18,7 @@ N_GUESSES = conf['buzzer']['n_guesses']
 
 log = logging.get(__name__)
 
+random.seed(1234)
 
 def dense_vector(dicts: List[List[Dict[str, float]]],
         step_size=1) -> List[List[float]]:
