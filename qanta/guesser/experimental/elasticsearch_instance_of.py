@@ -240,3 +240,9 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         log.info('Filtering when classification probability > {}'.format(self.confidence_threshold))
 
         return sc.parallelize(spark_input, 32 * n_cores).map(ir_search).collect()
+
+    def guess_single(self, question: QuestionText):
+        p_class, prob = self.test_instance_of([question])[0]
+        return es_index.search(
+                question, p_class, prob, self.confidence_threshold,
+                normalize_score_by_length=self.normalize_score_by_length)
