@@ -3,6 +3,7 @@ import time
 from multiprocessing import Pool, Manager
 from functools import partial
 from qanta.config import conf
+from qanta.spark import create_spark_context
 
 def queue_wrapper(func, inputs):
     real_inputs, queue = inputs
@@ -10,11 +11,17 @@ def queue_wrapper(func, inputs):
     return func(*real_inputs)
 
 def _multiprocess(func, inputs, n_cores=conf['buzzer']['n_cores'], info='',
-        multi=True):
+        multi=True, spark=False):
 
     total_size = len(inputs)
     output = '\r[{0}] ({1}) done: {2}/{3}'
-    if multi:
+    if spark:
+        def spark_wrapper(inputs):
+            return func(*inputs)
+        sc = create_spark_context(configs=[('spark.executor.cores', n_cores),
+                                           ('spark.executor.memory', '20g')])
+        return sc.parallelize(inputs, 32 * n_cores).map(spark_wrapper).collect()
+    elif multi:
         pool = Pool(n_cores)
         manager = Manager()
         queue = manager.Queue()
