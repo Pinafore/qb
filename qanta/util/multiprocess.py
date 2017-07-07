@@ -1,5 +1,6 @@
 import sys
 import time
+import multiprocessing
 from multiprocessing import Pool, Manager
 from functools import partial
 from qanta.config import conf
@@ -10,17 +11,16 @@ def queue_wrapper(func, inputs):
     queue.put(0)
     return func(*real_inputs)
 
-def _multiprocess(func, inputs, n_cores=conf['buzzer']['n_cores'], info='',
-        multi=True, spark=False):
-
+def _multiprocess(func, inputs, n_cores=0, info='', 
+                  progress=True, multi=True, spark=None):
+    if n_cores == 0:
+        n_cores = multiprocessing.cpu_count()
     total_size = len(inputs)
-    output = '\r[{0}] ({1}) done: {2}/{3}'
-    if spark:
+    output = '\r[{0}] ({1}) done: {2}/{3} eta: {4}'
+    if spark is not None:
         def spark_wrapper(inputs):
             return func(*inputs)
-        sc = create_spark_context(configs=[('spark.executor.cores', n_cores),
-                                           ('spark.executor.memory', '20g')])
-        return sc.parallelize(inputs, 32 * n_cores).map(spark_wrapper).collect()
+        return spark.parallelize(inputs, 64 * n_cores).map(spark_wrapper).collect()
     elif multi:
         pool = Pool(n_cores)
         manager = Manager()
@@ -31,18 +31,38 @@ def _multiprocess(func, inputs, n_cores=conf['buzzer']['n_cores'], info='',
         inputs = [(i, queue) for i in inputs]
         result = pool.map_async(worker, inputs)
         # monitor loop
+
+        start_time = time.time()
         while not result.ready():
             size = queue.qsize()
-            sys.stderr.write(output.format(info, n_cores, size, total_size))
+            if size > 0:
+                eta = int((time.time() - start_time) / size \
+                        * (total_size - size))
+                eta = '{}min {}s'.format(eta // 60, eta % 60)
+            else:
+                eta = 'inf'
+            if progress:
+                sys.stderr.write(
+                        output.format(info, n_cores, size, total_size, eta))
             time.sleep(0.1)
-        sys.stderr.write('\n')
+        if progress:
+            sys.stderr.write('\n')
         pool.close()
         return result.get()
     else:
         result = []
         for i, inp in enumerate(inputs):
             result.append(func(*inp))
-            sys.stderr.write(output.format(info, 1, i, total_size))
-        sys.stderr.write('\n')
+            size = i
+            if size > 0:
+                eta = int((time.time() - start_time) / size \
+                        * (total_size - size))
+                eta = '{}min {}s'.format(eta // 60, eta % 60)
+            else:
+                eta = 'inf'
+            if progress:
+                sys.stderr.write(output.format(info, 1, i, total_size, eta))
+        if progress:
+            sys.stderr.write('\n')
         return result
 

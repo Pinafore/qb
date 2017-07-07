@@ -243,6 +243,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
 
     def guess_single(self, question: QuestionText):
         p_class, prob = self.test_instance_of([question])[0]
-        return es_index.search(
+        guesses = es_index.search(
                 question, p_class, prob, self.confidence_threshold,
                 normalize_score_by_length=self.normalize_score_by_length)
+        return dict(guesses)

@@ -34,7 +34,7 @@ class CompileCLM(ExternalTask):
 class CodeCompile(WrapperTask):
     def requires(self):
         yield NLTKDownload()
-        yield CompileCLM()
+        #yield CompileCLM()
 
 
 class WikipediaRawRedirects(Task):

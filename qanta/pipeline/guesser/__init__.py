@@ -66,6 +66,18 @@ class TrainGuesser(Task):
         ] + guesser_targets
 
 
+class TrainSingleGuesser(WrapperTask):
+
+    def requires(self):
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            yield TrainGuesser(
+                guesser_module=g_spec.guesser_module,
+                guesser_class=g_spec.guesser_class,
+                dependency_module=g_spec.dependency_module,
+                dependency_class=g_spec.dependency_class
+            )
+
+
 class GenerateGuesses(Task):
     guesser_module = luigi.Parameter()  # type: str
     guesser_class = luigi.Parameter()  # type: str
