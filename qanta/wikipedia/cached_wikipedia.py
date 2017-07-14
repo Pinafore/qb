@@ -201,7 +201,7 @@ class CachedWikipedia:
                 self._dump_redirects = pickle.load(f)
         else:
             raise ValueError(
-                'The redirect file (%s) from the dump is missing, run: luigi --module qanta.pipeline.preprocess DownloadData' % self.dump_redirect_path)
+                'The redirect file (%s) from the dump is missing, run: luigi --module qanta.pipeline.preprocess WikipediaRedirectPickle' % self.dump_redirect_path)
 
         if os.path.exists(self.cached_redirect_path):
             with open(self.cached_redirect_path, 'rb') as f:
