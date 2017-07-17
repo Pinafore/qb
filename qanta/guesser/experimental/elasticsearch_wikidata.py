@@ -22,7 +22,7 @@ from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 
 log = logging.get(__name__)
 
-connections.create_connection(hosts=['localhost'])
+connections.create_connection(hosts=['152.2.128.43'])
 
 IS_HUMAN_MODEL_PICKLE = 'is_human_model.pickle'
 WIKIDATA_PICKLE = 'output/wikidata.pickle'

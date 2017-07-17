@@ -106,7 +106,7 @@ def run(questions, first_n, keep_n, ckp_dir):
     returns = list(map(list, zip(*returns)))
     text_before, text_after, guesses_before, guesses_after, dropped = returns
     checkpoint = defaultdict(dict)
-    s = [[], [], [], []]
+    s = [0, 0, 0, 0, 0]
     for i, q in enumerate(questions):
         checkpoint[q.qnum]['text_before'] = text_before[i]
         checkpoint[q.qnum]['text_after'] = text_after[i]
@@ -115,12 +115,14 @@ def run(questions, first_n, keep_n, ckp_dir):
         checkpoint[q.qnum]['dropped'] = dropped[i]
         gb = guesses_before[i]
         ga = guesses_after[i]
-        s[0].append(gb[0][0] == q.page)
-        s[1].append(gb[0][0] == q.page)
-        s[2].append(q.page in [x[0] for x in gb[:5]])
-        s[3].append(q.page in [x[0] for x in ga[:5]])
-    print([sum(x) / len(x) for x in s])
+        s[0] += gb[0][0] == q.page
+        s[1] += ga[0][0] == q.page
+        s[2] += ga[0][0] == gb[0][0]
+        s[3] += q.page in [x[0] for x in gb[:5]]
+        s[4] += q.page in [x[0] for x in ga[:5]]
+    print([x / len(questions) for x in s])
 
+    checkpoint = dict(checkpoint)
     with open(safe_path(ckp_dir), 'wb') as f:
         pickle.dump(checkpoint, f)
 
@@ -134,8 +136,8 @@ def main():
     fold = 'guessdev'
     db = QuizBowlDataset(1, guesser_train=True, buzzer_train=True)
     questions = db.questions_in_folds([fold])
-    ckp_dir = 'output/experimental/{0}.{1}.first.pkl'.format(fold, 'quarter')
-    run(questions, 1, quarter, ckp_dir)
+    ckp_dir = 'output/experimental/{0}.{1}.first.pkl'.format(fold, 'five')
+    run(questions, 1, five, ckp_dir)
 
 if __name__ == '__main__':
     main()
