@@ -56,6 +56,7 @@ This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-s
 * Docker 1.11.1
 * KenLM
 * CUDA and Nvidia drivers if using a GPU instance
+* lz4
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
@@ -123,40 +124,6 @@ want to completely reset the AWS infrastructure this does the job
 2. `terraform destroy -target=aws_spot_instance_request.master` will only destroy the EC2 instance.
 This is the only part of the insfrastructure aside from S3 that AWS charges you for.
 
-### Non-AWS Setup
-Since we do not primarily develop qanta outside of AWS and setups vary widely we don't maintain a
-formal set of procedures to get qanta running not using AWS. Below are a listing of the important
-scripts that Packer and Terraform run to install and configure a running qanta system.
-
-#### Install Programs
-
-1. Install Scala/Spark
-
-http://www.scala-lang.org/download/
-http://spark.apache.org/downloads.html
-
-2. Install ElasticSearch
-
-https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
-
-3. Install Python packages
-
-1. `packer/packer.json`: Inventory of commands to setup pre-runtime image
-2. `packer/setup.sh`: Install dependencies which don't require runtime information
-3. `aws.tf`: Terraform configuration
-4. `terraform/`: Bash scripts and configuration scripts
-
-## Configuration
-QANTA configuration is done through a combination of environment variables and the `qanta-defaults.hcl` file. These are set
-appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults. QANTA will read a `qanta.hcl`
-first if it exists, otherwise it will fall back to reading `qanta-defaults.hcl`. This is meant to allow for custom
-configuration of `qanta.hcl` after copying it via `cp qanta-defaults.hcl qanta.hcl` without having a chance for configs
-to accidentally become defaults unless that is on purpose.
-
-Reference `conf/qb-env.sh.template` for a list of available configuration variables
-
-## Run QANTA
-### Pre-requisites
 
 #### Accessing Resources on EC2
 
@@ -204,6 +171,40 @@ output from `vpc_id`.
 "Change Security Groups", and finally add your security group
 
 
+
+### Non-AWS Setup
+Since we do not primarily develop qanta outside of AWS and setups vary widely we don't maintain a
+formal set of procedures to get qanta running not using AWS. Below are a listing of the important
+scripts that Packer and Terraform run to install and configure a running qanta system.
+
+#### Install Programs
+
+1. Install Scala/Spark
+
+http://www.scala-lang.org/download/
+http://spark.apache.org/downloads.html
+
+2. Install ElasticSearch
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
+
+3. Install Python packages
+
+1. `packer/packer.json`: Inventory of commands to setup pre-runtime image
+2. `packer/setup.sh`: Install dependencies which don't require runtime information
+3. `aws.tf`: Terraform configuration
+4. `terraform/`: Bash scripts and configuration scripts
+
+## Configuration
+QANTA configuration is done through a combination of environment variables and the `qanta-defaults.hcl` file. These are set
+appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults. QANTA will read a `qanta.hcl`
+first if it exists, otherwise it will fall back to reading `qanta-defaults.hcl`. This is meant to allow for custom
+configuration of `qanta.hcl` after copying it via `cp qanta-defaults.hcl qanta.hcl` without having a chance for configs
+to accidentally become defaults unless that is on purpose.
+
+Reference `conf/qb-env.sh.template` for a list of available configuration variables
+
+
 #### Non-AWS dependency download
 If you are running on AWS, these files are already downloaded. Otherwise you will need to run either
 `terraform/aws-downloads.sh` to get dependencies from Amazon S3 or run the bash commands below.
@@ -232,6 +233,12 @@ $ make clm
 
 In addition to these steps you need to either run `python setup.py develop` or include the qanta directory in your
 `PYTHONPATH` environment variable. We intend to fix path issues in the future by fixing absolute/relative paths.
+
+
+## Run QANTA
+### Pre-requisites
+
+Complete either the non-AWS or AWS setup as above.
 
 ### Qanta Running Summary
 QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
