@@ -383,6 +383,12 @@ resort is to explicitly assign questions to pages based on either
 Protobowl or NAQT id.  These files have four fields but only use the
 first three.
 
+## Running the Assignment Process
+
+> python3 ingestion/create_db.py
+
+Needs Protobowl files at https://s3.amazonaws.com/protobowl/questions-05-05-2017.json.xz
+
 # Wikipedia Dumps
 
 As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
@@ -422,5 +428,4 @@ These references may be useful and are the source for these instructions:
 * https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
 * https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
 * http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
-=======
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300
+
