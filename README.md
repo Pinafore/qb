@@ -128,6 +128,19 @@ Since we do not primarily develop qanta outside of AWS and setups vary widely we
 formal set of procedures to get qanta running not using AWS. Below are a listing of the important
 scripts that Packer and Terraform run to install and configure a running qanta system.
 
+#### Install Programs
+
+1. Install Scala/Spark
+
+http://www.scala-lang.org/download/
+http://spark.apache.org/downloads.html
+
+2. Install ElasticSearch
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
+
+3. Install Python packages
+
 1. `packer/packer.json`: Inventory of commands to setup pre-runtime image
 2. `packer/setup.sh`: Install dependencies which don't require runtime information
 3. `aws.tf`: Terraform configuration
@@ -271,7 +284,9 @@ export PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/python/build:$PYTHONPATH
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
-> No module named 'pyspark'
+> TypeError: namedtuple() missing 3 required keyword-only arguments: 'verbose', 'rename', and 'module'
+
+Python 3.6 needs Spark 2.1.1
 
 ### Expo Instructions
 

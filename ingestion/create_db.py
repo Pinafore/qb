@@ -426,6 +426,7 @@ if __name__ == "__main__":
 
     if flags.guess:
         if not os.path.exists(flags.wiki_title):
+            import urllib
             urllib.request.urlretrieve("http://dumps.wikimedia.org/enwiki/latest/enwiki-latest-all-titles-in-ns0.gz",
                                     flags.wiki_title)
 

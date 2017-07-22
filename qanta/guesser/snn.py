@@ -14,8 +14,9 @@ from qanta.config import conf
 from qanta.keras import AverageWords
 from qanta import logging
 
-from keras.models import Sequential, Model, load_model
-from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda
+from keras.models import Sequential, load_model
+from keras.layers import Dense, Embedding, Activation, Lambda, Dropout
+from keras.layers.noise import AlphaDropout
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
@@ -26,20 +27,20 @@ import numpy as np
 
 log = logging.get(__name__)
 
-DAN_WE_TMP = '/tmp/qanta/deep/dan_we.pickle'
-DAN_WE = 'dan_we.pickle'
-DAN_MODEL_TMP_TARGET = '/tmp/qanta/deep/final_dan.keras'
-DAN_MODEL_TARGET = 'final_dan.keras'
-DAN_PARAMS_TARGET = 'dan_params.pickle'
+SNN_WE_TMP = '/tmp/qanta/deep/snn_we.pickle'
+SNN_WE = 'snn_we.pickle'
+SNN_MODEL_TMP_TARGET = '/tmp/qanta/deep/final_snn.keras'
+SNN_MODEL_TARGET = 'final_snn.keras'
+SNN_PARAMS_TARGET = 'snn_params.pickle'
 
 
-load_embeddings = nn.create_load_embeddings_function(DAN_WE_TMP, DAN_WE, log)
+load_embeddings = nn.create_load_embeddings_function(SNN_WE_TMP, SNN_WE, log)
 
 
-class DANGuesser(AbstractGuesser):
+class SNNGuesser(AbstractGuesser):
     def __init__(self):
         super().__init__()
-        guesser_conf = conf['guessers']['DAN']
+        guesser_conf = conf['guessers']['SNN']
         self.expand_we = guesser_conf['expand_we']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.n_hidden_units = guesser_conf['n_hidden_units']
@@ -50,16 +51,12 @@ class DANGuesser(AbstractGuesser):
         self.l2_normalize_averaged_words = guesser_conf['l2_normalize_averaged_words']
         self.max_n_epochs = guesser_conf['max_n_epochs']
         self.max_patience = guesser_conf['max_patience']
-        self.activation_function = guesser_conf['activation_function']
         self.train_on_q_runs = guesser_conf['train_on_q_runs']
         self.train_on_full_q = guesser_conf['train_on_full_q']
         self.decay_lr_on_plateau = guesser_conf['decay_lr_on_plateau']
         self.wiki_data_frac = conf['wiki_data_frac']
         self.generate_mentions = guesser_conf['generate_mentions']
         self.max_len = guesser_conf['max_len']
-        self.output_last_hidden = guesser_conf['output_last_hidden']
-
-        self.last_hidden_model = None
         self.embeddings = None
         self.embedding_lookup = None
         self.i_to_class = None
@@ -87,13 +84,11 @@ class DANGuesser(AbstractGuesser):
             'word_dropout_rate': self.word_dropout_rate,
             'learning_rate': self.learning_rate,
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
-            'activation_function': self.activation_function,
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
             'decay_lr_on_plateau': self.decay_lr_on_plateau,
             'wiki_data_frac': self.wiki_data_frac,
-            'generate_mentions': self.generate_mentions,
-            'output_last_hidden': self.output_last_hidden
+            'generate_mentions': self.generate_mentions
         }
 
     def load_parameters(self, params):
@@ -113,13 +108,11 @@ class DANGuesser(AbstractGuesser):
         self.word_dropout_rate = params['word_dropout_rate']
         self.l2_normalize_averaged_words = params['l2_normalize_averaged_words']
         self.learning_rate = params['learning_rate']
-        self.activation_function = params['activation_function']
         self.train_on_q_runs = params['train_on_q_runs']
         self.train_on_full_q = params['train_on_full_q']
         self.decay_lr_on_plateau = params['decay_lr_on_plateau']
         self.wiki_data_frac = params['wiki_data_frac']
         self.generate_mentions = params['generate_mentions']
-        self.output_last_hidden = params['output_last_hidden']
 
     def parameters(self):
         return {
@@ -134,15 +127,13 @@ class DANGuesser(AbstractGuesser):
             'word_dropout_rate': self.word_dropout_rate,
             'learning_rate': self.learning_rate,
             'l2_normalize_averaged_words': self.l2_normalize_averaged_words,
-            'activation_function': self.activation_function,
             'epochs_trained_for': np.argmax(self.history['val_sparse_categorical_accuracy']) + 1,
             'best_validation_accuracy': max(self.history['val_sparse_categorical_accuracy']),
             'train_on_q_runs': self.train_on_q_runs,
             'train_on_full_q': self.train_on_full_q,
             'decay_lr_on_plateau': self.decay_lr_on_plateau,
             'wiki_data_frac': self.wiki_data_frac,
-            'generate_mentions': self.generate_mentions,
-            'output_last_hidden': self.output_last_hidden
+            'generate_mentions': self.generate_mentions
         }
 
     def qb_dataset(self):
@@ -150,7 +141,7 @@ class DANGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls) -> List[str]:
-        return [DAN_PARAMS_TARGET]
+        return [SNN_PARAMS_TARGET]
 
     def build_model(self):
         model = Sequential()
@@ -161,20 +152,16 @@ class DANGuesser(AbstractGuesser):
             input_length=self.max_len,
             weights=[self.embeddings]
         ))
-        model.add(Dropout(self.word_dropout_rate, noise_shape=(self.max_len, 1)))
+        #model.add(Dropout(self.word_dropout_rate, noise_shape=(self.max_len, 1)))
         model.add(AverageWords())
-        if self.l2_normalize_averaged_words:
-            model.add(Lambda(lambda x: K.l2_normalize(x, 1)))
 
         for _ in range(self.n_hidden_layers):
             model.add(Dense(self.n_hidden_units))
-            model.add(BatchNormalization())
-            model.add(Activation(self.activation_function))
-            model.add(Dropout(self.nn_dropout_rate))
+            model.add(Activation('selu'))
+            model.add(AlphaDropout(self.nn_dropout_rate))
 
         model.add(Dense(self.n_classes))
-        model.add(BatchNormalization())
-        model.add(Dropout(self.nn_dropout_rate))
+        model.add(AlphaDropout(self.nn_dropout_rate))
         model.add(Activation('softmax'))
 
         adam = Adam()
@@ -182,27 +169,7 @@ class DANGuesser(AbstractGuesser):
             loss=sparse_categorical_crossentropy, optimizer=adam,
             metrics=['sparse_categorical_accuracy']
         )
-        
-        if self.output_last_hidden:
-            self.last_hidden_model = self.build_last_hidden_model(model)
-        
         return model
-    
-    def build_last_hidden_model(self, model):
-        # This does a janky job of grabbing the last hidden layer, excluding the
-        # fully connected layer for the classification softmax
-        n_dense_layers = sum(1 for l in model.layers if l.name.startswith('dense'))
-
-        # Subtract another to go back a layer
-        last_hidden_idx = n_dense_layers - 1
-        last_hidden_name = 'dense_{}'.format(last_hidden_idx)
-        log.info('Building last hidden model with last_hidden_name={}'.format(last_hidden_name))
-        for l in model.layers:
-            log.info('layer: {}'.format(l.name))
-            if l.name == last_hidden_name:
-                return Model(inputs=model.input, outputs=l.output)
-        else:
-            raise ValueError('Could not find the last hidden layer when trying to output it')
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
@@ -246,7 +213,7 @@ class DANGuesser(AbstractGuesser):
             TensorBoard(),
             EarlyStopping(patience=self.max_patience, monitor='val_sparse_categorical_accuracy'),
             ModelCheckpoint(
-                safe_path(DAN_MODEL_TMP_TARGET),
+                safe_path(SNN_MODEL_TMP_TARGET),
                 save_best_only=True,
                 monitor='val_sparse_categorical_accuracy'
             )
@@ -275,35 +242,24 @@ class DANGuesser(AbstractGuesser):
             sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
             sorted_scores = np.copy(row[sorted_labels])
             guesses.append(list(zip(sorted_guesses, sorted_scores)))
-        
-        if self.output_last_hidden:
-            hidden_output = self.last_hidden_model.predict(x_test)
-            log.info('Saving hidden layer...')
-            with open('/tmp/hidden_layer.pickle', 'wb') as f:
-                pickle.dump(hidden_output, f)
-        
         return guesses
 
     def save(self, directory: str) -> None:
-        shutil.copyfile(DAN_MODEL_TMP_TARGET, os.path.join(directory, DAN_MODEL_TARGET))
-        with safe_open(os.path.join(directory, DAN_PARAMS_TARGET), 'wb') as f:
+        shutil.copyfile(SNN_MODEL_TMP_TARGET, os.path.join(directory, SNN_MODEL_TARGET))
+        with safe_open(os.path.join(directory, SNN_PARAMS_TARGET), 'wb') as f:
             pickle.dump(self.dump_parameters(), f)
 
     @classmethod
     def load(cls, directory: str):
-        guesser = DANGuesser()
+        guesser = SNNGuesser()
         guesser.model = load_model(
-            os.path.join(directory, DAN_MODEL_TARGET),
+            os.path.join(directory, SNN_MODEL_TARGET),
             custom_objects={
                 'AverageWords': AverageWords
             }
         )
-        
-        with open(os.path.join(directory, DAN_PARAMS_TARGET), 'rb') as f:
+        with open(os.path.join(directory, SNN_PARAMS_TARGET), 'rb') as f:
             params = pickle.load(f)
             guesser.load_parameters(params)
-        
-        if guesser.output_last_hidden:
-            guesser.last_hidden_model = guesser.build_last_hidden_model(guesser.model)
 
         return guesser
