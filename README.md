@@ -427,6 +427,12 @@ resort is to explicitly assign questions to pages based on either
 Protobowl or NAQT id.  These files have four fields but only use the
 first three.
 
+## Running the Assignment Process
+
+> python3 ingestion/create_db.py
+
+Needs Protobowl files at https://s3.amazonaws.com/protobowl/questions-05-05-2017.json.xz
+
 # Wikipedia Dumps
 
 As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
