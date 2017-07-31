@@ -12,7 +12,8 @@ from qanta.guesser.experimental.elasticsearch_instance_of import ElasticSearchWi
 
 
 '''Greedily drop words while trying to maintain the guesses.
-Difference between two sets of guesses is measured by kl divergence.'''
+Difference between two sets of guesses is measured by kl divergence.
+'''
 
 
 gspec = AbstractGuesser.list_enabled_guessers()[0]
@@ -22,6 +23,8 @@ guesser = ElasticSearchWikidataGuesser.load(guesser_dir)
 
 
 def kl(dict1: Dict[str, float], dict2: Dict[str, float]) -> float:
+    '''Normalize the two dictionaries and compute the KL divergence KL(d1 | d2)
+    '''
     def normalize(d):
         s = sum(d.values())
         for k, v in d.items():
@@ -34,19 +37,6 @@ def kl(dict1: Dict[str, float], dict2: Dict[str, float]) -> float:
     for k in x1.keys():
         score += x1[k] * math.log(x1[k] / x2.get(k, x1[k] / 2))
     return score
-
-def drop(question: List[str], dict1: Dict[str, float], i: int) -> float:
-    '''Get the divergence between dict1 and question with ith word dropped.
-    Args:
-        question: the unmodified question.
-        dict1: the guesses from the unmodified question.
-        i: the position of the word to be dropped.
-    Return:
-        guesses: the new guesses.
-    '''
-    question = ' '.join(question[:i] + question[i+1:])
-    guesses = guesser.guess_single(question)
-    return guesses
 
 def greedy_drop(question, keep_n):
     '''Drop n words from the question.
@@ -77,7 +67,8 @@ def greedy_drop(question, keep_n):
     return ' '.join(question), dropped
 
 def evaluate_question(question: Question, first_n=-1, keep_n=lambda x: 6):
-    '''Get the top one and top five precisions before and after dropping words.
+    '''Get the question and guesses before and after dropping words.
+    Keep keep_n words in the first_n sentence.
     Args:
         question: a Question object.
         first_n: take the first_n sentences.
@@ -115,11 +106,11 @@ def run(questions, first_n, keep_n, ckp_dir):
         checkpoint[q.qnum]['dropped'] = dropped[i]
         gb = guesses_before[i]
         ga = guesses_after[i]
-        s[0] += gb[0][0] == q.page
-        s[1] += ga[0][0] == q.page
-        s[2] += ga[0][0] == gb[0][0]
-        s[3] += q.page in [x[0] for x in gb[:5]]
-        s[4] += q.page in [x[0] for x in ga[:5]]
+        s[0] += gb[0][0] == q.page # accuracy before
+        s[1] += ga[0][0] == q.page # accuracy after
+        s[2] += ga[0][0] == gb[0][0] # if generate same guess
+        s[3] += q.page in [x[0] for x in gb[:5]] # top 5 accuracy before
+        s[4] += q.page in [x[0] for x in ga[:5]] # top 5 accuracy after
     print([x / len(questions) for x in s])
 
     checkpoint = dict(checkpoint)
