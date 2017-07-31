@@ -24,7 +24,7 @@ from qanta.wikipedia.wikidata import NO_MATCH
 
 log = logging.get(__name__)
 
-connections.create_connection(hosts=['152.2.128.43'])
+connections.create_connection(hosts=['localhost'])
 
 
 Claim = namedtuple('Claim', 'item property object title')
