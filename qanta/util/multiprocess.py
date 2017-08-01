@@ -51,6 +51,7 @@ def _multiprocess(func, inputs, n_cores=0, info='',
         return result.get()
     else:
         result = []
+        start_time = time.time()
         for i, inp in enumerate(inputs):
             result.append(func(*inp))
             size = i
