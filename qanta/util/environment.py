@@ -19,8 +19,11 @@ if os.path.exists('data/internal/naqt.db'):
 else:
     QB_QUESTION_DB = data_path('data/internal/non_naqt.db')
 
+BONUS_QUESTION_DB = data_path('data/internal/bonus.db')
+
 ENVIRONMENT = dict(
     QB_ROOT=QB_ROOT,
     QB_QUESTION_DB=QB_QUESTION_DB,
-    QB_SPARK_MASTER=QB_SPARK_MASTER
+    QB_SPARK_MASTER=QB_SPARK_MASTER,
+    BONUS_QUESTION_DB=BONUS_QUESTION_DB
 )

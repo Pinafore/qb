@@ -9,7 +9,7 @@ import nltk
 
 from qanta import logging
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
-from qanta.util.environment import QB_QUESTION_DB
+from qanta.util.environment import QB_QUESTION_DB, BONUS_QUESTION_DB
 from qanta.util import constants as c
 from qanta.util.io import file_backed_cache_decorator, safe_path
 from qanta.config import conf
@@ -337,3 +337,49 @@ class QuizBowlDataset(AbstractDataset):
             questions.extend(by_fold[fold])
 
         return questions
+
+class BonusQuestion:
+
+    def __init__(self, qnum, texts, pages, answers, fold=None, leadin=None):
+        self.qnum = qnum
+        assert len(texts) == 3 and len(pages) == 3 and len(answers) == 3
+        self.texts = texts
+        self.pages = pages
+        self.answers = answers
+        self.fold = fold
+        self.leadin = None
+
+    def __repr__(self):
+        return '<BonusQuestion qnum={} \n' + \
+                '0: page={}, text={}...\n' + \
+                '1: page={}, text={}...\n' + \
+                '2: page={}, text={}...\n'.format(
+                        self.qnum, 
+                        self.texts[0], self.pages[1],
+                        self.texts[1], self.pages[1],
+                        self.texts[2], self.pages[2])
+
+class BonusQuestionDatabase:
+
+    def __init__(self, location=BONUS_QUESTION_DB):
+        self._conn = sqlite3.connect(location)
+    
+    def all_questions(self) -> Dict[int, BonusQuestion]:
+        questions = {}
+        c = self._conn.cursor()
+        command = 'select * from text where page != ""'
+        c.execute(command)
+        question_parts = defaultdict(dict)
+        for qid, number, _, text, page, answer, _ in c:
+            # print(qid, number, text, page)
+            question_parts[int(qid)][int(number)] = (text, page, answer)
+        bonus_questions = dict()
+        for qnum, parts in question_parts.items():
+            if not set(parts.keys()) == {0,1,2}:
+                # log.info('skipping {}, missing question parts'.format(qnum))
+                # print(set(parts.keys()))
+                continue
+            # transpose
+            parts = list(zip(*[parts[i] for i in [0,1,2]]))
+            bonus_questions[qnum] = BonusQuestion(qnum, parts[0], parts[1], parts[2])
+        return bonus_questions
