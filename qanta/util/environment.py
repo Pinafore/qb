@@ -20,6 +20,7 @@ else:
     QB_QUESTION_DB = data_path('data/internal/non_naqt.db')
 
 BONUS_QUESTION_DB = data_path('data/internal/bonus.db')
+BONUS_ANSWER_PAGES = data_path('data/internal/bonus_answer_pages.pkl')
 
 ENVIRONMENT = dict(
     QB_ROOT=QB_ROOT,

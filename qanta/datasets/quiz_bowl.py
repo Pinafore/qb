@@ -340,21 +340,22 @@ class QuizBowlDataset(AbstractDataset):
 
 class BonusQuestion:
 
-    def __init__(self, qnum, texts, pages, answers, fold=None, leadin=None):
+    def __init__(self, qnum, texts, pages, answers, leadin=None, fold=None):
         self.qnum = qnum
         assert len(texts) == 3 and len(pages) == 3 and len(answers) == 3
         self.texts = texts
         self.pages = pages
         self.answers = answers
+        self.leadin = leadin
         self.fold = fold
-        self.leadin = None
 
     def __repr__(self):
-        return '<BonusQuestion qnum={} \n' + \
-                '0: page={}, text={}...\n' + \
-                '1: page={}, text={}...\n' + \
-                '2: page={}, text={}...\n'.format(
-                        self.qnum, 
+        s = '<BonusQuestion qnum={} fold={} \n' + \
+            'leadin: {}\n' + \
+            '0: page={}, text={}...\n' + \
+            '1: page={}, text={}...\n' + \
+            '2: page={}, text={}...\n'
+        return s.format(self.qnum, self.fold, self.leadin,
                         self.texts[0], self.pages[1],
                         self.texts[1], self.pages[1],
                         self.texts[2], self.pages[2])
@@ -367,19 +368,26 @@ class BonusQuestionDatabase:
     def all_questions(self) -> Dict[int, BonusQuestion]:
         questions = {}
         c = self._conn.cursor()
-        command = 'select * from text where page != ""'
-        c.execute(command)
+        c.execute('select * from text where page != ""')
         question_parts = defaultdict(dict)
         for qid, number, _, text, page, answer, _ in c:
-            # print(qid, number, text, page)
             question_parts[int(qid)][int(number)] = (text, page, answer)
         bonus_questions = dict()
         for qnum, parts in question_parts.items():
             if not set(parts.keys()) == {0,1,2}:
                 # log.info('skipping {}, missing question parts'.format(qnum))
-                # print(set(parts.keys()))
                 continue
             # transpose
             parts = list(zip(*[parts[i] for i in [0,1,2]]))
             bonus_questions[qnum] = BonusQuestion(qnum, parts[0], parts[1], parts[2])
+
+        c = self._conn.cursor()
+        c.execute('select * from questions')
+        extra_parts = dict()
+        for qnum, tour, leadin, _, fold in c:
+            qnum = int(qnum)
+            if qnum not in bonus_questions:
+                continue
+            bonus_questions[qnum].leadin = leadin
+            bonus_questions[qnum].fold = fold
         return bonus_questions
