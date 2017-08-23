@@ -21,6 +21,7 @@ else:
 
 BONUS_QUESTION_DB = data_path('data/internal/bonus.db')
 BONUS_ANSWER_PAGES = data_path('data/internal/bonus_answer_pages.pkl')
+BONUS_PAIRS_JSON = data_path('data/internal/bonus_pairs.json')
 
 ENVIRONMENT = dict(
     QB_ROOT=QB_ROOT,
