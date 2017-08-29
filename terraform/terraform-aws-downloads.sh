@@ -2,6 +2,7 @@
 
 set -e
 
+cd /ssd-c/qanta/qb
 /home/ubuntu/anaconda3/bin/python setup.py download
 
 mkdir -p data/external/wikipedia
