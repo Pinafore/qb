@@ -248,7 +248,7 @@ resource "aws_spot_instance_request" "qanta" {
   }
 
   provisioner "remote-exec" {
-    script = "terraform/aws-downloads.sh"
+    script = "terraform/terraform-aws-downloads.sh"
   }
 
   provisioner "remote-exec" {

@@ -9,10 +9,16 @@ log = logging.get(__name__)
 
 
 def create_spark_context(app_name="Quiz Bowl", configs=None) -> SparkContext:
-    spark_conf = SparkConf()\
-        .set('spark.rpc.message.maxSize', 300)\
-        .setAppName(app_name)\
-        .setMaster(QB_SPARK_MASTER)
+    if QB_SPARK_MASTER != "":
+        log.info("Spark master is %s" % QB_SPARK_MASTER)
+        spark_conf = SparkConf()\
+            .set('spark.rpc.message.maxSize', 300)\
+            .setAppName(app_name)\
+            .setMaster(QB_SPARK_MASTER)
+    else:
+        spark_conf = SparkConf()\
+            .set('spark.rpc.message.maxSize', 300)\
+            .setAppName(app_name)
     if configs is not None:
         for key, value in configs:
             if key in ('spark.executor.cores', 'spark.max.cores'):

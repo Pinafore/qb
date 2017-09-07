@@ -17,6 +17,10 @@ installs `apt-get` software, download software distributions, etc). Terraform ta
 creating AWS EC2 machines and provisioning them correctly (networking, secrets, dns, SSD drives,
 etc).
 
+However, we also run this software setup outside of AWS; you can skip to
+non-AWS setup for those instructions, which require a little more manual
+effort.
+
 ### AWS Setup
 **WARNING: Running Qanta scripts will create EC2 instances which you will be billed for**
 
@@ -56,6 +60,7 @@ This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-s
 * Docker 1.11.1
 * KenLM
 * CUDA and Nvidia drivers if using a GPU instance
+* lz4
 * All python packages in `packer/requirements.txt`
 
 ##### AWS Configuration
@@ -123,27 +128,6 @@ want to completely reset the AWS infrastructure this does the job
 2. `terraform destroy -target=aws_spot_instance_request.master` will only destroy the EC2 instance.
 This is the only part of the insfrastructure aside from S3 that AWS charges you for.
 
-### Non-AWS Setup
-Since we do not primarily develop qanta outside of AWS and setups vary widely we don't maintain a
-formal set of procedures to get qanta running not using AWS. Below are a listing of the important
-scripts that Packer and Terraform run to install and configure a running qanta system.
-
-1. `packer/packer.json`: Inventory of commands to setup pre-runtime image
-2. `packer/setup.sh`: Install dependencies which don't require runtime information
-3. `aws.tf`: Terraform configuration
-4. `terraform/`: Bash scripts and configuration scripts
-
-## Configuration
-QANTA configuration is done through a combination of environment variables and the `qanta-defaults.hcl` file. These are set
-appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults. QANTA will read a `qanta.hcl`
-first if it exists, otherwise it will fall back to reading `qanta-defaults.hcl`. This is meant to allow for custom
-configuration of `qanta.hcl` after copying it via `cp qanta-defaults.hcl qanta.hcl` without having a chance for configs
-to accidentally become defaults unless that is on purpose.
-
-Reference `conf/qb-env.sh.template` for a list of available configuration variables
-
-## Run QANTA
-### Pre-requisites
 
 #### Accessing Resources on EC2
 
@@ -190,17 +174,52 @@ output from `vpc_id`.
 6. Select your instance, click the "Actions" drop down, click "Networking" then
 "Change Security Groups", and finally add your security group
 
+### Non-AWS Setup
+
+Since we do not primarily develop qanta outside of AWS and setups vary widely we don't maintain a
+formal set of procedures to get qanta running not using AWS. Below are a listing of the important
+scripts that Packer and Terraform run to install and configure a running qanta system.
+
+#### Install Programs
+
+1. Install Scala/Spark
+
+http://www.scala-lang.org/download/
+http://spark.apache.org/downloads.html
+
+You will also need to setup spark to make sure it runs correctly.  A simple
+way of making sure that QANTA can access Spark correctly is to run:
+
+```
+> python
+Python 3.6.1 |Anaconda 4.4.0 (64-bit)| (default, May 11 2017, 13:09:58) 
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from qanta.spark import create_spark_context
+>>> sc = create_spark_context()
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/07/25 10:04:01 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/07/25 10:04:01 WARN Utils: Your hostname, hongwu resolves to a loopback address: 127.0.0.2; using 192.168.2.2 instead (on interface eth0)
+17/07/25 10:04:01 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+```
+
+2. Install ElasticSearch
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
+
+3. Install Python packages
+
+```
+pip install -r packer/requirements.txt
+```
 
 #### Non-AWS dependency download
 If you are running on AWS, these files are already downloaded. Otherwise you will need to run either
 `terraform/aws-downloads.sh` to get dependencies from Amazon S3 or run the bash commands below.
 
 ```bash
-# Download Wikifier (S3 Download in script mentioned above is much faster, this is 8GB file compressed)
-wget -O /tmp/Wikifier2013.zip http://cogcomp.cs.illinois.edu/software/Wikifier2013.zip
-unzip /tmp/Wikifier2013.zip -d data/external
-rm /tmp/Wikifier2013.zip
-
 # Download nltk data
 $ python3 setup.py download
 ```
@@ -220,6 +239,23 @@ $ make clm
 In addition to these steps you need to either run `python setup.py develop` or include the qanta directory in your
 `PYTHONPATH` environment variable. We intend to fix path issues in the future by fixing absolute/relative paths.
 
+
+## Configuration
+
+QANTA configuration is done through a combination of environment variables and the `qanta-defaults.hcl` file. These are set
+appropriately for AWS by Packer/Terraform, but are otherwise set to sensible defaults. QANTA will read a `qanta.hcl`
+first if it exists, otherwise it will fall back to reading `qanta-defaults.hcl`. This is meant to allow for custom
+configuration of `qanta.hcl` after copying it via `cp qanta-defaults.hcl qanta.hcl` without having a chance for configs
+to accidentally become defaults unless that is on purpose.
+
+Reference `conf/qb-env.sh.template` for a list of available configuration
+variables  Copy this to something that you scource in your .bashrc.
+
+## Run QANTA
+### Pre-requisites
+
+Complete either the non-AWS or AWS setup as above.
+
 ### Qanta Running Summary
 QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
 large batches of questions at a time. Running the batch pipeline is managed by
@@ -235,24 +271,25 @@ qanta from the AWS instance started by Terraform.
 
 1. Start the spark cluster by navigating into `$SPARK_HOME` and running `sbin/start-all.sh`
 2. Start the Luigi daemon: `luigid --background` from `/ssd-c/qanta`
-3. Before you can run any of the features, you need to build the guess database:
-`luigi --module qanta.pipeline CreateGuesses --workers 1`.  You can skip ahead to next step if you
-want (it will also create the guesses, but seeing the guesses will ensure that the deep guesser
-worked as expected).
+3. Start elastic search: `elasticsearch -d`
+
+The above steps can also be done by using the `bin/init-nonaws.sh` script
+which uses environment variables to move into the correct directory.
+
 4. Run the full pipeline: `luigi --module qanta.pipeline AllSummaries --workers 30`
 5. Observe pipeline progress at [http://hostname:8082](http://hostname:8082)
 
 To rerun any part of the pipeline it is sufficient to delete the target file generated by the task
 you wish to rerun.
 
-### AWS S3 Checkpoint/Restore
+## AWS S3 Checkpoint/Restore
 
 To provide and easy way to version, checkpoint, and restore runs of qanta we provide a script to
 manage that at `aws_checkpoint.py`. We assume that you set an environment variable
 `QB_AWS_S3_BUCKET` to where you want to checkpoint to and restore from. We assume that we have full
 access to all the contents of the bucket so we suggest creating a dedicated bucket.
 
-### Problems you may encounter
+## Problems you may encounter
 
 > pg_config executable not found
 
@@ -271,9 +308,11 @@ export PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/python/build:$PYTHONPATH
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
-> No module named 'pyspark'
+> TypeError: namedtuple() missing 3 required keyword-only arguments: 'verbose', 'rename', and 'module'
 
-### Expo Instructions
+Python 3.6 needs Spark 2.1.1
+
+## Expo Instructions
 
 The expo files can be generated from a completed qanta run by calling
 
@@ -320,6 +359,11 @@ also use questions for training data, we need to map individual
 questions to Wikipedia pages.  We have three systems for doing this
 (the code that does the mapping lives in ingestion/create_db.py, which
 produces a database of questions based on protobowl and NAQT input).
+
+We provide a database with non-naqt questions from Protobowl, so if you're
+content using that source of data, you can ignore this portion of the README.
+However, this may be useful if you want to improve our question ingestion code
+or to provide additional questions.
 
 As per our agreement with NAQT, we cannot distribute the NAQT data,
 but we include the ingestion code in the interest of scientific transparency.
@@ -383,6 +427,12 @@ resort is to explicitly assign questions to pages based on either
 Protobowl or NAQT id.  These files have four fields but only use the
 first three.
 
+## Running the Assignment Process
+
+> python3 ingestion/create_db.py
+
+Needs Protobowl files at https://s3.amazonaws.com/protobowl/questions-05-05-2017.json.xz
+
 # Wikipedia Dumps
 
 As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
@@ -397,7 +447,7 @@ Of these we use the following
 
 NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
 
-## Wikipedia Redirect Mapping Creation
+# Wikipedia Redirect Mapping Creation
 
 All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps. For this task we will need these tables:
 
@@ -422,5 +472,3 @@ These references may be useful and are the source for these instructions:
 * https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
 * https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
 * http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
-=======
->>>>>>> cbd41dd6ccbeb63b8c7935d1c994d16169d93300

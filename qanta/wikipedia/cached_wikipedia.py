@@ -154,9 +154,9 @@ class CachedWikipedia:
         2) It should be able to use pre-cached wikipedia content, but fallback to using the `wikipedia` package to fetch
         content in realtime
         3) It should support access to pages using non-canonical names by resolving them to canonical names
-        
+
         The following sections explain how the different levels of caching work as well as how redirects work
-        
+
         Caching
         There are two levels of caching in CachedWikipedia. When a request is issued by the user for a page the
         in memory dictionary-backed cache is checked first. If the content exists it is returned. If it does not exist
@@ -165,7 +165,7 @@ class CachedWikipedia:
         dictionary-backed cache and returned. If that file does not exist and the variable
         remote_fallback=cached_wikipedia_remote_fallback is True (which is not the default), then a HTTP request to
         wikipedia fetches the page content and stores it in both the file-backed and dictionary-backed cache.
-        
+
         Redirects
         To support some flexibility in requesting pages that are very close matches we have two sources of redirects.
         The first is based on wikipedia database dumps which is the most reliable, the second is a redirect cache which
@@ -173,7 +173,7 @@ class CachedWikipedia:
         of this we do the very light preprocessing step of replacing whitespace with underscores since the canonical
         page names in the wikipedia database dumps contains an underscore instead of whitespace (a difference from the
         HTTP package which defaults to the opposite)
-        
+
         remote_delay sets the number of seconds to sleep for in between requests, if set to 0 then there is no delay.
         Please be courteous to Wikipedia and rate limit requests if remote_fallback is set to True (by default it is
         False)
@@ -201,18 +201,23 @@ class CachedWikipedia:
                 self._dump_redirects = pickle.load(f)
         else:
             raise ValueError(
-                'The redirect file from the dump is missing, run the luigi task qanta.pipeline.preprocess.Wikipedia')
+                'The redirect file (%s) from the dump is missing, run: luigi --module qanta.pipeline.preprocess WikipediaRedirectPickle' % self.dump_redirect_path)
 
         if os.path.exists(self.cached_redirect_path):
             with open(self.cached_redirect_path, 'rb') as f:
                 self._cached_redirects = pickle.load(f)
 
-        # This allows for transparrent access to both the requests cached via wikipedia HTTP requests and those defined
-        # via the SQL database dump. ChainMap checks the dictionaries for the existence of the key from left to right
-        # so _cached_redirects is checked first then _dump_redirects. If a new key is written to the _redirects
-        # dictionary it will mutate the first dictionary which is _cached_redirects. Thus it is sufficient to set new
-        # keys on _redirects and resave _cached_redirects upon finding new redirects, allowing for _dump_redirects to
-        # correctly remain unchanged since it comes from a luigi job
+        # This allows for transparrent access to both the requests
+        # cached via wikipedia HTTP requests and those defined via the
+        # SQL database dump. ChainMap checks the dictionaries for the
+        # existence of the key from left to right so _cached_redirects
+        # is checked first then _dump_redirects. If a new key is
+        # written to the _redirects dictionary it will mutate the
+        # first dictionary which is _cached_redirects. Thus it is
+        # sufficient to set new keys on _redirects and resave
+        # _cached_redirects upon finding new redirects, allowing for
+        # _dump_redirects to correctly remain unchanged since it comes
+        # from a luigi job
         self._redirects = ChainMap(self._cached_redirects, self._dump_redirects)
 
     def _wiki_request_page(self, key: str):

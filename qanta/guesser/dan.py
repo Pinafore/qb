@@ -14,7 +14,7 @@ from qanta.config import conf
 from qanta.keras import AverageWords
 from qanta import logging
 
-from keras.models import Sequential, load_model
+from keras.models import Sequential, Model, load_model
 from keras.layers import Dense, Dropout, Embedding, BatchNormalization, Activation, Lambda
 from keras.losses import sparse_categorical_crossentropy
 from keras.optimizers import Adam
@@ -57,6 +57,9 @@ class DANGuesser(AbstractGuesser):
         self.wiki_data_frac = conf['wiki_data_frac']
         self.generate_mentions = guesser_conf['generate_mentions']
         self.max_len = guesser_conf['max_len']
+        self.output_last_hidden = guesser_conf['output_last_hidden']
+
+        self.last_hidden_model = None
         self.embeddings = None
         self.embedding_lookup = None
         self.i_to_class = None
@@ -89,7 +92,8 @@ class DANGuesser(AbstractGuesser):
             'train_on_full_q': self.train_on_full_q,
             'decay_lr_on_plateau': self.decay_lr_on_plateau,
             'wiki_data_frac': self.wiki_data_frac,
-            'generate_mentions': self.generate_mentions
+            'generate_mentions': self.generate_mentions,
+            'output_last_hidden': self.output_last_hidden
         }
 
     def load_parameters(self, params):
@@ -115,6 +119,7 @@ class DANGuesser(AbstractGuesser):
         self.decay_lr_on_plateau = params['decay_lr_on_plateau']
         self.wiki_data_frac = params['wiki_data_frac']
         self.generate_mentions = params['generate_mentions']
+        self.output_last_hidden = params['output_last_hidden']
 
     def parameters(self):
         return {
@@ -136,7 +141,8 @@ class DANGuesser(AbstractGuesser):
             'train_on_full_q': self.train_on_full_q,
             'decay_lr_on_plateau': self.decay_lr_on_plateau,
             'wiki_data_frac': self.wiki_data_frac,
-            'generate_mentions': self.generate_mentions
+            'generate_mentions': self.generate_mentions,
+            'output_last_hidden': self.output_last_hidden
         }
 
     def qb_dataset(self):
@@ -176,7 +182,27 @@ class DANGuesser(AbstractGuesser):
             loss=sparse_categorical_crossentropy, optimizer=adam,
             metrics=['sparse_categorical_accuracy']
         )
+        
+        if self.output_last_hidden:
+            self.last_hidden_model = self.build_last_hidden_model(model)
+        
         return model
+    
+    def build_last_hidden_model(self, model):
+        # This does a janky job of grabbing the last hidden layer, excluding the
+        # fully connected layer for the classification softmax
+        n_dense_layers = sum(1 for l in model.layers if l.name.startswith('dense'))
+
+        # Subtract another to go back a layer
+        last_hidden_idx = n_dense_layers - 1
+        last_hidden_name = 'dense_{}'.format(last_hidden_idx)
+        log.info('Building last hidden model with last_hidden_name={}'.format(last_hidden_name))
+        for l in model.layers:
+            log.info('layer: {}'.format(l.name))
+            if l.name == last_hidden_name:
+                return Model(inputs=model.input, outputs=l.output)
+        else:
+            raise ValueError('Could not find the last hidden layer when trying to output it')
 
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
@@ -249,6 +275,13 @@ class DANGuesser(AbstractGuesser):
             sorted_guesses = [self.i_to_class[i] for i in sorted_labels]
             sorted_scores = np.copy(row[sorted_labels])
             guesses.append(list(zip(sorted_guesses, sorted_scores)))
+        
+        if self.output_last_hidden:
+            hidden_output = self.last_hidden_model.predict(x_test)
+            log.info('Saving hidden layer...')
+            with open('/tmp/hidden_layer.pickle', 'wb') as f:
+                pickle.dump(hidden_output, f)
+        
         return guesses
 
     def save(self, directory: str) -> None:
@@ -265,8 +298,12 @@ class DANGuesser(AbstractGuesser):
                 'AverageWords': AverageWords
             }
         )
+        
         with open(os.path.join(directory, DAN_PARAMS_TARGET), 'rb') as f:
             params = pickle.load(f)
             guesser.load_parameters(params)
+        
+        if guesser.output_last_hidden:
+            guesser.last_hidden_model = guesser.build_last_hidden_model(guesser.model)
 
         return guesser
