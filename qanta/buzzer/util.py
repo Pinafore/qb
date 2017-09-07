@@ -267,9 +267,7 @@ def ultimate_buzzer(test_iter):
     return buzzes
 
 if __name__ == "__main__":
-    pass
-    # merge_dfs()
+    merge_dfs()
 
-    # option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
+    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
     # load_protobowl()
-    # option2id, guesses_by_fold = load_quizbowl()
