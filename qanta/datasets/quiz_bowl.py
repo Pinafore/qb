@@ -342,23 +342,22 @@ class BonusQuestion:
 
     def __init__(self, qnum, texts, pages, answers, leadin=None, fold=None):
         self.qnum = qnum
-        assert len(texts) == 3 and len(pages) == 3 and len(answers) == 3
+        # assert len(texts) == 3 and len(pages) == 3 and len(answers) == 3
         self.texts = texts
         self.pages = pages
         self.answers = answers
         self.leadin = leadin
         self.fold = fold
+        assert len(pages) == len(texts)
 
     def __repr__(self):
         s = '<BonusQuestion qnum={} fold={} \n' + \
-            'leadin: {}\n' + \
-            '0: page={}, text={}...\n' + \
-            '1: page={}, text={}...\n' + \
-            '2: page={}, text={}...\n'
+            'leadin: {}\n'
+        s += ' '.join('0: page={}, text={}...\n' for i in range(len(self.pages)))
         return s.format(self.qnum, self.fold, self.leadin,
-                        self.texts[0], self.pages[1],
-                        self.texts[1], self.pages[1],
-                        self.texts[2], self.pages[2])
+                         self.pages[0], self.texts[0],
+                         self.pages[1], self.texts[1],
+                         self.pages[2], self.texts[2],)
 
 class BonusQuestionDatabase:
 
