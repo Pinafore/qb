@@ -66,7 +66,7 @@ class TrainGuesser(Task):
         ] + guesser_targets
 
 
-class TrainSingleGuesser(WrapperTask):
+class TrainAllGuessers(WrapperTask):
 
     def requires(self):
         for g_spec in AbstractGuesser.list_enabled_guessers():

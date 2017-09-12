@@ -9,7 +9,7 @@ import nltk
 
 from qanta import logging
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
-from qanta.util.environment import QB_QUESTION_DB, BONUS_QUESTION_DB
+from qanta.util.environment import QB_QUESTION_DB
 from qanta.util import constants as c
 from qanta.util.io import file_backed_cache_decorator, safe_path
 from qanta.config import conf

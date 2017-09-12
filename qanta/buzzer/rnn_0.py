@@ -26,8 +26,7 @@ N_GUESSES = 10
 
 log = logging.get(__name__)
 
-
-def dense_vector(dicts: List[List[Dict[str, float]]],
+def dense_vector0(dicts: List[List[Dict[str, float]]],
         step_size=1) -> List[List[float]]:
     length = len(dicts)
     prev_vec = [0. for _ in range(N_GUESSERS * N_GUESSES)]
@@ -67,6 +66,92 @@ def dense_vector(dicts: List[List[Dict[str, float]]],
                 np.average(vec[:5]), np.average(prev_vec[:5]),
                 np.var(vec), np.var(prev_vec),
                 np.var(vec[:5]), np.var(prev_vec[:5])
+                ]
+
+        vecs.append(features)
+        prev_vec = vec
+    return vecs
+
+def dense_vector1(dicts: List[List[Dict[str, float]]],
+        step_size=1) -> List[List[float]]:
+    length = len(dicts)
+    prev_vec = [0. for _ in range(N_GUESSERS * N_GUESSES)]
+            
+    vecs = []
+    for i in range(length):
+        if len(dicts[i]) != N_GUESSERS:
+            raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
+                N_GUESSERS, len(dicts)))
+        vec = []
+        diff_vec = []
+        isnew_vec = []
+        for j in range(N_GUESSERS):
+            dic = sorted(dicts[i][j].items(), key=lambda x: x[1],
+                    reverse=True)[:N_GUESSES]
+            for guess, score in dic:
+                vec.append(score)
+                if i > 0 and guess in dicts[i-1][j]:
+                    diff_vec.append(score - dicts[i-1][j][guess])
+                    isnew_vec.append(0)
+                else:
+                    diff_vec.append(score) 
+                    isnew_vec.append(1)
+            if len(dic) < N_GUESSES:
+                for k in range(max(N_GUESSES - len(dic), 0)):
+                    vec.append(0)
+                    diff_vec.append(0)
+                    isnew_vec.append(0)
+        features = [
+                vec[0], vec[1],
+                isnew_vec[0], isnew_vec[1],
+                diff_vec[0], diff_vec[1],
+                vec[0] - vec[1],
+                vec[0] - prev_vec[0],
+                np.average(vec[:5]), np.average(prev_vec[:5]),
+                np.var(vec[:5]), np.var(prev_vec[:5])
+                ]
+
+        vecs.append(features)
+        prev_vec = vec
+    return vecs
+
+def dense_vector2(dicts: List[List[Dict[str, float]]],
+        step_size=1) -> List[List[float]]:
+    length = len(dicts)
+    prev_vec = [0. for _ in range(N_GUESSERS * N_GUESSES)]
+            
+    vecs = []
+    for i in range(length):
+        if len(dicts[i]) != N_GUESSERS:
+            raise ValueError("Inconsistent number of guessers ({0}, {1}).".format(
+                N_GUESSERS, len(dicts)))
+        vec = []
+        diff_vec = []
+        isnew_vec = []
+        for j in range(N_GUESSERS):
+            dic = sorted(dicts[i][j].items(), key=lambda x: x[1],
+                    reverse=True)[:N_GUESSES]
+            for guess, score in dic:
+                vec.append(score)
+                if i > 0 and guess in dicts[i-1][j]:
+                    diff_vec.append(score - dicts[i-1][j][guess])
+                    isnew_vec.append(0)
+                else:
+                    diff_vec.append(score) 
+                    isnew_vec.append(1)
+            if len(dic) < N_GUESSES:
+                for k in range(max(N_GUESSES - len(dic), 0)):
+                    vec.append(0)
+                    diff_vec.append(0)
+                    isnew_vec.append(0)
+        features = [
+                vec[0], vec[1],
+                isnew_vec[0], isnew_vec[1],
+                diff_vec[0], diff_vec[1],
+                vec[0] - vec[1],
+                vec[0] - prev_vec[0],
+                np.average(vec[:3]), np.average(prev_vec[:3]),
+                np.var(vec[:3]), np.var(prev_vec[:3])
                 ]
 
         vecs.append(features)

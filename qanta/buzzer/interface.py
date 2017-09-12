@@ -6,6 +6,7 @@ import numpy as np
 import codecs
 import pandas as pd
 import itertools
+import warnings
 from functools import partial
 from multiprocessing import Pool, Manager
 from typing import List, Dict, Tuple, Optional
@@ -26,6 +27,7 @@ log = logging.get(__name__)
 
 def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]], 
         qnum, question) -> Tuple[list, list, list, list]:
+    # TODO: Will be deprecated after VW stuff is remove from the pipeline
     '''Multiprocessing worker for buzzer2vwexpo
     buzzes: dictionary of qnum -> buzzing position
     inputs: qnum, question
@@ -82,11 +84,16 @@ def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]],
 
 def buzzer2vwexpo(guesses_df: pd.DataFrame, 
         buzzes: Dict[int, List[List[float]]], fold: str) -> None:
+    # TODO: Will be deprecated after VW stuff is remove from the pipeline
     '''Given buzzing positions, generate vw_pred, vw_meta, buzz and final files
     guesses_df: pd.DataFrame of guesses
     buzzes: dictionary of qnum -> buzzing position
     fold: string indicating the data fold
     '''
+    warnings.warn("buzzer2vwexpo will be deprecated after VW stuff is completely
+                   removed from the pipeline",
+                  DeprecationWarning)
+
     inputs = guesses_df.groupby('qnum')
     worker = partial(_buzzer2vwexpo, buzzes)
     result = _multiprocess(worker, inputs, info='buzzer2vwexpo')
