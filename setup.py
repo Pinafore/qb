@@ -26,7 +26,8 @@ requirements = [
     'boto3',
     'pyhcl',
     'fn',
-    'matplotlib'
+    'matplotlib',
+    'tagme'
 ]
 
 

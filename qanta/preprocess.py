@@ -5,7 +5,7 @@ import string
 from qanta import logging
 from qanta.mentions import find_references
 from nltk import word_tokenize
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 from qanta.datasets.abstract import TrainingData
 

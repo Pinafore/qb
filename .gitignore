@@ -39,3 +39,4 @@ logs/
 terraform.tfvars
 build/
 dist/
+tagme.ipynb
