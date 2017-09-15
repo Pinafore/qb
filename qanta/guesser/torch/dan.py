@@ -30,7 +30,8 @@ class DanModel(nn.Module):
     def __init__(self, vocab_size, n_classes,
                  embedding_dim=300,
                  dropout_prob=.5, word_dropout_prob=.5,
-                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='relu'):
+                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='relu',
+                 init_scale=.1):
         super(DanModel, self).__init__()
         self.n_hidden_layers = 1
         self.non_linearity = non_linearity
@@ -40,6 +41,7 @@ class DanModel(nn.Module):
         self.vocab_size = vocab_size
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
+        self.init_scale = init_scale
 
         self.word_dropout = nn.Dropout2d(word_dropout_prob)
         self.embeddings = nn.EmbeddingBag(vocab_size, embedding_dim)
@@ -63,3 +65,15 @@ class DanModel(nn.Module):
             nn.LogSoftmax()
         ])
         self.layers = nn.Sequential(*layers)
+
+        self.init_weights()
+
+    def init_weights(self):
+        self.embeddings.weight.data.uniform_(-self.init_scale, self.init_scale)
+        for l in self.layers:
+            if isinstance(l, nn.Linear):
+                l.weight.data.uniform_(-self.init_scale, self.init_scale)
+                l.bias.data.fill_(0)
+
+    def forward(self, input_):
+        pass
