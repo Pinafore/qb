@@ -58,6 +58,12 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
                        create_runs=False, full_question=False,
                        generate_mentions=False):
     """
+    This function does primarily text preprocessing on the dataset. It will return x_train and x_test as a list of
+    examples where each word is a tokenized word list (not padded). y_train and y_test is a list of indices coresponding
+    to the class labels that are associated with i_to_class and class_to_i. vocab consists of any word which occurred
+    in the training set.
+    
+    TODO: Implement an option for maximum vocab size which takes the most frequently occurring words only.
     
     :param data: 
     :param train_size: 
