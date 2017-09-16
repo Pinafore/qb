@@ -169,7 +169,7 @@ class DanModel(nn.Module):
 
     def init_weights(self, initial_embeddings=None):
         if initial_embeddings is not None:
-            pass
+            self.embeddings.weight = nn.Parameter(torch.from_numpy(initial_embeddings).float())
 
     def forward(self, input_: Variable, offsets: Variable):
         avg_embeddings = self.dropout(self.embeddings(input_.view(-1), offsets))
