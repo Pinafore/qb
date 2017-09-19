@@ -1,23 +1,30 @@
 import abc
 from collections import defaultdict
+from typing import List, Tuple, Optional
 
 import numpy as np
 
 
 class Callback(abc.ABC):
     @abc.abstractmethod
-    def on_epoch_end(self, logs):
+    def on_epoch_end(self, logs) -> Tuple[bool, Optional[str]]:
         pass
 
 
 class BaseLogger(Callback):
+    def __init__(self, log_func=None):
+        self.log_func = log_func
     def on_epoch_end(self, logs):
-        print('Epoch {}: train_acc={:.4f} test_acc={:.4f} | train_loss={:.4f} test_loss={:.4f} | time={:.1f}'.format(
+        msg = 'Epoch {}: train_acc={:.4f} test_acc={:.4f} | train_loss={:.4f} test_loss={:.4f} | time={:.1f}'.format(
             len(logs['train_acc']),
             logs['train_acc'][-1], logs['test_acc'][-1],
             logs['train_loss'][-1], logs['test_loss'][-1],
             logs['train_time'][-1]
-        ))
+        )
+        if self.log_func is None:
+            print(msg)
+        else:
+            self.log_func(msg)
         return False, None
 
     def __repr__(self):
@@ -103,7 +110,7 @@ class ModelCheckpoint(Callback):
 
 
 class TrainingManager:
-    def __init__(self, callbacks):
+    def __init__(self, callbacks: List[Callback]):
         self.callbacks = callbacks
         self.logs = defaultdict(list)
 
@@ -119,7 +126,7 @@ class TrainingManager:
         for c in self.callbacks:
             stop_training, reason = c.on_epoch_end(self.logs)
             if stop_training:
-                callback_stop_reasons.append('{}: {}'.format(c.__name__, reason))
+                callback_stop_reasons.append('{}: {}'.format(c.__class__.__name__, reason))
 
         if len(callback_stop_reasons) > 0:
             return True, callback_stop_reasons

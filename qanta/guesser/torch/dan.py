@@ -80,8 +80,9 @@ def create_save_model(model):
 
 
 class DanGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=128):
+    def __init__(self, max_epochs=100, batch_size=512, learning_rate=.001):
         super(DanGuesser, self).__init__()
+        self.learning_rate = learning_rate
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.class_to_i = None
@@ -152,11 +153,11 @@ class DanGuesser(AbstractGuesser):
         self.model = DanModel(embeddings.shape[0], self.n_classes)
         self.model.init_weights(initial_embeddings=embeddings)
         self.model.cuda()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=.001)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
 
         manager = TrainingManager([
-            BaseLogger(), TerminateOnNaN(),
+            BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(patience=5), MaxEpochStopping(100),
             ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt')
         ])
@@ -183,6 +184,8 @@ class DanGuesser(AbstractGuesser):
             if stop_training:
                 log.info(' '.join(reasons))
                 break
+
+        log.info('Done training')
 
     def run_epoch(self, n_batches, t_x_array, t_offset_array, t_y_array, evaluate=False):
         if not evaluate:
@@ -227,7 +230,8 @@ class DanGuesser(AbstractGuesser):
                 'embeddings_lookup': self.embedding_lookup,
                 'n_classes': self.n_classes,
                 'max_epochs': self.max_epochs,
-                'batch_size': self.batch_size
+                'batch_size': self.batch_size,
+                'learning_rate': self.learning_rate
             }, f)
 
     @classmethod
@@ -244,6 +248,7 @@ class DanGuesser(AbstractGuesser):
         guesser.n_classes = params['n_classes']
         guesser.max_epochs = params['max_epochs']
         guesser.batch_size = params['batch_size']
+        guesser.learning_rate = params['learning_rate']
         guesser.model = torch.load(os.path.join(directory, 'dan.pt'))
         return guesser
 
