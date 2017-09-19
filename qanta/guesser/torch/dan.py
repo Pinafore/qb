@@ -103,14 +103,14 @@ class DanGuesser(AbstractGuesser):
         x_test = np.array(x_test)
         y_test = np.zeros(len(x_test))
 
-        n_batches, t_x_batches, t_offset_batches, t_y_batches = batchify(
+        _, t_x_batches, t_offset_batches, t_y_batches = batchify(
             self.batch_size, x_test, y_test, truncate=False, shuffle=False
         )
 
         self.model.eval()
         self.model.cuda()
         guesses = []
-        for b in range(n_batches):
+        for b in range(len(t_x_batches)):
             t_x = Variable(t_x_batches[b], volatile=True)
             t_offset = Variable(t_offset_batches[b], volatile=True)
             out = self.model(t_x, t_offset)
@@ -119,7 +119,7 @@ class DanGuesser(AbstractGuesser):
             scores = scores.data.cpu().numpy()
             preds = preds.data.cpu().numpy()
             for p, s in zip(preds, scores):
-                guesses.append([(p, s)])
+                guesses.append([(self.i_to_class[p], s)])
 
         return guesses
 
@@ -158,7 +158,7 @@ class DanGuesser(AbstractGuesser):
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(patience=5), MaxEpochStopping(100),
+            EarlyStopping(patience=10), MaxEpochStopping(100),
             ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt')
         ])
 
@@ -244,7 +244,7 @@ class DanGuesser(AbstractGuesser):
         guesser.class_to_i = params['class_to_i']
         guesser.i_to_class = params['i_to_class']
         guesser.embeddings = params['embeddings']
-        guesser.embedding_lookup = params['embedding_lookup']
+        guesser.embedding_lookup = params['embeddings_lookup']
         guesser.n_classes = params['n_classes']
         guesser.max_epochs = params['max_epochs']
         guesser.batch_size = params['batch_size']
@@ -287,8 +287,9 @@ class DanModel(nn.Module):
 
             layers.extend([
                 nn.Linear(input_dim, n_hidden_units),
+                nn.BatchNorm1d(n_hidden_units),
+                nn.ELU(),
                 nn.Dropout(dropout_prob),
-                nn.ReLU()
             ])
 
         layers.extend([
