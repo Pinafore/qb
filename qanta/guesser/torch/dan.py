@@ -294,6 +294,7 @@ class DanModel(nn.Module):
 
         layers.extend([
             nn.Linear(n_hidden_units, n_classes),
+            nn.BatchNorm1d(n_classes),
             nn.Dropout(dropout_prob)
         ])
         self.layers = nn.Sequential(*layers)
