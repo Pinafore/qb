@@ -35,7 +35,7 @@ class TerminateOnNaN(Callback):
     def on_epoch_end(self, logs):
         for key, arr in logs.items():
             if np.any(np.isnan(arr)):
-                return True, 'NaN encountered in {} containing {}'.format(key, arr)
+                raise ValueError('NaN encountered')
         else:
             return False, None
 

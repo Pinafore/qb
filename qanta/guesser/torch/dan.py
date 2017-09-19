@@ -287,7 +287,7 @@ class DanModel(nn.Module):
 
             layers.extend([
                 nn.Linear(input_dim, n_hidden_units),
-                nn.BatchNorm1d(n_hidden_units),
+                #nn.BatchNorm1d(n_hidden_units),
                 nn.ELU(),
                 nn.Dropout(dropout_prob),
             ])
