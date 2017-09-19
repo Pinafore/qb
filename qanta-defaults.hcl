@@ -65,6 +65,12 @@ guessers "DAN" {
   output_last_hidden = false
 }
 
+guessers "PTDan" {
+  class = "qanta.guesser.torch.dan.DanGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+}
+
 guessers "SNN" {
   class = "qanta.guesser.snn.SNNGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
