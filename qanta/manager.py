@@ -93,7 +93,7 @@ class ModelCheckpoint(Callback):
         self.save_best_only = save_best_only
         if monitor.endswith('loss'):
             self.improvement_sign = 1
-        elif monitor.endswith('accuracy'):
+        elif monitor.endswith('acc'):
             self.improvement_sign = -1
         else:
             raise ValueError('Unrecognized monitor')
