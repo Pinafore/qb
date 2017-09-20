@@ -40,3 +40,4 @@ terraform.tfvars
 build/
 dist/
 tagme.ipynb
+tb-logs/

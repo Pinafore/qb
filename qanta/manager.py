@@ -22,7 +22,6 @@ class BaseLogger(Callback):
             logs['train_time'][-1]
         )
         self.log_func(msg)
-        return False, None
 
     def __repr__(self):
         return 'BaseLogger()'
@@ -114,7 +113,25 @@ class ModelCheckpoint(Callback):
                 if self.verbose > 0:
                     self.log_func('New best model, saving to: {}'.format(path))
                 self.save_function(path)
-        return False, None
+
+
+class Tensorboard(Callback):
+    def __init__(self, experiment_name: str, log_dir=None):
+        from pycrayon import CrayonClient
+        self.client = CrayonClient(port=6007)
+        self.experiment_name = experiment_name
+        try:
+            self.client.remove_experiment(experiment_name)
+        except ValueError:
+            pass
+        self.experiment = self.client.create_experiment(experiment_name)
+
+    def on_epoch_end(self, logs):
+        self.experiment.add_scalar_value('train_loss', logs['train_loss'][-1])
+        self.experiment.add_scalar_value('train_acc', logs['train_acc'][-1])
+        self.experiment.add_scalar_value('test_loss', logs['test_loss'][-1])
+        self.experiment.add_scalar_value('test_acc', logs['test_acc'][-1])
+        self.experiment.add_scalar_value('train_time', logs['train_time'][-1])
 
 
 class TrainingManager:
@@ -132,7 +149,11 @@ class TrainingManager:
 
         callback_stop_reasons = []
         for c in self.callbacks:
-            stop_training, reason = c.on_epoch_end(self.logs)
+            result = c.on_epoch_end(self.logs)
+            if result is None:
+                stop_training, reason = False, None
+            else:
+                stop_training, reason = result
             if stop_training:
                 callback_stop_reasons.append('{}: {}'.format(c.__class__.__name__, reason))
 

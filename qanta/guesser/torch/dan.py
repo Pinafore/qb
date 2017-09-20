@@ -15,7 +15,10 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
-from qanta.manager import BaseLogger, TerminateOnNaN, EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
+from qanta.manager import (
+    BaseLogger, TerminateOnNaN, Tensorboard,
+    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
+)
 
 
 log = logging.get(__name__)
@@ -130,7 +133,7 @@ class DanGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data
+            training_data, train_size=.95
         )
 
         self.class_to_i = class_to_i
@@ -171,7 +174,8 @@ class DanGuesser(AbstractGuesser):
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc'),
+            Tensorboard('dan', log_dir='tb-logs')
         ])
 
         log.info('Starting training...')
