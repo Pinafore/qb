@@ -100,6 +100,10 @@ class DanGuesser(AbstractGuesser):
             tokenize_question(q), self.embedding_lookup)
             for q in questions
         ]
+        for r in x_test:
+            if len(r) == 0:
+                log.warn('Found an empty question, adding an UNK token to it so that NaNs do not occur')
+                r.append(self.embedding_lookup['UNK'])
         x_test = np.array(x_test)
         y_test = np.zeros(len(x_test))
 
@@ -137,10 +141,18 @@ class DanGuesser(AbstractGuesser):
         self.embeddings = embeddings
         self.embedding_lookup = embedding_lookup
 
-        x_train = np.array([convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train_text])
+        x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train_text]
+        for r in x_train:
+            if len(r) == 0:
+                r.append(embedding_lookup['UNK'])
+        x_train = np.array(x_train)
         y_train = np.array(y_train)
 
-        x_test = np.array([convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test_text])
+        x_test = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test_text]
+        for r in x_test:
+            if len(r) == 0:
+                r.append(embedding_lookup['UNK'])
+        x_test = np.array(x_test)
         y_test = np.array(y_test)
 
         self.n_classes = compute_n_classes(training_data[1])
@@ -158,7 +170,7 @@ class DanGuesser(AbstractGuesser):
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(patience=10), MaxEpochStopping(100),
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
             ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt')
         ])
 
@@ -209,6 +221,7 @@ class DanGuesser(AbstractGuesser):
             batch_loss = self.criterion(out, t_y_batch)
             if not evaluate:
                 batch_loss.backward()
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), .25)
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)
@@ -259,23 +272,26 @@ class DanGuesser(AbstractGuesser):
 
 class DanModel(nn.Module):
     def __init__(self, vocab_size, n_classes,
-                 embedding_dim=300,
-                 dropout_prob=.5, word_dropout_prob=.5,
-                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='relu',
-                 init_scale=.1):
+                 embedding_dim=300, dropout_prob=.3,
+                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='elu'):
         super(DanModel, self).__init__()
         self.n_hidden_layers = 1
         self.non_linearity = non_linearity
+        if non_linearity == 'relu':
+            self._non_linearity = nn.ReLU
+        elif non_linearity == 'elu':
+            self._non_linearity = nn.ELU
+        elif non_linearity == 'prelu':
+            self._non_linearity = nn.PReLU
+        else:
+            raise ValueError('Unrecognized non-linearity function:{}'.format(non_linearity))
         self.n_hidden_units = n_hidden_units
         self.dropout_prob = dropout_prob
-        self.word_dropout_prob = word_dropout_prob
         self.vocab_size = vocab_size
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
-        self.init_scale = init_scale
 
         self.dropout = nn.Dropout(dropout_prob)
-        self.word_dropout = nn.Dropout2d(word_dropout_prob)
         self.embeddings = nn.EmbeddingBag(vocab_size, embedding_dim)
 
         layers = []
@@ -288,7 +304,7 @@ class DanModel(nn.Module):
             layers.extend([
                 nn.Linear(input_dim, n_hidden_units),
                 nn.BatchNorm1d(n_hidden_units),
-                nn.ReLU(),
+                self._non_linearity(),
                 nn.Dropout(dropout_prob),
             ])
 

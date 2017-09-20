@@ -12,7 +12,7 @@ class Callback(abc.ABC):
 
 
 class BaseLogger(Callback):
-    def __init__(self, log_func=None):
+    def __init__(self, log_func=print):
         self.log_func = log_func
     def on_epoch_end(self, logs):
         msg = 'Epoch {}: train_acc={:.4f} test_acc={:.4f} | train_loss={:.4f} test_loss={:.4f} | time={:.1f}'.format(
@@ -21,10 +21,7 @@ class BaseLogger(Callback):
             logs['train_loss'][-1], logs['test_loss'][-1],
             logs['train_time'][-1]
         )
-        if self.log_func is None:
-            print(msg)
-        else:
-            self.log_func(msg)
+        self.log_func(msg)
         return False, None
 
     def __repr__(self):
@@ -44,10 +41,10 @@ class TerminateOnNaN(Callback):
 
 
 class EarlyStopping(Callback):
-    def __init__(self, monitor='test_loss', min_delta=0, patience=1):
+    def __init__(self, monitor='test_loss', min_delta=0, patience=1, verbose=0, log_func=print):
         if monitor.endswith('loss'):
             self.improvement_sign = 1
-        elif monitor.endswith('accuracy'):
+        elif monitor.endswith('acc'):
             self.improvement_sign = -1
         else:
             raise ValueError('Unrecognized monitor')
@@ -56,6 +53,8 @@ class EarlyStopping(Callback):
         self.patience = patience
         self.best_monitor_score = self.improvement_sign * float('inf')
         self.current_patience = patience
+        self.verbose = verbose
+        self.log_func = log_func
 
     def __repr__(self):
         return 'EarlyStopping(monitor={}, min_delta={}, patience={})'.format(
@@ -67,6 +66,8 @@ class EarlyStopping(Callback):
             self.best_monitor_score = logs[self.monitor][-1]
         else:
             self.current_patience -= 1
+            if self.verbose > 0:
+                self.log_func('Patience: reduced by one and waiting for {} epochs for improvemnt before stopping'.format(self.current_patience))
 
         if self.current_patience == 0:
             return True, 'Ran out of patience'
@@ -86,7 +87,7 @@ class MaxEpochStopping(Callback):
 
 
 class ModelCheckpoint(Callback):
-    def __init__(self, save_function, filepath, monitor='test_loss', save_best_only=True):
+    def __init__(self, save_function, filepath, monitor='test_loss', save_best_only=True, verbose=0, log_func=print):
         self.save_function = save_function
         self.filepath = filepath
         self.save_best_only = save_best_only
@@ -98,14 +99,21 @@ class ModelCheckpoint(Callback):
             raise ValueError('Unrecognized monitor')
         self.monitor = monitor
         self.best_monitor_score = self.improvement_sign * float('inf')
+        self.verbose = verbose
+        self.log_func = log_func
 
     def on_epoch_end(self, logs):
         if logs[self.monitor][-1] * self.improvement_sign < self.improvement_sign * self.best_monitor_score:
             self.best_monitor_score = logs[self.monitor][-1]
             if self.save_best_only:
+                if self.verbose > 0:
+                    self.log_func('New best model, saving to: {}'.format(self.filepath))
                 self.save_function(self.filepath)
             else:
-                self.save_function(self.filepath.format(epoch=len(logs['train_time']) - 1))
+                path = self.filepath.format(epoch=len(logs['train_time']) - 1)
+                if self.verbose > 0:
+                    self.log_func('New best model, saving to: {}'.format(path))
+                self.save_function(path)
         return False, None
 
 
