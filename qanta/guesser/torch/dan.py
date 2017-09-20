@@ -19,6 +19,7 @@ from qanta.manager import (
     BaseLogger, TerminateOnNaN, Tensorboard,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
+from qanta.guesser.torch.util import create_save_model
 
 
 log = logging.get(__name__)
@@ -74,12 +75,6 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
     t_y_batches = np.array(t_y_batches)
 
     return n_batches, t_x_batches, t_offset_batches, t_y_batches
-
-
-def create_save_model(model):
-    def save_model(path):
-        torch.save(model, path)
-    return save_model
 
 
 class DanGuesser(AbstractGuesser):
