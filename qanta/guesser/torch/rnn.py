@@ -58,7 +58,7 @@ def create_batch(x_array, y_array):
     x_batch_padded = torch.from_numpy(x_batch_padded).long().cuda()
     y_batch = torch.from_numpy(y_batch).long().cuda()
 
-    return x_batch_padded, lengths, y_batch
+    return x_batch_padded, lengths, y_batch, length_sort
 
 
 def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
@@ -72,27 +72,30 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
     t_x_batches = []
     length_batches = []
     t_y_batches = []
+    sort_batches = []
 
     for b in range(n_batches):
         x_batch = x_array[b * batch_size:(b + 1) * batch_size]
         y_batch = y_array[b * batch_size:(b + 1) * batch_size]
-        x_batch, lengths, y_batch = create_batch(x_batch, y_batch)
+        x_batch, lengths, y_batch, sort = create_batch(x_batch, y_batch)
 
         t_x_batches.append(x_batch)
         length_batches.append(lengths)
         t_y_batches.append(y_batch)
+        sort_batches.append(sort)
 
     if (not truncate) and (batch_size * n_batches < n_examples):
         x_batch = x_array[n_batches * batch_size:]
         y_batch = y_array[n_batches * batch_size:]
 
-        x_batch, lengths, y_batch = create_batch(x_batch, y_batch)
+        x_batch, lengths, y_batch, sort = create_batch(x_batch, y_batch)
 
         t_x_batches.append(x_batch)
         length_batches.append(lengths)
         t_y_batches.append(y_batch)
+        sort_batches.append(sort)
 
-    return n_batches, t_x_batches, length_batches, t_y_batches
+    return n_batches, t_x_batches, length_batches, t_y_batches, sort_batches
 
 
 class RnnGuesser(AbstractGuesser):
@@ -114,7 +117,44 @@ class RnnGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        pass
+        x_test = [convert_text_to_embeddings_indices(
+            tokenize_question(q), self.embedding_lookup)
+            for q in questions
+        ]
+        for r in x_test:
+            if len(r) == 0:
+                log.warn('Found an empty question, adding an UNK token to it so that NaNs do not occur')
+                r.append(self.embedding_lookup['UNK'])
+        x_test = np.array(x_test)
+        y_test = np.zeros(len(x_test))
+
+        _, t_x_batches, lengths, t_y_batches, sort_batches = batchify(
+            self.batch_size, x_test, y_test, truncate=False, shuffle=False)
+
+        self.model.eval()
+        self.model.cuda()
+        guesses = []
+        hidden = self.model.init_hidden(self.batch_size)
+        for b in range(len(t_x_batches)):
+            t_x = Variable(t_x_batches[b], volatile=True)
+            length_batch = lengths[b]
+            sort = sort_batches[b]
+
+            if len(length_batch) != self.batch_size:
+                # This could happen for the last batch which is shorter than batch_size
+                hidden = self.model.init_hidden(len(length_batch))
+            else:
+                hidden = repackage_hidden(hidden, reset=True)
+
+            out, hidden = self.model(t_x, length_batch, hidden)
+            probs = F.softmax(out)
+            scores, preds = torch.max(probs, 1)
+            scores = scores.data.cpu().numpy()[np.argsort(sort)]
+            preds = preds.data.cpu().numpy()[np.argsort(sort)]
+            for p, s in zip(preds, scores):
+                guesses.append([(self.i_to_class[p], s)])
+
+        return guesses
 
     def train(self, training_data: TrainingData):
         x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
@@ -145,9 +185,9 @@ class RnnGuesser(AbstractGuesser):
 
         self.n_classes = compute_n_classes(training_data[1])
 
-        n_batches_train, t_x_train, lengths_train, t_y_train = batchify(
+        n_batches_train, t_x_train, lengths_train, t_y_train, _ = batchify(
             self.batch_size, x_train, y_train, truncate=True)
-        n_batches_test, t_x_test, lengths_test, t_y_test = batchify(
+        n_batches_test, t_x_test, lengths_test, t_y_test, _ = batchify(
             self.batch_size, x_test, y_test, truncate=False)
 
         self.model = RnnModel(embeddings.shape[0], self.n_classes)
@@ -260,8 +300,8 @@ class RnnGuesser(AbstractGuesser):
 
 
 class RnnModel(nn.Module):
-    def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000):
+    def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.4, recurrent_dropout_prob=.5,
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=False):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
         self.n_classes = n_classes
@@ -270,13 +310,15 @@ class RnnModel(nn.Module):
         self.recurrent_dropout_prob = recurrent_dropout_prob
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_units = n_hidden_units
+        self.bidirectional = bidirectional
 
         self.dropout = nn.Dropout(dropout_prob)
         self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
         self.rnn = nn.LSTM(embedding_dim, n_hidden_units, n_hidden_layers,
-                           dropout=recurrent_dropout_prob, batch_first=True)
+                           dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
+        self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
-            nn.Linear(n_hidden_units, n_classes),
+            nn.Linear(n_hidden_units * self.num_directions, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(dropout_prob)
         )
@@ -288,8 +330,8 @@ class RnnModel(nn.Module):
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
         return (
-            Variable(weight.new(self.n_hidden_layers, batch_size, self.n_hidden_units).zero_()),
-            Variable(weight.new(self.n_hidden_layers, batch_size, self.n_hidden_units).zero_())
+            Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_()),
+            Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
         )
 
     def forward(self, input_: Variable, lengths, hidden):
