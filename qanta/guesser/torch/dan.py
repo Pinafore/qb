@@ -128,7 +128,7 @@ class DanGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data, train_size=.95
+            training_data
         )
 
         self.class_to_i = class_to_i

@@ -71,6 +71,12 @@ guessers "PTDan" {
   enabled = false
 }
 
+guessers "PTRnn" {
+  class = "qanta.guesser.torch.rnn.RnnGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+}
+
 guessers "SNN" {
   class = "qanta.guesser.snn.SNNGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
