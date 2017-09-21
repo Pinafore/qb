@@ -301,7 +301,7 @@ class RnnGuesser(AbstractGuesser):
 
 class RnnModel(nn.Module):
     def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.4, recurrent_dropout_prob=.5,
-                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=False):
+                 n_hidden_layers=2, n_hidden_units=1000, bidirectional=True, rnn_type='lstm'):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
         self.n_classes = n_classes
@@ -314,11 +314,17 @@ class RnnModel(nn.Module):
 
         self.dropout = nn.Dropout(dropout_prob)
         self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
-        self.rnn = nn.LSTM(embedding_dim, n_hidden_units, n_hidden_layers,
+        if rnn_type == 'lstm':
+            rnn_layer = nn.LSTM
+        elif rnn_type == 'gru':
+            rnn_layer = nn.GRU
+        else:
+            raise ValueError('Unrecognized rnn layer type')
+        self.rnn = rnn_layer(embedding_dim, n_hidden_units, n_hidden_layers,
                            dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
-            nn.Linear(n_hidden_units * self.num_directions, n_classes),
+            nn.Linear(n_hidden_units * self.num_directions * self.n_hidden_layers, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(dropout_prob)
         )
@@ -339,8 +345,12 @@ class RnnModel(nn.Module):
         packed_input = nn.utils.rnn.pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         output, hidden = self.rnn(packed_input, hidden)
-        padded_sequence, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-        positions = torch.LongTensor(lengths).cuda() - 1
-        row_indexer = torch.arange(0, padded_sequence.data.shape[0]).long().cuda()
-        last_out = padded_sequence[row_indexer, positions]
-        return self.classification_layer(last_out), hidden
+
+        #padded_sequence, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
+        #positions = torch.LongTensor(lengths).cuda() - 1
+        #row_indexer = torch.arange(0, padded_sequence.data.shape[0]).long().cuda()
+        #last_out = padded_sequence[row_indexer, positions]
+        #return self.classification_layer(last_out), hidden
+        h_reshaped = hidden[0].transpose(0, 1).contiguous().view(input_.data.shape[0], -1)
+        return self.classification_layer(h_reshaped), hidden
+
