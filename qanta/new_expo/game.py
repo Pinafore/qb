@@ -2,7 +2,7 @@ import typing
 from collections import namedtuple
 from abc import ABCMeta, abstractmethod
 from qanta.datasets.quiz_bowl import Question as TossUpQuestion
-from qanta.expo.buzzer import interpret_keypress
+from qanta.new_expo.agent import HumanAgent, GuesserBuzzerAgent
 
 class Game(object):
     '''A Game object represents a complete QuizBowl game with multiple rounds, each
@@ -34,6 +34,19 @@ class Game(object):
         self.agents = agents
         self.hooks = self.hooks
         self.scores = [0 for _ in agents]
+
+    def evaluate(self, agent, guess):
+        if isinstance(agent, HumanAgent):
+            response = input("Player, provide an answer:\t")
+            if '+' in response:
+                result = True
+            elif '-' in response:
+                result = False
+        elif guess is None:
+            result = False
+        else:
+            result = self.round.evaluate(guess)
+        return result
 
     def run_round(self):
         question = next(self.question_iter)
@@ -76,46 +89,6 @@ class Game(object):
     def run(self, n_rounds):
         for round_num in range(n_rounds):
             self.run_round()
-
-class Agent:
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def new_round(self):
-        '''Initialize for a new question'''
-        pass
-    
-    @abstractmethod
-    def update(self, state):
-        '''Update the agent state and action based on the state'''
-        pass
-
-Action = namedtuple('buzz', 'guess')
-
-class GuesserBuzzerAgent(Agent):
-
-    def __init__(self, guesser, buzzer):
-        self.guesser = guesser
-        self.buzzer = buzzer
-        self.action = Action(False, None)
-        self.all_guesses = [] # internal state used for things like visualization
-
-    def new_round(self):
-        pass
-
-    def update(self, state):
-        guesses = self.guesser.guess(state)
-        if isinstance(guesses, dict):
-            guesses = list(sorted(guesses.items(), key=lambda x: x[1]))
-        self.all_guesses.append(guesses)
-        # TODO
-        buzz = False
-        self.action = Action(buzz, guesses[0][0])
-
-class HumanAgent(Agent):
-
-    def __init__(self):
-        pass
 
 class Round(object): 
     '''A Round object represents a single question in the game. 
