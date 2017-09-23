@@ -29,10 +29,10 @@ class Game(object):
         evaluate. Round returns the correctness, game control determines
         termination and rewards.
     '''
-    def __init__(self, question_list, agents, hooks):
+    def __init__(self, question_list, agents, hooks=[]):
         self.question_iter = iter(question_list)
         self.agents = agents
-        self.hooks = self.hooks
+        self.hooks = hooks
         self.scores = [0 for _ in agents]
 
     def evaluate(self, agent, guess):

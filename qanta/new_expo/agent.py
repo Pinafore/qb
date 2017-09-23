@@ -5,7 +5,7 @@ from qanta.datasets.quiz_bowl import Question as TossUpQuestion
 from qanta.expo.buzzer import interpret_keypress
 from qanta.new_expo.util import GetchUnix
 
-Action = namedtuple('buzz', 'guess')
+Action = namedtuple('Action', ['buzz', 'guess'])
 
 class Agent:
     __metaclass__ = ABCMeta
@@ -30,6 +30,9 @@ class GuesserBuzzerAgent(Agent):
 
     def new_round(self):
         self.action = Action(False, None)
+        self.all_guesses = []
+        self.guesser.new_round()
+        self.buzzer.new_round()
 
     def update(self, state):
         guesses = self.guesser.guess(state)
@@ -37,23 +40,24 @@ class GuesserBuzzerAgent(Agent):
             guesses = list(sorted(guesses.items(), key=lambda x: x[1]))
         self.all_guesses.append(guesses)
         # TODO
-        buzz = False
+        buzz = self.buzzer.buzz(guesses)
         self.action = Action(buzz, guesses[0][0])
 
 class HumanAgent(Agent):
 
     def __init__(self):
-        self.getch = _GetchUnix()
+        self.getch = GetchUnix()
         self.action = Action(False, None)
         self._initial_key_test()
 
     def _initial_key_test(self):
         players_needed = [1, 2, 3, 4]
+        current_players = set()
         while len(current_players) < len(players_needed):
             print("Player %i, please buzz in" % min(x for x in players_needed if x not in current_players))
             press = interpret_keypress()
             if press in players_needed:
-                os.system("afplay /System/Library/Sounds/Glass.aiff")
+                # os.system("afplay /System/Library/Sounds/Glass.aiff")
                 print("Thanks for buzzing in, player %i!" % press)
                 current_players.add(press)
 
@@ -87,4 +91,6 @@ class HumanAgent(Agent):
         press = interpret_keypress()
         if isinstance(press, int):
             response = input("Player %i, provide an answer:\t" % press)
-        self.action = Action(True, None)
+            self.action = Action(True, None)
+        else:
+            self.action = Action(False, None)
