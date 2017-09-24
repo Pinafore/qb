@@ -4,7 +4,73 @@ from abc import ABCMeta, abstractmethod
 from qanta.datasets.quiz_bowl import Question as TossUpQuestion
 from qanta.new_expo.util import interpret_keypress
 
+import chainer
+from qanta.buzzer.iterator import QuestionIterator
+from qanta.buzzer.util import load_quizbowl, GUESSERS
+from qanta.buzzer.models import MLP, RNN
+N_GUESSERS = len(GUESSERS)
+N_GUESSES = 10
+
 Action = namedtuple('Action', ['buzz', 'guess'])
+
+
+class StupidBuzzer:
+    
+    def __init__(self, threshold=1.2):
+        self.threshold = threshold
+
+    def new_round(self):
+        pass
+
+    def buzz(self, guesses):
+        '''guesses is a sorted list of (guess, score)'''
+        return guesses[0][1] > self.threshold
+
+
+class ESGuesserWrapper:
+
+    def __init__(self, guesser):
+        self.guesser = guesser
+
+    def new_round(self):
+        pass
+
+    def guess(self, text):
+        return self.guesser.guess_single(text)
+
+
+class RNNBuzzerWrapper:
+
+    def __init__(self):
+        option2id, all_guesses = load_quizbowl()
+        train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
+            batch_size=128, make_vector=dense_vector)
+        
+        n_hidden = 300
+        model_name = 'neo_0'
+        model_dir = 'output/buzzer/neo/{}.npz'.format(model_name)
+        model = RNN(train_iter.n_input, n_hidden, N_GUESSERS + 1)
+        print('QANTA: loading model')
+        chainer.serializers.load_npz(model_dir, model)
+
+        chainer.cuda.get_device(0).use()
+        model.to_gpu(0)
+        self.vecs = []
+
+    def new_round(self):
+        self.model.reset_state()
+
+    def buzz(self, guesses):
+        guesses = [[guesses]]
+        vec = dense_vector(guesses)
+        # length=1, batch_size=1, dim
+        vec = self.model.xp.asarray(vecs, dtype=xp.float32) 
+        ys = self.model.step(vec) # length=1 * batch_size=1, n_guessers+1
+        ys.to_cpu()
+        ys = ys[0]
+        buzz = ys[1] > ys[0]
+        return buzz
+
 
 class Agent:
     __metaclass__ = ABCMeta

@@ -168,13 +168,13 @@ def main():
 
     option2id, all_guesses = load_quizbowl()
     train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
-            batch_size=128, make_vector=dense_vector)
+            batch_size=128, make_vector=dense_vector0)
     dev_iter = QuestionIterator(all_guesses[c.BUZZER_DEV_FOLD], option2id,
-            batch_size=128, make_vector=dense_vector)
+            batch_size=128, make_vector=dense_vector0)
     devtest_iter = QuestionIterator(all_guesses['test'], option2id,
-            batch_size=128, make_vector=dense_vector)
+            batch_size=128, make_vector=dense_vector0)
     expo_iter = QuestionIterator(all_guesses['expo'], option2id,
-            batch_size=128, make_vector=dense_vector)
+            batch_size=128, make_vector=dense_vector0)
 
     n_hidden = 300
     model_name = 'neo_0'
@@ -186,6 +186,8 @@ def main():
 
     trainer = Trainer(model, model_dir)
     trainer.run(train_iter, dev_iter, 25)
+
+    chainer.serializers.save_npz(model_dir, model)
 
     dev_buzzes = trainer.test(dev_iter)
     dev_buzzes_dir = 'output/buzzer/neo/dev_buzzes.{}.pkl'.format(model_name)

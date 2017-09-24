@@ -68,6 +68,14 @@ class RNN(chainer.Chain):
             return -1
         return self.linear._device_id
 
+    def reset_state(self):
+        self.rnn.reset_state()
+
+    def step(self, x, train=True):
+        batch_size, _ = x.shape
+        y  = self.linear(self.rnn(x))
+        return y
+
     def __call__(self, xs, train=True):
         length, batch_size, _ = xs.shape
         self.rnn.reset_state()

@@ -66,7 +66,7 @@ class Trainer(object):
             batch = test_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=False)
-            ys = F.softmax(ys) # length * batch_size, n_guessers
+            ys = F.softmax(ys) # length * batch_size, n_guessers+1
             ys = F.swapaxes(F.reshape(ys, (length, batch_size, -1)), 0, 1)
             ys.to_cpu()
             masks = batch.mask.T.tolist()

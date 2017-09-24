@@ -124,7 +124,6 @@ class Game(object):
         # end of round
         self.run_hooks('round')
 
-
     def run(self, n_rounds):
         for round_num in range(n_rounds):
             self.round_num = round_num + 1
