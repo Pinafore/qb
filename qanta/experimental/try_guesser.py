@@ -13,8 +13,8 @@ guesses = guesser.guess_single('Sviatoslav Teofilovich Richter was a Soviet pian
     known for the depth of his interpretations, virtuoso technique, and vast \
     repertoire.')
 
-print(guesses)
-
 guesses = [[guesses]]
+print(guesses)
 vecs = dense_vector(guesses)
 print(vecs)
+
