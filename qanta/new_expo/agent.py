@@ -1,10 +1,13 @@
-import typing
+import numpy as np
 from collections import namedtuple
+import typing
+from typing import List, Dict, Tuple, Optional
 from abc import ABCMeta, abstractmethod
 from qanta.datasets.quiz_bowl import Question as TossUpQuestion
 from qanta.new_expo.util import interpret_keypress
 
 import chainer
+import chainer.functions as F
 from qanta.buzzer.iterator import QuestionIterator
 from qanta.buzzer.util import load_quizbowl, GUESSERS
 from qanta.buzzer.models import MLP, RNN
@@ -14,7 +17,7 @@ N_GUESSES = 10
 Action = namedtuple('Action', ['buzz', 'guess'])
 
 
-class StupidBuzzer:
+class ThresholdBuzzer:
     
     def __init__(self, threshold=1.2):
         self.threshold = threshold
@@ -31,44 +34,98 @@ class ESGuesserWrapper:
 
     def __init__(self, guesser):
         self.guesser = guesser
+        self.guesses = None
 
     def new_round(self):
         pass
 
     def guess(self, text):
-        return self.guesser.guess_single(text)
+        guesses = self.guesser.guess_single(text)
+        self.guesses = sorted(guesses.items(), key=lambda x: x[1])[::-1]
+        return guesses
+
+def dense_vector(scores: Dict[str, float], prev_scores=None):
+    N_GUESSES = 10
+
+    if prev_scores is None:
+        prev_scores = dict()
+    prev_vec = sorted(prev_scores.items(), key=lambda x: x[1])[::-1]
+    prev_vec = [x[1] for x in prev_vec]
+    _len = N_GUESSES - len(prev_vec)
+    if _len > 0:
+         prev_vec += [0 for _ in range(_len)]
+            
+    vec = []
+    diff_vec = []
+    isnew_vec = []
+    scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:10]
+    for guess, score in scores:
+        vec.append(score)
+        if guess in prev_scores:
+            diff_vec.append(score - prev_scores[guess])
+            isnew_vec.append(0)
+        else:
+            diff_vec.append(score) 
+            isnew_vec.append(1)
+    if len(scores) < N_GUESSES:
+        for k in range(max(N_GUESSES - len(scores), 0)):
+            vec.append(0)
+            diff_vec.append(0)
+            isnew_vec.append(0)
+    features = [
+            vec[0], vec[1], vec[2],
+            isnew_vec[0], isnew_vec[1], isnew_vec[2],
+            diff_vec[0], diff_vec[1], diff_vec[2],
+            vec[0] - vec[1], vec[1] - vec[2], 
+            vec[0] - prev_vec[0],
+            sum(isnew_vec[:5]),
+            np.average(vec), np.average(prev_vec),
+            np.average(vec[:5]), np.average(prev_vec[:5]),
+            np.var(vec), np.var(prev_vec),
+            np.var(vec[:5]), np.var(prev_vec[:5])
+            ]
+
+    return features
 
 
-class RNNBuzzerWrapper:
+class RNNBuzzer:
 
-    def __init__(self):
-        option2id, all_guesses = load_quizbowl()
-        train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
-            batch_size=128, make_vector=dense_vector)
-        
-        n_hidden = 300
-        model_name = 'neo_0'
-        model_dir = 'output/buzzer/neo/{}.npz'.format(model_name)
-        model = RNN(train_iter.n_input, n_hidden, N_GUESSERS + 1)
+    def __init__(self, word_skip=0):
+        self.word_skip = word_skip
+        model_dir = 'output/buzzer/neo/neo_0.npz'
+        model = RNN(21, 300, 2)
         print('QANTA: loading model')
         chainer.serializers.load_npz(model_dir, model)
 
         chainer.cuda.get_device(0).use()
         model.to_gpu(0)
-        self.vecs = []
+
+        self.model = model
+        self.new_round()
 
     def new_round(self):
         self.model.reset_state()
+        self.prev_buzz = None
+        self.prev_scores = None
+        self.ys = None
+        self.skipped = 0
 
-    def buzz(self, guesses):
-        guesses = [[guesses]]
-        vec = dense_vector(guesses)
-        # length=1, batch_size=1, dim
-        vec = self.model.xp.asarray(vecs, dtype=xp.float32) 
-        ys = self.model.step(vec) # length=1 * batch_size=1, n_guessers+1
+    def buzz(self, guesses: Dict[str, float]):
+        if self.skipped < self.word_skip:
+            self.skipped += 1
+            return self.prev_buzz
+        self.skipped = 0
+        feature_vec = dense_vector(guesses, self.prev_scores)
+        self.prev_scores = guesses
+        # batch_size=1, dim
+        vec = self.model.xp.asarray([feature_vec], dtype=self.model.xp.float32) 
+        ys = self.model.step(vec) # batch_size=1, 2
+        ys = F.softmax(ys)
         ys.to_cpu()
-        ys = ys[0]
-        buzz = ys[1] > ys[0]
+        ys = ys[0].data
+        self.ys = ys
+        buzz = ys[0] > ys[1]
+        self.prev_buzz = buzz
         return buzz
 
 
@@ -122,15 +179,15 @@ class GuesserBuzzerAgent(Agent):
 
     def update(self, state):
         guesses = self.guesser.guess(state)
-        if isinstance(guesses, dict):
-            guesses = list(sorted(guesses.items(), key=lambda x: x[1]))
-            guesses = guesses[::-1]
+        if isinstance(guesses, list):
+            guesses = {x[0]:x[1] for x in guesses}
         self.all_guesses.append(guesses)
-        # TODO
-        # buzz = self.buzzer.buzz(guesses)
-        buzz = (self.n_steps > 70) and\
-                (not self.me_buzzed) and\
-                (not self.opponent_buzzed)
+        buzz = self.buzzer.buzz(guesses)
+        # buzz = (self.n_steps > 70) and\
+        # don't buzz if opponent has
+        buzz = buzz and (not self.opponent_buzzed)
+        guesses = sorted(guesses.items(), key=lambda x: x[1])[::-1]
+        self.all_guesses.append(guesses)
         self.action = Action(buzz, guesses[0][0])
         self.n_steps += 1
 

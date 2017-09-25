@@ -10,6 +10,8 @@ class GameInterfaceHook(Hook):
         self.game = game
         
     def run(self):
+        print(self.game.round.question.page)
+        print('------')
         print(self.game.round.get_clue())
         print('++++++++++++')
         print('Scores: ' + ' '.join(str(x) for x in self.game.scores))
@@ -43,4 +45,16 @@ class NotifyBuzzingHook(Hook):
             b = [buzzed[i]] + buzzed[:i] + buzzed[i+1:]
             agent.notify_buzzing(buzzed)
 
+class VisualizeGuesserBuzzer(Hook):
 
+    def __init__(self, guesser_buzzer, call_every='step'):
+        self.guesser = guesser_buzzer.guesser
+        self.buzzer = guesser_buzzer.buzzer
+        self.call_every = call_every
+
+    def run(self):
+        print('===== Guesser =====')
+        for guess, score in self.guesser.guesses:
+            print(guess, score)
+        print('===== Buzzer =====')
+        print(self.buzzer.ys)
