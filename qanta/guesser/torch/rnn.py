@@ -99,11 +99,12 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
 
 
 class RnnGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=512, learning_rate=.001):
+    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5):
         super(RnnGuesser, self).__init__()
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
+        self.max_grad_norm = max_grad_norm
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
@@ -251,7 +252,7 @@ class RnnGuesser(AbstractGuesser):
             batch_loss = self.criterion(out, t_y_batch)
             if not evaluate:
                 batch_loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), .25)
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 5)
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)
@@ -300,8 +301,9 @@ class RnnGuesser(AbstractGuesser):
 
 
 class RnnModel(nn.Module):
-    def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.4, recurrent_dropout_prob=.5,
-                 n_hidden_layers=2, n_hidden_units=1000, bidirectional=True, rnn_type='lstm'):
+    def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=0, recurrent_dropout_prob=0,
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
+                 rnn_output='max_pool'):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
         self.n_classes = n_classes
@@ -311,9 +313,11 @@ class RnnModel(nn.Module):
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_units = n_hidden_units
         self.bidirectional = bidirectional
+        self.rnn_output = rnn_output
 
-        self.dropout = nn.Dropout(dropout_prob)
+        #self.dropout = nn.Dropout(dropout_prob)
         self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
+        self.rnn_type = rnn_type
         if rnn_type == 'lstm':
             rnn_layer = nn.LSTM
         elif rnn_type == 'gru':
@@ -324,9 +328,9 @@ class RnnModel(nn.Module):
                            dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
-            nn.Linear(n_hidden_units * self.num_directions * self.n_hidden_layers, n_classes),
-            nn.BatchNorm1d(n_classes),
-            nn.Dropout(dropout_prob)
+            nn.Linear(n_hidden_units * self.num_directions * self.n_hidden_layers, n_classes)
+            #nn.BatchNorm1d(n_classes),
+            #nn.Dropout(dropout_prob)
         )
 
     def init_weights(self, embeddings=None):
@@ -335,13 +339,17 @@ class RnnModel(nn.Module):
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
-        return (
-            Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_()),
-            Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
-        )
+        if self.rnn_type == 'lstm':
+            return (
+                Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_()),
+                Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
+            )
+        else:
+            return Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
 
     def forward(self, input_: Variable, lengths, hidden):
-        embeddings = self.dropout(self.embeddings(input_))
+        #embeddings = self.dropout(self.embeddings(input_))
+        embeddings = self.embeddings(input_)
         packed_input = nn.utils.rnn.pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         output, hidden = self.rnn(packed_input, hidden)
@@ -351,6 +359,23 @@ class RnnModel(nn.Module):
         #row_indexer = torch.arange(0, padded_sequence.data.shape[0]).long().cuda()
         #last_out = padded_sequence[row_indexer, positions]
         #return self.classification_layer(last_out), hidden
-        h_reshaped = hidden[0].transpose(0, 1).contiguous().view(input_.data.shape[0], -1)
-        return self.classification_layer(h_reshaped), hidden
+        if self.rnn_output == 'last_hidden':
+            if type(hidden) == tuple:
+                final_hidden = hidden[0]
+            else:
+                final_hidden = hidden
+
+            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(input_.data.shape[0], -1)
+
+            return self.classification_layer(h_reshaped), hidden
+        elif self.rnn_output == 'max_pool':
+            idx = np.cumsum(np.insert(lengths, 0, 0))
+            pooled = []
+            for i in range(len(lengths)):
+                pooled.append(output.data[idx[i]:idx[i + 1]].max(0)[0].view(-1))
+                #pooled.append(output.data[idx[i]:idx[i + 1]].mean(0).view(-1))
+            pooled = torch.cat(pooled).view(len(lengths), -1)
+            return self.classification_layer(pooled), hidden
+        else:
+            raise ValueError('Unrecognized rnn_output option')
 
