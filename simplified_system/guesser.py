@@ -13,7 +13,7 @@ import logging
 
 log = logging.getLogger(__name__)
 connections.create_connection(hosts=['localhost'])
-INDEX_NAME = 'qb'
+INDEX_NAME = 'simplified_sys'
 
 
 class Answer(DocType):
