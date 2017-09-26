@@ -41,3 +41,4 @@ build/
 dist/
 tagme.ipynb
 tb-logs/
+*.ipynb
