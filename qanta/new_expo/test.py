@@ -35,7 +35,6 @@ def main():
     # setup questions
     questions = list(QuestionDatabase().all_questions().values())
     dev_questions = [x for x in questions if x.fold == 'dev']
-    random.shuffle(dev_questions)
 
     # setup machine agent
     gspec = AbstractGuesser.list_enabled_guessers()[0]

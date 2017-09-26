@@ -3,8 +3,7 @@ from collections import namedtuple
 from abc import ABCMeta, abstractmethod
 from qanta.datasets.quiz_bowl import Question as TossUpQuestion
 from qanta.new_expo.agent import HumanAgent, GuesserBuzzerAgent
-from qanta.new_expo.hook import GameInterfaceHook, EndOfRoundHook,\
-                                NotifyBuzzingHook
+from qanta.new_expo.hook import GameInterfaceHook, NotifyBuzzingHook
 
 
 class Game(object):
@@ -43,9 +42,8 @@ class Game(object):
         self.setup_hooks()
 
     def setup_hooks(self):
-        self.hooks.append(GameInterfaceHook(self))
-        self.hooks.append(EndOfRoundHook(self))
-        self.hooks.append(NotifyBuzzingHook(self))
+        self.hooks = [NotifyBuzzingHook(self)] + self.hooks
+        self.hooks = [GameInterfaceHook(self)] + self.hooks
         self.round_hooks = [x for x in self.hooks if x.call_every == 'round']
         self.step_hooks = [x for x in self.hooks if x.call_every == 'step']
 
@@ -116,7 +114,6 @@ class Game(object):
                     else:
                         self.scores[i] -= 5
 
-            print(self.buzzed)
             if all(self.buzzed) or terminate:
                 break
 
