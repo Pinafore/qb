@@ -46,7 +46,7 @@ class TfidfGuesser(AbstractGuesser):
         return guesses
 
     def save(self, directory: str) -> None:
-        with open(os.path.join(directory, 'params.pickle')) as f:
+        with open(os.path.join(directory, 'params.pickle'), 'wb') as f:
             pickle.dump({
                 'i_to_ans': self.i_to_ans,
                 'tfidf_vectorizer': self.tfidf_vectorizer,
@@ -55,7 +55,7 @@ class TfidfGuesser(AbstractGuesser):
 
     @classmethod
     def load(cls, directory: str):
-        with open(os.path.join(directory, 'params.pickle')) as f:
+        with open(os.path.join(directory, 'params.pickle'), 'rb') as f:
             params = pickle.load(f)
             guesser = TfidfGuesser()
             guesser.tfidf_vectorizer = params['tfidf_vectorizer']
