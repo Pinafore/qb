@@ -42,6 +42,12 @@ guessers "ElasticSearch" {
   qb_boost = 1
 }
 
+guessers "Tfidf" {
+  class = "qanta.guesser.tfidf.TfidfGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+}
+
 guessers "DAN" {
   class = "qanta.guesser.dan.DANGuesser"
   luigi_dependency = "qanta.pipeline.wiki_questions.SelectWikiQuestions"
