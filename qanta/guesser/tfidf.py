@@ -40,8 +40,10 @@ class TfidfGuesser(AbstractGuesser):
         guess_scores = guess_matrix.max(axis=1)
         guess_indices = guess_matrix.argmax(axis=1)
         guesses = []
-        for idx, s in zip(guess_indices, guess_scores):
-            guesses.append([(self.i_to_ans[idx], s)])
+        for i in range(len(questions)):
+            idx = guess_indices[i]
+            score = guess_indices[i]
+            guesses.append([(self.i_to_ans[idx], score)])
 
         return guesses
 
