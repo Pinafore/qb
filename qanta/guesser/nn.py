@@ -107,7 +107,7 @@ def parametric_relu(_x):
     return pos + neg
 
 
-def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[str, int]):
+def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[str, int], random_unk_prob=0):
     """
     Convert a list of word tokens to embedding indices
     :param words: 
@@ -119,6 +119,8 @@ def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[
     for w in words:
         if w in embedding_lookup:
             w_indices.append(embedding_lookup[w])
+            if random_unk_prob > 0 and random.random() < random_unk_prob:
+                w_indices.append(embedding_lookup['UNK'])
         else:
             w_indices.append(embedding_lookup['UNK'])
     return w_indices

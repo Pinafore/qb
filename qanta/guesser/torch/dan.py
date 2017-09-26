@@ -20,6 +20,7 @@ from qanta.manager import (
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
 from qanta.guesser.torch.util import create_save_model
+from qanta.torch.yellowfin import YFOptimizer
 
 
 log = logging.get(__name__)
@@ -164,6 +165,7 @@ class DanGuesser(AbstractGuesser):
         self.model.init_weights(initial_embeddings=embeddings)
         self.model.cuda()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        #self.optimizer = self.optimizer = YFOptimizer(self.model.parameters(), lr=1.0, mu=0.0)
         self.criterion = nn.CrossEntropyLoss()
 
         manager = TrainingManager([
@@ -220,7 +222,6 @@ class DanGuesser(AbstractGuesser):
             batch_loss = self.criterion(out, t_y_batch)
             if not evaluate:
                 batch_loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), .25)
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)

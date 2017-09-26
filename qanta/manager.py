@@ -66,7 +66,7 @@ class EarlyStopping(Callback):
         else:
             self.current_patience -= 1
             if self.verbose > 0:
-                self.log_func('Patience: reduced by one and waiting for {} epochs for improvemnt before stopping'.format(self.current_patience))
+                self.log_func('Patience: reduced by one and waiting for {} epochs for improvement before stopping'.format(self.current_patience))
 
         if self.current_patience == 0:
             return True, 'Ran out of patience'
