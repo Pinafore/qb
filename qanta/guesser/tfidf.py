@@ -61,6 +61,7 @@ class TfidfGuesser(AbstractGuesser):
             guesser.tfidf_vectorizer = params['tfidf_vectorizer']
             guesser.tfidf_matrix = params['tfidf_matrix']
             guesser.i_to_ans = params['i_to_ans']
+            return guesser
 
     @classmethod
     def targets(cls) -> List[str]:
