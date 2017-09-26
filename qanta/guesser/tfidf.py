@@ -4,6 +4,7 @@ from collections import defaultdict
 import pickle
 
 from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
 
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import QuestionText
@@ -37,8 +38,8 @@ class TfidfGuesser(AbstractGuesser):
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[str, float]]]:
         representations = self.tfidf_vectorizer.transform(questions)
         guess_matrix = self.tfidf_matrix.dot(representations.T).T
-        guess_scores = guess_matrix.max(axis=1)
-        guess_indices = guess_matrix.argmax(axis=1)
+        guess_scores = guess_matrix.max(axis=1).toarray().reshape(-1)
+        guess_indices = np.array(guess_matrix.argmax(axis=1)).reshape(-1)
         guesses = []
         for i in range(len(questions)):
             idx = guess_indices[i]
