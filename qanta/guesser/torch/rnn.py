@@ -216,9 +216,13 @@ class RnnGuesser(AbstractGuesser):
             )
 
             self.model.eval()
+            #test_acc, test_loss, test_time = self.run_epoch(
+            #    n_batches_test,
+            #    t_x_test, lengths_test, t_y_test, evaluate=True
+            #)
             test_acc, test_loss, test_time = self.run_epoch(
-                n_batches_test,
-                t_x_test, lengths_test, t_y_test, evaluate=True
+                n_batches_train,
+                t_x_train, lengths_train, t_y_train, evaluate=True
             )
 
             stop_training, reasons = manager.instruct(
@@ -310,7 +314,7 @@ class RnnGuesser(AbstractGuesser):
 class RnnModel(nn.Module):
     def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
-                 rnn_output='last_hidden'):
+                 rnn_output='max_pool'):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
         self.n_classes = n_classes
