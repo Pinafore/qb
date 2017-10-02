@@ -3,7 +3,6 @@ from typing import List
 import string
 
 from qanta import logging
-from qanta.mentions import find_references
 from nltk import word_tokenize
 from sklearn.model_selection import train_test_split
 
@@ -40,13 +39,8 @@ def clean_question(question: str):
     return re.sub(regex_pattern, '', question.strip().lower())
 
 
-def tokenize_question(text: str, generate_mentions=False) -> List[str]:
-    if generate_mentions:
-        tokens = word_tokenize(clean_question(text))
-        tokens.extend([m for _, m, _ in find_references(text)])
-        return tokens
-    else:
-        return word_tokenize(clean_question(text))
+def tokenize_question(text: str) -> List[str]:
+    return word_tokenize(clean_question(text))
 
 
 def format_guess(guess):

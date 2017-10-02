@@ -21,10 +21,6 @@ clm {
   min_appearances = 2
 }
 
-wikifier {
-  min_appearances = 2
-}
-
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
@@ -83,74 +79,6 @@ guessers "PTRnn" {
   enabled = false
 }
 
-guessers "SNN" {
-  class = "qanta.guesser.snn.SNNGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-  expand_we = true
-  n_hidden_layers = 1
-  n_hidden_units = 1000
-  nn_dropout_rate = 0.5
-  word_dropout_rate = 0.5
-  batch_size = 512
-  learning_rate = 0.001
-  l2_normalize_averaged_words = true
-  max_n_epochs = 100
-  max_patience = 10
-  train_on_q_runs = false
-  train_on_full_q = false
-  decay_lr_on_plateau = false
-  generate_mentions = false
-  max_len = 200
-}
-
-guessers "RNN" {
-  class = "qanta.guesser.rnn.RNNGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-  min_answers = 1
-  expand_we = true
-  rnn_cell = "gru"
-  n_rnn_units = 300
-  max_patience = 10
-  max_n_epochs = 100
-  batch_size = 64
-  nn_dropout_rate = 0.5
-  n_rnn_layers = 1
-  bidirectional_rnn = false
-  # The default is to train on sentences
-  train_on_q_runs = false
-  train_on_full_q = false
-  decay_lr_on_plateau = false
-}
-
-guessers "MemNN" {
-  class = "qanta.guesser.mem_nn.MemNNGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-  min_answers = 2
-  expand_we = true
-  n_hops = 1
-  n_hidden_units = 300
-  nn_dropout_rate = 0.5
-  word_dropout_rate = 0.5
-  batch_size = 256
-  learning_rate = 0.001
-  l2_normalize_averaged_words = true
-  max_n_epochs = 100
-  max_patience = 10
-  activation_function = "elu"
-  n_wiki_sentences = 10
-  n_memories = 10
-  n_cores = 2
-}
-
-guessers "AuxDan" {
-  class = "qanta.guesser.experimental.dan.aux_dan.AuxDANGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-}
-
 guessers "ESWikidata" {
   class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
@@ -159,12 +87,6 @@ guessers "ESWikidata" {
   n_cores = 20
   confidence_threshold = 0.7
   normalize_score_by_length = true
-}
-
-guessers "FixedLen" {
-  class = "qanta.guesser.experimental.tf_fixed.FixedLenGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
 }
 
 guessers "CNN" {
@@ -184,15 +106,6 @@ guessers "CNN" {
   train_on_full_q = false
   decay_lr_on_plateau = false
   max_len = 200
-}
-
-guessers "BinarizedSiamese" {
-  class = "qanta.guesser.experimental.binarized.BinarizedGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-
-  # Model parameters
-  nn_dropout_keep_prob = 0.6
 }
 
 guessers "VowpalWabbit" {

@@ -10,7 +10,6 @@ requirements = [
     'scipy',
     'numpy',
     'wikipedia',
-    'whoosh',
     'nltk',
     'scikit-learn',
     'regex',
