@@ -20,7 +20,6 @@ from qanta.manager import (
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
 from qanta.guesser.torch.util import create_save_model
-from qanta.torch.yellowfin import YFOptimizer
 
 
 log = logging.get(__name__)
