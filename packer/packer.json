@@ -43,6 +43,11 @@
       "destination": "/home/ubuntu/client.cfg"
     },
     {
+      "type": "file",
+      "source": "conf/environment",
+      "destination": "/home/ubuntu/environment"
+    },
+    {
       "type": "shell",
       "script": "bin/install-apt-packages.sh"
     },
