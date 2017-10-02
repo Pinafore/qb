@@ -54,11 +54,9 @@ nodes can communicate via SSH
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
 
 ##### Installed Software
-* Python 3.5
-* Apache Spark 2.1.0
+* Python 3.6
+* Apache Spark 2.2.0
 * Vowpal Wabbit 8.1.1
-* Docker 1.11.1
-* KenLM
 * CUDA and Nvidia drivers if using a GPU instance
 * lz4
 * All python packages in `packer/requirements.txt`

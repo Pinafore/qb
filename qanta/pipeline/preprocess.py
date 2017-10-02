@@ -23,20 +23,6 @@ class NLTKDownload(ExternalTask):
         return LocalTarget('data/external/nltk_download_SUCCESS')
 
 
-class CompileCLM(ExternalTask):
-    """
-    To complete this task run `make clm`
-    """
-    def output(self):
-        return LocalTarget('clm/_SUCCESS')
-
-
-class CodeCompile(WrapperTask):
-    def requires(self):
-        yield NLTKDownload()
-        yield CompileCLM()
-
-
 class WikipediaRawRedirects(Task):
     def run(self):
         s3_location = 's3://pinafore-us-west-2/public/wiki_redirects.csv'
@@ -128,7 +114,7 @@ class WikidataInstanceOfPickle(Task):
 
 class DownloadData(WrapperTask):
     def requires(self):
-        yield CodeCompile()
+        yield NLTKDownload()
         yield BuildWikipediaCache()
         yield WikipediaTitles()
         yield WikipediaRedirectPickle()

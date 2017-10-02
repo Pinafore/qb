@@ -38,16 +38,17 @@
       "destination": "/home/ubuntu/limits.conf"
     },
     {
+      "type": "file",
+      "source": "conf/client.cfg",
+      "destination": "/home/ubuntu/client.cfg"
+    },
+    {
       "type": "shell",
       "script": "bin/install-apt-packages.sh"
     },
     {
       "type": "shell",
       "script": "bin/install-python.sh"
-    },
-    {
-      "type": "shell",
-      "script": "bin/install-kenlm.sh"
     },
     {
       "type": "shell",
@@ -59,7 +60,7 @@
     },
     {
       "type": "shell",
-      "script": "bin/install-tensorflow.sh"
+      "script": "bin/install-dl-libs.sh"
     },
     {
       "type": "shell",
@@ -76,7 +77,7 @@
     {
       "type": "file",
       "source": "conf/spark-defaults.conf",
-      "destination": "/home/ubuntu/dependencies/spark-2.1.0-bin-hadoop2.7/conf/spark-defaults.conf"
+      "destination": "/home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7/conf/spark-defaults.conf"
     },
     {
       "type": "file",

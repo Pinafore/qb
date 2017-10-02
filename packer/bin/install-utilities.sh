@@ -3,4 +3,4 @@
 set -e
 
 # Install Utilities
-/home/ubuntu/anaconda3/bin/pip install glances
+/home/ubuntu/anaconda3/bin/pip install glances gpustat

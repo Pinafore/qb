@@ -41,6 +41,11 @@
     },
     {
       "type": "file",
+      "source": "conf/client.cfg",
+      "destination": "/home/ubuntu/client.cfg"
+    },
+    {
+      "type": "file",
       "source": "conf/cuda-dnn-env.sh",
       "destination": "/home/ubuntu/cuda-dnn-env.sh"
     },
@@ -51,10 +56,6 @@
     {
       "type": "shell",
       "script": "bin/install-python.sh"
-    },
-    {
-      "type": "shell",
-      "script": "bin/install-kenlm.sh"
     },
     {
       "type": "shell",
@@ -70,7 +71,7 @@
     },
     {
       "type": "shell",
-      "script": "bin/install-tensorflow-gpu.sh"
+      "script": "bin/install-dl-libs-gpu.sh"
     },
     {
       "type": "shell",
@@ -87,7 +88,7 @@
     {
       "type": "file",
       "source": "conf/spark-defaults.conf",
-      "destination": "/home/ubuntu/dependencies/spark-2.1.0-bin-hadoop2.7/conf/spark-defaults.conf"
+      "destination": "/home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7/conf/spark-defaults.conf"
     },
     {
       "type": "file",

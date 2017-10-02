@@ -211,9 +211,9 @@ resource "aws_spot_instance_request" "qanta" {
   # Configure AWS credentials
   provisioner "remote-exec" {
     inline = [
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-env.sh",
+      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7/conf/spark-env.sh",
       "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/.bashrc",
-      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-2.0.0-bin-hadoop2.7/conf/spark-env.sh",
+      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7/conf/spark-env.sh",
       "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/.bashrc",
       "mkdir -p /home/ubuntu/.aws",
       "echo \"[default]\" >> /home/ubuntu/.aws/credentials",
@@ -225,11 +225,9 @@ resource "aws_spot_instance_request" "qanta" {
   # Configure qanta environment variables
   provisioner "remote-exec" {
     inline = [
-      "echo \"export QB_SPARK_MASTER=spark://${self.private_dns}:7077\" >> /home/ubuntu/.bashrc",
       "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc",
-      "echo \"export LUIGI_CONFIG_PATH=/ssd-c/qanta/luigi.cfg\" >> /home/ubuntu/.bashrc"
     ]
   }
 
@@ -240,11 +238,6 @@ resource "aws_spot_instance_request" "qanta" {
       "git clone https://github.com/Pinafore/qb /ssd-c/qanta/qb",
       "(cd /ssd-c/qanta/qb && git checkout ${var.qb_branch} && /home/ubuntu/anaconda3/bin/python setup.py develop)"
     ]
-  }
-
-  provisioner "file" {
-    source = "terraform/luigi.cfg"
-    destination = "/ssd-c/qanta/luigi.cfg"
   }
 
   provisioner "remote-exec" {

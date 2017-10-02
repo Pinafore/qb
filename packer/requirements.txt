@@ -13,7 +13,6 @@ requests
 click
 pyfunctional
 progressbar2
-fn
 luigi
 sqlalchemy
 jinja2
