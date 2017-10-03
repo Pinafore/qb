@@ -6,7 +6,7 @@ import pickle
 import codecs
 import numpy as np
 import pandas as pd
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from multiprocessing import Pool, Manager
 from functools import partial
 from typing import List, Dict, Tuple, Optional
@@ -188,11 +188,11 @@ def merge_dfs():
 
 def load_protobowl():
     
-    protobowl_df_dir = bc.PROTOBOWL_DIR + '.df.pkl'
+    protobowl_df_dir = bc.PROTOBOWL_DIR + '.h5'
     protobowl_user_dir = bc.PROTOBOWL_DIR + '.user.pkl'
     if os.path.exists(protobowl_df_dir) and os.path.exists(protobowl_df_dir):
-        with open(protobowl_df_dir, 'rb') as f:
-            protobowl_df = pickle.load(f)
+        with pd.HDFStore(protobowl_df_dir) as store:
+            protobowl_df = store['data']
         with open(protobowl_user_dir, 'rb') as f:
             user_count = pickle.load(f)
         return protobowl_df, user_count
@@ -236,14 +236,14 @@ def load_protobowl():
             line = f.readline()
     
     for x in data:
-        x[-1] = user_count[x[-1]]
+        x.append(user_count[x[-1]])
 
     protobowl_df = df = pd.DataFrame(data, 
             columns=['guess', 'qid', 'position', 
-                     'result', 'user_answers'])
+                     'result', 'uid', 'user_answers'])
     
-    with open(protobowl_df_dir, 'wb') as f:
-        pickle.dump(protobowl_df, f)
+    with pd.HDFStore(protobowl_df_dir) as store:
+        store['data'] = protobowl_df
     
     user_count = dict(user_count)
     with open(protobowl_user_dir, 'wb') as f:
