@@ -125,7 +125,6 @@ class DanGuesser(AbstractGuesser):
 
         return guesses
 
-
     def train(self, training_data: TrainingData) -> None:
         x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data
@@ -164,14 +163,13 @@ class DanGuesser(AbstractGuesser):
         self.model.init_weights(initial_embeddings=embeddings)
         self.model.cuda()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        #self.optimizer = self.optimizer = YFOptimizer(self.model.parameters(), lr=1.0, mu=0.0)
         self.criterion = nn.CrossEntropyLoss()
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc'),
-            Tensorboard('dan', log_dir='tb-logs')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
+            # Tensorboard('dan', log_dir='tb-logs')
         ])
 
         log.info('Starting training...')

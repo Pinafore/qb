@@ -9,6 +9,7 @@ sudo apt-get install -y build-essential cmake swig python-software-properties
 sudo apt-get install -y git wget vim tmux unzip
 sudo apt-get install -y libboost-program-options-dev libboost-python-dev libtool libboost-all-dev
 sudo apt-get install -y liblzma-dev libpq-dev liblz4-tool zlib1g-dev
+sudo apt-get install -y docker.io
 
 sudo apt-get install -y default-jre default-jdk
 cat /home/ubuntu/environment | sudo tee --append /etc/environment
