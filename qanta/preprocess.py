@@ -49,8 +49,7 @@ def format_guess(guess):
 
 def preprocess_dataset(data: TrainingData, train_size=.9,
                        vocab=None, class_to_i=None, i_to_class=None,
-                       create_runs=False, full_question=False,
-                       generate_mentions=False):
+                       create_runs=False, full_question=False):
     """
     This function does primarily text preprocessing on the dataset. It will return x_train and x_test as a list of
     examples where each word is a tokenized word list (not padded). y_train and y_test is a list of indices coresponding
@@ -66,8 +65,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
     :param i_to_class: 
     :param create_runs: 
     :param full_question: 
-    :param generate_mentions: Whether or not to generate and include special mention tokens
-    :return: 
+    :return:
     """
     if full_question and create_runs:
         raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
@@ -100,7 +98,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
     for q, ans in train:
         q_text = []
         for sentence in q:
-            t_question = tokenize_question(sentence, generate_mentions=generate_mentions)
+            t_question = tokenize_question(sentence)
             if create_runs or full_question:
                 q_text.extend(t_question)
             else:
@@ -122,7 +120,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
     for q, ans in test:
         q_text = []
         for sentence in q:
-            t_question = tokenize_question(sentence, generate_mentions=generate_mentions)
+            t_question = tokenize_question(sentence)
             if create_runs or full_question:
                 q_text.extend(t_question)
                 if not full_question:

@@ -7,4 +7,5 @@ echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/cuda:/usr/local/cuda
 echo "export CUDA_HOME=/usr/local/cuda" >> conf/spark-env.sh
 
 cd /ssd-c/qanta/qb
+bash packer/bin/install-elasticsearch.sh
 /home/ubuntu/dependencies/elasticsearch-5.6.2/bin/elasticsearch -d

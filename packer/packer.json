@@ -82,6 +82,10 @@
     },
     {
       "type": "shell",
+      "script": "bin/install-elasticsearch.sh"
+    },
+    {
+      "type": "shell",
       "script": "bin/install-utilities.sh"
     },
     {
