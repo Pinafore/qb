@@ -48,6 +48,11 @@
       "destination": "/home/ubuntu/environment"
     },
     {
+      "type": "file",
+      "source": "conf/spark-defaults.conf",
+      "destination": "/home/ubuntu/spark-defaults.conf"
+    },
+    {
       "type": "shell",
       "script": "bin/install-apt-packages.sh"
     },
@@ -78,11 +83,6 @@
     {
       "type": "shell",
       "script": "bin/configure.sh"
-    },
-    {
-      "type": "file",
-      "source": "conf/spark-defaults.conf",
-      "destination": "/home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7/conf/spark-defaults.conf"
     },
     {
       "type": "file",
