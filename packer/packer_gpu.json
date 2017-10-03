@@ -20,7 +20,8 @@
       "tags": {
         "Image": "qanta-gpu"
       },
-      "spot_price": "auto"
+      "spot_price": "auto",
+      "spot_price_auto_product": "Linux/UNIX"
     }
   ],
 
