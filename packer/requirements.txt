@@ -27,3 +27,4 @@ slacker
 pyhcl
 chainer
 unidecode
+elasticsearch-dsl
