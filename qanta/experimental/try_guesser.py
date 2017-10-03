@@ -9,9 +9,9 @@ guesser_dir = AbstractGuesser.output_path(gspec.guesser_module,
         gspec.guesser_class, '')
 guesser = ElasticSearchWikidataGuesser.load(guesser_dir)
 
-guesses = guesser.guess_single('Sviatoslav Teofilovich Richter was a Soviet pianist \
-    known for the depth of his interpretations, virtuoso technique, and vast \
-    repertoire.')
+guesses = guesser.guess_single("wrote a novel about a boy who encounters the\
+        Duke and the Dauphin while traveling down the Mississippi with the slave\
+        Jim")
 
 guesses = [[guesses]]
 print(guesses)
