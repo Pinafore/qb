@@ -24,7 +24,7 @@ requirements = [
     'progressbar2',
     'boto3',
     'pyhcl',
-    'fn',
+    'pycrayon',
     'matplotlib',
     'tagme'
 ]

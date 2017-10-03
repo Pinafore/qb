@@ -28,3 +28,4 @@ pyhcl
 chainer
 unidecode
 elasticsearch-dsl
+pycrayon
