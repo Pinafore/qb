@@ -5,7 +5,8 @@ set -e
 # Install Apache Spark
 cd /home/ubuntu
 wget https://d3kbcqa49mib13.cloudfront.net/spark-2.2.0-bin-hadoop2.7.tgz
-tar xzf spark-2.2.0-bin-hadoop2.7.tgz -C /home/ubuntu/dependencies
+mkdir /home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7
+tar xzf spark-2.2.0-bin-hadoop2.7.tgz -C /home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7
 rm spark-2.2.0-bin-hadoop2.7.tgz
 mv /home/ubuntu/spark-defaults.conf /home/ubuntu/spark-2.2.0-bin-hadoop2.7/conf
 echo "export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python3" >> ~/.bashrc
