@@ -1,4 +1,5 @@
 import pickle
+import json
 from typing import List
 import math
 
@@ -101,3 +102,25 @@ class TaggedQuestions(luigi.WrapperTask):
 
         for i in range(n_batches):
             yield TaggedQuestionBatch(question_batch=i)
+
+
+class MergeTaggedQuestions(luigi.Task):
+    def requires(self):
+        yield TaggedQuestions()
+
+    def output(self):
+        yield luigi.LocalTarget('output/tagme/tagme.json')
+
+    def run(self):
+        with open('output/tagme/meta.pickle', 'rb') as f:
+            n_batches = pickle.load(f)
+
+        tagged_questions = {}
+        for i in range(n_batches):
+            with open(f'output/tagme/tagged_batch_{i}.pickle', 'rb') as f:
+                dict_annotations = pickle.load(f)
+                for qnum, value in dict_annotations.items():
+                    tagged_questions[qnum] = value
+
+        with open('output/tagme/tagme.pickle', 'w') as f:
+            json.dump(tagged_questions, f)
