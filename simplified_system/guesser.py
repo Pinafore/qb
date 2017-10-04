@@ -7,7 +7,6 @@ import elasticsearch
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 
-from datasets import QuizBowlDataset
 import logging
 
 
@@ -97,9 +96,6 @@ class ElasticSearchGuesser:
         self.normalize_score_by_length = True
         self.qb_boost = 1
 
-    def qb_dataset(self):
-        return QuizBowlDataset(1, guesser_train=True)
-
     def parameters(self):
         return {
             'use_qb': self.use_qb,
@@ -126,13 +122,3 @@ class ElasticSearchGuesser:
         return es_index.search(question, max_n_guesses,
                             normalize_score_by_length=self.normalize_score_by_length,
                             qb_boost=self.qb_boost)
-
-
-if __name__ == '__main__':
-    esguesser = ElasticSearchGuesser()
-    qb_dataset = QuizBowlDataset(1, guesser_train=True)
-    training_data = qb_dataset.training_data()
-    esguesser.train(training_data)
-    print(training_data[0][0])
-    print(training_data[1][0])
-    print(esguesser.guess(' '.join(training_data[0][0])))

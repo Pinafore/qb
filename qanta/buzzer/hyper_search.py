@@ -6,6 +6,7 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.config import conf
 
 from qanta.buzzer import configs
+from qanta.util import constants as c
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.buzzer.iterator import QuestionIterator
 from qanta.buzzer.util import load_quizbowl, GUESSERS
@@ -20,7 +21,7 @@ log = logging.get(__name__)
 
 
 def run(cfg, fold, all_guesses, option2id):
-    train_iter = QuestionIterator(all_guesses['dev'], option2id,
+    train_iter = QuestionIterator(all_guesses[c.BUZZER_TRAIN_FOLD], option2id,
             batch_size=cfg.batch_size, step_size=cfg.step_size,
             neg_weight=cfg.neg_weight)
     test_iter = QuestionIterator(all_guesses[fold], option2id,
@@ -38,32 +39,60 @@ def run(cfg, fold, all_guesses, option2id):
         model.to_gpu(gpu)
 
     trainer = Trainer(model, cfg.model_dir)
-    trainer.run(train_iter, test_iter, 4)
+    trainer.run(train_iter, test_iter, 4, verbose=True)
 
     buzzes = trainer.test(test_iter)
     log.info('Buzzes generated. Size {0}.'.format(len(buzzes)))
 
-    buzzes_dir = bc.BUZZES_DIR.format(fold)
-    with open(buzzes_dir, 'wb') as outfile:
-        pickle.dump(buzzes, outfile)
     return buzzes
 
+def get_cfgs():
+    # n_layers, n_hidden, batch_norm / dropout, neg_weight, # step_size
+    _n_layers = [1,2,3]
+    _n_hidden = [50, 100, 200]
+    _batch_norm = [True, False]
+    _neg_weight = [1, 0.95, 0.9, 0.85, 0.8]
+    cfgs = []
+    for n_layers in _n_layers:
+        cfg = configs.mlp()
+        cfg.n_layers = n_layers
+        cfgs.append(cfg)
+    for n_hidden in _n_hidden:
+        cfg = configs.mlp()
+        cfg.n_hidden = n_hidden
+        cfgs.append(cfg)
+    for batch_norm in _batch_norm:
+        cfg = configs.mlp()
+        cfg.batch_norm = batch_norm
+        cfgs.append(cfg)
+    for neg_weight in _neg_weight:
+        cfg = configs.mlp()
+        cfg.neg_weight = neg_weight
+        cfgs.append(cfg)
+    return cfgs
 
 def hyper_search(fold):
-    cfg = getattr(configs, 'mlp')()
-
     option2id, all_guesses = load_quizbowl()
 
     all_questions = QuestionDatabase().all_questions()
     answers = {k: v.page for k, v in all_questions.items()}
     guesses_df = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
-    buzzes = run(cfg, fold, all_guesses, option2id)
-    output = generate_report(buzzes, answers, guesses_df, fold)
-    with open('example.txt', 'w') as outfile:
-        outfile.write(output)
-    print(output)
+    cfgs = get_cfgs()
+    cfg_buzzes = []
+    for i, cfg in enumerate(cfgs):
+        print('**********{}**********'.format(i))
+        buzzes = run(cfg, fold, all_guesses, option2id)
+        cfg_buzzes.append((cfg, buzzes))
+
+    with open('output/buzzer/cfg_buzzes_{}.pkl'.format(fold), 'wb') as outfile:
+        pickle.dump(cfg_buzzes, outfile)
 
 if __name__ == '__main__':
-    fold = sys.argv[1]
-    hyper_search(fold)
+    if len(sys.argv) > 1:
+        folds = [sys.argv[1]]
+    else:
+        folds = c.BUZZER_INPUT_FOLDS
+
+    for fold in folds:
+        hyper_search(fold)
