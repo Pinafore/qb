@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
+from torch.optim import Adam, lr_scheduler
 
 from qanta import logging
 from qanta.guesser.abstract import AbstractGuesser
@@ -114,6 +115,7 @@ class RnnGuesser(AbstractGuesser):
         self.model = None
         self.criterion = None
         self.optimizer = None
+        self.scheduler = None
 
     def guess(self,
               questions: List[QuestionText],
@@ -170,14 +172,14 @@ class RnnGuesser(AbstractGuesser):
         self.embeddings = embeddings
         self.embedding_lookup = embedding_lookup
 
-        x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train_text]
+        x_train = [convert_text_to_embeddings_indices(q, embedding_lookup, random_unk_prob=.05) for q in x_train_text]
         for r in x_train:
             if len(r) == 0:
                 r.append(embedding_lookup['UNK'])
         x_train = np.array(x_train)
         y_train = np.array(y_train)
 
-        x_test = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test_text]
+        x_test = [convert_text_to_embeddings_indices(q, embedding_lookup, random_unk_prob=.05) for q in x_test_text]
         for r in x_test:
             if len(r) == 0:
                 r.append(embedding_lookup['UNK'])
@@ -194,8 +196,9 @@ class RnnGuesser(AbstractGuesser):
         self.model = RnnModel(embeddings.shape[0], self.n_classes)
         self.model.init_weights(embeddings=embeddings)
         self.model.cuda()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, 'max', patience=5, verbose=True)
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
@@ -213,9 +216,13 @@ class RnnGuesser(AbstractGuesser):
             )
 
             self.model.eval()
+            #test_acc, test_loss, test_time = self.run_epoch(
+            #    n_batches_test,
+            #    t_x_test, lengths_test, t_y_test, evaluate=True
+            #)
             test_acc, test_loss, test_time = self.run_epoch(
-                n_batches_test,
-                t_x_test, lengths_test, t_y_test, evaluate=True
+                n_batches_train,
+                t_x_train, lengths_train, t_y_train, evaluate=True
             )
 
             stop_training, reasons = manager.instruct(
@@ -226,6 +233,8 @@ class RnnGuesser(AbstractGuesser):
             if stop_training:
                 log.info(' '.join(reasons))
                 break
+            else:
+                self.scheduler.step(test_acc)
 
         log.info('Done training')
 
@@ -304,8 +313,8 @@ class RnnGuesser(AbstractGuesser):
 
 class RnnModel(nn.Module):
     def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
-                 rnn_output='last_hidden'):
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
+                 rnn_output='max_pool'):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
         self.n_classes = n_classes

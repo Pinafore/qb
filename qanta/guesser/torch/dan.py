@@ -125,7 +125,6 @@ class DanGuesser(AbstractGuesser):
 
         return guesses
 
-
     def train(self, training_data: TrainingData) -> None:
         x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data
@@ -169,8 +168,8 @@ class DanGuesser(AbstractGuesser):
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc'),
-            Tensorboard('dan', log_dir='tb-logs')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
+            # Tensorboard('dan', log_dir='tb-logs')
         ])
 
         log.info('Starting training...')
@@ -220,7 +219,6 @@ class DanGuesser(AbstractGuesser):
             batch_loss = self.criterion(out, t_y_batch)
             if not evaluate:
                 batch_loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), .25)
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)

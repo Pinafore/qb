@@ -9,7 +9,7 @@ import multiprocessing
 
 from qanta.util.environment import TAGME_GCUBE_TOKEN
 from qanta.util.io import make_dirs
-from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.quiz_bowl import QuestionDatabase
 
 
 BATCH_SIZE = 200
@@ -46,9 +46,8 @@ class BatchQuestions(luigi.Task):
 
     def run(self):
         make_dirs('output/tagme/')
-        dataset = QuizBowlDataset(1, guesser_train=True)
-        training_data = dataset.training_data()
-        questions = training_data[0]
+        db = QuestionDatabase()
+        questions = list(db.all_questions().values())
         batch = 0
         batch_lookup = {}
 
@@ -82,21 +81,22 @@ class TaggedQuestionBatch(luigi.Task):
         with open('output/tagme/batches.pickle', 'rb') as f:
             batch_dict = pickle.load(f)
         batch_questions = batch_dict[self.question_batch]
-        flattened_sentences = []
+        dict_annotations = {}
         for q in batch_questions:
-            flattened_sentences.extend(q)
+            annotated_sentences = {}
+            for s, text in q.text.items():
+                annotation = annotation_to_dict(tagme.annotate(text))
+                annotated_sentences[s] = annotation
+            dict_annotations[q.qnum] = annotated_sentences
 
-        annotation_responses = [tagme.annotate(s) for s in flattened_sentences]
-        dict_annotations = [annotation_to_dict(ar) for ar in annotation_responses]
         with open('output/tagme/tagged_batch_{}.pickle'.format(self.question_batch), 'wb') as f:
             pickle.dump(dict_annotations, f)
 
 
 class TaggedQuestions(luigi.WrapperTask):
     def requires(self):
-        dataset = QuizBowlDataset(1, guesser_train=True)
-        training_data = dataset.training_data()
-        questions = training_data[0]
+        db = QuestionDatabase()
+        questions = list(db.all_questions().values())
         n_batches = int(math.ceil(len(questions) / BATCH_SIZE))
 
         for i in range(n_batches):

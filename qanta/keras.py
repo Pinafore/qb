@@ -1,8 +1,5 @@
-from collections import ChainMap
-
 from keras.layers import Layer
 from keras import backend as K
-import tensorflow as tf
 
 
 class AverageWords(Layer):
@@ -27,22 +24,3 @@ class AverageWords(Layer):
         n_dimensions = len(input_shape)
         del dimensions[n_dimensions - 2]
         return tuple(dimensions)
-
-
-class BatchMatmul(Layer):
-    """
-    Compute dot product between multiple vectors and one vector
-    """
-    def __init__(self, num_outputs, **kwargs):
-        super().__init__(**kwargs)
-        self.num_outputs = num_outputs
-
-    def call(self, inputs):
-        return tf.reduce_sum(inputs[0] * K.expand_dims(inputs[1], 1), axis=-1)
-
-    def compute_output_shape(self, input_shape):
-        return (None, self.num_outputs)
-
-    def get_config(self):
-        base_config = super().get_config()
-        return dict(ChainMap(base_config, {'num_outputs': self.num_outputs}))

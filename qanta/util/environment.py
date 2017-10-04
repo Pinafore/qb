@@ -3,7 +3,7 @@ import multiprocessing
 
 QB_ROOT = os.getenv('QB_ROOT')
 
-QB_SPARK_MASTER = os.getenv('QB_SPARK_MASTER')
+QB_SPARK_MASTER = os.getenv('QB_SPARK_MASTER', 'local[*]')
 
 QB_MAX_CORES = os.getenv('QB_MAX_CORES', multiprocessing.cpu_count())
 
