@@ -10,18 +10,22 @@ class MLP(chainer.ChainList):
             batch_norm=False):
         self.dropout = dropout
         layers = []
-        layers.append(L.Linear(n_input, n_hidden))
-        for i in range(n_layers):
+        if n_layers == 0:
+            layers.append(L.Linear(n_input, n_output))
+            self.n_layers = 1
+        else:
+            layers.append(L.Linear(n_input, n_hidden))
+            for i in range(n_layers):
+                if batch_norm:
+                    layers.append(L.BatchNormalization(size=n_hidden))
+                layers.append(L.Linear(n_hidden, n_hidden))
             if batch_norm:
                 layers.append(L.BatchNormalization(size=n_hidden))
-            layers.append(L.Linear(n_hidden, n_hidden))
-        if batch_norm:
-            layers.append(L.BatchNormalization(size=n_hidden))
-        layers.append(L.Linear(n_hidden, n_output))
-        if batch_norm:
-            self.n_layers = n_layers * 2 + 3
-        else:
-            self.n_layers = n_layers + 2
+            layers.append(L.Linear(n_hidden, n_output))
+            if batch_norm:
+                self.n_layers = n_layers * 2 + 3
+            else:
+                self.n_layers = n_layers + 2
         self.batch_norm = batch_norm
         super(MLP, self).__init__(*layers)
 
@@ -43,14 +47,15 @@ class MLP(chainer.ChainList):
             if not self.batch_norm and self.dropout > 0:
                 xs = F.dropout(xs, ratio=self.dropout, train=train)
             xs = self[i](xs)
+            # xs = F.relu(xs)
         return xs
 
 
 class RNN(chainer.Chain):
     def __init__(self, n_input, n_hidden, n_output):
         super(RNN, self).__init__(
-                rnn=L.LSTM(n_input, n_hidden),
-                linear=L.Linear(n_hidden, n_output))
+            rnn=L.LSTM(n_input, n_hidden),
+            linear=L.Linear(n_hidden, n_output))
 
     @property
     def xp(self):
@@ -63,9 +68,18 @@ class RNN(chainer.Chain):
             return -1
         return self.linear._device_id
 
+    def reset_state(self):
+        self.rnn.reset_state()
+
+    def step(self, x, train=True):
+        batch_size, _ = x.shape
+        y  = self.linear(self.rnn(x))
+        return y
+
     def __call__(self, xs, train=True):
         length, batch_size, _ = xs.shape
         self.rnn.reset_state()
         ys = F.stack([self.rnn(x) for x in xs], axis=0)
         ys = F.reshape(ys, (length * batch_size, -1))
+        ys = self.linear(ys)
         return ys
