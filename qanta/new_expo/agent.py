@@ -164,10 +164,8 @@ class GuesserBuzzerAgent(Agent):
         print("I'm ready too")
         self.n_steps = 0
         self.opponent_buzzed = False
-        self.me_buzzed = False
 
     def notify_buzzing(self, buzzed):
-        self.me_buzzed = buzzed[0]
         self.opponent_buzzed = all(buzzed[1:])
 
     def new_round(self):
@@ -192,6 +190,8 @@ class GuesserBuzzerAgent(Agent):
         self.n_steps += 1
 
 class HumanAgent(Agent):
+    '''Human agent gets evaluated based on keypress
+    guess in an action of human agent indicates the player number'''
 
     def __init__(self):
         self.action = Action(False, None)

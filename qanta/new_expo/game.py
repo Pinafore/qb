@@ -7,29 +7,30 @@ from qanta.new_expo.hook import GameInterfaceHook, NotifyBuzzingHook
 
 
 class Game(object):
-    '''A Game object represents a complete QuizBowl game with multiple rounds, each
-    round is a Round object.
-    Components of game state:
-        a Round object which contains the question and the progress (position)
-        history of actions of the agents
-        scores of the agents
+    '''A Game object represents a QuizBowl game with multiple rounds, where
+    each round is a Round object.
+    Game process:
+    - Beginning of a round
+        - Game control creats a Round object with a new question
+        - Game control notifies all players the start of a new round
+    - In the middle of a Round, at each step,
+        - Game control queries the Round object for an updated clue
+        - Game sends the updated clue to all agents
+        - Agents update their actions. Each action is [buzz, guess]
+        - Game control retrieves the actions
+        - If any agent chooses to buzz, game control sends the agent to Round
+          to get an evaluation. 
+        - Round returns True if the guess is correct, and False otherwise
+        - Game control determines termination and rewards
+        - Run all per-step hooks
+    - End of a round
+        - Game control update its states
+        - Run all the per-round hooks
     Args:
-        quetion_iter: 
+        quetion_list: a list of TossUpQuestions and BonusQuestions
         agents: players
-        hooks: visualization stuff
-    Process:
-        At the beginning of each round, the Game object creats a Round object
-        using a new question from question iterator. At each step, the Game
-        object queries the Round object for an updated clue. The clue will be
-        given in the form of partial question which depends on the type of the
-        question.
-        Game control sends the updated clue to all agents, agents update their
-        actions, and game control retrieves the actions. 
-        Each action has two parts, [buzz, guess].
-        Break tie.
-        If any action is not None, game control sends the answer to Round to
-        evaluate. Round returns the correctness, game control determines
-        termination and rewards.
+        hooks: hooks that are callable are ones that need to created by passing
+        the game control itself, they are internal hooks 
     '''
     def __init__(self, question_list, agents, hooks=[]):
         self.question_iter = iter(question_list)
@@ -42,17 +43,28 @@ class Game(object):
         self.setup_hooks()
 
     def setup_hooks(self):
-        self.hooks = [NotifyBuzzingHook(self)] + self.hooks
-        self.hooks = [GameInterfaceHook(self)] + self.hooks
-        self.round_hooks = [x for x in self.hooks if x.call_every == 'round']
-        self.step_hooks = [x for x in self.hooks if x.call_every == 'step']
+        '''Setup some extra hooks that need access to the internal state of
+        game control'''
+        # create internal hooks that requires access to game control 
+        for i in range(len(self.hooks)):
+            if callable(self.hooks[i]):
+                self.hooks[i] = self.hooks[i](self)
+
+        hooks = {'round': [x for x in self.hooks if x.call_every == 'round'], 
+                 'step': [x for x in self.hooks if x.call_every == 'step']}
+        self.hooks = hooks
 
     def evaluate(self, agent):
+        '''Evaluate an agent's guess'''
         guess = agent.action.guess
         if guess is None:
             guess = ''
         if isinstance(agent, HumanAgent):
-            # guess is used to indicate player number for human agent
+            '''In the case of human agent, guess is an integer that indicates
+            the player number in the human team. The evaluation of human agent
+            is determined by keyboard input.'''
+            print()
+            print('=============================')
             response = input("Player {}, provide an answer:\t".format(guess))
             # FIXME only accept + and -
             if '+' in response:
@@ -60,17 +72,25 @@ class Game(object):
             else:
                 result = False
         else:
+            print()
+            print('=============================')
             print('QANTA: {}'.format(guess))
+            print('=============================')
+            print()
             result = self.round.evaluate(guess)
         return result
     
     def run_hooks(self, call_every):
-        for hook in self.hooks:
-            if hook.call_every == call_every:
-                hook.run()
+        for hook in self.hooks[call_every]:
+            hook.run()
+
+    def break_tie(self, indices):
+        if len(indices) > 0:
+            return indices[0]
+        else:
+            return None
 
     def run_round(self):
-
         # get new question, set up the round
         question = next(self.question_iter)
         if isinstance(question, TossUpQuestion):
@@ -90,29 +110,31 @@ class Game(object):
             state = self.round.next()
             terminate = False
 
+            not_buzzed = [i for i, x in enumerate(self.buzzed) if not x]
+
             if state is None:
                 terminate = True
                 # end of question
-                # find an agent that has not buzzed, check guess
-                for i, x in enumerate(self.agents):
-                    if self.buzzed[i] is False:
-                        if self.evaluate(x):
-                            self.scores[i] += 10
-                        break
-            
-            if terminate:
+                if len(not_buzzed) > 0:
+                    i = self.break_tie(not_buzzed)
+                    if self.evaluate(self.agents[i]):
+                        self.scores[i] += 10
                 break
             
             for i, x in enumerate(self.agents):
                 x.update(state)
-                if self.buzzed[i] is False and x.action.buzz is True:
-                    self.buzzed[i] = True
-                    if self.evaluate(x):
-                        self.scores[i] += 10
-                        terminate = True
-                        break
-                    else:
-                        self.scores[i] -= 5
+
+            buzzing = [i for i, x in enumerate(self.agents) if x.action.buzz]
+            buzzing = [i for i in buzzing if i in not_buzzed]
+            if len(buzzing) > 0:
+                i = self.break_tie(buzzing)
+                self.buzzed[i] = True
+                if self.evaluate(self.agents[i]):
+                    self.scores[i] += 10
+                    terminate = True
+                    break
+                else:
+                    self.scores[i] -= 5
 
             if all(self.buzzed) or terminate:
                 break
@@ -161,7 +183,7 @@ class TossUpRound(Round):
         if self.position > self.length:
             return None
         else:
-            return ' '.join(self.question_text[:self.position])
+            return self.get_clue()
 
 class BonusRound(Round):
     pass

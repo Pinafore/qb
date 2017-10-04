@@ -8,7 +8,7 @@ from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.new_expo.game import Game
 from qanta.new_expo.agent import HumanAgent, GuesserBuzzerAgent, ESGuesserWrapper
 from qanta.new_expo.agent import RNNBuzzer
-from qanta.new_expo.hook import VisualizeGuesserBuzzer
+from qanta.new_expo import hook
 
 def test_buzzer():
     questions = QuestionDatabase().all_questions()
@@ -49,12 +49,15 @@ def main():
 
     # setup hook
     hooks = []
-    hooks.append(VisualizeGuesserBuzzer(machine_agent))
+    hooks.append(hook.NotifyBuzzingHook)
+    hooks.append(hook.GameInterfaceHook)
+    hooks.append(hook.VisualizeGuesserBuzzerHook(machine_agent))
+    hooks.append(hook.HighlightHook)
 
     # setup game
     game = Game(dev_questions, [human_agent, machine_agent], hooks)
 
-    game.run(3)
+    game.run(10)
 
 if __name__ == '__main__':
     main()

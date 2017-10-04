@@ -63,4 +63,4 @@ def main():
         pickle.dump(highlights, f)
 
 if __name__ == '__main__':
-    main()
+    test()
