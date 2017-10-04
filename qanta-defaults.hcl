@@ -14,9 +14,6 @@ cached_wikipedia_remote_fallback = false
 
 wiki_data_frac = 0.0
 
-# The guesser will train on all folds, this is a mega hack for the expo
-expo_mega_hack = false
-
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
