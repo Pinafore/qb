@@ -216,13 +216,9 @@ class RnnGuesser(AbstractGuesser):
             )
 
             self.model.eval()
-            #test_acc, test_loss, test_time = self.run_epoch(
-            #    n_batches_test,
-            #    t_x_test, lengths_test, t_y_test, evaluate=True
-            #)
             test_acc, test_loss, test_time = self.run_epoch(
-                n_batches_train,
-                t_x_train, lengths_train, t_y_train, evaluate=True
+                n_batches_test,
+                t_x_test, lengths_test, t_y_test, evaluate=True
             )
 
             stop_training, reasons = manager.instruct(
@@ -313,7 +309,7 @@ class RnnGuesser(AbstractGuesser):
 
 class RnnModel(nn.Module):
     def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
                  rnn_output='max_pool'):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
@@ -363,12 +359,6 @@ class RnnModel(nn.Module):
         packed_input = nn.utils.rnn.pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         output, hidden = self.rnn(packed_input, hidden)
-
-        #padded_sequence, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-        #positions = torch.LongTensor(lengths).cuda() - 1
-        #row_indexer = torch.arange(0, padded_sequence.data.shape[0]).long().cuda()
-        #last_out = padded_sequence[row_indexer, positions]
-        #return self.classification_layer(last_out), hidden
         if self.rnn_output == 'last_hidden':
             if type(hidden) == tuple:
                 final_hidden = hidden[0]
@@ -379,12 +369,14 @@ class RnnModel(nn.Module):
 
             return self.classification_layer(h_reshaped), hidden
         elif self.rnn_output == 'max_pool':
-            idx = np.cumsum(np.insert(lengths, 0, 0))
+            padded_output, padded_lengths = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
+            actual_batch_size = input_.data.shape[0]
             pooled = []
-            for i in range(len(lengths)):
-                pooled.append(output.data[idx[i]:idx[i + 1]].max(0)[0].view(-1))
-                #pooled.append(output.data[idx[i]:idx[i + 1]].mean(0).view(-1))
-            pooled = torch.cat(pooled).view(len(lengths), -1)
+            for i in range(actual_batch_size):
+                max_pooled = padded_output[i][:padded_lengths[i]].mean(0)
+                #max_pooled = padded_output[i][:padded_lengths[i]].max(0)[0]
+                pooled.append(max_pooled)
+            pooled = torch.cat(pooled).view(actual_batch_size, -1)
             return self.classification_layer(pooled), hidden
         else:
             raise ValueError('Unrecognized rnn_output option')
