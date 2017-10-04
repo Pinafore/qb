@@ -1,5 +1,4 @@
 import pickle
-import json
 from typing import List
 import math
 
@@ -34,7 +33,7 @@ def annotation_to_dict(response):
         {
             'begin': a.begin, 'end': a.end,
             'entity_id': a.entity_id, 'entity_title': a.entity_title,
-            'mention': a.mention, 'score': a.score, 'uri': a.score
+            'mention': a.mention, 'score': a.score, 'uri': a.uri
         }
         for a in response.annotations
     ]
@@ -122,5 +121,5 @@ class MergeTaggedQuestions(luigi.Task):
                 for qnum, value in dict_annotations.items():
                     tagged_questions[qnum] = value
 
-        with open('output/tagme/tagme.pickle', 'w') as f:
-            json.dump(tagged_questions, f)
+        with open('output/tagme/tagme.pickle', 'wb') as f:
+            pickle.dump(tagged_questions, f)
