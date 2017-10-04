@@ -3,9 +3,11 @@ import multiprocessing
 
 QB_ROOT = os.getenv('QB_ROOT')
 
-QB_SPARK_MASTER = os.getenv('QB_SPARK_MASTER')
+QB_SPARK_MASTER = os.getenv('QB_SPARK_MASTER', 'local[*]')
 
 QB_MAX_CORES = os.getenv('QB_MAX_CORES', multiprocessing.cpu_count())
+
+TAGME_GCUBE_TOKEN = os.getenv('TAGME_GCUBE_TOKEN')
 
 
 def data_path(other_path):
@@ -30,4 +32,5 @@ ENVIRONMENT = dict(
     QB_QUESTION_DB=QB_QUESTION_DB,
     QB_SPARK_MASTER=QB_SPARK_MASTER,
     BONUS_QUESTION_DB=BONUS_QUESTION_DB
+    TAGME_GCUBE_TOKEN=TAGME_GCUBE_TOKEN
 )

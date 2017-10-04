@@ -6,18 +6,22 @@
       "source_ami": "ami-746aba14",
       "instance_type": "m4.xlarge",
       "ssh_username": "ubuntu",
+      "ebs_optimized": true,
       "ami_name": "qanta-cpu {{timestamp}}",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
           "volume_size": 50,
           "volume_type": "gp2",
-          "delete_on_termination": true
+          "delete_on_termination": true,
+          "iops": 1000
         }
       ],
       "tags": {
         "Image": "qanta-cpu"
-      }
+      },
+      "spot_price": "auto",
+      "spot_price_auto_product": "Linux/UNIX"
     }
   ],
 
@@ -38,16 +42,27 @@
       "destination": "/home/ubuntu/limits.conf"
     },
     {
+      "type": "file",
+      "source": "conf/client.cfg",
+      "destination": "/home/ubuntu/client.cfg"
+    },
+    {
+      "type": "file",
+      "source": "conf/environment",
+      "destination": "/home/ubuntu/environment"
+    },
+    {
+      "type": "file",
+      "source": "conf/spark-defaults.conf",
+      "destination": "/home/ubuntu/spark-defaults.conf"
+    },
+    {
       "type": "shell",
       "script": "bin/install-apt-packages.sh"
     },
     {
       "type": "shell",
       "script": "bin/install-python.sh"
-    },
-    {
-      "type": "shell",
-      "script": "bin/install-kenlm.sh"
     },
     {
       "type": "shell",
@@ -59,11 +74,15 @@
     },
     {
       "type": "shell",
-      "script": "bin/install-tensorflow.sh"
+      "script": "bin/install-dl-libs.sh"
     },
     {
       "type": "shell",
       "script": "bin/install-pandoc.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-elasticsearch.sh"
     },
     {
       "type": "shell",
@@ -72,11 +91,6 @@
     {
       "type": "shell",
       "script": "bin/configure.sh"
-    },
-    {
-      "type": "file",
-      "source": "conf/spark-defaults.conf",
-      "destination": "/home/ubuntu/dependencies/spark-2.1.0-bin-hadoop2.7/conf/spark-defaults.conf"
     },
     {
       "type": "file",

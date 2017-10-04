@@ -10,7 +10,6 @@ requirements = [
     'scipy',
     'numpy',
     'wikipedia',
-    'whoosh',
     'nltk',
     'scikit-learn',
     'regex',
@@ -25,8 +24,9 @@ requirements = [
     'progressbar2',
     'boto3',
     'pyhcl',
-    'fn',
-    'matplotlib'
+    'pycrayon',
+    'matplotlib',
+    'tagme'
 ]
 
 

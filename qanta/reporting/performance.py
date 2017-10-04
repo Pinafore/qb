@@ -9,7 +9,6 @@ from enum import Enum
 import click
 from functional import seq
 from functional.pipeline import Sequence
-from fn import _
 
 import matplotlib
 matplotlib.use('Agg')
@@ -139,26 +138,26 @@ def compute_answers(data: Sequence, dan_answers: Set[str]):
     for q, lines in data:
         lines = seq(lines)
         answer = lines.first().answer
-        buzz = lines.find(_.buzz)
+        buzz = lines.find(lambda b: b.buzz)
         if buzz is None:
-            if lines.exists(_.guess == answer):
+            if lines.exists(lambda g: g.guess == answer):
                 questions[q] = Answer.unanswered_wrong
             elif answer not in dan_answers:
                 questions[q] = Answer.unanswered_hopeless_dan
             else:
                 questions[q] = Answer.unanswered_hopeless_1
-                if not lines.flat_map(_.all_guesses).exists(_.guess == answer):
+                if not lines.flat_map(lambda g: g.all_guesses).exists(lambda g: g.guess == answer):
                     questions[q] = Answer.unanswered_hopeless_classifier
         elif buzz.guess == buzz.answer:
             questions[q] = Answer.correct
         else:
-            correct_buzz = lines.find(_.guess == answer)
+            correct_buzz = lines.find(lambda g: g.guess == answer)
             if correct_buzz is None:
                 questions[q] = Answer.wrong_hopeless_1
                 if answer not in dan_answers:
                     questions[q] = Answer.wrong_hopeless_dan
                 else:
-                    if not lines.flat_map(_.all_guesses).exists(_.guess == answer):
+                    if not lines.flat_map(lambda g: g.all_guesses).exists(lambda g: g.guess == answer):
                         questions[q] = Answer.wrong_hopeless_classifier
             elif (correct_buzz.sentence, correct_buzz.token) < (buzz.sentence, buzz.token):
                 questions[q] = Answer.wrong_late
