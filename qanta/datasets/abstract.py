@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, Dict
 
 QuestionText = str
 Answer = str
-Evidence = Any
+Evidence = Dict[str, Any]
 TrainingData = Tuple[List[List[QuestionText]], List[Answer], List[Evidence]]
 
 

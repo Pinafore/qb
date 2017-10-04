@@ -1,4 +1,5 @@
 from typing import List, Dict, Iterable, Tuple
+import pickle
 import csv
 import os
 import sqlite3
@@ -269,7 +270,7 @@ class QuestionDatabase:
 
 class QuizBowlDataset(AbstractDataset):
     def __init__(self, *, guesser_train=False, buzzer_train=False,
-                 qb_question_db: str=QB_QUESTION_DB, tagme_evidence=False):
+                 qb_question_db: str=QB_QUESTION_DB, use_tagme_evidence=False):
         """
         Initialize a new quiz bowl data set
         :param min_class_examples: The minimum number of training examples to include an answer class.
@@ -285,7 +286,12 @@ class QuizBowlDataset(AbstractDataset):
         self.guesser_train = guesser_train
         self.buzzer_train = buzzer_train
         self.training_fold = c.GUESSER_TRAIN_FOLD if self.guesser_train else c.BUZZER_TRAIN_FOLD
-        self.tagme_evidence = tagme_evidence
+        self.use_tagme_evidence = use_tagme_evidence
+        if self.tagme_evidence:
+            with open('output/tagme/tagme.pickle', 'rb') as f:
+                self.tagme_evidence = pickle.load(f)
+        else:
+            self.tagme_evidence = None
 
     def training_data(self) -> TrainingData:
         from functional import seq
