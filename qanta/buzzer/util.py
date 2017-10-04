@@ -1,21 +1,15 @@
 import os
-import sys
-import time
 import pickle
 import gensim
 import numpy as np
 import pandas as pd
-from collections import namedtuple
-from multiprocessing import Pool, Manager
 from functools import partial
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 
 from qanta.datasets.quiz_bowl import Question, QuestionDatabase, QuizBowlDataset
-from qanta.preprocess import format_guess
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
-from qanta.util.io import safe_open, safe_path
-from qanta.config import conf
+from qanta.util.io import safe_path
 from qanta import logging
 from qanta.buzzer import constants as bc
 from qanta.util.multiprocess import _multiprocess
@@ -23,6 +17,7 @@ from qanta.util.multiprocess import _multiprocess
 log = logging.get(__name__)
 
 GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
+
 
 def stupid_buzzer(iterator) -> Dict[int, int]:
     '''Buzz by several heuristics.
@@ -148,7 +143,7 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
     merge_dfs()
     log.info('Loading data')
     question_db = QuestionDatabase()
-    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS, buzzer_train=True)
+    quizbowl_db = QuizBowlDataset(buzzer_train=True)
     all_questions = question_db.all_questions()
     # TODO: Change folds to use correct ones
     if not os.path.isfile(bc.OPTIONS_DIR):

@@ -268,9 +268,8 @@ class QuestionDatabase:
 
 
 class QuizBowlDataset(AbstractDataset):
-    def __init__(self, min_class_examples: int, *,
-                 guesser_train=False, buzzer_train=False,
-                 qb_question_db: str=QB_QUESTION_DB):
+    def __init__(self, *, guesser_train=False, buzzer_train=False,
+                 qb_question_db: str=QB_QUESTION_DB, tagme_evidence=False):
         """
         Initialize a new quiz bowl data set
         :param min_class_examples: The minimum number of training examples to include an answer class.
@@ -283,29 +282,26 @@ class QuizBowlDataset(AbstractDataset):
             log.warning(
                 'Using QuizBowlDataset with guesser and buzzer training data, make sure you know what you are doing!')
         self.db = QuestionDatabase(qb_question_db)
-        self.min_class_examples = min_class_examples
         self.guesser_train = guesser_train
         self.buzzer_train = buzzer_train
         self.training_fold = c.GUESSER_TRAIN_FOLD if self.guesser_train else c.BUZZER_TRAIN_FOLD
+        self.tagme_evidence = tagme_evidence
 
     def training_data(self) -> TrainingData:
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
-        filtered_questions = all_questions.filter(lambda q: q.fold == self.training_fold)
-
-        if self.min_class_examples > 1:
-            filtered_questions = filtered_questions\
-                .group_by(lambda q: q.page)\
-                .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
-                .flat_map(lambda kv: kv[1])
-        filtered_questions = filtered_questions.map(lambda q: q.to_example())
+        filtered_questions = all_questions\
+            .filter(lambda q: q.fold == self.training_fold)\
+            .map(lambda q: q.to_example())
         training_examples = []
         training_answers = []
+        training_evidence = []
         for example, answer in filtered_questions:
             training_examples.append(example)
             training_answers.append(answer)
+            training_evidence.append(None)
 
-        return training_examples, training_answers
+        return training_examples, training_answers, training_evidence
 
     def questions_by_fold(self, folds=c.ALL_FOLDS) -> Dict[str, List[Question]]:
         from functional import seq
@@ -313,7 +309,6 @@ class QuizBowlDataset(AbstractDataset):
         train_questions = all_questions\
             .filter(lambda q: q.fold == self.training_fold)\
             .group_by(lambda q: q.page)\
-            .filter(lambda kv: len(kv[1]) >= self.min_class_examples)\
             .flat_map(lambda kv: kv[1])\
             .list()
 

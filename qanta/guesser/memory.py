@@ -29,8 +29,9 @@ def index_page(wiki_page):
     for paragraph in paragraph_tokenize(wiki_page):
         Answer(page=page, content=paragraph).save()
 
+
 def create_memory_index():
-    dataset = QuizBowlDataset(1, guesser_train=True)
+    dataset = QuizBowlDataset(guesser_train=True)
     training_data = dataset.training_data()
     answers = set(training_data[1])
     cw = CachedWikipedia()
