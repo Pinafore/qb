@@ -146,7 +146,7 @@ class DANGuesser(AbstractGuesser):
         }
 
     def qb_dataset(self):
-        return QuizBowlDataset(1, guesser_train=True)
+        return QuizBowlDataset(guesser_train=True)
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -207,8 +207,7 @@ class DANGuesser(AbstractGuesser):
     def train(self, training_data: TrainingData) -> None:
         log.info('Preprocessing training data...')
         x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q,
-            generate_mentions=self.generate_mentions)
+            training_data, create_runs=self.train_on_q_runs, full_question=self.train_on_full_q)
         if self.wiki_data_frac > 0:
             log.info('Using wikipedia with fraction: {}'.format(self.wiki_data_frac))
             wiki_data = FilteredWikipediaDataset().training_data()

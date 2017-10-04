@@ -145,7 +145,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         self.is_human_model = is_human_model
 
     def qb_dataset(self):
-        return QuizBowlDataset(conf['guessers']['ElasticSearch']['min_appearances'], guesser_train=True)
+        return QuizBowlDataset(guesser_train=True)
 
     def train(self, training_data):
         answers = {a for a in training_data[1]}

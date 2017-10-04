@@ -17,7 +17,8 @@ class TfidfGuesser(AbstractGuesser):
         self.i_to_ans = None
 
     def train(self, training_data) -> None:
-        questions, answers = training_data
+        questions = training_data[0]
+        answers = training_data[1]
         answer_docs = defaultdict(str)
         for q, ans in zip(questions, answers):
             text = ' '.join(q)

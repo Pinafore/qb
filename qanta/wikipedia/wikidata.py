@@ -401,7 +401,7 @@ def is_god(obj):
 
 
 def create_instance_of_map(wikidata_claims_instance_of_path, output_path, n_types=50):
-    ds = QuizBowlDataset(1, guesser_train=True)
+    ds = QuizBowlDataset(guesser_train=True)
     training_data = ds.training_data()
     answers = set(training_data[1])
     answer_counts = Counter(training_data[1])
