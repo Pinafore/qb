@@ -72,3 +72,25 @@ def search(text):
         memories.append((r.page, r.content, r.meta.score))
     return memories
 
+
+class KeyValueGuesser(AbstractGuesser):
+    def __init__(self):
+        pass
+
+    def train(self, training_data):
+        pass
+
+    def guess(self, questions, max_n_guesses):
+        pass
+
+    @classmethod
+    def targets(cls):
+        return []
+
+    @classmethod
+    def load(cls, directory):
+        pass
+
+    def save(self, directory):
+        pass
+
