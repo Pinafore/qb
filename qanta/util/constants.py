@@ -69,9 +69,6 @@ COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 
 SENTENCE_STATS = 'output/guesser/sentence_stats.pickle'
 
-CLM_PATH = 'output/language_model'
-CLM_TARGET = 'output/language_model.txt'
-
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 GUESSER_TARGET_PREFIX = 'output/guesser'
@@ -86,8 +83,6 @@ META_TARGET = 'output/vw_input/{0}.meta'
 EXPO_BUZZ = 'output/expo/{}.buzz'
 EXPO_FINAL = 'output/expo/{}.final'
 EXPO_QUESTIONS = 'output/expo/{}.questions.csv'
-
-KEN_LM = 'output/kenlm.binary'
 
 DOMAIN_TARGET_PREFIX = 'output/deep/domain_data'
 DOMAIN_MODEL_FORMAT = 'output/deep/domain_clf{}.vw'

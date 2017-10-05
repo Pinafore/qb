@@ -127,7 +127,7 @@ class CNNGuesser(AbstractGuesser):
         }
 
     def qb_dataset(self):
-        return QuizBowlDataset(1, guesser_train=True)
+        return QuizBowlDataset(guesser_train=True)
 
     @classmethod
     def targets(cls) -> List[str]:

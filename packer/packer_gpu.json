@@ -6,20 +6,22 @@
       "source_ami": "ami-b7a114d7",
       "instance_type": "p2.xlarge",
       "ssh_username": "ubuntu",
+      "ebs_optimized": true,
       "ami_name": "qanta-gpu {{timestamp}}",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
           "volume_size": 50,
           "volume_type": "gp2",
-          "delete_on_termination": true
+          "delete_on_termination": true,
+          "iops": 1000
         }
       ],
       "tags": {
         "Image": "qanta-gpu"
       },
-      "ebs_optimized": true,
-      "spot_price": 1.0
+      "spot_price": "auto",
+      "spot_price_auto_product": "Linux/UNIX"
     }
   ],
 
@@ -41,8 +43,23 @@
     },
     {
       "type": "file",
+      "source": "conf/client.cfg",
+      "destination": "/home/ubuntu/client.cfg"
+    },
+    {
+      "type": "file",
       "source": "conf/cuda-dnn-env.sh",
       "destination": "/home/ubuntu/cuda-dnn-env.sh"
+    },
+    {
+      "type": "file",
+      "source": "conf/environment",
+      "destination": "/home/ubuntu/environment"
+    },
+    {
+      "type": "file",
+      "source": "conf/spark-defaults.conf",
+      "destination": "/home/ubuntu/spark-defaults.conf"
     },
     {
       "type": "shell",
@@ -51,10 +68,6 @@
     {
       "type": "shell",
       "script": "bin/install-python.sh"
-    },
-    {
-      "type": "shell",
-      "script": "bin/install-kenlm.sh"
     },
     {
       "type": "shell",
@@ -70,11 +83,15 @@
     },
     {
       "type": "shell",
-      "script": "bin/install-tensorflow-gpu.sh"
+      "script": "bin/install-dl-libs-gpu.sh"
     },
     {
       "type": "shell",
       "script": "bin/install-pandoc.sh"
+    },
+    {
+      "type": "shell",
+      "script": "bin/install-elasticsearch.sh"
     },
     {
       "type": "shell",
@@ -83,11 +100,6 @@
     {
       "type": "shell",
       "script": "bin/configure.sh"
-    },
-    {
-      "type": "file",
-      "source": "conf/spark-defaults.conf",
-      "destination": "/home/ubuntu/dependencies/spark-2.1.0-bin-hadoop2.7/conf/spark-defaults.conf"
     },
     {
       "type": "file",

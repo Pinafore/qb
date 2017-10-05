@@ -19,15 +19,13 @@ PRE_PROCESS_TARGETS = {
     'data/external/wikidata_instance-of.pickle'
 }
 
+TAGME_TARGETS = {
+    'output/tagme'
+}
+
 GUESS_TARGETS = {
     'output/guesser'
 }
-
-CLM_TARGETS = {
-    'output/language_model.txt',
-    'output/language_model'
-}
-
 
 VW_INPUT = {'output/vw_input'}
 
@@ -43,14 +41,14 @@ EXPO = {'output/expo'}
 
 
 CHECKPOINT_TARGETS = (
-    PRE_PROCESS_TARGETS | GUESS_TARGETS | CLM_TARGETS |
+    PRE_PROCESS_TARGETS | TAGME_TARGETS | GUESS_TARGETS |
     VW_INPUT | VW_MODELS | PREDICTIONS | SUMMARIES | REPORTING | EXPO
 )
 
 TARGET_GROUPS = {
     'preprocess': PRE_PROCESS_TARGETS,
+    'tagme': TAGME_TARGETS,
     'guesser': GUESS_TARGETS,
-    'clm': CLM_TARGETS,
     'vw_input': VW_INPUT,
     'vw_models': VW_MODELS,
     'predictions': PREDICTIONS,

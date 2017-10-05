@@ -147,7 +147,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
         self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
 
     def qb_dataset(self):
-        return QuizBowlDataset(1, guesser_train=True)
+        return QuizBowlDataset(guesser_train=True)
 
     @classmethod
     def targets(cls):
