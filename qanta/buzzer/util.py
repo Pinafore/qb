@@ -1,8 +1,13 @@
 import os
+import sys
+import json
+import time
 import pickle
-import gensim
+import codecs
 import numpy as np
 import pandas as pd
+from collections import namedtuple, defaultdict
+from multiprocessing import Pool, Manager
 from functools import partial
 from typing import List, Dict, Tuple
 
@@ -66,8 +71,7 @@ def stupid_buzzer(iterator) -> Dict[int, int]:
     return buzz_dict
 
 def _process_question(option2id: Dict[str, int], 
-        all_questions: Dict[int, Question], 
-        word2vec, inputs: Tuple) -> \
+        all_questions: Dict[int, Question], qnum, question) -> \
             Tuple[int, int, List[List[Dict[str, int]]], List[List[int]]]:
     '''Process one question.
     return:
@@ -76,10 +80,11 @@ def _process_question(option2id: Dict[str, int],
         guess_dicts: a sequence of guess dictionaries for each guesser
         results: sequence of 0 and 1 for each guesser
     '''
-    (qnum, question), queue = inputs
-
     qnum = int(qnum)
-    answer = all_questions[qnum].page
+    try:
+        answer = all_questions[qnum].page
+    except KeyError:
+        return None
     if answer in option2id:
         answer_id = option2id[answer]
     else:
@@ -87,72 +92,39 @@ def _process_question(option2id: Dict[str, int],
 
     guess_dicts = []
     results = []
-    wordvecs = None
-    if word2vec is not None:
-        wordvecs = []
     for pos, pos_group in question.groupby(['sentence', 'token']):
         pos_group = pos_group.groupby('guesser')
         guess_dicts.append([])
         results.append([])
-        if word2vec is not None:
-            wordvecs.append([])
         for guesser in GUESSERS:
             if guesser not in pos_group.groups:
                 log.info("{0} missing guesser {1}.".format(qnum, guesser))
                 guess_dicts[-1].append({})
                 results[-1].append(0)
-                if word2vec is not None:
-                    wordvecs[-1].append(word2vec.get_zero_vec())
             else:
                 guesses = pos_group.get_group(guesser)
                 guesses = guesses.sort_values('score', ascending=False)
                 top_guess = guesses.iloc[0].guess
                 results[-1].append(int(top_guess == answer))
-                # normalize score to 0-1 at each time step
-                s = sum(guesses.score)
+                
+                # s = sum(guesses.score)
+                s = 1
                 dic = {x.guess: x.score / s for x in guesses.itertuples()}
+                
                 guess_dicts[-1].append(dic)
-                if word2vec is not None:
-                    wordvecs[-1].append(word2vec.get_avg_vec(top_guess))
 
-    if queue is not None:
-        queue.put(qnum)
-    return qnum, answer_id, guess_dicts, results, wordvecs
+    return qnum, answer_id, guess_dicts, results
 
-class Word2Vec:
-
-    def __init__(self, wordvec_dir, wordvec_dim):
-        self.word2vec = gensim.models.KeyedVectors.load_word2vec_format(
-                wordvec_dir, binary=True)
-        self.wordvec_dim = wordvec_dim
-
-    def get_avg_vec(self, guess):
-        vecs = []
-        for word in guess.split('_'):
-            if word in self.word2vec:
-                vecs.append(self.word2vec[word])
-        if len(vecs) > 0:
-            return sum(vecs) / len(vecs)
-        return self.get_zero_vec()
-
-    def get_zero_vec(self):
-        return np.zeros(self.wordvec_dim, dtype=np.float32)
-
-
-def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, int], Dict[str, list]]:
-    merge_dfs()
+def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS) \
+                    -> Tuple[Dict[str, int], Dict[str, list]]:
+    # merge_dfs()
     log.info('Loading data')
     question_db = QuestionDatabase()
-    quizbowl_db = QuizBowlDataset(buzzer_train=True)
+    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS, guesser_train=True, buzzer_train=True)
     all_questions = question_db.all_questions()
-    # TODO: Change folds to use correct ones
     if not os.path.isfile(bc.OPTIONS_DIR):
         log.info('Loading the set of options')
-        dev_guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=['dev'])
-        all_options = set(dev_guesses.guess)
-
-        train_dev_questions = quizbowl_db.questions_in_folds(['train', 'dev'])
-        all_options.update({q.page for q in train_dev_questions})
+        all_options = set(quizbowl_db.training_data()[1])
 
         id2option = list(all_options)
         with open(safe_path(bc.OPTIONS_DIR), 'wb') as outfile:
@@ -176,9 +148,12 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
         log.info('Processing {0} guesses'.format(fold))
         guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
-        worker = partial(_process_question, option2id, all_questions, word2vec)
+        worker = partial(_process_question, option2id, all_questions)
         inputs = guesses.groupby('qnum')
-        guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data')
+        guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data',
+                multi=True)
+        guesses_by_fold[fold] = [x for x in guesses_by_fold[fold] if x is not None]
+        print(len(guesses_by_fold[fold]))
 
         with open(safe_path(save_dir), 'wb') as outfile:
             pickle.dump(guesses_by_fold[fold], outfile)
@@ -186,7 +161,6 @@ def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS, word2vec=None) -> Tuple[Dict[str, 
         log.info('Processed {0} guesses saved to {1}'.format(fold, save_dir))
 
     return option2id, guesses_by_fold
-
 
 def merge_dfs():
     GUESSERS = ["{0}.{1}".format(
@@ -196,7 +170,7 @@ def merge_dfs():
     merged_dir = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
     if not os.path.exists(merged_dir):
         os.makedirs(merged_dir)
-    for fold in c.BUZZ_FOLDS:
+    for fold in c.BUZZER_INPUT_FOLDS:
         if os.path.exists(AbstractGuesser.guess_path(merged_dir, fold)):
             log.info("Merged {0} exists, skipping.".format(fold))
             continue
@@ -211,15 +185,88 @@ def merge_dfs():
         AbstractGuesser.save_guesses(new_guesses, merged_dir, folds=[fold])
         log.info("Merging: {0} finished.".format(fold))
 
+def load_protobowl():
+    
+    protobowl_df_dir = bc.PROTOBOWL_DIR + '.h5'
+    protobowl_user_dir = bc.PROTOBOWL_DIR + '.user.pkl'
+    if os.path.exists(protobowl_df_dir) and os.path.exists(protobowl_df_dir):
+        with pd.HDFStore(protobowl_df_dir) as store:
+            protobowl_df = store['data']
+        with open(protobowl_user_dir, 'rb') as f:
+            user_count = pickle.load(f)
+        return protobowl_df, user_count
+
+    def process_line(x):
+        total_time = x['object']['time_elapsed'] + x['object']['time_remaining']
+        ratio = x['object']['time_elapsed'] / total_time
+        position = int(len(x['object']['question_text'].split()) * ratio)
+        return [x['object']['guess'], x['object']['qid'], 
+                position, x['object']['ruling'], x['object']['user']['id']]
+
+    data = []
+    count = 0
+    user_count = defaultdict(lambda: 0)
+    with codecs.open(bc.PROTOBOWL_DIR, 'r', 'utf-8') as f:
+        line = f.readline()
+        while line is not None:
+            line = line.strip()
+            if len(line) < 1:
+                break
+            while not line.endswith('}}'):
+                l = f.readline()
+                if l is None:
+                    break
+                line += l.strip()
+            try:
+                line = json.loads(line)
+            except ValueError:
+                line = f.readline()
+                if line == None:
+                    break
+                continue
+                
+            count += 1
+            if count % 10000 == 0:
+                sys.stderr.write('\rdone: {}/9707590'.format(count))
+            
+            x = process_line(line)
+            user_count[x[-1]] += 1
+            data.append(x)
+            line = f.readline()
+    
+    for x in data:
+        x.append(user_count[x[-1]])
+
+    protobowl_df = df = pd.DataFrame(data, 
+            columns=['guess', 'qid', 'position', 
+                     'result', 'uid', 'user_answers'])
+    
+    with pd.HDFStore(protobowl_df_dir) as store:
+        store['data'] = protobowl_df
+    
+    user_count = dict(user_count)
+    with open(protobowl_user_dir, 'wb') as f:
+        pickle.dump(user_count, f)
+        
+    return protobowl_df, user_count
+
+def ultimate_buzzer(test_iter):
+    buzzes = dict()
+    for i in range(test_iter.size):
+        batch = test_iter.next_batch(np)
+        masks = batch.mask.T.tolist()
+        results = np.swapaxes(batch.results, 0, 1).tolist()
+        for qnum, mask, result in zip(batch.qids, masks, results):
+            if isinstance(qnum, np.ndarray):
+                qnum = qnum.tolist()
+            length = int(sum(mask))
+            scores = result[:length]
+            buzzes[qnum] = scores
+    print(list(buzzes.values())[0])
+    return buzzes
+
 if __name__ == "__main__":
     merge_dfs()
 
-    processed_dirs = ['%s_processed.pickle' % (os.path.join(
-        bc.GUESSES_DIR, fold)) for fold in c.BUZZ_FOLDS]
-    if not all(os.path.isfile(d) for d in processed_dirs):
-        log.info('Loading {0}'.format(bc.WORDVEC_DIR))
-        word2vec = Word2Vec(bc.WORDVEC_DIR, bc.WORDVEC_DIM)
-    else:
-        word2vec = None
-
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZ_FOLDS, word2vec)
+    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
+    # load_protobowl()

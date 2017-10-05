@@ -25,7 +25,7 @@ class Trainer(object):
     def __init__(self, model, model_dir=None):
         self.model = model
         self.model_dir = model_dir
-        self.optimizer = chainer.optimizers.Adam(alpha=1e-4)
+        self.optimizer = chainer.optimizers.Adam()
         self.optimizer.setup(self.model)
         self.optimizer.add_hook(chainer.optimizer.GradientClipping(5))
 
@@ -61,12 +61,12 @@ class Trainer(object):
 
     def test(self, test_iter):
         buzzes = dict()
-        progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
+        # progress_bar = ProgressBar(test_iter.size, unit_iteration=True)
         for i in range(test_iter.size):
             batch = test_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
             ys = self.model(batch.vecs, train=False)
-            ys = F.softmax(ys) # length * batch_size, n_guessers
+            ys = F.softmax(ys) # length * batch_size, n_guessers+1
             ys = F.swapaxes(F.reshape(ys, (length, batch_size, -1)), 0, 1)
             ys.to_cpu()
             masks = batch.mask.T.tolist()
@@ -76,14 +76,21 @@ class Trainer(object):
                     qnum = qnum.tolist()
                 total = int(sum(mask))
                 buzzes[qnum] = scores[:total].tolist()
-            progress_bar(*test_iter.epoch_detail)
+
+                # for t in range(total):
+                #     q = buzzes[qnum][t][0]
+                #     if q < 0.6 and q > 0.5:
+                #         buzzes[qnum][t][0] -= 0.1
+                #         buzzes[qnum][t][1] += 0.1
+                            
+            # progress_bar(*test_iter.epoch_detail)
         test_iter.finalize(reset=True)
-        progress_bar.finalize()
+        # progress_bar.finalize()
         return buzzes
 
     def evaluate(self, eval_iter):
         stats = defaultdict(lambda: 0)
-        progress_bar = ProgressBar(eval_iter.size, unit_iteration=True)
+        # progress_bar = ProgressBar(eval_iter.size, unit_iteration=True)
         for i in range(eval_iter.size):
             batch = eval_iter.next_batch(self.model.xp)
             length, batch_size, _ = batch.vecs.shape
@@ -95,9 +102,9 @@ class Trainer(object):
             for k, v in batch_stats.items():
                 stats[k] += v
 
-            progress_bar(*eval_iter.epoch_detail)
+            # progress_bar(*eval_iter.epoch_detail)
         eval_iter.finalize(reset=True)
-        progress_bar.finalize()
+        # progress_bar.finalize()
 
         for k, v in stats.items():
             stats[k] = v / eval_iter.size
@@ -128,22 +135,26 @@ class Trainer(object):
             stats[k] = v / train_iter.size
         return stats
 
-    def run(self, train_iter=None, eval_iter=None, n_epochs=1):
-        progress_bar = ProgressBar(n_epochs, unit_iteration=False)
+    def run(self, train_iter=None, eval_iter=None, n_epochs=1, verbose=True):
+        # progress_bar = ProgressBar(n_epochs, unit_iteration=False)
+        progress_bar = None
         for epoch in range(n_epochs):
-            log.info('epoch {0}'.format(epoch))
+            if verbose:
+                log.info('epoch {0}'.format(epoch))
             if train_iter is not None:
                 train_stats = self.train_one_epoch(train_iter, progress_bar)
-                output = 'train '
-                for k, v in train_stats.items():
-                    output += '{0}: {1:.2f}  '.format(k, v)
-                log.info(output)
+                if verbose:
+                    output = 'train '
+                    for k, v in train_stats.items():
+                        output += '{0}: {1:.2f}  '.format(k, v)
+                    log.info(output)
             if eval_iter is not None:
-                output = 'eval '
                 eval_stats = self.evaluate(eval_iter)
-                for k, v in eval_stats.items():
-                    output += '{0}: {1:.2f}  '.format(k, v)
-                log.info(output)
+                if verbose:
+                    output = 'eval '
+                    for k, v in eval_stats.items():
+                        output += '{0}: {1:.2f}  '.format(k, v)
+                    log.info(output)
             if self.model_dir is not None:
                 chainer.serializers.save_npz(self.model_dir, self.model)
         train_iter.finalize(reset=True)
