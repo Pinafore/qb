@@ -1,3 +1,6 @@
+import os
+import pickle
+
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 import elasticsearch
@@ -11,6 +14,7 @@ from torch.optim import Adam, lr_scheduler
 
 import progressbar
 
+from qanta import logging
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.spark import create_spark_context
@@ -23,6 +27,13 @@ from qanta.manager import (
 )
 from qanta.guesser.torch.util import create_save_model
 
+
+log = logging.get(__name__)
+
+
+MEM_WE_TMP = '/tmp/qanta/deep/mem_we.pickle'
+MEM_WE = 'mem_we.pickle'
+load_embeddings = create_load_embeddings_function(MEM_WE_TMP, MEM_WE, log)
 
 
 connections.create_connection(hosts='localhost')
@@ -64,21 +75,110 @@ def create_memory_index():
     sc.parallelize(wiki_pages, 1000).foreach(index_page)
 
 
-def search(text):
-    s = Search(index='mem')[0:50].query('match', content=text)
+def search(text, n=10):
+    s = Search(index='mem')[0:n].query('match', content=text)
     results = s.execute()
     memories = []
     for r in results:
-        memories.append((r.page, r.content, r.meta.score))
+        # memories.append((r.page, r.content, r.meta.score))
+        memories.append(r.content)
+
+    while len(memories) < n:
+        memories.append('')
     return memories
 
 
+def load_memories(text_list, n):
+    if os.path.exists('/tmp/memories.pickle'):
+        with open('/tmp/memories.pickle', 'rb') as f:
+            memory_lookup = pickle.load(f)
+    else:
+        memory_lookup = {}
+    memory_size = len(memory_lookup)
+
+    if memory_size == 0:
+        # If everything is missing, then parallelize for speed
+        sc = create_spark_context()
+        memories = sc.parallelize(text_list, 256).map(lambda t: search(t, n=n)).collect()
+        for text, mem in zip(text_list, memories):
+            memory_lookup[text] = mem
+    else:
+        # If only some things are missing, use the cache and query what is missing
+        memories = []
+        for text in text_list:
+            if text in memory_lookup:
+                memories.append(memory_lookup[text])
+            else:
+                mem = search(text, n=n)
+                memories.append(mem)
+                memory_lookup[text] = mem
+
+    if memory_size != len(memory_lookup):
+        with open('/tmp/memories.pickle', 'wb') as f:
+            pickle.dump(memory_lookup, f)
+
+    return memories
+
+
+def memories_to_indices(mems_list, embedding_lookup):
+    mems_indices = []
+    for row in mems_list:
+        # Each row contains a list of memories/text
+        row_mems = []
+        for text_mem in row:
+            # For each text in the row, convert it to embedding indices
+            mem_indices = convert_text_to_embeddings_indices(text_mem, embedding_lookup)
+            if len(mem_indices) == 0:
+                mem_indices.append(embedding_lookup['UNK'])
+            row_mems.append(mem_indices)
+        mems_indices.append(row_mems)
+    return np.array(mems_indices)
+
+
 class KeyValueGuesser(AbstractGuesser):
-    def __init__(self):
-        pass
+    def __init__(self, n_memories=10):
+        super().__init__()
+        self.n_memories = n_memories
+        self.class_to_i = None
+        self.i_to_class = None
+        self.vocab = None
+        self.embeddings = None
+        self.embedding_lookup = None
+        self.n_classes = None
 
     def train(self, training_data):
-        pass
+        x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
+            training_data
+        )
+        self.class_to_i = class_to_i
+        self.i_to_class = i_to_class
+        self.vocab = vocab
+
+        embeddings, embedding_lookup = load_embeddings(vocab=vocab, expand_glove=True)
+        self.embeddings = embeddings
+        self.embedding_lookup = embedding_lookup
+
+        x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train_text]
+        for row in x_train:
+            if len(row) == 0:
+                row.append(embedding_lookup['UNK'])
+        x_train = np.array(x_train)
+        y_train = np.array(y_train)
+
+        mems_train = load_memories([' '.join(x) for x in x_train_text], self.n_memories)
+        mems_indices_train = memories_to_indices(mems_train, embedding_lookup)
+
+        x_test = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test_text]
+        for row in x_test:
+            if len(row) == 0:
+                row.append(embedding_lookup['UNK'])
+        x_test = np.array(x_test)
+        y_test = np.array(y_test)
+
+        mems_test = load_memories([' '.join(x) for x in x_test_text], self.n_memories)
+        mem_indices_test = memories_to_indices(mems_test, embedding_lookup)
+
+        self.n_classes = compute_n_classes(training_data[1])
 
     def guess(self, questions, max_n_guesses):
         pass
