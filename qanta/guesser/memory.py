@@ -1,11 +1,28 @@
-from qanta.wikipedia.cached_wikipedia import CachedWikipedia
-from qanta.datasets.quiz_bowl import QuizBowlDataset
-from qanta.spark import create_spark_context
-import progressbar
-
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 import elasticsearch
+
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+from torch.nn import functional as F
+from torch.optim import Adam, lr_scheduler
+
+import progressbar
+
+from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.spark import create_spark_context
+from qanta.preprocess import preprocess_dataset, tokenize_question
+from qanta.guesser.abstract import AbstractGuesser
+from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
+from qanta.manager import (
+    BaseLogger, TerminateOnNaN, Tensorboard,
+    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
+)
+from qanta.guesser.torch.util import create_save_model
+
 
 
 connections.create_connection(hosts='localhost')
@@ -55,6 +72,3 @@ def search(text):
         memories.append((r.page, r.content, r.meta.score))
     return memories
 
-
-if __name__ == '__main__':
-    create_memory_index()

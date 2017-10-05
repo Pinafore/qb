@@ -10,6 +10,7 @@ import multiprocessing
 from qanta.util.environment import TAGME_GCUBE_TOKEN
 from qanta.util.io import make_dirs
 from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.preprocess import tokenize_question
 
 
 BATCH_SIZE = 200
@@ -85,6 +86,8 @@ class TaggedQuestionBatch(luigi.Task):
         for q in batch_questions:
             annotated_sentences = {}
             for s, text in q.text.items():
+                # This insures that preprocessing is matched for neural models
+                text = ' '.join(tokenize_question(text))
                 annotation = annotation_to_dict(tagme.annotate(text))
                 annotated_sentences[s] = annotation
             dict_annotations[q.qnum] = annotated_sentences

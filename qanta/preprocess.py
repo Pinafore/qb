@@ -71,8 +71,6 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
         raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
             create_runs, full_question))
 
-    for i in range(len(data[1])):
-        data[1][i] = data[1][i]
     classes = set(data[1])
     if class_to_i is None or i_to_class is None:
         class_to_i = {}

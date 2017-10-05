@@ -94,9 +94,13 @@ class Question:
     def flatten_text(self):
         return " ".join(self.text[x] for x in sorted(self.text))
 
-    def to_example(self) -> Tuple[List[QuestionText], Answer]:
+    def to_example(self, all_evidence=None) -> Tuple[List[QuestionText], Answer]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
-        return sentence_list, self.page
+        if all_evidence is not None and 'tagme' in all_evidence:
+            evidence = {'tagme': all_evidence['tagme'][self.qnum]}
+        else:
+            evidence = None
+        return sentence_list, self.page, evidence
 
 
 @file_backed_cache_decorator(safe_path('data/external/preprocess_expo_questions.cache'))
@@ -287,7 +291,7 @@ class QuizBowlDataset(AbstractDataset):
         self.buzzer_train = buzzer_train
         self.training_fold = c.GUESSER_TRAIN_FOLD if self.guesser_train else c.BUZZER_TRAIN_FOLD
         self.use_tagme_evidence = use_tagme_evidence
-        if self.tagme_evidence:
+        if self.use_tagme_evidence:
             with open('output/tagme/tagme.pickle', 'rb') as f:
                 self.tagme_evidence = pickle.load(f)
         else:
@@ -296,16 +300,23 @@ class QuizBowlDataset(AbstractDataset):
     def training_data(self) -> TrainingData:
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
+        if self.use_tagme_evidence:
+            all_evidence = {
+                'tagme': self.tagme_evidence
+            }
+        else:
+            all_evidence = None
+
         filtered_questions = all_questions\
             .filter(lambda q: q.fold == self.training_fold)\
-            .map(lambda q: q.to_example())
+            .map(lambda q: q.to_example(all_evidence=all_evidence))
         training_examples = []
         training_answers = []
         training_evidence = []
-        for example, answer in filtered_questions:
+        for example, answer, evidence in filtered_questions:
             training_examples.append(example)
             training_answers.append(answer)
-            training_evidence.append(None)
+            training_evidence.append(evidence)
 
         return training_examples, training_answers, training_evidence
 
