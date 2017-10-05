@@ -160,7 +160,7 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.wiki_boost = guesser_conf['wiki_boost']
 
     def qb_dataset(self):
-        return QuizBowlDataset(1, guesser_train=True)
+        return QuizBowlDataset(guesser_train=True)
 
     def parameters(self):
         return {

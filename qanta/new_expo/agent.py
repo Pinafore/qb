@@ -92,7 +92,7 @@ class RNNBuzzer:
 
     def __init__(self, word_skip=0):
         self.word_skip = word_skip
-        model_dir = 'output/buzzer/neo/neo_0.npz'
+        model_dir = 'output/buzzer/neo_0.npz'
         model = RNN(21, 300, 2)
         print('QANTA: loading model')
         chainer.serializers.load_npz(model_dir, model)

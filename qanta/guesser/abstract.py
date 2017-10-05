@@ -45,7 +45,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     def qb_dataset(self) -> QuizBowlDataset:
-        return QuizBowlDataset(1, guesser_train=True)
+        return QuizBowlDataset(guesser_train=True)
 
     @abstractmethod
     def train(self, training_data: TrainingData) -> None:
@@ -755,7 +755,7 @@ def n_guesser_report(report_path, fold, n_samples=10):
 
 def sample_n_guesser_correct_questions(question_lookup, guess_lookup, n_correct_samples, n_samples=10):
     sampled_questions_by_correct = defaultdict(list)
-    dataset = QuizBowlDataset(1, guesser_train=True)
+    dataset = QuizBowlDataset(guesser_train=True)
     training_data = dataset.training_data()
     answer_counts = defaultdict(int)
     for ans in training_data[1]:

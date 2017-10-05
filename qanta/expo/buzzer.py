@@ -627,7 +627,7 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
-    qb_dataset = QuizBowlDataset(1, guesser_train=True)
+    qb_dataset = QuizBowlDataset(guesser_train=True)
     qb_answer_set = {g for g in qb_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
