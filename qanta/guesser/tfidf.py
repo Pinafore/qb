@@ -44,7 +44,7 @@ class TfidfGuesser(AbstractGuesser):
         guesses = []
         for i in range(len(questions)):
             idx = guess_indices[i]
-            score = guess_indices[i]
+            score = guess_scores[i]
             guesses.append([(self.i_to_ans[idx], score)])
 
         return guesses
