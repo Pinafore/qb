@@ -80,11 +80,10 @@ def search(text, n=10):
     results = s.execute()
     memories = []
     for r in results:
-        # memories.append((r.page, r.content, r.meta.score))
-        memories.append(r.content)
+        memories.append((r.meta.score, r.content, r.page))
 
     while len(memories) < n:
-        memories.append('')
+        memories.append(None)
     return memories
 
 
@@ -121,18 +120,28 @@ def load_memories(text_list, n):
 
 
 def memories_to_indices(mems_list, embedding_lookup):
-    mems_indices = []
+    all_key_indices = []
+    all_value_classes = []
+    all_scores = []
     for row in mems_list:
         # Each row contains a list of memories/text
-        row_mems = []
-        for text_mem in row:
+        row_keys = []
+        row_values = []
+        row_scores = []
+        for score, content, page in row:
+            row_scores.append(score)
             # For each text in the row, convert it to embedding indices
-            mem_indices = convert_text_to_embeddings_indices(text_mem, embedding_lookup)
-            if len(mem_indices) == 0:
-                mem_indices.append(embedding_lookup['UNK'])
-            row_mems.append(mem_indices)
-        mems_indices.append(row_mems)
-    return np.array(mems_indices)
+            key_indices = convert_text_to_embeddings_indices(content, embedding_lookup)
+            if len(key_indices) == 0:
+                key_indices.append(embedding_lookup['UNK'])
+            row_keys.append(key_indices)
+            row_values.append(page)
+
+        all_key_indices.append(row_keys)
+        all_value_classes.append(row_values)
+        all_scores.append(row_scores)
+
+    return np.array(all_key_indices), all_value_classes, np.array(all_scores)
 
 
 class KeyValueGuesser(AbstractGuesser):
