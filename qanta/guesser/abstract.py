@@ -69,9 +69,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def guess(self,
-              questions: List[QuestionText],
-              max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
+    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         """
         Given a list of questions as text, return n_guesses number of guesses per question. Guesses
         must be returned in canonical form, are returned with a score in which higher is better, and

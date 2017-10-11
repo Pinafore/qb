@@ -100,12 +100,13 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
 
 
 class RnnGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5):
+    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5, use_tagme_evidence=True):
         super(RnnGuesser, self).__init__()
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.max_grad_norm = max_grad_norm
+        self.use_tagme_evidence = use_tagme_evidence
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
@@ -305,6 +306,9 @@ class RnnGuesser(AbstractGuesser):
     @classmethod
     def targets(cls):
         return ['rnn.pickle', 'rnn.pt']
+
+    def qb_dataset(self):
+        return QuizBowlDataset(guesser_train=True, use_tagme_evidence=self.use_tagme_evidence)
 
 
 class RnnModel(nn.Module):
