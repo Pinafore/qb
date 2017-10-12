@@ -215,7 +215,7 @@ class ElasticSearchWikidataGuesser(AbstractGuesser):
                 documents[page] += ' ' + paragraph
             else:
                 documents[page] = paragraph
-        ElasticSearchIndex.build(documents, instance_of_map)
+        ElasticSearchIndex.build(documents, instance_of_map, rebuild_index=True)
 
         self.train_instance_of(instance_of_map, training_data)
 
