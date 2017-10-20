@@ -203,3 +203,26 @@ class KeyValueGuesser(AbstractGuesser):
     def save(self, directory):
         pass
 
+
+class KeyValueNetwork(nn.Module):
+    def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3):
+        super(KeyValueNetwork, self).__init__()
+        self.vocab_size = vocab_size
+        self.n_classes = n_classes
+        self.embedding_dim = embedding_dim
+        self.dropout_prob = dropout_prob
+
+        self.dropout = nn.Dropout(dropout_prob)
+        self.embeddings = nn.EmbeddingBag(vocab_size, embedding_dim)
+        self.classification_layer = nn.Sequential(
+            nn.Linear(embedding_dim, n_classes),
+            nn.BatchNorm1d(n_classes),
+            nn.Dropout(dropout_prob)
+        )
+
+    def init_weights(self, embeddings=None):
+        if embeddings is not None:
+            self.embeddings.weight = nn.Parameter(torch.from_numpy(embeddings).float())
+
+    def forward(self):
+        pass
