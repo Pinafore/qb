@@ -372,7 +372,6 @@ class AbstractGuesser(metaclass=ABCMeta):
             'guesser_params': params,
             'n_answers_all_folds': len(all_answers),
             'n_total_train_questions': len(train_questions),
-            'min_class_examples': dataset.min_class_examples,
             'n_train_questions': len(min_n_train_questions),
             'n_dev_questions': len(dev_questions),
             'n_total_train_answers': len(train_answers),
