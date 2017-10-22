@@ -43,3 +43,5 @@ tagme.ipynb
 tb-logs/
 *.ipynb
 .terraform
+.ignore
+tags

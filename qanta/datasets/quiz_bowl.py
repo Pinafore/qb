@@ -277,7 +277,6 @@ class QuizBowlDataset(AbstractDataset):
                  qb_question_db: str=QB_QUESTION_DB, use_tagme_evidence=False):
         """
         Initialize a new quiz bowl data set
-        :param min_class_examples: The minimum number of training examples to include an answer class.
         """
         super().__init__()
         if not guesser_train and not buzzer_train:
