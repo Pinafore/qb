@@ -13,6 +13,8 @@ from spacy.tokens import Token
 
 from sklearn.model_selection import train_test_split
 
+import progressbar
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -100,7 +102,9 @@ class MultiVocab:
 
 
 def preprocess_dataset(data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
-    nlp = spacy.load('en')
+    def custom_pipeline(nlp):
+        return nlp.tagger, nlp.entity
+    nlp = spacy.load('en', create_pipeline=custom_pipeline)
     classes = set(data[1])
     if class_to_i is None or i_to_class is None:
         class_to_i = {}
@@ -127,7 +131,11 @@ def preprocess_dataset(data: TrainingData, train_size=.9, vocab=None, class_to_i
             raw_x_train.append(sentence)
             y_train.append(class_to_i[ans])
 
-    x_train = list(nlp.pipe(raw_x_train, batch_size=1000, n_threads=-1))
+    log.info('Spacy is processing train input')
+    bar = progressbar.ProgressBar()
+    x_train = []
+    for x in bar(raw_x_train):
+        x_train.append(nlp(x))
     for doc in x_train:
         for word in doc:
             vocab.word.add(word.lower_)
@@ -141,7 +149,11 @@ def preprocess_dataset(data: TrainingData, train_size=.9, vocab=None, class_to_i
             raw_x_test.append(sentence)
             y_test.append(class_to_i[ans])
 
-    x_test = list(nlp.pipe(raw_x_test, batch_size=1000, n_threads=-1))
+    log.info('Spacy is processing test input')
+    bar = progressbar.ProgressBar()
+    x_test = []
+    for x in bar(raw_x_test):
+        x_test.append(nlp(x))
 
     return x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class
 
@@ -459,6 +471,7 @@ class RnnEntityGuesser(AbstractGuesser):
         return guesses
 
     def train(self, training_data: TrainingData):
+        log.info('Preprocessing the dataset')
         x_train_tokens, y_train, x_test_tokens, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data
         )
@@ -467,17 +480,26 @@ class RnnEntityGuesser(AbstractGuesser):
         self.i_to_class = i_to_class
         self.vocab = vocab
 
+        log.info('Loading word embeddings')
         embeddings, multi_embedding_lookup = load_multi_embeddings(multi_vocab=vocab)
         embedding_lookup = multi_embedding_lookup.word
         self.embeddings = embeddings
         self.embedding_lookup = embedding_lookup
 
 
+        log.info('Batching the dataset')
         train_dataset = BatchedDataset(self.batch_size, multi_embedding_lookup, x_train_tokens, y_train)
         test_dataset = BatchedDataset(self.batch_size, multi_embedding_lookup, x_test_tokens, y_test)
         self.n_classes = compute_n_classes(training_data[1])
 
-        self.model = RnnEntityModel(embeddings.shape[0], self.n_classes)
+        log.info('Initializing neural model')
+        self.model = RnnEntityModel(
+            len(multi_embedding_lookup.word),
+            len(multi_embedding_lookup.pos),
+            len(multi_embedding_lookup.iob),
+            len(multi_embedding_lookup.ent_type),
+            self.n_classes
+        )
         self.model.init_weights(word_embeddings=embeddings)
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
@@ -487,8 +509,8 @@ class RnnEntityGuesser(AbstractGuesser):
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc'),
-            Tensorboard('rnn_entity', log_dir='tb-logs')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc')
+            #Tensorboard('rnn_entity', log_dir='tb-logs')
         ])
 
         log.info('Starting training...')
@@ -597,7 +619,7 @@ class RnnEntityGuesser(AbstractGuesser):
 class RnnEntityModel(nn.Module):
     def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size,
                  n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
+                 n_hidden_layers=1, n_hidden_units=500, bidirectional=True, rnn_type='gru',
                  rnn_output='last_hidden'):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
@@ -627,7 +649,7 @@ class RnnEntityModel(nn.Module):
             rnn_layer = nn.GRU
         else:
             raise ValueError('Unrecognized rnn layer type')
-        self.rnn = rnn_layer(embedding_dim, n_hidden_units, n_hidden_layers,
+        self.rnn = rnn_layer(embedding_dim + 150, n_hidden_units, n_hidden_layers,
                            dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
