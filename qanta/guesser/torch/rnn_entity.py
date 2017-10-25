@@ -77,6 +77,10 @@ def clean_sentence(sent):
     return capitalize(re.sub(re_pattern, '', sent.strip(), flags=re.IGNORECASE))
 
 
+def custom_spacy_pipeline(nlp):
+    return nlp.tagger, nlp.entity
+
+
 class MultiVocab:
     def __init__(self, word_vocab=None, pos_vocab=None, iob_vocab=None, ent_type_vocab=None):
         if word_vocab is None:
@@ -101,10 +105,7 @@ class MultiVocab:
 
 
 
-def preprocess_dataset(data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
-    def custom_pipeline(nlp):
-        return nlp.tagger, nlp.entity
-    nlp = spacy.load('en', create_pipeline=custom_pipeline)
+def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
     classes = set(data[1])
     if class_to_i is None or i_to_class is None:
         class_to_i = {}
@@ -420,39 +421,37 @@ class RnnEntityGuesser(AbstractGuesser):
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
-        self.embeddings = None
-        self.embedding_lookup = None
+        self.word_embeddings = None
+        self.multi_embedding_lookup = None
         self.n_classes = None
         self.model = None
         self.criterion = None
         self.optimizer = None
         self.scheduler = None
+        self.nlp = None
 
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        x_test = [convert_text_to_embeddings_indices(
-            tokenize_question(q), self.embedding_lookup)
-            for q in questions
-        ]
-        for r in x_test:
-            if len(r) == 0:
-                log.warn('Found an empty question, adding an UNK token to it so that NaNs do not occur')
-                r.append(self.embedding_lookup['UNK'])
-        x_test = np.array(x_test)
-        y_test = np.zeros(len(x_test))
-
-        _, t_x_batches, lengths, t_y_batches, sort_batches = batchify(
-            self.batch_size, x_test, y_test, truncate=False, shuffle=False)
+        x_test_tokens = [self.nlp(x) for x in questions]
+        y_test = np.zeros(len(questions))
+        dataset = BatchedDataset(
+            self.batch_size, self.multi_embedding_lookup, x_test_tokens, y_test,
+            truncate=False, shuffle=False
+        )
 
         self.model.eval()
         self.model.cuda()
         guesses = []
         hidden = self.model.init_hidden(self.batch_size)
-        for b in range(len(t_x_batches)):
-            t_x = Variable(t_x_batches[b], volatile=True)
-            length_batch = lengths[b]
-            sort = sort_batches[b]
+        for b in range(len(dataset.t_x_w_batches)):
+            t_x_w_batch = Variable(dataset.t_x_w_batches[b], volatile=True)
+            t_x_pos_batch = Variable(dataset.t_x_pos_batches[b], volatile=True)
+            t_x_iob_batch = Variable(dataset.t_x_iob_batches[b], volatile=True)
+            t_x_type_batch = Variable(dataset.t_x_type_batches[b], volatile=True)
+
+            length_batch = dataset.length_batches[b]
+            sort_batch = dataset.sort_batches[b]
 
             if len(length_batch) != self.batch_size:
                 # This could happen for the last batch which is shorter than batch_size
@@ -460,11 +459,14 @@ class RnnEntityGuesser(AbstractGuesser):
             else:
                 hidden = repackage_hidden(hidden, reset=True)
 
-            out, hidden = self.model(t_x, length_batch, hidden)
+            out, hidden = self.model(
+                t_x_w_batch, t_x_pos_batch, t_x_iob_batch, t_x_type_batch,
+                length_batch, hidden
+            )
             probs = F.softmax(out)
             scores, preds = torch.max(probs, 1)
-            scores = scores.data.cpu().numpy()[np.argsort(sort)]
-            preds = preds.data.cpu().numpy()[np.argsort(sort)]
+            scores = scores.data.cpu().numpy()[np.argsort(sort_batch)]
+            preds = preds.data.cpu().numpy()[np.argsort(sort_batch)]
             for p, s in zip(preds, scores):
                 guesses.append([(self.i_to_class[p], s)])
 
@@ -472,8 +474,9 @@ class RnnEntityGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData):
         log.info('Preprocessing the dataset')
+        self.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
         x_train_tokens, y_train, x_test_tokens, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data
+            self.nlp, training_data
         )
 
         self.class_to_i = class_to_i
@@ -481,10 +484,9 @@ class RnnEntityGuesser(AbstractGuesser):
         self.vocab = vocab
 
         log.info('Loading word embeddings')
-        embeddings, multi_embedding_lookup = load_multi_embeddings(multi_vocab=vocab)
-        embedding_lookup = multi_embedding_lookup.word
-        self.embeddings = embeddings
-        self.embedding_lookup = embedding_lookup
+        word_embeddings, multi_embedding_lookup = load_multi_embeddings(multi_vocab=vocab)
+        self.word_embeddings = word_embeddings
+        self.multi_embedding_lookup = multi_embedding_lookup
 
 
         log.info('Batching the dataset')
@@ -500,7 +502,7 @@ class RnnEntityGuesser(AbstractGuesser):
             len(multi_embedding_lookup.ent_type),
             self.n_classes
         )
-        self.model.init_weights(word_embeddings=embeddings)
+        self.model.init_weights(word_embeddings=word_embeddings)
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
@@ -580,8 +582,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'vocab': self.vocab,
                 'class_to_i': self.class_to_i,
                 'i_to_class': self.i_to_class,
-                'embeddings': self.embeddings,
-                'embedding_lookup': self.embedding_lookup,
+                'word_embeddings': self.word_embeddings,
+                'multi_embedding_lookup': self.multi_embedding_lookup,
                 'n_classes': self.n_classes,
                 'max_epochs': self.max_epochs,
                 'batch_size': self.batch_size,
@@ -598,14 +600,15 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.vocab = params['vocab']
         guesser.class_to_i = params['class_to_i']
         guesser.i_to_class = params['i_to_class']
-        guesser.embeddings = params['embeddings']
-        guesser.embedding_lookup = params['embedding_lookup']
+        guesser.word_embeddings = params['word_embeddings']
+        guesser.multi_embedding_lookup = params['multi_embedding_lookup']
         guesser.n_classes = params['n_classes']
         guesser.max_epochs = params['max_epochs']
         guesser.batch_size = params['batch_size']
         guesser.learning_rate = params['learning_rate']
         guesser.max_grad_norm = params['max_grad_norm']
         guesser.model = torch.load(os.path.join(directory, 'rnn_entity.pt'))
+        guesser.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
         return  guesser
 
     @classmethod
