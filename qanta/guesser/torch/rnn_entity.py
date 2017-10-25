@@ -478,7 +478,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.n_classes = compute_n_classes(training_data[1])
 
         self.model = RnnEntityModel(embeddings.shape[0], self.n_classes)
-        self.model.init_weights(embeddings=embeddings)
+        self.model.init_weights(word_embeddings=embeddings)
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
@@ -595,11 +595,15 @@ class RnnEntityGuesser(AbstractGuesser):
 
 
 class RnnEntityModel(nn.Module):
-    def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
+    def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size,
+                 n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
-                 rnn_output='max_pool'):
+                 rnn_output='last_hidden'):
         super(RnnEntityModel, self).__init__()
-        self.vocab_size = vocab_size
+        self.word_vocab_size = word_vocab_size
+        self.pos_vocab_size = pos_vocab_size
+        self.iob_vocab_size = iob_vocab_size
+        self.type_vocab_size = type_vocab_size
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
         self.dropout_prob = dropout_prob
@@ -610,7 +614,12 @@ class RnnEntityModel(nn.Module):
         self.rnn_output = rnn_output
 
         self.dropout = nn.Dropout(dropout_prob)
-        self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
+
+        self.word_embeddings = nn.Embedding(word_vocab_size, embedding_dim, padding_idx=0)
+        self.pos_embeddings = nn.Embedding(pos_vocab_size, 50, padding_idx=0)
+        self.iob_embeddings = nn.Embedding(iob_vocab_size, 50, padding_idx=0)
+        self.type_embeddings = nn.Embedding(type_vocab_size, 50, padding_idx=0)
+
         self.rnn_type = rnn_type
         if rnn_type == 'lstm':
             rnn_layer = nn.LSTM
@@ -627,9 +636,9 @@ class RnnEntityModel(nn.Module):
             nn.Dropout(dropout_prob)
         )
 
-    def init_weights(self, embeddings=None):
-        if embeddings is not None:
-            self.embeddings.weight = nn.Parameter(torch.from_numpy(embeddings).float())
+    def init_weights(self, word_embeddings=None):
+        if word_embeddings is not None:
+            self.word_embeddings.weight = nn.Parameter(torch.from_numpy(word_embeddings).float())
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
@@ -641,8 +650,13 @@ class RnnEntityModel(nn.Module):
         else:
             return Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
 
-    def forward(self, input_: Variable, lengths, hidden):
-        embeddings = self.dropout(self.embeddings(input_))
+    def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable, lengths, hidden):
+        word_embeddings = self.word_embeddings(word_idxs)
+        pos_embeddings = self.pos_embeddings(pos_idxs)
+        iob_embeddings = self.iob_embeddings(iob_idxs)
+        type_embeddings = self.type_embeddings(type_idxs)
+        embeddings = self.dropout(torch.cat([word_embeddings, pos_embeddings, iob_embeddings, type_embeddings], 2))
+
         packed_input = nn.utils.rnn.pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         output, hidden = self.rnn(packed_input, hidden)
@@ -652,12 +666,12 @@ class RnnEntityModel(nn.Module):
             else:
                 final_hidden = hidden
 
-            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(input_.data.shape[0], -1)
+            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(word_idxs.data.shape[0], -1)
 
             return self.classification_layer(h_reshaped), hidden
         elif self.rnn_output == 'max_pool':
             padded_output, padded_lengths = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-            actual_batch_size = input_.data.shape[0]
+            actual_batch_size = word_idxs.data.shape[0]
             pooled = []
             for i in range(actual_batch_size):
                 max_pooled = padded_output[i][:padded_lengths[i]].mean(0)
