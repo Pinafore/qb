@@ -72,6 +72,12 @@ guessers "PTRnn" {
   enabled = false
 }
 
+guessers = "EntityRNN" {
+  class = "qanta.guesser.torch.rnn_entity.RnnEntityGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+}
+
 guessers "ESWikidata" {
   class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
