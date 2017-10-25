@@ -72,7 +72,7 @@ guessers "PTRnn" {
   enabled = false
 }
 
-guessers = "EntityRNN" {
+guessers "EntityRNN" {
   class = "qanta.guesser.torch.rnn_entity.RnnEntityGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
