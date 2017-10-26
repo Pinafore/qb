@@ -64,11 +64,18 @@ class LabelWikiQuestionsVW(Task):
 
 class SelectWikiQuestions(Task):
     def requires(self):
-        for group in (0, 1):
-            yield LabelWikiQuestionsVW(data_num=group, model_num=1-group)
+        if conf['wiki_data_frac'] > 0:
+            for group in (0, 1):
+                return LabelWikiQuestionsVW(data_num=group, model_num=1-group)
+        else:
+            return []
 
     def run(self):
-        get_best_wiki_questions(frac_questions=conf['wiki_data_frac'])
+        if conf['wiki_data_frac'] > 0:
+            get_best_wiki_questions(frac_questions=conf['wiki_data_frac'])
+        else:
+            from pathlib import Path
+            Path(c.DOMAIN_OUTPUT.format('frac=0')).touch()
 
     def output(self):
-        return LocalTarget(c.DOMAIN_OUTPUT)
+        return LocalTarget(c.DOMAIN_OUTPUT.format('frac=' + str(conf['wiki_data_frac'])))
