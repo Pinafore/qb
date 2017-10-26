@@ -17,6 +17,8 @@ terraform/ssh-keys/
 eip.tf
 readable.txt
 aws_gpu_override.tf
+aws_p2_1_override.tf
+aws_p3_2_override.tf
 aws_small_override.tf
 aws_x1_32_override.tf
 aws_x1_16_override.tf
