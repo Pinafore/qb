@@ -622,7 +622,7 @@ class RnnEntityGuesser(AbstractGuesser):
 class RnnEntityModel(nn.Module):
     def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size,
                  n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=500, bidirectional=True, rnn_type='gru',
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
                  rnn_output='last_hidden'):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
