@@ -100,7 +100,7 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
 
 
 class RnnGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5, use_tagme_evidence=True):
+    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5, use_tagme_evidence=False):
         super(RnnGuesser, self).__init__()
         self.max_epochs = max_epochs
         self.batch_size = batch_size
@@ -313,8 +313,8 @@ class RnnGuesser(AbstractGuesser):
 
 class RnnModel(nn.Module):
     def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
-                 rnn_output='max_pool'):
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
+                 rnn_output='last_hidden'):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
         self.n_classes = n_classes
