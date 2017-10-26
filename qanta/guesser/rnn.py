@@ -13,14 +13,14 @@ from torch.optim import Adam, lr_scheduler
 
 from qanta import logging
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.datasets.abstract import TrainingData, Answer, QuestionText
+from qanta.datasets.abstract import TrainingData, QuestionText
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
-from qanta.manager import (
+from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard,
-    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
+    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager, create_save_model
 )
-from qanta.guesser.torch.util import create_save_model
 
 
 log = logging.get(__name__)

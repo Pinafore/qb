@@ -37,43 +37,20 @@ guessers "Tfidf" {
   enabled = false
 }
 
-guessers "DAN" {
-  class = "qanta.guesser.dan.DANGuesser"
-  luigi_dependency = "qanta.pipeline.wiki_questions.SelectWikiQuestions"
-  enabled = false
-  expand_we = true
-  n_hidden_layers = 1
-  n_hidden_units = 1000
-  nn_dropout_rate = 0.5
-  word_dropout_rate = 0.5
-  batch_size = 512
-  learning_rate = 0.001
-  l2_normalize_averaged_words = true
-  max_n_epochs = 100
-  max_patience = 10
-  activation_function = "elu"
-  train_on_q_runs = false
-  train_on_full_q = false
-  decay_lr_on_plateau = false
-  generate_mentions = false
-  max_len = 200
-  output_last_hidden = false
-}
-
-guessers "PTDan" {
-  class = "qanta.guesser.torch.dan.DanGuesser"
+guessers "Dan" {
+  class = "qanta.guesser.dan.DanGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }
 
-guessers "PTRnn" {
-  class = "qanta.guesser.torch.rnn.RnnGuesser"
+guessers "Rnn" {
+  class = "qanta.guesser.rnn.RnnGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }
 
 guessers "EntityRNN" {
-  class = "qanta.guesser.torch.rnn_entity.RnnEntityGuesser"
+  class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }
@@ -108,7 +85,7 @@ guessers "CNN" {
 }
 
 guessers "VowpalWabbit" {
-  class = "qanta.guesser.experimental.vw.VWGuesser"
+  class = "qanta.guesser.vw.VWGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 

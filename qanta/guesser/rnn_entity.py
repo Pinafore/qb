@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Tuple
 import time
 import pickle
 import os
@@ -26,11 +26,10 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.nn import compute_n_classes, create_embeddings
-from qanta.manager import (
-    BaseLogger, TerminateOnNaN, Tensorboard,
+from qanta.torch import (
+    BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
-from qanta.guesser.torch.util import create_save_model
 from qanta.util.io import safe_open
 
 

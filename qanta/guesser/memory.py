@@ -21,7 +21,7 @@ from qanta.spark import create_spark_context
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
-from qanta.manager import (
+from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
