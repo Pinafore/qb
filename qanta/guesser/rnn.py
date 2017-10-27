@@ -171,8 +171,9 @@ class RnnGuesser(AbstractGuesser):
 
         if self.use_wiki:
             wiki_dataset = FilteredWikipediaDataset()
+            wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_train_y, _, _, _, _, _ = preprocess_dataset(
-                wiki_dataset, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
             )
             x_train_text.extend(w_x_train_text)
             y_train.extend(w_train_y)
