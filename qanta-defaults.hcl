@@ -47,6 +47,12 @@ guessers "Rnn" {
   class = "qanta.guesser.rnn.RnnGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
+
+  use_wiki = false
+  max_epochs = 100
+  batch_size = 256
+  learning_rate = 0.001
+  max_grad_norm = 5
 }
 
 guessers "EntityRNN" {
