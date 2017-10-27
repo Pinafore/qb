@@ -131,18 +131,28 @@ class DanGuesser(AbstractGuesser):
         return guesses
 
     def train(self, training_data: TrainingData) -> None:
-        x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data
-        )
 
-        if self.use_wiki:
-            wiki_dataset = FilteredWikipediaDataset()
-            wiki_train_data = wiki_dataset.training_data()
-            w_x_train_text, w_train_y, _, _, _, _, _ = preprocess_dataset(
-                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+        if self.use_qb:
+            x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
+                training_data
             )
-            x_train_text.extend(w_x_train_text)
-            y_train.extend(w_train_y)
+            if self.use_wiki:
+                wiki_dataset = FilteredWikipediaDataset()
+                wiki_train_data = wiki_dataset.training_data()
+                w_x_train_text, w_train_y, _, _, _, _, _ = preprocess_dataset(
+                    wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+                )
+                x_train_text.extend(w_x_train_text)
+                y_train.extend(w_train_y)
+        else:
+            if self.use_wiki:
+                wiki_dataset = FilteredWikipediaDataset()
+                wiki_train_data = wiki_dataset.training_data()
+                x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
+                    wiki_train_data
+                )
+            else:
+                raise ValueError('use_wiki and use_qb cannot both be false, otherwise there is no training data')
 
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
