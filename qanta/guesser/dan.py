@@ -82,8 +82,8 @@ class DanGuesser(AbstractGuesser):
     def __init__(self, max_epochs=100, batch_size=512, learning_rate=.001):
         super(DanGuesser, self).__init__()
         guesser_conf = conf['guessers']['Dan']
-        self.use_wiki = conf['use_wiki']
-        self.use_qb = conf['use_qb']
+        self.use_wiki = guesser_conf['use_wiki']
+        self.use_qb = guesser_conf['use_qb']
 
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
