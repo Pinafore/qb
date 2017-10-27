@@ -1,5 +1,5 @@
 import luigi
-from luigi import LocalTarget, Task
+from luigi import LocalTarget, Task, WrapperTask
 from qanta.config import conf
 from qanta.guesser.util.wiki_questions import generate_domain_classifier_data, get_best_wiki_questions
 from qanta.util import constants as c
@@ -65,8 +65,7 @@ class LabelWikiQuestionsVW(Task):
 class SelectWikiQuestions(Task):
     def requires(self):
         if conf['wiki_data_frac'] > 0:
-            for group in (0, 1):
-                return LabelWikiQuestionsVW(data_num=group, model_num=1-group)
+            return [LabelWikiQuestionsVW(data_num=group, model_num=1-group) for group in (0, 1)]
         else:
             return []
 
