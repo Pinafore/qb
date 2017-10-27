@@ -41,6 +41,9 @@ guessers "Dan" {
   class = "qanta.guesser.dan.DanGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
+
+  use_wiki = false
+  use_qb = true
 }
 
 guessers "Rnn" {

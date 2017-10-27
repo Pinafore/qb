@@ -11,8 +11,10 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 
 from qanta import logging
+from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
+from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
@@ -79,6 +81,10 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
 class DanGuesser(AbstractGuesser):
     def __init__(self, max_epochs=100, batch_size=512, learning_rate=.001):
         super(DanGuesser, self).__init__()
+        guesser_conf = conf['guessers']['Dan']
+        self.use_wiki = conf['use_wiki']
+        self.use_qb = conf['use_qb']
+
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
         self.batch_size = batch_size
@@ -128,6 +134,15 @@ class DanGuesser(AbstractGuesser):
         x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data
         )
+
+        if self.use_wiki:
+            wiki_dataset = FilteredWikipediaDataset()
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_train_y, _, _, _, _, _ = preprocess_dataset(
+                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class
+            )
+            x_train_text.extend(w_x_train_text)
+            y_train.extend(w_train_y)
 
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -240,7 +255,9 @@ class DanGuesser(AbstractGuesser):
                 'n_classes': self.n_classes,
                 'max_epochs': self.max_epochs,
                 'batch_size': self.batch_size,
-                'learning_rate': self.learning_rate
+                'learning_rate': self.learning_rate,
+                'use_wiki': self.use_wiki,
+                'use_qb': self.use_qb
             }, f)
 
     @classmethod
@@ -258,6 +275,8 @@ class DanGuesser(AbstractGuesser):
         guesser.max_epochs = params['max_epochs']
         guesser.batch_size = params['batch_size']
         guesser.learning_rate = params['learning_rate']
+        guesser.use_wiki = params['use_wiki']
+        guesser.use_qb = params['use_qb']
         guesser.model = torch.load(os.path.join(directory, 'dan.pt'))
         return guesser
 
