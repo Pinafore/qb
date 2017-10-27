@@ -118,4 +118,3 @@ class DownloadData(WrapperTask):
         yield BuildWikipediaCache()
         yield WikipediaTitles()
         yield WikipediaRedirectPickle()
-        yield WikidataInstanceOfPickle()
