@@ -10,6 +10,25 @@ from qanta.datasets.abstract import TrainingData
 
 log = logging.get(__name__)
 
+ftp_patterns = {
+    '\n',
+    ', for 10 points,',
+    ', for ten points,',
+    '--for 10 points--',
+    'for 10 points, ',
+    'for 10 points--',
+    'for ten points, ',
+    'for 10 points ',
+    'for ten points ',
+    ', ftp,'
+    'ftp,',
+    'ftp'
+}
+
+patterns = ftp_patterns | set(string.punctuation)
+regex_pattern = '|'.join([re.escape(p) for p in patterns])
+regex_pattern += r'|\[.*?\]|\(.*?\)'
+
 
 def clean_question(question: str):
     """
@@ -17,24 +36,6 @@ def clean_question(question: str):
     :param question:
     :return:
     """
-    patterns = {
-        '\n',
-        ', for 10 points,',
-        ', for ten points,',
-        '--for 10 points--',
-        'for 10 points, ',
-        'for 10 points--',
-        'for ten points, ',
-        'for 10 points ',
-        'for ten points ',
-        ', ftp,'
-        'ftp,',
-        'ftp'
-    }
-
-    patterns |= set(string.punctuation)
-    regex_pattern = '|'.join([re.escape(p) for p in patterns])
-    regex_pattern += r'|\[.*?\]|\(.*?\)'
 
     return re.sub(regex_pattern, '', question.strip().lower())
 
