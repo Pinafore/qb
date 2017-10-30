@@ -12,15 +12,17 @@ from torch.nn import functional as F
 from torch.optim import Adam, lr_scheduler
 
 from qanta import logging
+from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.datasets.abstract import TrainingData, Answer, QuestionText
+from qanta.datasets.abstract import TrainingData, QuestionText
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
-from qanta.manager import (
+from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard,
-    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
+    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager, create_save_model
 )
-from qanta.guesser.torch.util import create_save_model
 
 
 log = logging.get(__name__)
@@ -100,13 +102,15 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
 
 
 class RnnGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5, use_tagme_evidence=True):
+    def __init__(self):
         super(RnnGuesser, self).__init__()
-        self.max_epochs = max_epochs
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.max_grad_norm = max_grad_norm
-        self.use_tagme_evidence = use_tagme_evidence
+        guesser_conf = conf['guessers']['Rnn']
+        self.use_wiki = guesser_conf['use_wiki']
+        self.max_epochs = guesser_conf['max_epochs']
+        self.batch_size = guesser_conf['batch_size']
+        self.learning_rate = guesser_conf['learning_rate']
+        self.max_grad_norm = guesser_conf['max_grad_norm']
+
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
@@ -165,6 +169,16 @@ class RnnGuesser(AbstractGuesser):
             training_data
         )
 
+        if self.use_wiki:
+            wiki_dataset = FilteredWikipediaDataset()
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_train_y, _, _, _, _, _ = preprocess_dataset(
+                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+            x_train_text.extend(w_x_train_text)
+            y_train.extend(w_train_y)
+
+
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
@@ -204,8 +218,8 @@ class RnnGuesser(AbstractGuesser):
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_acc'),
-            Tensorboard('rnn', log_dir='tb-logs')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_acc')
+            #Tensorboard('rnn', log_dir='tb-logs')
         ])
 
         log.info('Starting training...')
@@ -281,7 +295,8 @@ class RnnGuesser(AbstractGuesser):
                 'max_epochs': self.max_epochs,
                 'batch_size': self.batch_size,
                 'learning_rate': self.learning_rate,
-                'max_grad_norm': self.max_grad_norm
+                'max_grad_norm': self.max_grad_norm,
+                'use_wiki': self.use_wiki
             }, f)
 
     @classmethod
@@ -300,6 +315,7 @@ class RnnGuesser(AbstractGuesser):
         guesser.batch_size = params['batch_size']
         guesser.learning_rate = params['learning_rate']
         guesser.max_grad_norm = params['max_grad_norm']
+        guesser.use_wiki = params['use_wiki']
         guesser.model = torch.load(os.path.join(directory, 'rnn.pt'))
         return  guesser
 
@@ -308,13 +324,13 @@ class RnnGuesser(AbstractGuesser):
         return ['rnn.pickle', 'rnn.pt']
 
     def qb_dataset(self):
-        return QuizBowlDataset(guesser_train=True, use_tagme_evidence=self.use_tagme_evidence)
+        return QuizBowlDataset(guesser_train=True)
 
 
 class RnnModel(nn.Module):
     def __init__(self, vocab_size, n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
-                 rnn_output='max_pool'):
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
+                 rnn_output='last_hidden'):
         super(RnnModel, self).__init__()
         self.vocab_size = vocab_size
         self.n_classes = n_classes

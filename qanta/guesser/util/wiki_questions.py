@@ -85,7 +85,7 @@ def get_best_wiki_questions(frac_questions=1.0):
         file_pairs = [(stack.enter_context(open(DOMAIN_TARGET_PREFIX + str(i))),
                        stack.enter_context(open(DOMAIN_PREDICTIONS_PREFIX + str(i))))
                       for i in (0, 1)]
-        with safe_open(DOMAIN_OUTPUT, 'wb') as f:
+        with safe_open(DOMAIN_OUTPUT.format('frac=' + str(frac_questions)), 'wb') as f:
             pickle.dump(_get_best(file_pairs, frac_questions), f)
 
 

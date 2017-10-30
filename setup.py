@@ -26,7 +26,8 @@ requirements = [
     'pyhcl',
     'pycrayon',
     'matplotlib',
-    'tagme'
+    'tagme',
+    'spacy'
 ]
 
 

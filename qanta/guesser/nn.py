@@ -104,7 +104,7 @@ def tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
 
 
 def create_load_embeddings_function(we_tmp_target, we_target, logger):
-    def load_embeddings(vocab=None, root_directory='', expand_glove=False, mask_zero=False):
+    def load_embeddings(vocab=None, root_directory='', expand_glove=True, mask_zero=False):
         if os.path.exists(we_tmp_target):
             logger.info('Loading word embeddings from tmp cache')
             with safe_open(we_tmp_target, 'rb') as f:

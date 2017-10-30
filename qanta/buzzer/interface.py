@@ -90,8 +90,7 @@ def buzzer2vwexpo(guesses_df: pd.DataFrame,
     buzzes: dictionary of qnum -> buzzing position
     fold: string indicating the data fold
     '''
-    warnings.warn("buzzer2vwexpo will be deprecated after VW stuff is completely
-                   removed from the pipeline",
+    warnings.warn("buzzer2vwexpo will be deprecated after VW stuff is completely removed from the pipeline",
                   DeprecationWarning)
 
     inputs = guesses_df.groupby('qnum')

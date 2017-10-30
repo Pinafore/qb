@@ -3,6 +3,13 @@ from collections import defaultdict
 from typing import List, Tuple, Optional
 
 import numpy as np
+import torch
+
+
+def create_save_model(model):
+    def save_model(path):
+        torch.save(model, path)
+    return save_model
 
 
 class Callback(abc.ABC):
