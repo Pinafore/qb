@@ -14,6 +14,7 @@ from spacy.tokens import Token
 from sklearn.model_selection import train_test_split
 
 import progressbar
+import pycountry
 
 import torch
 import torch.nn as nn
@@ -70,6 +71,57 @@ qb_patterns = {
 }
 re_pattern = '|'.join([re.escape(p) for p in qb_patterns])
 re_pattern += r'|\[.*?\]|\(.*?\)'
+
+COUNTRIES = set(['american'])
+for c in pycountry.countries:
+    split = c.name.lower().split()
+    if len(split) == 1:
+        COUNTRIES.add(split[0])
+
+STATES = set()
+for s in pycountry.subdivisions.get(country_code='US'):
+    if s.type == 'State':
+        split = s.name.lower().split()
+        if len(split) == 1:
+            STATES.add(split[0])
+
+NN_TAGS = {'NN', 'NNP', 'NNS'}
+SKIP_PUNCTATION = {'HYPH', 'POS'}
+SKIP_TAGS = NN_TAGS | SKIP_PUNCTATION
+
+
+def extract_mentions(tokens):
+    begin = None
+    mention_spans = []
+    i = 0
+    while i < len(tokens):
+        t = tokens[i]
+        if t.lower_ == 'this' or t.lower_ == 'these':
+            begin = i
+        elif begin is not None and t.tag_ in NN_TAGS:
+            if i + 1 < len(tokens) and tokens[i + 1].tag_ in SKIP_TAGS:
+                i += 1
+                continue
+            mention_spans.append((begin, i))
+            begin = None
+        elif begin is not None and (t.lower_ in COUNTRIES or t.lower_ in STATES):
+            if i + 1 < len(tokens) and (tokens[i + 1].tag_ in SKIP_TAGS):
+                i += 1
+                continue
+            mention_spans.append((begin, i))
+            begin = None
+        i += 1
+    return mention_spans
+
+
+def mentions_to_sequence(mention_spans, tokens):
+    m_sequence = [0] * len(tokens)
+    for m_span in mention_spans:
+        i = m_span[0]
+        while i <= m_span[1]:
+            m_sequence[i] = 1
+            i += 1
+    return m_sequence
 
 
 def clean_sentence(sent):
@@ -261,7 +313,7 @@ def pad_batch(x_batch, max_length):
     return torch.from_numpy(np.array(x_batch_padded)).long()
 
 
-def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, y_array):
+def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_mention, y_array):
     lengths = np.array([len(r) for r in x_array_w])
     max_length = np.max(lengths)
     length_sort = np.argsort(-lengths)
@@ -269,6 +321,7 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, y_array):
     x_pos_batch = x_array_pos[length_sort]
     x_iob_batch = x_array_iob[length_sort]
     x_type_batch = x_array_type[length_sort]
+    x_mention_batch = x_array_mention[length_sort]
 
     y_batch = y_array[length_sort]
     lengths = lengths[length_sort]
@@ -277,6 +330,10 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, y_array):
     x_batch_pos_padded = pad_batch(x_pos_batch, max_length)
     x_batch_iob_padded = pad_batch(x_iob_batch, max_length)
     x_batch_type_padded = pad_batch(x_type_batch, max_length)
+
+    # Since this is a literal value, it needs to match the embedding data type as well as having an extra dimension
+    # that is put in place by the embeddings for the above input
+    x_batch_mention_padded = pad_batch(x_mention_batch, max_length).float().unsqueeze(2)
     y_batch = torch.from_numpy(y_batch).long()
 
     if CUDA:
@@ -284,9 +341,11 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, y_array):
         x_batch_pos_padded = x_batch_pos_padded.cuda()
         x_batch_iob_padded = x_batch_iob_padded.cuda()
         x_batch_type_padded = x_batch_type_padded.cuda()
+        x_batch_mention_padded = x_batch_mention_padded.cuda()
         y_batch = y_batch.cuda()
 
-    return x_batch_w_padded, x_batch_pos_padded, x_batch_iob_padded, x_batch_type_padded, lengths, y_batch, length_sort
+    return (x_batch_w_padded, x_batch_pos_padded, x_batch_iob_padded, x_batch_type_padded, x_batch_mention_padded,
+            lengths, y_batch, length_sort)
 
 
 class BatchedDataset:
@@ -295,16 +354,20 @@ class BatchedDataset:
         self.x_array_pos = []
         self.x_array_iob = []
         self.x_array_ent_type = []
+        self.x_array_mention = []
         self.y_array = []
 
         for q in x_tokens:
             w_indicies, pos_indices, iob_indices, ent_type_indices = convert_tokens_to_representations(
                 q, multi_embedding_lookup
             )
+            mention_spans = extract_mentions(q)
+            mention_flags = mentions_to_sequence(mention_spans, q)
             self.x_array_w.append(w_indicies)
             self.x_array_pos.append(pos_indices)
             self.x_array_iob.append(iob_indices)
             self.x_array_ent_type.append(ent_type_indices)
+            self.x_array_mention.append(mention_flags)
 
         for i in range(len(x_tokens)):
             if len(self.x_array_w[i]) == 0:
@@ -319,10 +382,14 @@ class BatchedDataset:
             if len(self.x_array_ent_type[i]) == 0:
                 self.x_array_ent_type[i].append(multi_embedding_lookup.ent_type[UNK])
 
+            if len(self.x_array_mention[i]) == 0:
+                self.x_array_mention[i].append(0)
+
         self.x_array_w = np.array(self.x_array_w)
         self.x_array_pos = np.array(self.x_array_pos)
         self.x_array_iob = np.array(self.x_array_iob)
         self.x_array_ent_type = np.array(self.x_array_ent_type)
+        self.x_array_mention = np.array(self.x_array_mention)
         self.y_array = np.array(y_array)
 
         self.n_examples = self.y_array.shape[0]
@@ -331,6 +398,7 @@ class BatchedDataset:
         self.t_x_pos_batches = None
         self.t_x_iob_batches = None
         self.t_x_type_batches = None
+        self.t_x_mention_batches = None
         self.length_batches = None
         self.t_y_batches = None
         self.sort_batches = None
@@ -352,12 +420,14 @@ class BatchedDataset:
             self.x_array_pos = self.x_array_pos[random_order]
             self.x_array_iob = self.x_array_iob[random_order]
             self.x_array_ent_type = self.x_array_ent_type[random_order]
+            self.x_array_mention = self.x_array_mention[random_order]
             self.y_array = self.y_array[random_order]
 
         t_x_w_batches = []
         t_x_pos_batches = []
         t_x_iob_batches = []
         t_x_type_batches = []
+        t_x_mention_batches = []
         length_batches = []
         t_y_batches = []
         sort_batches = []
@@ -367,9 +437,10 @@ class BatchedDataset:
             x_pos_batch = self.x_array_pos[b * batch_size:(b + 1) * batch_size]
             x_iob_batch = self.x_array_iob[b * batch_size:(b + 1) * batch_size]
             x_type_batch = self.x_array_ent_type[b * batch_size:(b + 1) * batch_size]
+            x_mention_batch = self.x_array_mention[b * batch_size:(b + 1) * batch_size]
             y_batch = self.y_array[b * batch_size:(b + 1) * batch_size]
-            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, lengths, y_batch, sort = create_batch(
-                x_w_batch, x_pos_batch, x_iob_batch, x_type_batch,
+            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, sort = create_batch(
+                x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch,
                 y_batch
             )
 
@@ -377,6 +448,7 @@ class BatchedDataset:
             t_x_pos_batches.append(x_pos_batch)
             t_x_iob_batches.append(x_iob_batch)
             t_x_type_batches.append(x_type_batch)
+            t_x_mention_batches.append(x_mention_batch)
             length_batches.append(lengths)
             t_y_batches.append(y_batch)
             sort_batches.append(sort)
@@ -386,10 +458,11 @@ class BatchedDataset:
             x_pos_batch = self.x_array_pos[self.n_batches * batch_size:]
             x_iob_batch = self.x_array_iob[self.n_batches * batch_size:]
             x_type_batch = self.x_array_ent_type[self.n_batches * batch_size:]
+            x_mention_batch = self.x_array_mention[self.n_batches * batch_size:]
             y_batch = self.y_array[self.n_batches * batch_size:]
 
-            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, lengths, y_batch, sort = create_batch(
-                x_w_batch, x_pos_batch, x_iob_batch, x_type_batch,
+            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, sort = create_batch(
+                x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch,
                 y_batch
             )
 
@@ -397,6 +470,7 @@ class BatchedDataset:
             t_x_pos_batches.append(x_pos_batch)
             t_x_iob_batches.append(x_iob_batch)
             t_x_type_batches.append(x_type_batch)
+            t_x_mention_batches.append(x_mention_batch)
             length_batches.append(lengths)
             t_y_batches.append(y_batch)
             sort_batches.append(sort)
@@ -405,6 +479,7 @@ class BatchedDataset:
         self.t_x_pos_batches = t_x_pos_batches
         self.t_x_iob_batches = t_x_iob_batches
         self.t_x_type_batches = t_x_type_batches
+        self.t_x_mention_batches = t_x_mention_batches
         self.length_batches = length_batches
         self.t_y_batches = t_y_batches
         self.sort_batches = sort_batches
@@ -448,6 +523,7 @@ class RnnEntityGuesser(AbstractGuesser):
             t_x_pos_batch = Variable(dataset.t_x_pos_batches[b], volatile=True)
             t_x_iob_batch = Variable(dataset.t_x_iob_batches[b], volatile=True)
             t_x_type_batch = Variable(dataset.t_x_type_batches[b], volatile=True)
+            t_x_mention_batch = Variable(dataset.t_x_mention_batches[b], volatile=True)
 
             length_batch = dataset.length_batches[b]
             sort_batch = dataset.sort_batches[b]
@@ -459,7 +535,7 @@ class RnnEntityGuesser(AbstractGuesser):
                 hidden = repackage_hidden(hidden, reset=True)
 
             out, hidden = self.model(
-                t_x_w_batch, t_x_pos_batch, t_x_iob_batch, t_x_type_batch,
+                t_x_w_batch, t_x_pos_batch, t_x_iob_batch, t_x_type_batch, t_x_mention_batch,
                 length_batch, hidden
             )
             probs = F.softmax(out)
@@ -550,13 +626,14 @@ class RnnEntityGuesser(AbstractGuesser):
             t_x_pos_batch = Variable(batched_dataset.t_x_pos_batches[batch], volatile=evaluate)
             t_x_iob_batch = Variable(batched_dataset.t_x_iob_batches[batch], volatile=evaluate)
             t_x_type_batch = Variable(batched_dataset.t_x_type_batches[batch], volatile=evaluate)
+            t_x_mention_batch = Variable(batched_dataset.t_x_mention_batches[batch], volatile=evaluate)
             length_batch = batched_dataset.length_batches[batch]
             t_y_batch = Variable(batched_dataset.t_y_batches[batch], volatile=evaluate)
 
             self.model.zero_grad()
             hidden = repackage_hidden(hidden, reset=True)
             out, hidden = self.model(
-                t_x_w_batch, t_x_pos_batch, t_x_iob_batch, t_x_type_batch,
+                t_x_w_batch, t_x_pos_batch, t_x_iob_batch, t_x_type_batch, t_x_mention_batch,
                 length_batch, hidden
             )
             _, preds = torch.max(out, 1)
@@ -674,12 +751,13 @@ class RnnEntityModel(nn.Module):
         else:
             return Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
 
-    def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable, lengths, hidden):
+    def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable, mention_flags, lengths, hidden):
         word_embeddings = self.word_embeddings(word_idxs)
         pos_embeddings = self.pos_embeddings(pos_idxs)
         iob_embeddings = self.iob_embeddings(iob_idxs)
         type_embeddings = self.type_embeddings(type_idxs)
         embeddings = self.dropout(torch.cat([word_embeddings, pos_embeddings, iob_embeddings, type_embeddings], 2))
+        embeddings = torch.cat([embeddings, mention_flags], 2)
 
         packed_input = nn.utils.rnn.pack_padded_sequence(embeddings, lengths, batch_first=True)
 
