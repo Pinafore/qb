@@ -728,7 +728,7 @@ class RnnEntityModel(nn.Module):
             rnn_layer = nn.GRU
         else:
             raise ValueError('Unrecognized rnn layer type')
-        self.rnn = rnn_layer(embedding_dim + 150, n_hidden_units, n_hidden_layers,
+        self.rnn = rnn_layer(embedding_dim + 150 + 1, n_hidden_units, n_hidden_layers,
                            dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
