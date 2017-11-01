@@ -30,3 +30,4 @@ unidecode
 elasticsearch-dsl
 pycrayon
 pycountry
+spacy
