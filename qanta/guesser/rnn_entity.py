@@ -668,7 +668,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'max_epochs': self.max_epochs,
                 'batch_size': self.batch_size,
                 'learning_rate': self.learning_rate,
-                'max_grad_norm': self.max_grad_norm
+                'max_grad_norm': self.max_grad_norm,
+                'features': self.features
             }, f)
 
     @classmethod
@@ -689,6 +690,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.max_grad_norm = params['max_grad_norm']
         guesser.model = torch.load(os.path.join(directory, 'rnn_entity.pt'))
         guesser.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
+        guesser.features = params['features']
         return  guesser
 
     @classmethod
@@ -780,22 +782,21 @@ class RnnEntityModel(nn.Module):
             return Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
 
     def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable, mention_flags, lengths, hidden):
-        word_embeddings = self.word_embeddings(word_idxs)
-        pos_embeddings = self.pos_embeddings(pos_idxs)
-        iob_embeddings = self.iob_embeddings(iob_idxs)
-        type_embeddings = self.type_embeddings(type_idxs)
-
         dropout_features = []
         if 'word' in self.enabled_features:
+            word_embeddings = self.word_embeddings(word_idxs)
             dropout_features.append(word_embeddings)
 
         if 'pos' in self.enabled_features:
+            pos_embeddings = self.pos_embeddings(pos_idxs)
             dropout_features.append(pos_embeddings)
 
         if 'iob' in self.enabled_features:
+            iob_embeddings = self.iob_embeddings(iob_idxs)
             dropout_features.append(iob_embeddings)
 
         if 'type' in self.enabled_features:
+            type_embeddings = self.type_embeddings(type_idxs)
             dropout_features.append(type_embeddings)
 
         features = self.dropout(torch.cat(dropout_features, 2))
