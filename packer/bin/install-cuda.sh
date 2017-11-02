@@ -17,5 +17,5 @@ sudo chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
 sudo apt-get install -y libcupti-dev
 cat cuda-dnn-env.sh >> ~/.bashrc
 
-wget https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/nccl-repo-ubuntu1604-2.0.5-ga-cuda9.0_3-1_amd64.deb /home/ubuntu/nccl-repo-ubuntu1604-2.0.5-ga-cuda9.0_3-1_amd64.deb
+wget https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/nccl-repo-ubuntu1604-2.0.5-ga-cuda9.0_3-1_amd64.deb -O /home/ubuntu/nccl-repo-ubuntu1604-2.0.5-ga-cuda9.0_3-1_amd64.deb
 sudo dpkg -i /home/ubuntu/nccl-repo-ubuntu1604-2.0.5-ga-cuda9.0_3-1_amd64.deb
