@@ -184,22 +184,6 @@ resource "aws_spot_instance_request" "qanta" {
     user = "ubuntu"
   }
 
-  # Copy SSH keys for Spark to use
-  provisioner "file" {
-    source = "terraform/ssh-keys"
-    destination = "/home/ubuntu"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "mkdir -p /home/ubuntu/.ssh",
-      "cat /home/ubuntu/ssh-keys/*.pub >> /home/ubuntu/.ssh/authorized_keys",
-      "mv /home/ubuntu/ssh-keys/spark.master /home/ubuntu/.ssh/id_rsa",
-      "mv /home/ubuntu/ssh-keys/spark.master.pub /home/ubuntu/.ssh/id_rsa.pub",
-      "chmod 600 /home/ubuntu/.ssh/id_rsa"
-    ]
-  }
-
   provisioner "remote-exec" {
     script = "terraform/configure-drives.sh"
   }
