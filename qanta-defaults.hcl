@@ -72,6 +72,7 @@ guessers "ESWikidata" {
   n_cores = 20
   confidence_threshold = 0.7
   normalize_score_by_length = true
+  features = ['word', 'mention']
 }
 
 guessers "CNN" {
