@@ -507,6 +507,15 @@ class RnnEntityGuesser(AbstractGuesser):
         self.scheduler = None
         self.nlp = None
 
+    def parameters(self):
+        return {
+            'features': self.features,
+            'max_epochs': self.max_epochs,
+            'batch_size': self.batch_size,
+            'learning_rate': self.learning_rate,
+            'max_grad_norm': self.max_grad_norm
+        }
+
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
