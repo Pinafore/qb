@@ -6,7 +6,7 @@ data "aws_ami" "qanta_ami" {
   }
   filter {
     name = "tag-value"
-    values = ["qanta-gpu"]
+    values = ["qanta-gpu-cuda-9"]
   }
 }
 
