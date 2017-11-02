@@ -62,6 +62,7 @@ guessers "EntityRNN" {
   class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
+  features = ['word', 'mention']
 }
 
 guessers "ESWikidata" {
@@ -72,7 +73,6 @@ guessers "ESWikidata" {
   n_cores = 20
   confidence_threshold = 0.7
   normalize_score_by_length = true
-  features = ['word', 'mention']
 }
 
 guessers "CNN" {
