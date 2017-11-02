@@ -62,7 +62,7 @@ guessers "EntityRNN" {
   class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
-  features = ['word', 'mention']
+  features = ["word", "mention"]
 }
 
 guessers "ESWikidata" {
