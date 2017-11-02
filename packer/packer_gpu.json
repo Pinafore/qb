@@ -7,7 +7,7 @@
       "instance_type": "p2.xlarge",
       "ssh_username": "ubuntu",
       "ebs_optimized": true,
-      "ami_name": "qanta-gpu {{timestamp}}",
+      "ami_name": "qanta-gpu-cuda-9 {{timestamp}}",
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
@@ -18,7 +18,7 @@
         }
       ],
       "tags": {
-        "Image": "qanta-gpu"
+        "Image": "qanta-gpu-cuda-9"
       },
       "spot_price": "auto",
       "spot_price_auto_product": "Linux/UNIX"
