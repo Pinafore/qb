@@ -20,7 +20,7 @@
       "tags": {
         "Image": "qanta-gpu-cuda-9"
       },
-      "spot_price": "auto",
+      "spot_price": "1.5",
       "spot_price_auto_product": "Linux/UNIX"
     }
   ],
