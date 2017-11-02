@@ -23,6 +23,7 @@ from torch.nn import functional as F
 from torch.optim import Adam, lr_scheduler
 
 from qanta import logging
+from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
@@ -488,6 +489,8 @@ class BatchedDataset:
 class RnnEntityGuesser(AbstractGuesser):
     def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5):
         super(RnnEntityGuesser, self).__init__()
+        guesser_conf = conf['guessers']['EntityRNN']
+        self.features = set(guesser_conf['features'])
         self.max_epochs = max_epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -575,7 +578,8 @@ class RnnEntityGuesser(AbstractGuesser):
             len(multi_embedding_lookup.pos),
             len(multi_embedding_lookup.iob),
             len(multi_embedding_lookup.ent_type),
-            self.n_classes
+            self.n_classes,
+            enabled_features=self.features
         )
         self.model.init_weights(word_embeddings=word_embeddings)
         self.model.cuda()
@@ -699,7 +703,7 @@ class RnnEntityModel(nn.Module):
     def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size,
                  n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
-                 rnn_output='last_hidden'):
+                 rnn_output='last_hidden', enabled_features={'word', 'pos', 'iob', 'type', 'mention'}):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
         self.pos_vocab_size = pos_vocab_size
@@ -713,13 +717,37 @@ class RnnEntityModel(nn.Module):
         self.n_hidden_units = n_hidden_units
         self.bidirectional = bidirectional
         self.rnn_output = rnn_output
+        self.enabled_features = enabled_features
 
         self.dropout = nn.Dropout(dropout_prob)
+        self.feature_dimension = 0
 
-        self.word_embeddings = nn.Embedding(word_vocab_size, embedding_dim, padding_idx=0)
-        self.pos_embeddings = nn.Embedding(pos_vocab_size, 50, padding_idx=0)
-        self.iob_embeddings = nn.Embedding(iob_vocab_size, 50, padding_idx=0)
-        self.type_embeddings = nn.Embedding(type_vocab_size, 50, padding_idx=0)
+        if 'word' in enabled_features:
+            self.word_embeddings = nn.Embedding(word_vocab_size, embedding_dim, padding_idx=0)
+            self.feature_dimension += 300
+        else:
+            self.word_embeddings = None
+
+        if 'pos' in enabled_features:
+            self.pos_embeddings = nn.Embedding(pos_vocab_size, 50, padding_idx=0)
+            self.feature_dimension += 50
+        else:
+            self.pos_embeddings = None
+
+        if 'iob' in enabled_features:
+            self.iob_embeddings = nn.Embedding(iob_vocab_size, 50, padding_idx=0)
+            self.feature_dimension += 50
+        else:
+            self.iob_embeddings = None
+
+        if 'type' in enabled_features:
+            self.type_embeddings = nn.Embedding(type_vocab_size, 50, padding_idx=0)
+            self.feature_dimension += 50
+        else:
+            self.type_embeddings = None
+
+        if 'mention' in enabled_features:
+            self.feature_dimension += 1
 
         self.rnn_type = rnn_type
         if rnn_type == 'lstm':
@@ -728,7 +756,7 @@ class RnnEntityModel(nn.Module):
             rnn_layer = nn.GRU
         else:
             raise ValueError('Unrecognized rnn layer type')
-        self.rnn = rnn_layer(embedding_dim + 150 + 1, n_hidden_units, n_hidden_layers,
+        self.rnn = rnn_layer(self.feature_dimension, n_hidden_units, n_hidden_layers,
                            dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
@@ -756,10 +784,25 @@ class RnnEntityModel(nn.Module):
         pos_embeddings = self.pos_embeddings(pos_idxs)
         iob_embeddings = self.iob_embeddings(iob_idxs)
         type_embeddings = self.type_embeddings(type_idxs)
-        embeddings = self.dropout(torch.cat([word_embeddings, pos_embeddings, iob_embeddings, type_embeddings], 2))
-        embeddings = torch.cat([embeddings, mention_flags], 2)
 
-        packed_input = nn.utils.rnn.pack_padded_sequence(embeddings, lengths, batch_first=True)
+        dropout_features = []
+        if 'word' in self.enabled_features:
+            dropout_features.append(word_embeddings)
+
+        if 'pos' in self.enabled_features:
+            dropout_features.append(pos_embeddings)
+
+        if 'iob' in self.enabled_features:
+            dropout_features.append(iob_embeddings)
+
+        if 'type' in self.enabled_features:
+            dropout_features.append(type_embeddings)
+
+        features = self.dropout(torch.cat(dropout_features, 2))
+        if 'mention' in self.enabled_features:
+            features = torch.cat([features, mention_flags], 2)
+
+        packed_input = nn.utils.rnn.pack_padded_sequence(features, lengths, batch_first=True)
 
         output, hidden = self.rnn(packed_input, hidden)
         if self.rnn_output == 'last_hidden':
