@@ -13,3 +13,4 @@ cat /home/ubuntu/aws-qb-env.sh >> ~/.bashrc
 
 # Install Python dependencies
 /home/ubuntu/anaconda3/bin/pip install -r requirements.txt
+/home/ubuntu/anaconda3/bin/python -m spacy download en
