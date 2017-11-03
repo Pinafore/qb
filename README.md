@@ -26,16 +26,16 @@ effort.
 
 Qanta scripts by default use [Spot Instances](https://aws.amazon.com/ec2/spot/) to get machines
 at the lowest price at the expense that they may be terminated at any time if demand increases.
-We find in practice that using the region `us-west-1` makes such terminations rare. Qanta primarily
+We find in practice that using the region `us-west-2` makes such terminations rare. Qanta primarily
 uses `r3.8xlarge` machines which have 32 CPU cores, 244GB of RAM, and 640GB of SSD storage, but
 other [EC2 Instance Types](https://aws.amazon.com/ec2/instance-types/) are available.
 
 #### Install and Configure Local Software
 
-To execute the AWS scripts you will need to follow these steps (`brew` options are for Macs):
+To execute the AWS scripts you will need to follow these steps:
 
-1. [Install Packer Binaries](https://www.packer.io/downloads.html) or run `brew install packer`
-2. [Install Terraform 0.7.x](https://www.terraform.io/downloads.html) or run `brew install terraform`
+1. [Install Packer Binaries](https://www.packer.io/downloads.html)
+2. [Install Terraform 0.7.x](https://www.terraform.io/downloads.html)
 3. Python 3.5+: If you don't have a preferred distribution,
 [Anaconda Python](https://www.continuum.io/downloads) is a good choice
 4. Install the AWS command line tools via `pip3 install awscli`. Run `pip3 install pyhcl`
@@ -44,11 +44,6 @@ To execute the AWS scripts you will need to follow these steps (`brew` options a
 7. Set the environment variable `TF_VAR_key_pair` to the key pair name from the prior step
 8. Set the environment variables `TF_VAR_access_key` and `TF_VAR_secret_key` to match your AWS
 credentials.
-9. **WARNING**: These are copied by Terraform to the cluster so that the cluster has S3 access. See AWS the
-configuration section for a summary of how the Terraform install scripts treat these keys.
-10. Run `bin/generate-ssh-keys.sh n` where n equals the number of workers. You should start with zero
-and scale up as necessary. This will generate SSH keys that are copied to the Spark cluster so that
-nodes can communicate via SSH
 
 #### What do the Packer/Terraform scripts install and configure?
 This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-scripts)
@@ -70,11 +65,6 @@ internet.
 * Spot instance requests for requested number of workers and a master node
 
 #### Configuration
-* SSH keys generated from `bin/generate-ssh-keys.sh` are copied to each instance. Each instance
-receives its own ssh key and all other instances have SSH access to every other instance.
-* AWS keys are copied to `/home/ubuntu/.bashrc`,
-`/home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.6/conf/spark-env.sh`, and
-`/home/ubuntu/.aws/credentials`.
 * **Warning**: AWS keys are printed during `terraform apply`
 * Configure the 2 SSD drives attached to `r3.8xlarge` instances for use
 * Clone the `Pinafore/qb` to `/ssd-c/qanta/qb` and set it as the quiz bowl root
@@ -93,8 +83,6 @@ If you are developing new pieces of qanta that require new software it might be 
 Additionally, the output from `terraform apply` is documented below and can be shown again with
 `terraform show`
 
-* `master_private_dns`: Address to access when using `sshuttle`
-* `master_private_ip`: Internal AWS ip address
 * `master_public_dns` and `master_public_ip`: Use for access from open web (eg ssh)
 * `vpc_id`: Useful when adding custom security group
 
@@ -240,13 +228,12 @@ variables  Copy this to something that you scource in your .bashrc.
 Complete either the non-AWS or AWS setup as above.
 
 ### Qanta Running Summary
-QANTA can be run in two modes: batch or streaming. Batch mode is used for training and evaluating
-large batches of questions at a time. Running the batch pipeline is managed by
+Running the training batch pipeline is managed by
 [Spotify Luigi](https://github.com/spotify/luigi). Luigi is a pure python make-like framework for
 running data pipelines. The QANTA pipeline is specified in `qanta/pipeline.py`. Below are the
 pre-requisites that need to be met before running the pipeline and how to run the pipeline itself.
 
-### Running Batch Mode
+### Running
 
 These steps will guide you through starting Apache Spark, Luigi, and running the pipeline.
 Where marked steps are marked"(Non-AWS)" indicates a step which is unnecessary to do if running
