@@ -12,7 +12,8 @@ from qanta.new_expo import hook
 
 def test_buzzer():
     questions = QuestionDatabase().all_questions()
-    buzzer = RNNBuzzer(word_skip=conf['buzzer_word_skip'])
+    buzzer = RNNBuzzer(model_dir='output/buzzer/neo_0.npz',
+            word_skip=conf['buzzer_word_skip'])
 
     # setup machine agent
     gspec = AbstractGuesser.list_enabled_guessers()[0]

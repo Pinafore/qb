@@ -90,24 +90,22 @@ def dense_vector(scores: Dict[str, float], prev_scores=None):
 
 class RNNBuzzer:
 
-    def __init__(self, word_skip=0):
+    def __init__(self, model_dir, word_skip=0):
         self.word_skip = word_skip
-        model_dir = 'output/buzzer/neo_0.npz'
         model = RNN(21, 300, 2)
-        print('QANTA: loading model')
+        print('RNNBuzzer: loading model')
         chainer.serializers.load_npz(model_dir, model)
-
         chainer.cuda.get_device(0).use()
         model.to_gpu(0)
+        print('RNNBuzzer: model loaded')
 
         self.model = model
         self.new_round()
 
     def new_round(self):
         self.model.reset_state()
-        self.prev_buzz = None
-        self.prev_scores = None
-        self.ys = None
+        self.prev_buzz = [0, 1]
+        self.prev_guesses = None
         self.skipped = 0
 
     def buzz(self, guesses: Dict[str, float]):
@@ -115,18 +113,16 @@ class RNNBuzzer:
             self.skipped += 1
             return self.prev_buzz
         self.skipped = 0
-        feature_vec = dense_vector(guesses, self.prev_scores)
-        self.prev_scores = guesses
+        feature_vec = dense_vector(guesses, self.prev_guesses)
+        self.prev_guesses = guesses
         # batch_size=1, dim
         vec = self.model.xp.asarray([feature_vec], dtype=self.model.xp.float32) 
         ys = self.model.step(vec) # batch_size=1, 2
         ys = F.softmax(ys)
         ys.to_cpu()
         ys = ys[0].data
-        self.ys = ys
-        buzz = ys[0] > ys[1]
-        self.prev_buzz = buzz
-        return buzz
+        self.prev_buzz = ys
+        return ys
 
 
 class Agent:
