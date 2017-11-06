@@ -6,6 +6,8 @@ from elasticsearch_dsl.connections import connections
 import elasticsearch
 
 import numpy as np
+import nltk
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -22,7 +24,7 @@ from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
-    BaseLogger, TerminateOnNaN, Tensorboard,
+    BaseLogger, TerminateOnNaN,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager, create_save_model
 )
 
@@ -51,10 +53,23 @@ def paragraph_tokenize(page):
     return [c for c in page.content.split('\n') if c != ''][1:]
 
 
+def memory_tokenize(page):
+    first = True
+    memories = []
+    for c in page.content.split('\n'):
+        # The first element is always just the wikipedia page title
+        if first:
+            first = False
+            continue
+        if c != '':
+            memories.extend(nltk.sent_tokenize(c))
+    return memories
+
+
 def index_page(wiki_page):
     page = wiki_page.title
-    for paragraph in paragraph_tokenize(wiki_page):
-        Answer(page=page, content=paragraph).save()
+    for sentence in memory_tokenize(wiki_page):
+        Answer(page=page, content=sentence).save()
 
 
 def create_memory_index():
@@ -143,8 +158,36 @@ def memories_to_indices(mems_list, embedding_lookup):
     return np.array(all_key_indices), all_value_classes, np.array(all_scores)
 
 
+def preprocess_memories(mems_list, vocab=None):
+    all_key_words = []
+    all_value_classes = []
+
+    for row in mems_list:
+        row_keys = []
+        row_values = []
+        for entry in row:
+            if entry is None:
+                row_keys.append(['UNK'])
+                row_values.append('UNK')
+            else:
+                score, content, page = entry
+                tokenized_content = tokenize_question(content)
+                if vocab is not None:
+                    for word in tokenized_content:
+                        vocab.add(word)
+                if len(tokenized_content) == 0:
+                    tokenized_content.append('UNK')
+                row_keys.append(tokenized_content)
+                row_values.append(page)
+
+        all_key_words.append(row_keys)
+        all_value_classes.append(row_values)
+
+    return all_key_words, all_value_classes
+
+
 class KeyValueGuesser(AbstractGuesser):
-    def __init__(self, n_memories=10):
+    def __init__(self, n_memories=5):
         super().__init__()
         self.n_memories = n_memories
         self.class_to_i = None
@@ -153,11 +196,24 @@ class KeyValueGuesser(AbstractGuesser):
         self.embeddings = None
         self.embedding_lookup = None
         self.n_classes = None
+        self.model = None
+        self.optimizer = None
+        self.criterion = None
 
     def train(self, training_data):
         x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             training_data
         )
+        n_classes = len(class_to_i)
+        i_to_class.append('UNK')
+        class_to_i['UNK'] = n_classes
+
+        mems_train = load_memories([' '.join(x) for x in x_train_text], self.n_memories)
+        train_keys, train_values = preprocess_memories(mems_train, vocab)
+
+        mems_test = load_memories([' '.join(x) for x in x_test_text], self.n_memories)
+        test_keys, test_values = preprocess_memories(mems_test)
+
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
         self.vocab = vocab
@@ -173,8 +229,6 @@ class KeyValueGuesser(AbstractGuesser):
         x_train = np.array(x_train)
         y_train = np.array(y_train)
 
-        mems_train = load_memories([' '.join(x) for x in x_train_text], self.n_memories)
-        mems_indices_train = memories_to_indices(mems_train, embedding_lookup)
 
         x_test = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test_text]
         for row in x_test:
@@ -183,10 +237,24 @@ class KeyValueGuesser(AbstractGuesser):
         x_test = np.array(x_test)
         y_test = np.array(y_test)
 
-        mems_test = load_memories([' '.join(x) for x in x_test_text], self.n_memories)
+        mems_indices_train = memories_to_indices(mems_train, embedding_lookup)
         mem_indices_test = memories_to_indices(mems_test, embedding_lookup)
 
         self.n_classes = compute_n_classes(training_data[1])
+
+        # Do batching here
+        self.model = KeyValueNetwork(embeddings.shape[0], self.n_classes)
+        self.model.init_weights(embeddings=embeddings)
+        self.model.cuda()
+        self.optimizer = torch.optim.Adam(self.model.parameters())
+        self.criterion = nn.CrossEntropyLoss()
+
+        manager = TrainingManager([
+            BaseLogger(log_func=log.info), TerminateOnNaN(),
+            EarlyStopping(monitor='test_acc', patience=5, verbose=1), MaxEpochStopping(100),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/kv.pt', monitor='test_acc')
+        ])
+
 
     def guess(self, questions, max_n_guesses):
         pass

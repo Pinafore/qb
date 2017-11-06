@@ -18,7 +18,7 @@ from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
-    BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
+    BaseLogger, TerminateOnNaN, create_save_model,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
 
@@ -71,9 +71,9 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
         t_offset_batches.append(torch.from_numpy(offsets).long().cuda())
         t_y_batches.append(torch.from_numpy(y_batch).long().cuda())
 
-    t_x_batches = np.array(t_x_batches)
-    t_offset_batches = np.array(t_offset_batches)
-    t_y_batches = np.array(t_y_batches)
+    t_x_batches = np.array(t_x_batches, dtype=np.object)
+    t_offset_batches = np.array(t_offset_batches, dtype=np.object)
+    t_y_batches = np.array(t_y_batches, dtype=np.object)
 
     return n_batches, t_x_batches, t_offset_batches, t_y_batches
 
