@@ -69,6 +69,17 @@ guessers "EntityRNN" {
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
   features = ["word", "mention"]
+
+  max_epochs = 100
+  batch_size = 256
+  learning_rate = 0.001
+  max_grad_norm = 5
+  rnn_type = "gru"
+  dropout_prob = 0.3
+  recurrent_dropout_prob = 0.3
+  bidirectional = true
+  n_hidden_units = 1000
+  n_hidden_layers = 1
 }
 
 guessers "ESWikidata" {
