@@ -186,6 +186,7 @@ class DanGuesser(AbstractGuesser):
         self.model = DanModel(embeddings.shape[0], self.n_classes)
         self.model.init_weights(initial_embeddings=embeddings)
         self.model.cuda()
+
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
 
