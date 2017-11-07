@@ -5,6 +5,7 @@ import os
 import shutil
 import re
 import string
+from pprint import pformat
 
 import numpy as np
 
@@ -538,14 +539,22 @@ class BatchedDataset:
 
 
 class RnnEntityGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5):
+    def __init__(self):
         super(RnnEntityGuesser, self).__init__()
         guesser_conf = conf['guessers']['EntityRNN']
         self.features = set(guesser_conf['features'])
-        self.max_epochs = max_epochs
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.max_grad_norm = max_grad_norm
+
+        self.max_epochs = guesser_conf['max_epochs']
+        self.batch_size = guesser_conf['batch_size']
+        self.learning_rate = guesser_conf['learning_rate']
+        self.max_grad_norm = guesser_conf['max_grad_norm']
+        self.rnn_type = guesser_conf['rnn_type']
+        self.dropout_prob = guesser_conf['dropout_prob']
+        self.recurrent_dropout_prob = guesser_conf['recurrent_dropout_prob']
+        self.bidirectional = guesser_conf['bidirectional']
+        self.n_hidden_units = guesser_conf['n_hidden_units']
+        self.n_hidden_layers = guesser_conf['n_hidden_layers']
+
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
@@ -566,7 +575,13 @@ class RnnEntityGuesser(AbstractGuesser):
             'max_epochs': self.max_epochs,
             'batch_size': self.batch_size,
             'learning_rate': self.learning_rate,
-            'max_grad_norm': self.max_grad_norm
+            'max_grad_norm': self.max_grad_norm,
+            'rnn_type': self.rnn_type,
+            'dropout_prob': self.dropout_prob,
+            'recurrent_dropout_prob': self.recurrent_dropout_prob,
+            'bidirectional': self.bidirectional,
+            'n_hidden_units': self.n_hidden_units,
+            'n_hidden_layers': self.n_hidden_layers
         }
 
     def guess(self,
@@ -647,6 +662,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.n_classes = compute_n_classes(training_data[1])
 
         log.info('Initializing neural model')
+        log.info(f'Parameters:\n{pformat(self.parameters())}')
         self.model = RnnEntityModel(
             len(multi_embedding_lookup.word),
             len(multi_embedding_lookup.pos),
@@ -654,8 +670,11 @@ class RnnEntityGuesser(AbstractGuesser):
             len(multi_embedding_lookup.ent_type),
             len(self.rel_position_lookup),
             self.n_classes,
-            enabled_features=self.features
+            enabled_features=self.features,
+            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob, recurrent_dropout_prob=self.recurrent_dropout_prob,
+            bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers
         )
+        log.info(f'Model:\n{repr(self.model)}')
         self.model.init_weights(word_embeddings=word_embeddings)
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
@@ -664,7 +683,7 @@ class RnnEntityGuesser(AbstractGuesser):
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
             ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc')
             #Tensorboard('rnn_entity', log_dir='tb-logs')
         ])
@@ -746,7 +765,13 @@ class RnnEntityGuesser(AbstractGuesser):
                 'max_grad_norm': self.max_grad_norm,
                 'features': self.features,
                 'rel_position_lookup': self.rel_position_lookup,
-                'rel_position_vocab': self.rel_position_vocab
+                'rel_position_vocab': self.rel_position_vocab,
+                'rnn_type': self.rnn_type,
+                'dropout_prob': self.dropout_prob,
+                'recurrent_dropout_prob': self.recurrent_dropout_prob,
+                'bidirectional': self.bidirectional,
+                'n_hidden_units': self.n_hidden_units,
+                'n_hidden_layers': self.n_hidden_layers
             }, f)
 
     @classmethod
@@ -770,6 +795,12 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.features = params['features']
         guesser.rel_position_vocab = params['rel_position_vocab']
         guesser.rel_position_lookup = params['rel_position_lookup']
+        guesser.rnn_type = params['rnn_type']
+        guesser.dropout_prob = params['dropout_prob']
+        guesser.recurrent_dropout_prob = params['recurrent_dropout_prob']
+        guesser.bidirectional = params['bidirectional']
+        guesser.n_hidden_units = params['n_hidden_units']
+        guesser.n_hidden_layers = params['n_hidden_layers']
         return  guesser
 
     @classmethod
