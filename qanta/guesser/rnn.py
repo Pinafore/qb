@@ -110,6 +110,12 @@ class RnnGuesser(AbstractGuesser):
         self.batch_size = guesser_conf['batch_size']
         self.learning_rate = guesser_conf['learning_rate']
         self.max_grad_norm = guesser_conf['max_grad_norm']
+        self.rnn_type = guesser_conf['rnn_type']
+        self.dropout_prob = guesser_conf['dropout_prob']
+        self.recurrent_dropout_prob = guesser_conf['recurrent_dropout_prob']
+        self.bidirectional = guesser_conf['bidirectional']
+        self.n_hidden_units = guesser_conf['n_hidden_units']
+        self.n_hidden_layers = guesser_conf['n_hidden_layers']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -121,6 +127,20 @@ class RnnGuesser(AbstractGuesser):
         self.criterion = None
         self.optimizer = None
         self.scheduler = None
+
+    def parameters(self):
+        return {
+            'max_epochs': self.max_epochs,
+            'batch_size': self.batch_size,
+            'learning_rate': self.learning_rate,
+            'max_grad_norm': self.max_grad_norm,
+            'rnn_type': self.rnn_type,
+            'dropout_prob': self.dropout_prob,
+            'recurrent_dropout_prob': self.recurrent_dropout_prob,
+            'bidirectional': self.bidirectional,
+            'n_hidden_units': self.n_hidden_units,
+            'n_hidden_layers': self.n_hidden_layers
+        }
 
     def guess(self,
               questions: List[QuestionText],
@@ -208,7 +228,11 @@ class RnnGuesser(AbstractGuesser):
         n_batches_test, t_x_test, lengths_test, t_y_test, _ = batchify(
             self.batch_size, x_test, y_test, truncate=False)
 
-        self.model = RnnModel(embeddings.shape[0], self.n_classes)
+        self.model = RnnModel(
+            embeddings.shape[0], self.n_classes,
+            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob, recurrent_dropout_prob=self.recurrent_dropout_prob,
+            n_hidden_layers=self.n_hidden_layers, n_hidden_units=self.n_hidden_units, bidirectional=self.bidirectional
+        )
         self.model.init_weights(embeddings=embeddings)
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
@@ -217,7 +241,7 @@ class RnnGuesser(AbstractGuesser):
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
             ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_acc')
             #Tensorboard('rnn', log_dir='tb-logs')
         ])
@@ -296,7 +320,13 @@ class RnnGuesser(AbstractGuesser):
                 'batch_size': self.batch_size,
                 'learning_rate': self.learning_rate,
                 'max_grad_norm': self.max_grad_norm,
-                'use_wiki': self.use_wiki
+                'use_wiki': self.use_wiki,
+                'rnn_type': self.rnn_type,
+                'dropout_prob': self.dropout_prob,
+                'recurrent_dropout_prob': self.recurrent_dropout_prob,
+                'bidirectional': self.bidirectional,
+                'n_hidden_units': self.n_hidden_units,
+                'n_hidden_layers': self.n_hidden_layers
             }, f)
 
     @classmethod
@@ -316,6 +346,13 @@ class RnnGuesser(AbstractGuesser):
         guesser.learning_rate = params['learning_rate']
         guesser.max_grad_norm = params['max_grad_norm']
         guesser.use_wiki = params['use_wiki']
+        guesser.rnn_type = params['rnn_type']
+        guesser.dropout_prob = params['dropout_prob']
+        guesser.recurrent_dropout_prob = params['recurrent_dropout_prob']
+        guesser.bidirectional = params['bidirectional']
+        guesser.n_hidden_units = params['n_hidden_units']
+        guesser.n_hidden_layers = params['n_hidden_layers']
+
         guesser.model = torch.load(os.path.join(directory, 'rnn.pt'))
         return  guesser
 
@@ -400,4 +437,3 @@ class RnnModel(nn.Module):
             return self.classification_layer(pooled), hidden
         else:
             raise ValueError('Unrecognized rnn_output option')
-

@@ -83,7 +83,10 @@ class Question:
     def get_text(self, sentence, token):
         text = ""
         for i in range(sentence):
-            text += self.text.get(i, "")
+            if text == "":
+                text += self.text.get(i, "")
+            else:
+                text += " " + self.text.get(i, "")
         if token > 0:
             text += " ".join(self.text.get(sentence, "").split()[:token])
         return text
