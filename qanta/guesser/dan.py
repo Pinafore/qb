@@ -312,7 +312,9 @@ class DanGuesser(AbstractGuesser):
         guesser.use_qb = params['use_qb']
         guesser.vocab_size = params['vocab_size']
         guesser.model = DanModel(guesser.vocab_size, guesser.n_classes)
-        guesser.model.load_state_dict(torch.load(os.path.join(directory, 'dan.pt'), map_location='cpu'))
+        guesser.model.load_state_dict(torch.load(
+            os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage
+        ))
         return guesser
 
     @classmethod
