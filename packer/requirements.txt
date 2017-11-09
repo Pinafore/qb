@@ -31,3 +31,4 @@ elasticsearch-dsl
 pycrayon
 pycountry
 spacy
+flask
