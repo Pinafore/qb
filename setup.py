@@ -28,7 +28,8 @@ requirements = [
     'matplotlib',
     'tagme',
     'spacy',
-    'pycountry'
+    'pycountry',
+    'flask'
 ]
 
 

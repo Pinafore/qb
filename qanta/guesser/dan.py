@@ -194,7 +194,6 @@ class DanGuesser(AbstractGuesser):
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
             ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
-            # Tensorboard('dan', log_dir='tb-logs')
         ])
 
         log.info('Starting training...')
