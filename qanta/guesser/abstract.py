@@ -428,7 +428,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         guesser_path = '{}.{}'.format(guesser_module, guesser_class)
         return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
 
-    def web_api(self, host='0.0.0.0', port=5000):
+    def web_api(self, host='0.0.0.0', port=5000, debug=False):
         from flask import Flask, jsonify, request
 
         app = Flask(__name__)
@@ -439,7 +439,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             guess, score = self.guess([text], 1)[0][0]
             return jsonify({'guess': guess, 'score': float(score)})
 
-        app.run(host=host, port=port)
+        app.run(host=host, port=port, debug=debug)
 
 QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
 
