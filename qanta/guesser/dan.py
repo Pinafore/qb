@@ -18,7 +18,7 @@ from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
-    BaseLogger, TerminateOnNaN, create_save_model,
+    BaseLogger, TerminateOnNaN,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
 
@@ -29,6 +29,13 @@ log = logging.get(__name__)
 PTDAN_WE_TMP = '/tmp/qanta/deep/pt_dan_we.pickle'
 PTDAN_WE = 'pt_dan_we.pickle'
 load_embeddings = create_load_embeddings_function(PTDAN_WE_TMP, PTDAN_WE, log)
+CUDA = torch.cuda.is_available()
+
+
+def create_save_model(model):
+    def save_model(path):
+        torch.save(model.state_dict(), path)
+    return save_model
 
 
 def flatten_and_offset(x_batch):
@@ -58,18 +65,28 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
         y_batch = y_array[b * batch_size:(b + 1) * batch_size]
         flat_x_batch, offsets = flatten_and_offset(x_batch)
 
-        t_x_batches.append(torch.from_numpy(flat_x_batch).long().cuda())
-        t_offset_batches.append(torch.from_numpy(offsets).long().cuda())
-        t_y_batches.append(torch.from_numpy(y_batch).long().cuda())
+        if CUDA:
+            t_x_batches.append(torch.from_numpy(flat_x_batch).long().cuda())
+            t_offset_batches.append(torch.from_numpy(offsets).long().cuda())
+            t_y_batches.append(torch.from_numpy(y_batch).long().cuda())
+        else:
+            t_x_batches.append(torch.from_numpy(flat_x_batch).long())
+            t_offset_batches.append(torch.from_numpy(offsets).long())
+            t_y_batches.append(torch.from_numpy(y_batch).long())
 
     if (not truncate) and (batch_size * n_batches < n_examples):
         x_batch = x_array[n_batches * batch_size:]
         y_batch = y_array[n_batches * batch_size:]
         flat_x_batch, offsets = flatten_and_offset(x_batch)
 
-        t_x_batches.append(torch.from_numpy(flat_x_batch).long().cuda())
-        t_offset_batches.append(torch.from_numpy(offsets).long().cuda())
-        t_y_batches.append(torch.from_numpy(y_batch).long().cuda())
+        if CUDA:
+            t_x_batches.append(torch.from_numpy(flat_x_batch).long().cuda())
+            t_offset_batches.append(torch.from_numpy(offsets).long().cuda())
+            t_y_batches.append(torch.from_numpy(y_batch).long().cuda())
+        else:
+            t_x_batches.append(torch.from_numpy(flat_x_batch).long())
+            t_offset_batches.append(torch.from_numpy(offsets).long())
+            t_y_batches.append(torch.from_numpy(y_batch).long())
 
     t_x_batches = np.array(t_x_batches, dtype=np.object)
     t_offset_batches = np.array(t_offset_batches, dtype=np.object)
@@ -97,6 +114,7 @@ class DanGuesser(AbstractGuesser):
         self.model = None
         self.criterion = None
         self.optimizer = None
+        self.vocab_size = None
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         x_test = [convert_text_to_embeddings_indices(
@@ -115,7 +133,9 @@ class DanGuesser(AbstractGuesser):
         )
 
         self.model.eval()
-        self.model.cuda()
+        if CUDA:
+            self.model = self.model.cuda()
+
         guesses = []
         for b in range(len(t_x_batches)):
             t_x = Variable(t_x_batches[b], volatile=True)
@@ -183,9 +203,11 @@ class DanGuesser(AbstractGuesser):
         n_batches_test, t_x_test, t_offset_test, t_y_test = batchify(
             self.batch_size, x_test, y_test, truncate=False)
 
-        self.model = DanModel(embeddings.shape[0], self.n_classes)
+        self.vocab_size = embeddings.shape[0]
+        self.model = DanModel(self.vocab_size, self.n_classes)
         self.model.init_weights(initial_embeddings=embeddings)
-        self.model.cuda()
+        if CUDA:
+            self.model = self.model.cuda()
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
@@ -267,7 +289,8 @@ class DanGuesser(AbstractGuesser):
                 'batch_size': self.batch_size,
                 'learning_rate': self.learning_rate,
                 'use_wiki': self.use_wiki,
-                'use_qb': self.use_qb
+                'use_qb': self.use_qb,
+                'vocab_size': self.vocab_size
             }, f)
 
     @classmethod
@@ -287,7 +310,9 @@ class DanGuesser(AbstractGuesser):
         guesser.learning_rate = params['learning_rate']
         guesser.use_wiki = params['use_wiki']
         guesser.use_qb = params['use_qb']
-        guesser.model = torch.load(os.path.join(directory, 'dan.pt'))
+        guesser.vocab_size = params['vocab_size']
+        guesser.model = DanModel(guesser.vocab_size, guesser.n_classes)
+        guesser.model.load_state_dict(torch.load(os.path.join(directory, 'dan.pt')))
         return guesser
 
     @classmethod
