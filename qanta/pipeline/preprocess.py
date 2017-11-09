@@ -6,6 +6,7 @@ from qanta.util.io import shell
 from qanta.util.constants import (
     ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE, WIKI_INSTANCE_OF_PICKLE
 )
+from qanta.util.environment import is_aws_authenticated
 from qanta.wikipedia.wikidata import create_instance_of_map
 from qanta.wikipedia.cached_wikipedia import (
     create_wikipedia_redirect_pickle, create_wikipedia_title_pickle, create_wikipedia_cache
@@ -25,8 +26,12 @@ class NLTKDownload(ExternalTask):
 
 class WikipediaRawRedirects(Task):
     def run(self):
-        s3_location = 's3://pinafore-us-west-2/public/wiki_redirects.csv'
-        shell('aws s3 cp {} {}'.format(s3_location, ALL_WIKI_REDIRECTS))
+        if is_aws_authenticated():
+            s3_location = 's3://pinafore-us-west-2/public/wiki_redirects.csv'
+            shell('aws s3 cp {} {}'.format(s3_location, ALL_WIKI_REDIRECTS))
+        else:
+            https_location = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/wiki_redirects.csv'
+            shell('wget -O {} {}'.format(ALL_WIKI_REDIRECTS, https_location))
 
     def output(self):
         return LocalTarget(ALL_WIKI_REDIRECTS)
@@ -45,8 +50,13 @@ class WikipediaRedirectPickle(Task):
 
 class WikipediaDumps(Task):
     def run(self):
-        s3_location = 's3://pinafore-us-west-2/public/wikipedia-dumps/parsed-wiki.tar.lz4'
-        shell('aws s3 cp {} data/external/wikipedia/parsed-wiki.tar.lz4'.format(s3_location))
+        if is_aws_authenticated():
+            s3_location = 's3://pinafore-us-west-2/public/wikipedia-dumps/parsed-wiki.tar.lz4'
+            shell('aws s3 cp {} data/external/wikipedia/parsed-wiki.tar.lz4'.format(s3_location))
+        else:
+            https_location = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/wikipedia-dumps/parsed-wiki.tar.lz4'
+            shell('wget -O {} {}'.format('data/external/wikipedia/parsed-wiki.tar.lz4', https_location))
+
         shell('lz4 -d data/external/wikipedia/parsed-wiki.tar.lz4 | tar -x -C data/external/wikipedia/')
         shell('rm data/external/wikipedia/parsed-wiki.tar.lz4')
         shell('touch data/external/wikipedia/parsed-wiki_SUCCESS')

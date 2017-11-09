@@ -5,6 +5,7 @@ import os
 import shutil
 import re
 import string
+from pprint import pformat
 
 import numpy as np
 
@@ -73,7 +74,7 @@ qb_patterns = {
 re_pattern = '|'.join([re.escape(p) for p in qb_patterns])
 re_pattern += r'|\[.*?\]|\(.*?\)'
 
-COUNTRIES = set(['american'])
+COUNTRIES = {'american'}
 for c in pycountry.countries:
     split = c.name.lower().split()
     if len(split) == 1:
@@ -115,14 +116,45 @@ def extract_mentions(tokens):
     return mention_spans
 
 
-def mentions_to_sequence(mention_spans, tokens):
-    m_sequence = [0] * len(tokens)
+def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
+    n_tokens = len(tokens)
+    m_sequence = [0] * n_tokens
+    m_locations = []
     for m_span in mention_spans:
         i = m_span[0]
         while i <= m_span[1]:
             m_sequence[i] = 1
+            m_locations.append(i)
             i += 1
-    return m_sequence
+
+    m_locations = np.array(m_locations)
+    rel_position_sequence = []
+    for i in range(n_tokens):
+        if len(m_locations) > 0:
+            distance = m_locations - i
+            arg_min_distance = np.argmin(np.abs(distance))
+            rel_position = distance[arg_min_distance]
+            if rel_position < -max_distance:
+                val = str(-max_distance)
+                rel_position_sequence.append(val)
+                if vocab is not None:
+                    vocab.add(val)
+            elif max_distance < rel_position:
+                val = str(max_distance)
+                rel_position_sequence.append(val)
+                if vocab is not None:
+                    vocab.add(val)
+            else:
+                val = str(rel_position)
+                rel_position_sequence.append(val)
+                if vocab is not None:
+                    vocab.add(val)
+        else:
+            if vocab is not None:
+                vocab.add('NO_MENTION')
+            rel_position_sequence.append('NO_MENTION')
+
+    return rel_position_sequence
 
 
 def clean_sentence(sent):
@@ -154,7 +186,6 @@ class MultiVocab:
             self.ent_type = set()
         else:
             self.ent_type = ent_type_vocab
-
 
 
 def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
@@ -331,10 +362,8 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_ment
     x_batch_pos_padded = pad_batch(x_pos_batch, max_length)
     x_batch_iob_padded = pad_batch(x_iob_batch, max_length)
     x_batch_type_padded = pad_batch(x_type_batch, max_length)
+    x_batch_mention_padded = pad_batch(x_mention_batch, max_length)
 
-    # Since this is a literal value, it needs to match the embedding data type as well as having an extra dimension
-    # that is put in place by the embeddings for the above input
-    x_batch_mention_padded = pad_batch(x_mention_batch, max_length).float().unsqueeze(2)
     y_batch = torch.from_numpy(y_batch).long()
 
     if CUDA:
@@ -350,25 +379,48 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_ment
 
 
 class BatchedDataset:
-    def __init__(self, batch_size, multi_embedding_lookup, x_tokens, y_array, truncate=True, shuffle=True):
+    def __init__(self, batch_size, multi_embedding_lookup: MultiEmbeddingLookup,
+                 rel_position_vocab, rel_position_lookup,
+                 x_tokens, y_array, truncate=True, shuffle=True, train=True):
+        self.train = train
         self.x_array_w = []
         self.x_array_pos = []
         self.x_array_iob = []
         self.x_array_ent_type = []
         self.x_array_mention = []
         self.y_array = []
+        self.rel_position_vocab = rel_position_vocab
+        self.rel_position_lookup = rel_position_lookup
 
+        rel_position_tags = []
         for q in x_tokens:
             w_indicies, pos_indices, iob_indices, ent_type_indices = convert_tokens_to_representations(
                 q, multi_embedding_lookup
             )
             mention_spans = extract_mentions(q)
-            mention_flags = mentions_to_sequence(mention_spans, q)
+            mention_tags = mentions_to_sequence(
+                mention_spans, q, self.rel_position_vocab if train else None
+            )
+            rel_position_tags.append(mention_tags)
+
             self.x_array_w.append(w_indicies)
             self.x_array_pos.append(pos_indices)
             self.x_array_iob.append(iob_indices)
             self.x_array_ent_type.append(ent_type_indices)
-            self.x_array_mention.append(mention_flags)
+
+        if train:
+            for i, tag in enumerate(self.rel_position_vocab, start=2):
+                self.rel_position_lookup[tag] = i
+
+        for tag_list in rel_position_tags:
+            mention_indices = []
+            for t in tag_list:
+                if t in self.rel_position_lookup:
+                    mention_indices.append(self.rel_position_lookup[t])
+                else:
+                    mention_indices.append(self.rel_position_lookup[UNK])
+
+            self.x_array_mention.append(mention_indices)
 
         for i in range(len(x_tokens)):
             if len(self.x_array_w[i]) == 0:
@@ -384,7 +436,7 @@ class BatchedDataset:
                 self.x_array_ent_type[i].append(multi_embedding_lookup.ent_type[UNK])
 
             if len(self.x_array_mention[i]) == 0:
-                self.x_array_mention[i].append(0)
+                self.x_array_mention[i].append(self.rel_position_lookup[UNK])
 
         self.x_array_w = np.array(self.x_array_w)
         self.x_array_pos = np.array(self.x_array_pos)
@@ -487,19 +539,29 @@ class BatchedDataset:
 
 
 class RnnEntityGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=256, learning_rate=.001, max_grad_norm=5):
+    def __init__(self):
         super(RnnEntityGuesser, self).__init__()
         guesser_conf = conf['guessers']['EntityRNN']
         self.features = set(guesser_conf['features'])
-        self.max_epochs = max_epochs
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.max_grad_norm = max_grad_norm
+
+        self.max_epochs = guesser_conf['max_epochs']
+        self.batch_size = guesser_conf['batch_size']
+        self.learning_rate = guesser_conf['learning_rate']
+        self.max_grad_norm = guesser_conf['max_grad_norm']
+        self.rnn_type = guesser_conf['rnn_type']
+        self.dropout_prob = guesser_conf['dropout_prob']
+        self.recurrent_dropout_prob = guesser_conf['recurrent_dropout_prob']
+        self.bidirectional = guesser_conf['bidirectional']
+        self.n_hidden_units = guesser_conf['n_hidden_units']
+        self.n_hidden_layers = guesser_conf['n_hidden_layers']
+
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
         self.word_embeddings = None
         self.multi_embedding_lookup = None
+        self.rel_position_vocab = None
+        self.rel_position_lookup = None
         self.n_classes = None
         self.model = None
         self.criterion = None
@@ -513,7 +575,13 @@ class RnnEntityGuesser(AbstractGuesser):
             'max_epochs': self.max_epochs,
             'batch_size': self.batch_size,
             'learning_rate': self.learning_rate,
-            'max_grad_norm': self.max_grad_norm
+            'max_grad_norm': self.max_grad_norm,
+            'rnn_type': self.rnn_type,
+            'dropout_prob': self.dropout_prob,
+            'recurrent_dropout_prob': self.recurrent_dropout_prob,
+            'bidirectional': self.bidirectional,
+            'n_hidden_units': self.n_hidden_units,
+            'n_hidden_layers': self.n_hidden_layers
         }
 
     def guess(self,
@@ -522,8 +590,9 @@ class RnnEntityGuesser(AbstractGuesser):
         x_test_tokens = [self.nlp(x) for x in questions]
         y_test = np.zeros(len(questions))
         dataset = BatchedDataset(
-            self.batch_size, self.multi_embedding_lookup, x_test_tokens, y_test,
-            truncate=False, shuffle=False
+            self.batch_size, self.multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
+            x_test_tokens, y_test,
+            truncate=False, shuffle=False, train=False
         )
 
         self.model.eval()
@@ -577,19 +646,35 @@ class RnnEntityGuesser(AbstractGuesser):
 
 
         log.info('Batching the dataset')
-        train_dataset = BatchedDataset(self.batch_size, multi_embedding_lookup, x_train_tokens, y_train)
-        test_dataset = BatchedDataset(self.batch_size, multi_embedding_lookup, x_test_tokens, y_test)
+        self.rel_position_vocab = set()
+        self.rel_position_lookup = {
+            'MASK': 0,
+            UNK: 1
+        }
+        train_dataset = BatchedDataset(
+            self.batch_size, multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
+            x_train_tokens, y_train, train=True
+        )
+        test_dataset = BatchedDataset(
+            self.batch_size, multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
+            x_test_tokens, y_test, train=False
+        )
         self.n_classes = compute_n_classes(training_data[1])
 
         log.info('Initializing neural model')
+        log.info(f'Parameters:\n{pformat(self.parameters())}')
         self.model = RnnEntityModel(
             len(multi_embedding_lookup.word),
             len(multi_embedding_lookup.pos),
             len(multi_embedding_lookup.iob),
             len(multi_embedding_lookup.ent_type),
+            len(self.rel_position_lookup),
             self.n_classes,
-            enabled_features=self.features
+            enabled_features=self.features,
+            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob, recurrent_dropout_prob=self.recurrent_dropout_prob,
+            bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers
         )
+        log.info(f'Model:\n{repr(self.model)}')
         self.model.init_weights(word_embeddings=word_embeddings)
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
@@ -598,7 +683,7 @@ class RnnEntityGuesser(AbstractGuesser):
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
             ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc')
             #Tensorboard('rnn_entity', log_dir='tb-logs')
         ])
@@ -678,7 +763,15 @@ class RnnEntityGuesser(AbstractGuesser):
                 'batch_size': self.batch_size,
                 'learning_rate': self.learning_rate,
                 'max_grad_norm': self.max_grad_norm,
-                'features': self.features
+                'features': self.features,
+                'rel_position_lookup': self.rel_position_lookup,
+                'rel_position_vocab': self.rel_position_vocab,
+                'rnn_type': self.rnn_type,
+                'dropout_prob': self.dropout_prob,
+                'recurrent_dropout_prob': self.recurrent_dropout_prob,
+                'bidirectional': self.bidirectional,
+                'n_hidden_units': self.n_hidden_units,
+                'n_hidden_layers': self.n_hidden_layers
             }, f)
 
     @classmethod
@@ -700,6 +793,14 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.model = torch.load(os.path.join(directory, 'rnn_entity.pt'))
         guesser.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
         guesser.features = params['features']
+        guesser.rel_position_vocab = params['rel_position_vocab']
+        guesser.rel_position_lookup = params['rel_position_lookup']
+        guesser.rnn_type = params['rnn_type']
+        guesser.dropout_prob = params['dropout_prob']
+        guesser.recurrent_dropout_prob = params['recurrent_dropout_prob']
+        guesser.bidirectional = params['bidirectional']
+        guesser.n_hidden_units = params['n_hidden_units']
+        guesser.n_hidden_layers = params['n_hidden_layers']
         return  guesser
 
     @classmethod
@@ -711,9 +812,9 @@ class RnnEntityGuesser(AbstractGuesser):
 
 
 class RnnEntityModel(nn.Module):
-    def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size,
+    def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
                  n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='lstm',
+                 n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
                  rnn_output='last_hidden', enabled_features={'word', 'pos', 'iob', 'type', 'mention'}):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
@@ -758,7 +859,10 @@ class RnnEntityModel(nn.Module):
             self.type_embeddings = None
 
         if 'mention' in enabled_features:
-            self.feature_dimension += 1
+            self.mention_embeddings = nn.Embedding(mention_vocab_size, 50, padding_idx=0)
+            self.feature_dimension += 50
+        else:
+            self.mention_embeddings = None
 
         self.rnn_type = rnn_type
         if rnn_type == 'lstm':
@@ -790,7 +894,7 @@ class RnnEntityModel(nn.Module):
         else:
             return Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
 
-    def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable, mention_flags, lengths, hidden):
+    def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable, mention_idxs, lengths, hidden):
         dropout_features = []
         if 'word' in self.enabled_features:
             word_embeddings = self.word_embeddings(word_idxs)
@@ -808,9 +912,11 @@ class RnnEntityModel(nn.Module):
             type_embeddings = self.type_embeddings(type_idxs)
             dropout_features.append(type_embeddings)
 
-        features = self.dropout(torch.cat(dropout_features, 2))
         if 'mention' in self.enabled_features:
-            features = torch.cat([features, mention_flags], 2)
+            mention_embeddings = self.mention_embeddings(mention_idxs)
+            dropout_features.append(mention_embeddings)
+
+        features = self.dropout(torch.cat(dropout_features, 2))
 
         packed_input = nn.utils.rnn.pack_padded_sequence(features, lengths, batch_first=True)
 
