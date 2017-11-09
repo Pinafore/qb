@@ -433,7 +433,7 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         app = Flask(__name__)
 
-        @app.route('/api/answer_question')
+        @app.route('/api/answer_question', methods=['POST'])
         def answer_question():
             text = request.form['text']
             guess, score = self.guess([text], 1)[0][0]
