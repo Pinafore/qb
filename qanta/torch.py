@@ -1,9 +1,24 @@
 import abc
 from collections import defaultdict
 from typing import List, Tuple, Optional
+from urllib import request
 
 import numpy as np
 import torch
+
+from qanta import logging
+
+
+log = logging.get(__name__)
+
+
+def host_is_up(hostname, port, protocol='http'):
+    url = f'{protocol}://{hostname}:{port}'
+    try:
+        request.urlopen(url).getcode()
+        return True
+    except request.URLError:
+        return False
 
 
 def create_save_model(model):
@@ -123,22 +138,29 @@ class ModelCheckpoint(Callback):
 
 
 class Tensorboard(Callback):
-    def __init__(self, experiment_name: str, log_dir=None):
-        from pycrayon import CrayonClient
-        self.client = CrayonClient(port=6007)
-        self.experiment_name = experiment_name
-        try:
-            self.client.remove_experiment(experiment_name)
-        except ValueError:
-            pass
-        self.experiment = self.client.create_experiment(experiment_name)
+    def __init__(self, experiment_name: str, hostname='localhost', port=6007):
+        if host_is_up(hostname, port):
+            from pycrayon import CrayonClient
+            self.client = CrayonClient(hostname=hostname, port=port)
+            self.experiment_name = experiment_name
+            try:
+                self.client.remove_experiment(experiment_name)
+            except ValueError:
+                pass
+            self.experiment = self.client.create_experiment(experiment_name)
+        else:
+            log.info(f'Tensorboard not found on http://{hostname}:{port}, experiment logging disabled')
+            self.client = None
+            self.experiment_name = None
+            self.experiment = None
 
     def on_epoch_end(self, logs):
-        self.experiment.add_scalar_value('train_loss', logs['train_loss'][-1])
-        self.experiment.add_scalar_value('train_acc', logs['train_acc'][-1])
-        self.experiment.add_scalar_value('test_loss', logs['test_loss'][-1])
-        self.experiment.add_scalar_value('test_acc', logs['test_acc'][-1])
-        self.experiment.add_scalar_value('train_time', logs['train_time'][-1])
+        if self.client is not None:
+            self.experiment.add_scalar_value('train_loss', logs['train_loss'][-1])
+            self.experiment.add_scalar_value('train_acc', logs['train_acc'][-1])
+            self.experiment.add_scalar_value('test_loss', logs['test_loss'][-1])
+            self.experiment.add_scalar_value('test_acc', logs['test_acc'][-1])
+            self.experiment.add_scalar_value('train_time', logs['train_time'][-1])
 
 
 class TrainingManager:
