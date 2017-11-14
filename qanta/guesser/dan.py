@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
+from torch.optim import Adam, lr_scheduler
 
 from qanta import logging
 from qanta.config import conf
@@ -114,6 +115,7 @@ class DanGuesser(AbstractGuesser):
         self.model = None
         self.criterion = None
         self.optimizer = None
+        self.scheduler = None
         self.vocab_size = None
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
@@ -209,13 +211,14 @@ class DanGuesser(AbstractGuesser):
         if CUDA:
             self.model = self.model.cuda()
 
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
+            EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(100),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_loss')
         ])
 
         log.info('Starting training...')
@@ -240,6 +243,8 @@ class DanGuesser(AbstractGuesser):
             if stop_training:
                 log.info(' '.join(reasons))
                 break
+            else:
+                self.scheduler.step(test_loss)
 
         log.info('Done training')
 
