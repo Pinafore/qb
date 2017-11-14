@@ -237,12 +237,12 @@ class RnnGuesser(AbstractGuesser):
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, 'max', patience=5, verbose=True)
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_acc')
+            EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_loss')
             #Tensorboard('rnn', log_dir='tb-logs')
         ])
 
@@ -269,7 +269,7 @@ class RnnGuesser(AbstractGuesser):
                 log.info(' '.join(reasons))
                 break
             else:
-                self.scheduler.step(test_acc)
+                self.scheduler.step(test_loss)
 
         log.info('Done training')
 
