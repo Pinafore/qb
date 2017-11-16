@@ -41,6 +41,7 @@ log = logging.get(__name__)
 PT_RNN_ENTITY_WE_TMP = '/tmp/qanta/deep/pt_rnn_entity_we.pickle'
 PT_RNN_ENTITY_WE = 'pt_rnn_entity_we.pickle'
 UNK = 'UNK'
+EOS = 'EOS'
 CUDA = torch.cuda.is_available()
 
 LOWER_TO_UPPER = dict(zip(string.ascii_lowercase, string.ascii_uppercase))
@@ -153,6 +154,9 @@ def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
             if vocab is not None:
                 vocab.add('NO_MENTION')
             rel_position_sequence.append('NO_MENTION')
+
+    # This is for the EOS token
+    rel_position_sequence.append('NO_MENTION')
 
     return rel_position_sequence
 
@@ -278,6 +282,11 @@ def convert_tokens_to_representations(tokens: List[Token], embedding_lookup: Mul
         else:
             ent_type_indices.append(embedding_lookup.ent_type[UNK])
 
+    w_indices.append(embedding_lookup.word[EOS])
+    pos_indices.append(embedding_lookup.pos[EOS])
+    iob_indices.append(embedding_lookup.iob[EOS])
+    ent_type_indices.append(embedding_lookup.ent_type[EOS])
+
     return w_indices, pos_indices, iob_indices, ent_type_indices
 
 
@@ -300,23 +309,26 @@ def load_multi_embeddings(
 
             pos_lookup = {
                 'MASK': 0,
-                UNK: 1
+                UNK: 1,
+                'EOS': 2
             }
-            for i, term in enumerate(multi_vocab.pos, start=2):
+            for i, term in enumerate(multi_vocab.pos, start=3):
                 pos_lookup[term] = i
 
             iob_lookup = {
                 'MASK': 0,
-                UNK: 1
+                UNK: 1,
+                'EOS': 2,
             }
-            for i, term in enumerate(multi_vocab.iob, start=2):
+            for i, term in enumerate(multi_vocab.iob, start=3):
                 iob_lookup[term] = i
 
             ent_type_lookup = {
                 'MASK': 0,
-                UNK: 1
+                UNK: 1,
+                'EOS': 2
             }
-            for i, term in enumerate(multi_vocab.ent_type, start=2):
+            for i, term in enumerate(multi_vocab.ent_type, start=3):
                 ent_type_lookup[term] = i
 
             multi_embedding_lookup = MultiEmbeddingLookup(word_lookup, pos_lookup, iob_lookup, ent_type_lookup)
@@ -550,7 +562,6 @@ class RnnEntityGuesser(AbstractGuesser):
         self.max_grad_norm = guesser_conf['max_grad_norm']
         self.rnn_type = guesser_conf['rnn_type']
         self.dropout_prob = guesser_conf['dropout_prob']
-        self.recurrent_dropout_prob = guesser_conf['recurrent_dropout_prob']
         self.bidirectional = guesser_conf['bidirectional']
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
@@ -578,7 +589,6 @@ class RnnEntityGuesser(AbstractGuesser):
             'max_grad_norm': self.max_grad_norm,
             'rnn_type': self.rnn_type,
             'dropout_prob': self.dropout_prob,
-            'recurrent_dropout_prob': self.recurrent_dropout_prob,
             'bidirectional': self.bidirectional,
             'n_hidden_units': self.n_hidden_units,
             'n_hidden_layers': self.n_hidden_layers
@@ -671,7 +681,7 @@ class RnnEntityGuesser(AbstractGuesser):
             len(self.rel_position_lookup),
             self.n_classes,
             enabled_features=self.features,
-            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob, recurrent_dropout_prob=self.recurrent_dropout_prob,
+            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob,
             bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers
         )
         log.info(f'Model:\n{repr(self.model)}')
@@ -684,8 +694,8 @@ class RnnEntityGuesser(AbstractGuesser):
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_loss')
-            #Tensorboard('rnn_entity', log_dir='tb-logs')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_loss'),
+            Tensorboard('rnn_entity')
         ])
 
         log.info('Starting training...')
@@ -768,7 +778,6 @@ class RnnEntityGuesser(AbstractGuesser):
                 'rel_position_vocab': self.rel_position_vocab,
                 'rnn_type': self.rnn_type,
                 'dropout_prob': self.dropout_prob,
-                'recurrent_dropout_prob': self.recurrent_dropout_prob,
                 'bidirectional': self.bidirectional,
                 'n_hidden_units': self.n_hidden_units,
                 'n_hidden_layers': self.n_hidden_layers
@@ -797,7 +806,6 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.rel_position_lookup = params['rel_position_lookup']
         guesser.rnn_type = params['rnn_type']
         guesser.dropout_prob = params['dropout_prob']
-        guesser.recurrent_dropout_prob = params['recurrent_dropout_prob']
         guesser.bidirectional = params['bidirectional']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
@@ -813,7 +821,7 @@ class RnnEntityGuesser(AbstractGuesser):
 
 class RnnEntityModel(nn.Module):
     def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
-                 n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
+                 n_classes, embedding_dim=300, dropout_prob=.3,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
                  rnn_output='last_hidden', enabled_features={'word', 'pos', 'iob', 'type', 'mention'}):
         super(RnnEntityModel, self).__init__()
@@ -824,7 +832,6 @@ class RnnEntityModel(nn.Module):
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
         self.dropout_prob = dropout_prob
-        self.recurrent_dropout_prob = recurrent_dropout_prob
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_units = n_hidden_units
         self.bidirectional = bidirectional
@@ -872,10 +879,10 @@ class RnnEntityModel(nn.Module):
         else:
             raise ValueError('Unrecognized rnn layer type')
         self.rnn = rnn_layer(self.feature_dimension, n_hidden_units, n_hidden_layers,
-                           dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
+                           dropout=dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
-            nn.Linear(n_hidden_units * self.num_directions * self.n_hidden_layers, n_classes),
+            nn.Linear(n_hidden_units * self.num_directions, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(dropout_prob)
         )
@@ -927,7 +934,13 @@ class RnnEntityModel(nn.Module):
             else:
                 final_hidden = hidden
 
-            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(word_idxs.data.shape[0], -1)
+            batch_size = word_idxs.data.shape[0]
+            final_hidden = final_hidden.view(
+                self.n_hidden_layers, self.num_directions, batch_size, self.n_hidden_units
+            )[-1].view(self.num_directions, batch_size, self.n_hidden_units)
+            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(
+                word_idxs.data.shape[0], self.num_directions * self.n_hidden_units
+            )
 
             return self.classification_layer(h_reshaped), hidden
         elif self.rnn_output == 'max_pool':
@@ -935,11 +948,10 @@ class RnnEntityModel(nn.Module):
             actual_batch_size = word_idxs.data.shape[0]
             pooled = []
             for i in range(actual_batch_size):
-                max_pooled = padded_output[i][:padded_lengths[i]].mean(0)
-                #max_pooled = padded_output[i][:padded_lengths[i]].max(0)[0]
+                #max_pooled = padded_output[i][:padded_lengths[i]].mean(0)
+                max_pooled = padded_output[i][:padded_lengths[i]].max(0)[0]
                 pooled.append(max_pooled)
             pooled = torch.cat(pooled).view(actual_batch_size, -1)
             return self.classification_layer(pooled), hidden
         else:
             raise ValueError('Unrecognized rnn_output option')
-

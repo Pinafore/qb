@@ -11,7 +11,7 @@ data "aws_ami" "qanta_ami" {
 }
 
 variable "spot_price" {
-  default = "1.50"
+  default = "3.10"
 }
 
 resource "aws_spot_instance_request" "qanta" {
