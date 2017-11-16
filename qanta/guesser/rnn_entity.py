@@ -28,6 +28,9 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.filtered_wikipedia import (
+    FilteredWikipediaDataset, compute_ans_distribution, compute_threshold_distribution
+)
 from qanta.guesser.nn import compute_n_classes, create_embeddings
 from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
@@ -565,6 +568,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.bidirectional = guesser_conf['bidirectional']
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.use_wiki = guesser_conf['use_wiki']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -591,7 +595,8 @@ class RnnEntityGuesser(AbstractGuesser):
             'dropout_prob': self.dropout_prob,
             'bidirectional': self.bidirectional,
             'n_hidden_units': self.n_hidden_units,
-            'n_hidden_layers': self.n_hidden_layers
+            'n_hidden_layers': self.n_hidden_layers,
+            'use_wiki': self.use_wiki
         }
 
     def guess(self,
@@ -644,6 +649,19 @@ class RnnEntityGuesser(AbstractGuesser):
         x_train_tokens, y_train, x_test_tokens, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             self.nlp, training_data
         )
+
+
+        if self.use_wiki:
+            answer_dist = compute_ans_distribution(training_data)
+            median_sentences = np.median(np.array(list(answer_dist.values())))
+            add_dist = compute_threshold_distribution(answer_dist, median_sentences)
+            wiki_dataset = FilteredWikipediaDataset(add_dist=add_dist)
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_train_y, *_ = preprocess_dataset(
+                self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+            x_train_tokens.extend(w_x_train_text)
+            y_train.extend(w_train_y)
 
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -780,7 +798,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'dropout_prob': self.dropout_prob,
                 'bidirectional': self.bidirectional,
                 'n_hidden_units': self.n_hidden_units,
-                'n_hidden_layers': self.n_hidden_layers
+                'n_hidden_layers': self.n_hidden_layers,
+                'use_wiki': self.use_wiki
             }, f)
 
     @classmethod
@@ -809,6 +828,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.bidirectional = params['bidirectional']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
+        guesser.use_wiki = params['use_wiki']
         return  guesser
 
     @classmethod
