@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from qanta import logging
+from qanta.util.environment import QB_TB_HOSTNAME, QB_TB_PORT
 
 
 log = logging.get(__name__)
@@ -138,7 +139,7 @@ class ModelCheckpoint(Callback):
 
 
 class Tensorboard(Callback):
-    def __init__(self, experiment_name: str, hostname='localhost', port=6007):
+    def __init__(self, experiment_name: str, hostname=QB_TB_HOSTNAME, port=QB_TB_PORT):
         if host_is_up(hostname, port):
             from pycrayon import CrayonClient
             self.client = CrayonClient(hostname=hostname, port=port)

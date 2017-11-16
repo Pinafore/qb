@@ -242,8 +242,8 @@ class RnnGuesser(AbstractGuesser):
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_loss')
-            #Tensorboard('rnn', log_dir='tb-logs')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_loss'),
+            Tensorboard('rnn')
         ])
 
         log.info('Starting training...')
