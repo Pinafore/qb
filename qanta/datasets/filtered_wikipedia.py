@@ -6,12 +6,14 @@ from qanta.datasets.abstract import AbstractDataset
 
 
 class FilteredWikipediaDataset(AbstractDataset):
-    def __init__(self):
+    def __init__(self, wiki_data_frac=None):
         super().__init__()
+        self.wiki_data_frac = wiki_data_frac
 
     def training_data(self):
-        if conf['wiki_data_frac'] > 0:
-            frac = 'frac=' + str(conf['wiki_data_frac'])
+        wiki_data_frac = self.wiki_data_frac if self.wiki_data_frac is not None else conf['wiki_data_frac']
+        if wiki_data_frac > 0:
+            frac = 'frac=' + str(wiki_data_frac)
             with open(DOMAIN_OUTPUT.format(frac), 'rb') as f:
                 data = pickle.load(f)
             x = []
