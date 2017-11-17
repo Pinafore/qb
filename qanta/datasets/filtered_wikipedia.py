@@ -61,6 +61,8 @@ class FilteredWikipediaDataset(AbstractDataset):
                         y.append(page)
                         self.add_dist[page] -= 1
             log.info(f'Added {n_added} sentences from wikipedia')
+            missing = sum(1 for c in self.add_dist if c != 0)
+            log.info(f"Couldn't find enough sentances for {missing} classes")
 
             return x, y, [None for _ in x]
         else:

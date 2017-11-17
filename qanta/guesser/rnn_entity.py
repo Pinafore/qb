@@ -94,9 +94,11 @@ for s in pycountry.subdivisions.get(country_code='US'):
 NN_TAGS = {'NN', 'NNP', 'NNS'}
 SKIP_PUNCTATION = {'HYPH', 'POS'}
 SKIP_TAGS = NN_TAGS | SKIP_PUNCTATION
+PRONOUNS = {'they', 'it', 'he', 'she'}
+PREPOSITION_POS = {'ADP', 'ADV'}
 
 
-def extract_mentions(tokens):
+def extract_this_mentions(tokens):
     begin = None
     mention_spans = []
     i = 0
@@ -119,6 +121,26 @@ def extract_mentions(tokens):
         i += 1
     return mention_spans
 
+
+def extract_pronoun_mentions(doc):
+    mentions = set()
+    if len(doc) == 0:
+        return mentions
+    for sent in doc.sents:
+        is_start_of_sentence = True
+        is_phrase_span = False
+        for t in sent:
+            if is_start_of_sentence and not is_phrase_span and t.pos_ in PREPOSITION_POS:
+                is_phrase_span = True
+            if is_start_of_sentence and t.lower_ in PRONOUNS:
+                mentions.add(t.i)
+                is_start_of_sentence = False
+            elif is_phrase_span and t.text == ',':
+                is_phrase_span = False
+                is_start_of_sentence = True
+            else:
+                is_start_of_sentence = False
+    return mentions
 
 def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
     n_tokens = len(tokens)
@@ -164,14 +186,6 @@ def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
     return rel_position_sequence
 
 
-def clean_sentence(sent):
-    return capitalize(re.sub(re_pattern, '', sent.strip(), flags=re.IGNORECASE))
-
-
-def custom_spacy_pipeline(nlp):
-    return nlp.tagger, nlp.entity
-
-
 class MultiVocab:
     def __init__(self, word_vocab=None, pos_vocab=None, iob_vocab=None, ent_type_vocab=None):
         if word_vocab is None:
@@ -193,6 +207,13 @@ class MultiVocab:
             self.ent_type = set()
         else:
             self.ent_type = ent_type_vocab
+
+
+def clean_question(text):
+    return re.sub(
+        '\s+', ' ',
+        re.sub(r'[~\*\(\)]|--', ' ', text)
+    ).strip()
 
 
 def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
@@ -226,7 +247,7 @@ def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class
     bar = progressbar.ProgressBar()
     x_train = []
     for x in bar(raw_x_train):
-        x_train.append(nlp(x))
+        x_train.append(nlp(clean_question(x)))
     for doc in x_train:
         for word in doc:
             vocab.word.add(word.lower_)
@@ -244,7 +265,7 @@ def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class
     bar = progressbar.ProgressBar()
     x_test = []
     for x in bar(raw_x_test):
-        x_test.append(nlp(x))
+        x_test.append(nlp(clean_question(x)))
 
     return x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class
 
@@ -412,7 +433,10 @@ class BatchedDataset:
             w_indicies, pos_indices, iob_indices, ent_type_indices = convert_tokens_to_representations(
                 q, multi_embedding_lookup
             )
-            mention_spans = extract_mentions(q)
+            this_mention_spans = extract_this_mentions(q)
+            pronoun_mention_spans = [(i, i) for i in extract_pronoun_mentions(q)]
+            mention_spans = this_mention_spans + pronoun_mention_spans
+
             mention_tags = mentions_to_sequence(
                 mention_spans, q, self.rel_position_vocab if train else None
             )
@@ -602,7 +626,7 @@ class RnnEntityGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        x_test_tokens = [self.nlp(x) for x in questions]
+        x_test_tokens = [self.nlp(clean_question(x)) for x in questions]
         y_test = np.zeros(len(questions))
         dataset = BatchedDataset(
             self.batch_size, self.multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
@@ -645,7 +669,7 @@ class RnnEntityGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData):
         log.info('Preprocessing the dataset')
-        self.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
+        self.nlp = spacy.load('en')
         x_train_tokens, y_train, x_test_tokens, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             self.nlp, training_data
         )
