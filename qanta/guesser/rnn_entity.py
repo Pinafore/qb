@@ -843,7 +843,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.learning_rate = params['learning_rate']
         guesser.max_grad_norm = params['max_grad_norm']
         guesser.model = torch.load(os.path.join(directory, 'rnn_entity.pt'))
-        guesser.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
+        guesser.nlp = spacy.load('en')
         guesser.features = params['features']
         guesser.rel_position_vocab = params['rel_position_vocab']
         guesser.rel_position_lookup = params['rel_position_lookup']
