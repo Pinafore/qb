@@ -28,6 +28,9 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.filtered_wikipedia import (
+    FilteredWikipediaDataset, compute_ans_distribution, compute_threshold_distribution
+)
 from qanta.guesser.nn import compute_n_classes, create_embeddings
 from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
@@ -91,9 +94,11 @@ for s in pycountry.subdivisions.get(country_code='US'):
 NN_TAGS = {'NN', 'NNP', 'NNS'}
 SKIP_PUNCTATION = {'HYPH', 'POS'}
 SKIP_TAGS = NN_TAGS | SKIP_PUNCTATION
+PRONOUNS = {'they', 'it', 'he', 'she'}
+PREPOSITION_POS = {'ADP', 'ADV'}
 
 
-def extract_mentions(tokens):
+def extract_this_mentions(tokens):
     begin = None
     mention_spans = []
     i = 0
@@ -116,6 +121,26 @@ def extract_mentions(tokens):
         i += 1
     return mention_spans
 
+
+def extract_pronoun_mentions(doc):
+    mentions = set()
+    if len(doc) == 0:
+        return mentions
+    for sent in doc.sents:
+        is_start_of_sentence = True
+        is_phrase_span = False
+        for t in sent:
+            if is_start_of_sentence and not is_phrase_span and t.pos_ in PREPOSITION_POS:
+                is_phrase_span = True
+            if is_start_of_sentence and t.lower_ in PRONOUNS:
+                mentions.add(t.i)
+                is_start_of_sentence = False
+            elif is_phrase_span and t.text == ',':
+                is_phrase_span = False
+                is_start_of_sentence = True
+            else:
+                is_start_of_sentence = False
+    return mentions
 
 def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
     n_tokens = len(tokens)
@@ -161,14 +186,6 @@ def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
     return rel_position_sequence
 
 
-def clean_sentence(sent):
-    return capitalize(re.sub(re_pattern, '', sent.strip(), flags=re.IGNORECASE))
-
-
-def custom_spacy_pipeline(nlp):
-    return nlp.tagger, nlp.entity
-
-
 class MultiVocab:
     def __init__(self, word_vocab=None, pos_vocab=None, iob_vocab=None, ent_type_vocab=None):
         if word_vocab is None:
@@ -190,6 +207,13 @@ class MultiVocab:
             self.ent_type = set()
         else:
             self.ent_type = ent_type_vocab
+
+
+def clean_question(text):
+    return re.sub(
+        '\s+', ' ',
+        re.sub(r'[~\*\(\)]|--', ' ', text)
+    ).strip()
 
 
 def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
@@ -223,7 +247,7 @@ def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class
     bar = progressbar.ProgressBar()
     x_train = []
     for x in bar(raw_x_train):
-        x_train.append(nlp(x))
+        x_train.append(nlp(clean_question(x)))
     for doc in x_train:
         for word in doc:
             vocab.word.add(word.lower_)
@@ -241,7 +265,7 @@ def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class
     bar = progressbar.ProgressBar()
     x_test = []
     for x in bar(raw_x_test):
-        x_test.append(nlp(x))
+        x_test.append(nlp(clean_question(x)))
 
     return x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class
 
@@ -409,7 +433,10 @@ class BatchedDataset:
             w_indicies, pos_indices, iob_indices, ent_type_indices = convert_tokens_to_representations(
                 q, multi_embedding_lookup
             )
-            mention_spans = extract_mentions(q)
+            this_mention_spans = extract_this_mentions(q)
+            pronoun_mention_spans = [(i, i) for i in extract_pronoun_mentions(q)]
+            mention_spans = this_mention_spans + pronoun_mention_spans
+
             mention_tags = mentions_to_sequence(
                 mention_spans, q, self.rel_position_vocab if train else None
             )
@@ -565,6 +592,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.bidirectional = guesser_conf['bidirectional']
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.use_wiki = guesser_conf['use_wiki']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -591,13 +619,14 @@ class RnnEntityGuesser(AbstractGuesser):
             'dropout_prob': self.dropout_prob,
             'bidirectional': self.bidirectional,
             'n_hidden_units': self.n_hidden_units,
-            'n_hidden_layers': self.n_hidden_layers
+            'n_hidden_layers': self.n_hidden_layers,
+            'use_wiki': self.use_wiki
         }
 
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        x_test_tokens = [self.nlp(x) for x in questions]
+        x_test_tokens = [self.nlp(clean_question(x)) for x in questions]
         y_test = np.zeros(len(questions))
         dataset = BatchedDataset(
             self.batch_size, self.multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
@@ -640,10 +669,23 @@ class RnnEntityGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData):
         log.info('Preprocessing the dataset')
-        self.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
+        self.nlp = spacy.load('en')
         x_train_tokens, y_train, x_test_tokens, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             self.nlp, training_data
         )
+
+
+        if self.use_wiki:
+            answer_dist = compute_ans_distribution(training_data)
+            median_sentences = np.median(np.array(list(answer_dist.values())))
+            add_dist = compute_threshold_distribution(answer_dist, median_sentences)
+            wiki_dataset = FilteredWikipediaDataset(add_dist=add_dist)
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_train_y, *_ = preprocess_dataset(
+                self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+            x_train_tokens.extend(w_x_train_text)
+            y_train.extend(w_train_y)
 
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -780,7 +822,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'dropout_prob': self.dropout_prob,
                 'bidirectional': self.bidirectional,
                 'n_hidden_units': self.n_hidden_units,
-                'n_hidden_layers': self.n_hidden_layers
+                'n_hidden_layers': self.n_hidden_layers,
+                'use_wiki': self.use_wiki
             }, f)
 
     @classmethod
@@ -800,7 +843,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.learning_rate = params['learning_rate']
         guesser.max_grad_norm = params['max_grad_norm']
         guesser.model = torch.load(os.path.join(directory, 'rnn_entity.pt'))
-        guesser.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
+        guesser.nlp = spacy.load('en')
         guesser.features = params['features']
         guesser.rel_position_vocab = params['rel_position_vocab']
         guesser.rel_position_lookup = params['rel_position_lookup']
@@ -809,6 +852,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.bidirectional = params['bidirectional']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
+        guesser.use_wiki = params['use_wiki']
         return  guesser
 
     @classmethod
