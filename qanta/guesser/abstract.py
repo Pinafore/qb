@@ -1,4 +1,5 @@
 import os
+import warnings
 import random
 from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
@@ -6,7 +7,9 @@ from typing import List, Dict, Tuple, Optional, NamedTuple
 import pickle
 
 import matplotlib
-matplotlib.use('Agg')
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sb
