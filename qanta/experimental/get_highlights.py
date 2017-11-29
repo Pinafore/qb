@@ -18,25 +18,31 @@ class color:
    UNDERLINE = '\033[4m'
    END = '\033[0m'
 
-def get_highlights(question):
-    text = question.flatten_text()
+def get_highlights(text):
     # query top 10 guesses
     s = Search(index='qb_ir_instance_of')[0:10].query('multi_match', query=text,
             fields=['wiki_content', 'qb_content', 'source_content'])
     s = s.highlight('qb_content').highlight('wiki_content')
     results = list(s.execute())
+    if len(results) == 0:
+        highlights = {'wiki': [''],
+                      'qb': [''],
+                      'guess': ''}
+        return highlights
+
     guess = results[0] # take the best answer
     _highlights = guess.meta.highlight 
 
     try:
         wiki_content = list(_highlights.wiki_content)
     except AttributeError:
-        wiki_content = None
+        wiki_content = ['']
 
     try:
         qb_content = list(_highlights.qb_content)
     except AttributeError:
-        qb_content = None
+        qb_content = ['']
+
     highlights = {'wiki': wiki_content,
                   'qb': qb_content,
                   'guess': guess.page}
@@ -45,7 +51,7 @@ def get_highlights(question):
 def test():
     questions = QuestionDatabase().all_questions()
     guessdev_questions = [x for x in questions.values() if x.fold == 'guessdev']
-    highlights = get_highlights(questions[0])
+    highlights = get_highlights(questions[0].flatten_text())
     print(highlights['guess'])
     for x in highlights['wiki']:
         print('WIKI|' + x.replace('<em>', color.RED).replace('</em>', color.END))
@@ -58,7 +64,7 @@ def main():
             if v.fold == 'guessdev'}
     highlights = {}
     for k, v in tqdm(guessdev_questions.items()):
-        highlights[k] = get_highlights(v)
+        highlights[k] = get_highlights(v.flatten_text())
     with open('guessdev_highlight.pkl', 'wb') as f:
         pickle.dump(highlights, f)
 

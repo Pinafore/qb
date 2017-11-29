@@ -8,6 +8,7 @@ from qanta.util.io import safe_path
 from qanta.util.multiprocess import _multiprocess
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset, Question
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.experimental.elasticsearch_instance_of import ElasticSearchWikidataGuesser
 
 
@@ -90,13 +91,11 @@ def all_sents(x):
     # take all sentences from the question
     return x
 
-def main():
-    fold = 'guessdev'
+def main(n_keep, ckp_dir):
     db = QuizBowlDataset(guesser_train=True, buzzer_train=True)
-    questions = db.questions_in_folds([fold])
+    questions = db.questions_in_folds(['guessdev'])
 
     n_sents = all_sents 
-    n_keep = 8 # keep 8 words
 
     inputs = [[x, n_keep, n_sents] for x in questions]
     returns = _multiprocess(greedy_remove, inputs)
@@ -104,31 +103,43 @@ def main():
     text_before, text_after, guesses_before, guesses_after, removed = returns
 
     checkpoint = defaultdict(dict)
-    scores = [0, 0, 0, 0, 0]
-    descriptions = ['accuracy before', 'accuracy after', 'before after match',
-                    'top 5 accuracy before', 'top 5 accuracy after']
     for i, q in enumerate(questions):
         checkpoint[q.qnum]['text_before'] = text_before[i]
         checkpoint[q.qnum]['text_after'] = text_after[i]
         checkpoint[q.qnum]['guesses_before'] = guesses_before[i]
         checkpoint[q.qnum]['guesses_after'] = guesses_after[i]
         checkpoint[q.qnum]['removed'] = removed[i]
-        gb = sorted(guesses_before[i].items(), key=lambda x: x[1])[::-1]
-        ga = sorted(guesses_after[i].items(), key=lambda x: x[1])[::-1]
-        scores[0] += gb[0][0] == q.page # accuracy before
-        scores[1] += ga[0][0] == q.page # accuracy after
-        scores[2] += ga[0][0] == gb[0][0] # top 1 match before / after
-        scores[3] += q.page in [x[0] for x in gb[:5]] # top 5 accuracy before
-        scores[4] += q.page in [x[0] for x in ga[:5]] # top 5 accuracy after
-    scores = [x / len(questions) for x in scores]
-    for s, d in zip(scores, descriptions):
-        print(d, s)
-
-    ckp_dir = 'output/experimental/greedy_remove.{0}.{1}.pkl'.format(fold, '8')
 
     checkpoint = dict(checkpoint)
     with open(safe_path(ckp_dir), 'wb') as f:
         pickle.dump(checkpoint, f)
 
+    eval(ckp_dir)
+
+def eval(ckp_dir):
+    questions = QuestionDatabase().all_questions()
+
+    with open(ckp_dir, 'rb') as f:
+        checkpoint = pickle.load(f)
+    scores = [0, 0, 0, 0, 0]
+    descriptions = ['accuracy before', 'accuracy after', 'before after match',
+                    'top 5 accuracy before', 'top 5 accuracy after']
+    for k, q in checkpoint.items():
+        page = questions[k].page
+        gb = sorted(q['guesses_before'].items(), key=lambda x: x[1])[::-1]
+        ga = sorted(q['guesses_after'].items(), key=lambda x: x[1])[::-1]
+        scores[0] += gb[0][0] == page # accuracy before
+        scores[1] += ga[0][0] == page # accuracy after
+        scores[2] += ga[0][0] == gb[0][0] # top 1 match before / after
+        scores[3] += page in [x[0] for x in gb[:5]] # top 5 accuracy before
+        scores[4] += page in [x[0] for x in ga[:5]] # top 5 accuracy after
+    scores = [x / len(questions) for x in scores]
+    for s, d in zip(scores, descriptions):
+        print(d, s)
+
+
 if __name__ == '__main__':
-    main()
+    n_keep = 20
+    ckp_dir = 'output/experimental/greedy_remove.dev.{}.pkl'.format(n_keep)
+    eval(ckp_dir)
+    # main(n_keep, ckp_dir)
