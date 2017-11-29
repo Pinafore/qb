@@ -62,8 +62,9 @@ def create_embeddings(vocab: Set[str], expand_glove=False, mask_zero=False):
         log.info('Total number of embeddings: {}'.format(i))
 
         embeddings = np.array(embeddings)
-        embed_with_unk = np.vstack([embeddings, mean_embedding])
+        embed_with_unk = np.vstack([embeddings, mean_embedding, mean_embedding])
         embedding_lookup['UNK'] = i
+        embedding_lookup['EOS'] = i + 1
         return embed_with_unk, embedding_lookup
 
 

@@ -1,4 +1,5 @@
 from typing import List, Tuple, Optional
+from pprint import pformat
 import shutil
 import os
 import pickle
@@ -20,7 +21,7 @@ from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
     BaseLogger, TerminateOnNaN,
-    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
+    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager, Tensorboard
 )
 
 
@@ -95,9 +96,14 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
 
     return n_batches, t_x_batches, t_offset_batches, t_y_batches
 
+def logsumexp(x):
+    max_x, _ = torch.max(x, dim=1, keepdim=True)
+    part = torch.log(torch.sum(torch.exp(x - max_x), dim=1, keepdim=True))
+    return max_x + part
+
 
 class DanGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=512, learning_rate=.001):
+    def __init__(self, max_epochs=100, batch_size=512, learning_rate=.001, k_softmaxes=3, dropout_prob=.4, n_hidden_units=1000, non_linearity='elu'):
         super(DanGuesser, self).__init__()
         guesser_conf = conf['guessers']['Dan']
         self.use_wiki = guesser_conf['use_wiki']
@@ -106,6 +112,10 @@ class DanGuesser(AbstractGuesser):
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
         self.batch_size = batch_size
+        self.k_softmaxes = k_softmaxes
+        self.dropout_prob = dropout_prob
+        self.n_hidden_units = n_hidden_units
+        self.non_linearity = non_linearity
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
@@ -206,19 +216,36 @@ class DanGuesser(AbstractGuesser):
             self.batch_size, x_test, y_test, truncate=False)
 
         self.vocab_size = embeddings.shape[0]
-        self.model = DanModel(self.vocab_size, self.n_classes)
+        self.model = DanModel(
+            self.vocab_size, self.n_classes,
+            dropout_prob=self.dropout_prob, k_softmaxes=self.k_softmaxes, n_hidden_units=self.n_hidden_units,
+            non_linearity=self.non_linearity
+        )
+        log.info(f'Parameters:\n{pformat(self.parameters())}')
+        log.info(f'Torch Model:\n{self.model}')
         self.model.init_weights(initial_embeddings=embeddings)
         if CUDA:
             self.model = self.model.cuda()
 
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.NLLLoss()
+        # self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
+        tb_experiment = ' '.join(f'{param}={value}' for param, value in [
+            ('model', 'dan'),
+            ('n_hidden_units', self.n_hidden_units),
+            ('dropout_prob', self.dropout_prob),
+            ('k_softmaxes', self.k_softmaxes),
+            ('non_linearity', self.non_linearity),
+            ('learning_rate', self.learning_rate),
+            ('batch_size', self.batch_size)
+        ])
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_loss')
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_loss'),
+            Tensorboard(tb_experiment)
         ])
 
         log.info('Starting training...')
@@ -270,6 +297,7 @@ class DanGuesser(AbstractGuesser):
             batch_loss = self.criterion(out, t_y_batch)
             if not evaluate:
                 batch_loss.backward()
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 5)
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)
@@ -295,8 +323,28 @@ class DanGuesser(AbstractGuesser):
                 'learning_rate': self.learning_rate,
                 'use_wiki': self.use_wiki,
                 'use_qb': self.use_qb,
-                'vocab_size': self.vocab_size
+                'vocab_size': self.vocab_size,
+                'n_hidden_units': self.n_hidden_units,
+                'dropout_prob': self.dropout_prob,
+                'k_softmaxes': self.k_softmaxes,
+                'non_linearity': self.non_linearity
             }, f)
+
+
+    def parameters(self):
+        return {
+            'n_classes': self.n_classes,
+            'max_epochs': self.max_epochs,
+            'batch_size': self.batch_size,
+            'learning_rate': self.learning_rate,
+            'use_wiki': self.use_wiki,
+            'use_qb': self.use_qb,
+            'vocab_size': self.vocab_size,
+            'n_hidden_units': self.n_hidden_units,
+            'dropout_prob': self.dropout_prob,
+            'k_softmaxes': self.k_softmaxes,
+            'non_linearity': self.non_linearity
+        }
 
     @classmethod
     def load(cls, directory: str):
@@ -316,7 +364,15 @@ class DanGuesser(AbstractGuesser):
         guesser.use_wiki = params['use_wiki']
         guesser.use_qb = params['use_qb']
         guesser.vocab_size = params['vocab_size']
-        guesser.model = DanModel(guesser.vocab_size, guesser.n_classes)
+        guesser.dropout_prob = params['dropout_prob']
+        guesser.k_softmaxes = params['k_softmaxes']
+        guesser.n_hidden_units = params['n_hidden_units']
+        guesser.non_linearity = params['non_linearity']
+        guesser.model = DanModel(
+            guesser.vocab_size, guesser.n_classes,
+            n_hidden_units=guesser.n_hidden_units, k_softmaxes=guesser.k_softmaxes, dropout_prob=guesser.dropout_prob,
+            non_linearity=guesser.non_linearity
+        )
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage
         ))
@@ -329,7 +385,7 @@ class DanGuesser(AbstractGuesser):
 
 class DanModel(nn.Module):
     def __init__(self, vocab_size, n_classes,
-                 embedding_dim=300, dropout_prob=.3,
+                 embedding_dim=300, dropout_prob=.4, k_softmaxes=2,
                  n_hidden_layers=1, n_hidden_units=1000, non_linearity='elu'):
         super(DanModel, self).__init__()
         self.n_hidden_layers = 1
@@ -347,32 +403,28 @@ class DanModel(nn.Module):
         self.vocab_size = vocab_size
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
+        self.k_softmaxes = k_softmaxes
 
         self.dropout = nn.Dropout(dropout_prob)
         self.embeddings = nn.EmbeddingBag(vocab_size, embedding_dim)
 
-        layers = []
-        for i in range(n_hidden_layers):
-            if i == 0:
-                input_dim = embedding_dim
-            else:
-                input_dim = n_hidden_units
 
-            layers.extend([
-                nn.Linear(input_dim, n_hidden_units),
-                nn.BatchNorm1d(n_hidden_units),
-                self._non_linearity(),
-                nn.Dropout(dropout_prob),
-            ])
+        self.mixer = nn.Sequential(
+            nn.Linear(embedding_dim, k_softmaxes * n_hidden_units),
+            nn.BatchNorm1d(k_softmaxes * n_hidden_units),
+            self._non_linearity(),
+            nn.Dropout(dropout_prob)
+        )
 
-        layers.extend([
+        self.prior = nn.Sequential(
+            nn.Linear(embedding_dim, k_softmaxes),
+            nn.BatchNorm1d(k_softmaxes)
+        )
+
+        self.classifier = nn.Sequential(
             nn.Linear(n_hidden_units, n_classes),
             nn.BatchNorm1d(n_classes),
-            nn.Dropout(dropout_prob)
-        ])
-        self.layers = nn.Sequential(*layers)
-
-        self.init_weights()
+        )
 
     def init_weights(self, initial_embeddings=None):
         if initial_embeddings is not None:
@@ -380,4 +432,14 @@ class DanModel(nn.Module):
 
     def forward(self, input_: Variable, offsets: Variable):
         avg_embeddings = self.dropout(self.embeddings(input_.view(-1), offsets))
-        return self.layers(avg_embeddings)
+        # avg_embeddings = self.embeddings(input_.view(-1), offsets))
+        mixed_hidden = self.mixer(avg_embeddings)
+        parts = torch.chunk(mixed_hidden, self.k_softmaxes, dim=1)
+        prior = F.softmax(self.prior(avg_embeddings)).view(-1, self.k_softmaxes, 1)
+        results = []
+        for part in parts:
+            results.append(F.log_softmax(self.classifier(part)))
+        result = torch.cat(results, dim=1).view(-1, self.k_softmaxes, self.n_classes)
+        result = torch.log(prior) + result
+        result = torch.log(torch.sum(torch.exp(result), 1))
+        return result

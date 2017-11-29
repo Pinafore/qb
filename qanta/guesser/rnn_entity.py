@@ -28,6 +28,9 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.filtered_wikipedia import (
+    FilteredWikipediaDataset, compute_ans_distribution, compute_threshold_distribution
+)
 from qanta.guesser.nn import compute_n_classes, create_embeddings
 from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
@@ -41,6 +44,7 @@ log = logging.get(__name__)
 PT_RNN_ENTITY_WE_TMP = '/tmp/qanta/deep/pt_rnn_entity_we.pickle'
 PT_RNN_ENTITY_WE = 'pt_rnn_entity_we.pickle'
 UNK = 'UNK'
+EOS = 'EOS'
 CUDA = torch.cuda.is_available()
 
 LOWER_TO_UPPER = dict(zip(string.ascii_lowercase, string.ascii_uppercase))
@@ -90,9 +94,11 @@ for s in pycountry.subdivisions.get(country_code='US'):
 NN_TAGS = {'NN', 'NNP', 'NNS'}
 SKIP_PUNCTATION = {'HYPH', 'POS'}
 SKIP_TAGS = NN_TAGS | SKIP_PUNCTATION
+PRONOUNS = {'they', 'it', 'he', 'she'}
+PREPOSITION_POS = {'ADP', 'ADV'}
 
 
-def extract_mentions(tokens):
+def extract_this_mentions(tokens):
     begin = None
     mention_spans = []
     i = 0
@@ -115,6 +121,26 @@ def extract_mentions(tokens):
         i += 1
     return mention_spans
 
+
+def extract_pronoun_mentions(doc):
+    mentions = set()
+    if len(doc) == 0:
+        return mentions
+    for sent in doc.sents:
+        is_start_of_sentence = True
+        is_phrase_span = False
+        for t in sent:
+            if is_start_of_sentence and not is_phrase_span and t.pos_ in PREPOSITION_POS:
+                is_phrase_span = True
+            if is_start_of_sentence and t.lower_ in PRONOUNS:
+                mentions.add(t.i)
+                is_start_of_sentence = False
+            elif is_phrase_span and t.text == ',':
+                is_phrase_span = False
+                is_start_of_sentence = True
+            else:
+                is_start_of_sentence = False
+    return mentions
 
 def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
     n_tokens = len(tokens)
@@ -154,15 +180,10 @@ def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
                 vocab.add('NO_MENTION')
             rel_position_sequence.append('NO_MENTION')
 
+    # This is for the EOS token
+    rel_position_sequence.append('NO_MENTION')
+
     return rel_position_sequence
-
-
-def clean_sentence(sent):
-    return capitalize(re.sub(re_pattern, '', sent.strip(), flags=re.IGNORECASE))
-
-
-def custom_spacy_pipeline(nlp):
-    return nlp.tagger, nlp.entity
 
 
 class MultiVocab:
@@ -186,6 +207,13 @@ class MultiVocab:
             self.ent_type = set()
         else:
             self.ent_type = ent_type_vocab
+
+
+def clean_question(text):
+    return re.sub(
+        '\s+', ' ',
+        re.sub(r'[~\*\(\)]|--', ' ', text)
+    ).strip()
 
 
 def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class_to_i=None, i_to_class=None):
@@ -219,7 +247,7 @@ def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class
     bar = progressbar.ProgressBar()
     x_train = []
     for x in bar(raw_x_train):
-        x_train.append(nlp(x))
+        x_train.append(nlp(clean_question(x)))
     for doc in x_train:
         for word in doc:
             vocab.word.add(word.lower_)
@@ -237,7 +265,7 @@ def preprocess_dataset(nlp, data: TrainingData, train_size=.9, vocab=None, class
     bar = progressbar.ProgressBar()
     x_test = []
     for x in bar(raw_x_test):
-        x_test.append(nlp(x))
+        x_test.append(nlp(clean_question(x)))
 
     return x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class
 
@@ -278,6 +306,11 @@ def convert_tokens_to_representations(tokens: List[Token], embedding_lookup: Mul
         else:
             ent_type_indices.append(embedding_lookup.ent_type[UNK])
 
+    w_indices.append(embedding_lookup.word[EOS])
+    pos_indices.append(embedding_lookup.pos[EOS])
+    iob_indices.append(embedding_lookup.iob[EOS])
+    ent_type_indices.append(embedding_lookup.ent_type[EOS])
+
     return w_indices, pos_indices, iob_indices, ent_type_indices
 
 
@@ -300,23 +333,26 @@ def load_multi_embeddings(
 
             pos_lookup = {
                 'MASK': 0,
-                UNK: 1
+                UNK: 1,
+                'EOS': 2
             }
-            for i, term in enumerate(multi_vocab.pos, start=2):
+            for i, term in enumerate(multi_vocab.pos, start=3):
                 pos_lookup[term] = i
 
             iob_lookup = {
                 'MASK': 0,
-                UNK: 1
+                UNK: 1,
+                'EOS': 2,
             }
-            for i, term in enumerate(multi_vocab.iob, start=2):
+            for i, term in enumerate(multi_vocab.iob, start=3):
                 iob_lookup[term] = i
 
             ent_type_lookup = {
                 'MASK': 0,
-                UNK: 1
+                UNK: 1,
+                'EOS': 2
             }
-            for i, term in enumerate(multi_vocab.ent_type, start=2):
+            for i, term in enumerate(multi_vocab.ent_type, start=3):
                 ent_type_lookup[term] = i
 
             multi_embedding_lookup = MultiEmbeddingLookup(word_lookup, pos_lookup, iob_lookup, ent_type_lookup)
@@ -397,7 +433,10 @@ class BatchedDataset:
             w_indicies, pos_indices, iob_indices, ent_type_indices = convert_tokens_to_representations(
                 q, multi_embedding_lookup
             )
-            mention_spans = extract_mentions(q)
+            this_mention_spans = extract_this_mentions(q)
+            pronoun_mention_spans = [(i, i) for i in extract_pronoun_mentions(q)]
+            mention_spans = this_mention_spans + pronoun_mention_spans
+
             mention_tags = mentions_to_sequence(
                 mention_spans, q, self.rel_position_vocab if train else None
             )
@@ -550,10 +589,10 @@ class RnnEntityGuesser(AbstractGuesser):
         self.max_grad_norm = guesser_conf['max_grad_norm']
         self.rnn_type = guesser_conf['rnn_type']
         self.dropout_prob = guesser_conf['dropout_prob']
-        self.recurrent_dropout_prob = guesser_conf['recurrent_dropout_prob']
         self.bidirectional = guesser_conf['bidirectional']
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.use_wiki = guesser_conf['use_wiki']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -578,16 +617,16 @@ class RnnEntityGuesser(AbstractGuesser):
             'max_grad_norm': self.max_grad_norm,
             'rnn_type': self.rnn_type,
             'dropout_prob': self.dropout_prob,
-            'recurrent_dropout_prob': self.recurrent_dropout_prob,
             'bidirectional': self.bidirectional,
             'n_hidden_units': self.n_hidden_units,
-            'n_hidden_layers': self.n_hidden_layers
+            'n_hidden_layers': self.n_hidden_layers,
+            'use_wiki': self.use_wiki
         }
 
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]):
-        x_test_tokens = [self.nlp(x) for x in questions]
+        x_test_tokens = [self.nlp(clean_question(x)) for x in questions]
         y_test = np.zeros(len(questions))
         dataset = BatchedDataset(
             self.batch_size, self.multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
@@ -630,10 +669,23 @@ class RnnEntityGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData):
         log.info('Preprocessing the dataset')
-        self.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
+        self.nlp = spacy.load('en')
         x_train_tokens, y_train, x_test_tokens, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             self.nlp, training_data
         )
+
+
+        if self.use_wiki:
+            answer_dist = compute_ans_distribution(training_data)
+            median_sentences = np.median(np.array(list(answer_dist.values())))
+            add_dist = compute_threshold_distribution(answer_dist, median_sentences)
+            wiki_dataset = FilteredWikipediaDataset(add_dist=add_dist)
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_train_y, *_ = preprocess_dataset(
+                self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+            x_train_tokens.extend(w_x_train_text)
+            y_train.extend(w_train_y)
 
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -671,7 +723,7 @@ class RnnEntityGuesser(AbstractGuesser):
             len(self.rel_position_lookup),
             self.n_classes,
             enabled_features=self.features,
-            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob, recurrent_dropout_prob=self.recurrent_dropout_prob,
+            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob,
             bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers
         )
         log.info(f'Model:\n{repr(self.model)}')
@@ -679,13 +731,13 @@ class RnnEntityGuesser(AbstractGuesser):
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, 'max', patience=5, verbose=True)
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc')
-            #Tensorboard('rnn_entity', log_dir='tb-logs')
+            EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_loss'),
+            Tensorboard('rnn_entity')
         ])
 
         log.info('Starting training...')
@@ -705,7 +757,7 @@ class RnnEntityGuesser(AbstractGuesser):
                 log.info(' '.join(reasons))
                 break
             else:
-                self.scheduler.step(test_acc)
+                self.scheduler.step(test_loss)
 
         log.info('Done training')
 
@@ -768,10 +820,10 @@ class RnnEntityGuesser(AbstractGuesser):
                 'rel_position_vocab': self.rel_position_vocab,
                 'rnn_type': self.rnn_type,
                 'dropout_prob': self.dropout_prob,
-                'recurrent_dropout_prob': self.recurrent_dropout_prob,
                 'bidirectional': self.bidirectional,
                 'n_hidden_units': self.n_hidden_units,
-                'n_hidden_layers': self.n_hidden_layers
+                'n_hidden_layers': self.n_hidden_layers,
+                'use_wiki': self.use_wiki
             }, f)
 
     @classmethod
@@ -791,16 +843,16 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.learning_rate = params['learning_rate']
         guesser.max_grad_norm = params['max_grad_norm']
         guesser.model = torch.load(os.path.join(directory, 'rnn_entity.pt'))
-        guesser.nlp = spacy.load('en', create_pipeline=custom_spacy_pipeline)
+        guesser.nlp = spacy.load('en')
         guesser.features = params['features']
         guesser.rel_position_vocab = params['rel_position_vocab']
         guesser.rel_position_lookup = params['rel_position_lookup']
         guesser.rnn_type = params['rnn_type']
         guesser.dropout_prob = params['dropout_prob']
-        guesser.recurrent_dropout_prob = params['recurrent_dropout_prob']
         guesser.bidirectional = params['bidirectional']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
+        guesser.use_wiki = params['use_wiki']
         return  guesser
 
     @classmethod
@@ -813,7 +865,7 @@ class RnnEntityGuesser(AbstractGuesser):
 
 class RnnEntityModel(nn.Module):
     def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
-                 n_classes, embedding_dim=300, dropout_prob=.3, recurrent_dropout_prob=.3,
+                 n_classes, embedding_dim=300, dropout_prob=.3,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
                  rnn_output='last_hidden', enabled_features={'word', 'pos', 'iob', 'type', 'mention'}):
         super(RnnEntityModel, self).__init__()
@@ -824,7 +876,6 @@ class RnnEntityModel(nn.Module):
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
         self.dropout_prob = dropout_prob
-        self.recurrent_dropout_prob = recurrent_dropout_prob
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_units = n_hidden_units
         self.bidirectional = bidirectional
@@ -872,10 +923,10 @@ class RnnEntityModel(nn.Module):
         else:
             raise ValueError('Unrecognized rnn layer type')
         self.rnn = rnn_layer(self.feature_dimension, n_hidden_units, n_hidden_layers,
-                           dropout=recurrent_dropout_prob, batch_first=True, bidirectional=bidirectional)
+                           dropout=dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
         self.classification_layer = nn.Sequential(
-            nn.Linear(n_hidden_units * self.num_directions * self.n_hidden_layers, n_classes),
+            nn.Linear(n_hidden_units * self.num_directions, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(dropout_prob)
         )
@@ -927,7 +978,13 @@ class RnnEntityModel(nn.Module):
             else:
                 final_hidden = hidden
 
-            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(word_idxs.data.shape[0], -1)
+            batch_size = word_idxs.data.shape[0]
+            final_hidden = final_hidden.view(
+                self.n_hidden_layers, self.num_directions, batch_size, self.n_hidden_units
+            )[-1].view(self.num_directions, batch_size, self.n_hidden_units)
+            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(
+                word_idxs.data.shape[0], self.num_directions * self.n_hidden_units
+            )
 
             return self.classification_layer(h_reshaped), hidden
         elif self.rnn_output == 'max_pool':
@@ -935,11 +992,10 @@ class RnnEntityModel(nn.Module):
             actual_batch_size = word_idxs.data.shape[0]
             pooled = []
             for i in range(actual_batch_size):
-                max_pooled = padded_output[i][:padded_lengths[i]].mean(0)
-                #max_pooled = padded_output[i][:padded_lengths[i]].max(0)[0]
+                #max_pooled = padded_output[i][:padded_lengths[i]].mean(0)
+                max_pooled = padded_output[i][:padded_lengths[i]].max(0)[0]
                 pooled.append(max_pooled)
             pooled = torch.cat(pooled).view(actual_batch_size, -1)
             return self.classification_layer(pooled), hidden
         else:
             raise ValueError('Unrecognized rnn_output option')
-
