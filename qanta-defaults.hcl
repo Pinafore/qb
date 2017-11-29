@@ -81,6 +81,7 @@ guessers "EntityRNN" {
   bidirectional = true
   n_hidden_units = 1000
   n_hidden_layers = 1
+  use_wiki = false
 }
 
 guessers "ESWikidata" {
