@@ -75,12 +75,21 @@ guessers "EntityRNN" {
   learning_rate = 0.001
   max_grad_norm = 5
   rnn_type = "gru"
-  dropout_prob = 0.3
+  dropout_prob = 0.5
   recurrent_dropout_prob = 0.3
   bidirectional = true
   n_hidden_units = 1000
   n_hidden_layers = 1
   use_wiki = false
+  use_triviaqa = false
+  sm_dropout_prob = .3
+  sm_dropout_before_linear = false
+}
+
+guessers "Bcn" {
+    class = "qanta.guesser.bcn.BcnGuesser"
+    luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+    enabled = false
 }
 
 guessers "ESWikidata" {
