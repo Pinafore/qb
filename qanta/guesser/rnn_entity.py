@@ -595,6 +595,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.use_triviaqa = guesser_conf['use_triviaqa']
         self.sm_dropout_prob = guesser_conf['sm_dropout_prob']
         self.sm_dropout_before_linear = guesser_conf['sm_dropout_before_linear']
+        self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -625,7 +626,8 @@ class RnnEntityGuesser(AbstractGuesser):
             'use_wiki': self.use_wiki,
             'use_triviaqa': self.use_triviaqa,
             'sm_dropout_prob': self.sm_dropout_prob,
-            'sm_dropout_before_linear': self.sm_dropout_before_linear
+            'sm_dropout_before_linear': self.sm_dropout_before_linear,
+            'n_wiki_paragraphs': self.n_wiki_paragraphs
         }
 
     def guess(self,
@@ -680,7 +682,7 @@ class RnnEntityGuesser(AbstractGuesser):
         )
 
         if self.use_wiki:
-            wiki_dataset = WikipediaDataset(set(i_to_class))
+            wiki_dataset = WikipediaDataset(set(i_to_class), n_paragraphs=self.n_wiki_paragraphs)
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_train_y, *_ = preprocess_dataset(
                 self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
