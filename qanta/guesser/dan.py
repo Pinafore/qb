@@ -15,7 +15,7 @@ from qanta import logging
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
-from qanta.datasets.filtered_wikipedia import FilteredWikipediaDataset
+from qanta.datasets.wikipedia import WikipediaDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
@@ -159,7 +159,7 @@ class DanGuesser(AbstractGuesser):
                 training_data
             )
             if self.use_wiki:
-                wiki_dataset = FilteredWikipediaDataset()
+                wiki_dataset = WikipediaDataset(set(training_data[1]))
                 wiki_train_data = wiki_dataset.training_data()
                 w_x_train_text, w_train_y, _, _, _, _, _ = preprocess_dataset(
                     wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
@@ -168,7 +168,7 @@ class DanGuesser(AbstractGuesser):
                 y_train.extend(w_train_y)
         else:
             if self.use_wiki:
-                wiki_dataset = FilteredWikipediaDataset()
+                wiki_dataset = WikipediaDataset(set(training_data[1]))
                 wiki_train_data = wiki_dataset.training_data()
                 x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
                     wiki_train_data
