@@ -354,7 +354,7 @@ class RnnGuesser(AbstractGuesser):
         guesser.n_hidden_layers = params['n_hidden_layers']
 
         guesser.model = torch.load(os.path.join(directory, 'rnn.pt'))
-        return  guesser
+        return guesser
 
     @classmethod
     def targets(cls):

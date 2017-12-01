@@ -28,9 +28,8 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
-from qanta.datasets.filtered_wikipedia import (
-    FilteredWikipediaDataset, compute_ans_distribution, compute_threshold_distribution
-)
+from qanta.datasets.wikipedia import WikipediaDataset
+from qanta.datasets.triviaqa import TriviaQADataset
 from qanta.guesser.nn import compute_n_classes, create_embeddings
 from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
@@ -593,6 +592,9 @@ class RnnEntityGuesser(AbstractGuesser):
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.use_wiki = guesser_conf['use_wiki']
+        self.use_triviaqa = guesser_conf['use_triviaqa']
+        self.sm_dropout_prob = guesser_conf['sm_dropout_prob']
+        self.sm_dropout_before_linear = guesser_conf['sm_dropout_before_linear']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -620,7 +622,10 @@ class RnnEntityGuesser(AbstractGuesser):
             'bidirectional': self.bidirectional,
             'n_hidden_units': self.n_hidden_units,
             'n_hidden_layers': self.n_hidden_layers,
-            'use_wiki': self.use_wiki
+            'use_wiki': self.use_wiki,
+            'use_triviaqa': self.use_triviaqa,
+            'sm_dropout_prob': self.sm_dropout_prob,
+            'sm_dropout_before_linear': self.sm_dropout_before_linear
         }
 
     def guess(self,
@@ -674,18 +679,25 @@ class RnnEntityGuesser(AbstractGuesser):
             self.nlp, training_data
         )
 
-
         if self.use_wiki:
-            answer_dist = compute_ans_distribution(training_data)
-            median_sentences = np.median(np.array(list(answer_dist.values())))
-            add_dist = compute_threshold_distribution(answer_dist, median_sentences)
-            wiki_dataset = FilteredWikipediaDataset(add_dist=add_dist)
+            wiki_dataset = WikipediaDataset(set(i_to_class))
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_train_y, *_ = preprocess_dataset(
                 self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
             )
+            log.info(f'Adding {len(w_x_train_text)} Wikipedia sentences as training data')
             x_train_tokens.extend(w_x_train_text)
             y_train.extend(w_train_y)
+
+        if self.use_triviaqa:
+            tqa_dataset = TriviaQADataset(set(i_to_class))
+            tqa_train_data = tqa_dataset.training_data()
+            tqa_x_train_text, tqa_train_y, *_ = preprocess_dataset(
+                self.nlp, tqa_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+            log.info(f'Adding {len(tqa_x_train_text)} TriviaQA examples as training data')
+            x_train_tokens.extend(tqa_x_train_text)
+            y_train.extend(tqa_train_y)
 
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -724,7 +736,8 @@ class RnnEntityGuesser(AbstractGuesser):
             self.n_classes,
             enabled_features=self.features,
             rnn_type=self.rnn_type, dropout_prob=self.dropout_prob,
-            bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers
+            bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
+            sm_dropout_before_linear=self.sm_dropout_before_linear, sm_dropout_prob=self.sm_dropout_prob
         )
         log.info(f'Model:\n{repr(self.model)}')
         self.model.init_weights(word_embeddings=word_embeddings)
@@ -733,11 +746,25 @@ class RnnEntityGuesser(AbstractGuesser):
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
 
+        tb_experiment = ' '.join(f'{param}={value}' for param, value in [
+            ('model', 'rnn_entity'),
+            ('features', '-'.join(sorted(self.features))),
+            ('dropout', self.dropout_prob),
+            ('sm_dropout', self.sm_dropout_prob),
+            ('sm_drop_before_linear', self.sm_dropout_before_linear),
+            ('lr', self.learning_rate),
+            ('hu', self.n_hidden_units),
+            ('n_layers', self.n_hidden_layers),
+            ('rnn', self.rnn_type),
+            ('bidirectional', self.bidirectional),
+            ('use_wiki', self.use_wiki)
+        ])
+
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_loss'),
-            Tensorboard('rnn_entity')
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc'),
+            Tensorboard(tb_experiment)
         ])
 
         log.info('Starting training...')
@@ -770,7 +797,7 @@ class RnnEntityGuesser(AbstractGuesser):
         batch_accuracies = []
         batch_losses = []
         epoch_start = time.time()
-        hidden = self.model.init_hidden(self.batch_size)
+        hidden_init = self.model.init_hidden(self.batch_size)
         for batch in batch_order:
             t_x_w_batch = Variable(batched_dataset.t_x_w_batches[batch], volatile=evaluate)
             t_x_pos_batch = Variable(batched_dataset.t_x_pos_batches[batch], volatile=evaluate)
@@ -781,10 +808,9 @@ class RnnEntityGuesser(AbstractGuesser):
             t_y_batch = Variable(batched_dataset.t_y_batches[batch], volatile=evaluate)
 
             self.model.zero_grad()
-            hidden = repackage_hidden(hidden, reset=True)
             out, hidden = self.model(
                 t_x_w_batch, t_x_pos_batch, t_x_iob_batch, t_x_type_batch, t_x_mention_batch,
-                length_batch, hidden
+                length_batch, hidden_init
             )
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, t_y_batch).float()).data[0]
@@ -823,7 +849,9 @@ class RnnEntityGuesser(AbstractGuesser):
                 'bidirectional': self.bidirectional,
                 'n_hidden_units': self.n_hidden_units,
                 'n_hidden_layers': self.n_hidden_layers,
-                'use_wiki': self.use_wiki
+                'use_wiki': self.use_wiki,
+                'sm_dropout_prob': self.sm_dropout_prob,
+                'sm_dropout_before_linear': self.sm_dropout_before_linear
             }, f)
 
     @classmethod
@@ -853,6 +881,8 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.use_wiki = params['use_wiki']
+        guesser.sm_dropout_prob = params['sm_dropout_prob']
+        guesser.sm_dropout_before_linear = params['sm_dropout_before_linear']
         return  guesser
 
     @classmethod
@@ -865,9 +895,9 @@ class RnnEntityGuesser(AbstractGuesser):
 
 class RnnEntityModel(nn.Module):
     def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
-                 n_classes, embedding_dim=300, dropout_prob=.3,
+                 n_classes, embedding_dim=300, dropout_prob=.5, sm_dropout_prob=.3, sm_dropout_before_linear=True,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
-                 rnn_output='last_hidden', enabled_features={'word', 'pos', 'iob', 'type', 'mention'}):
+                 enabled_features={'word', 'pos', 'iob', 'type', 'mention'}):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
         self.pos_vocab_size = pos_vocab_size
@@ -876,11 +906,12 @@ class RnnEntityModel(nn.Module):
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
         self.dropout_prob = dropout_prob
+        self.sm_dropout_prob = sm_dropout_prob
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_units = n_hidden_units
         self.bidirectional = bidirectional
-        self.rnn_output = rnn_output
         self.enabled_features = enabled_features
+        self.sm_dropout_before_linear = sm_dropout_before_linear
 
         self.dropout = nn.Dropout(dropout_prob)
         self.feature_dimension = 0
@@ -922,14 +953,22 @@ class RnnEntityModel(nn.Module):
             rnn_layer = nn.GRU
         else:
             raise ValueError('Unrecognized rnn layer type')
+
         self.rnn = rnn_layer(self.feature_dimension, n_hidden_units, n_hidden_layers,
                            dropout=dropout_prob, batch_first=True, bidirectional=bidirectional)
         self.num_directions = int(bidirectional) + 1
-        self.classification_layer = nn.Sequential(
-            nn.Linear(n_hidden_units * self.num_directions, n_classes),
-            nn.BatchNorm1d(n_classes),
-            nn.Dropout(dropout_prob)
-        )
+        if sm_dropout_before_linear:
+            self.classification_layer = nn.Sequential(
+                nn.Dropout(sm_dropout_prob),
+                nn.Linear(n_hidden_units * self.num_directions, n_classes),
+                nn.BatchNorm1d(n_classes),
+            )
+        else:
+            self.classification_layer = nn.Sequential(
+                nn.Linear(n_hidden_units * self.num_directions, n_classes),
+                nn.BatchNorm1d(n_classes),
+                nn.Dropout(sm_dropout_prob)
+            )
 
     def init_weights(self, word_embeddings=None):
         if word_embeddings is not None:
@@ -972,30 +1011,18 @@ class RnnEntityModel(nn.Module):
         packed_input = nn.utils.rnn.pack_padded_sequence(features, lengths, batch_first=True)
 
         output, hidden = self.rnn(packed_input, hidden)
-        if self.rnn_output == 'last_hidden':
-            if type(hidden) == tuple:
-                final_hidden = hidden[0]
-            else:
-                final_hidden = hidden
 
-            batch_size = word_idxs.data.shape[0]
-            final_hidden = final_hidden.view(
-                self.n_hidden_layers, self.num_directions, batch_size, self.n_hidden_units
-            )[-1].view(self.num_directions, batch_size, self.n_hidden_units)
-            h_reshaped = final_hidden.transpose(0, 1).contiguous().view(
-                word_idxs.data.shape[0], self.num_directions * self.n_hidden_units
-            )
-
-            return self.classification_layer(h_reshaped), hidden
-        elif self.rnn_output == 'max_pool':
-            padded_output, padded_lengths = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-            actual_batch_size = word_idxs.data.shape[0]
-            pooled = []
-            for i in range(actual_batch_size):
-                #max_pooled = padded_output[i][:padded_lengths[i]].mean(0)
-                max_pooled = padded_output[i][:padded_lengths[i]].max(0)[0]
-                pooled.append(max_pooled)
-            pooled = torch.cat(pooled).view(actual_batch_size, -1)
-            return self.classification_layer(pooled), hidden
+        if type(hidden) == tuple:
+            final_hidden = hidden[0]
         else:
-            raise ValueError('Unrecognized rnn_output option')
+            final_hidden = hidden
+
+        batch_size = word_idxs.data.shape[0]
+        final_hidden = final_hidden.view(
+            self.n_hidden_layers, self.num_directions, batch_size, self.n_hidden_units
+        )[-1].view(self.num_directions, batch_size, self.n_hidden_units)
+        h_reshaped = final_hidden.transpose(0, 1).contiguous().view(
+            word_idxs.data.shape[0], self.num_directions * self.n_hidden_units
+        )
+
+        return self.classification_layer(h_reshaped), hidden
