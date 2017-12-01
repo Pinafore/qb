@@ -746,7 +746,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.model.cuda()
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
         tb_experiment = ' '.join(f'{param}={value}' for param, value in [
             ('model', 'rnn_entity'),
@@ -759,7 +759,9 @@ class RnnEntityGuesser(AbstractGuesser):
             ('n_layers', self.n_hidden_layers),
             ('rnn', self.rnn_type),
             ('bidirectional', self.bidirectional),
-            ('use_wiki', self.use_wiki)
+            ('use_wiki', self.use_wiki),
+            ('use_triviaqa', self.use_triviaqa),
+            ('n_wiki_paragraphs', self.n_wiki_paragraphs)
         ])
 
         manager = TrainingManager([
@@ -786,7 +788,7 @@ class RnnEntityGuesser(AbstractGuesser):
                 log.info(' '.join(reasons))
                 break
             else:
-                self.scheduler.step(test_loss)
+                self.scheduler.step(test_acc)
 
         log.info('Done training')
 
@@ -852,6 +854,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'n_hidden_units': self.n_hidden_units,
                 'n_hidden_layers': self.n_hidden_layers,
                 'use_wiki': self.use_wiki,
+                'use_triviaqa': self.use_triviaqa,
+                'n_wiki_paragraphs': self.n_wiki_paragraphs,
                 'sm_dropout_prob': self.sm_dropout_prob,
                 'sm_dropout_before_linear': self.sm_dropout_before_linear
             }, f)
@@ -883,6 +887,8 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.use_wiki = params['use_wiki']
+        guesser.use_triviaqa = params['use_triviaqa']
+        guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
         guesser.sm_dropout_prob = params['sm_dropout_prob']
         guesser.sm_dropout_before_linear = params['sm_dropout_before_linear']
         return  guesser
