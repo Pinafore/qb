@@ -82,6 +82,7 @@ guessers "EntityRNN" {
   n_hidden_layers = 1
   use_wiki = false
   use_triviaqa = false
+  n_wiki_paragraphs = 3
   sm_dropout_prob = .3
   sm_dropout_before_linear = false
 }
