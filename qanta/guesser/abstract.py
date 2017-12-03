@@ -365,6 +365,13 @@ class AbstractGuesser(metaclass=ABCMeta):
         correct_by_n_count_plot('/tmp/dev_correct_by_count.png', dev_counts, 'Guesser Dev')
         n_train_vs_fold_plot('/tmp/n_train_vs_dev.png', dev_counts, 'Guesser Dev')
 
+        with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
+            pickle.dump({
+                'dev_accuracy': dev_summary_accuracy,
+                'guesser_name': self.display_name(),
+                'guesser_params': params
+            }, f)
+
         output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
         report = ReportGenerator('guesser.md')
         report.create({
@@ -395,12 +402,6 @@ class AbstractGuesser(metaclass=ABCMeta):
             'dev_correct_by_count_plot': '/tmp/dev_correct_by_count.png',
             'n_train_vs_dev_plot': '/tmp/n_train_vs_dev.png',
         }, output)
-        with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
-            pickle.dump({
-                'dev_accuracy': dev_summary_accuracy,
-                'guesser_name': self.display_name(),
-                'guesser_params': params
-            }, f)
 
     @staticmethod
     def list_enabled_guessers() -> List[GuesserSpec]:

@@ -13,7 +13,6 @@ use_pretrained_embeddings = true
 # performing a remote call to Wikipedia if a page doesn't exist
 cached_wikipedia_remote_fallback = false
 
-wiki_data_frac = 0.0
 
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
@@ -47,23 +46,6 @@ guessers "Dan" {
   use_qb = true
 }
 
-guessers "Rnn" {
-  class = "qanta.guesser.rnn.RnnGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-
-  use_wiki = false
-  max_epochs = 100
-  batch_size = 256
-  learning_rate = 0.001
-  max_grad_norm = 5
-  rnn_type = "gru"
-  dropout_prob = 0.3
-  recurrent_dropout_prob = 0.3
-  bidirectional = true
-  n_hidden_units = 1000
-  n_hidden_layers = 1
-}
 
 guessers "EntityRNN" {
   class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
@@ -76,12 +58,22 @@ guessers "EntityRNN" {
   learning_rate = 0.001
   max_grad_norm = 5
   rnn_type = "gru"
-  dropout_prob = 0.3
+  dropout_prob = 0.5
   recurrent_dropout_prob = 0.3
   bidirectional = true
   n_hidden_units = 1000
   n_hidden_layers = 1
   use_wiki = false
+  use_triviaqa = false
+  n_wiki_paragraphs = 3
+  sm_dropout_prob = .3
+  sm_dropout_before_linear = false
+}
+
+guessers "Bcn" {
+    class = "qanta.guesser.bcn.BcnGuesser"
+    luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+    enabled = false
 }
 
 guessers "ESWikidata" {
@@ -92,25 +84,6 @@ guessers "ESWikidata" {
   n_cores = 20
   confidence_threshold = 0.7
   normalize_score_by_length = true
-}
-
-guessers "CNN" {
-  class = "qanta.guesser.cnn.CNNGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-  expand_we = true
-  n_filter_list = [10]
-  filter_sizes = [2, 3, 4]
-  nn_dropout_rate = 0.5
-  batch_size = 512
-  learning_rate = 0.001
-  max_n_epochs = 100
-  max_patience = 10
-  activation_function = "relu"
-  train_on_q_runs = false
-  train_on_full_q = false
-  decay_lr_on_plateau = false
-  max_len = 200
 }
 
 guessers "VowpalWabbit" {
