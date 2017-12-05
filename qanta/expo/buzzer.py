@@ -393,15 +393,15 @@ class Questions:
 
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
-        # for r in qfile:
-        #     self._questions[int(r["id"])][int(r["sent"])] = r["text"]
-        #     self._answers[int(r["id"])] = r["answer"].strip()
-        qbdb = QuizBowlDataset(1, guesser_train=True, buzzer_train=True)
-        questions = qbdb.questions_in_folds(folds=['expo'])
-        for r in questions:
-            for i in r.text:
-                self._questions[int(r.qnum)][int(i)] = r.text[i]
-            self._answers[int(r.qnum)] = '_'.join(r.page.split())
+        for r in qfile:
+            self._questions[int(r["id"])][int(r["sent"])] = r["text"]
+            self._answers[int(r["id"])] = '_'.join(r["answer"].strip().split())
+        # qbdb = QuizBowlDataset(1, guesser_train=True, buzzer_train=True)
+        # questions = qbdb.questions_in_folds(folds=['expo'])
+        # for r in questions:
+        #     for i in r.text:
+        #         self._questions[int(r.qnum)][int(i)] = r.text[i]
+        #     self._answers[int(r.qnum)] = '_'.join(r.page.split())
 
     def __iter__(self):
         for qnum in self._questions:
@@ -651,7 +651,8 @@ if __name__ == "__main__":
     human = 0
     computer = 0
     question_num = 0
-    question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
+    # question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
+    question_ids = list(questions._questions.keys())
 
     question_ids = [x for x in question_ids if x in buzzes]
 
