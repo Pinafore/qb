@@ -213,12 +213,12 @@ class DanGuesser(AbstractGuesser):
 
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_loss')
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
         ])
 
         log.info('Starting training...')
@@ -244,7 +244,7 @@ class DanGuesser(AbstractGuesser):
                 log.info(' '.join(reasons))
                 break
             else:
-                self.scheduler.step(test_loss)
+                self.scheduler.step(test_acc)
 
         log.info('Done training')
 
