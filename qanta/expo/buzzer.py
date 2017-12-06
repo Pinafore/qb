@@ -1,11 +1,16 @@
+import json
 import textwrap
 from collections import defaultdict, Counter, namedtuple
 import argparse
+import itertools
 from csv import DictReader
 from time import sleep
 import os
 
-from qanta.datasets.quiz_bowl import QuizBowlDataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
+from qanta.guesser.abstract import AbstractGuesser
+
+GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
 
 kSHOW_RIGHT = False
 kPAUSE = .25
@@ -337,25 +342,27 @@ Guess = namedtuple('Guess', 'page evidence final weight')
 
 class Buzzes:
     def __init__(self, buzz_file):
-        buzzfile = DictReader(open(buzz_file, 'r'))
+        buzzfile = DictReader(open(buzz_file, 'r'), delimiter='|')
 
         self._buzzes = defaultdict(dict)
         for r in buzzfile:
             question, sent, word = int(r["question"]), int(r["sentence"]), int(r["word"])
             if not (sent, word) in self._buzzes[question]:
                 self._buzzes[question][(sent, word)] = {}
+            evidence = json.loads(r['evidence'])
             if r['page'] in self._buzzes[question][(sent, word)]:
+                evidence.update(curr_guess.evidence)
                 curr_guess = self._buzzes[question][(sent, word)][r['page']]
                 new_guess = Guess(
                     curr_guess.page,
-                    curr_guess.evidence + ' ' + r['evidence'],
+                    evidence,
                     max(int(r['final']), curr_guess.final),
                     max(float(r['weight']), curr_guess.weight)
                 )
                 self._buzzes[question][(sent, word)][r['page']] = new_guess
             else:
                 self._buzzes[question][(sent, word)][r["page"]] = Guess(
-                    r["page"], r["evidence"], int(r["final"]), float(r["weight"])
+                    r["page"], evidence, int(r["final"]), float(r["weight"])
                 )
 
     def current_guesses(self, question, sent, word):
@@ -388,7 +395,13 @@ class Questions:
         self._answers = defaultdict(str)
         for r in qfile:
             self._questions[int(r["id"])][int(r["sent"])] = r["text"]
-            self._answers[int(r["id"])] = r["answer"].strip()
+            self._answers[int(r["id"])] = '_'.join(r["answer"].strip().split())
+        # qbdb = QuizBowlDataset(1, guesser_train=True, buzzer_train=True)
+        # questions = qbdb.questions_in_folds(folds=['expo'])
+        # for r in questions:
+        #     for i in r.text:
+        #         self._questions[int(r.qnum)][int(i)] = r.text[i]
+        #     self._answers[int(r.qnum)] = '_'.join(r.page.split())
 
     def __iter__(self):
         for qnum in self._questions:
@@ -399,12 +412,6 @@ class Questions:
 
     def answer(self, val):
         return self._answers[val]
-
-
-def select_features(evidence_str, allowed_features):
-    features = evidence_str.split()
-    included_features = [f for f in features if f in allowed_features]
-    return ' '.join(included_features)
 
 
 def format_display(display_num, question_text, sent, word, current_guesses,
@@ -421,42 +428,50 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     report += "Question %i: %i points\n%s\n%s\n%s\n\n" % \
         (display_num, points, sep, current_text, sep)
 
-    top_guesses = sorted(current_guesses,
-                         key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]
-    duplicated_feature_counter = Counter()
-    for g in top_guesses:
-        evidence = current_guesses[g].evidence.split()
-        for f in evidence:
-            duplicated_feature_counter[f] += 1
+    guesses = {k: [] for k in GUESSERS}
+    for x in current_guesses.values():
+        for guesser in GUESSERS:
+            if guesser in x.evidence:
+                guesses[guesser].append([x.page, x.weight, x.evidence[guesser]])
 
-    allowed_features = set()
-    for k, v in duplicated_feature_counter.items():
-        if v == 1:
-            allowed_features.add(k)
+    top_guesses = []
+    buzzer_scores = []
+    for guesser in GUESSERS:
+        _gs = sorted(guesses[guesser], key=lambda x: x[1],
+                reverse=True)[:guess_limit]
+        if len(_gs) > 0:
+            buzzer_score = _gs[0][2]['buzzer_score']
+            buzzer_score = str(buzzer_score)[:6]
+            buzzer_scores.append(buzzer_score)
+        else:
+            buzzer_scores.append('')
 
-    if False and len(top_guesses) > 0:
-        print(top_guesses)
-        print(allowed_features)
-        print(duplicated_feature_counter)
-        raise Exception()
-    for gg in top_guesses:
-        guess = current_guesses[gg]
-        if disable_features:
-            features = ''
-        else:
-            features = select_features(guess.evidence, allowed_features)[:100]
-        if guess.page == answer:
-            report += "%s\t%f\t%s\n" % (
-                "***CORRECT***",
-                guess.weight,
-                features
-            )
-        else:
-            report += "%s\t%f\t%s\n" % (
-                guess.page,
-                guess.weight,
-                features
-            )
+        gs = []
+        for x in _gs:
+            guess = x[0]
+            normalized_score = str(x[1])[:6]
+            unnormalized_score = str(x[2]['unnormalized_score'])[:6]
+            gs.append([guess, normalized_score, unnormalized_score])
+
+        while len(gs) < guess_limit:
+            gs.append(["", "", ""])
+        top_guesses.append(gs)
+
+    template = '|'.join("{:30}|{:10}|{:10}" for _ in GUESSERS) + '\n'
+    header = [[x[:17] + '  ' + buzzer_scores[i], 'normalized', 'unnormalized'] 
+            for i, x in enumerate(GUESSERS)]
+    header = list(itertools.chain(*header))
+    report += template.format(*header)
+
+    guesses = list(top_guesses)
+    for row in zip(*guesses):
+        for i in range(len(GUESSERS)):
+            if row[i][0] == answer:
+                row[i][0] = "***CORRECT***"
+            row[i][0] = row[i][0][:25]
+        row = list(itertools.chain(*row))
+        report += template.format(*row)
+
     return report
 
 
@@ -512,7 +527,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             if str.lower(ww).startswith(str.lower(power)):
                 question_value = 10
             press = interpret_keypress()
-            current_guesses = buzzes.current_guesses(question_id, ss, ii - 2)
+            current_guesses = buzzes.current_guesses(question_id, ss, ii)
             buzz_now = [x for x in current_guesses.values() if x.final]
             assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
             if isinstance(press, int):
@@ -533,29 +548,34 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                         response = None
             # Don't buzz if anyone else has gotten it wrong
             elif buzz_now and human_delta == 0 and computer_delta == 0:
-                show_score(human + human_delta,
-                           computer + computer_delta,
-                           "HUMAN", "COMPUTER")
-                print(format_display(display_num, question_text, ss, ii + 1,
-                                     current_guesses, answer=correct,
-                                     points=question_value, answerable=answerable))
+
                 answer(buzz_now[0].page)
                 if buzz_now[0].page == correct:
+                    show_score(human + human_delta,
+                               computer + computer_delta,
+                               "HUMAN", "COMPUTER")
+                    print(format_display(display_num, question_text,
+                        ss, ii + 1, current_guesses, answer=correct,
+                        points=question_value, answerable=answerable))
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
-                    sleep(1)
-                    print(format_display(display_num, question_text, max(question_text), 0,
-                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
+                    sleep(2)
+
                     return (human + human_delta, computer + question_value,
                             buzz_now[0].page)
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
-                    sleep(1)
                     computer_delta = -5
+
                     show_score(human + human_delta,
                                computer + computer_delta,
                                "HUMAN", "COMPUTER")
-                    print(format_display(display_num, question_text, max(question_text), 0,
-                                         current_guesses, answer=correct, points=question_value, answerable=answerable))
+                    print(format_display(display_num, question_text,
+                        ss, ii + 1, current_guesses, answer=correct,
+                        points=question_value, answerable=answerable))
+                    sleep(2)
+
+
+
             else:
                 show_score(human + human_delta,
                            computer + computer_delta,
@@ -563,6 +583,8 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
                                      points=question_value, answerable=answerable))
+
+
     if computer_delta == 0:
         answer(final)
         if final == correct:
@@ -629,7 +651,8 @@ if __name__ == "__main__":
     human = 0
     computer = 0
     question_num = 0
-    question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
+    # question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
+    question_ids = list(questions._questions.keys())
 
     question_ids = [x for x in question_ids if x in buzzes]
 
