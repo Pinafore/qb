@@ -38,89 +38,77 @@ def kl(dict1: Dict[str, float], dict2: Dict[str, float]) -> float:
         score += x1[k] * math.log(x1[k] / x2.get(k, x1[k] / 2))
     return score
 
-def greedy_remove(question: Question, n_keep, n_sents):
+def greedy_remove(text_before, guesses_before, n_keep):
     '''Remove words from the question while trying to keep the original
         predictions
     Args:
-        question: the question to be modified
-        n_sents: take the first n_sents sentences, either a constant or a
-                function of the total number of sentences
+        text_before: the text before removal
+        guesses_before: a dictionary of scores of guesses as the starting point
         n_keep: number of words to keep, either a constant or a function of the
                 total number of words
     Retuen:
-        text_before
         text_after
-        guesses_before
         guesses_after
         removed: the original indices of words that are removed
     '''
-    # take the first n_sents sentences
-    sents = list(question.text.values())
-    if callable(n_sents):
-        n_sents = n_sents(len(sents))
-    text_before = ' '.join(sents[:n_sents])
-    guesses_before = guesser.guess_single(text_before)
-    question = text_before.split()
+    text = text_before.split()
 
     # calculate the number of words to remove
     if callable(n_keep):
-        n_keep = n_keep(len(question))
+        n_keep = n_keep(len(text))
     # number of words to keep cannot exceed total number of words
-    n_keep = min(len(question), n_keep)
-    n_remove = len(question) - n_keep
+    n_keep = min(len(text), n_keep)
+    n_remove = len(text) - n_keep
 
     removed = []
-    indices = list(range(len(question)))
+    indices = list(range(len(text)))
     dict1 = guesses_before
     for i in range(n_remove):
         # iterate through all possible words to remove at this step
-        inputs = [' '.join(question[:j] + question[j+1:]) 
-                for j in range(len(question))]
+        inputs = [' '.join(text[:j] + text[j+1:]) 
+                for j in range(len(text))]
         dict2s = map(guesser.guess_single, inputs)
         scores = [kl(dict1, dict2) for dict2 in dict2s]
         idx = sorted(list(enumerate(scores)), key=lambda x: x[1])[0][0]
         removed.append(indices[idx])
-        question = question[:idx] + question[idx + 1:]
+        text = text[:idx] + text[idx + 1:]
         indices = indices[:idx] + indices[idx + 1:]
 
-    text_after = ' '.join(question)
+    text_after = ' '.join(text)
     guesses_after = guesser.guess_single(text_after)
-    return text_before, text_after, guesses_before, guesses_after, removed
+    return text_after, guesses_after, removed
 
-def all_sents(x):
-    # take all sentences from the question
-    return x
-
-def main(n_keep, ckp_dir):
+def main(questions, n_keep, ckp_dir):
     db = QuizBowlDataset(guesser_train=True, buzzer_train=True)
     questions = db.questions_in_folds(['guessdev'])
-
-    n_sents = all_sents 
-
-    inputs = [[x, n_keep, n_sents] for x in questions]
-    returns = _multiprocess(greedy_remove, inputs)
-    returns = list(map(list, zip(*returns)))
-    text_before, text_after, guesses_before, guesses_after, removed = returns
+    questions = {x.qnum: x for x in questions}
 
     checkpoint = defaultdict(dict)
-    for i, q in enumerate(questions):
-        checkpoint[q.qnum]['text_before'] = text_before[i]
-        checkpoint[q.qnum]['text_after'] = text_after[i]
-        checkpoint[q.qnum]['guesses_before'] = guesses_before[i]
-        checkpoint[q.qnum]['guesses_after'] = guesses_after[i]
-        checkpoint[q.qnum]['removed'] = removed[i]
+    for qnum, question in questions.items():
+        text_before = question.flatten_text()
+        guesses_before = guesser.guess_single(text_before)
+        text_after, guesses_after, removed = greedy_remove(
+                text_before, guesses_before, n_keep)
+        checkpoint[qnum]['text_before'] = text_before
+        checkpoint[qnum]['text_after'] = text_after
+        checkpoint[qnum]['guesses_before'] = guesses_before
+        checkpoint[qnum]['guesses_after'] = guesses_after
+        checkpoint[qnum]['removed'] = removed
 
     checkpoint = dict(checkpoint)
     with open(safe_path(ckp_dir), 'wb') as f:
         pickle.dump(checkpoint, f)
 
-    eval(ckp_dir)
+    evaluate(ckp_dir)
 
-def eval(ckp_dir):
-    questions = QuestionDatabase().all_questions()
+def evaluate(ckp_dir):
+    db = QuizBowlDataset(guesser_train=True, buzzer_train=True)
+    questions = db.questions_in_folds(['guessdev'])
+    questions = {x.qnum: x for x in questions}
 
     with open(ckp_dir, 'rb') as f:
         checkpoint = pickle.load(f)
+
     scores = [0, 0, 0, 0, 0]
     descriptions = ['accuracy before', 'accuracy after', 'before after match',
                     'top 5 accuracy before', 'top 5 accuracy after']
@@ -137,9 +125,8 @@ def eval(ckp_dir):
     for s, d in zip(scores, descriptions):
         print(d, s)
 
-
 if __name__ == '__main__':
     n_keep = 20
     ckp_dir = 'output/experimental/greedy_remove.dev.{}.pkl'.format(n_keep)
-    eval(ckp_dir)
+    # evaluate(ckp_dir)
     # main(n_keep, ckp_dir)
