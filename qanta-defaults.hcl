@@ -7,6 +7,7 @@ expo_questions = "data/internal/expo/2016_hsnct.csv"
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
 use_pretrained_embeddings = true
+buzz_as_guesser_train = false
 
 # Configure whether qanta.wikipedia.cached_wikipedia.CachedWikipedia should fallback
 # performing a remote call to Wikipedia if a page doesn't exist
