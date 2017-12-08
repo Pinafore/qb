@@ -16,6 +16,7 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
 from qanta.datasets.wikipedia import WikipediaDataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
@@ -97,11 +98,12 @@ def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
 
 
 class DanGuesser(AbstractGuesser):
-    def __init__(self, max_epochs=100, batch_size=512, learning_rate=.001):
+    def __init__(self, max_epochs=100, batch_size=512, learning_rate=.0075):
         super(DanGuesser, self).__init__()
         guesser_conf = conf['guessers']['Dan']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_qb = guesser_conf['use_qb']
+        self.use_buzz_as_train = conf['buzz_as_guesser_train']
 
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
@@ -200,25 +202,27 @@ class DanGuesser(AbstractGuesser):
 
         self.n_classes = compute_n_classes(training_data[1])
 
+        log.info(f'Batching: {len(x_train)} train questions and {len(x_test)} test questions')
+
         n_batches_train, t_x_train, t_offset_train, t_y_train = batchify(
             self.batch_size, x_train, y_train, truncate=True)
         n_batches_test, t_x_test, t_offset_test, t_y_test = batchify(
             self.batch_size, x_test, y_test, truncate=False)
 
         self.vocab_size = embeddings.shape[0]
-        self.model = DanModel(self.vocab_size, self.n_classes)
-        self.model.init_weights(initial_embeddings=embeddings)
+        self.model = DanModel(self.vocab_size, self.n_classes, embeddings=embeddings)
         if CUDA:
             self.model = self.model.cuda()
+        log.info(f'Model:\n{self.model}')
 
         self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True)
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_loss', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_loss')
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
         ])
 
         log.info('Starting training...')
@@ -244,7 +248,7 @@ class DanGuesser(AbstractGuesser):
                 log.info(' '.join(reasons))
                 break
             else:
-                self.scheduler.step(test_loss)
+                self.scheduler.step(test_acc)
 
         log.info('Done training')
 
@@ -278,7 +282,6 @@ class DanGuesser(AbstractGuesser):
         epoch_end = time.time()
 
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
-
 
     def save(self, directory: str) -> None:
         shutil.copyfile('/tmp/dan.pt', os.path.join(directory, 'dan.pt'))
@@ -326,11 +329,15 @@ class DanGuesser(AbstractGuesser):
     def targets(cls) -> List[str]:
         return ['dan.pickle', 'dan.pt']
 
+    def qb_dataset(self):
+        return QuizBowlDataset(guesser_train=True, buzzer_train=self.use_buzz_as_train)
+
 
 class DanModel(nn.Module):
     def __init__(self, vocab_size, n_classes,
-                 embedding_dim=300, dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='elu'):
+                 embeddings=None,
+                 embedding_dim=300, nn_dropout_prob=.3, sm_dropout_prob=.3,
+                 n_hidden_layers=1, n_hidden_units=800, non_linearity='elu'):
         super(DanModel, self).__init__()
         self.n_hidden_layers = 1
         self.non_linearity = non_linearity
@@ -343,13 +350,16 @@ class DanModel(nn.Module):
         else:
             raise ValueError('Unrecognized non-linearity function:{}'.format(non_linearity))
         self.n_hidden_units = n_hidden_units
-        self.dropout_prob = dropout_prob
+        self.nn_dropout_prob = nn_dropout_prob
+        self.sm_dropout_prob = sm_dropout_prob
         self.vocab_size = vocab_size
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
 
-        self.dropout = nn.Dropout(dropout_prob)
+        self.we_dropout = nn.Dropout(nn_dropout_prob)
         self.embeddings = nn.EmbeddingBag(vocab_size, embedding_dim)
+        if embeddings is not None:
+            self.embeddings.weight.data = torch.from_numpy(embeddings).float()
 
         layers = []
         for i in range(n_hidden_layers):
@@ -362,22 +372,16 @@ class DanModel(nn.Module):
                 nn.Linear(input_dim, n_hidden_units),
                 nn.BatchNorm1d(n_hidden_units),
                 self._non_linearity(),
-                nn.Dropout(dropout_prob),
+                nn.Dropout(nn_dropout_prob),
             ])
 
         layers.extend([
             nn.Linear(n_hidden_units, n_classes),
             nn.BatchNorm1d(n_classes),
-            nn.Dropout(dropout_prob)
+            nn.Dropout(sm_dropout_prob)
         ])
         self.layers = nn.Sequential(*layers)
 
-        self.init_weights()
-
-    def init_weights(self, initial_embeddings=None):
-        if initial_embeddings is not None:
-            self.embeddings.weight = nn.Parameter(torch.from_numpy(initial_embeddings).float())
-
     def forward(self, input_: Variable, offsets: Variable):
-        avg_embeddings = self.dropout(self.embeddings(input_.view(-1), offsets))
+        avg_embeddings = self.we_dropout(self.embeddings(input_.view(-1), offsets))
         return self.layers(avg_embeddings)
