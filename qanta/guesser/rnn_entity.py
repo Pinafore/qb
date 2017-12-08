@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 
 import progressbar
 import pycountry
+from cove import MTLSTM
 
 import torch
 import torch.nn as nn
@@ -275,7 +276,6 @@ class MultiEmbeddingLookup:
         self.pos = pos_lookup
         self.iob = iob_lookup
         self.ent_type = ent_type_lookup
-
 
 
 def convert_tokens_to_representations(tokens: List[Token], embedding_lookup: MultiEmbeddingLookup):
@@ -596,6 +596,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.sm_dropout_prob = guesser_conf['sm_dropout_prob']
         self.sm_dropout_before_linear = guesser_conf['sm_dropout_before_linear']
         self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
+        self.use_cove = guesser_conf['use_cove']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -627,7 +628,8 @@ class RnnEntityGuesser(AbstractGuesser):
             'use_triviaqa': self.use_triviaqa,
             'sm_dropout_prob': self.sm_dropout_prob,
             'sm_dropout_before_linear': self.sm_dropout_before_linear,
-            'n_wiki_paragraphs': self.n_wiki_paragraphs
+            'n_wiki_paragraphs': self.n_wiki_paragraphs,
+            'use_cove': self.use_cove
         }
 
     def guess(self,
@@ -737,14 +739,16 @@ class RnnEntityGuesser(AbstractGuesser):
             len(self.rel_position_lookup),
             self.n_classes,
             enabled_features=self.features,
+            embeddings=word_embeddings,
             rnn_type=self.rnn_type, dropout_prob=self.dropout_prob,
             bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
-            sm_dropout_before_linear=self.sm_dropout_before_linear, sm_dropout_prob=self.sm_dropout_prob
-        )
+            sm_dropout_before_linear=self.sm_dropout_before_linear, sm_dropout_prob=self.sm_dropout_prob,
+            use_cove=self.use_cove
+        ).cuda()
         log.info(f'Model:\n{repr(self.model)}')
-        self.model.init_weights(word_embeddings=word_embeddings)
-        self.model.cuda()
-        self.optimizer = Adam(self.model.parameters(), lr=self.learning_rate)
+        self.optimizer = Adam(
+            filter(lambda p: p.requires_grad, self.model.parameters()),
+            lr=self.learning_rate)
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
@@ -761,7 +765,8 @@ class RnnEntityGuesser(AbstractGuesser):
             ('bidirectional', self.bidirectional),
             ('use_wiki', self.use_wiki),
             ('use_triviaqa', self.use_triviaqa),
-            ('n_wiki_paragraphs', self.n_wiki_paragraphs)
+            ('n_wiki_paragraphs', self.n_wiki_paragraphs),
+            ('use_cove', self.use_cove)
         ])
 
         manager = TrainingManager([
@@ -857,7 +862,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'use_triviaqa': self.use_triviaqa,
                 'n_wiki_paragraphs': self.n_wiki_paragraphs,
                 'sm_dropout_prob': self.sm_dropout_prob,
-                'sm_dropout_before_linear': self.sm_dropout_before_linear
+                'sm_dropout_before_linear': self.sm_dropout_before_linear,
+                'use_cove': self.use_cove
             }, f)
 
     @classmethod
@@ -891,7 +897,8 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
         guesser.sm_dropout_prob = params['sm_dropout_prob']
         guesser.sm_dropout_before_linear = params['sm_dropout_before_linear']
-        return  guesser
+        guesser.use_cove = params['use_cove']
+        return guesser
 
     @classmethod
     def targets(cls):
@@ -902,10 +909,12 @@ class RnnEntityGuesser(AbstractGuesser):
 
 
 class RnnEntityModel(nn.Module):
-    def __init__(self, word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
+    def __init__(self,
+                 word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
                  n_classes, embedding_dim=300, dropout_prob=.5, sm_dropout_prob=.3, sm_dropout_before_linear=True,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
-                 enabled_features={'word', 'pos', 'iob', 'type', 'mention'}):
+                 enabled_features={'word', 'pos', 'iob', 'type', 'mention'},
+                 embeddings=None, use_cove=False):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
         self.pos_vocab_size = pos_vocab_size
@@ -920,6 +929,7 @@ class RnnEntityModel(nn.Module):
         self.bidirectional = bidirectional
         self.enabled_features = enabled_features
         self.sm_dropout_before_linear = sm_dropout_before_linear
+        self.use_cove = use_cove
 
         self.dropout = nn.Dropout(dropout_prob)
         self.feature_dimension = 0
@@ -954,6 +964,18 @@ class RnnEntityModel(nn.Module):
         else:
             self.mention_embeddings = None
 
+        if embeddings is not None:
+            self.word_embeddings.weight.data = torch.from_numpy(embeddings).float()
+
+        if use_cove:
+            self.cove = MTLSTM(n_vocab=embeddings.shape[0], vectors=torch.from_numpy(embeddings).float())
+            self.cove.requires_grad = False
+            for p in self.cove.parameters():
+                p.requires_grad = False
+            self.feature_dimension += 300
+        else:
+            self.cove = None
+
         self.rnn_type = rnn_type
         if rnn_type == 'lstm':
             rnn_layer = nn.LSTM
@@ -977,10 +999,6 @@ class RnnEntityModel(nn.Module):
                 nn.BatchNorm1d(n_classes),
                 nn.Dropout(sm_dropout_prob)
             )
-
-    def init_weights(self, word_embeddings=None):
-        if word_embeddings is not None:
-            self.word_embeddings.weight = nn.Parameter(torch.from_numpy(word_embeddings).float())
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
@@ -1013,6 +1031,10 @@ class RnnEntityModel(nn.Module):
         if 'mention' in self.enabled_features:
             mention_embeddings = self.mention_embeddings(mention_idxs)
             dropout_features.append(mention_embeddings)
+
+        if self.use_cove:
+            cove_embeddings = self.cove(word_idxs, torch.from_numpy(lengths))
+            dropout_features.append(cove_embeddings)
 
         features = self.dropout(torch.cat(dropout_features, 2))
 
