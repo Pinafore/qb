@@ -14,7 +14,7 @@ GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
 
 kSHOW_RIGHT = False
 kPAUSE = .25
-kSYSTEM = "QANTA"
+kSYSTEM = "OUSIA"
 
 kBIGNUMBERS = {-1:
 """
@@ -424,8 +424,8 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
 
-    report = 'answerable: {}\n'.format(answerable)
-    report += "Question %i: %i points\n%s\n%s\n%s\n\n" % \
+    #report = 'answerable: {}\n'.format(answerable)
+    report = "Question %i: %i points\n%s\n%s\n%s\n\n" % \
         (display_num, points, sep, current_text, sep)
 
     guesses = {k: [] for k in GUESSERS}
@@ -458,19 +458,21 @@ def format_display(display_num, question_text, sent, word, current_guesses,
         top_guesses.append(gs)
 
     template = '|'.join("{:30}|{:10}|{:10}" for _ in GUESSERS) + '\n'
-    header = [[x[:17] + '  ' + buzzer_scores[i], 'normalized', 'unnormalized'] 
+    header = [['', '', '']
             for i, x in enumerate(GUESSERS)]
-    header = list(itertools.chain(*header))
-    report += template.format(*header)
+    #header = [[x[:17] + '  ' + buzzer_scores[i], 'normalized', 'unnormalized']
+    #          for i, x in enumerate(GUESSERS)]
+    #header = list(itertools.chain(*header))
+    #report += template.format(*header)
 
-    guesses = list(top_guesses)
-    for row in zip(*guesses):
-        for i in range(len(GUESSERS)):
-            if row[i][0] == answer:
-                row[i][0] = "***CORRECT***"
-            row[i][0] = row[i][0][:25]
-        row = list(itertools.chain(*row))
-        report += template.format(*row)
+    #guesses = list(top_guesses)
+    #for row in zip(*guesses):
+    #    for i in range(len(GUESSERS)):
+    #        if row[i][0] == answer:
+    #            row[i][0] = "***CORRECT***"
+    #        row[i][0] = row[i][0][:25]
+    #    row = list(itertools.chain(*row))
+    #    report += template.format(*row)
 
     return report
 
@@ -511,7 +513,7 @@ def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say %s" % ans.replace('_', ' ').split("(")[0])
+    os.system('say "%s"' % ans.replace('_', ' ').split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
@@ -618,7 +620,7 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=str, default="competition.csv")
     parser.add_argument('--finals', type=str, default="finals.csv")
     parser.add_argument('--power', type=str, default="power.csv")
-    parser.add_argument('--max_questions', type=int, default=40)
+    parser.add_argument('--max_questions', type=int, default=60)
     parser.add_argument('--readable', type=str, default="readable.txt")
 
     flags = parser.parse_args()
@@ -673,9 +675,11 @@ if __name__ == "__main__":
 
         correct_answer = questions.answer(ii)
         if correct_answer in qb_answer_set:
-            answerable = 'answerable'
+            # answerable = 'answerable'
+            answerable = ''
         else:
-            answerable = 'not answerable'
+            # answerable = 'not answerable'
+            answerable = ''
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),
