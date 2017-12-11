@@ -393,7 +393,10 @@ class Questions:
 
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
+        self._ids = []
         for r in qfile:
+            if int(r["id"]) not in self._ids:
+                self._ids.append(int(r["id"]))
             self._questions[int(r["id"])][int(r["sent"])] = r["text"]
             self._answers[int(r["id"])] = '_'.join(r["answer"].strip().split())
         # qbdb = QuizBowlDataset(1, guesser_train=True, buzzer_train=True)
@@ -620,7 +623,10 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=str, default="competition.csv")
     parser.add_argument('--finals', type=str, default="finals.csv")
     parser.add_argument('--power', type=str, default="power.csv")
+    parser.add_argument('--players', type=int, default=1)
     parser.add_argument('--max_questions', type=int, default=60)
+    parser.add_argument('--start_human', type=int, default=0)
+    parser.add_argument('--start_computer', type=int, default=0)
     parser.add_argument('--readable', type=str, default="readable.txt")
 
     flags = parser.parse_args()
@@ -629,16 +635,16 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
-    qb_dataset = QuizBowlDataset(guesser_train=True)
-    qb_answer_set = {g for g in qb_dataset.training_data()[1]}
+    # qb_dataset = QuizBowlDataset(guesser_train=True)
+    # qb_answer_set = {g for g in qb_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
 
     current_players = set()
 
-    if True:
+    if flags.players > 0:
         print("Time for a buzzer check")
-        players_needed = [1, 2, 3, 4]
+        players_needed = range(1, flags.players + 1)
         while len(current_players) < len(players_needed):
             print("Player %i, please buzz in" % min(x for x in players_needed if x not in current_players))
             press = interpret_keypress()
@@ -650,11 +656,12 @@ if __name__ == "__main__":
         sleep(1.5)
         answer("I am ready too")
 
-    human = 0
-    computer = 0
-    question_num = 0
+    human = flags.start_human
+    computer = flags.start_computer
+    question_num = flags.skip
+    question_ids = questions._ids
     # question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
-    question_ids = list(questions._questions.keys())
+    # question_ids = list(questions._questions.keys())
 
     question_ids = [x for x in question_ids if x in buzzes]
 
@@ -673,13 +680,12 @@ if __name__ == "__main__":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
 
-        correct_answer = questions.answer(ii)
-        if correct_answer in qb_answer_set:
-            # answerable = 'answerable'
-            answerable = ''
-        else:
-            # answerable = 'not answerable'
-            answerable = ''
+        answerable = ''
+        # correct_answer = questions.answer(ii)
+        # if correct_answer in qb_answer_set:
+        #    answerable = 'answerable'
+        # else:
+        #    answerable = 'not answerable'
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),
