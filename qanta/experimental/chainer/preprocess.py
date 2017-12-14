@@ -35,7 +35,7 @@ if os.path.isfile(answers_dir):
         id_to_answer = checkpoint['id_to_answer']
         answer_to_id = checkpoint['answer_to_id']
 else:
-    logger.info('processing answers..', end='')
+    logger.info('processing answers..')
     id_to_answer = list(set(x.page for x in all_questions))
     answer_to_id = {x: i for i, x in enumerate(id_to_answer)}
     with open('answers.json', 'w') as f:

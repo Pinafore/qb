@@ -5,6 +5,9 @@ import argparse
 import itertools
 import numpy as np
 import logging
+from tqdm import tqdm
+import matplotlib
+matplotlib.use('Agg')
 
 import cupy
 import chainer
@@ -35,64 +38,41 @@ class RNNModel(chainer.Chain):
         for param in self.params():
             param.data[...] = np.random.uniform(-0.1, 0.1, param.data.shape)
 
-    def __call__(self, x):
+    def __call__(self, xs):
         """
         Forward pass of a sentence.
-        :param x: a batch of sentences
+        :param xs: a batch of sentences
         :return h: final hidden states
         """
-        xs = self.embed(x)
+        xs = self.embed(xs)
         xs = F.swapaxes(xs, 0, 1) # time, batch, embed
         self.rnn.reset_state()
         for x in xs:
-            h = F.dropout(self.rnn(x))
+            h = self.rnn(x)
         h = self.linear(h)
         return h
 
 
-def load_embeddings(path, vocab_size, embed_size):
-    emb = np.zeros((vocab_size, embed_size), dtype=np.float32)
-    size = os.stat(path).st_size
-    with open(path, 'rb') as f:
-        pos = 0
-        idx = 0
-        while pos < size:
-            chunk = np.load(f)
-            chunk_size = chunk.shape[0]
-            emb[idx : idx+chunk_size, :] = chunk
-            idx += chunk_size
-            pos = f.tell()
-    return emb
+def load_glove(glove_path, word_to_id, embed_size):
+    vocab_size = len(word_to_id)
+    embed_W = np.zeros((vocab_size, embed_size), dtype=np.float32)
+    with open(glove_path, "r") as fi:
+        logger.info('loading glove vectors..')
+        for line in tqdm(fi):
+            line = line.strip().split(" ")
+            word = line[0]
+            if word in vocab:
+                vec = np.array(line[1::], dtype=np.float32)
+                embed_W[word_to_id[word]] = vec
+    return embed_W
 
-
-class BPTTUpdater(training.StandardUpdater):
-
-    def __init__(self, train_iter, optimizer, bprop_len, device):
-        super(BPTTUpdater, self).__init__(
-            train_iter, optimizer, device=device)
-        self.bprop_len = bprop_len
-
-    # The core part of the update routine can be customized by overriding.
-    def update_core(self):
-        loss = 0
-        # When we pass one iterator and optimizer to StandardUpdater.__init__,
-        # they are automatically named 'main'.
-        train_iter = self.get_iterator('main')
-        optimizer = self.get_optimizer('main')
-
-        batch = train_iter.__next__()
-        x, t = concat_examples(batch, self.device, 0)
-        loss = optimizer.target(chainer.Variable(x), chainer.Variable(t))
-
-        optimizer.target.cleargrads()
-        loss.backward()
-        loss.unchain_backward()
-        optimizer.update()
-    
+def converter(batch, device):
+    x, t = concat_examples(batch, device, 0)
+    return x, t
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', '-b', type=int, default=128,
+    parser.add_argument('--batch_size', '-b', type=int, default=32,
                         help='Number of examples in each mini-batch')
     parser.add_argument('--bproplen', '-l', type=int, default=35,
                         help='Number of words in each mini-batch '
@@ -112,8 +92,12 @@ def main():
     parser.set_defaults(test=False)
     parser.add_argument('--hidden_size', type=int, default=300,
                         help='Number of LSTM units in each layer')
+    parser.add_argument('--embed_size', type=int, default=300,
+                        help='Size of embeddings')
     parser.add_argument('--model', '-m', default='model.npz',
                         help='Model file name to serialize')
+    parser.add_argument('--glove', default='data/glove.6B.300d.txt',
+                        help='Path to glove embedding file.')
     args = parser.parse_args()
 
     logger.info('loading answers..')
@@ -154,45 +138,55 @@ def main():
                 labels.append(a)
         return list(zip(sentences, labels))
     
-    train_dataset = convert_dataset(train_questions)
+    train_dataset = convert_dataset(train_questions)[:3000]
     dev_dataset = convert_dataset(dev_questions)
 
     train_iter = chainer.iterators.SerialIterator(train_dataset, args.batch_size)
     dev_iter = chainer.iterators.SerialIterator(dev_dataset, args.batch_size,
             repeat=False)
 
-    rnn = RNNModel(len(word_to_id), args.hidden_size,
+    rnn = RNNModel(len(word_to_id), args.embed_size,
             args.hidden_size, len(answer_to_id))
-    model = L.Classifier(rnn)
 
-    # if args.embeddings:
-    #     model.embed.W.data = load_embeddings(
-    #             args.embeddings, args.vocab_size, args.embed_size)
+    # if os.path.isfile(args.glove):
+    #     rnn.embed.W.data = load_glove(
+    #             args.glove, word_to_id, args.embed_size)
+
+    model = L.Classifier(rnn)
 
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()
-        model.to_gpu()
-        # model.embed.to_gpu()
+        model.to_gpu(device=args.gpu)
+        # model.predictor.embed.to_gpu()
 
     optimizer = chainer.optimizers.Adam()
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.GradientClipping(args.gradclip))
 
-    updater = BPTTUpdater(train_iter, optimizer, args.bproplen, args.gpu)
+    updater = training.StandardUpdater(
+            train_iter, optimizer, converter=converter, device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 
     eval_model = model.copy()
     eval_rnn = eval_model.predictor
     trainer.extend(extensions.Evaluator(
-            dev_iter, eval_model, device=args.gpu))
+            dev_iter, eval_model, converter=converter, device=args.gpu))
 
-    interval = 10 if args.test else 500
+    interval = 10 if args.test else 200
     trainer.extend(extensions.LogReport(trigger=(interval, 'iteration')))
-    trainer.extend(extensions.PrintReport(
-                ['epoch', 'iteration', 'accuracy']),
-            trigger=(interval, 'iteration'))
+    trainer.extend(extensions.PrintReport([
+        'epoch', 'main/loss', 'main/accuracy',
+        'validation/main/loss', 'validation/main/accuracy', 'elapsed_time']),
+        trigger=(interval, 'iteration'))
+    trainer.extend(extensions.PlotReport([
+        'main/loss', 'validation/main/loss'],
+        x_key='epoch', file_name='loss.png'))
+    trainer.extend(extensions.PlotReport([
+        'main/accuracy', 'validation/main/accuracy'],
+        x_key='epoch', file_name='accuracy.png'))
+    trainer.extend(extensions.dump_graph('main/loss'))
     trainer.extend(extensions.ProgressBar(
-            update_interval=1 if args.test else 10))
+            update_interval=1))
     trainer.extend(extensions.snapshot())
     trainer.extend(extensions.snapshot_object(
             model, 'model_iter_{.updater.iteration}'))
@@ -200,6 +194,7 @@ def main():
         chainer.serializers.load_npz(args.resume, trainer)
 
     trainer.run()
+    chainer.serializers.save_npz(args.model, model)
     
 if __name__ == '__main__':
     main()
