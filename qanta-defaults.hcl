@@ -7,6 +7,7 @@ expo_questions = "data/internal/expo/2016_hsnct.csv"
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
 use_pretrained_embeddings = true
+buzz_as_guesser_train = false
 
 # Configure whether qanta.wikipedia.cached_wikipedia.CachedWikipedia should fallback
 # performing a remote call to Wikipedia if a page doesn't exist
@@ -43,6 +44,19 @@ guessers "Dan" {
 
   use_wiki = false
   use_qb = true
+
+  optimizer = "adam"
+  batch_size = 256
+  max_epochs = 100
+  gradient_clip = 0.25
+  sgd_weight_decay = 0.0000012
+  sgd_lr = 30.0
+  adam_lr = 0.001
+  use_lr_scheduler = true
+  emb_dropout = 0.1
+  nn_dropout = 0.3
+  sm_dropout = 0.3
+  hyper_opt = false
 }
 
 
@@ -65,8 +79,9 @@ guessers "EntityRNN" {
   use_wiki = false
   use_triviaqa = false
   n_wiki_paragraphs = 3
-  sm_dropout_prob = .3
+  sm_dropout_prob = 0.3
   sm_dropout_before_linear = false
+  use_cove = false
 }
 
 guessers "Bcn" {
