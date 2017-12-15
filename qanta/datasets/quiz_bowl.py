@@ -291,7 +291,12 @@ class QuizBowlDataset(AbstractDataset):
         self.db = QuestionDatabase(qb_question_db)
         self.guesser_train = guesser_train
         self.buzzer_train = buzzer_train
-        self.training_fold = c.GUESSER_TRAIN_FOLD if self.guesser_train else c.BUZZER_TRAIN_FOLD
+        self.training_folds = set()
+        if self.guesser_train:
+            self.training_folds.add(c.GUESSER_TRAIN_FOLD)
+        if self.buzzer_train:
+            self.training_folds.add(c.BUZZER_TRAIN_FOLD)
+
         self.use_tagme_evidence = use_tagme_evidence
         if self.use_tagme_evidence:
             with open('output/tagme/tagme.pickle', 'rb') as f:
@@ -310,7 +315,7 @@ class QuizBowlDataset(AbstractDataset):
             all_evidence = None
 
         filtered_questions = all_questions\
-            .filter(lambda q: q.fold == self.training_fold)\
+            .filter(lambda q: q.fold in self.training_folds)\
             .map(lambda q: q.to_example(all_evidence=all_evidence))
         training_examples = []
         training_answers = []
@@ -326,15 +331,19 @@ class QuizBowlDataset(AbstractDataset):
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
         train_questions = all_questions\
-            .filter(lambda q: q.fold == self.training_fold)\
+            .filter(lambda q: q.fold in self.training_folds)\
             .group_by(lambda q: q.page)\
             .flat_map(lambda kv: kv[1])\
             .list()
 
-        question_fold_dict = {self.training_fold: train_questions}
+        if len(self.training_folds) == 1:
+            fold = next(iter(self.training_folds))
+            question_fold_dict = {fold: train_questions}
+        else:
+            question_fold_dict = {'guessertrain': train_questions}
 
         for fold in folds:
-            if fold != self.training_fold:
+            if fold not in self.training_folds:
                 fold_questions = all_questions.filter(lambda q: q.fold == fold).list()
                 question_fold_dict[fold] = fold_questions
 
