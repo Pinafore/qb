@@ -54,7 +54,6 @@ def pad_batch(x_batch):
             pad_r.append(0)  # 0 is the mask idx
         padded_x_batch.append(pad_r)
 
-    #offsets = np.cumsum([0] + x_lengths[:-1])
     return np.array(padded_x_batch), x_lengths
 
 
@@ -120,7 +119,6 @@ class DanGuesser(AbstractGuesser):
         self.max_epochs = guesser_conf['max_epochs']
         self.use_lr_scheduler = guesser_conf['use_lr_scheduler']
         self.gradient_clip = guesser_conf['gradient_clip']
-        self.emb_dropout = guesser_conf['emb_dropout']
         self.sm_dropout = guesser_conf['sm_dropout']
         self.nn_dropout = guesser_conf['nn_dropout']
         self.hyper_opt = guesser_conf['hyper_opt']
@@ -150,7 +148,6 @@ class DanGuesser(AbstractGuesser):
             'max_epochs': self.max_epochs,
             'use_lr_scheduler': self.use_lr_scheduler,
             'gradient_clip': self.gradient_clip,
-            'emb_dropout': self.emb_dropout,
             'nn_dropout': self.nn_dropout,
             'sm_dropout': self.sm_dropout,
             'hyper_opt': self.hyper_opt
@@ -266,16 +263,14 @@ class DanGuesser(AbstractGuesser):
         params = []
         space = {
             'sm_dropout': ho.hp.uniform('sm_dropout', 0, 1),
-            'nn_dropout': ho.hp.uniform('nn_dropuot', 0, 1),
-            'emb_dropout': ho.hp.uniform('emb_dropout', 0, 1)
+            'nn_dropout': ho.hp.uniform('nn_dropuot', 0, 1)
 
         }
 
         def objective(sampled_params):
             p = {
                 'sm_dropout': sampled_params['sm_dropout'],
-                'nn_dropout': sampled_params['nn_dropout'],
-                'emb_dropout': sampled_params['emb_dropout']
+                'nn_dropout': sampled_params['nn_dropout']
             }
             acc_score = self._fit(
                 embeddings,
@@ -296,11 +291,9 @@ class DanGuesser(AbstractGuesser):
         while True:
             sm_dropout = np.random.uniform()
             nn_dropout = np.random.uniform()
-            embed_dropout = np.random.uniform()
             p = {
                 'sm_dropout': sm_dropout,
-                'nn_dropout': nn_dropout,
-                'emb_dropout': embed_dropout
+                'nn_dropout': nn_dropout
             }
             acc_score = self._fit(
                 embeddings,
@@ -320,7 +313,6 @@ class DanGuesser(AbstractGuesser):
              n_batches_train, t_x_train, t_len_train, t_y_train,
              n_batches_test, t_x_test, t_len_test, t_y_test, hyper_params=None):
         model_params = {
-            'emb_dropout': self.emb_dropout,
             'sm_dropout': self.sm_dropout,
             'nn_dropout': self.nn_dropout,
             'adam_lr': self.adam_lr,
@@ -332,7 +324,6 @@ class DanGuesser(AbstractGuesser):
         self.model = DanModel(
             self.vocab_size, self.n_classes,
             embeddings=embeddings,
-            emb_dropout_prob=model_params['emb_dropout'],
             sm_dropout_prob=model_params['sm_dropout'],
             nn_dropout_prob=model_params['nn_dropout']
         )
@@ -442,7 +433,6 @@ class DanGuesser(AbstractGuesser):
                 'use_wiki': self.use_wiki,
                 'use_qb': self.use_qb,
                 'vocab_size': self.vocab_size,
-                'emb_dropout': self.emb_dropout,
                 'nn_dropout': self.nn_dropout,
                 'sm_dropout': self.sm_dropout,
                 'hyper_opt': self.hyper_opt
@@ -467,7 +457,6 @@ class DanGuesser(AbstractGuesser):
         guesser.sgd_lr = params['sgd_lr']
         guesser.use_qb = params['use_qb']
         guesser.vocab_size = params['vocab_size']
-        guesser.emb_dropout = params['emb_dropout']
         guesser.nn_dropout = params['nn_dropout']
         guesser.sm_dropout = params['sm_dropout']
         guesser.hyper_opt = params['hyper_opt']
@@ -488,7 +477,7 @@ class DanGuesser(AbstractGuesser):
 class DanModel(nn.Module):
     def __init__(self, vocab_size, n_classes,
                  embeddings=None,
-                 embedding_dim=300, nn_dropout_prob=.3, sm_dropout_prob=.3, emb_dropout_prob=.05,
+                 embedding_dim=300, nn_dropout_prob=.3, sm_dropout_prob=.3,
                  n_hidden_layers=1, n_hidden_units=1000, non_linearity='elu'):
         super(DanModel, self).__init__()
         self.n_hidden_layers = 1
@@ -504,7 +493,6 @@ class DanModel(nn.Module):
         self.n_hidden_units = n_hidden_units
         self.nn_dropout_prob = nn_dropout_prob
         self.sm_dropout_prob = sm_dropout_prob
-        self.emb_dropout_prob = emb_dropout_prob
         self.vocab_size = vocab_size
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
@@ -537,6 +525,6 @@ class DanModel(nn.Module):
         self.layers = nn.Sequential(*layers)
 
     def forward(self, input_: Variable, lengths: Variable):
-        q_enc = embedded_dropout(self.embeddings, input_, dropout=self.emb_dropout_prob)
+        q_enc = self.embeddings(input_)
         q_enc = q_enc.sum(1) / lengths.view(input_.size()[0], -1)
         return self.layers(self.dropout(q_enc))
