@@ -290,8 +290,8 @@ class DanGuesser(AbstractGuesser):
             fn=objective, space=space, algo=ho.tpe.suggest, max_evals=100,
             trials=trials
         )
-        print(best)
-        print(trials)
+        log.info(best)
+        log.info(trials)
 
         while True:
             sm_dropout = np.random.uniform()

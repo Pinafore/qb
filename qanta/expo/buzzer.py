@@ -14,7 +14,7 @@ GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
 
 kSHOW_RIGHT = False
 kPAUSE = .25
-kSYSTEM = "QANTA"
+kSYSTEM = "OUSIA"
 
 kBIGNUMBERS = {-1:
 """
@@ -393,7 +393,10 @@ class Questions:
 
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
+        self._ids = []
         for r in qfile:
+            if int(r["id"]) not in self._ids:
+                self._ids.append(int(r["id"]))
             self._questions[int(r["id"])][int(r["sent"])] = r["text"]
             self._answers[int(r["id"])] = '_'.join(r["answer"].strip().split())
         # qbdb = QuizBowlDataset(1, guesser_train=True, buzzer_train=True)
@@ -424,8 +427,8 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
 
-    report = 'answerable: {}\n'.format(answerable)
-    report += "Question %i: %i points\n%s\n%s\n%s\n\n" % \
+    #report = 'answerable: {}\n'.format(answerable)
+    report = "Question %i: %i points\n%s\n%s\n%s\n\n" % \
         (display_num, points, sep, current_text, sep)
 
     guesses = {k: [] for k in GUESSERS}
@@ -458,19 +461,21 @@ def format_display(display_num, question_text, sent, word, current_guesses,
         top_guesses.append(gs)
 
     template = '|'.join("{:30}|{:10}|{:10}" for _ in GUESSERS) + '\n'
-    header = [[x[:17] + '  ' + buzzer_scores[i], 'normalized', 'unnormalized'] 
+    header = [['', '', '']
             for i, x in enumerate(GUESSERS)]
-    header = list(itertools.chain(*header))
-    report += template.format(*header)
+    #header = [[x[:17] + '  ' + buzzer_scores[i], 'normalized', 'unnormalized']
+    #          for i, x in enumerate(GUESSERS)]
+    #header = list(itertools.chain(*header))
+    #report += template.format(*header)
 
-    guesses = list(top_guesses)
-    for row in zip(*guesses):
-        for i in range(len(GUESSERS)):
-            if row[i][0] == answer:
-                row[i][0] = "***CORRECT***"
-            row[i][0] = row[i][0][:25]
-        row = list(itertools.chain(*row))
-        report += template.format(*row)
+    #guesses = list(top_guesses)
+    #for row in zip(*guesses):
+    #    for i in range(len(GUESSERS)):
+    #        if row[i][0] == answer:
+    #            row[i][0] = "***CORRECT***"
+    #        row[i][0] = row[i][0][:25]
+    #    row = list(itertools.chain(*row))
+    #    report += template.format(*row)
 
     return report
 
@@ -511,7 +516,7 @@ def answer(ans, print_string="%s says:" % kSYSTEM):
     if print_string:
         print(print_string)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say %s" % ans.replace('_', ' ').split("(")[0])
+    os.system('say "%s"' % ans.replace('_', ' ').split("(")[0])
     sleep(kPAUSE)
     print(ans)
 
@@ -618,7 +623,10 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=str, default="competition.csv")
     parser.add_argument('--finals', type=str, default="finals.csv")
     parser.add_argument('--power', type=str, default="power.csv")
-    parser.add_argument('--max_questions', type=int, default=40)
+    parser.add_argument('--players', type=int, default=1)
+    parser.add_argument('--max_questions', type=int, default=60)
+    parser.add_argument('--start_human', type=int, default=0)
+    parser.add_argument('--start_computer', type=int, default=0)
     parser.add_argument('--readable', type=str, default="readable.txt")
 
     flags = parser.parse_args()
@@ -627,16 +635,16 @@ if __name__ == "__main__":
     buzzes = Buzzes(flags.buzzes)
     finals = load_finals(flags.finals)
     power = PowerPositions(flags.power)
-    qb_dataset = QuizBowlDataset(guesser_train=True)
-    qb_answer_set = {g for g in qb_dataset.training_data()[1]}
+    # qb_dataset = QuizBowlDataset(guesser_train=True)
+    # qb_answer_set = {g for g in qb_dataset.training_data()[1]}
     print("Done loading data")
     clear_screen()
 
     current_players = set()
 
-    if True:
+    if flags.players > 0:
         print("Time for a buzzer check")
-        players_needed = [1, 2, 3, 4]
+        players_needed = range(1, flags.players + 1)
         while len(current_players) < len(players_needed):
             print("Player %i, please buzz in" % min(x for x in players_needed if x not in current_players))
             press = interpret_keypress()
@@ -648,11 +656,12 @@ if __name__ == "__main__":
         sleep(1.5)
         answer("I am ready too")
 
-    human = 0
-    computer = 0
-    question_num = 0
+    human = flags.start_human
+    computer = flags.start_computer
+    question_num = flags.skip
+    question_ids = questions._ids
     # question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
-    question_ids = list(questions._questions.keys())
+    # question_ids = list(questions._questions.keys())
 
     question_ids = [x for x in question_ids if x in buzzes]
 
@@ -671,11 +680,12 @@ if __name__ == "__main__":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
 
-        correct_answer = questions.answer(ii)
-        if correct_answer in qb_answer_set:
-            answerable = 'answerable'
-        else:
-            answerable = 'not answerable'
+        answerable = ''
+        # correct_answer = questions.answer(ii)
+        # if correct_answer in qb_answer_set:
+        #    answerable = 'answerable'
+        # else:
+        #    answerable = 'not answerable'
         hum, comp, ans = present_question(question_num, ii, questions[ii],
                                           buzzes, finals[ii],
                                           questions.answer(ii),
