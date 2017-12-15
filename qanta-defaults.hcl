@@ -46,16 +46,15 @@ guessers "Dan" {
   use_qb = true
 
   optimizer = "adam"
-  batch_size = 256
+  batch_size = 1024
   max_epochs = 100
   gradient_clip = 0.25
   sgd_weight_decay = 0.0000012
   sgd_lr = 30.0
   adam_lr = 0.001
   use_lr_scheduler = true
-  emb_dropout = 0.1
-  nn_dropout = 0.3
-  sm_dropout = 0.3
+  nn_dropout = 0.265
+  sm_dropout = 0.158
   hyper_opt = false
 }
 
