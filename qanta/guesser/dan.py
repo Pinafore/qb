@@ -59,6 +59,9 @@ def pad_batch(x_batch):
 
 def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
     n_examples = x_array.shape[0]
+    if n_examples == 0:
+        return 0, np.array([], dtype=np.object), np.array([], dtype=np.object), np.array([], dtype=np.object)
+
     n_batches = n_examples // batch_size
     if shuffle:
         random_order = np.random.permutation(n_examples)
@@ -109,7 +112,6 @@ class DanGuesser(AbstractGuesser):
         super(DanGuesser, self).__init__()
         guesser_conf = conf['guessers']['Dan']
         self.use_wiki = guesser_conf['use_wiki']
-        self.use_qb = guesser_conf['use_qb']
         self.use_buzz_as_train = conf['buzz_as_guesser_train']
         self.optimizer_name = guesser_conf['optimizer']
         self.sgd_weight_decay = guesser_conf['sgd_weight_decay']
@@ -138,7 +140,6 @@ class DanGuesser(AbstractGuesser):
     def parameters(self):
         return {
             'use_wiki': self.use_wiki,
-            'use_qb': self.use_qb,
             'use_buzz_as_train': self.use_buzz_as_train,
             'optimizer_name': self.optimizer_name,
             'sgd_weight_decay': self.sgd_weight_decay,
@@ -188,27 +189,16 @@ class DanGuesser(AbstractGuesser):
         return guesses
 
     def train(self, training_data: TrainingData) -> None:
-        if self.use_qb:
-            x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-                training_data
+        qb_x_train_text, qb_y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
+            training_data
+        )
+
+        if self.use_wiki:
+            wiki_dataset = WikipediaDataset(set(training_data[1]))
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
+                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
             )
-            if self.use_wiki:
-                wiki_dataset = WikipediaDataset(set(training_data[1]))
-                wiki_train_data = wiki_dataset.training_data()
-                w_x_train_text, w_train_y, _, _, _, _, _ = preprocess_dataset(
-                    wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
-                )
-                x_train_text.extend(w_x_train_text)
-                y_train.extend(w_train_y)
-        else:
-            if self.use_wiki:
-                wiki_dataset = WikipediaDataset(set(training_data[1]))
-                wiki_train_data = wiki_dataset.training_data()
-                x_train_text, y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-                    wiki_train_data
-                )
-            else:
-                raise ValueError('use_wiki and use_qb cannot both be false, otherwise there is no training data')
 
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
@@ -218,12 +208,23 @@ class DanGuesser(AbstractGuesser):
         self.embeddings = embeddings
         self.embedding_lookup = embedding_lookup
 
-        x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_train_text]
-        for r in x_train:
+        qb_x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in qb_x_train_text]
+        for r in qb_x_train:
             if len(r) == 0:
                 r.append(embedding_lookup['UNK'])
-        x_train = np.array(x_train)
-        y_train = np.array(y_train)
+        qb_x_train = np.array(qb_x_train)
+        qb_y_train = np.array(qb_y_train)
+
+        n_wiki = 0
+        if self.use_wiki:
+            w_x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in w_x_train_text]
+            for r in w_x_train:
+                if len(r) == 0:
+                    r.append(embedding_lookup['UNK'])
+            w_x_train = np.array(w_x_train)
+            w_y_train = np.array(w_y_train)
+            n_wiki += len(w_x_train)
+
 
         x_test = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test_text]
         for r in x_test:
@@ -234,10 +235,25 @@ class DanGuesser(AbstractGuesser):
 
         self.n_classes = compute_n_classes(training_data[1])
 
-        log.info(f'Batching: {len(x_train)} train questions and {len(x_test)} test questions')
+        log.info(f'Batching: {len(qb_x_train)} qb, {len(n_wiki)} wikipedia, {len(x_test)} test')
 
-        n_batches_train, t_x_train, t_len_train, t_y_train = batchify(
-            self.batch_size, x_train, y_train, truncate=True)
+        n_qb_batches_train, t_qb_x_train, t_qb_len_train, t_qb_y_train = batchify(
+            self.batch_size, qb_x_train, qb_y_train, truncate=True)
+
+        if self.use_wiki:
+            n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train = batchify(
+                self.batch_size, w_x_train, w_y_train, truncate=True
+            )
+
+            n_batches_train = n_qb_batches_train + n_w_batches_train
+            t_x_train = np.concatenate([t_qb_x_train, t_w_x_train])
+            t_len_train = np.concatenate([t_qb_len_train, t_w_len_train])
+            t_y_train = np.concatenate([t_qb_y_train, t_w_y_train])
+        else:
+            n_batches_train = n_qb_batches_train
+            t_x_train = t_qb_x_train
+            t_len_train = t_qb_len_train
+            t_y_train = t_qb_y_train
 
         n_batches_test, t_x_test, t_len_test, t_y_test = batchify(
             self.batch_size, x_test, y_test, truncate=False)
@@ -431,7 +447,6 @@ class DanGuesser(AbstractGuesser):
                 'adam_lr': self.adam_lr,
                 'sgd_lr': self.sgd_lr,
                 'use_wiki': self.use_wiki,
-                'use_qb': self.use_qb,
                 'vocab_size': self.vocab_size,
                 'nn_dropout': self.nn_dropout,
                 'sm_dropout': self.sm_dropout,
@@ -455,7 +470,6 @@ class DanGuesser(AbstractGuesser):
         guesser.use_wiki = params['use_wiki']
         guesser.adam_lr = params['adam_lr']
         guesser.sgd_lr = params['sgd_lr']
-        guesser.use_qb = params['use_qb']
         guesser.vocab_size = params['vocab_size']
         guesser.nn_dropout = params['nn_dropout']
         guesser.sm_dropout = params['sm_dropout']
