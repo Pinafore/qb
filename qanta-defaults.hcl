@@ -43,7 +43,6 @@ guessers "Dan" {
   enabled = false
 
   use_wiki = false
-  use_qb = true
 
   optimizer = "adam"
   batch_size = 1024
