@@ -43,6 +43,8 @@ guessers "Dan" {
   enabled = false
 
   use_wiki = false
+  use_tagme = false
+  n_tagme_sentences = 20
 
   optimizer = "adam"
   batch_size = 1024
@@ -55,6 +57,7 @@ guessers "Dan" {
   nn_dropout = 0.265
   sm_dropout = 0.158
   hyper_opt = false
+  dual_encoder = false
 }
 
 
