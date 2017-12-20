@@ -17,12 +17,12 @@ from qanta import logging
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
-from qanta.datasets.wikipedia import WikipediaDataset
+from qanta.datasets.wikipedia import WikipediaDataset, TagmeWikipediaDataset
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
 from qanta.torch import (
-    embedded_dropout, BaseLogger, TerminateOnNaN,
+    BaseLogger, TerminateOnNaN,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
 
@@ -113,6 +113,8 @@ class DanGuesser(AbstractGuesser):
         guesser_conf = conf['guessers']['Dan']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_buzz_as_train = conf['buzz_as_guesser_train']
+        self.use_tagme = guesser_conf['use_tagme']
+        self.n_tagme_sentences = guesser_conf['n_tagme_sentences']
         self.optimizer_name = guesser_conf['optimizer']
         self.sgd_weight_decay = guesser_conf['sgd_weight_decay']
         self.sgd_lr = guesser_conf['sgd_lr']
@@ -124,6 +126,7 @@ class DanGuesser(AbstractGuesser):
         self.sm_dropout = guesser_conf['sm_dropout']
         self.nn_dropout = guesser_conf['nn_dropout']
         self.hyper_opt = guesser_conf['hyper_opt']
+        self.dual_encoder = guesser_conf['dual_encoder']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -140,6 +143,8 @@ class DanGuesser(AbstractGuesser):
     def parameters(self):
         return {
             'use_wiki': self.use_wiki,
+            'use_tagme': self.use_tagme,
+            'n_tagme_sentences': self.n_tagme_sentences,
             'use_buzz_as_train': self.use_buzz_as_train,
             'optimizer_name': self.optimizer_name,
             'sgd_weight_decay': self.sgd_weight_decay,
@@ -151,7 +156,8 @@ class DanGuesser(AbstractGuesser):
             'gradient_clip': self.gradient_clip,
             'nn_dropout': self.nn_dropout,
             'sm_dropout': self.sm_dropout,
-            'hyper_opt': self.hyper_opt
+            'hyper_opt': self.hyper_opt,
+            'dual_encoder': self.dual_encoder
         }
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
@@ -178,7 +184,7 @@ class DanGuesser(AbstractGuesser):
         for b in range(len(t_x_batches)):
             t_x = Variable(t_x_batches[b], volatile=True)
             t_len = Variable(t_len_batches[b], volatile=True)
-            out = self.model(t_x, t_len)
+            out = self.model(t_x, t_len, 0)
             probs = F.softmax(out)
             scores, preds = torch.max(probs, 1)
             scores = scores.data.cpu().numpy()
@@ -193,8 +199,16 @@ class DanGuesser(AbstractGuesser):
             training_data
         )
 
-        if self.use_wiki:
+        if self.use_wiki and self.use_tagme:
+            raise ValueError('Using wikipedia and tagme are mutually exclusive')
+        elif self.use_wiki:
             wiki_dataset = WikipediaDataset(set(training_data[1]))
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
+                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+        elif self.use_tagme:
+            wiki_dataset = TagmeWikipediaDataset(n_examples=self.n_tagme_sentences)
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
                 wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
@@ -216,7 +230,7 @@ class DanGuesser(AbstractGuesser):
         qb_y_train = np.array(qb_y_train)
 
         n_wiki = 0
-        if self.use_wiki:
+        if self.use_wiki or self.use_tagme:
             w_x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in w_x_train_text]
             for r in w_x_train:
                 if len(r) == 0:
@@ -235,12 +249,13 @@ class DanGuesser(AbstractGuesser):
 
         self.n_classes = compute_n_classes(training_data[1])
 
-        log.info(f'Batching: {len(qb_x_train)} qb, {len(n_wiki)} wikipedia, {len(x_test)} test')
+        log.info(f'Batching: {len(qb_x_train)} qb, {n_wiki} wikipedia, {len(x_test)} test')
 
         n_qb_batches_train, t_qb_x_train, t_qb_len_train, t_qb_y_train = batchify(
             self.batch_size, qb_x_train, qb_y_train, truncate=True)
 
-        if self.use_wiki:
+
+        if self.use_wiki or self.use_tagme:
             n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train = batchify(
                 self.batch_size, w_x_train, w_y_train, truncate=True
             )
@@ -249,32 +264,35 @@ class DanGuesser(AbstractGuesser):
             t_x_train = np.concatenate([t_qb_x_train, t_w_x_train])
             t_len_train = np.concatenate([t_qb_len_train, t_w_len_train])
             t_y_train = np.concatenate([t_qb_y_train, t_w_y_train])
+            source_train = np.array([0] * n_qb_batches_train + [1] * n_w_batches_train)
         else:
             n_batches_train = n_qb_batches_train
             t_x_train = t_qb_x_train
             t_len_train = t_qb_len_train
             t_y_train = t_qb_y_train
+            source_train = np.array([0] * n_qb_batches_train)
 
         n_batches_test, t_x_test, t_len_test, t_y_test = batchify(
             self.batch_size, x_test, y_test, truncate=False)
+        source_test = np.array([0] * n_batches_test)
 
         self.vocab_size = embeddings.shape[0]
         if self.hyper_opt:
             self.hyperparameter_optimize(
                 embeddings,
-                n_batches_train, t_x_train, t_len_train, t_y_train,
-                n_batches_test, t_x_test, t_len_test, t_y_test
+                n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+                n_batches_test, t_x_test, t_len_test, t_y_test, source_test
             )
         else:
             self._fit(
                 embeddings,
-                n_batches_train, t_x_train, t_len_train, t_y_train,
-                n_batches_test, t_x_test, t_len_test, t_y_test
+                n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+                n_batches_test, t_x_test, t_len_test, t_y_test, source_test
             )
 
     def hyperparameter_optimize(self,
-                                embeddings, n_batches_train, t_x_train, t_len_train, t_y_train,
-                                n_batches_test, t_x_test, t_len_test, t_y_test):
+                                embeddings, n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+                                n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
         scores = []
         params = []
         space = {
@@ -290,8 +308,8 @@ class DanGuesser(AbstractGuesser):
             }
             acc_score = self._fit(
                 embeddings,
-                n_batches_train, t_x_train, t_len_train, t_y_train,
-                n_batches_test, t_x_test, t_len_test, t_y_test,
+                n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+                n_batches_test, t_x_test, t_len_test, t_y_test, source_test,
                 hyper_params=p
             )
             return {'loss': -acc_score, 'status': ho.STATUS_OK}
@@ -326,8 +344,8 @@ class DanGuesser(AbstractGuesser):
         raise ValueError('Hyper parameter optimization done')
 
     def _fit(self, embeddings,
-             n_batches_train, t_x_train, t_len_train, t_y_train,
-             n_batches_test, t_x_test, t_len_test, t_y_test, hyper_params=None):
+             n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+             n_batches_test, t_x_test, t_len_test, t_y_test, source_test, hyper_params=None):
         model_params = {
             'sm_dropout': self.sm_dropout,
             'nn_dropout': self.nn_dropout,
@@ -341,7 +359,8 @@ class DanGuesser(AbstractGuesser):
             self.vocab_size, self.n_classes,
             embeddings=embeddings,
             sm_dropout_prob=model_params['sm_dropout'],
-            nn_dropout_prob=model_params['nn_dropout']
+            nn_dropout_prob=model_params['nn_dropout'],
+            dual_encoder=self.dual_encoder
         )
         if CUDA:
             self.model = self.model.cuda()
@@ -375,13 +394,13 @@ class DanGuesser(AbstractGuesser):
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(
                 n_batches_train,
-                t_x_train, t_len_train, t_y_train, evaluate=False
+                t_x_train, t_len_train, t_y_train, source_train, evaluate=False
             )
 
             self.model.eval()
             test_acc, test_loss, test_time = self.run_epoch(
                 n_batches_test,
-                t_x_test, t_len_test, t_y_test, evaluate=True
+                t_x_test, t_len_test, t_y_test, source_test, evaluate=True
             )
             best_acc = max(best_acc, test_acc)
 
@@ -400,12 +419,13 @@ class DanGuesser(AbstractGuesser):
         log.info('Done training')
         return best_acc
 
-    def run_epoch(self, n_batches, t_x_array, t_len_array, t_y_array, evaluate=False):
+    def run_epoch(self, n_batches, t_x_array, t_len_array, t_y_array, source_array, evaluate=False):
         if not evaluate:
             random_batch_order = np.random.permutation(n_batches)
             t_x_array = t_x_array[random_batch_order]
             t_len_array = t_len_array[random_batch_order]
             t_y_array = t_y_array[random_batch_order]
+            source_array = source_array[random_batch_order]
 
         batch_accuracies = []
         batch_losses = []
@@ -414,9 +434,10 @@ class DanGuesser(AbstractGuesser):
             t_x_batch = Variable(t_x_array[batch], volatile=evaluate)
             t_len_batch = Variable(t_len_array[batch], volatile=evaluate)
             t_y_batch = Variable(t_y_array[batch], volatile=evaluate)
+            source = source_array[batch]
 
             self.model.zero_grad()
-            out = self.model(t_x_batch, t_len_batch)
+            out = self.model(t_x_batch, t_len_batch, source)
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, t_y_batch).float()).data[0]
             batch_loss = self.criterion(out, t_y_batch)
@@ -447,10 +468,13 @@ class DanGuesser(AbstractGuesser):
                 'adam_lr': self.adam_lr,
                 'sgd_lr': self.sgd_lr,
                 'use_wiki': self.use_wiki,
+                'n_tagme_sentences': self.n_tagme_sentences,
+                'use_tagme': self.use_tagme,
                 'vocab_size': self.vocab_size,
                 'nn_dropout': self.nn_dropout,
                 'sm_dropout': self.sm_dropout,
-                'hyper_opt': self.hyper_opt
+                'hyper_opt': self.hyper_opt,
+                'dual_encoder': self.dual_encoder
             }, f)
 
     @classmethod
@@ -468,13 +492,16 @@ class DanGuesser(AbstractGuesser):
         guesser.max_epochs = params['max_epochs']
         guesser.batch_size = params['batch_size']
         guesser.use_wiki = params['use_wiki']
+        guesser.use_tagme = params['use_tagme']
+        guesser.n_tagme_sentences = params['n_tagme_sentences']
         guesser.adam_lr = params['adam_lr']
         guesser.sgd_lr = params['sgd_lr']
         guesser.vocab_size = params['vocab_size']
         guesser.nn_dropout = params['nn_dropout']
         guesser.sm_dropout = params['sm_dropout']
         guesser.hyper_opt = params['hyper_opt']
-        guesser.model = DanModel(guesser.vocab_size, guesser.n_classes)
+        guesser.dual_encoder = params['dual_encoder']
+        guesser.model = DanModel(guesser.vocab_size, guesser.n_classes, dual_encoder=guesser.dual_encoder)
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage
         ))
@@ -488,11 +515,34 @@ class DanGuesser(AbstractGuesser):
         return QuizBowlDataset(guesser_train=True, buzzer_train=self.use_buzz_as_train)
 
 
+class Encoder(nn.Module):
+    def __init__(self, embedding_dim, n_hidden_layers, n_hidden_units, non_linearity, dropout_prob):
+        super(Encoder, self).__init__()
+        encoder_layers = []
+        for i in range(n_hidden_layers):
+            if i == 0:
+                input_dim = embedding_dim
+            else:
+                input_dim = n_hidden_units
+
+            encoder_layers.extend([
+                nn.Linear(input_dim, n_hidden_units),
+                nn.BatchNorm1d(n_hidden_units),
+                non_linearity(),
+                nn.Dropout(dropout_prob),
+            ])
+        self.encoder = nn.Sequential(*encoder_layers)
+
+    def forward(self, x_array):
+        return self.encoder(x_array)
+
+
+
 class DanModel(nn.Module):
     def __init__(self, vocab_size, n_classes,
                  embeddings=None,
                  embedding_dim=300, nn_dropout_prob=.3, sm_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='elu'):
+                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='elu', dual_encoder=False):
         super(DanModel, self).__init__()
         self.n_hidden_layers = 1
         self.non_linearity = non_linearity
@@ -510,6 +560,7 @@ class DanModel(nn.Module):
         self.vocab_size = vocab_size
         self.n_classes = n_classes
         self.embedding_dim = embedding_dim
+        self.dual_encoder = dual_encoder
 
         self.dropout = nn.Dropout(nn_dropout_prob)
 
@@ -517,28 +568,32 @@ class DanModel(nn.Module):
         if embeddings is not None:
             self.embeddings.weight.data = torch.from_numpy(embeddings).float()
 
-        layers = []
-        for i in range(n_hidden_layers):
-            if i == 0:
-                input_dim = embedding_dim
-            else:
-                input_dim = n_hidden_units
+        self.qb_encoder = Encoder(embedding_dim, n_hidden_layers, n_hidden_units, self._non_linearity, nn_dropout_prob)
+        if dual_encoder:
+            self.wiki_encoder = Encoder(
+                embedding_dim, n_hidden_layers, n_hidden_units, self._non_linearity, nn_dropout_prob
+            )
+        else:
+            self.wiki_encoder = None
 
-            layers.extend([
-                nn.Linear(input_dim, n_hidden_units),
-                nn.BatchNorm1d(n_hidden_units),
-                self._non_linearity(),
-                nn.Dropout(nn_dropout_prob),
-            ])
-
-        layers.extend([
+        self.classifier = nn.Sequential(
             nn.Linear(n_hidden_units, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(sm_dropout_prob)
-        ])
-        self.layers = nn.Sequential(*layers)
+        )
 
-    def forward(self, input_: Variable, lengths: Variable):
+
+    def forward(self, input_: Variable, lengths: Variable, source: int):
         q_enc = self.embeddings(input_)
         q_enc = q_enc.sum(1) / lengths.view(input_.size()[0], -1)
-        return self.layers(self.dropout(q_enc))
+        if self.dual_encoder:
+            if source == 0:
+                q_enc = self.qb_encoder(self.dropout(q_enc))
+            elif source == 1:
+                q_enc = self.wiki_encoder(self.dropout(q_enc))
+            else:
+                raise ValueError('Invalid source')
+        else:
+            q_enc = self.qb_encoder(self.dropout(q_enc))
+
+        return self.classifier(q_enc)
