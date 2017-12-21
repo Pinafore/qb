@@ -18,7 +18,6 @@ EOS = '<EOS>'
 UNK_ID = 0
 EOS_ID = 1
 LOWER = True
-VOCAB_SIZE = 5
 
 answers_dir = 'answers.json'
 vocabulary_dir = 'vocabulary.json'
@@ -102,9 +101,10 @@ else:
         for sent in question.text.sents:
             _sent = []
             for word in sent:
-                word = word.lower_ if LOWER else word.text
-                word = word_to_id.get(word, UNK_ID)
-                _sent.append(word)
+                if word.is_alpha or word.is_digit:
+                    word = word.lower_ if LOWER else word.text
+                    word = word_to_id.get(word, UNK_ID)
+                    _sent.append(word)
             sents.append(_sent)
     
         q = {'sentences': sents, 'answer': question.page}

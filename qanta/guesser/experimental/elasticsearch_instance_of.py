@@ -56,7 +56,7 @@ class ElasticSearchIndex:
         return Index(INDEX_NAME).exists()
 
     @staticmethod
-    def build(documents: Dict[str, str], instance_of_map, rebuild_index=False):
+    def build(documents: Dict[str, str], instance_of_map, rebuild_index=True):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
             log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
