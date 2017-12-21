@@ -65,22 +65,24 @@ guessers "EntityRNN" {
   class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
-  features = ["word", "mention"]
+  features = ["word"]
 
   max_epochs = 100
   batch_size = 256
   learning_rate = 0.001
   max_grad_norm = 5
   rnn_type = "gru"
-  dropout_prob = 0.5
-  recurrent_dropout_prob = 0.3
+  dropout_prob = 0.25
+  variational_dropout_prob = 0.25
   bidirectional = true
   n_hidden_units = 1000
   n_hidden_layers = 1
   use_wiki = false
   use_triviaqa = false
+  use_tagme = false
+  n_tagme_sentences = 20
   n_wiki_paragraphs = 3
-  sm_dropout_prob = 0.3
+  sm_dropout_prob = 0.15
   sm_dropout_before_linear = false
   use_cove = false
 }
