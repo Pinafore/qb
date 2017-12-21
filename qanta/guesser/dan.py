@@ -4,9 +4,9 @@ import shutil
 import os
 import pickle
 import time
+import json
 
 import numpy as np
-import hyperopt as ho
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -293,55 +293,51 @@ class DanGuesser(AbstractGuesser):
     def hyperparameter_optimize(self,
                                 embeddings, n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
                                 n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
-        scores = []
-        params = []
-        space = {
-            'sm_dropout': ho.hp.uniform('sm_dropout', 0, 1),
-            'nn_dropout': ho.hp.uniform('nn_dropuot', 0, 1)
+        from advisor_client.client import AdvisorClient
 
-        }
-
-        def objective(sampled_params):
-            p = {
-                'sm_dropout': sampled_params['sm_dropout'],
-                'nn_dropout': sampled_params['nn_dropout']
+        client = AdvisorClient()
+        study_id = os.environ.get('QB_STUDY_ID')
+        if study_id is None:
+            study_config = {
+                'goal': 'MAXIMIZE',
+                'maxTrials': 100,
+                'maxParallelTrials': 1,
+                'params': [
+                    {
+                        'parameterName': 'sm_dropout',
+                        'type': 'DOUBLE',
+                        'minValue': 0,
+                        'maxValue': 1
+                    },
+                    {
+                        'parameterName': 'nn_dropout',
+                        'type': 'DOUBLE',
+                        'minValue': 0,
+                        'maxValue': 1
+                    }
+                ]
             }
+
+            study = client.create_study('dan', study_config)
+        else:
+            study_id = int(study_id)
+            study = client.get_study_by_id(study_id)
+        is_done = False
+        while not is_done:
+            trial = client.get_suggestions(study.id, 1)[0]
+            trial_params = json.loads(trial.parameter_values)
             acc_score = self._fit(
                 embeddings,
                 n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
                 n_batches_test, t_x_test, t_len_test, t_y_test, source_test,
-                hyper_params=p
+                hyper_params=trial_params
             )
-            return {'loss': -acc_score, 'status': ho.STATUS_OK}
+            client.complete_trial_with_one_metric(trial, acc_score)
+            best_trial = client.get_best_trial(study.id)
+            log.info(f'Best Trial: {best_trial}')
+            is_done = client.is_study_done(study.id)
 
-        trials = ho.Trials()
-        best = ho.fmin(
-            fn=objective, space=space, algo=ho.tpe.suggest, max_evals=100,
-            trials=trials
-        )
-        log.info(best)
-        log.info(trials)
-
-        while True:
-            sm_dropout = np.random.uniform()
-            nn_dropout = np.random.uniform()
-            p = {
-                'sm_dropout': sm_dropout,
-                'nn_dropout': nn_dropout
-            }
-            acc_score = self._fit(
-                embeddings,
-                n_batches_train, t_x_train, t_len_train, t_y_train,
-                n_batches_test, t_x_test, t_len_test, t_y_test,
-                hyper_params=p
-            )
-            scores.append(acc_score)
-            params.append(p)
-            log.info(f'Trial {len(scores)}')
-            best = np.argmax(scores)
-            log.info(f'Best score: {scores[best]} params: {params[best]}')
-        log.info(f'Parameter sweep results: {results}')
-        raise ValueError('Hyper parameter optimization done')
+        raise ValueError('Hyper parameter optimization done, exiting')
 
     def _fit(self, embeddings,
              n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
@@ -355,6 +351,7 @@ class DanGuesser(AbstractGuesser):
         if hyper_params is not None:
             for k, v in hyper_params.items():
                 model_params[k] = v
+
         self.model = DanModel(
             self.vocab_size, self.n_classes,
             embeddings=embeddings,
