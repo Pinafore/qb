@@ -8,6 +8,7 @@ expo_questions = "data/external/2017_hsnct.csv"
 word_embeddings = "data/external/deep/glove.6B.300d.txt"
 embedding_dimension = 300
 use_pretrained_embeddings = true
+buzz_as_guesser_train = false
 
 # Configure whether qanta.wikipedia.cached_wikipedia.CachedWikipedia should fallback
 # performing a remote call to Wikipedia if a page doesn't exist
@@ -43,7 +44,21 @@ guessers "Dan" {
   enabled = false
 
   use_wiki = false
-  use_qb = true
+  use_tagme = false
+  n_tagme_sentences = 20
+
+  optimizer = "adam"
+  batch_size = 1024
+  max_epochs = 100
+  gradient_clip = 0.25
+  sgd_weight_decay = 0.0000012
+  sgd_lr = 30.0
+  adam_lr = 0.001
+  use_lr_scheduler = true
+  nn_dropout = 0.265
+  sm_dropout = 0.158
+  hyper_opt = false
+  dual_encoder = false
 }
 
 
@@ -51,23 +66,26 @@ guessers "EntityRNN" {
   class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
-  features = ["word", "mention"]
+  features = ["word"]
 
   max_epochs = 100
   batch_size = 256
   learning_rate = 0.001
   max_grad_norm = 5
   rnn_type = "gru"
-  dropout_prob = 0.5
-  recurrent_dropout_prob = 0.3
+  dropout_prob = 0.25
+  variational_dropout_prob = 0.25
   bidirectional = true
   n_hidden_units = 1000
   n_hidden_layers = 1
   use_wiki = false
   use_triviaqa = false
+  use_tagme = false
+  n_tagme_sentences = 20
   n_wiki_paragraphs = 3
-  sm_dropout_prob = .3
+  sm_dropout_prob = 0.15
   sm_dropout_before_linear = false
+  use_cove = false
 }
 
 guessers "Bcn" {
