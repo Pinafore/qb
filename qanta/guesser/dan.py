@@ -323,13 +323,13 @@ class DanGuesser(AbstractGuesser):
                     },
                     {
                         'parameterName': 'n_hidden_layers',
-                        'type': 'LINEAR',
+                        'type': 'INTEGER',
                         'minValue': 1,
                         'maxValue': 4
                     },
                     {
                         'parameterName': 'n_hidden_units',
-                        'type': 'DISCRETE',
+                        'type': 'INTEGER',
                         'minValue': 300,
                         'maxValue': 1500,
                         'feasiblePoints': '300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500'
