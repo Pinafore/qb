@@ -29,13 +29,14 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
-from qanta.datasets.wikipedia import WikipediaDataset
+from qanta.datasets.wikipedia import WikipediaDataset, TagmeWikipediaDataset
 from qanta.datasets.triviaqa import TriviaQADataset
 from qanta.guesser.nn import compute_n_classes, create_embeddings
 from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
+from qanta.torch.nn import WeightDrop
 from qanta.util.io import safe_open
 
 
@@ -593,10 +594,13 @@ class RnnEntityGuesser(AbstractGuesser):
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_triviaqa = guesser_conf['use_triviaqa']
+        self.use_tagme = guesser_conf['use_tagme']
         self.sm_dropout_prob = guesser_conf['sm_dropout_prob']
         self.sm_dropout_before_linear = guesser_conf['sm_dropout_before_linear']
+        self.n_tagme_sentences = guesser_conf['n_tagme_sentences']
         self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
         self.use_cove = guesser_conf['use_cove']
+        self.variational_dropout_prob = guesser_conf['variational_dropout_prob']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -626,10 +630,13 @@ class RnnEntityGuesser(AbstractGuesser):
             'n_hidden_layers': self.n_hidden_layers,
             'use_wiki': self.use_wiki,
             'use_triviaqa': self.use_triviaqa,
+            'use_tagme': self.use_tagme,
             'sm_dropout_prob': self.sm_dropout_prob,
             'sm_dropout_before_linear': self.sm_dropout_before_linear,
+            'n_tagme_sentences': self.n_tagme_sentences,
             'n_wiki_paragraphs': self.n_wiki_paragraphs,
-            'use_cove': self.use_cove
+            'use_cove': self.use_cove,
+            'variational_dropout_prob': self.variational_dropout_prob
         }
 
     def guess(self,
@@ -693,6 +700,16 @@ class RnnEntityGuesser(AbstractGuesser):
             x_train_tokens.extend(w_x_train_text)
             y_train.extend(w_train_y)
 
+        if self.use_tagme:
+            wiki_dataset = TagmeWikipediaDataset(n_examples=self.n_tagme_sentences)
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_train_y, *_ = preprocess_dataset(
+                self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+            log.info(f'Adding {len(w_x_train_text)} Tagme Wikipedia sentences as training data')
+            x_train_tokens.extend(w_x_train_text)
+            y_train.extend(w_train_y)
+
         if self.use_triviaqa:
             tqa_dataset = TriviaQADataset(set(i_to_class))
             tqa_train_data = tqa_dataset.training_data()
@@ -743,6 +760,7 @@ class RnnEntityGuesser(AbstractGuesser):
             rnn_type=self.rnn_type, dropout_prob=self.dropout_prob,
             bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
             sm_dropout_before_linear=self.sm_dropout_before_linear, sm_dropout_prob=self.sm_dropout_prob,
+            variational_dropout_prob=self.variational_dropout_prob,
             use_cove=self.use_cove
         ).cuda()
         log.info(f'Model:\n{repr(self.model)}')
@@ -765,8 +783,11 @@ class RnnEntityGuesser(AbstractGuesser):
             ('bidirectional', self.bidirectional),
             ('use_wiki', self.use_wiki),
             ('use_triviaqa', self.use_triviaqa),
+            ('use_tagme', self.use_tagme),
             ('n_wiki_paragraphs', self.n_wiki_paragraphs),
-            ('use_cove', self.use_cove)
+            ('n_tagme_sentences', self.n_tagme_sentences),
+            ('use_cove', self.use_cove),
+            ('variational_dropout_prob', self.variational_dropout_prob)
         ])
 
         manager = TrainingManager([
@@ -860,9 +881,12 @@ class RnnEntityGuesser(AbstractGuesser):
                 'n_hidden_layers': self.n_hidden_layers,
                 'use_wiki': self.use_wiki,
                 'use_triviaqa': self.use_triviaqa,
+                'use_tagme': self.use_tagme,
+                'n_tagme_sentences': self.n_tagme_sentences,
                 'n_wiki_paragraphs': self.n_wiki_paragraphs,
                 'sm_dropout_prob': self.sm_dropout_prob,
                 'sm_dropout_before_linear': self.sm_dropout_before_linear,
+                'variational_dropout_prob': self.variational_dropout_prob,
                 'use_cove': self.use_cove
             }, f)
 
@@ -894,10 +918,13 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.use_wiki = params['use_wiki']
         guesser.use_triviaqa = params['use_triviaqa']
+        guesser.use_tagme = params['use_tagme']
+        guesser.n_tagme_sentences = params['n_tagme_sentences']
         guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
         guesser.sm_dropout_prob = params['sm_dropout_prob']
         guesser.sm_dropout_before_linear = params['sm_dropout_before_linear']
         guesser.use_cove = params['use_cove']
+        guesser.variational_dropout_prob = params['variational_dropout_prob']
         return guesser
 
     @classmethod
@@ -913,7 +940,7 @@ class RnnEntityModel(nn.Module):
                  word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
                  n_classes, embedding_dim=300, dropout_prob=.5, sm_dropout_prob=.3, sm_dropout_before_linear=True,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
-                 enabled_features={'word', 'pos', 'iob', 'type', 'mention'},
+                 variational_dropout_prob=.5, enabled_features={'word', 'pos', 'iob', 'type', 'mention'},
                  embeddings=None, use_cove=False):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
@@ -924,6 +951,7 @@ class RnnEntityModel(nn.Module):
         self.embedding_dim = embedding_dim
         self.dropout_prob = dropout_prob
         self.sm_dropout_prob = sm_dropout_prob
+        self.variational_dropout_prob = variational_dropout_prob
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_units = n_hidden_units
         self.bidirectional = bidirectional
@@ -984,8 +1012,15 @@ class RnnEntityModel(nn.Module):
         else:
             raise ValueError('Unrecognized rnn layer type')
 
-        self.rnn = rnn_layer(self.feature_dimension, n_hidden_units, n_hidden_layers,
-                           dropout=dropout_prob, batch_first=True, bidirectional=bidirectional)
+        rnn = rnn_layer(
+            self.feature_dimension, n_hidden_units, n_hidden_layers,
+            dropout=dropout_prob, batch_first=True, bidirectional=bidirectional
+        )
+        if variational_dropout > 0:
+            self.rnn = WeightDrop(rnn, ['weight_hh_l0'], dropout=variational_dropout)
+        else:
+            self.rnn = rnn
+
         self.num_directions = int(bidirectional) + 1
         if sm_dropout_before_linear:
             self.classification_layer = nn.Sequential(

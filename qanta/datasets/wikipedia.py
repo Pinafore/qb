@@ -97,7 +97,8 @@ class TagmeWikipediaDataset(AbstractDataset):
         tagme_answers = []
 
         for ans in page_sentences:
-            n_mentions, sent_list = sorted(page_sentences[ans], reverse=True, key=lambda x: x[0])
+            sorted_sentences = sorted(page_sentences[ans], reverse=True, key=lambda x: x[0])
+            sent_list = [t[1] for t in sorted_sentences]
 
             for sentence in sent_list[:self.n_examples]:
                 tagme_content.append([sentence])
