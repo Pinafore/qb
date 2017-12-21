@@ -46,6 +46,9 @@ guessers "Dan" {
   use_tagme = false
   n_tagme_sentences = 20
 
+  n_hidden_units = 1000
+  n_hidden_layers = 1
+
   optimizer = "adam"
   batch_size = 1024
   max_epochs = 100
@@ -57,6 +60,7 @@ guessers "Dan" {
   nn_dropout = 0.265
   sm_dropout = 0.158
   hyper_opt = false
+  hyper_opt_steps = 300
   dual_encoder = false
 }
 

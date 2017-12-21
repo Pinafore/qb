@@ -126,7 +126,10 @@ class DanGuesser(AbstractGuesser):
         self.sm_dropout = guesser_conf['sm_dropout']
         self.nn_dropout = guesser_conf['nn_dropout']
         self.hyper_opt = guesser_conf['hyper_opt']
+        self.hyper_opt_steps = guesser_conf['hyper_opt_steps']
         self.dual_encoder = guesser_conf['dual_encoder']
+        self.n_hidden_units = guesser_conf['n_hidden_units']
+        self.n_hidden_layers = guesser_conf['n_hidden_layers']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -157,7 +160,10 @@ class DanGuesser(AbstractGuesser):
             'nn_dropout': self.nn_dropout,
             'sm_dropout': self.sm_dropout,
             'hyper_opt': self.hyper_opt,
-            'dual_encoder': self.dual_encoder
+            'hyper_opt_steps': self.hyper_opt_steps,
+            'dual_encoder': self.dual_encoder,
+            'n_hidden_units': self.n_hidden_units,
+            'n_hidden_layers': self.n_hidden_layers
         }
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
@@ -300,7 +306,7 @@ class DanGuesser(AbstractGuesser):
         if study_id is None:
             study_config = {
                 'goal': 'MAXIMIZE',
-                'maxTrials': 100,
+                'maxTrials': self.hyper_opt_steps,
                 'maxParallelTrials': 1,
                 'params': [
                     {
@@ -314,6 +320,19 @@ class DanGuesser(AbstractGuesser):
                         'type': 'DOUBLE',
                         'minValue': 0,
                         'maxValue': 1
+                    },
+                    {
+                        'parameterName': 'n_hidden_layers',
+                        'type': 'LINEAR',
+                        'minValue': 1,
+                        'maxValue': 4
+                    },
+                    {
+                        'parameterName': 'n_hidden_units',
+                        'type': 'DISCRETE',
+                        'minValue': 300,
+                        'maxValue': 1500,
+                        'feasiblePoints': '300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500'
                     }
                 ]
             }
@@ -346,7 +365,9 @@ class DanGuesser(AbstractGuesser):
             'sm_dropout': self.sm_dropout,
             'nn_dropout': self.nn_dropout,
             'adam_lr': self.adam_lr,
-            'sgd_lr': self.sgd_lr
+            'sgd_lr': self.sgd_lr,
+            'n_hidden_units': self.n_hidden_units,
+            'n_hidden_layers': self.n_hidden_layers
         }
         if hyper_params is not None:
             for k, v in hyper_params.items():
@@ -357,6 +378,8 @@ class DanGuesser(AbstractGuesser):
             embeddings=embeddings,
             sm_dropout_prob=model_params['sm_dropout'],
             nn_dropout_prob=model_params['nn_dropout'],
+            n_hidden_layers=model_params['n_hidden_layers'],
+            n_hidden_units=model_params['n_hidden_units'],
             dual_encoder=self.dual_encoder
         )
         if CUDA:
@@ -471,7 +494,10 @@ class DanGuesser(AbstractGuesser):
                 'nn_dropout': self.nn_dropout,
                 'sm_dropout': self.sm_dropout,
                 'hyper_opt': self.hyper_opt,
-                'dual_encoder': self.dual_encoder
+                'hyper_opt_steps': self.hyper_opt_steps,
+                'dual_encoder': self.dual_encoder,
+                'n_hidden_layers': self.n_hidden_layers,
+                'n_hidden_units': self.n_hidden_units
             }, f)
 
     @classmethod
@@ -497,7 +523,10 @@ class DanGuesser(AbstractGuesser):
         guesser.nn_dropout = params['nn_dropout']
         guesser.sm_dropout = params['sm_dropout']
         guesser.hyper_opt = params['hyper_opt']
+        guesser.hyper_opt_steps = params['hyper_opt_steps']
         guesser.dual_encoder = params['dual_encoder']
+        guesser.n_hidden_units = params['n_hidden_units']
+        guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.model = DanModel(guesser.vocab_size, guesser.n_classes, dual_encoder=guesser.dual_encoder)
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage
