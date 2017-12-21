@@ -1016,8 +1016,8 @@ class RnnEntityModel(nn.Module):
             self.feature_dimension, n_hidden_units, n_hidden_layers,
             dropout=dropout_prob, batch_first=True, bidirectional=bidirectional
         )
-        if variational_dropout > 0:
-            self.rnn = WeightDrop(rnn, ['weight_hh_l0'], dropout=variational_dropout)
+        if variational_dropout_prob > 0:
+            self.rnn = WeightDrop(rnn, ['weight_hh_l0'], dropout=variational_dropout_prob)
         else:
             self.rnn = rnn
 
