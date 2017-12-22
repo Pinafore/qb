@@ -8,37 +8,44 @@ import chainer
 from chainer import training
 from chainer.training import extensions
 
+from qanta.preprocess import preprocess_dataset
+from qanta.datasets.quiz_bowl import QuizBowlDataset
+
 import nets
-from nlp_utils import convert_seq
+from nlp_utils import convert_seq, transform_to_array
 import dataset
+
+def get_quizbowl():
+    qb_dataset = QuizBowlDataset(guesser_train=True, buzzer_train=False)
+    training_data = qb_dataset.training_data()
+    train_x, train_y, dev_x, dev_y, i_to_word, class_to_i, i_to_class = preprocess_dataset(training_data)
+    i_to_word = ['<unk>', '<eos>'] + sorted(i_to_word)
+    word_to_i = {x: i for i, x in enumerate(i_to_word)}
+    train = transform_to_array(zip(train_x, train_y), word_to_i)
+    dev = transform_to_array(zip(dev_x, dev_y), word_to_i)
+    return train, dev, word_to_i, i_to_class
+
 
 def main():
     current_datetime = '{}'.format(datetime.datetime.today())
     parser = argparse.ArgumentParser(
         description='Chainer NN guesser.')
-    parser.add_argument('--batchsize', '-b', type=int, default=64,
+    parser.add_argument('--batchsize', type=int, default=64,
                         help='Number of examples in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=30,
+    parser.add_argument('--epoch', type=int, default=30,
                         help='Number of sweeps over the dataset to train')
-    parser.add_argument('--gpu', '-g', type=int, default=0,
+    parser.add_argument('--gpu', type=int, default=0,
                         help='GPU ID (negative value indicates CPU)')
-    parser.add_argument('--out', '-o', default='result/nn_guesser',
+    parser.add_argument('--out', default='result/nn_guesser',
                         help='Directory to output the result')
-    parser.add_argument('--unit', '-u', type=int, default=300,
-                        help='Number of units')
-    parser.add_argument('--layer', '-l', type=int, default=1,
-                        help='Number of layers of RNN or MLP following CNN')
-    parser.add_argument('--dropout', '-d', type=float, default=0.4,
-                        help='Dropout rate')
-    parser.add_argument('--model', '-model', default='bow',
-                        choices=['cnn', 'rnn', 'bow'],
+    parser.add_argument('--model', default='dan',
+                        choices=['cnn', 'rnn', 'dan'],
                         help='Name of encoder model type.')
-    parser.add_argument('--resume', '-resume', action='store_true',
+    parser.add_argument('--resume', action='store_true',
                         help='Resume training.')
-    parser.add_argument('--glove', default='data/glove.6B.300d.txt',
+    parser.add_argument('--glove', default='data/external/deep/glove.6B.300d.txt',
                         help='Path to glove embedding file.')
     parser.set_defaults(resume=False)
-
     args = parser.parse_args()
 
     if args.resume:
@@ -47,31 +54,42 @@ def main():
         args.resume = True
     print(json.dumps(args.__dict__, indent=2))
 
-    train, dev, vocab, answers = dataset.get_quizbowl(
-            data_dir='data/nn_guesser',
-            split_sentences=True)
+    train, dev, vocab, answers = get_quizbowl()
+    
+    n_vocab = len(vocab)
+    n_class = len(set([int(d[1]) for d in train]))
+    embed_size = 300
+    hidden_size = 1000
+    hidden_dropout = 0.265
+    output_dropout = 0.158
+    gradient_clipping = 0.25
 
     print('# train data: {}'.format(len(train)))
     print('# dev data: {}'.format(len(dev)))
     print('# vocab: {}'.format(len(vocab)))
-    n_class = len(set([int(d[1]) for d in train]))
     print('# class: {}'.format(n_class))
+    print('embedding size: {}'.format(embed_size))
+    print('hidden size: {}'.format(hidden_size))
+    print('hidden dropout: {}'.format(hidden_dropout))
+    print('output dropout: {}'.format(output_dropout))
+    print('gradient clipping: {}'.format(gradient_clipping))
 
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     dev_iter = chainer.iterators.SerialIterator(dev, args.batchsize,
                                                  repeat=False, shuffle=False)
 
     # Setup a model
-    if args.model == 'rnn':
-        Encoder = nets.RNNEncoder
-    elif args.model == 'cnn':
-        Encoder = nets.CNNEncoder
-    elif args.model == 'bow':
-        Encoder = nets.BOWMLPEncoder
-    encoder = Encoder(n_layers=args.layer, n_vocab=len(vocab),
-                      n_units=args.unit, dropout=args.dropout)
+    # if args.model == 'rnn':
+    #     Encoder = nets.RNNEncoder
+    # elif args.model == 'cnn':
+    #     Encoder = nets.CNNEncoder
+    if args.model == 'dan':
+        encoder = nets.DANEncoder(n_vocab, embed_size, hidden_size,
+                dropout=hidden_dropout)
+    model = nets.NNGuesser(encoder, n_class, dropout=output_dropout)
 
-    model = nets.TextClassifier(encoder, n_class)
+    if not args.resume:
+        model.load_glove(args.glove, vocab, (n_vocab, embed_size))
 
     if args.gpu >= 0:
         # Make a specified GPU current
@@ -79,9 +97,10 @@ def main():
         model.to_gpu()  # Copy the model to the GPU
 
     # Setup an optimizer
-    optimizer = chainer.optimizers.Adam()
+    optimizer = chainer.optimizers.Adam(alpha=0.001)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(1e-4))
+    optimizer.add_hook(chainer.optimizer.GradientClipping(gradient_clipping))
 
     # Set up a trainer
     updater = training.StandardUpdater(
@@ -100,11 +119,17 @@ def main():
         model, 'best_model.npz'),
         trigger=record_trigger)
 
+    # Exponential decay of learning rate
+    trainer.extend(extensions.observe_lr())
+    trainer.extend(extensions.ExponentialShift(alpha, 0.5))
+
     # Write a log of evaluation statistics for each epoch
+
     trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(
         ['epoch', 'main/loss', 'validation/main/loss',
-         'main/accuracy', 'validation/main/accuracy', 'elapsed_time']))
+         'main/accuracy', 'validation/main/accuracy',
+         'main/lr', 'elapsed_time']))
 
     # Print a progress bar to stdout
     trainer.extend(extensions.ProgressBar())
@@ -115,7 +140,6 @@ def main():
     # current = os.path.dirname(os.path.abspath(__file__))
     vocab_path = os.path.join(args.out, 'vocab.json')
     answers_path = os.path.join(args.out, 'answers.json')
-    embed_path = os.path.join(args.out, 'embed_w.npz')
     with open(vocab_path, 'w') as f:
         json.dump(vocab, f)
     with open(answers_path, 'w') as f:
@@ -133,14 +157,6 @@ def main():
     if args.resume:
         print('loading model {}'.format(model_path))
         chainer.serializers.load_npz(model_path, model)
-    else:
-        if os.path.isfile(args.glove):
-            model.load_glove(embed_path, args.glove, vocab)
-
-    if args.model == 'bow':
-        print(model.encoder.bow_encoder.embed.W)
-    else:
-        print(model.encoder.embed.W)
 
     # Run the training
     trainer.run()
