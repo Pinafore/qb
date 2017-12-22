@@ -308,6 +308,7 @@ class DanGuesser(AbstractGuesser):
                 'goal': 'MAXIMIZE',
                 'maxTrials': self.hyper_opt_steps,
                 'maxParallelTrials': 1,
+                'randomInitTrials': 1,
                 'params': [
                     {
                         'parameterName': 'sm_dropout',
@@ -331,8 +332,7 @@ class DanGuesser(AbstractGuesser):
                         'parameterName': 'n_hidden_units',
                         'type': 'INTEGER',
                         'minValue': 300,
-                        'maxValue': 1500,
-                        'feasiblePoints': '300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500'
+                        'maxValue': 1500
                     }
                 ]
             }
