@@ -47,6 +47,9 @@ guessers "Dan" {
   use_tagme = false
   n_tagme_sentences = 20
 
+  n_hidden_units = 1000
+  n_hidden_layers = 1
+
   optimizer = "adam"
   batch_size = 1024
   max_epochs = 100
@@ -58,6 +61,7 @@ guessers "Dan" {
   nn_dropout = 0.265
   sm_dropout = 0.158
   hyper_opt = false
+  hyper_opt_steps = 300
   dual_encoder = false
 }
 
@@ -86,6 +90,10 @@ guessers "EntityRNN" {
   sm_dropout_prob = 0.15
   sm_dropout_before_linear = false
   use_cove = false
+  use_locked_dropout = false
+
+  hyper_opt = false
+  hyper_opt_steps = 100
 }
 
 guessers "Bcn" {
