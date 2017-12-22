@@ -41,7 +41,7 @@ guessers "Tfidf" {
 guessers "Dan" {
   class = "qanta.guesser.dan.DanGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
+  enabled = true
 
   use_wiki = false
   use_tagme = false
@@ -97,7 +97,7 @@ guessers "Bcn" {
 guessers "ESWikidata" {
   class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = true
+  enabled = false
   # Set the level of parallelism for guess generation
   n_cores = 20
   confidence_threshold = 0.7
