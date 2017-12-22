@@ -89,6 +89,10 @@ guessers "EntityRNN" {
   sm_dropout_prob = 0.15
   sm_dropout_before_linear = false
   use_cove = false
+  use_locked_dropout = false
+
+  hyper_opt = false
+  hyper_opt_steps = 100
 }
 
 guessers "Bcn" {
