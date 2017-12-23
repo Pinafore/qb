@@ -30,5 +30,5 @@ unidecode
 elasticsearch-dsl
 pycrayon
 pycountry
-spacy
+spacy==1.9
 flask

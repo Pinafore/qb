@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple
+import json
 import time
 import pickle
 import os
@@ -29,13 +30,14 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
-from qanta.datasets.wikipedia import WikipediaDataset
+from qanta.datasets.wikipedia import WikipediaDataset, TagmeWikipediaDataset
 from qanta.datasets.triviaqa import TriviaQADataset
 from qanta.guesser.nn import compute_n_classes, create_embeddings
 from qanta.torch import (
     BaseLogger, TerminateOnNaN, Tensorboard, create_save_model,
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
 )
+from qanta.torch.nn import WeightDrop, LockedDropout
 from qanta.util.io import safe_open
 
 
@@ -593,10 +595,16 @@ class RnnEntityGuesser(AbstractGuesser):
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_triviaqa = guesser_conf['use_triviaqa']
+        self.use_tagme = guesser_conf['use_tagme']
         self.sm_dropout_prob = guesser_conf['sm_dropout_prob']
         self.sm_dropout_before_linear = guesser_conf['sm_dropout_before_linear']
+        self.n_tagme_sentences = guesser_conf['n_tagme_sentences']
         self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
         self.use_cove = guesser_conf['use_cove']
+        self.variational_dropout_prob = guesser_conf['variational_dropout_prob']
+        self.use_locked_dropout = guesser_conf['use_locked_dropout']
+        self.hyper_opt = guesser_conf['hyper_opt']
+        self.hyper_opt_steps = guesser_conf['hyper_opt_steps']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -626,10 +634,14 @@ class RnnEntityGuesser(AbstractGuesser):
             'n_hidden_layers': self.n_hidden_layers,
             'use_wiki': self.use_wiki,
             'use_triviaqa': self.use_triviaqa,
+            'use_tagme': self.use_tagme,
             'sm_dropout_prob': self.sm_dropout_prob,
             'sm_dropout_before_linear': self.sm_dropout_before_linear,
+            'n_tagme_sentences': self.n_tagme_sentences,
             'n_wiki_paragraphs': self.n_wiki_paragraphs,
-            'use_cove': self.use_cove
+            'use_cove': self.use_cove,
+            'variational_dropout_prob': self.variational_dropout_prob,
+            'use_locked_dropout': self.use_locked_dropout
         }
 
     def guess(self,
@@ -693,6 +705,16 @@ class RnnEntityGuesser(AbstractGuesser):
             x_train_tokens.extend(w_x_train_text)
             y_train.extend(w_train_y)
 
+        if self.use_tagme:
+            wiki_dataset = TagmeWikipediaDataset(n_examples=self.n_tagme_sentences)
+            wiki_train_data = wiki_dataset.training_data()
+            w_x_train_text, w_train_y, *_ = preprocess_dataset(
+                self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+            )
+            log.info(f'Adding {len(w_x_train_text)} Tagme Wikipedia sentences as training data')
+            x_train_tokens.extend(w_x_train_text)
+            y_train.extend(w_train_y)
+
         if self.use_triviaqa:
             tqa_dataset = TriviaQADataset(set(i_to_class))
             tqa_train_data = tqa_dataset.training_data()
@@ -729,23 +751,91 @@ class RnnEntityGuesser(AbstractGuesser):
         )
         self.n_classes = compute_n_classes(training_data[1])
 
+        if self.hyper_opt:
+            self.hyperparameter_optimize(train_dataset, test_dataset)
+        else:
+            self._fit(train_dataset, test_dataset)
+
+    def hyperparameter_optimize(self, train_dataset, test_dataset):
+        from advisor_client.client import AdvisorClient
+
+        client = AdvisorClient()
+        study_id = os.environ.get('QB_STUDY_ID')
+        if study_id is None:
+            study_config = {
+                'goal': 'MAXIMIZE',
+                'maxTrials': self.hyper_opt_steps,
+                'maxParallelTrials': 1,
+                'randomInitTrials': 1,
+                'params': [
+                    {
+                        'parameterName': 'sm_dropout',
+                        'type': 'DOUBLE',
+                        'minValue': 0,
+                        'maxValue': 1
+                    },
+                    {
+                        'parameterName': 'nn_dropout',
+                        'type': 'DOUBLE',
+                        'minValue': 0,
+                        'maxValue': 1
+                    },
+                    {
+                        'parameterName': 'variational_dropout',
+                        'type': 'DOUBLE',
+                        'minValue': 0,
+                        'maxValue': 1
+                    }
+                ]
+            }
+
+            study = client.create_study('rnn', study_config)
+        else:
+            study_id = int(study_id)
+            study = client.get_study_by_id(study_id)
+        is_done = False
+        while not is_done:
+            trial = client.get_suggestions(study.id, 1)[0]
+            trial_params = json.loads(trial.parameter_values)
+            acc_score = self._fit(train_dataset, test_dataset, hyper_params=trial_params)
+            client.complete_trial_with_one_metric(trial, acc_score)
+            best_trial = client.get_best_trial(study.id)
+            log.info(f'Best Trial: {best_trial}')
+            is_done = client.is_study_done(study.id)
+
+        raise ValueError('Hyperparameter optimization done, exiting')
+
+    def _fit(self, train_dataset, test_dataset, hyper_params=None):
+        model_params = {
+            'sm_dropout': self.sm_dropout_prob,
+            'nn_dropout': self.dropout_prob,
+            'variational_dropout': self.variational_dropout_prob
+        }
+        if hyper_params is not None:
+            for k, v in hyper_params.items():
+                model_params[k] = v
+
         log.info('Initializing neural model')
-        log.info(f'Parameters:\n{pformat(self.parameters())}')
         self.model = RnnEntityModel(
-            len(multi_embedding_lookup.word),
-            len(multi_embedding_lookup.pos),
-            len(multi_embedding_lookup.iob),
-            len(multi_embedding_lookup.ent_type),
+            len(self.multi_embedding_lookup.word),
+            len(self.multi_embedding_lookup.pos),
+            len(self.multi_embedding_lookup.iob),
+            len(self.multi_embedding_lookup.ent_type),
             len(self.rel_position_lookup),
             self.n_classes,
             enabled_features=self.features,
-            embeddings=word_embeddings,
-            rnn_type=self.rnn_type, dropout_prob=self.dropout_prob,
-            bidirectional=self.bidirectional, n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
-            sm_dropout_before_linear=self.sm_dropout_before_linear, sm_dropout_prob=self.sm_dropout_prob,
-            use_cove=self.use_cove
+            embeddings=self.word_embeddings,
+            rnn_type=self.rnn_type, bidirectional=self.bidirectional,
+            dropout_prob=model_params['nn_dropout'],
+            variational_dropout_prob=model_params['variational_dropout'],
+            sm_dropout_prob=model_params['sm_dropout'],
+            n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
+            sm_dropout_before_linear=self.sm_dropout_before_linear,
+            use_cove=self.use_cove, use_locked_dropout=self.use_locked_dropout
         ).cuda()
+        log.info(f'Parameters:\n{pformat(self.parameters())}')
         log.info(f'Model:\n{repr(self.model)}')
+        log.info(f'Hyper params:\n{pformat(model_params)}')
         self.optimizer = Adam(
             filter(lambda p: p.requires_grad, self.model.parameters()),
             lr=self.learning_rate)
@@ -765,8 +855,12 @@ class RnnEntityGuesser(AbstractGuesser):
             ('bidirectional', self.bidirectional),
             ('use_wiki', self.use_wiki),
             ('use_triviaqa', self.use_triviaqa),
+            ('use_tagme', self.use_tagme),
             ('n_wiki_paragraphs', self.n_wiki_paragraphs),
-            ('use_cove', self.use_cove)
+            ('n_tagme_sentences', self.n_tagme_sentences),
+            ('use_cove', self.use_cove),
+            ('variational_dropout_prob', self.variational_dropout_prob),
+            ('use_locked_dropout', self.use_locked_dropout)
         ])
 
         manager = TrainingManager([
@@ -777,12 +871,14 @@ class RnnEntityGuesser(AbstractGuesser):
         ])
 
         log.info('Starting training...')
+        best_acc = 0.0
         while True:
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(train_dataset, evaluate=False)
 
             self.model.eval()
             test_acc, test_loss, test_time = self.run_epoch(test_dataset, evaluate=True)
+            best_acc = max(best_acc, test_acc)
 
             stop_training, reasons = manager.instruct(
                 train_time, train_loss, train_acc,
@@ -796,6 +892,7 @@ class RnnEntityGuesser(AbstractGuesser):
                 self.scheduler.step(test_acc)
 
         log.info('Done training')
+        return best_acc
 
     def run_epoch(self, batched_dataset: BatchedDataset, evaluate=False):
         if evaluate:
@@ -860,10 +957,16 @@ class RnnEntityGuesser(AbstractGuesser):
                 'n_hidden_layers': self.n_hidden_layers,
                 'use_wiki': self.use_wiki,
                 'use_triviaqa': self.use_triviaqa,
+                'use_tagme': self.use_tagme,
+                'n_tagme_sentences': self.n_tagme_sentences,
                 'n_wiki_paragraphs': self.n_wiki_paragraphs,
                 'sm_dropout_prob': self.sm_dropout_prob,
                 'sm_dropout_before_linear': self.sm_dropout_before_linear,
-                'use_cove': self.use_cove
+                'variational_dropout_prob': self.variational_dropout_prob,
+                'use_cove': self.use_cove,
+                'use_locked_dropout': self.use_locked_dropout,
+                'hyper_opt': self.hyper_opt,
+                'hyper_opt_steps': self.hyper_opt_steps
             }, f)
 
     @classmethod
@@ -894,10 +997,16 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.use_wiki = params['use_wiki']
         guesser.use_triviaqa = params['use_triviaqa']
+        guesser.use_tagme = params['use_tagme']
+        guesser.n_tagme_sentences = params['n_tagme_sentences']
         guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
         guesser.sm_dropout_prob = params['sm_dropout_prob']
         guesser.sm_dropout_before_linear = params['sm_dropout_before_linear']
         guesser.use_cove = params['use_cove']
+        guesser.variational_dropout_prob = params['variational_dropout_prob']
+        guesser.use_locked_dropout = params['use_locked_dropout']
+        guesser.hyper_opt = params['hyper_opt']
+        guesser.hyper_opt_steps = params['hyper_opt_steps']
         return guesser
 
     @classmethod
@@ -913,8 +1022,8 @@ class RnnEntityModel(nn.Module):
                  word_vocab_size, pos_vocab_size, iob_vocab_size, type_vocab_size, mention_vocab_size,
                  n_classes, embedding_dim=300, dropout_prob=.5, sm_dropout_prob=.3, sm_dropout_before_linear=True,
                  n_hidden_layers=1, n_hidden_units=1000, bidirectional=True, rnn_type='gru',
-                 enabled_features={'word', 'pos', 'iob', 'type', 'mention'},
-                 embeddings=None, use_cove=False):
+                 variational_dropout_prob=.5, enabled_features={'word', 'pos', 'iob', 'type', 'mention'},
+                 embeddings=None, use_cove=False, use_locked_dropout=False):
         super(RnnEntityModel, self).__init__()
         self.word_vocab_size = word_vocab_size
         self.pos_vocab_size = pos_vocab_size
@@ -924,14 +1033,19 @@ class RnnEntityModel(nn.Module):
         self.embedding_dim = embedding_dim
         self.dropout_prob = dropout_prob
         self.sm_dropout_prob = sm_dropout_prob
+        self.variational_dropout_prob = variational_dropout_prob
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_units = n_hidden_units
         self.bidirectional = bidirectional
         self.enabled_features = enabled_features
         self.sm_dropout_before_linear = sm_dropout_before_linear
         self.use_cove = use_cove
+        self.use_locked_dropout = use_locked_dropout
 
-        self.dropout = nn.Dropout(dropout_prob)
+        if use_locked_dropout:
+            self.dropout = LockedDropout()
+        else:
+            self.dropout = nn.Dropout(dropout_prob)
         self.feature_dimension = 0
 
         if 'word' in enabled_features:
@@ -972,7 +1086,7 @@ class RnnEntityModel(nn.Module):
             self.cove.requires_grad = False
             for p in self.cove.parameters():
                 p.requires_grad = False
-            self.feature_dimension += 300
+            self.feature_dimension += 600
         else:
             self.cove = None
 
@@ -984,8 +1098,15 @@ class RnnEntityModel(nn.Module):
         else:
             raise ValueError('Unrecognized rnn layer type')
 
-        self.rnn = rnn_layer(self.feature_dimension, n_hidden_units, n_hidden_layers,
-                           dropout=dropout_prob, batch_first=True, bidirectional=bidirectional)
+        rnn = rnn_layer(
+            self.feature_dimension, n_hidden_units, n_hidden_layers,
+            dropout=dropout_prob, batch_first=True, bidirectional=bidirectional
+        )
+        if variational_dropout_prob > 0:
+            self.rnn = WeightDrop(rnn, ['weight_hh_l0'], dropout=variational_dropout_prob)
+        else:
+            self.rnn = rnn
+
         self.num_directions = int(bidirectional) + 1
         if sm_dropout_before_linear:
             self.classification_layer = nn.Sequential(
@@ -1033,10 +1154,13 @@ class RnnEntityModel(nn.Module):
             dropout_features.append(mention_embeddings)
 
         if self.use_cove:
-            cove_embeddings = self.cove(word_idxs, torch.from_numpy(lengths))
+            cove_embeddings = self.cove(word_idxs, torch.from_numpy(lengths).cuda())
             dropout_features.append(cove_embeddings)
-
-        features = self.dropout(torch.cat(dropout_features, 2))
+        features = torch.cat(dropout_features, 2)
+        if self.use_locked_dropout:
+            features = self.dropout(features, self.dropout_prob)
+        else:
+            features = self.dropout(features)
 
         packed_input = nn.utils.rnn.pack_padded_sequence(features, lengths, batch_first=True)
 
