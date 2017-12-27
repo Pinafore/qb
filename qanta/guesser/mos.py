@@ -12,7 +12,7 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 from torch.optim import Adam, lr_scheduler
 
-from qanta import logging
+from qanta import qlogging
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, Answer, QuestionText
@@ -25,7 +25,7 @@ from qanta.torch import (
 )
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 PTDAN_WE_TMP = '/tmp/qanta/deep/pt_dan_we.pickle'

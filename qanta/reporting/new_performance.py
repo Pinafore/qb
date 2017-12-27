@@ -10,7 +10,7 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util import constants as c
 from qanta.buzzer import constants as bc
-from qanta import logging
+from qanta import qlogging
 from qanta.buzzer.util import GUESSERS
 from qanta.reporting.report_generator import ReportGenerator
 from qanta.util.multiprocess import _multiprocess
@@ -19,7 +19,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 N_GUESSERS = len(GUESSERS)
 MAXINT = 99999
 HISTO_RATIOS = [0, 0.25, 0.5, 0.75, 1.0]

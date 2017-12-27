@@ -4,7 +4,7 @@ from itertools import chain, repeat
 import pickle
 import random
 
-from qanta import logging
+from qanta import qlogging
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.util.constants import DOMAIN_PREDICTIONS_PREFIX, DOMAIN_OUTPUT, DOMAIN_TARGET_PREFIX
 from qanta.util.io import safe_open
@@ -13,7 +13,7 @@ from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 
 import nltk
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def sentences_from_page(wiki_page):

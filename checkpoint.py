@@ -19,6 +19,7 @@ PRE_PROCESS_TARGETS = {
     'data/external/wikidata_instance-of.pickle'
 }
 
+
 TAGME_TARGETS = {
     'output/tagme'
 }

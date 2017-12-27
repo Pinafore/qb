@@ -8,7 +8,7 @@ import re
 
 import nltk
 
-from qanta import logging
+from qanta import qlogging
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util import constants as c
@@ -20,7 +20,7 @@ kBRACKET = re.compile(r'\[[^)]*\]')
 kMULT_SPACE = re.compile(r'\s+')
 kANGLE = re.compile(r'<[^>]*>')
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 class Question:

@@ -9,13 +9,13 @@ from urllib import parse
 
 import wikipedia
 
-from qanta import logging
+from qanta import qlogging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import COUNTRY_LIST_PATH, WIKI_LOCATION, WIKI_DUMP_REDIRECT_PICKLE, WIKI_PAGE_PATH
 from qanta.util.io import safe_path
 from qanta.config import conf
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 COUNTRY_SUB = ["History of ", "Geography of "]
 

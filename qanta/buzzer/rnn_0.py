@@ -6,7 +6,7 @@ import pickle
 from collections import defaultdict, namedtuple
 from typing import List, Dict, Tuple, Optional
 
-from qanta import logging
+from qanta import qlogging
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 
@@ -24,7 +24,7 @@ from qanta.util import constants as c
 N_GUESSERS = len(GUESSERS)
 N_GUESSES = 10
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 def dense_vector0(dicts: List[List[Dict[str, float]]],
         step_size=1) -> List[List[float]]:

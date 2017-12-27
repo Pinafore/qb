@@ -6,10 +6,10 @@ import pickle
 
 from qanta.util.io import safe_open
 from qanta.config import conf
-from qanta import logging
+from qanta import qlogging
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def create_embeddings(vocab: Set[str], expand_glove=False, mask_zero=False):

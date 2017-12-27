@@ -13,12 +13,12 @@ from chainer import cuda
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
 from qanta.buzzer.util import GUESSERS
-from qanta import logging
+from qanta import qlogging
 
 from qanta.buzzer.progress import ProgressBar
 
 N_GUESSERS = len(GUESSERS)
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 class Trainer(object):
 

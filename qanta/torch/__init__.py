@@ -7,11 +7,11 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-from qanta import logging
+from qanta import qlogging
 from qanta.util.environment import QB_TB_HOSTNAME, QB_TB_PORT
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def host_is_up(hostname, port, protocol='http'):

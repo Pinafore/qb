@@ -13,7 +13,7 @@ from torch.nn.utils.rnn import pack_padded_sequence as pack
 from torch.nn import functional as F
 from torch.optim import Adam, lr_scheduler
 
-from qanta import logging
+from qanta import qlogging
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
@@ -22,7 +22,7 @@ from qanta.torch import (
     EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager, create_save_model
 )
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 PT_BCN_WE_TMP = '/tmp/qanta/deep/pt_bcn_we.pickle'
 PT_BCN_WE = 'pt_bcn_we.pickle'

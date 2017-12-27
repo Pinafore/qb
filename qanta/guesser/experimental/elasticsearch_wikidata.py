@@ -16,11 +16,11 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.config import conf
 from qanta.util.io import safe_open
-from qanta import logging
+from qanta import qlogging
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 connections.create_connection(hosts=['localhost'])
 

@@ -15,11 +15,11 @@ from qanta.datasets.quiz_bowl import Question, QuestionDatabase, QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util import constants as c
 from qanta.util.io import safe_path
-from qanta import logging
+from qanta import qlogging
 from qanta.buzzer import constants as bc
 from qanta.util.multiprocess import _multiprocess
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
 
