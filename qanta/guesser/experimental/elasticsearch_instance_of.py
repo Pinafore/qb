@@ -16,13 +16,13 @@ from qanta.spark import create_spark_context
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.config import conf
-from qanta import logging
+from qanta import qlogging
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.util.constants import WIKI_INSTANCE_OF_PICKLE
 from qanta.wikipedia.wikidata import NO_MATCH
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 connections.create_connection(hosts=['localhost'])
 

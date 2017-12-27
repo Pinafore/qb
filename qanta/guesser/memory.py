@@ -16,7 +16,7 @@ from torch.optim import Adam, lr_scheduler
 
 import progressbar
 
-from qanta import logging
+from qanta import qlogging
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.spark import create_spark_context
@@ -29,7 +29,7 @@ from qanta.torch import (
 )
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 MEM_WE_TMP = '/tmp/qanta/deep/mem_we.pickle'

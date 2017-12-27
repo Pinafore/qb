@@ -15,10 +15,10 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.spark import create_spark_context
 from qanta.config import conf
 from qanta.source import Source
-from qanta import logging
+from qanta import qlogging
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 connections.create_connection(hosts=['localhost'])
 INDEX_NAME = 'qb'
 

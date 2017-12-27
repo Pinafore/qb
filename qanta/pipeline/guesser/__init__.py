@@ -9,9 +9,9 @@ from qanta.config import conf
 from qanta.util import constants as c
 from qanta.guesser.abstract import AbstractGuesser, n_guesser_report
 from qanta.pipeline.preprocess import DownloadData
-from qanta import logging
+from qanta import qlogging
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def get_class(instance_module: str, instance_class: str):

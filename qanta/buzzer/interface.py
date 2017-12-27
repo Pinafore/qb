@@ -19,10 +19,10 @@ from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.buzzer.util import GUESSERS
 from qanta.util.multiprocess import _multiprocess
-from qanta import logging
+from qanta import qlogging
 
 N_GUESSERS = len(GUESSERS)
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def _buzzer2vwexpo(buzzes: Dict[int, List[List[float]]], 

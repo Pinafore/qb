@@ -14,11 +14,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from qanta import logging
+from qanta import qlogging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.io import safe_path
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 class Answer(Enum):

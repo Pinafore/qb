@@ -2,10 +2,10 @@ from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
 from qanta.util.environment import QB_SPARK_MASTER, QB_MAX_CORES
-from qanta import logging
+from qanta import qlogging
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def create_spark_context(app_name="Quiz Bowl", configs=None) -> SparkContext:

@@ -22,10 +22,10 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
 from qanta.config import conf
 from qanta.util import constants as c
 from qanta.util.io import safe_path
-from qanta import logging
+from qanta import qlogging
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 GuesserSpec = NamedTuple('GuesserSpec', [

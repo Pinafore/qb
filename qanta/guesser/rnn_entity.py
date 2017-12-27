@@ -25,7 +25,7 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 from torch.optim import Adam, lr_scheduler
 
-from qanta import logging
+from qanta import qlogging
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import TrainingData, QuestionText
@@ -41,7 +41,7 @@ from qanta.torch.nn import WeightDrop, LockedDropout
 from qanta.util.io import safe_open
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 PT_RNN_ENTITY_WE_TMP = '/tmp/qanta/deep/pt_rnn_entity_we.pickle'
 PT_RNN_ENTITY_WE = 'pt_rnn_entity_we.pickle'

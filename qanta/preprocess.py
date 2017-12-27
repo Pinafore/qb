@@ -2,13 +2,13 @@ import re
 from typing import List
 import string
 
-from qanta import logging
+from qanta import qlogging
 from nltk import word_tokenize
 from sklearn.model_selection import train_test_split
 
 from qanta.datasets.abstract import TrainingData
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 ftp_patterns = {
     '\n',

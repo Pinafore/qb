@@ -1,11 +1,11 @@
 import click
 
-from qanta import logging
+from qanta import qlogging
 from qanta.util.environment import ENVIRONMENT
 from qanta.wikipedia.cached_wikipedia import web_initialize_file_cache
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
