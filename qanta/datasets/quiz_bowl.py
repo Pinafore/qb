@@ -145,6 +145,7 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
 
 class QuestionDatabase:
     def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
+        self.location = location
         self._conn = sqlite3.connect(location)
         if os.path.exists(expo_csv) and load_expo:
             self.expo_questions = preprocess_expo_questions(expo_csv)

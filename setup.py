@@ -29,7 +29,12 @@ requirements = [
     'tagme',
     'spacy',
     'pycountry',
-    'flask'
+    'flask',
+    'dash',
+    'dash-renderer',
+    'dash-html-components',
+    'dash-core-components',
+    'plotly'
 ]
 
 
