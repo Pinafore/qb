@@ -130,6 +130,8 @@ class DanGuesser(AbstractGuesser):
         self.dual_encoder = guesser_conf['dual_encoder']
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.wiki_training = guesser_conf['wiki_training']
+        self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -163,7 +165,9 @@ class DanGuesser(AbstractGuesser):
             'hyper_opt_steps': self.hyper_opt_steps,
             'dual_encoder': self.dual_encoder,
             'n_hidden_units': self.n_hidden_units,
-            'n_hidden_layers': self.n_hidden_layers
+            'n_hidden_layers': self.n_hidden_layers,
+            'wiki_training': self.wiki_training,
+            'n_wiki_paragraphs': self.n_wiki_paragraphs
         }
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
@@ -208,7 +212,7 @@ class DanGuesser(AbstractGuesser):
         if self.use_wiki and self.use_tagme:
             raise ValueError('Using wikipedia and tagme are mutually exclusive')
         elif self.use_wiki:
-            wiki_dataset = WikipediaDataset(set(training_data[1]))
+            wiki_dataset = WikipediaDataset(set(training_data[1]), n_paragraphs=self.n_wiki_paragraphs)
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
                 wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
@@ -258,28 +262,40 @@ class DanGuesser(AbstractGuesser):
         log.info(f'Batching: {len(qb_x_train)} qb, {n_wiki} wikipedia, {len(x_test)} test')
 
         n_qb_batches_train, t_qb_x_train, t_qb_len_train, t_qb_y_train = batchify(
-            self.batch_size, qb_x_train, qb_y_train, truncate=True)
+            self.batch_size, qb_x_train, qb_y_train, truncate=True
+        )
 
 
-        if self.use_wiki or self.use_tagme:
-            n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train = batchify(
-                self.batch_size, w_x_train, w_y_train, truncate=True
-            )
+        if self.wiki_training == 'mixed':
+            if self.use_wiki or self.use_tagme:
+                n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train = batchify(
+                    self.batch_size, w_x_train, w_y_train, truncate=True
+                )
 
-            n_batches_train = n_qb_batches_train + n_w_batches_train
-            t_x_train = np.concatenate([t_qb_x_train, t_w_x_train])
-            t_len_train = np.concatenate([t_qb_len_train, t_w_len_train])
-            t_y_train = np.concatenate([t_qb_y_train, t_w_y_train])
-            source_train = np.array([0] * n_qb_batches_train + [1] * n_w_batches_train)
+                n_batches_train = n_qb_batches_train + n_w_batches_train
+                t_x_train = np.concatenate([t_qb_x_train, t_w_x_train])
+                t_len_train = np.concatenate([t_qb_len_train, t_w_len_train])
+                t_y_train = np.concatenate([t_qb_y_train, t_w_y_train])
+                source_train = np.array([0] * n_qb_batches_train + [1] * n_w_batches_train)
+            else:
+                n_batches_train = n_qb_batches_train
+                t_x_train = t_qb_x_train
+                t_len_train = t_qb_len_train
+                t_y_train = t_qb_y_train
+                source_train = np.array([0] * n_qb_batches_train)
+        elif self.wiki_training == 'pretrain':
+            if self.use_wiki or self.use_tagme:
+                n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train = batchify(
+                    self.batch_size, w_x_train, w_y_train, truncate=True
+                )
+            else:
+                raise ValueError('Cannot perform wiki pretraining when use_wiki and use_tagme are both false')
         else:
-            n_batches_train = n_qb_batches_train
-            t_x_train = t_qb_x_train
-            t_len_train = t_qb_len_train
-            t_y_train = t_qb_y_train
-            source_train = np.array([0] * n_qb_batches_train)
+            raise ValueError(f'Invalid option for wiki_training: {self.wiki_training}, must be mixed/pretrain')
 
         n_batches_test, t_x_test, t_len_test, t_y_test = batchify(
-            self.batch_size, x_test, y_test, truncate=False)
+            self.batch_size, x_test, y_test, truncate=False
+        )
         source_test = np.array([0] * n_batches_test)
 
         self.vocab_size = embeddings.shape[0]
@@ -290,11 +306,24 @@ class DanGuesser(AbstractGuesser):
                 n_batches_test, t_x_test, t_len_test, t_y_test, source_test
             )
         else:
-            self._fit(
-                embeddings,
-                n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-                n_batches_test, t_x_test, t_len_test, t_y_test, source_test
-            )
+            if self.wiki_training == 'mixed':
+                self._fit(
+                    embeddings,
+                    n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+                    n_batches_test, t_x_test, t_len_test, t_y_test, source_test
+                )
+            elif self.wiki_training == 'pretrain':
+                self._fit(
+                    embeddings,
+                    n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train, np.array([1] * n_w_batches_train),
+                    n_batches_test, t_x_test, t_len_test, t_y_test, source_test
+                )
+                self._fine_tune(
+                    n_qb_batches_train, t_qb_x_train, t_qb_len_train, t_qb_y_train, np.array([0] * n_qb_batches_train),
+                    n_batches_test, t_x_test, t_len_test, t_y_test, source_test
+                )
+            else:
+                raise ValueError(f'Invalid option for wiki_training: {self.wiki_training}, must be mixed/pretrain')
 
     def hyperparameter_optimize(self,
                                 embeddings, n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
@@ -358,6 +387,55 @@ class DanGuesser(AbstractGuesser):
 
         raise ValueError('Hyper parameter optimization done, exiting')
 
+    def _training_loop(self,
+                       n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+                       n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
+        manager = TrainingManager([
+            BaseLogger(log_func=log.info), TerminateOnNaN(),
+            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
+            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
+        ])
+        best_acc = 0.0
+        while True:
+            self.model.train()
+            train_acc, train_loss, train_time = self.run_epoch(
+                n_batches_train,
+                t_x_train, t_len_train, t_y_train, source_train, evaluate=False
+            )
+
+            self.model.eval()
+            test_acc, test_loss, test_time = self.run_epoch(
+                n_batches_test,
+                t_x_test, t_len_test, t_y_test, source_test, evaluate=True
+            )
+            best_acc = max(best_acc, test_acc)
+
+            stop_training, reasons = manager.instruct(
+                train_time, train_loss, train_acc,
+                test_time, test_loss, test_acc
+            )
+
+            if stop_training:
+                log.info(' '.join(reasons))
+                break
+            else:
+                if self.use_lr_scheduler:
+                    self.scheduler.step(test_acc)
+
+        log.info('Done training')
+        return best_acc
+
+    def _fine_tune(self,
+                   n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+                   n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
+        self.optimizer = Adam(self.model.parameters(), lr=self.adam_lr)
+        self.criterion = nn.CrossEntropyLoss()
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
+        return self._training_loop(
+            n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+            n_batches_test, t_x_test, t_len_test, t_y_test, source_test
+        )
+
     def _fit(self, embeddings,
              n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
              n_batches_test, t_x_test, t_len_test, t_y_test, source_test, hyper_params=None):
@@ -402,42 +480,12 @@ class DanGuesser(AbstractGuesser):
         if self.use_lr_scheduler:
             self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
-        manager = TrainingManager([
-            BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
-        ])
 
         log.info('Starting training...')
-        best_acc = 0.0
-        while True:
-            self.model.train()
-            train_acc, train_loss, train_time = self.run_epoch(
-                n_batches_train,
-                t_x_train, t_len_train, t_y_train, source_train, evaluate=False
-            )
-
-            self.model.eval()
-            test_acc, test_loss, test_time = self.run_epoch(
-                n_batches_test,
-                t_x_test, t_len_test, t_y_test, source_test, evaluate=True
-            )
-            best_acc = max(best_acc, test_acc)
-
-            stop_training, reasons = manager.instruct(
-                train_time, train_loss, train_acc,
-                test_time, test_loss, test_acc
-            )
-
-            if stop_training:
-                log.info(' '.join(reasons))
-                break
-            else:
-                if self.use_lr_scheduler:
-                    self.scheduler.step(test_acc)
-
-        log.info('Done training')
-        return best_acc
+        return self._training_loop(
+            n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
+            n_batches_test, t_x_test, t_len_test, t_y_test, source_test
+        )
 
     def run_epoch(self, n_batches, t_x_array, t_len_array, t_y_array, source_array, evaluate=False):
         if not evaluate:
@@ -497,7 +545,9 @@ class DanGuesser(AbstractGuesser):
                 'hyper_opt_steps': self.hyper_opt_steps,
                 'dual_encoder': self.dual_encoder,
                 'n_hidden_layers': self.n_hidden_layers,
-                'n_hidden_units': self.n_hidden_units
+                'n_hidden_units': self.n_hidden_units,
+                'wiki_training': self.wiki_training,
+                'n_wiki_paragraphs': self.n_wiki_paragraphs
             }, f)
 
     @classmethod
@@ -527,6 +577,8 @@ class DanGuesser(AbstractGuesser):
         guesser.dual_encoder = params['dual_encoder']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
+        guesser.wiki_training = params['wiki_training']
+        guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
         guesser.model = DanModel(guesser.vocab_size, guesser.n_classes, dual_encoder=guesser.dual_encoder)
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage

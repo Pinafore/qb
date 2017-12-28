@@ -45,6 +45,7 @@ guessers "Dan" {
   use_wiki = false
   use_tagme = false
   n_tagme_sentences = 20
+  n_wiki_paragraphs = 3
 
   n_hidden_units = 1000
   n_hidden_layers = 1
@@ -62,6 +63,8 @@ guessers "Dan" {
   hyper_opt = false
   hyper_opt_steps = 300
   dual_encoder = false
+
+  wiki_training = "pretrain" # Options: "mixed", "pretrain"
 }
 
 
