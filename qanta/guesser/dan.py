@@ -132,6 +132,7 @@ class DanGuesser(AbstractGuesser):
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.wiki_training = guesser_conf['wiki_training']
         self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
+        self.qb_fraction = guesser_conf['qb_fraction']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -167,7 +168,8 @@ class DanGuesser(AbstractGuesser):
             'n_hidden_units': self.n_hidden_units,
             'n_hidden_layers': self.n_hidden_layers,
             'wiki_training': self.wiki_training,
-            'n_wiki_paragraphs': self.n_wiki_paragraphs
+            'n_wiki_paragraphs': self.n_wiki_paragraphs,
+            'qb_fraction': self.qb_fraction
         }
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
@@ -206,7 +208,7 @@ class DanGuesser(AbstractGuesser):
 
     def train(self, training_data: TrainingData) -> None:
         qb_x_train_text, qb_y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data
+            training_data, train_size=.9 * self.qb_fraction, test_size=.1
         )
 
         if self.use_wiki and self.use_tagme:
@@ -547,7 +549,8 @@ class DanGuesser(AbstractGuesser):
                 'n_hidden_layers': self.n_hidden_layers,
                 'n_hidden_units': self.n_hidden_units,
                 'wiki_training': self.wiki_training,
-                'n_wiki_paragraphs': self.n_wiki_paragraphs
+                'n_wiki_paragraphs': self.n_wiki_paragraphs,
+                'qb_fraction': self.qb_fraction
             }, f)
 
     @classmethod
@@ -579,6 +582,7 @@ class DanGuesser(AbstractGuesser):
         guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.wiki_training = params['wiki_training']
         guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
+        guesser.qb_fraction = params['qb_fraction']
         guesser.model = DanModel(guesser.vocab_size, guesser.n_classes, dual_encoder=guesser.dual_encoder)
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage

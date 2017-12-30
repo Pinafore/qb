@@ -46,6 +46,7 @@ guessers "Dan" {
   use_tagme = false
   n_tagme_sentences = 20
   n_wiki_paragraphs = 3
+  qb_fraction = 1.0
 
   n_hidden_units = 1000
   n_hidden_layers = 1
