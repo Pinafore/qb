@@ -47,3 +47,4 @@ tb-logs/
 .terraform
 .ignore
 tags
+.mypy_cache/

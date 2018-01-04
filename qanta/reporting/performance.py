@@ -119,14 +119,11 @@ def load_audit(audit_file: str, meta_file: str):
     with open(audit_file) as audit_f, open(meta_file) as meta_f:
         for a_line, m_line in zip(audit_f, meta_f):
             qid, evidence = a_line.split('\t')
-            a_qnum, a_sentence, a_token = qid.split('_')
-            a_qnum = int(a_qnum)
-            a_sentence = int(a_sentence)
-            a_token = int(a_token)
-            m_qnum, m_sentence, m_token, guess = m_line.split()
-            m_qnum = int(m_qnum)
-            m_sentence = int(m_sentence)
-            m_token = int(m_token)
+            a_qnum, a_sentence, a_token = [int(t) for t in qid.split('_')]
+            s_m_qnum, s_m_sentence, s_m_token, guess = m_line.split()
+            m_qnum = int(s_m_qnum)
+            m_sentence = int(s_m_sentence)
+            m_token = int(s_m_token)
             if a_qnum != m_qnum or a_sentence != m_sentence or a_token != m_token:
                 raise ValueError('Error occurred in audit and meta file alignment')
             audit_data[(a_qnum, a_sentence, a_token, guess)] = evidence.strip()
