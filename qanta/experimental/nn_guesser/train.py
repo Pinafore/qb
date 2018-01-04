@@ -11,9 +11,9 @@ from chainer.training import extensions
 from qanta.preprocess import preprocess_dataset
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 
-import nets
-from nlp_utils import convert_seq, transform_to_array
-import dataset
+from qanta.experimental.nn_guesser import nets
+from qanta.experimental.nn_guesser.nlp_utils import convert_seq, transform_to_array
+
 
 def get_quizbowl():
     qb_dataset = QuizBowlDataset(guesser_train=True, buzzer_train=False)
@@ -59,9 +59,9 @@ def main():
     n_vocab = len(vocab)
     n_class = len(set([int(d[1]) for d in train]))
     embed_size = 300
-    hidden_size = 1000
-    hidden_dropout = 0.265
-    output_dropout = 0.158
+    hidden_size = 512
+    hidden_dropout = 0.3
+    output_dropout = 0.2
     gradient_clipping = 0.25
 
     print('# train data: {}'.format(len(train)))
@@ -79,13 +79,11 @@ def main():
                                                  repeat=False, shuffle=False)
 
     # Setup a model
-    # if args.model == 'rnn':
-    #     Encoder = nets.RNNEncoder
-    # elif args.model == 'cnn':
-    #     Encoder = nets.CNNEncoder
     if args.model == 'dan':
         encoder = nets.DANEncoder(n_vocab, embed_size, hidden_size,
                 dropout=hidden_dropout)
+    elif args.model == 'rnn':
+        encoder = nets.RNNEncoder(1, n_vocab, embed_size, hidden_size)
     model = nets.NNGuesser(encoder, n_class, dropout=output_dropout)
 
     if not args.resume:
@@ -120,8 +118,7 @@ def main():
         trigger=record_trigger)
 
     # Exponential decay of learning rate
-    trainer.extend(extensions.observe_lr())
-    trainer.extend(extensions.ExponentialShift(alpha, 0.5))
+    # trainer.extend(extensions.ExponentialShift('alpha', 0.5))
 
     # Write a log of evaluation statistics for each epoch
 
@@ -129,7 +126,7 @@ def main():
     trainer.extend(extensions.PrintReport(
         ['epoch', 'main/loss', 'validation/main/loss',
          'main/accuracy', 'validation/main/accuracy',
-         'main/lr', 'elapsed_time']))
+         'elapsed_time']))
 
     # Print a progress bar to stdout
     trainer.extend(extensions.ProgressBar())

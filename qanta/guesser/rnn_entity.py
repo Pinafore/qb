@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 
 import progressbar
 import pycountry
-from cove import MTLSTM
+# from cove import MTLSTM
 
 import torch
 import torch.nn as nn

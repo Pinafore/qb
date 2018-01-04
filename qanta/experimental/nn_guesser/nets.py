@@ -71,7 +71,8 @@ class RNNEncoder(chainer.Chain):
     def __init__(self, n_layers, n_vocab, embed_size, hidden_size, dropout=0.1):
         super(RNNEncoder, self).__init__()
         with self.init_scope():
-            self.embed = L.EmbedID(n_vocab, embed_size, initialW=embed_init)
+            self.embed = L.EmbedID(n_vocab, embed_size, ignore_label=-1,
+                    initialW=embed_init)
             self.rnn = L.NStepLSTM(n_layers, embed_size, hidden_size, dropout)
         self.n_layers = n_layers
         self.output_size = hidden_size
@@ -124,7 +125,8 @@ class DANEncoder(chainer.Chain):
     def __init__(self, n_vocab, embed_size, hidden_size, dropout):
         super(DANEncoder, self).__init__()
         with self.init_scope():
-            self.embed = L.EmbedID(n_vocab, embed_size, initialW=embed_init)
+            self.embed = L.EmbedID(n_vocab, embed_size, ignore_label=-1,
+                    initialW=embed_init)
             self.linear = L.Linear(embed_size, hidden_size)
             self.batchnorm = L.BatchNormalization(hidden_size)
         self.dropout = dropout
