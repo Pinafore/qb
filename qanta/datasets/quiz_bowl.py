@@ -1,4 +1,4 @@
-from typing import List, Dict, Iterable, Tuple
+from typing import List, Dict, Iterable, Tuple, Optional, Any, Set
 import pickle
 import csv
 import os
@@ -97,7 +97,7 @@ class Question:
     def flatten_text(self):
         return " ".join(self.text[x] for x in sorted(self.text))
 
-    def to_example(self, all_evidence=None) -> Tuple[List[QuestionText], Answer]:
+    def to_example(self, all_evidence: Optional[Dict[str, Dict[int, Any]]]=None) -> Tuple[List[QuestionText], Answer, Optional[Dict[str, Any]]]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
         if all_evidence is not None and 'tagme' in all_evidence:
             evidence = {'tagme': all_evidence['tagme'][self.qnum]}
@@ -224,14 +224,11 @@ class QuestionDatabase:
             yield questions[ii]
 
     def questions_with_pages(self) -> Dict[str, List[Question]]:
-        page_map = {}
-
+        page_map = defaultdict(list) # type: Dict[str, List[Question]]
         questions = self.query('from questions where page != ""', ()).values()
 
         for q in questions:
             page = q.page
-            if page not in page_map:
-                page_map[page] = []
             page_map[page].append(q)
         return page_map
 
@@ -278,7 +275,7 @@ class QuestionDatabase:
 
 class QuizBowlDataset(AbstractDataset):
     def __init__(self, *, guesser_train=False, buzzer_train=False,
-                 qb_question_db: str=QB_QUESTION_DB, use_tagme_evidence=False):
+                 qb_question_db: str=QB_QUESTION_DB, use_tagme_evidence=False) -> None:
         """
         Initialize a new quiz bowl data set
         """
@@ -292,7 +289,7 @@ class QuizBowlDataset(AbstractDataset):
         self.db = QuestionDatabase(qb_question_db)
         self.guesser_train = guesser_train
         self.buzzer_train = buzzer_train
-        self.training_folds = set()
+        self.training_folds = set() # type: Set[str]
         if self.guesser_train:
             self.training_folds.add(c.GUESSER_TRAIN_FOLD)
         if self.buzzer_train:
@@ -301,19 +298,17 @@ class QuizBowlDataset(AbstractDataset):
         self.use_tagme_evidence = use_tagme_evidence
         if self.use_tagme_evidence:
             with open('output/tagme/tagme.pickle', 'rb') as f:
-                self.tagme_evidence = pickle.load(f)
+                self.tagme_evidence = pickle.load(f) # type: Optional[Dict[int, Any]]
         else:
-            self.tagme_evidence = None
+            self.tagme_evidence = None # type: Optional[Dict[int, Any]]
 
     def training_data(self) -> TrainingData:
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
         if self.use_tagme_evidence:
-            all_evidence = {
-                'tagme': self.tagme_evidence
-            }
+            all_evidence = {'tagme': self.tagme_evidence} # type: Optional[Dict[str, Any]]
         else:
-            all_evidence = None
+            all_evidence = None # type: Optional[Dict[str, Any]]
 
         filtered_questions = all_questions\
             .filter(lambda q: q.fold in self.training_folds)\
