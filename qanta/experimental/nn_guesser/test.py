@@ -46,7 +46,7 @@ def setup_model(setup_dir):
     return model, vocab, answers, args
 
 def main():
-    setup_dir = 'result/nn_guesser_bk/args.json'
+    setup_dir = 'result/nn_guesser/args.json'
     model, vocab, answers, args = setup_model(setup_dir)
 
     questions = QuestionDatabase().all_questions().values()

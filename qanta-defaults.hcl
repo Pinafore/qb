@@ -41,7 +41,7 @@ guessers "Tfidf" {
 guessers "Dan" {
   class = "qanta.guesser.dan.DanGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = true
+  enabled = false
 
   use_wiki = false
   use_tagme = false
@@ -69,7 +69,7 @@ guessers "Dan" {
 guessers "EntityRNN" {
   class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
+  enabled = true
   features = ["word"]
 
   max_epochs = 100
