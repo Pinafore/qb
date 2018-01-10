@@ -58,6 +58,7 @@ guessers "Dan" {
   sgd_weight_decay = 0.0000012
   sgd_lr = 30.0
   adam_lr = 0.001
+  adam_weight_decay = 0.0
   use_lr_scheduler = true
   nn_dropout = 0.265
   sm_dropout = 0.158
@@ -65,9 +66,14 @@ guessers "Dan" {
   hyper_opt_steps = 300
   dual_encoder = false
 
-  wiki_training = "pretrain" # Options: "mixed", "pretrain"
+  wiki_training = "mixed" # Options: "mixed", "pretrain"
 }
 
+guessers "RNN" {
+  class = "qanta.guesser.rnn.RnnGuesser"
+  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
+  enabled = false
+}
 
 guessers "EntityRNN" {
   class = "qanta.guesser.rnn_entity.RnnEntityGuesser"
@@ -78,6 +84,7 @@ guessers "EntityRNN" {
   max_epochs = 100
   batch_size = 256
   learning_rate = 0.001
+  weight_decay = 0
   max_grad_norm = 5
   rnn_type = "gru"
   dropout_prob = 0.25
@@ -99,11 +106,6 @@ guessers "EntityRNN" {
   hyper_opt_steps = 100
 }
 
-guessers "Bcn" {
-    class = "qanta.guesser.bcn.BcnGuesser"
-    luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-    enabled = false
-}
 
 guessers "ESWikidata" {
   class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"

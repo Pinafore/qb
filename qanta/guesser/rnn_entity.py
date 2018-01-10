@@ -605,6 +605,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.use_locked_dropout = guesser_conf['use_locked_dropout']
         self.hyper_opt = guesser_conf['hyper_opt']
         self.hyper_opt_steps = guesser_conf['hyper_opt_steps']
+        self.weight_decay = guesser_conf['weight_decay']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -641,7 +642,8 @@ class RnnEntityGuesser(AbstractGuesser):
             'n_wiki_paragraphs': self.n_wiki_paragraphs,
             'use_cove': self.use_cove,
             'variational_dropout_prob': self.variational_dropout_prob,
-            'use_locked_dropout': self.use_locked_dropout
+            'use_locked_dropout': self.use_locked_dropout,
+            'weight_decay': self.weight_decay
         }
 
     def guess(self,
@@ -838,7 +840,8 @@ class RnnEntityGuesser(AbstractGuesser):
         log.info(f'Hyper params:\n{pformat(model_params)}')
         self.optimizer = Adam(
             filter(lambda p: p.requires_grad, self.model.parameters()),
-            lr=self.learning_rate)
+            lr=self.learning_rate, weight_decay=self.weight_decay
+        )
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
@@ -860,7 +863,8 @@ class RnnEntityGuesser(AbstractGuesser):
             ('n_tagme_sentences', self.n_tagme_sentences),
             ('use_cove', self.use_cove),
             ('variational_dropout_prob', self.variational_dropout_prob),
-            ('use_locked_dropout', self.use_locked_dropout)
+            ('use_locked_dropout', self.use_locked_dropout),
+            ('weight_decay', self.weight_decay)
         ])
 
         manager = TrainingManager([
@@ -966,7 +970,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'use_cove': self.use_cove,
                 'use_locked_dropout': self.use_locked_dropout,
                 'hyper_opt': self.hyper_opt,
-                'hyper_opt_steps': self.hyper_opt_steps
+                'hyper_opt_steps': self.hyper_opt_steps,
+                'weight_decay': self.weight_decay
             }, f)
 
     @classmethod
@@ -1007,6 +1012,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.use_locked_dropout = params['use_locked_dropout']
         guesser.hyper_opt = params['hyper_opt']
         guesser.hyper_opt_steps = params['hyper_opt_steps']
+        guesser.weight_decay = params['weight_decay']
         return guesser
 
     @classmethod

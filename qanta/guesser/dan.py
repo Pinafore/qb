@@ -119,6 +119,7 @@ class DanGuesser(AbstractGuesser):
         self.sgd_weight_decay = guesser_conf['sgd_weight_decay']
         self.sgd_lr = guesser_conf['sgd_lr']
         self.adam_lr = guesser_conf['adam_lr']
+        self.adam_weight_decay = guesser_conf['adam_weight_decay']
         self.batch_size = guesser_conf['batch_size']
         self.max_epochs = guesser_conf['max_epochs']
         self.use_lr_scheduler = guesser_conf['use_lr_scheduler']
@@ -156,6 +157,7 @@ class DanGuesser(AbstractGuesser):
             'sgd_weight_decay': self.sgd_weight_decay,
             'sgd_lr': self.sgd_lr,
             'adam_lr': self.adam_lr,
+            'adam_weight_decay': self.adam_weight_decay,
             'batch_size': self.batch_size,
             'max_epochs': self.max_epochs,
             'use_lr_scheduler': self.use_lr_scheduler,
@@ -217,13 +219,13 @@ class DanGuesser(AbstractGuesser):
             wiki_dataset = WikipediaDataset(set(training_data[1]), n_paragraphs=self.n_wiki_paragraphs)
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
-                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+                wiki_train_data, train_size=1, test_size=0, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
             )
         elif self.use_tagme:
             wiki_dataset = TagmeWikipediaDataset(n_examples=self.n_tagme_sentences)
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
-                wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
+                wiki_train_data, train_size=1, test_size=0, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
             )
 
         self.class_to_i = class_to_i
@@ -445,6 +447,7 @@ class DanGuesser(AbstractGuesser):
             'sm_dropout': self.sm_dropout,
             'nn_dropout': self.nn_dropout,
             'adam_lr': self.adam_lr,
+            'adam_weight_decay': self.adam_weight_decay,
             'sgd_lr': self.sgd_lr,
             'n_hidden_units': self.n_hidden_units,
             'n_hidden_layers': self.n_hidden_layers
@@ -471,7 +474,8 @@ class DanGuesser(AbstractGuesser):
 
         if self.optimizer_name == 'adam':
             lr = model_params['adam_lr']
-            self.optimizer = Adam(self.model.parameters(), lr=lr)
+            weight_decay = model_params['adam_weight_decay']
+            self.optimizer = Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
         elif self.optimizer_name == 'sgd':
             lr = model_params['sgd_lr']
             self.optimizer = SGD(self.model.parameters(), lr=lr, weight_decay=self.sgd_weight_decay)
@@ -536,6 +540,7 @@ class DanGuesser(AbstractGuesser):
                 'max_epochs': self.max_epochs,
                 'batch_size': self.batch_size,
                 'adam_lr': self.adam_lr,
+                'adam_weight_decay': self.adam_weight_decay,
                 'sgd_lr': self.sgd_lr,
                 'use_wiki': self.use_wiki,
                 'n_tagme_sentences': self.n_tagme_sentences,
@@ -571,6 +576,7 @@ class DanGuesser(AbstractGuesser):
         guesser.use_tagme = params['use_tagme']
         guesser.n_tagme_sentences = params['n_tagme_sentences']
         guesser.adam_lr = params['adam_lr']
+        guesser.adam_weight_decay = params['adam_weight_decay']
         guesser.sgd_lr = params['sgd_lr']
         guesser.vocab_size = params['vocab_size']
         guesser.nn_dropout = params['nn_dropout']

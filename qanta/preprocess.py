@@ -72,7 +72,8 @@ def preprocess_dataset(data: TrainingData, train_size=.9, test_size=.1,
         raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
             create_runs, full_question))
     if train_size + test_size > 1:
-        raise ValueError('Train and test size must sum to 1 or less')
+        raise ValueError(
+            f'Train + test must sum to 1 or less: train={train_size} test={test_size} sum={train_size + test_size}')
 
     classes = set(data[1])
     if class_to_i is None or i_to_class is None:
