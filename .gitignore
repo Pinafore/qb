@@ -2,6 +2,9 @@
 .idea
 data/external
 data/internal/naqt.db
+data/internal/naqt-unused.db
+.data/
+.vector_cache/
 output/
 metastore_db/
 *.o

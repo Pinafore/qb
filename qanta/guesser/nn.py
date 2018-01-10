@@ -12,7 +12,7 @@ from qanta import qlogging
 log = qlogging.get(__name__)
 
 
-def create_embeddings(vocab: Set[str], expand_glove=False, mask_zero=False):
+def create_embeddings(vocab: Set[str], expand_glove=True, mask_zero=False):
     """
     Create embeddings
     :param vocab: words in the vocabulary
@@ -68,7 +68,7 @@ def create_embeddings(vocab: Set[str], expand_glove=False, mask_zero=False):
         return embed_with_unk, embedding_lookup
 
 
-def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[str, int], random_unk_prob=0):
+def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[str, int]):
     """
     Convert a list of word tokens to embedding indices
     :param words: 
@@ -80,28 +80,9 @@ def convert_text_to_embeddings_indices(words: List[str], embedding_lookup: Dict[
     for w in words:
         if w in embedding_lookup:
             w_indices.append(embedding_lookup[w])
-            if random_unk_prob > 0 and random.random() < random_unk_prob:
-                w_indices.append(embedding_lookup['UNK'])
         else:
             w_indices.append(embedding_lookup['UNK'])
     return w_indices
-
-
-def tf_format(x_data: List[List[int]], max_len: int, zero_index: int):
-    """
-    Pad with elements until it has max_len or shorten it until it has max_len. When padding insert
-    the zero index so it doesn't contribute anything
-    :param x_data:
-    :param max_len:
-    :param zero_index:
-    :return:
-    """
-    for i in range(len(x_data)):
-        row = x_data[i]
-        while len(row) < max_len:
-            row.append(zero_index)
-        x_data[i] = x_data[i][:max_len]
-    return x_data
 
 
 def create_load_embeddings_function(we_tmp_target, we_target, logger):
