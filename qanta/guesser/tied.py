@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 import pickle
+import math
 from typing import List, Optional, Dict
 
 import numpy as np
@@ -11,7 +12,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-from torch.optim import Adam, lr_scheduler
+from torch.optim import Adam, lr_scheduler, Optimizer
 
 from torchtext.data.field import Field
 from torchtext.data.iterator import Iterator
@@ -25,7 +26,6 @@ from qanta.torch import (
     BaseLogger, TerminateOnNaN, EarlyStopping, ModelCheckpoint,
     MaxEpochStopping, TrainingManager
 )
-from qanta.torch.nn import WeightDrop, LockedDropout
 
 
 log = qlogging.get(__name__)
@@ -60,6 +60,109 @@ qb_patterns = {
 }
 re_pattern = '|'.join([re.escape(p) for p in qb_patterns])
 re_pattern += r'|\[.*?\]|\(.*?\)'
+
+
+class TiedLinear(nn.Linear):
+    def __init__(self, group, w_type, in_features, out_features):
+        """
+        :param group: Group name to tie weights together
+        :param w_type: One of: "general", "source", or "target"
+        :param in_features: Passed to nn.Linear
+        :param out_features: Passed to nn.Linear
+        """
+        super().__init__(in_features, out_features)
+        self.group = group
+        self.w_type = w_type
+
+
+class TiedEmbeddings(nn.Embedding):
+    def __init__(self, group, w_type, num_embeddings, embedding_dim):
+        """
+        :param group: Group name to tie weights together
+        :param w_type: One of: "general", "source", or "target"
+        :param num_embeddings: Passed to nn.Embedding
+        :param embedding_dim: Passed to nn.Embedding
+        """
+        super().__init__(num_embeddings, embedding_dim)
+        self.group = group
+        self.w_type = w_type
+
+
+class TiedAdam(Optimizer):
+    """Implements Adam algorithm.
+
+    It has been proposed in `Adam: A Method for Stochastic Optimization`_.
+
+    Arguments:
+        params (iterable): iterable of parameters to optimize or dicts defining
+            parameter groups
+        lr (float, optional): learning rate (default: 1e-3)
+        betas (Tuple[float, float], optional): coefficients used for computing
+            running averages of gradient and its square (default: (0.9, 0.999))
+        eps (float, optional): term added to the denominator to improve
+            numerical stability (default: 1e-8)
+        weight_decay (float, optional): weight decay (L2 penalty) (default: 0)
+
+    .. _Adam\: A Method for Stochastic Optimization:
+        https://arxiv.org/abs/1412.6980
+    """
+
+    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
+                 weight_decay=0):
+        defaults = dict(lr=lr, betas=betas, eps=eps,
+                        weight_decay=weight_decay)
+        super(TiedAdam, self).__init__(params, defaults)
+
+    def step(self, closure=None):
+        """Performs a single optimization step.
+
+        Arguments:
+            closure (callable, optional): A closure that reevaluates the model
+                and returns the loss.
+        """
+        loss = None
+        if closure is not None:
+            loss = closure()
+
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None:
+                    continue
+                grad = p.grad.data
+                if grad.is_sparse:
+                    raise RuntimeError('Adam does not support sparse gradients, please consider SparseAdam instead')
+
+                state = self.state[p]
+
+                # State initialization
+                if len(state) == 0:
+                    state['step'] = 0
+                    # Exponential moving average of gradient values
+                    state['exp_avg'] = torch.zeros_like(p.data)
+                    # Exponential moving average of squared gradient values
+                    state['exp_avg_sq'] = torch.zeros_like(p.data)
+
+                exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
+                beta1, beta2 = group['betas']
+
+                state['step'] += 1
+
+                if group['weight_decay'] != 0:
+                    grad = grad.add(group['weight_decay'], p.data)
+
+                # Decay the first and second moment running average coefficient
+                exp_avg.mul_(beta1).add_(1 - beta1, grad)
+                exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
+
+                denom = exp_avg_sq.sqrt().add_(group['eps'])
+
+                bias_correction1 = 1 - beta1 ** state['step']
+                bias_correction2 = 1 - beta2 ** state['step']
+                step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
+
+                p.data.addcdiv_(-step_size, exp_avg, denom)
+
+        return loss
 
 
 class DanEncoder(nn.Module):
@@ -121,10 +224,10 @@ class Model(nn.Module):
 
 
 
-class RnnGuesser(AbstractGuesser):
+class TiedGuesser(AbstractGuesser):
     def __init__(self):
-        super(RnnGuesser, self).__init__()
-        guesser_conf = conf['guessers']['RNN']
+        super(TiedGuesser, self).__init__()
+        guesser_conf = conf['guessers']['Tied']
         self.gradient_clip = .25
         self.n_hidden_units = 1000
         self.n_hidden_layers = 1
@@ -271,7 +374,7 @@ class RnnGuesser(AbstractGuesser):
         with open(os.path.join(directory, 'rnn.pkl'), 'rb') as f:
             params = pickle.load(f)
 
-        guesser = RnnGuesser()
+        guesser = TiedGuesser()
         guesser.page_field = params['page_field']
         guesser.text_field = params['text_field']
         guesser.qnum_field = params['qnum_field']

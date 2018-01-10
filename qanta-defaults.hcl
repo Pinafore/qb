@@ -69,8 +69,8 @@ guessers "Dan" {
   wiki_training = "mixed" # Options: "mixed", "pretrain"
 }
 
-guessers "RNN" {
-  class = "qanta.guesser.rnn.RnnGuesser"
+guessers "Tied" {
+  class = "qanta.guesser.tied.TiedGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
 }

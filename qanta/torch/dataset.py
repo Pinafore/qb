@@ -164,10 +164,11 @@ class QuizBowl(Dataset):
         )
 
     @classmethod
-    def iters(cls, example_mode='sentence', batch_size=128, device=0, root='.data', vectors='glove.6B.300d', **kwargs):
+    def iters(cls, lower=False, example_mode='sentence',
+              batch_size=128, device=0, root='.data', vectors='glove.6B.300d', **kwargs):
         QNUM = LongField()
         SENT = LongField()
-        TEXT = QBTextField(batch_first=True, tokenize=qb_tokenize, include_lengths=True, lower=False)
+        TEXT = QBTextField(batch_first=True, tokenize=qb_tokenize, include_lengths=True, lower=lower)
         PAGE = Field(sequential=False, tokenize=str_split)
 
         train, val, dev = cls.splits(QNUM, SENT, TEXT, PAGE, root=root, example_mode=example_mode, **kwargs)
