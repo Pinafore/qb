@@ -48,12 +48,16 @@ def create_wikipedia_cache(parsed_wiki_path='data/external/wikipedia/parsed-wiki
 
     def parse_page(json_text):
         page = json.loads(json_text)
-        return WikipediaPage(int(page['id']), page['title'].replace(' ', '_'), page['text'], page['url'])
+        return {
+            'id': int(page['id']),
+            'title': page['title'].replace(' ', '_'),
+            'text': page['text'], 'url': page['url']
+        }
 
-    wiki_pages = sc.textFile(page_pattern).map(parse_page).filter(lambda p: p.title in b_answers.value).collect()
-    wiki_lookup = {p.title: p for p in wiki_pages}
-    with open(output_path, 'wb') as f:
-        pickle.dump(wiki_lookup, f)
+    wiki_pages = sc.textFile(page_pattern).map(parse_page).filter(lambda p: p['title'] in b_answers.value).collect()
+    wiki_lookup = {p['title']: p for p in wiki_pages}
+    with open(output_path, 'w') as f:
+        json.dump(wiki_lookup, f)
 
     return wiki_lookup
 
@@ -92,7 +96,7 @@ def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
 
 
 class Wikipedia:
-    def __init__(self, lookup_path=WIKI_LOOKUP_PATH):
+    def __init__(self, lookup_path=WIKI_LOOKUP_PATH, dump_redirect_path=WIKI_DUMP_REDIRECT_PICKLE):
         """
         CachedWikipedia provides a unified way and easy way to access Wikipedia pages. Its design is motivated by:
         1) Getting a wikipedia page should function as a simple python dictionary access
@@ -107,12 +111,16 @@ class Wikipedia:
         page names in the wikipedia database dumps contains an underscore instead of whitespace (a difference from the
         HTTP package which defaults to the opposite)
         """
-        self.dump_redirect_path = WIKI_DUMP_REDIRECT_PICKLE
         self.countries = {}
         self.redirects = {}
         self.lookup_path = lookup_path
+        self.dump_redirect_path = dump_redirect_path
         with open(lookup_path, 'rb') as f:
-            self.lookup: Dict[str, WikipediaPage] = pickle.load(f)
+            raw_lookup: Dict[str, Dict] = json.load(f)
+            self.lookup: Dict[str, WikipediaPage] = {
+                title: WikipediaPage(page['id'], page['title'], page['text'], page['url'])
+                for title, page in raw_lookup.items()
+            }
 
         if COUNTRY_LIST_PATH:
             with open(COUNTRY_LIST_PATH) as f:
@@ -125,7 +133,7 @@ class Wikipedia:
                 self.redirects = pickle.load(f)
         else:
             raise ValueError(
-                'The redirect file (%s) from the dump is missing, run: luigi --module qanta.pipeline.preprocess WikipediaRedirectPickle' % self.dump_redirect_path)
+                f'{self.dump_redirect_path} missing, run: luigi --module qanta.pipeline.preprocess WikipediaRedirectPickle')
 
     def load_country(self, key: str):
         content = self[key]
