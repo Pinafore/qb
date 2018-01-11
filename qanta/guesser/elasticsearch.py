@@ -8,13 +8,12 @@ import elasticsearch
 import progressbar
 from nltk.tokenize import word_tokenize
 
-from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.wikipedia.cached_wikipedia import Wikipedia
 from qanta.datasets.abstract import QuestionText
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.spark import create_spark_context
 from qanta.config import conf
-from qanta.source import Source
 from qanta import qlogging
 
 
@@ -27,7 +26,6 @@ class Answer(DocType):
     page = Text(fields={'raw': Keyword()})
     wiki_content = Text()
     qb_content = Text()
-    source_content = Text()
 
     class Meta:
         index = INDEX_NAME
@@ -46,7 +44,7 @@ class ElasticSearchIndex:
         return Index(INDEX_NAME).exists()
 
     @staticmethod
-    def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, use_source=False, rebuild_index=False):
+    def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
             log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
@@ -56,13 +54,12 @@ class ElasticSearchIndex:
         else:
             log.info('Index {} does not exist'.format(INDEX_NAME))
             Answer.init()
-            cw = CachedWikipedia()
-            source = Source()
+            wiki_lookup = Wikipedia()
             log.info('Indexing questions and corresponding wikipedia pages as large docs...')
             bar = progressbar.ProgressBar()
             for page in bar(documents):
-                if use_wiki:
-                    wiki_content = cw[page].content
+                if use_wiki and page in wiki_lookup:
+                    wiki_content = wiki_lookup[page].text
                 else:
                     wiki_content = ''
 
@@ -71,19 +68,14 @@ class ElasticSearchIndex:
                 else:
                     qb_content = ''
 
-                if use_source:
-                    source_content = source[page][:50000]
-                else:
-                    source_content = ''
-
                 answer = Answer(
                     page=page,
-                    wiki_content=wiki_content, qb_content=qb_content, source_content=source_content
+                    wiki_content=wiki_content, qb_content=qb_content
                 )
                 answer.save()
 
     @staticmethod
-    def build_many_docs(pages, documents, use_wiki=True, use_qb=True, use_source=False, rebuild_index=False):
+    def build_many_docs(pages, documents, use_wiki=True, use_qb=True, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
             log.info('Deleting index: {}'.format(INDEX_NAME))
             ElasticSearchIndex.delete()
@@ -102,14 +94,15 @@ class ElasticSearchIndex:
 
             if use_wiki:
                 log.info('Indexing wikipedia...')
-                cw = CachedWikipedia()
+                wiki_lookup = Wikipedia()
                 bar = progressbar.ProgressBar()
                 for page in bar(pages):
-                    content = word_tokenize(cw[page].content)
-                    for i in range(0, len(content), 200):
-                        chunked_content = content[i:i + 200]
-                        if len(chunked_content) > 0:
-                            Answer(page=page, wiki_content=' '.join(chunked_content)).save()
+                    if page in wiki_lookup:
+                        content = word_tokenize(wiki_lookup[page].text)
+                        for i in range(0, len(content), 200):
+                            chunked_content = content[i:i + 200]
+                            if len(chunked_content) > 0:
+                                Answer(page=page, wiki_content=' '.join(chunked_content)).save()
 
     @staticmethod
     def search(text: str, max_n_guesses: int,
@@ -126,7 +119,7 @@ class ElasticSearchIndex:
             qb_field = 'qb_content'
 
         s = Search(index='qb')[0:max_n_guesses].query(
-            'multi_match', query=text, fields=[wiki_field, qb_field, 'source_content'])
+            'multi_match', query=text, fields=[wiki_field, qb_field])
         results = s.execute()
         guess_set = set()
         guesses = []
@@ -153,7 +146,6 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.n_cores = guesser_conf['n_cores']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_qb = guesser_conf['use_qb']
-        self.use_source = guesser_conf['use_source']
         self.many_docs = guesser_conf['many_docs']
         self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
         self.qb_boost = guesser_conf['qb_boost']
@@ -167,7 +159,6 @@ class ElasticSearchGuesser(AbstractGuesser):
             'n_cores': self.n_cores,
             'use_wiki': self.use_wiki,
             'use_qb': self.use_qb,
-            'use_source': self.use_source,
             'many_docs': self.many_docs,
             'normalize_score_by_length': self.normalize_score_by_length,
             'qb_boost': self.qb_boost,
@@ -183,7 +174,7 @@ class ElasticSearchGuesser(AbstractGuesser):
                 documents.append((page, paragraph))
             ElasticSearchIndex.build_many_docs(
                 pages, documents,
-                use_qb=self.use_qb, use_wiki=self.use_wiki, use_source=self.use_source
+                use_qb=self.use_qb, use_wiki=self.use_wiki
             )
         else:
             documents = {}
@@ -197,8 +188,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             ElasticSearchIndex.build_large_docs(
                 documents,
                 use_qb=self.use_qb,
-                use_wiki=self.use_wiki,
-                use_source=self.use_source
+                use_wiki=self.use_wiki
             )
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
@@ -222,7 +212,6 @@ class ElasticSearchGuesser(AbstractGuesser):
         guesser = ElasticSearchGuesser()
         guesser.use_wiki = params['use_wiki']
         guesser.use_qb = params['use_qb']
-        guesser.use_source = params['use_source']
         guesser.many_docs = params['many_docs']
         guesser.normalize_score_by_length = params['normalize_score_by_length']
         return guesser
@@ -232,7 +221,6 @@ class ElasticSearchGuesser(AbstractGuesser):
             pickle.dump({
                 'use_wiki': self.use_wiki,
                 'use_qb': self.use_qb,
-                'use_source': self.use_source,
                 'many_docs': self.many_docs,
                 'normalize_score_by_length': self.normalize_score_by_length
             }, f)

@@ -24,7 +24,6 @@ guessers "ElasticSearch" {
   use_all_wikipedia = false
   use_wiki = true
   use_qb = true
-  use_source = false
   many_docs = false
   normalize_score_by_length = true
   wiki_boost = 1
@@ -105,34 +104,6 @@ guessers "EntityRNN" {
   hyper_opt = false
   hyper_opt_steps = 100
 }
-
-
-guessers "ESWikidata" {
-  class = "qanta.guesser.experimental.elasticsearch_instance_of.ElasticSearchWikidataGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-  # Set the level of parallelism for guess generation
-  n_cores = 20
-  confidence_threshold = 0.7
-  normalize_score_by_length = true
-}
-
-guessers "VowpalWabbit" {
-  class = "qanta.guesser.vw.VWGuesser"
-  luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
-  enabled = false
-
-  # These two flags are XOR with each other, one must be true and the other false
-  multiclass_one_against_all = false
-  multiclass_online_trees = true
-  l2 = 0.000001
-  l1 = 0
-  passes = 20
-  learning_rate = 0.1
-  decay_learning_rate = 0.95
-  bits = 30
-}
-
 
 buzzer {
   n_cores=16

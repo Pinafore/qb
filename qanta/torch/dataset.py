@@ -152,15 +152,14 @@ class QuizBowl(Dataset):
         super(QuizBowl, self).__init__(examples, dataset_fields, **kwargs)
 
     @classmethod
-    def splits(cls, qnum_field, sent_field, text_field, page_field,
-               example_mode='sentence', root='.data',
-               train='quiz-bowl.train.json',
-               validation='quiz-bowl.val.json',
-               test='quiz-bowl.dev.json',
+    def splits(cls, example_mode='sentence', root='.data',
+               train='quiz-bowl.train.json', validation='quiz-bowl.val.json', test='quiz-bowl.dev.json',
                **kwargs):
         return super(QuizBowl, cls).splits(
             root=root, train=train, validation=validation, test=test, example_mode=example_mode,
-            qnum_field=qnum_field, sent_field=sent_field, text_field=text_field, page_field=page_field, **kwargs
+            qnum_field=kwargs['qnum_field'], sent_field=kwargs['sent_field'],
+            text_field=kwargs['text_field'], page_field=kwargs['page_field'],
+            **kwargs
         )
 
     @classmethod
@@ -171,7 +170,9 @@ class QuizBowl(Dataset):
         TEXT = QBTextField(batch_first=True, tokenize=qb_tokenize, include_lengths=True, lower=lower)
         PAGE = Field(sequential=False, tokenize=str_split)
 
-        train, val, dev = cls.splits(QNUM, SENT, TEXT, PAGE, root=root, example_mode=example_mode, **kwargs)
+        train, val, dev = cls.splits(
+            qnum_field=QNUM, sent_field=SENT, text_field=TEXT, page_field=PAGE,
+            root=root, example_mode=example_mode, **kwargs)
 
         TEXT.build_vocab(train, vectors=vectors)
         PAGE.build_vocab(train)
