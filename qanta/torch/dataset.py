@@ -1,4 +1,5 @@
 from typing import List
+import os
 import six
 import re
 import json
@@ -8,6 +9,7 @@ from torchtext.data.dataset import Dataset
 from torchtext.data.example import Example
 from torchtext.data import Field, RawField, SubwordField, BucketIterator
 from torchtext.vocab import Vocab, pretrained_aliases, Vectors
+from torchtext.utils import download_from_url
 
 
 ftp_patterns = {
@@ -101,6 +103,7 @@ class QBTextField(Field):
 
 
 s3_url_pattern = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/datasets/non_naqt/quiz-bowl.{fold}.json'
+s3_wiki = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/datasets/wikipedia/wiki_lookup.json'
 
 class QuizBowl(Dataset):
     name = 'quizbowl'
@@ -112,7 +115,18 @@ class QuizBowl(Dataset):
     def sort_key(example):
         return len(example.text)
 
-    def __init__(self, path, qnum_field, sent_field, text_field, page_field, example_mode='sentence', **kwargs):
+    def __init__(self, path, qnum_field, sent_field, text_field, page_field,
+                 example_mode='sentence', use_wiki=False, n_wiki_paragraphs=3, **kwargs):
+        if use_wiki:
+            base_path = os.path.dirname(path)
+            filename = os.path.basename(s3_wiki)
+            output_file = os.path.join(base_path, filename)
+            if not os.path.exists(output_file):
+                download_from_url(s3_wiki, output_file)
+            with open(output_file) as f:
+                self.wiki_lookup = json.load(f)
+        else:
+            self.wiki_lookup = {}
         self.path = path
         self.example_mode = example_mode
         example_fields = {
@@ -152,18 +166,26 @@ class QuizBowl(Dataset):
         super(QuizBowl, self).__init__(examples, dataset_fields, **kwargs)
 
     @classmethod
-    def splits(cls, example_mode='sentence', root='.data',
+    def splits(cls, example_mode='sentence', use_wiki=False, n_wiki_paragraphs=3,
+               root='.data',
                train='quiz-bowl.train.json', validation='quiz-bowl.val.json', test='quiz-bowl.dev.json',
                **kwargs):
+        remaining_kwargs = kwargs.copy()
+        del remaining_kwargs['qnum_field']
+        del remaining_kwargs['sent_field']
+        del remaining_kwargs['text_field']
+        del remaining_kwargs['page_field']
         return super(QuizBowl, cls).splits(
             root=root, train=train, validation=validation, test=test, example_mode=example_mode,
             qnum_field=kwargs['qnum_field'], sent_field=kwargs['sent_field'],
             text_field=kwargs['text_field'], page_field=kwargs['page_field'],
-            **kwargs
+            use_wiki=use_wiki, n_wiki_paragraphs=n_wiki_paragraphs,
+            **remaining_kwargs
         )
 
     @classmethod
     def iters(cls, lower=False, example_mode='sentence',
+              use_wiki=False, n_wiki_paragraphs=3,
               batch_size=128, device=0, root='.data', vectors='glove.6B.300d', **kwargs):
         QNUM = LongField()
         SENT = LongField()
@@ -172,7 +194,9 @@ class QuizBowl(Dataset):
 
         train, val, dev = cls.splits(
             qnum_field=QNUM, sent_field=SENT, text_field=TEXT, page_field=PAGE,
-            root=root, example_mode=example_mode, **kwargs)
+            root=root, example_mode=example_mode,
+            use_wiki=use_wiki, n_wiki_paragraphs=n_wiki_paragraphs,
+            **kwargs)
 
         TEXT.build_vocab(train, vectors=vectors)
         PAGE.build_vocab(train)
