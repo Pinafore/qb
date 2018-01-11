@@ -7,7 +7,7 @@ import re
 from unidecode import unidecode
 
 from qanta.datasets.abstract import AbstractDataset, TrainingData
-from qanta.wikipedia.cached_wikipedia import CachedWikipedia
+from qanta.wikipedia.cached_wikipedia import Wikipedia
 from qanta.tagme import TagmeClient
 from qanta.util.io import safe_open
 
@@ -31,14 +31,16 @@ class WikipediaDataset(AbstractDataset):
         self.n_paragraphs = n_paragraphs
 
     def training_data(self) -> TrainingData:
-        cw = CachedWikipedia()
+        wiki_lookup = Wikipedia()
         wiki_content = []
         wiki_answers = []
         for ans in self.answers:
-            wiki_page = cw[ans]
-            if len(wiki_page.content) != 0:
+            if ans not in wiki_lookup:
+                continue
+            wiki_page = wiki_lookup[ans]
+            if len(wiki_page.text) != 0:
                 # Take the first paragraph, skipping the initial title and empty line after
-                paragraphs = wiki_page.content.split('\n')
+                paragraphs = wiki_page.text.split('\n')
                 if len(paragraphs) > 2:
                     n_used = 0
                     for par in paragraphs[2:]:
@@ -66,13 +68,15 @@ class TagmeWikipediaDataset(AbstractDataset):
 
     def build(self, answers: Set[str], save=True):
         client = TagmeClient()
-        cw = CachedWikipedia()
+        wiki_lookup = Wikipedia()
 
         page_sentences = defaultdict(list)
         for ans in answers:
-            wiki_page = cw[ans]
-            if len(wiki_page.content) != 0:
-                sentences = nltk.sent_tokenize(wiki_page.content)
+            if ans not in wiki_lookup:
+                continue
+            wiki_page = wiki_lookup[ans]
+            if len(wiki_page.text) != 0:
+                sentences = nltk.sent_tokenize(wiki_page.text)
                 random.shuffle(sentences)
                 clean_sentences, all_mentions = client.tag_mentions(sentences)
                 for sent, mentions in zip(clean_sentences, all_mentions):

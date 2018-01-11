@@ -4,7 +4,7 @@ from luigi import LocalTarget, Task, WrapperTask, ExternalTask
 
 from qanta.util.io import shell
 from qanta.util.constants import (
-    ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE, WIKI_INSTANCE_OF_PICKLE
+    ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE, WIKI_INSTANCE_OF_PICKLE, WIKI_LOOKUP_PATH
 )
 from qanta.util.environment import is_aws_authenticated
 from qanta.wikipedia.wikidata import create_instance_of_map
@@ -86,14 +86,11 @@ class BuildWikipediaCache(Task):
         yield WikipediaDumps()
 
     def run(self):
-        dump_path = os.path.abspath('data/external/wikipedia/parsed-wiki/*/*')
-        create_wikipedia_cache(dump_path)
-        shell('touch data/external/wikipedia/cache_SUCCESS')
+        create_wikipedia_cache()
 
     def output(self):
         return [
-            LocalTarget('data/external/wikipedia/cache_SUCCESS'),
-            LocalTarget('data/external/wikipedia/pages/')
+            LocalTarget(WIKI_LOOKUP_PATH),
         ]
 
 
