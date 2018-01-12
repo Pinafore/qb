@@ -112,14 +112,20 @@ class DanGuesser(AbstractGuesser):
         super(DanGuesser, self).__init__()
         guesser_conf = conf['guessers']['Dan']
         self.use_wiki = guesser_conf['use_wiki']
+        self.wiki_training = guesser_conf['wiki_training']
+        self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
+        self.qb_fraction = guesser_conf['qb_fraction']
+
         self.use_buzz_as_train = conf['buzz_as_guesser_train']
         self.use_tagme = guesser_conf['use_tagme']
         self.n_tagme_sentences = guesser_conf['n_tagme_sentences']
+
         self.optimizer_name = guesser_conf['optimizer']
         self.sgd_weight_decay = guesser_conf['sgd_weight_decay']
         self.sgd_lr = guesser_conf['sgd_lr']
         self.adam_lr = guesser_conf['adam_lr']
         self.adam_weight_decay = guesser_conf['adam_weight_decay']
+
         self.batch_size = guesser_conf['batch_size']
         self.max_epochs = guesser_conf['max_epochs']
         self.use_lr_scheduler = guesser_conf['use_lr_scheduler']
@@ -131,9 +137,6 @@ class DanGuesser(AbstractGuesser):
         self.dual_encoder = guesser_conf['dual_encoder']
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
-        self.wiki_training = guesser_conf['wiki_training']
-        self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
-        self.qb_fraction = guesser_conf['qb_fraction']
 
         self.class_to_i = None
         self.i_to_class = None
@@ -148,31 +151,7 @@ class DanGuesser(AbstractGuesser):
         self.vocab_size = None
 
     def parameters(self):
-        return {
-            'use_wiki': self.use_wiki,
-            'use_tagme': self.use_tagme,
-            'n_tagme_sentences': self.n_tagme_sentences,
-            'use_buzz_as_train': self.use_buzz_as_train,
-            'optimizer_name': self.optimizer_name,
-            'sgd_weight_decay': self.sgd_weight_decay,
-            'sgd_lr': self.sgd_lr,
-            'adam_lr': self.adam_lr,
-            'adam_weight_decay': self.adam_weight_decay,
-            'batch_size': self.batch_size,
-            'max_epochs': self.max_epochs,
-            'use_lr_scheduler': self.use_lr_scheduler,
-            'gradient_clip': self.gradient_clip,
-            'nn_dropout': self.nn_dropout,
-            'sm_dropout': self.sm_dropout,
-            'hyper_opt': self.hyper_opt,
-            'hyper_opt_steps': self.hyper_opt_steps,
-            'dual_encoder': self.dual_encoder,
-            'n_hidden_units': self.n_hidden_units,
-            'n_hidden_layers': self.n_hidden_layers,
-            'wiki_training': self.wiki_training,
-            'n_wiki_paragraphs': self.n_wiki_paragraphs,
-            'qb_fraction': self.qb_fraction
-        }
+        return conf['guessers']['Dan']
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         x_test = [convert_text_to_embeddings_indices(
@@ -216,7 +195,7 @@ class DanGuesser(AbstractGuesser):
         if self.use_wiki and self.use_tagme:
             raise ValueError('Using wikipedia and tagme are mutually exclusive')
         elif self.use_wiki:
-            wiki_dataset = WikipediaDataset(set(training_data[1]), n_paragraphs=self.n_wiki_paragraphs)
+            wiki_dataset = WikipediaDataset(set(training_data[1]), n_sentences=self.n_wiki_sentences)
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
                 wiki_train_data, train_size=1, test_size=0, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
@@ -554,7 +533,7 @@ class DanGuesser(AbstractGuesser):
                 'n_hidden_layers': self.n_hidden_layers,
                 'n_hidden_units': self.n_hidden_units,
                 'wiki_training': self.wiki_training,
-                'n_wiki_paragraphs': self.n_wiki_paragraphs,
+                'n_wiki_sentences': self.n_wiki_sentences,
                 'qb_fraction': self.qb_fraction
             }, f)
 
@@ -587,7 +566,7 @@ class DanGuesser(AbstractGuesser):
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.wiki_training = params['wiki_training']
-        guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
+        guesser.n_wiki_sentences = params['n_wiki_sentences']
         guesser.qb_fraction = params['qb_fraction']
         guesser.model = DanModel(guesser.vocab_size, guesser.n_classes, dual_encoder=guesser.dual_encoder)
         guesser.model.load_state_dict(torch.load(

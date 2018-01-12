@@ -3,32 +3,19 @@ import random
 import pickle
 from collections import defaultdict
 import nltk
-import re
-from unidecode import unidecode
 
 from qanta.datasets.abstract import AbstractDataset, TrainingData
-from qanta.wikipedia.cached_wikipedia import Wikipedia
+from qanta.wikipedia.cached_wikipedia import Wikipedia, extract_wiki_sentences
 from qanta.tagme import TagmeClient
 from qanta.util.io import safe_open
 
 
-def strip_title_references(title, text):
-    """
-    Search the text for references to words in the title and remove them
-    """
-    text = unidecode(text).lower()
-    title_words = unidecode(title).lower().split('_')
-    for w in title_words:
-        text = text.replace(w, ' ')
-
-    # Fix up whitespaces
-    return re.sub('\s+', ' ', text).strip()
-
 class WikipediaDataset(AbstractDataset):
-    def __init__(self, answers: Set[str], n_paragraphs=3):
+    def __init__(self, answers: Set[str], n_sentences=5, replace_title_mentions=''):
         super().__init__()
         self.answers = answers
-        self.n_paragraphs = n_paragraphs
+        self.n_sentences = n_sentences
+        self.replace_title_mentions = replace_title_mentions
 
     def training_data(self) -> TrainingData:
         wiki_lookup = Wikipedia()
@@ -39,19 +26,13 @@ class WikipediaDataset(AbstractDataset):
                 continue
             wiki_page = wiki_lookup[ans]
             if len(wiki_page.text) != 0:
-                # Take the first paragraph, skipping the initial title and empty line after
-                paragraphs = wiki_page.text.split('\n')
-                if len(paragraphs) > 2:
-                    n_used = 0
-                    for par in paragraphs[2:]:
-                        if len(par) != 0:
-                            n_used += 1
-                            content = strip_title_references(ans, par)
-                            for sent in nltk.sent_tokenize(content):
-                                wiki_content.append([sent])
-                                wiki_answers.append(ans)
-                        if n_used == self.n_paragraphs:
-                            break
+                sentences = extract_wiki_sentences(
+                    ans, wiki_page.text, self.n_sentences,
+                    replace_title_mentions=self.replace_title_mentions
+                )
+                for sent in sentences:
+                    wiki_content.append([sent])
+                    wiki_answers.append(ans)
 
         return wiki_content, wiki_answers, None
 
@@ -83,6 +64,7 @@ class TagmeWikipediaDataset(AbstractDataset):
                     page_mentions = {m.page for m in mentions}
                     n_mentions = len(page_mentions)
                     for page in page_mentions.intersection(answers):
+                        raise NotImplementedError('Need to fix this to use extract_wiki_sentences')
                         stripped_sent = strip_title_references(page, sent)
                         page_sentences[page].append((n_mentions, stripped_sent))
 

@@ -47,6 +47,7 @@ PT_RNN_ENTITY_WE_TMP = '/tmp/qanta/deep/pt_rnn_entity_we.pickle'
 PT_RNN_ENTITY_WE = 'pt_rnn_entity_we.pickle'
 UNK = 'UNK'
 EOS = 'EOS'
+WIKI_TITLE_MENTION = 'wikititlemention'
 CUDA = torch.cuda.is_available()
 
 LOWER_TO_UPPER = dict(zip(string.ascii_lowercase, string.ascii_uppercase))
@@ -143,6 +144,19 @@ def extract_pronoun_mentions(doc):
             else:
                 is_start_of_sentence = False
     return mentions
+
+
+def extract_title_mentions(doc):
+    mention_spans = []
+    if len(doc) == 0:
+        return mention_spans
+
+    for sent in doc.sents:
+        for t in sent:
+            if t.lower_ == WIKI_TITLE_MENTION:
+                mention_spans.append((t.i, t.i))
+
+    return mention_spans
 
 def mentions_to_sequence(mention_spans, tokens, vocab, *, max_distance=10):
     n_tokens = len(tokens)
@@ -436,7 +450,8 @@ class BatchedDataset:
             )
             this_mention_spans = extract_this_mentions(q)
             pronoun_mention_spans = [(i, i) for i in extract_pronoun_mentions(q)]
-            mention_spans = this_mention_spans + pronoun_mention_spans
+            title_mention_spans = extract_title_mentions(q)
+            mention_spans = this_mention_spans + pronoun_mention_spans + title_mention_spans
 
             mention_tags = mentions_to_sequence(
                 mention_spans, q, self.rel_position_vocab if train else None
@@ -599,7 +614,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.sm_dropout_prob = guesser_conf['sm_dropout_prob']
         self.sm_dropout_before_linear = guesser_conf['sm_dropout_before_linear']
         self.n_tagme_sentences = guesser_conf['n_tagme_sentences']
-        self.n_wiki_paragraphs = guesser_conf['n_wiki_paragraphs']
+        self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
         self.use_cove = guesser_conf['use_cove']
         self.variational_dropout_prob = guesser_conf['variational_dropout_prob']
         self.use_locked_dropout = guesser_conf['use_locked_dropout']
@@ -639,7 +654,7 @@ class RnnEntityGuesser(AbstractGuesser):
             'sm_dropout_prob': self.sm_dropout_prob,
             'sm_dropout_before_linear': self.sm_dropout_before_linear,
             'n_tagme_sentences': self.n_tagme_sentences,
-            'n_wiki_paragraphs': self.n_wiki_paragraphs,
+            'n_wiki_sentences': self.n_wiki_sentences,
             'use_cove': self.use_cove,
             'variational_dropout_prob': self.variational_dropout_prob,
             'use_locked_dropout': self.use_locked_dropout,
@@ -698,7 +713,9 @@ class RnnEntityGuesser(AbstractGuesser):
         )
 
         if self.use_wiki:
-            wiki_dataset = WikipediaDataset(set(i_to_class), n_paragraphs=self.n_wiki_paragraphs)
+            wiki_dataset = WikipediaDataset(
+                set(i_to_class), n_sentences=self.n_wiki_sentences, replace_title_mentions=WIKI_TITLE_MENTION
+            )
             wiki_train_data = wiki_dataset.training_data()
             w_x_train_text, w_train_y, *_ = preprocess_dataset(
                 self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
@@ -859,7 +876,7 @@ class RnnEntityGuesser(AbstractGuesser):
             ('use_wiki', self.use_wiki),
             ('use_triviaqa', self.use_triviaqa),
             ('use_tagme', self.use_tagme),
-            ('n_wiki_paragraphs', self.n_wiki_paragraphs),
+            ('n_wiki_sentences', self.n_wiki_sentences),
             ('n_tagme_sentences', self.n_tagme_sentences),
             ('use_cove', self.use_cove),
             ('variational_dropout_prob', self.variational_dropout_prob),
@@ -963,7 +980,7 @@ class RnnEntityGuesser(AbstractGuesser):
                 'use_triviaqa': self.use_triviaqa,
                 'use_tagme': self.use_tagme,
                 'n_tagme_sentences': self.n_tagme_sentences,
-                'n_wiki_paragraphs': self.n_wiki_paragraphs,
+                'n_wiki_sentences': self.n_wiki_sentences,
                 'sm_dropout_prob': self.sm_dropout_prob,
                 'sm_dropout_before_linear': self.sm_dropout_before_linear,
                 'variational_dropout_prob': self.variational_dropout_prob,
@@ -1004,7 +1021,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.use_triviaqa = params['use_triviaqa']
         guesser.use_tagme = params['use_tagme']
         guesser.n_tagme_sentences = params['n_tagme_sentences']
-        guesser.n_wiki_paragraphs = params['n_wiki_paragraphs']
+        guesser.n_wiki_sentences = params['n_wiki_sentences']
         guesser.sm_dropout_prob = params['sm_dropout_prob']
         guesser.sm_dropout_before_linear = params['sm_dropout_before_linear']
         guesser.use_cove = params['use_cove']
