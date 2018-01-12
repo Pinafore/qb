@@ -44,7 +44,7 @@ guessers "Dan" {
   use_wiki = false
   use_tagme = false
   n_tagme_sentences = 20
-  n_wiki_paragraphs = 3
+  n_wiki_sentences = 5
   qb_fraction = 1.0
 
   n_hidden_units = 1000
@@ -72,6 +72,19 @@ guessers "Tied" {
   class = "qanta.guesser.tied.TiedGuesser"
   luigi_dependency = "qanta.pipeline.guesser.EmptyTask"
   enabled = false
+
+  gradient_clip = 0.25
+  n_hidden_units = 1000
+  n_hidden_layers = 1
+  lr = 0.001
+  nn_dropout = 0.265
+  sm_dropout = 0.158
+  batch_size = 1024
+  lowercase = true
+
+  use_wiki = false
+  n_wiki_sentences = 5
+  wiki_title_replace_token = ""
 }
 
 guessers "EntityRNN" {
@@ -84,22 +97,24 @@ guessers "EntityRNN" {
   batch_size = 256
   learning_rate = 0.001
   weight_decay = 0
-  max_grad_norm = 5
+  max_grad_norm = 1.0
   rnn_type = "gru"
   dropout_prob = 0.25
   variational_dropout_prob = 0.25
   bidirectional = true
   n_hidden_units = 1000
   n_hidden_layers = 1
+  sm_dropout_prob = 0.15
+  sm_dropout_before_linear = false
+
+  use_cove = false
+  use_locked_dropout = false
+
   use_wiki = false
   use_triviaqa = false
   use_tagme = false
   n_tagme_sentences = 20
-  n_wiki_paragraphs = 3
-  sm_dropout_prob = 0.15
-  sm_dropout_before_linear = false
-  use_cove = false
-  use_locked_dropout = false
+  n_wiki_sentences = 10
 
   hyper_opt = false
   hyper_opt_steps = 100

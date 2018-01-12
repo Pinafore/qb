@@ -7,9 +7,11 @@ import torch
 
 from torchtext.data.dataset import Dataset
 from torchtext.data.example import Example
-from torchtext.data import Field, RawField, SubwordField, BucketIterator
+from torchtext.data import Field, RawField, BucketIterator
 from torchtext.vocab import Vocab, pretrained_aliases, Vectors
 from torchtext.utils import download_from_url
+
+from qanta.wikipedia.cached_wikipedia import extract_wiki_sentences
 
 
 ftp_patterns = {
@@ -116,8 +118,12 @@ class QuizBowl(Dataset):
         return len(example.text)
 
     def __init__(self, path, qnum_field, sent_field, text_field, page_field,
-                 example_mode='sentence', use_wiki=False, n_wiki_paragraphs=3, **kwargs):
-        if use_wiki:
+                 example_mode='sentence',
+                 use_wiki=False, n_wiki_sentences=3, replace_title_mentions='',
+                 **kwargs):
+        from unidecode import unidecode
+
+        if use_wiki and 'train' in path:
             base_path = os.path.dirname(path)
             filename = os.path.basename(s3_wiki)
             output_file = os.path.join(base_path, filename)
@@ -136,8 +142,9 @@ class QuizBowl(Dataset):
             'page': [('page', page_field)]
         }
 
+        examples = []
+        answer_set = set()
         with open(path) as f:
-            examples = []
             for ex in json.load(f)['questions']:
                 if example_mode == 'sentence':
                     sentences = ex['sentences']
@@ -145,9 +152,10 @@ class QuizBowl(Dataset):
                         examples.append(Example.fromdict({
                             'qnum': ex['qnum'],
                             'sent': i,
-                            'text': s,
+                            'text': unidecode(s),
                             'page': ex['page']
                         }, example_fields))
+                        answer_set.add(ex['page'])
                 elif example_mode == 'question':
                     raise NotImplementedError('Question tokenization is not implemented yet, submit a PR!')
                 elif example_mode == 'runs':
@@ -155,6 +163,22 @@ class QuizBowl(Dataset):
                 else:
                     raise ValueError(
                         f"Valid modes are 'sentence', 'question', and 'runs', but '{example_mode}' was given")
+
+        if use_wiki and n_wiki_sentences > 0 and 'train' in path:
+            for page in answer_set:
+                if page in self.wiki_lookup:
+                    sentences = extract_wiki_sentences(
+                        page, self.wiki_lookup[page]['text'], n_wiki_sentences,
+                        replace_title_mentions=replace_title_mentions
+                    )
+                    for i, s in enumerate(sentences):
+                        examples.append(Example.fromdict({
+                            'qnum': -1,
+                            'sent': i,
+                            'text': s,
+                            'page': page
+                        }, example_fields))
+
 
         dataset_fields = {
             'qnum': qnum_field,
@@ -166,7 +190,8 @@ class QuizBowl(Dataset):
         super(QuizBowl, self).__init__(examples, dataset_fields, **kwargs)
 
     @classmethod
-    def splits(cls, example_mode='sentence', use_wiki=False, n_wiki_paragraphs=3,
+    def splits(cls, example_mode='sentence',
+               use_wiki=False, n_wiki_sentences=5, replace_title_mentions='',
                root='.data',
                train='quiz-bowl.train.json', validation='quiz-bowl.val.json', test='quiz-bowl.dev.json',
                **kwargs):
@@ -179,13 +204,13 @@ class QuizBowl(Dataset):
             root=root, train=train, validation=validation, test=test, example_mode=example_mode,
             qnum_field=kwargs['qnum_field'], sent_field=kwargs['sent_field'],
             text_field=kwargs['text_field'], page_field=kwargs['page_field'],
-            use_wiki=use_wiki, n_wiki_paragraphs=n_wiki_paragraphs,
+            use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
             **remaining_kwargs
         )
 
     @classmethod
-    def iters(cls, lower=False, example_mode='sentence',
-              use_wiki=False, n_wiki_paragraphs=3,
+    def iters(cls, lower=True, example_mode='sentence',
+              use_wiki=False, n_wiki_sentences=5, replace_title_mentions='',
               batch_size=128, device=0, root='.data', vectors='glove.6B.300d', **kwargs):
         QNUM = LongField()
         SENT = LongField()
@@ -195,7 +220,7 @@ class QuizBowl(Dataset):
         train, val, dev = cls.splits(
             qnum_field=QNUM, sent_field=SENT, text_field=TEXT, page_field=PAGE,
             root=root, example_mode=example_mode,
-            use_wiki=use_wiki, n_wiki_paragraphs=n_wiki_paragraphs,
+            use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
             **kwargs)
 
         TEXT.build_vocab(train, vectors=vectors)

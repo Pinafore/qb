@@ -228,19 +228,23 @@ class TiedGuesser(AbstractGuesser):
     def __init__(self):
         super(TiedGuesser, self).__init__()
         guesser_conf = conf['guessers']['Tied']
-        self.gradient_clip = .25
-        self.n_hidden_units = 1000
-        self.n_hidden_layers = 1
-        self.lr = .001
-        self.nn_dropout = .265
-        self.sm_dropout = .158
-        self.batch_size = 1024
-        self.emb_dim = 300
+        self.gradient_clip = guesser_conf['gradient_clip']
+        self.n_hidden_units = guesser_conf['n_hidden_units']
+        self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.lr = guesser_conf['lr']
+        self.nn_dropout = guesser_conf['nn_dropout']
+        self.sm_dropout = guesser_conf['sm_dropout']
+        self.batch_size = guesser_conf['batch_size']
+        self.use_wiki = guesser_conf['use_wiki']
+        self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
+        self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
+        self.lowercase = guesser_conf['lowercase']
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
         self.text_field: Optional[Field] = None
         self.n_classes = None
+        self.emb_dim = None
 
         self.model = None
         self.optimizer = None
@@ -256,11 +260,15 @@ class TiedGuesser(AbstractGuesser):
         return self.page_field.vocab.itos
 
     def parameters(self):
-        return {}
+        return conf['guessers']['Tied'].copy()
 
     def train(self, training_data):
         log.info('Loading Quiz Bowl dataset')
-        train_iter, val_iter, dev_iter = QuizBowl.iters(batch_size=self.batch_size)
+        train_iter, val_iter, dev_iter = QuizBowl.iters(
+            batch_size=self.batch_size, lower=self.lowercase,
+            use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
+            replace_title_mentions=self.wiki_title_replace_token
+        )
         log.info(f'N Train={len(train_iter.dataset.examples)}')
         log.info(f'N Test={len(val_iter.dataset.examples)}')
         fields: Dict[str, Field] = train_iter.dataset.fields
@@ -268,6 +276,7 @@ class TiedGuesser(AbstractGuesser):
         self.n_classes = len(self.ans_to_i)
         self.qnum_field = fields['qnum']
         self.text_field = fields['text']
+        self.emb_dim = self.text_field.vocab.vectors.shape[1]
         log.info(f'Vocab={len(self.text_field.vocab)}')
 
         log.info('Initializing Model')
@@ -278,6 +287,7 @@ class TiedGuesser(AbstractGuesser):
         )
         if CUDA:
             self.model = self.model.cuda()
+        log.info(f'Parameters:\n{self.parameters()}')
         log.info(f'Model:\n{self.model}')
         self.optimizer = Adam(self.model.parameters(), lr=self.lr)
         self.criterion = nn.CrossEntropyLoss()
@@ -366,7 +376,11 @@ class TiedGuesser(AbstractGuesser):
                 'lr': self.lr,
                 'nn_dropout': self.nn_dropout,
                 'sm_dropout': self.sm_dropout,
-                'batch_size': self.batch_size
+                'batch_size': self.batch_size,
+                'use_wiki': self.use_wiki,
+                'n_wiki_sentences': self.n_wiki_sentences,
+                'wiki_title_replace_token': self.wiki_title_replace_token,
+                'lowercase': self.lowercase
             }, f)
 
     @classmethod
@@ -386,6 +400,10 @@ class TiedGuesser(AbstractGuesser):
         guesser.lr = params['lr']
         guesser.nn_dropout = params['nn_dropout']
         guesser.sm_dropout = params['sm_dropout']
+        guesser.use_wiki = params['use_wiki']
+        guesser.n_wiki_sentences = params['n_wiki_sentences']
+        guesser.wiki_title_replace_token = params['wiki_title_replace_token']
+        guesser.lowercase = params['lowercase']
         guesser.model = Model(
             guesser.text_field, guesser.n_classes,
             init_embeddings=False, emb_dim=guesser.emb_dim

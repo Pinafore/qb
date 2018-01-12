@@ -3,7 +3,10 @@ import os
 import json
 import csv
 import pickle
+import re
 from collections import namedtuple
+import nltk
+from unidecode import unidecode
 
 from qanta import qlogging
 from qanta.datasets.quiz_bowl import QuestionDatabase
@@ -95,6 +98,39 @@ def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
         pickle.dump(redirects, output_f)
 
 
+def extract_wiki_sentences(title, text, n_sentences, replace_title_mentions=''):
+    """
+    Extracts the first n_paragraphs from the text of a wikipedia page corresponding to the title.
+    strip_title_mentions and replace_title_mentions control handling of references to the title in text.
+    Oftentimes QA models learn *not* to answer entities mentioned in the question so this helps deal with this
+    in the domain adaptation case.
+
+    :param title: title of page
+    :param text: text of page
+    :param n_paragraphs: number of paragraphs to use
+    :param replace_title_mentions: Replace mentions with the provided string token, by default removing them
+    :return:
+    """
+    # Get simplest representation of title and text
+    title = unidecode(title).replace('_', ' ')
+    text = unidecode(text)
+
+    # Split on non-alphanumeric
+    title_words = re.split('[^a-zA-Z0-9]', title)
+    title_word_pattern = '|'.join(re.escape(w.lower()) for w in title_words)
+
+    # Breaking by newline yields paragraphs. Ignore the first since its always just the title
+    paragraphs = [p for p in text.split('\n') if len(p) != 0][1:]
+    sentences = []
+    for p in paragraphs:
+        formatted_text = re.sub(title_word_pattern, replace_title_mentions, p, flags=re.IGNORECASE)
+        # Cleanup whitespace
+        formatted_text = re.sub('\s+', ' ', formatted_text).strip()
+        sentences.extend(nltk.sent_tokenize(formatted_text))
+
+    return sentences[:n_sentences]
+
+
 class Wikipedia:
     def __init__(self, lookup_path=WIKI_LOOKUP_PATH, dump_redirect_path=WIKI_DUMP_REDIRECT_PICKLE):
         """
@@ -136,7 +172,7 @@ class Wikipedia:
                 f'{self.dump_redirect_path} missing, run: luigi --module qanta.pipeline.preprocess WikipediaRedirectPickle')
 
     def load_country(self, key: str):
-        content = self[key]
+        content = self.lookup[key]
         for page in [f"{prefix}{self.countries[key]}" for prefix in COUNTRY_SUB]:
             if page in self.lookup:
                 content = content + ' ' + self.lookup[page].text
