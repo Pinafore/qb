@@ -7,17 +7,11 @@ from luigi import LocalTarget, Task, WrapperTask
 
 from qanta.config import conf
 from qanta.util import constants as c
-from qanta.guesser.abstract import AbstractGuesser, n_guesser_report
+from qanta.guesser.abstract import AbstractGuesser, n_guesser_report, get_class
 from qanta.pipeline.preprocess import DownloadData
 from qanta import qlogging
 
 log = qlogging.get(__name__)
-
-
-def get_class(instance_module: str, instance_class: str):
-    py_instance_module = importlib.import_module(instance_module)
-    py_instance_class = getattr(py_instance_module, instance_class)
-    return py_instance_class
 
 
 class EmptyTask(luigi.Task):
