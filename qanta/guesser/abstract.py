@@ -480,6 +480,16 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         @app.route('/api/guesser', methods=['POST'])
         def guess():
+            if 'guesser_name' not in request.form:
+                response = jsonify({'errors': 'Missing expected field "guesser_name"'})
+                response.status_code = 400
+                return response
+
+            if 'text' not in request.form:
+                response = jsonify({'errors': 'Missing expected field "text"'})
+                response.status_code = 400
+                return response
+
             g_name = request.form['guesser_name']
             if g_name not in guessers:
                 response = jsonify(
