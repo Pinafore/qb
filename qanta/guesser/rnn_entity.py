@@ -17,7 +17,6 @@ from sklearn.model_selection import train_test_split
 
 import progressbar
 import pycountry
-from cove import MTLSTM
 
 import torch
 import torch.nn as nn
@@ -1105,6 +1104,7 @@ class RnnEntityModel(nn.Module):
             self.word_embeddings.weight.data = torch.from_numpy(embeddings).float()
 
         if use_cove:
+            from cove import MTLSTM
             self.cove = MTLSTM(n_vocab=embeddings.shape[0], vectors=torch.from_numpy(embeddings).float())
             self.cove.requires_grad = False
             for p in self.cove.parameters():
