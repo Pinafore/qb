@@ -9,10 +9,6 @@ embedding_dimension = 300
 use_pretrained_embeddings = true
 buzz_as_guesser_train = false
 
-# Configure whether qanta.wikipedia.cached_wikipedia.CachedWikipedia should fallback
-# performing a remote call to Wikipedia if a page doesn't exist
-cached_wikipedia_remote_fallback = false
-
 
 guessers "ElasticSearch" {
   class = "qanta.guesser.elasticsearch.ElasticSearchGuesser"
@@ -85,6 +81,7 @@ guessers "Tied" {
   use_wiki = false
   n_wiki_sentences = 5
   wiki_title_replace_token = ""
+  tied_l2 = 0.00001
 }
 
 guessers "EntityRNN" {

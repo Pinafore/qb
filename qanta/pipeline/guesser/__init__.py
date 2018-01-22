@@ -145,7 +145,7 @@ class GuesserReport(Task):
         return [LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
-            'guesser_report.pdf')
+            'guesser_report.md')
         ), LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
