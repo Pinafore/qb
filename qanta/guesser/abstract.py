@@ -472,8 +472,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         for name in guesser_names:
             if name in guesser_lookup:
                 g_class, g_classname = guesser_lookup[name]
-                guesser_path = os.path.join('output/guesser', g_class)
-                log.info(f'Loading "{name}" corresponding to "{g_class}" located at "{guesser_path}"')
+                guesser_path = os.path.join('output/guesser', g_classname)
+                log.info(f'Loading "{name}" corresponding to "{g_classname}" located at "{guesser_path}"')
                 guessers[name] = g_class.load(guesser_path)
             else:
                 log.info(f'Guesser with name="{name}" not found')
