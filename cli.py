@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 
 from qanta import qlogging
 from qanta.util.environment import ENVIRONMENT
-from qanta.wikipedia.cached_wikipedia import web_initialize_file_cache
 from qanta.datasets.quiz_bowl import QuestionDatabase, Question
+from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_open
 
 
@@ -21,11 +21,6 @@ def main():
     for k, v in ENVIRONMENT.items():
         log.info("{0}={1}".format(k, v))
 
-
-@main.command()
-@click.argument('wiki_cache')
-def init_wiki_cache(wiki_cache):
-    web_initialize_file_cache(wiki_cache)
 
 @main.command()
 @click.argument('output_dir')
@@ -56,6 +51,22 @@ def export_db(output_dir):
 
     with safe_open(path.join(output_dir, 'quiz-bowl.dev.json'), 'w') as f:
         json.dump({'questions': dev}, f)
+
+
+@main.command()
+@click.option('--host', default='0.0.0.0')
+@click.option('--port', default=5000)
+@click.option('--debug', default=False)
+@click.argument('guessers', nargs=-1)
+def guesser_api(host, port, debug, guessers):
+    if debug:
+        log.warn('WARNING: debug mode in flask can expose environment variables, including AWS keys, NEVER use this when the API is exposed to the web')
+        log.warn('Confirm that you would like to enable flask debugging')
+        confirmation = input('yes/no:\n').strip()
+        if confirmation != 'yes':
+            raise ValueError('Most confirm enabling debug mode')
+
+    AbstractGuesser.multi_guesser_web_api(guessers, host=host, port=port, debug=debug)
 
 
 if __name__ == '__main__':
