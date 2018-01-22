@@ -1,4 +1,5 @@
 import os
+import importlib
 import warnings
 import random
 from collections import defaultdict, namedtuple
@@ -26,6 +27,12 @@ from qanta import qlogging
 
 
 log = qlogging.get(__name__)
+
+
+def get_class(instance_module: str, instance_class: str):
+    py_instance_module = importlib.import_module(instance_module)
+    py_instance_class = getattr(py_instance_module, instance_class)
+    return py_instance_class
 
 
 GuesserSpec = NamedTuple('GuesserSpec', [
@@ -452,17 +459,28 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         app = Flask(__name__)
 
+        guesser_lookup = {}
+        for name, g in conf['guessers'].items():
+            g_qualified_name = g['class']
+            parts = g_qualified_name.split('.')
+            g_module = '.'.join(parts[:-1])
+            g_classname = parts[-1]
+            guesser_lookup[name] = (get_class(g_module, g_classname), g_classname)
+
         log.info(f'Loading guessers: {guesser_names}')
         guessers = {}
         for name in guesser_names:
-            g_class = conf['guessers'][name]['class']
-            guesser_path = os.path.join('output/guesser', g_class)
-            log.info(f'Loading "{name}" corresponding to "{g_class}" located at "{guesser_path}"')
-            guessers[name] = AbstractGuesser.load(guesser_path)
+            if name in guesser_lookup:
+                g_class, g_classname = guesser_lookup[name]
+                guesser_path = os.path.join('output/guesser', g_class)
+                log.info(f'Loading "{name}" corresponding to "{g_class}" located at "{guesser_path}"')
+                guessers[name] = g_class.load(guesser_path)
+            else:
+                log.info(f'Guesser with name="{name}" not found')
 
         @app.route('/api/guesser', methods=['POST'])
         def guess():
-            g_name = request.form['g_name']
+            g_name = request.form['guesser_name']
             if g_name not in guessers:
                 response = jsonify(
                     {'errors': f'Guesser "{g_name}" invalid, options are: "{list(guessers.keys())}"'}
