@@ -452,12 +452,13 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         app = Flask(__name__)
 
+        log.info(f'Loading guessers: {guesser_names}')
         guessers = {}
         for name in guesser_names:
             g_class = conf['guessers'][name]['class']
             guesser_path = os.path.join('output/guesser', g_class)
-            guesser = AbstractGuesser.load(guesser_path)
-            guessers[name] = guesser
+            log.info(f'Loading "{name}" corresponding to "{g_class}" located at "{guesser_path}"')
+            guessers[name] = AbstractGuesser.load(guesser_path)
 
         @app.route('/api/guesser', methods=['POST'])
         def guess():
