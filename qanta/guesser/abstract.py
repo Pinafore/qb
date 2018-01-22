@@ -447,10 +447,32 @@ class AbstractGuesser(metaclass=ABCMeta):
         app.run(host=host, port=port, debug=debug)
 
     @staticmethod
-    def multi_guesser_web_api(guesser_names: List[str]):
+    def multi_guesser_web_api(guesser_names: List[str], host='0.0.0.0', port=5000, debug=False):
+        from flask import Flask, jsonify, request
+
+        app = Flask(__name__)
+
+        guessers = {}
         for name in guesser_names:
             g_class = conf['guessers'][name]['class']
             guesser_path = os.path.join('output/guesser', g_class)
+            guesser = AbstractGuesser.load(guesser_path)
+            guessers[name] = guesser
+
+        @app.route('/api/guesser', methods=['POST'])
+        def guess():
+            g_name = request.form['g_name']
+            if g_name not in guessers:
+                response = jsonify(
+                    {'errors': f'Guesser "{g_name}" invalid, options are: "{list(guessers.keys())}"'}
+                )
+                response.status_code = 400
+                return response
+            text = request.form['text']
+            guess, score = guessers[g_name].guess([text], 1)[0][0]
+            return jsonify({'guess': guess, 'score': float(score)})
+
+        app.run(host=host, port=port, debug=debug)
 
 QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
 
