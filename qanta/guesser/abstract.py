@@ -372,7 +372,8 @@ class AbstractGuesser(metaclass=ABCMeta):
                 'guesser_params': params
             }, f)
 
-        output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
+        md_output = safe_path(os.path.join(directory, 'guesser_report.md'))
+        pdf_output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
         report = ReportGenerator('guesser.md')
         report.create({
             'dev_recall_plot': '/tmp/dev_recall.png',
@@ -401,7 +402,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             'min_p_answerable_dev': len(min_dev_answerable_questions) / len(dev_questions),
             'dev_correct_by_count_plot': '/tmp/dev_correct_by_count.png',
             'n_train_vs_dev_plot': '/tmp/n_train_vs_dev.png',
-        }, output)
+        }, md_output, pdf_output)
 
     @staticmethod
     def list_enabled_guessers() -> List[GuesserSpec]:
@@ -444,6 +445,12 @@ class AbstractGuesser(metaclass=ABCMeta):
             return jsonify({'guess': guess, 'score': float(score)})
 
         app.run(host=host, port=port, debug=debug)
+
+    @staticmethod
+    def multi_guesser_web_api(guesser_names: List[str]):
+        for name in guesser_names:
+            g_class = conf['guessers'][name]['class']
+            guesser_path = os.path.join('output/guesser', g_class)
 
 QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
 
