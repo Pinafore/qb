@@ -81,7 +81,8 @@ guessers "Tied" {
   use_wiki = false
   n_wiki_sentences = 5
   wiki_title_replace_token = ""
-  tied_l2 = 0.00001
+  tied_l2 = 0.0
+  bigrams = false
 }
 
 guessers "EntityRNN" {

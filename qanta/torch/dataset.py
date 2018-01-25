@@ -32,26 +32,35 @@ ftp_patterns = {
 regex_pattern = '|'.join([re.escape(p) for p in ftp_patterns])
 regex_pattern += r'|\[.*?\]|\(.*?\)'
 
-def qb_split(text, nolength_token='nolengthunk'):
-    import nltk
-    tokens = nltk.word_tokenize(text)
-    if len(tokens) == 0:
-        return [nolength_token]
-    else:
-        return tokens
+
 
 
 def str_split(text):
     return text.split()
 
-def qb_tokenize(text: str, strip_qb_patterns=True, tokenizer=qb_split) -> List[str]:
-    if strip_qb_patterns:
-        text = re.sub(
-            '\s+', ' ',
-            re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
-        ).strip().capitalize()
 
-    return tokenizer(text)
+def create_tokenizer(bigrams=False):
+    def qb_split(text, nolength_token='nolengthunk'):
+        import nltk
+        tokens = nltk.word_tokenize(text)
+        if len(tokens) == 0:
+            return [nolength_token]
+        else:
+            if bigrams:
+                text_bigrams = [f'{w0}++{w1}' for w0, w1 in nltk.bigrams(tokens)]
+                return tokens + text_bigrams
+            else:
+                return tokens
+
+    def qb_tokenize(text: str, strip_qb_patterns=True, tokenizer=qb_split) -> List[str]:
+        if strip_qb_patterns:
+            text = re.sub(
+                '\s+', ' ',
+                re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
+            ).strip().capitalize()
+
+        return tokenizer(text)
+    return qb_tokenize
 
 
 class LongField(RawField):
@@ -211,10 +220,11 @@ class QuizBowl(Dataset):
     @classmethod
     def iters(cls, lower=True, example_mode='sentence',
               use_wiki=False, n_wiki_sentences=5, replace_title_mentions='',
-              batch_size=128, device=0, root='.data', vectors='glove.6B.300d', **kwargs):
+              batch_size=128, device=0, root='.data', vectors='glove.6B.300d', bigrams=False, **kwargs):
         QNUM = LongField()
         SENT = LongField()
-        TEXT = QBTextField(batch_first=True, tokenize=qb_tokenize, include_lengths=True, lower=lower)
+        TEXT = QBTextField(
+            batch_first=True, tokenize=create_tokenizer(bigrams=bigrams), include_lengths=True, lower=lower)
         PAGE = Field(sequential=False, tokenize=str_split)
 
         train, val, dev = cls.splits(
