@@ -138,6 +138,8 @@ class DanGuesser(AbstractGuesser):
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
 
+        self.kuro_trial_id = None
+
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
@@ -151,7 +153,9 @@ class DanGuesser(AbstractGuesser):
         self.vocab_size = None
 
     def parameters(self):
-        return conf['guessers']['Dan']
+        params = conf['guessers']['Dan'].copy()
+        params['kuro_trial_id'] = self.kuro_trial_id
+        return params
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
         x_test = [convert_text_to_embeddings_indices(
@@ -373,12 +377,29 @@ class DanGuesser(AbstractGuesser):
     def _training_loop(self,
                        n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
                        n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
+        try:
+            import socket
+            from kuro import Worker
+            worker = Worker(socket.gethostname())
+            experiment = worker.experiment(
+                'guesser', 'Dan', hyper_parameters=conf['guessers']['Dan'],
+                metrics=[
+                    'train_acc', 'train_loss', 'test_acc', 'test_loss'
+                ], n_trials=5
+            )
+            trial = experiment.trial()
+            if trial is not None:
+                self.kuro_trial_id = trial.id
+        except ModuleNotFoundError:
+            trial = None
+
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
             ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
         ])
         best_acc = 0.0
+        epoch = 0
         while True:
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(
@@ -393,6 +414,12 @@ class DanGuesser(AbstractGuesser):
             )
             best_acc = max(best_acc, test_acc)
 
+            if trial is not None:
+                trial.report_metric('test_acc', test_acc, step=epoch)
+                trial.report_metric('test_loss', test_loss, step=epoch)
+                trial.report_metric('train_acc', train_acc, step=epoch)
+                trial.report_metric('train_loss', train_loss, step=epoch)
+
             stop_training, reasons = manager.instruct(
                 train_time, train_loss, train_acc,
                 test_time, test_loss, test_acc
@@ -404,6 +431,7 @@ class DanGuesser(AbstractGuesser):
             else:
                 if self.use_lr_scheduler:
                     self.scheduler.step(test_acc)
+            epoch += 1
 
         log.info('Done training')
         return best_acc

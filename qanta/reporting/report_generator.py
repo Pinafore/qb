@@ -13,8 +13,9 @@ class ReportGenerator:
         env = Environment(loader=PackageLoader('qanta', 'reporting/templates'))
         template = env.get_template(self.template)
         markdown = template.render(variables)
-        with open(md_output, 'w') as f:
-            f.write(md_output)
+        if md_output is not None:
+            with open(md_output, 'w') as f:
+                f.write(md_output)
         try:
             import pypandoc
             pypandoc.convert_text(

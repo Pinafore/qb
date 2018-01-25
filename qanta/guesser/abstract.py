@@ -302,6 +302,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         dev_summary_accuracy = compute_summary_accuracy(dev_questions, dev_recall_stats)
         dev_summary_recall = compute_summary_recall(dev_questions, dev_recall_stats)
 
+        report_to_kuro(params['kuro_trial_id'] if 'kuro_trial_id' in params else None, dev_summary_accuracy)
+
         accuracy_plot('/tmp/dev_accuracy.png', dev_summary_accuracy, 'Guesser Dev')
         recall_plot('/tmp/dev_recall.png', dev_questions, dev_summary_recall, 'Guesser Dev')
 
@@ -504,6 +506,21 @@ class AbstractGuesser(metaclass=ABCMeta):
         app.run(host=host, port=port, debug=debug)
 
 QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
+
+
+def report_to_kuro(kuro_trial_id, summary_accuracy):
+    if kuro_trial_id is not None:
+        try:
+            from kuro.client import Trial
+            trial = Trial.from_trial_id(kuro_trial_id)
+            trial.report_metric('dev_acc_start', summary_accuracy['start'])
+            trial.report_metric('dev_acc_25', summary_accuracy['p_25'])
+            trial.report_metric('dev_acc_50', summary_accuracy['p_50'])
+            trial.report_metric('dev_acc_75', summary_accuracy['p_75'])
+            trial.report_metric('dev_acc_end', summary_accuracy['end'])
+            trial.end()
+        except:
+            pass
 
 
 def question_recall(guesses, qst, question_lookup):
@@ -822,7 +839,7 @@ def n_guesser_report(report_path, fold, n_samples=10):
     report.create({
         'dev_accuracy_by_n_correct_plot': accuracy_by_n_correct_plot_path,
         'sampled_questions_by_correct': sampled_questions_by_correct
-    }, safe_path(report_path))
+    }, None, safe_path(report_path))
 
 
 def sample_n_guesser_correct_questions(question_lookup, guess_lookup, n_correct_samples, n_samples=10):

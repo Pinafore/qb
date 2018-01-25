@@ -176,6 +176,7 @@ class TiedGuesser(AbstractGuesser):
         self.text_field: Optional[Field] = None
         self.n_classes = None
         self.emb_dim = None
+        self.kuro_trial_id = None
 
         self.model = None
         self.optimizer = None
@@ -191,7 +192,9 @@ class TiedGuesser(AbstractGuesser):
         return self.page_field.vocab.itos
 
     def parameters(self):
-        return conf['guessers']['Tied'].copy()
+        params = conf['guessers']['Tied'].copy()
+        params['kuro_trial_id'] = self.kuro_trial_id
+        return params
 
     def train(self, training_data):
         log.info('Loading Quiz Bowl dataset')
@@ -230,6 +233,23 @@ class TiedGuesser(AbstractGuesser):
         ])
 
         log.info('Starting training')
+        try:
+            import socket
+            from kuro import Worker
+            worker = Worker(socket.gethostname())
+            experiment = worker.experiment(
+                'guesser', 'Tied', hyper_parameters=conf['guessers']['Tied'],
+                metrics=[
+                    'train_acc', 'train_loss', 'test_acc', 'test_loss'
+                ], n_trials=5
+            )
+            trial = experiment.trial()
+            if trial is not None:
+                self.kuro_trial_id = trial.id
+        except ModuleNotFoundError:
+            trial = None
+
+        epoch = 0
         while True:
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(train_iter)
@@ -242,11 +262,18 @@ class TiedGuesser(AbstractGuesser):
                 test_time, test_loss, test_acc
             )
 
+            if trial is not None:
+                trial.report_metric('test_acc', test_acc, step=epoch)
+                trial.report_metric('test_loss', test_loss, step=epoch)
+                trial.report_metric('train_acc', train_acc, step=epoch)
+                trial.report_metric('train_loss', train_loss, step=epoch)
+
             if stop_training:
                 log.info(' '.join(reasons))
                 break
             else:
                 self.scheduler.step(test_acc)
+            epoch += 1
 
     def run_epoch(self, iterator: Iterator):
         is_train = iterator.train
