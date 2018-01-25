@@ -8,6 +8,10 @@ variable "key_pair" {}
 variable "access_key" {}
 variable "secret_key" {}
 
+variable "kuro_server" {
+  default = ""
+}
+
 variable "spot_price" {
   default = "2.70"
 }
@@ -212,6 +216,7 @@ resource "aws_spot_instance_request" "qanta" {
       "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc",
+      "echo \"export KURO_SERVER=${var.kuro_server}\" >> /home/ubuntu/.bashrc",
     ]
   }
 
