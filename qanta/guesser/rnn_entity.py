@@ -919,6 +919,7 @@ class RnnEntityGuesser(AbstractGuesser):
                 break
             else:
                 self.scheduler.step(test_acc)
+            epoch += 1
 
         log.info('Done training')
         return best_acc
