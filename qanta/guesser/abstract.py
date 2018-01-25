@@ -519,6 +519,7 @@ def report_to_kuro(kuro_trial_id, summary_accuracy):
             trial.report_metric('dev_acc_75', summary_accuracy['p_75'])
             trial.report_metric('dev_acc_end', summary_accuracy['end'])
             trial.end()
+            log.info('Logged guesser accuracies to kuro and ended trial')
         except:
             pass
 

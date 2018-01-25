@@ -621,6 +621,8 @@ class RnnEntityGuesser(AbstractGuesser):
         self.hyper_opt_steps = guesser_conf['hyper_opt_steps']
         self.weight_decay = guesser_conf['weight_decay']
 
+        self.kuro_trial_id = None
+
         self.class_to_i = None
         self.i_to_class = None
         self.vocab = None
@@ -636,29 +638,9 @@ class RnnEntityGuesser(AbstractGuesser):
         self.nlp = None
 
     def parameters(self):
-        return {
-            'features': self.features,
-            'max_epochs': self.max_epochs,
-            'batch_size': self.batch_size,
-            'learning_rate': self.learning_rate,
-            'max_grad_norm': self.max_grad_norm,
-            'rnn_type': self.rnn_type,
-            'dropout_prob': self.dropout_prob,
-            'bidirectional': self.bidirectional,
-            'n_hidden_units': self.n_hidden_units,
-            'n_hidden_layers': self.n_hidden_layers,
-            'use_wiki': self.use_wiki,
-            'use_triviaqa': self.use_triviaqa,
-            'use_tagme': self.use_tagme,
-            'sm_dropout_prob': self.sm_dropout_prob,
-            'sm_dropout_before_linear': self.sm_dropout_before_linear,
-            'n_tagme_sentences': self.n_tagme_sentences,
-            'n_wiki_sentences': self.n_wiki_sentences,
-            'use_cove': self.use_cove,
-            'variational_dropout_prob': self.variational_dropout_prob,
-            'use_locked_dropout': self.use_locked_dropout,
-            'weight_decay': self.weight_decay
-        }
+        params = conf['guessers']['EntityRNN'].copy()
+        params['kuro_trial_id'] = self.kuro_trial_id
+        return params
 
     def guess(self,
               questions: List[QuestionText],
@@ -892,6 +874,24 @@ class RnnEntityGuesser(AbstractGuesser):
 
         log.info('Starting training...')
         best_acc = 0.0
+        epoch = 0
+
+        try:
+            import socket
+            from kuro import Worker
+            worker = Worker(socket.gethostname())
+            experiment = worker.experiment(
+                'guesser', 'EntityRNN', hyper_parameters=conf['guessers']['EntityRNN'],
+                metrics=[
+                    'train_acc', 'train_loss', 'test_acc', 'test_loss'
+                ], n_trials=5
+            )
+            trial = experiment.trial()
+            if trial is not None:
+                self.kuro_trial_id = trial.id
+                log.info('Kuro experiment logging enabled')
+        except ModuleNotFoundError:
+            trial = None
         while True:
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(train_dataset, evaluate=False)
@@ -904,6 +904,15 @@ class RnnEntityGuesser(AbstractGuesser):
                 train_time, train_loss, train_acc,
                 test_time, test_loss, test_acc
             )
+
+            if trial is not None:
+                try:
+                    trial.report_metric('test_acc', test_acc, step=epoch)
+                    trial.report_metric('test_loss', test_loss, step=epoch)
+                    trial.report_metric('train_acc', train_acc, step=epoch)
+                    trial.report_metric('train_loss', train_loss, step=epoch)
+                except:
+                    log.exception('Error occurred while logging to kuro')
 
             if stop_training:
                 log.info(' '.join(reasons))
