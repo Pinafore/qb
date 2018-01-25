@@ -7,7 +7,7 @@ from qanta import qlogging
 from qanta.util.environment import ENVIRONMENT
 from qanta.datasets.quiz_bowl import QuestionDatabase, Question
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.io import safe_open
+from qanta.util.io import safe_open, shell
 
 
 log = qlogging.get(__name__)
@@ -67,6 +67,20 @@ def guesser_api(host, port, debug, guessers):
             raise ValueError('Most confirm enabling debug mode')
 
     AbstractGuesser.multi_guesser_web_api(guessers, host=host, port=port, debug=debug)
+
+
+@main.command()
+@click.option('--n_times', default=1)
+@click.option('--workers', default=1)
+@click.argument('guesser_qualified_class')
+def guesser_pipeline(n_times, workers, guesser_qualified_class):
+    for _ in range(n_times):
+        if 'qanta.guesser' not in guesser_qualified_class:
+            log.error('qanta.guesser not found in guesser_qualified_class, this is likely an error, exiting.')
+            return
+        shell('rm -rf /tmp/qanta')
+        shell(f'rm -rf output/guesser/{guesser_qualified_class}')
+        shell(f'luigi --local-scheduler --module qanta.pipeline.guesser --workers {workers} AllSingleGuesserReports')
 
 
 if __name__ == '__main__':
