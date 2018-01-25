@@ -170,6 +170,7 @@ class TiedGuesser(AbstractGuesser):
         self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
         self.lowercase = guesser_conf['lowercase']
         self.tied_l2 = guesser_conf['tied_l2']
+        self.bigrams = guesser_conf['bigrams']
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
@@ -201,7 +202,7 @@ class TiedGuesser(AbstractGuesser):
         train_iter, val_iter, dev_iter = QuizBowl.iters(
             batch_size=self.batch_size, lower=self.lowercase,
             use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
-            replace_title_mentions=self.wiki_title_replace_token
+            replace_title_mentions=self.wiki_title_replace_token, bigrams=self.bigrams
         )
         log.info(f'N Train={len(train_iter.dataset.examples)}')
         log.info(f'N Test={len(val_iter.dataset.examples)}')
