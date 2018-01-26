@@ -39,28 +39,43 @@ def str_split(text):
     return text.split()
 
 
-def create_tokenizer(bigrams=False):
-    def qb_split(text, nolength_token='nolengthunk'):
-        import nltk
-        tokens = nltk.word_tokenize(text)
-        if len(tokens) == 0:
-            return [nolength_token]
-        else:
-            if bigrams:
-                text_bigrams = [f'{w0}++{w1}' for w0, w1 in nltk.bigrams(tokens)]
-                return tokens + text_bigrams
-            else:
-                return tokens
+def qb_split(text, nolength_token='nolengthunk'):
+    import nltk
+    tokens = nltk.word_tokenize(text)
+    if len(tokens) == 0:
+        return [nolength_token]
+    else:
+        return tokens
 
-    def qb_tokenize(text: str, strip_qb_patterns=True, tokenizer=qb_split) -> List[str]:
-        if strip_qb_patterns:
-            text = re.sub(
-                '\s+', ' ',
-                re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
-            ).strip().capitalize()
 
-        return tokenizer(text)
-    return qb_tokenize
+def qb_split_bigrams(text, nolength_token='nolengthunk'):
+    import nltk
+    tokens = nltk.word_tokenize(text)
+    if len(tokens) == 0:
+        return [nolength_token]
+    else:
+        text_bigrams = [f'{w0}++{w1}' for w0, w1 in nltk.bigrams(tokens)]
+        return tokens + text_bigrams
+
+
+def qb_tokenize(text: str, strip_qb_patterns=True, tokenizer=qb_split) -> List[str]:
+    if strip_qb_patterns:
+        text = re.sub(
+            '\s+', ' ',
+            re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
+        ).strip().capitalize()
+
+    return tokenizer(text)
+
+
+def qb_tokenize_bigrams(text: str, strip_qb_patterns=True, tokenizer=qb_split_bigrams) -> List[str]:
+    if strip_qb_patterns:
+        text = re.sub(
+            '\s+', ' ',
+            re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
+        ).strip().capitalize()
+
+    return tokenizer(text)
 
 
 class LongField(RawField):
@@ -224,7 +239,10 @@ class QuizBowl(Dataset):
         QNUM = LongField()
         SENT = LongField()
         TEXT = QBTextField(
-            batch_first=True, tokenize=create_tokenizer(bigrams=bigrams), include_lengths=True, lower=lower)
+            batch_first=True,
+            tokenize=qb_tokenize_bigrams if bigrams else qb_tokenize,
+            include_lengths=True, lower=lower
+        )
         PAGE = Field(sequential=False, tokenize=str_split)
 
         train, val, dev = cls.splits(
