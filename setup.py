@@ -35,7 +35,8 @@ requirements = [
     'dash-html-components',
     'dash-core-components',
     'plotly',
-    'unidecode'
+    'unidecode',
+    'pyyaml'
 ]
 
 

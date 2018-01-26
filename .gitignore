@@ -34,6 +34,7 @@ security_groups.tf
 cynch.json
 naqt_db.tf
 qanta.hcl
+qanta.yaml
 qb.egg-info/
 qanta_web/.vscode
 qanta_web/*.sqlite3
