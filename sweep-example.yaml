@@ -1,0 +1,5 @@
+parameters:
+  - access: ["guessers", "Dan", "adam_r"]
+    values: [.1, .01, .001]
+  - access: ["guessers", "Dan", "nn_dropout"]
+    values: [.1, .5, .7]

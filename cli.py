@@ -2,12 +2,15 @@ import json
 from os import path
 import click
 from sklearn.model_selection import train_test_split
+import yaml
 
 from qanta import qlogging
 from qanta.util.environment import ENVIRONMENT
 from qanta.datasets.quiz_bowl import QuestionDatabase, Question
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_open, shell
+from qanta.config import conf
+from qanta.hyperparam import generate_configs
 
 
 log = qlogging.get(__name__)
@@ -69,11 +72,7 @@ def guesser_api(host, port, debug, guessers):
     AbstractGuesser.multi_guesser_web_api(guessers, host=host, port=port, debug=debug)
 
 
-@main.command()
-@click.option('--n_times', default=1)
-@click.option('--workers', default=1)
-@click.argument('guesser_qualified_class')
-def guesser_pipeline(n_times, workers, guesser_qualified_class):
+def run_guesser(n_times, workers, guesser_qualified_class):
     for _ in range(n_times):
         if 'qanta.guesser' not in guesser_qualified_class:
             log.error('qanta.guesser not found in guesser_qualified_class, this is likely an error, exiting.')
@@ -81,6 +80,34 @@ def guesser_pipeline(n_times, workers, guesser_qualified_class):
         shell('rm -rf /tmp/qanta')
         shell(f'rm -rf output/guesser/{guesser_qualified_class}')
         shell(f'luigi --local-scheduler --module qanta.pipeline.guesser --workers {workers} AllSingleGuesserReports')
+
+
+@main.command()
+@click.option('--n_times', default=1)
+@click.option('--workers', default=1)
+@click.argument('guesser_qualified_class')
+def guesser_pipeline(n_times, workers, guesser_qualified_class):
+    run_guesser(n_times, workers, guesser_qualified_class)
+
+
+@main.command()
+@click.option('--n_times', default=1)
+@click.option('--workers', default=1)
+@click.argument('guesser_qualified_class')
+@click.argument('sweep_file')
+def guesser_sweep(n_times, workers, guesser_qualified_class, sweep_file):
+    if path.exists('qanta.yaml'):
+        shell('mv qanta.yaml qanta-tmp.yaml')
+    with open(sweep_file) as f:
+        sweep_conf = yaml.load(f)
+    configurations = generate_configs(conf, sweep_conf)
+    for s_conf in configurations:
+        with open('qanta.yaml', 'w') as f:
+            yaml.dump(s_conf, f)
+        run_guesser(n_times, workers, guesser_qualified_class)
+
+    if path.exists('qanta-tmp.yaml'):
+        shell('mv qanta-tmp.yaml qanta.yaml')
 
 
 if __name__ == '__main__':
