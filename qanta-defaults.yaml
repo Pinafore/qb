@@ -1,0 +1,101 @@
+buzz_as_guesser_train: false
+buzzer:
+  config: mlp
+  gpu: 0
+  n_cores: 16
+  n_guesses: 50
+buzzer_word_skip: 2
+embedding_dimension: 300
+expo_questions: data/internal/expo/2016_hsnct.csv
+guesser_word_skip: -1
+guessers:
+  Dan:
+    adam_lr: 0.001
+    adam_weight_decay: 0.0
+    batch_size: 1024
+    class: qanta.guesser.dan.DanGuesser
+    dual_encoder: false
+    enabled: false
+    gradient_clip: 0.25
+    hyper_opt: false
+    hyper_opt_steps: 300
+    luigi_dependency: qanta.pipeline.guesser.EmptyTask
+    max_epochs: 100
+    n_hidden_layers: 1
+    n_hidden_units: 1000
+    n_tagme_sentences: 20
+    n_wiki_sentences: 5
+    nn_dropout: 0.265
+    optimizer: adam
+    qb_fraction: 1.0
+    sgd_lr: 30.0
+    sgd_weight_decay: 1.2e-06
+    sm_dropout: 0.158
+    use_lr_scheduler: true
+    use_tagme: false
+    use_wiki: false
+    wiki_training: mixed
+  ElasticSearch:
+    class: qanta.guesser.elasticsearch.ElasticSearchGuesser
+    enabled: true
+    luigi_dependency: qanta.pipeline.guesser.EmptyTask
+    many_docs: false
+    n_cores: 15
+    normalize_score_by_length: true
+    qb_boost: 1
+    use_all_wikipedia: false
+    use_qb: true
+    use_wiki: true
+    wiki_boost: 1
+  EntityRNN:
+    batch_size: 256
+    bidirectional: true
+    class: qanta.guesser.rnn_entity.RnnEntityGuesser
+    dropout_prob: 0.25
+    enabled: false
+    features:
+    - word
+    hyper_opt: false
+    hyper_opt_steps: 100
+    learning_rate: 0.001
+    luigi_dependency: qanta.pipeline.guesser.EmptyTask
+    max_epochs: 100
+    max_grad_norm: 1.0
+    n_hidden_layers: 1
+    n_hidden_units: 1000
+    n_tagme_sentences: 20
+    n_wiki_sentences: 10
+    rnn_type: gru
+    sm_dropout_before_linear: false
+    sm_dropout_prob: 0.15
+    use_cove: false
+    use_locked_dropout: false
+    use_tagme: false
+    use_triviaqa: false
+    use_wiki: false
+    variational_dropout_prob: 0.25
+    weight_decay: 0
+  Tfidf:
+    class: qanta.guesser.tfidf.TfidfGuesser
+    enabled: false
+    luigi_dependency: qanta.pipeline.guesser.EmptyTask
+  Tied:
+    batch_size: 1024
+    bigrams: false
+    class: qanta.guesser.tied.TiedGuesser
+    enabled: false
+    gradient_clip: 0.25
+    lowercase: true
+    lr: 0.001
+    luigi_dependency: qanta.pipeline.guesser.EmptyTask
+    n_hidden_layers: 1
+    n_hidden_units: 1000
+    n_wiki_sentences: 5
+    nn_dropout: 0.265
+    sm_dropout: 0.158
+    tied_l2: 0.0
+    use_wiki: false
+    wiki_title_replace_token: ''
+n_guesses: 50
+use_pretrained_embeddings: true
+word_embeddings: data/external/deep/glove.6B.300d.txt
