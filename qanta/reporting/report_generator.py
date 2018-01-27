@@ -15,7 +15,7 @@ class ReportGenerator:
         markdown = template.render(variables)
         if md_output is not None:
             with open(md_output, 'w') as f:
-                f.write(md_output)
+                f.write(markdown)
         try:
             import pypandoc
             pypandoc.convert_text(
