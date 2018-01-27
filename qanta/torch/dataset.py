@@ -233,7 +233,7 @@ class QuizBowl(Dataset):
             use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
             **kwargs)
 
-        TEXT.build_vocab(train, vectors=vectors)
+        TEXT.build_vocab(train, vectors=vectors, max_size=300000)
         PAGE.build_vocab(train)
 
         return BucketIterator.splits(
