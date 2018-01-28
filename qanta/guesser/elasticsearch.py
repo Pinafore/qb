@@ -192,14 +192,18 @@ class ElasticSearchGuesser(AbstractGuesser):
             )
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
-        sc = create_spark_context(configs=[('spark.executor.cores', self.n_cores), ('spark.executor.memory', '20g')])
-
         def es_search(query):
-            return es_index.search(query, max_n_guesses,
-                                   normalize_score_by_length=self.normalize_score_by_length,
-                                   wiki_boost=self.wiki_boost, qb_boost=self.qb_boost)
+                return es_index.search(query, max_n_guesses,
+                                       normalize_score_by_length=self.normalize_score_by_length,
+                                       wiki_boost=self.wiki_boost, qb_boost=self.qb_boost)
 
-        return sc.parallelize(questions, 16 * self.n_cores).map(es_search).collect()
+        if len(questions) > 1:
+            sc = create_spark_context(configs=[('spark.executor.cores', self.n_cores), ('spark.executor.memory', '20g')])
+            return sc.parallelize(questions, 16 * self.n_cores).map(es_search).collect()
+        elif len(questions) == 1:
+            return [es_search(questions[0])]
+        else:
+            return []
 
     @classmethod
     def targets(cls):
