@@ -80,7 +80,7 @@ guessers:
     enabled: false
     luigi_dependency: qanta.pipeline.guesser.EmptyTask
   Tied:
-    batch_size: 1024
+    batch_size: 512
     bigrams: false
     class: qanta.guesser.tied.TiedGuesser
     enabled: false
