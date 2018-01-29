@@ -102,7 +102,7 @@ class TiedModel(nn.Module):
         pad_idx = vocab.stoi[text_field.pad_token]
         self.general_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
         self.qb_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
-        self.wiki_embeddings =nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
+        self.wiki_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
         qb_mask = torch.cat([torch.ones(1, 600), torch.zeros(1, 300)], dim=1)
         wiki_mask = torch.cat([torch.ones(1, 300), torch.zeros(1, 300), torch.ones(1, 300)], dim=1)
         self.combined_mask = torch.cat([qb_mask, wiki_mask], dim=0).float().cuda()
@@ -153,7 +153,6 @@ class TiedModel(nn.Module):
         return self.classifier(encoded)
 
 
-
 class TiedGuesser(AbstractGuesser):
     def __init__(self):
         super(TiedGuesser, self).__init__()
@@ -171,6 +170,7 @@ class TiedGuesser(AbstractGuesser):
         self.lowercase = guesser_conf['lowercase']
         self.tied_l2 = guesser_conf['tied_l2']
         self.bigrams = guesser_conf['bigrams']
+        self.max_vocab_size = guesser_conf['max_vocab_size']
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
@@ -331,10 +331,9 @@ class TiedGuesser(AbstractGuesser):
 
         return guesses
 
-
     def save(self, directory: str):
-        shutil.copyfile('/tmp/rnn.pt', os.path.join(directory, 'rnn.pt'))
-        with open(os.path.join(directory, 'rnn.pkl'), 'wb') as f:
+        shutil.copyfile('/tmp/tied.pt', os.path.join(directory, 'tied.pt'))
+        with open(os.path.join(directory, 'tied.pkl'), 'wb') as f:
             pickle.dump({
                 'page_field': self.page_field,
                 'text_field': self.text_field,
@@ -352,12 +351,13 @@ class TiedGuesser(AbstractGuesser):
                 'n_wiki_sentences': self.n_wiki_sentences,
                 'wiki_title_replace_token': self.wiki_title_replace_token,
                 'lowercase': self.lowercase,
-                'tied_l2': self.tied_l2
+                'tied_l2': self.tied_l2,
+                'max_vocab_size': self.max_vocab_size
             }, f)
 
     @classmethod
     def load(cls, directory: str):
-        with open(os.path.join(directory, 'rnn.pkl'), 'rb') as f:
+        with open(os.path.join(directory, 'tied.pkl'), 'rb') as f:
             params = pickle.load(f)
 
         guesser = TiedGuesser()
@@ -377,12 +377,13 @@ class TiedGuesser(AbstractGuesser):
         guesser.wiki_title_replace_token = params['wiki_title_replace_token']
         guesser.lowercase = params['lowercase']
         guesser.tied_l2 = params['tied_l2']
+        guesser.max_vocab_size = params['max_vocab_size']
         guesser.model = TiedModel(
             guesser.text_field, guesser.n_classes,
             init_embeddings=False, emb_dim=guesser.emb_dim
         )
         guesser.model.load_state_dict(torch.load(
-            os.path.join(directory, 'rnn.pt'), map_location=lambda storage, loc: storage
+            os.path.join(directory, 'tied.pt'), map_location=lambda storage, loc: storage
         ))
         guesser.model.eval()
         if CUDA:
@@ -391,4 +392,4 @@ class TiedGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls):
-        return ['rnn.pt', 'rnn.pkl']
+        return ['tied.pt', 'tied.pkl']
