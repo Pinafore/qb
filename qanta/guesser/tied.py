@@ -202,7 +202,8 @@ class TiedGuesser(AbstractGuesser):
         train_iter, val_iter, dev_iter = QuizBowl.iters(
             batch_size=self.batch_size, lower=self.lowercase,
             use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
-            replace_title_mentions=self.wiki_title_replace_token, bigrams=self.bigrams
+            replace_title_mentions=self.wiki_title_replace_token,
+            bigrams=self.bigrams, max_vocab_size=self.max_vocab_size
         )
         log.info(f'N Train={len(train_iter.dataset.examples)}')
         log.info(f'N Test={len(val_iter.dataset.examples)}')
@@ -230,7 +231,7 @@ class TiedGuesser(AbstractGuesser):
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(), EarlyStopping(monitor='test_acc', patience=10, verbose=1),
-            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_acc')
+            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), '/tmp/tied.pt', monitor='test_acc')
         ])
 
         log.info('Starting training')
