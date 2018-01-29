@@ -96,6 +96,7 @@ guessers:
     tied_l2: 0.0
     use_wiki: false
     wiki_title_replace_token: ''
+    max_vocab_size: null
 n_guesses: 50
 use_pretrained_embeddings: true
 word_embeddings: data/external/deep/glove.6B.300d.txt

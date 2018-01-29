@@ -235,7 +235,8 @@ class QuizBowl(Dataset):
     @classmethod
     def iters(cls, lower=True, example_mode='sentence',
               use_wiki=False, n_wiki_sentences=5, replace_title_mentions='',
-              batch_size=128, device=0, root='.data', vectors='glove.6B.300d', bigrams=False, **kwargs):
+              batch_size=128, device=0, root='.data', vectors='glove.6B.300d', bigrams=False, max_vocab_size=None,
+              **kwargs):
         QNUM = LongField()
         SENT = LongField()
         TEXT = QBTextField(
@@ -251,7 +252,7 @@ class QuizBowl(Dataset):
             use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
             **kwargs)
 
-        TEXT.build_vocab(train, vectors=vectors, max_size=300000)
+        TEXT.build_vocab(train, vectors=vectors, max_size=max_vocab_size)
         PAGE.build_vocab(train)
 
         return BucketIterator.splits(
