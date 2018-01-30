@@ -1,4 +1,5 @@
 import json
+import pprint
 from os import path
 import click
 from sklearn.model_selection import train_test_split
@@ -101,10 +102,14 @@ def guesser_sweep(n_times, workers, guesser_qualified_class, sweep_file):
     with open(sweep_file) as f:
         sweep_conf = yaml.load(f)
     configurations = generate_configs(conf, sweep_conf)
-    for s_conf in configurations:
+    log.info(f'Found {len(configurations)} parameter configurations to try')
+    for i, s_conf in enumerate(configurations):
+        log.info(f'Starting configuration run {i} / {len(configurations)}')
+        log.info(f'{pprint.pformat(s_conf)}')
         with open('qanta.yaml', 'w') as f:
             yaml.dump(s_conf, f)
         run_guesser(n_times, workers, guesser_qualified_class)
+        log.info(f'Completed run {i} / {len(configurations)}')
 
     if path.exists('qanta-tmp.yaml'):
         shell('mv qanta-tmp.yaml qanta.yaml')
