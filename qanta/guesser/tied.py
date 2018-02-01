@@ -30,8 +30,6 @@ from qanta.torch import (
 log = qlogging.get(__name__)
 
 
-PT_RNN_WE_TMP = '/tmp/qanta/deep/pt_tied_we.pickle'
-PT_RNN_WE = 'pt_tied_we.pickle'
 CUDA = torch.cuda.is_available()
 
 
