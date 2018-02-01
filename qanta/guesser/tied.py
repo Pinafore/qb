@@ -3,7 +3,6 @@ import os
 import shutil
 import time
 import pickle
-import math
 from typing import List, Optional, Dict
 
 import numpy as np
@@ -12,7 +11,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-from torch.optim import Adam, lr_scheduler, Optimizer
+from torch.optim import Adam, lr_scheduler
 
 from torchtext.data.field import Field
 from torchtext.data.iterator import Iterator
@@ -31,8 +30,8 @@ from qanta.torch import (
 log = qlogging.get(__name__)
 
 
-PT_RNN_WE_TMP = '/tmp/qanta/deep/pt_rnn_we.pickle'
-PT_RNN_WE = 'pt_rnn_we.pickle'
+PT_RNN_WE_TMP = '/tmp/qanta/deep/pt_tied_we.pickle'
+PT_RNN_WE = 'pt_tied_we.pickle'
 CUDA = torch.cuda.is_available()
 
 
@@ -133,7 +132,7 @@ class TiedModel(nn.Module):
             lengths = Variable(lengths.float(), volatile=not self.training)
 
         g_embed = self.general_embeddings(input_)
-        g_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
+        gb_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
         g_embed = self.dropout(g_embed)
 
         qb_embed = self.qb_embeddings(input_)
@@ -169,8 +168,6 @@ class TiedGuesser(AbstractGuesser):
         self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
         self.lowercase = guesser_conf['lowercase']
         self.tied_l2 = guesser_conf['tied_l2']
-        self.bigrams = guesser_conf['bigrams']
-        self.max_vocab_size = guesser_conf['max_vocab_size']
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
@@ -202,8 +199,7 @@ class TiedGuesser(AbstractGuesser):
         train_iter, val_iter, dev_iter = QuizBowl.iters(
             batch_size=self.batch_size, lower=self.lowercase,
             use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
-            replace_title_mentions=self.wiki_title_replace_token,
-            bigrams=self.bigrams, max_vocab_size=self.max_vocab_size
+            replace_title_mentions=self.wiki_title_replace_token
         )
         log.info(f'N Train={len(train_iter.dataset.examples)}')
         log.info(f'N Test={len(val_iter.dataset.examples)}')
@@ -219,7 +215,7 @@ class TiedGuesser(AbstractGuesser):
         self.model = TiedModel(
             self.text_field, self.n_classes, emb_dim=self.emb_dim,
             n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
-            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout,
+            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout
         )
         if CUDA:
             self.model = self.model.cuda()
@@ -352,8 +348,7 @@ class TiedGuesser(AbstractGuesser):
                 'n_wiki_sentences': self.n_wiki_sentences,
                 'wiki_title_replace_token': self.wiki_title_replace_token,
                 'lowercase': self.lowercase,
-                'tied_l2': self.tied_l2,
-                'max_vocab_size': self.max_vocab_size
+                'tied_l2': self.tied_l2
             }, f)
 
     @classmethod
@@ -378,7 +373,6 @@ class TiedGuesser(AbstractGuesser):
         guesser.wiki_title_replace_token = params['wiki_title_replace_token']
         guesser.lowercase = params['lowercase']
         guesser.tied_l2 = params['tied_l2']
-        guesser.max_vocab_size = params['max_vocab_size']
         guesser.model = TiedModel(
             guesser.text_field, guesser.n_classes,
             init_embeddings=False, emb_dim=guesser.emb_dim
