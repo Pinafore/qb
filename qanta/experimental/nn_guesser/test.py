@@ -7,8 +7,8 @@ from tqdm import tqdm
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.util.constants import GUESSER_TRAIN_FOLD, GUESSER_DEV_FOLD
 
-import nets
-import nlp_utils
+from qanta.experimental.nn_guesser import nets
+from qanta.experimental.nn_guesser import nlp_utils
 
 nlp = spacy.load('en')
 
@@ -25,19 +25,24 @@ def setup_model(setup_dir):
         answers = json.load(f)
 
     n_class = args.n_class
+    n_vocab = len(vocab)
+    embed_size = 300
+    hidden_size = 512
+    hidden_dropout = 0.3
+    output_dropout = 0.2
+    gradient_clipping = 0.25
+
     print('# vocab: {}'.format(len(vocab)))
     print('# class: {}'.format(n_class))
 
     # Setup a model
-    if args.model == 'rnn':
-        Encoder = nets.RNNEncoder
-    elif args.model == 'cnn':
-        Encoder = nets.CNNEncoder
-    elif args.model == 'bow':
-        Encoder = nets.BOWMLPEncoder
-    encoder = Encoder(n_layers=args.layer, n_vocab=len(vocab),
-                      n_units=args.unit, dropout=args.dropout)
-    model = nets.TextClassifier(encoder, n_class)
+    if args.model == 'dan':
+        encoder = nets.DANEncoder(n_vocab, embed_size, hidden_size,
+                dropout=hidden_dropout)
+    elif args.model == 'rnn':
+        encoder = nets.RNNEncoder(1, n_vocab, embed_size, hidden_size)
+    model = nets.NNGuesser(encoder, n_class, dropout=output_dropout)
+
     chainer.serializers.load_npz(args.model_path, model)
     if args.gpu >= 0:
         chainer.cuda.get_device_from_id(args.gpu).use()

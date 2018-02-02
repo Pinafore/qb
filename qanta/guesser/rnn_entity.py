@@ -126,6 +126,7 @@ def extract_this_mentions(tokens):
 
 def extract_pronoun_mentions(doc):
     mentions = set()
+    return mentions
     if len(doc) == 0:
         return mentions
     for sent in doc.sents:
@@ -646,8 +647,12 @@ class RnnEntityGuesser(AbstractGuesser):
 
     def guess(self,
               questions: List[QuestionText],
-              max_n_guesses: Optional[int]):
-        x_test_tokens = [self.nlp(clean_question(x)) for x in questions]
+              max_n_guesses: Optional[int],
+              tokenize=True):
+        if tokenize:
+            x_test_tokens = [self.nlp(clean_question(x)) for x in questions]
+        else:
+            x_test_tokens = [x for x in questions]
         y_test = np.zeros(len(questions))
         dataset = BatchedDataset(
             self.batch_size, self.multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
@@ -1131,11 +1136,15 @@ class RnnEntityModel(nn.Module):
         else:
             return Variable(weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
 
-    def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable, mention_idxs, lengths, hidden):
+    def forward(self, word_idxs, pos_idxs, iob_idxs, type_idxs: Variable,
+            mention_idxs, lengths, hidden, grad_hook=None):
         dropout_features = []
         if 'word' in self.enabled_features:
             word_embeddings = self.word_embeddings(word_idxs)
             dropout_features.append(word_embeddings)
+
+            if grad_hook:
+                word_embeddings.register_hook(grad_hook)
 
         if 'pos' in self.enabled_features:
             pos_embeddings = self.pos_embeddings(pos_idxs)
