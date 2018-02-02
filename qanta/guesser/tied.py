@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 import pickle
+import math
 from typing import List, Optional, Dict
 
 import numpy as np
@@ -11,7 +12,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-from torch.optim import Adam, lr_scheduler
+from torch.optim import Adam, lr_scheduler, Optimizer
 
 from torchtext.data.field import Field
 from torchtext.data.iterator import Iterator
@@ -25,11 +26,14 @@ from qanta.torch import (
     BaseLogger, TerminateOnNaN, EarlyStopping, ModelCheckpoint,
     MaxEpochStopping, TrainingManager
 )
-
+from sklearn.neighbors import KDTree
+import random
 
 log = qlogging.get(__name__)
 
 
+PT_RNN_WE_TMP = '/tmp/qanta/deep/pt_rnn_we.pickle'
+PT_RNN_WE = 'pt_rnn_we.pickle'
 CUDA = torch.cuda.is_available()
 
 
@@ -38,7 +42,11 @@ def create_save_model(model):
         torch.save(model.state_dict(), path)
     return save_model
 
-
+extracted_grads = {}
+def extract_grad_hook(name):
+    def hook(grad):
+        extracted_grads[name] = grad
+    return hook
 
 qb_patterns = {
     '\n',
@@ -99,7 +107,7 @@ class TiedModel(nn.Module):
         pad_idx = vocab.stoi[text_field.pad_token]
         self.general_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
         self.qb_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
-        self.wiki_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
+        self.wiki_embeddings =nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
         qb_mask = torch.cat([torch.ones(1, 600), torch.zeros(1, 300)], dim=1)
         wiki_mask = torch.cat([torch.ones(1, 300), torch.zeros(1, 300), torch.ones(1, 300)], dim=1)
         self.combined_mask = torch.cat([qb_mask, wiki_mask], dim=0).float().cuda()
@@ -130,7 +138,7 @@ class TiedModel(nn.Module):
             lengths = Variable(lengths.float(), volatile=not self.training)
 
         g_embed = self.general_embeddings(input_)
-        gb_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
+        g_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
         g_embed = self.dropout(g_embed)
 
         qb_embed = self.qb_embeddings(input_)
@@ -172,7 +180,6 @@ class TiedGuesser(AbstractGuesser):
         self.text_field: Optional[Field] = None
         self.n_classes = None
         self.emb_dim = None
-        self.kuro_trial_id = None
 
         self.model = None
         self.optimizer = None
@@ -188,9 +195,7 @@ class TiedGuesser(AbstractGuesser):
         return self.page_field.vocab.itos
 
     def parameters(self):
-        params = conf['guessers']['Tied'].copy()
-        params['kuro_trial_id'] = self.kuro_trial_id
-        return params
+        return conf['guessers']['Tied'].copy()
 
     def train(self, training_data):
         log.info('Loading Quiz Bowl dataset')
@@ -213,7 +218,7 @@ class TiedGuesser(AbstractGuesser):
         self.model = TiedModel(
             self.text_field, self.n_classes, emb_dim=self.emb_dim,
             n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
-            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout
+            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout,
         )
         if CUDA:
             self.model = self.model.cuda()
@@ -225,27 +230,10 @@ class TiedGuesser(AbstractGuesser):
 
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(), EarlyStopping(monitor='test_acc', patience=10, verbose=1),
-            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), '/tmp/tied.pt', monitor='test_acc')
+            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), '/tmp/rnn.pt', monitor='test_acc')
         ])
 
         log.info('Starting training')
-        try:
-            import socket
-            from kuro import Worker
-            worker = Worker(socket.gethostname())
-            experiment = worker.experiment(
-                'guesser', 'Tied', hyper_parameters=conf['guessers']['Tied'],
-                metrics=[
-                    'train_acc', 'train_loss', 'test_acc', 'test_loss'
-                ], n_trials=5
-            )
-            trial = experiment.trial()
-            if trial is not None:
-                self.kuro_trial_id = trial.id
-        except ModuleNotFoundError:
-            trial = None
-
-        epoch = 0
         while True:
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(train_iter)
@@ -258,18 +246,11 @@ class TiedGuesser(AbstractGuesser):
                 test_time, test_loss, test_acc
             )
 
-            if trial is not None:
-                trial.report_metric('test_acc', test_acc, step=epoch)
-                trial.report_metric('test_loss', test_loss, step=epoch)
-                trial.report_metric('train_acc', train_acc, step=epoch)
-                trial.report_metric('train_loss', train_loss, step=epoch)
-
             if stop_training:
                 log.info(' '.join(reasons))
                 break
             else:
                 self.scheduler.step(test_acc)
-            epoch += 1
 
     def run_epoch(self, iterator: Iterator):
         is_train = iterator.train
@@ -326,9 +307,10 @@ class TiedGuesser(AbstractGuesser):
 
         return guesses
 
+
     def save(self, directory: str):
-        shutil.copyfile('/tmp/tied.pt', os.path.join(directory, 'tied.pt'))
-        with open(os.path.join(directory, 'tied.pkl'), 'wb') as f:
+        shutil.copyfile('/tmp/rnn.pt', os.path.join(directory, 'rnn.pt'))
+        with open(os.path.join(directory, 'rnn.pkl'), 'wb') as f:
             pickle.dump({
                 'page_field': self.page_field,
                 'text_field': self.text_field,
@@ -351,7 +333,7 @@ class TiedGuesser(AbstractGuesser):
 
     @classmethod
     def load(cls, directory: str):
-        with open(os.path.join(directory, 'tied.pkl'), 'rb') as f:
+        with open(os.path.join(directory, 'rnn.pkl'), 'rb') as f:
             params = pickle.load(f)
 
         guesser = TiedGuesser()
@@ -376,7 +358,7 @@ class TiedGuesser(AbstractGuesser):
             init_embeddings=False, emb_dim=guesser.emb_dim
         )
         guesser.model.load_state_dict(torch.load(
-            os.path.join(directory, 'tied.pt'), map_location=lambda storage, loc: storage
+            os.path.join(directory, 'rnn.pt'), map_location=lambda storage, loc: storage
         ))
         guesser.model.eval()
         if CUDA:
@@ -385,4 +367,92 @@ class TiedGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls):
-        return ['tied.pt', 'tied.pkl']
+        return ['rnn.pt', 'rnn.pkl']
+
+    # Runs query through the model and computes gradient based attacks
+    
+    def attack(self, query):
+        text = TEXT.preprocess(query)
+        text, lengths = self.text_field.process([text], None, False)
+        
+        text = TEXT.preprocess(query)
+        text = [[TEXT.vocab.stoi[x] for x in text]]
+        x = TEXT.tensor_type(text)
+        lengths = torch.FloatTensor([x.size()[1]]).cuda()
+        x = Variable(x).cuda()
+    
+        qnums = self.qnum_field.process([0]).cuda()
+        y = self.model(x, lengths, qnums, extract_grad_hook('g_embed'))
+        label = torch.max(y, 1)[1] # assume prediction is correct
+    
+        #print(self.i_to_ans[label.data.cpu().numpy()[0]]) #make sure label is the same as when you guess
+    
+        loss = criterion(y, label)
+        self.model.zero_grad()
+        loss.backward()
+    
+        grads = extracted_grads['g_embed'].transpose(0, 1)
+        grads = grads.data.cpu()            
+        scores = grads.sum(dim=2).numpy()
+        grads = grads.numpy()
+        text = x.transpose(0, 1).data.cpu().numpy()
+        y = y.data.cpu().numpy()
+            
+        scores = scores.tolist()
+        sorted_scores = list(scores) # make copy
+        sorted_scores.sort(reverse=True)
+    
+        # we want the line above for the general case, but for DAN all the gradients are the same for each word, so just pick some
+        #order = [scores.index(index) for index in sorted_scores]        
+        order = random.sample(range(x.size()[1]), n_replace)   
+    
+        returnVal = ""
+        for j in order[:n_replace]:
+            returnVal = returnVal + TEXT.vocab.itos[text[j][0]] + "*"
+            old_embed = TEXT.vocab.vectors[text[j][0]].numpy()
+    
+            _, inds = tree.query([old_embed], k=2)
+            repl = inds[0][0] if inds[0][0] != text[j] else inds[0][1]        
+    
+            returnVal = returnVal + TEXT.vocab.itos[repl.item()] + "**"
+    
+        return returnVal
+    #return "Server*is**Not*Running**Currently*Please**Come*Back**Tomorrow*Thanks"
+
+# Hyperparameters
+n_replace = 5
+eps = 10
+norm = np.inf
+
+# Load model
+save_path = './output/guesser/qanta.guesser.tied.TiedGuesser/'
+guesser = TiedGuesser.load(save_path)
+TEXT = guesser.text_field
+
+def attack(query):
+    return guesser.attack(query)
+
+# Create KD tree for nearest neighbor
+tree = KDTree(TEXT.vocab.vectors.numpy())
+print('KDTree built for {} words'.format(len(TEXT.vocab)))
+
+criterion = nn.CrossEntropyLoss()
+
+def to_numpy(x):
+    if isinstance(x, Variable):
+        x = x.data
+    try:
+        if x.is_cuda:
+            x = x.cpu()
+    except AttributeError:
+        pass
+    if isinstance(x, torch.LongTensor) or isinstance(x, torch.FloatTensor):
+        x = x.numpy()
+    return x
+
+def to_sentence(words):
+    words = to_numpy(words)
+    words = [TEXT.vocab.itos[w] for w in words]
+    words = [w for w in words if w != '<pad>']
+    return ' '.join(words)
+
