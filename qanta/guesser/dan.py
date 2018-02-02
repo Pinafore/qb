@@ -609,8 +609,11 @@ class DanModel(nn.Module):
         )
 
 
-    def forward(self, input_: Variable, lengths: Variable, source: int):
+    def forward(self, input_: Variable, lengths: Variable, source: int,
+            grad_hook=None):
         q_enc = self.embeddings(input_)
+        if grad_hook:
+            q_enc.register_hook(grad_hook)
         q_enc = q_enc.sum(1) / lengths.view(input_.size()[0], -1)
         if self.dual_encoder:
             if source == 0:
