@@ -228,3 +228,48 @@ class ElasticSearchGuesser(AbstractGuesser):
                 'many_docs': self.many_docs,
                 'normalize_score_by_length': self.normalize_score_by_length
             }, f)
+
+    def web_api(self, host='0.0.0.0', port=5000, debug=False):
+        from flask import Flask, jsonify, request
+
+        app = Flask(__name__)
+
+        @app.route('/api/answer_question', methods=['POST'])
+        def answer_question():
+            text = request.form['text']
+            guess, score = self.guess([text], 1)[0][0]
+            return jsonify({'guess': guess, 'score': float(score)})
+
+        @app.route('/api/get_highlights', methods=['POST'])
+        def get_highlights():
+            wiki_field = 'wiki_content'
+            qb_field = 'qb_content'
+            text = request.form['text']
+            s = Search(index='qb')[0:10].query(
+                'multi_match', query=text, fields=[wiki_field, qb_field])
+            s = s.highlight(wiki_field).highlight(qb_field)
+            results = list(s.execute())
+
+            if len(results) == 0:
+                highlights = {'wiki': [''],
+                              'qb': [''],
+                              'guess': ''}
+            else:
+                guess = results[0] # take the best answer
+                _highlights = guess.meta.highlight 
+                try:
+                    wiki_content = list(_highlights.wiki_content)
+                except AttributeError:
+                    wiki_content = ['']
+
+                try:
+                    qb_content = list(_highlights.qb_content)
+                except AttributeError:
+                    qb_content = ['']
+
+                highlights = {'wiki': wiki_content,
+                              'qb': qb_content,
+                              'guess': guess.page}
+            return jsonify(highlights)
+
+        app.run(host=host, port=port, debug=debug)
