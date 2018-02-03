@@ -450,7 +450,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         @app.route('/api/answer_question', methods=['POST'])
         def answer_question():
             text = request.form['text']
-            guess, score = self.guess([text], 1)[0][0]
+            guess, score = self.guess([text], 5)[0][0]
             return jsonify({'guess': guess, 'score': float(score)})
 
         app.run(host=host, port=port, debug=debug)
@@ -500,7 +500,7 @@ class AbstractGuesser(metaclass=ABCMeta):
                 response.status_code = 400
                 return response
             text = request.form['text']
-            guess, score = guessers[g_name].guess([text], 1)[0][0]
+            guess, score = guessers[g_name].guess([text], 5)[0][0]
             return jsonify({'guess': guess, 'score': float(score)})
 
         app.run(host=host, port=port, debug=debug)
