@@ -39,6 +39,7 @@ def str_split(text):
     return text.split()
 
 
+# Note that these functions don't serialize with pickle, so you have to use dill/cloudpickle instead
 def qb_split(text, nolength_token='nolengthunk'):
     import nltk
     tokens = nltk.word_tokenize(text)
@@ -66,6 +67,10 @@ def qb_tokenize(text: str, strip_qb_patterns=True, tokenizer=qb_split) -> List[s
         ).strip().capitalize()
 
     return tokenizer(text)
+
+
+def create_qb_tokenizer(unigrams=True, bigrams=False, trigrams=False):
+    pass
 
 
 def qb_tokenize_bigrams(text: str, strip_qb_patterns=True, tokenizer=qb_split_bigrams) -> List[str]:
@@ -235,7 +240,10 @@ class QuizBowl(Dataset):
     @classmethod
     def iters(cls, lower=True, example_mode='sentence',
               use_wiki=False, n_wiki_sentences=5, replace_title_mentions='',
-              batch_size=128, device=0, root='.data', vectors='glove.6B.300d', bigrams=False, max_vocab_size=None,
+              batch_size=128, device=0, root='.data', vectors='glove.6B.300d',
+              unigrams=True, bigrams=False, trigrams=False, combined_ngrams=True,
+              combined_max_vocab_size=None,
+              unigram_max_vocab_size=None, bigram_max_vocab_size=None, trigram_max_vocab_size=None,
               **kwargs):
         QNUM = LongField()
         SENT = LongField()
