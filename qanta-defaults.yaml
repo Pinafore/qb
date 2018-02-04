@@ -10,31 +10,28 @@ expo_questions: data/internal/expo/2016_hsnct.csv
 guesser_word_skip: -1
 guessers:
   Dan:
-    adam_lr: 0.001
-    adam_weight_decay: 0.0
-    batch_size: 1024
+    batch_size: 512
     class: qanta.guesser.dan.DanGuesser
-    dual_encoder: false
     enabled: false
     gradient_clip: 0.25
-    hyper_opt: false
-    hyper_opt_steps: 300
+    lowercase: true
+    lr: 0.001
     luigi_dependency: qanta.pipeline.guesser.EmptyTask
-    max_epochs: 100
     n_hidden_layers: 1
     n_hidden_units: 1000
-    n_tagme_sentences: 20
     n_wiki_sentences: 5
     nn_dropout: 0.265
-    optimizer: adam
-    qb_fraction: 1.0
-    sgd_lr: 30.0
-    sgd_weight_decay: 1.2e-06
     sm_dropout: 0.158
-    use_lr_scheduler: true
-    use_tagme: false
     use_wiki: false
-    wiki_training: mixed
+    wiki_title_replace_token: ''
+    combined_ngrams: false
+    unigrams: true
+    bigrams: false
+    trigrams: false
+    combined_max_vocab_size: null
+    unigram_max_vocab_size: null
+    bigram_max_vocab_size: null
+    trigram_max_vocab_size: null
   ElasticSearch:
     class: qanta.guesser.elasticsearch.ElasticSearchGuesser
     enabled: true

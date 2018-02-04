@@ -1,38 +1,35 @@
-from typing import List, Tuple, Optional
-from pprint import pformat
-import shutil
+import re
 import os
-import pickle
+import shutil
 import time
-import json
+import pickle
+from typing import List, Optional, Dict
 
 import numpy as np
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-from torch.optim import Adam, SGD, lr_scheduler
+from torch.optim import Adam, lr_scheduler
+
+from torchtext.data.field import Field
+from torchtext.data.iterator import Iterator
 
 from qanta import qlogging
+from qanta.torch.dataset import QuizBowl
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.datasets.abstract import TrainingData, Answer, QuestionText
-from qanta.datasets.wikipedia import WikipediaDataset, TagmeWikipediaDataset
-from qanta.datasets.quiz_bowl import QuizBowlDataset
-from qanta.preprocess import preprocess_dataset, tokenize_question
-from qanta.guesser.nn import create_load_embeddings_function, convert_text_to_embeddings_indices, compute_n_classes
+from qanta.datasets.abstract import QuestionText
 from qanta.torch import (
-    BaseLogger, TerminateOnNaN,
-    EarlyStopping, ModelCheckpoint, MaxEpochStopping, TrainingManager
+    BaseLogger, TerminateOnNaN, EarlyStopping, ModelCheckpoint,
+    MaxEpochStopping, TrainingManager
 )
 
 
 log = qlogging.get(__name__)
 
 
-PTDAN_WE_TMP = '/tmp/qanta/deep/pt_dan_we.pickle'
-PTDAN_WE = 'pt_dan_we.pickle'
-load_embeddings = create_load_embeddings_function(PTDAN_WE_TMP, PTDAN_WE, log)
 CUDA = torch.cuda.is_available()
 
 
@@ -42,341 +39,207 @@ def create_save_model(model):
     return save_model
 
 
-def pad_batch(x_batch):
-    x_lengths = np.array([len(r) for r in x_batch])
-    if x_lengths.min() == 0:
-        raise ValueError('Should not have zero length sequences')
-    max_len = x_lengths.max()
-    padded_x_batch = []
-    for r in x_batch:
-        pad_r = list(r)
-        while len(pad_r) < max_len:
-            pad_r.append(0)  # 0 is the mask idx
-        padded_x_batch.append(pad_r)
 
-    return np.array(padded_x_batch), x_lengths
+qb_patterns = {
+    '\n',
+    ', for 10 points,',
+    ', for ten points,',
+    '--for 10 points--',
+    'for 10 points, ',
+    'for 10 points--',
+    'for ten points, ',
+    'for 10 points ',
+    'for ten points ',
+    ', ftp,'
+    'ftp,',
+    'ftp',
+    '(*)'
+}
+re_pattern = '|'.join([re.escape(p) for p in qb_patterns])
+re_pattern += r'|\[.*?\]|\(.*?\)'
 
 
-def batchify(batch_size, x_array, y_array, truncate=True, shuffle=True):
-    n_examples = x_array.shape[0]
-    if n_examples == 0:
-        return 0, np.array([], dtype=np.object), np.array([], dtype=np.object), np.array([], dtype=np.object)
+class DanEncoder(nn.Module):
+    def __init__(self, embedding_dim, n_hidden_layers, n_hidden_units, dropout_prob):
+        super(DanEncoder, self).__init__()
+        encoder_layers = []
+        for i in range(n_hidden_layers):
+            if i == 0:
+                input_dim = embedding_dim
+            else:
+                input_dim = n_hidden_units
 
-    n_batches = n_examples // batch_size
-    if shuffle:
-        random_order = np.random.permutation(n_examples)
-        x_array = x_array[random_order]
-        y_array = y_array[random_order]
+            encoder_layers.extend([
+                nn.Linear(input_dim, n_hidden_units),
+                nn.BatchNorm1d(n_hidden_units),
+                nn.ELU(),
+                nn.Dropout(dropout_prob),
+            ])
+        self.encoder = nn.Sequential(*encoder_layers)
 
-    t_x_batches = []
-    t_len_batches = []
-    t_y_batches = []
+    def forward(self, x_array):
+        return self.encoder(x_array)
 
-    for b in range(n_batches):
-        x_batch = x_array[b * batch_size:(b + 1) * batch_size]
-        y_batch = y_array[b * batch_size:(b + 1) * batch_size]
-        flat_x_batch, lens = pad_batch(x_batch)
 
-        if CUDA:
-            t_x_batches.append(torch.from_numpy(flat_x_batch).long().cuda())
-            t_len_batches.append(torch.from_numpy(lens).float().cuda())
-            t_y_batches.append(torch.from_numpy(y_batch).long().cuda())
-        else:
-            t_x_batches.append(torch.from_numpy(flat_x_batch).long())
-            t_len_batches.append(torch.from_numpy(lens).float())
-            t_y_batches.append(torch.from_numpy(y_batch).long())
+class TiedModel(nn.Module):
+    def __init__(self, text_field: Field, n_classes,
+                 init_embeddings=True, emb_dim=300,
+                 n_hidden_units=1000, n_hidden_layers=1, nn_dropout=.265, sm_dropout=.158):
+        super(TiedModel, self).__init__()
+        vocab = text_field.vocab
+        self.vocab_size = len(vocab)
+        self.emb_dim = emb_dim
+        self.n_classes = n_classes
+        self.n_hidden_units = n_hidden_units
+        self.n_hidden_layers = n_hidden_layers
+        self.nn_dropout = nn_dropout
+        self.sm_dropout = sm_dropout
 
-    if (not truncate) and (batch_size * n_batches < n_examples):
-        x_batch = x_array[n_batches * batch_size:]
-        y_batch = y_array[n_batches * batch_size:]
-        flat_x_batch, lens = pad_batch(x_batch)
+        self.dropout = nn.Dropout(nn_dropout)
+        pad_idx = vocab.stoi[text_field.pad_token]
+        self.general_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
+        self.qb_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
+        self.wiki_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
+        qb_mask = torch.cat([torch.ones(1, 600), torch.zeros(1, 300)], dim=1)
+        wiki_mask = torch.cat([torch.ones(1, 300), torch.zeros(1, 300), torch.ones(1, 300)], dim=1)
+        self.combined_mask = torch.cat([qb_mask, wiki_mask], dim=0).float().cuda()
 
-        if CUDA:
-            t_x_batches.append(torch.from_numpy(flat_x_batch).long().cuda())
-            t_len_batches.append(torch.from_numpy(lens).float().cuda())
-            t_y_batches.append(torch.from_numpy(y_batch).long().cuda())
-        else:
-            t_x_batches.append(torch.from_numpy(flat_x_batch).long())
-            t_len_batches.append(torch.from_numpy(lens).float())
-            t_y_batches.append(torch.from_numpy(y_batch).long())
+        if init_embeddings:
+            mean_emb = vocab.vectors.mean(0)
+            vocab.vectors[vocab.stoi[text_field.unk_token]] = mean_emb
+            self.general_embeddings.weight.data = vocab.vectors.cuda()
+            self.qb_embeddings.weight.data = vocab.vectors.cuda()
+            self.wiki_embeddings.weight.data = vocab.vectors.cuda()
 
-    t_x_batches = np.array(t_x_batches, dtype=np.object)
-    t_len_batches = np.array(t_len_batches, dtype=np.object)
-    t_y_batches = np.array(t_y_batches, dtype=np.object)
+        # One averaged embedding for each of general, qb, and wiki
+        self.encoder = DanEncoder(3 * emb_dim, self.n_hidden_layers, self.n_hidden_units, self.nn_dropout)
+        self.classifier = nn.Sequential(
+            nn.Linear(self.n_hidden_units, n_classes),
+            nn.BatchNorm1d(n_classes),
+            nn.Dropout(self.sm_dropout)
+        )
 
-    return n_batches, t_x_batches, t_len_batches, t_y_batches
+    def forward(self, input_: Variable, lengths, qnums):
+        """
+        :param input_: [batch_size, seq_len] of word indices
+        :param lengths: Length of each example
+        :param qnums: QB qnum if a qb question, otherwise -1 for wikipedia, used to get domain as source/target
+        :return:
+        """
+        if not isinstance(lengths, Variable):
+            lengths = Variable(lengths.float(), volatile=not self.training)
+
+        g_embed = self.general_embeddings(input_)
+        gb_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
+        g_embed = self.dropout(g_embed)
+
+        qb_embed = self.qb_embeddings(input_)
+        qb_embed = qb_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
+        qb_embed = self.dropout(qb_embed)
+
+        wiki_embed = self.wiki_embeddings(input_)
+        wiki_embed = wiki_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
+        wiki_embed = self.dropout(wiki_embed)
+
+        # Need to use qnum to mask either qb or wiki embeddings here
+        concat_embed = torch.cat([g_embed, qb_embed, wiki_embed], dim=1)
+        mask = Variable(self.combined_mask[(qnums < 0).long()])
+        masked_embed = concat_embed * mask
+
+        encoded = self.encoder(masked_embed)
+        return self.classifier(encoded)
 
 
 class DanGuesser(AbstractGuesser):
     def __init__(self):
         super(DanGuesser, self).__init__()
         guesser_conf = conf['guessers']['Dan']
-        self.use_wiki = guesser_conf['use_wiki']
-        self.wiki_training = guesser_conf['wiki_training']
-        self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
-        self.qb_fraction = guesser_conf['qb_fraction']
-
-        self.use_buzz_as_train = conf['buzz_as_guesser_train']
-        self.use_tagme = guesser_conf['use_tagme']
-        self.n_tagme_sentences = guesser_conf['n_tagme_sentences']
-
-        self.optimizer_name = guesser_conf['optimizer']
-        self.sgd_weight_decay = guesser_conf['sgd_weight_decay']
-        self.sgd_lr = guesser_conf['sgd_lr']
-        self.adam_lr = guesser_conf['adam_lr']
-        self.adam_weight_decay = guesser_conf['adam_weight_decay']
-
-        self.batch_size = guesser_conf['batch_size']
-        self.max_epochs = guesser_conf['max_epochs']
-        self.use_lr_scheduler = guesser_conf['use_lr_scheduler']
         self.gradient_clip = guesser_conf['gradient_clip']
-        self.sm_dropout = guesser_conf['sm_dropout']
-        self.nn_dropout = guesser_conf['nn_dropout']
-        self.hyper_opt = guesser_conf['hyper_opt']
-        self.hyper_opt_steps = guesser_conf['hyper_opt_steps']
-        self.dual_encoder = guesser_conf['dual_encoder']
         self.n_hidden_units = guesser_conf['n_hidden_units']
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
+        self.lr = guesser_conf['lr']
+        self.nn_dropout = guesser_conf['nn_dropout']
+        self.sm_dropout = guesser_conf['sm_dropout']
+        self.batch_size = guesser_conf['batch_size']
+        self.use_wiki = guesser_conf['use_wiki']
+        self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
+        self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
+        self.lowercase = guesser_conf['lowercase']
 
+        self.combined_ngrams = guesser_conf['combined_ngrams']
+        self.unigrams = guesser_conf['unigrams']
+        self.bigrams = guesser_conf['bigrams']
+        self.trigrams = guesser_conf['trigrams']
+        self.combined_max_vocab_size = guesser_conf['combined_max_vocab_size']
+        self.unigram_max_vocab_size = guesser_conf['unigram_max_vocab_size']
+        self.bigram_max_vocab_size = guesser_conf['bigram_max_vocab_size']
+        self.trigram_max_vocab_size = guesser_conf['trigram_max_vocab_size']
+
+        self.page_field: Optional[Field] = None
+        self.qnum_field: Optional[Field] = None
+        self.combined_text_field: Optional[Field] = None
+        self.unigram_text_field: Optional[Field] = None
+        self.bigram_text_field: Optional[Field] = None
+        self.trigram_text_field: Optional[Field] = None
+        self.n_classes = None
+        self.emb_dim = None
         self.kuro_trial_id = None
 
-        self.class_to_i = None
-        self.i_to_class = None
-        self.vocab = None
-        self.embeddings = None
-        self.embedding_lookup = None
-        self.n_classes = None
         self.model = None
-        self.criterion = None
         self.optimizer = None
+        self.criterion = None
         self.scheduler = None
-        self.vocab_size = None
+
+    @property
+    def ans_to_i(self):
+        return self.page_field.vocab.stoi
+
+    @property
+    def i_to_ans(self):
+        return self.page_field.vocab.itos
 
     def parameters(self):
         params = conf['guessers']['Dan'].copy()
         params['kuro_trial_id'] = self.kuro_trial_id
         return params
 
-    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        x_test = [convert_text_to_embeddings_indices(
-            tokenize_question(q), self.embedding_lookup)
-            for q in questions
-        ]
-        for r in x_test:
-            if len(r) == 0:
-                log.warn('Found an empty question, adding an UNK token to it so that NaNs do not occur')
-                r.append(self.embedding_lookup['UNK'])
-        x_test = np.array(x_test)
-        y_test = np.zeros(len(x_test))
-
-        _, t_x_batches, t_len_batches, t_y_batches = batchify(
-            self.batch_size, x_test, y_test, truncate=False, shuffle=False
+    def train(self, training_data):
+        log.info('Loading Quiz Bowl dataset')
+        train_iter, val_iter, dev_iter = QuizBowl.iters(
+            batch_size=self.batch_size, lower=self.lowercase,
+            use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
+            replace_title_mentions=self.wiki_title_replace_token
         )
+        log.info(f'N Train={len(train_iter.dataset.examples)}')
+        log.info(f'N Test={len(val_iter.dataset.examples)}')
+        fields: Dict[str, Field] = train_iter.dataset.fields
+        self.page_field = fields['page']
+        self.n_classes = len(self.ans_to_i)
+        self.qnum_field = fields['qnum']
+        self.text_field = fields['text']
+        self.emb_dim = self.text_field.vocab.vectors.shape[1]
+        log.info(f'Vocab={len(self.text_field.vocab)}')
 
-        self.model.eval()
+        log.info('Initializing Model')
+        self.model = TiedModel(
+            self.text_field, self.n_classes, emb_dim=self.emb_dim,
+            n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
+            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout
+        )
         if CUDA:
             self.model = self.model.cuda()
+        log.info(f'Parameters:\n{self.parameters()}')
+        log.info(f'Model:\n{self.model}')
+        self.optimizer = Adam(self.model.parameters(), lr=self.lr)
+        self.criterion = nn.CrossEntropyLoss()
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
-        guesses = []
-        for b in range(len(t_x_batches)):
-            t_x = Variable(t_x_batches[b], volatile=True)
-            t_len = Variable(t_len_batches[b], volatile=True)
-            out = self.model(t_x, t_len, 0)
-            probs = F.softmax(out)
-            scores, preds = torch.max(probs, 1)
-            scores = scores.data.cpu().numpy()
-            preds = preds.data.cpu().numpy()
-            for p, s in zip(preds, scores):
-                guesses.append([(self.i_to_class[p], s)])
+        manager = TrainingManager([
+            BaseLogger(log_func=log.info), TerminateOnNaN(), EarlyStopping(monitor='test_acc', patience=10, verbose=1),
+            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
+        ])
 
-        return guesses
-
-    def train(self, training_data: TrainingData) -> None:
-        qb_x_train_text, qb_y_train, x_test_text, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
-            training_data, train_size=.9 * self.qb_fraction, test_size=.1
-        )
-
-        if self.use_wiki and self.use_tagme:
-            raise ValueError('Using wikipedia and tagme are mutually exclusive')
-        elif self.use_wiki:
-            wiki_dataset = WikipediaDataset(set(training_data[1]), n_sentences=self.n_wiki_sentences)
-            wiki_train_data = wiki_dataset.training_data()
-            w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
-                wiki_train_data, train_size=1, test_size=0, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
-            )
-        elif self.use_tagme:
-            wiki_dataset = TagmeWikipediaDataset(n_examples=self.n_tagme_sentences)
-            wiki_train_data = wiki_dataset.training_data()
-            w_x_train_text, w_y_train, _, _, _, _, _ = preprocess_dataset(
-                wiki_train_data, train_size=1, test_size=0, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
-            )
-
-        self.class_to_i = class_to_i
-        self.i_to_class = i_to_class
-        self.vocab = vocab
-
-        embeddings, embedding_lookup = load_embeddings(vocab=vocab, expand_glove=True, mask_zero=True)
-        self.embeddings = embeddings
-        self.embedding_lookup = embedding_lookup
-
-        qb_x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in qb_x_train_text]
-        for r in qb_x_train:
-            if len(r) == 0:
-                r.append(embedding_lookup['UNK'])
-        qb_x_train = np.array(qb_x_train)
-        qb_y_train = np.array(qb_y_train)
-
-        n_wiki = 0
-        if self.use_wiki or self.use_tagme:
-            w_x_train = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in w_x_train_text]
-            for r in w_x_train:
-                if len(r) == 0:
-                    r.append(embedding_lookup['UNK'])
-            w_x_train = np.array(w_x_train)
-            w_y_train = np.array(w_y_train)
-            n_wiki += len(w_x_train)
-
-
-        x_test = [convert_text_to_embeddings_indices(q, embedding_lookup) for q in x_test_text]
-        for r in x_test:
-            if len(r) == 0:
-                r.append(embedding_lookup['UNK'])
-        x_test = np.array(x_test)
-        y_test = np.array(y_test)
-
-        self.n_classes = compute_n_classes(training_data[1])
-
-        log.info(f'Batching: {len(qb_x_train)} qb, {n_wiki} wikipedia, {len(x_test)} test')
-
-        n_qb_batches_train, t_qb_x_train, t_qb_len_train, t_qb_y_train = batchify(
-            self.batch_size, qb_x_train, qb_y_train, truncate=True
-        )
-
-
-        if self.wiki_training == 'mixed':
-            if self.use_wiki or self.use_tagme:
-                n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train = batchify(
-                    self.batch_size, w_x_train, w_y_train, truncate=True
-                )
-
-                n_batches_train = n_qb_batches_train + n_w_batches_train
-                t_x_train = np.concatenate([t_qb_x_train, t_w_x_train])
-                t_len_train = np.concatenate([t_qb_len_train, t_w_len_train])
-                t_y_train = np.concatenate([t_qb_y_train, t_w_y_train])
-                source_train = np.array([0] * n_qb_batches_train + [1] * n_w_batches_train)
-            else:
-                n_batches_train = n_qb_batches_train
-                t_x_train = t_qb_x_train
-                t_len_train = t_qb_len_train
-                t_y_train = t_qb_y_train
-                source_train = np.array([0] * n_qb_batches_train)
-        elif self.wiki_training == 'pretrain':
-            if self.use_wiki or self.use_tagme:
-                n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train = batchify(
-                    self.batch_size, w_x_train, w_y_train, truncate=True
-                )
-            else:
-                raise ValueError('Cannot perform wiki pretraining when use_wiki and use_tagme are both false')
-        else:
-            raise ValueError(f'Invalid option for wiki_training: {self.wiki_training}, must be mixed/pretrain')
-
-        n_batches_test, t_x_test, t_len_test, t_y_test = batchify(
-            self.batch_size, x_test, y_test, truncate=False
-        )
-        source_test = np.array([0] * n_batches_test)
-
-        self.vocab_size = embeddings.shape[0]
-        if self.hyper_opt:
-            self.hyperparameter_optimize(
-                embeddings,
-                n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-                n_batches_test, t_x_test, t_len_test, t_y_test, source_test
-            )
-        else:
-            if self.wiki_training == 'mixed':
-                self._fit(
-                    embeddings,
-                    n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-                    n_batches_test, t_x_test, t_len_test, t_y_test, source_test
-                )
-            elif self.wiki_training == 'pretrain':
-                self._fit(
-                    embeddings,
-                    n_w_batches_train, t_w_x_train, t_w_len_train, t_w_y_train, np.array([1] * n_w_batches_train),
-                    n_batches_test, t_x_test, t_len_test, t_y_test, source_test
-                )
-                self._fine_tune(
-                    n_qb_batches_train, t_qb_x_train, t_qb_len_train, t_qb_y_train, np.array([0] * n_qb_batches_train),
-                    n_batches_test, t_x_test, t_len_test, t_y_test, source_test
-                )
-            else:
-                raise ValueError(f'Invalid option for wiki_training: {self.wiki_training}, must be mixed/pretrain')
-
-    def hyperparameter_optimize(self,
-                                embeddings, n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-                                n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
-        from advisor_client.client import AdvisorClient
-
-        client = AdvisorClient()
-        study_id = os.environ.get('QB_STUDY_ID')
-        if study_id is None:
-            study_config = {
-                'goal': 'MAXIMIZE',
-                'maxTrials': self.hyper_opt_steps,
-                'maxParallelTrials': 1,
-                'randomInitTrials': 1,
-                'params': [
-                    {
-                        'parameterName': 'sm_dropout',
-                        'type': 'DOUBLE',
-                        'minValue': 0,
-                        'maxValue': 1
-                    },
-                    {
-                        'parameterName': 'nn_dropout',
-                        'type': 'DOUBLE',
-                        'minValue': 0,
-                        'maxValue': 1
-                    },
-                    {
-                        'parameterName': 'n_hidden_layers',
-                        'type': 'INTEGER',
-                        'minValue': 1,
-                        'maxValue': 4
-                    },
-                    {
-                        'parameterName': 'n_hidden_units',
-                        'type': 'INTEGER',
-                        'minValue': 300,
-                        'maxValue': 1500
-                    }
-                ]
-            }
-
-            study = client.create_study('dan', study_config)
-        else:
-            study_id = int(study_id)
-            study = client.get_study_by_id(study_id)
-        is_done = False
-        while not is_done:
-            trial = client.get_suggestions(study.id, 1)[0]
-            trial_params = json.loads(trial.parameter_values)
-            acc_score = self._fit(
-                embeddings,
-                n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-                n_batches_test, t_x_test, t_len_test, t_y_test, source_test,
-                hyper_params=trial_params
-            )
-            client.complete_trial_with_one_metric(trial, acc_score)
-            best_trial = client.get_best_trial(study.id)
-            log.info(f'Best Trial: {best_trial}')
-            is_done = client.is_study_done(study.id)
-
-        raise ValueError('Hyper parameter optimization done, exiting')
-
-    def _training_loop(self,
-                       n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-                       n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
+        log.info('Starting training')
         try:
             import socket
             from kuro import Worker
@@ -393,26 +256,18 @@ class DanGuesser(AbstractGuesser):
         except ModuleNotFoundError:
             trial = None
 
-        manager = TrainingManager([
-            BaseLogger(log_func=log.info), TerminateOnNaN(),
-            EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(100),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
-        ])
-        best_acc = 0.0
         epoch = 0
         while True:
             self.model.train()
-            train_acc, train_loss, train_time = self.run_epoch(
-                n_batches_train,
-                t_x_train, t_len_train, t_y_train, source_train, evaluate=False
-            )
+            train_acc, train_loss, train_time = self.run_epoch(train_iter)
 
             self.model.eval()
-            test_acc, test_loss, test_time = self.run_epoch(
-                n_batches_test,
-                t_x_test, t_len_test, t_y_test, source_test, evaluate=True
+            test_acc, test_loss, test_time = self.run_epoch(val_iter)
+
+            stop_training, reasons = manager.instruct(
+                train_time, train_loss, train_acc,
+                test_time, test_loss, test_acc
             )
-            best_acc = max(best_acc, test_acc)
 
             if trial is not None:
                 trial.report_metric('test_acc', test_acc, step=epoch)
@@ -420,109 +275,31 @@ class DanGuesser(AbstractGuesser):
                 trial.report_metric('train_acc', train_acc, step=epoch)
                 trial.report_metric('train_loss', train_loss, step=epoch)
 
-            stop_training, reasons = manager.instruct(
-                train_time, train_loss, train_acc,
-                test_time, test_loss, test_acc
-            )
-
             if stop_training:
                 log.info(' '.join(reasons))
                 break
             else:
-                if self.use_lr_scheduler:
-                    self.scheduler.step(test_acc)
+                self.scheduler.step(test_acc)
             epoch += 1
 
-        log.info('Done training')
-        return best_acc
-
-    def _fine_tune(self,
-                   n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-                   n_batches_test, t_x_test, t_len_test, t_y_test, source_test):
-        self.optimizer = Adam(self.model.parameters(), lr=self.adam_lr)
-        self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
-        return self._training_loop(
-            n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-            n_batches_test, t_x_test, t_len_test, t_y_test, source_test
-        )
-
-    def _fit(self, embeddings,
-             n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-             n_batches_test, t_x_test, t_len_test, t_y_test, source_test, hyper_params=None):
-        model_params = {
-            'sm_dropout': self.sm_dropout,
-            'nn_dropout': self.nn_dropout,
-            'adam_lr': self.adam_lr,
-            'adam_weight_decay': self.adam_weight_decay,
-            'sgd_lr': self.sgd_lr,
-            'n_hidden_units': self.n_hidden_units,
-            'n_hidden_layers': self.n_hidden_layers
-        }
-        if hyper_params is not None:
-            for k, v in hyper_params.items():
-                model_params[k] = v
-
-        self.model = DanModel(
-            self.vocab_size, self.n_classes,
-            embeddings=embeddings,
-            sm_dropout_prob=model_params['sm_dropout'],
-            nn_dropout_prob=model_params['nn_dropout'],
-            n_hidden_layers=model_params['n_hidden_layers'],
-            n_hidden_units=model_params['n_hidden_units'],
-            dual_encoder=self.dual_encoder
-        )
-        if CUDA:
-            self.model = self.model.cuda()
-        log.info(f'Model:\n{self.model}')
-        log.info(f'Parameters:\n{pformat(self.parameters())}')
-        if self.hyper_opt:
-            log.info(f'Hyper params:\n{pformat(model_params)}')
-
-        if self.optimizer_name == 'adam':
-            lr = model_params['adam_lr']
-            weight_decay = model_params['adam_weight_decay']
-            self.optimizer = Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
-        elif self.optimizer_name == 'sgd':
-            lr = model_params['sgd_lr']
-            self.optimizer = SGD(self.model.parameters(), lr=lr, weight_decay=self.sgd_weight_decay)
-        else:
-            raise ValueError('Invalid optimizer')
-        self.criterion = nn.CrossEntropyLoss()
-
-        if self.use_lr_scheduler:
-            self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
-
-
-        log.info('Starting training...')
-        return self._training_loop(
-            n_batches_train, t_x_train, t_len_train, t_y_train, source_train,
-            n_batches_test, t_x_test, t_len_test, t_y_test, source_test
-        )
-
-    def run_epoch(self, n_batches, t_x_array, t_len_array, t_y_array, source_array, evaluate=False):
-        if not evaluate:
-            random_batch_order = np.random.permutation(n_batches)
-            t_x_array = t_x_array[random_batch_order]
-            t_len_array = t_len_array[random_batch_order]
-            t_y_array = t_y_array[random_batch_order]
-            source_array = source_array[random_batch_order]
-
+    def run_epoch(self, iterator: Iterator):
+        is_train = iterator.train
         batch_accuracies = []
         batch_losses = []
         epoch_start = time.time()
-        for batch in range(n_batches):
-            t_x_batch = Variable(t_x_array[batch], volatile=evaluate)
-            t_len_batch = Variable(t_len_array[batch], volatile=evaluate)
-            t_y_batch = Variable(t_y_array[batch], volatile=evaluate)
-            source = source_array[batch]
+        for batch in iterator:
+            text, lengths = batch.text
+            page = batch.page
+            qnums = batch.qnum.cuda()
 
-            self.model.zero_grad()
-            out = self.model(t_x_batch, t_len_batch, source)
+            if is_train:
+                self.model.zero_grad()
+
+            out = self.model(text, lengths, qnums)
             _, preds = torch.max(out, 1)
-            accuracy = torch.mean(torch.eq(preds, t_y_batch).float()).data[0]
-            batch_loss = self.criterion(out, t_y_batch)
-            if not evaluate:
+            accuracy = torch.mean(torch.eq(preds, page).float()).data[0]
+            batch_loss = self.criterion(out, page)
+            if is_train:
                 batch_loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), self.gradient_clip)
                 self.optimizer.step()
@@ -534,161 +311,103 @@ class DanGuesser(AbstractGuesser):
 
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
 
-    def save(self, directory: str) -> None:
+    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
+        examples = [self.text_field.preprocess(q) for q in questions]
+        text, lengths = self.text_field.process(examples, None, False)
+        qnums = self.qnum_field.process([0 for _ in questions]).cuda()
+        guesses = []
+        out = self.model(text, lengths, qnums)
+        probs = F.softmax(out)
+        scores, preds = torch.max(probs, 1)
+        scores = scores.data.cpu().numpy()
+        preds = preds.data.cpu().numpy()
+
+        for p, s in zip(preds, scores):
+            guesses.append([(self.i_to_ans[p], s)])
+
+        return guesses
+
+    def save(self, directory: str):
         shutil.copyfile('/tmp/dan.pt', os.path.join(directory, 'dan.pt'))
-        with open(os.path.join(directory, 'dan.pickle'), 'wb') as f:
+        with open(os.path.join(directory, 'dan.pkl'), 'wb') as f:
             pickle.dump({
-                'vocab': self.vocab,
-                'class_to_i': self.class_to_i,
-                'i_to_class': self.i_to_class,
-                'embeddings': self.embeddings,
-                'embeddings_lookup': self.embedding_lookup,
+                'page_field': self.page_field,
+                'combined_text_field': self.combined_text_field,
+                'unigram_text_field': self.unigram_text_field,
+                'bigram_text_field': self.bigram_text_field,
+                'trigram_text_field': self.trigram_text_field,
+                'combined_ngrams': self.combined_ngrams,
+                'unigrams': self.unigrams,
+                'bigrams': self.bigrams,
+                'trigrams': self.trigrams,
+                'combined_max_vocab_size': self.combined_max_vocab_size,
+                'unigram_max_vocab_size': self.unigram_max_vocab_size,
+                'bigram_max_vocab_size': self.bigram_max_vocab_size,
+                'trigram_max_vocab_size': self.trigram_max_vocab_size,
+                'qnum_field': self.qnum_field,
                 'n_classes': self.n_classes,
-                'max_epochs': self.max_epochs,
-                'batch_size': self.batch_size,
-                'adam_lr': self.adam_lr,
-                'adam_weight_decay': self.adam_weight_decay,
-                'sgd_lr': self.sgd_lr,
-                'use_wiki': self.use_wiki,
-                'n_tagme_sentences': self.n_tagme_sentences,
-                'use_tagme': self.use_tagme,
-                'vocab_size': self.vocab_size,
+                'emb_dim': self.emb_dim,
+                'gradient_clip': self.gradient_clip,
+                'n_hidden_units': self.n_hidden_units,
+                'n_hidden_layers': self.n_hidden_layers,
+                'lr': self.lr,
                 'nn_dropout': self.nn_dropout,
                 'sm_dropout': self.sm_dropout,
-                'hyper_opt': self.hyper_opt,
-                'hyper_opt_steps': self.hyper_opt_steps,
-                'dual_encoder': self.dual_encoder,
-                'n_hidden_layers': self.n_hidden_layers,
-                'n_hidden_units': self.n_hidden_units,
-                'wiki_training': self.wiki_training,
+                'batch_size': self.batch_size,
+                'use_wiki': self.use_wiki,
                 'n_wiki_sentences': self.n_wiki_sentences,
-                'qb_fraction': self.qb_fraction
+                'wiki_title_replace_token': self.wiki_title_replace_token,
+                'lowercase': self.lowercase
             }, f)
 
     @classmethod
     def load(cls, directory: str):
-        with open(os.path.join(directory, 'dan.pickle'), 'rb') as f:
+        with open(os.path.join(directory, 'dan.pkl'), 'rb') as f:
             params = pickle.load(f)
 
         guesser = DanGuesser()
-        guesser.vocab = params['vocab']
-        guesser.class_to_i = params['class_to_i']
-        guesser.i_to_class = params['i_to_class']
-        guesser.embeddings = params['embeddings']
-        guesser.embedding_lookup = params['embeddings_lookup']
+        guesser.page_field = params['page_field']
+
+        guesser.combined_text_field = params['combined_text_field']
+        guesser.unigram_text_field = params['unigram_text_field']
+        guesser.bigram_text_field = params['bigram_text_field']
+        guesser.trigram_text_field = params['trigram_text_field']
+
+        guesser.combined_ngrams = params['combined_ngrams']
+        guesser.unigrams = params['unigrams']
+        guesser.bigrams = params['bigrams']
+        guesser.trigrams = params['trigrams']
+
+        guesser.combined_max_vocab_size = params['combined_max_vocab_size']
+        guesser.unigram_max_vocab_size = params['unigram_max_vocab_size']
+        guesser.bigram_max_vocab_size = params['bigram_max_vocab_size']
+        guesser.trigram_max_vocab_size = params['trigram_max_vocab_size']
+
+        guesser.qnum_field = params['qnum_field']
         guesser.n_classes = params['n_classes']
-        guesser.max_epochs = params['max_epochs']
-        guesser.batch_size = params['batch_size']
-        guesser.use_wiki = params['use_wiki']
-        guesser.use_tagme = params['use_tagme']
-        guesser.n_tagme_sentences = params['n_tagme_sentences']
-        guesser.adam_lr = params['adam_lr']
-        guesser.adam_weight_decay = params['adam_weight_decay']
-        guesser.sgd_lr = params['sgd_lr']
-        guesser.vocab_size = params['vocab_size']
-        guesser.nn_dropout = params['nn_dropout']
-        guesser.sm_dropout = params['sm_dropout']
-        guesser.hyper_opt = params['hyper_opt']
-        guesser.hyper_opt_steps = params['hyper_opt_steps']
-        guesser.dual_encoder = params['dual_encoder']
+        guesser.emb_dim = params['emb_dim']
+        guesser.gradient_clip = params['gradient_clip']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
-        guesser.wiki_training = params['wiki_training']
+        guesser.lr = params['lr']
+        guesser.nn_dropout = params['nn_dropout']
+        guesser.sm_dropout = params['sm_dropout']
+        guesser.use_wiki = params['use_wiki']
         guesser.n_wiki_sentences = params['n_wiki_sentences']
-        guesser.qb_fraction = params['qb_fraction']
-        guesser.model = DanModel(guesser.vocab_size, guesser.n_classes, dual_encoder=guesser.dual_encoder)
+        guesser.wiki_title_replace_token = params['wiki_title_replace_token']
+        guesser.lowercase = params['lowercase']
+        guesser.model = TiedModel(
+            guesser.text_field, guesser.n_classes,
+            init_embeddings=False, emb_dim=guesser.emb_dim
+        )
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage
         ))
+        guesser.model.eval()
+        if CUDA:
+            guesser.model = guesser.model.cuda()
         return guesser
 
     @classmethod
-    def targets(cls) -> List[str]:
-        return ['dan.pickle', 'dan.pt']
-
-    def qb_dataset(self):
-        return QuizBowlDataset(guesser_train=True, buzzer_train=self.use_buzz_as_train)
-
-
-class Encoder(nn.Module):
-    def __init__(self, embedding_dim, n_hidden_layers, n_hidden_units, non_linearity, dropout_prob):
-        super(Encoder, self).__init__()
-        encoder_layers = []
-        for i in range(n_hidden_layers):
-            if i == 0:
-                input_dim = embedding_dim
-            else:
-                input_dim = n_hidden_units
-
-            encoder_layers.extend([
-                nn.Linear(input_dim, n_hidden_units),
-                nn.BatchNorm1d(n_hidden_units),
-                non_linearity(),
-                nn.Dropout(dropout_prob),
-            ])
-        self.encoder = nn.Sequential(*encoder_layers)
-
-    def forward(self, x_array):
-        return self.encoder(x_array)
-
-
-
-class DanModel(nn.Module):
-    def __init__(self, vocab_size, n_classes,
-                 embeddings=None,
-                 embedding_dim=300, nn_dropout_prob=.3, sm_dropout_prob=.3,
-                 n_hidden_layers=1, n_hidden_units=1000, non_linearity='elu', dual_encoder=False):
-        super(DanModel, self).__init__()
-        self.n_hidden_layers = 1
-        self.non_linearity = non_linearity
-        if non_linearity == 'relu':
-            self._non_linearity = nn.ReLU
-        elif non_linearity == 'elu':
-            self._non_linearity = nn.ELU
-        elif non_linearity == 'prelu':
-            self._non_linearity = nn.PReLU
-        else:
-            raise ValueError('Unrecognized non-linearity function:{}'.format(non_linearity))
-        self.n_hidden_units = n_hidden_units
-        self.nn_dropout_prob = nn_dropout_prob
-        self.sm_dropout_prob = sm_dropout_prob
-        self.vocab_size = vocab_size
-        self.n_classes = n_classes
-        self.embedding_dim = embedding_dim
-        self.dual_encoder = dual_encoder
-
-        self.dropout = nn.Dropout(nn_dropout_prob)
-
-        self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
-        if embeddings is not None:
-            self.embeddings.weight.data = torch.from_numpy(embeddings).float()
-
-        self.qb_encoder = Encoder(embedding_dim, n_hidden_layers, n_hidden_units, self._non_linearity, nn_dropout_prob)
-        if dual_encoder:
-            self.wiki_encoder = Encoder(
-                embedding_dim, n_hidden_layers, n_hidden_units, self._non_linearity, nn_dropout_prob
-            )
-        else:
-            self.wiki_encoder = None
-
-        self.classifier = nn.Sequential(
-            nn.Linear(n_hidden_units, n_classes),
-            nn.BatchNorm1d(n_classes),
-            nn.Dropout(sm_dropout_prob)
-        )
-
-
-    def forward(self, input_: Variable, lengths: Variable, source: int):
-        q_enc = self.embeddings(input_)
-        q_enc = q_enc.sum(1) / lengths.view(input_.size()[0], -1)
-        if self.dual_encoder:
-            if source == 0:
-                q_enc = self.qb_encoder(self.dropout(q_enc))
-            elif source == 1:
-                q_enc = self.wiki_encoder(self.dropout(q_enc))
-            else:
-                raise ValueError('Invalid source')
-        else:
-            q_enc = self.qb_encoder(self.dropout(q_enc))
-
-        return self.classifier(q_enc)
+    def targets(cls):
+        return ['dan.pt', 'dan.pkl']
