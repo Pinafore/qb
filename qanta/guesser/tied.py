@@ -130,7 +130,7 @@ class TiedModel(nn.Module):
             lengths = Variable(lengths.float(), volatile=not self.training)
 
         g_embed = self.general_embeddings(input_)
-        gb_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
+        g_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
         g_embed = self.dropout(g_embed)
 
         qb_embed = self.qb_embeddings(input_)
