@@ -33,54 +33,37 @@ regex_pattern = '|'.join([re.escape(p) for p in ftp_patterns])
 regex_pattern += r'|\[.*?\]|\(.*?\)'
 
 
-
-
 def str_split(text):
     return text.split()
 
 
-# Note that these functions don't serialize with pickle, so you have to use dill/cloudpickle instead
-def qb_split(text, nolength_token='nolengthunk'):
-    import nltk
-    tokens = nltk.word_tokenize(text)
-    if len(tokens) == 0:
-        return [nolength_token]
-    else:
-        return tokens
+def create_qb_tokenizer(
+        unigrams=True, bigrams=False, trigrams=False,
+        zero_length_token='zerolengthunk', strip_qb_patterns=True):
+    def tokenizer(text):
+        if strip_qb_patterns:
+            text = re.sub(
+                '\s+', ' ',
+                re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
+            ).strip().capitalize()
+        import nltk
+        tokens = nltk.word_tokenize(text)
+        if len(tokens) == 0:
+            return [zero_length_token]
+        else:
+            ngrams = []
+            if unigrams:
+                ngrams.extend(tokens)
+            if bigrams:
+                ngrams.extend([f'{w0}++{w1}' for w0, w1 in nltk.bigrams(tokens)])
+            if trigrams:
+                ngrams.extend([f'{w0}++{w1}++{w2}' for w0, w1, w2 in nltk.trigrams(tokens)])
 
+            if len(ngrams) == 0:
+                ngrams.append(zero_length_token)
+            return ngrams
 
-def qb_split_bigrams(text, nolength_token='nolengthunk'):
-    import nltk
-    tokens = nltk.word_tokenize(text)
-    if len(tokens) == 0:
-        return [nolength_token]
-    else:
-        text_bigrams = [f'{w0}++{w1}' for w0, w1 in nltk.bigrams(tokens)]
-        return tokens + text_bigrams
-
-
-def qb_tokenize(text: str, strip_qb_patterns=True, tokenizer=qb_split) -> List[str]:
-    if strip_qb_patterns:
-        text = re.sub(
-            '\s+', ' ',
-            re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
-        ).strip().capitalize()
-
-    return tokenizer(text)
-
-
-def create_qb_tokenizer(unigrams=True, bigrams=False, trigrams=False):
-    pass
-
-
-def qb_tokenize_bigrams(text: str, strip_qb_patterns=True, tokenizer=qb_split_bigrams) -> List[str]:
-    if strip_qb_patterns:
-        text = re.sub(
-            '\s+', ' ',
-            re.sub(regex_pattern, ' ', text, flags=re.IGNORECASE)
-        ).strip().capitalize()
-
-    return tokenizer(text)
+    return tokenizer
 
 
 class LongField(RawField):
@@ -92,8 +75,6 @@ class LongField(RawField):
 
     def process(self, batch, **kwargs):
         return torch.LongTensor(batch)
-
-
 
 
 class QBVocab(Vocab):
@@ -144,9 +125,19 @@ class QuizBowl(Dataset):
 
     @staticmethod
     def sort_key(example):
-        return len(example.text)
+        if hasattr(example, 'text'):
+            return len(example.text)
+        elif hasattr(example, 'unigram'):
+            return len(example.unigram)
+        elif hasattr(example, 'bigram'):
+            return len(example.bigram)
+        elif hasattr(example, 'trigram'):
+            return len(example.trigram)
+        else:
+            raise ValueError('Not valid length fields')
 
-    def __init__(self, path, qnum_field, sent_field, text_field, page_field,
+    def __init__(self, path, qnum_field, sent_field, page_field,
+                 text_field, unigram_field, bigram_field, trigram_field,
                  example_mode='sentence',
                  use_wiki=False, n_wiki_sentences=3, replace_title_mentions='',
                  **kwargs):
@@ -164,11 +155,22 @@ class QuizBowl(Dataset):
             self.wiki_lookup = {}
         self.path = path
         self.example_mode = example_mode
+
+        text_dependent_fields = []
+        if text_field is not None:
+            text_dependent_fields.append(('text', text_field))
+        if unigram_field is not None:
+            text_dependent_fields.append(('unigram', unigram_field))
+        if bigram_field is not None:
+            text_dependent_fields.append(('bigram', bigram_field))
+        if trigram_field is not None:
+            text_dependent_fields.append(('trigram', trigram_field))
+
         example_fields = {
             'qnum': [('qnum', qnum_field)],
             'sent': [('sent', sent_field)],
-            'text': [('text', text_field)],
-            'page': [('page', page_field)]
+            'page': [('page', page_field)],
+            'text': text_dependent_fields
         }
 
         examples = []
@@ -212,9 +214,16 @@ class QuizBowl(Dataset):
         dataset_fields = {
             'qnum': qnum_field,
             'sent': sent_field,
-            'text': text_field,
-            'page': page_field
+            'page': page_field,
         }
+        if text_field is not None:
+            dataset_fields['text'] = text_field
+        if unigram_field is not None:
+            dataset_fields['unigram'] = unigram_field
+        if bigram_field is not None:
+            dataset_fields['bigram'] = bigram_field
+        if trigram_field is not None:
+            dataset_fields['trigram'] = trigram_field
 
         super(QuizBowl, self).__init__(examples, dataset_fields, **kwargs)
 
@@ -227,12 +236,19 @@ class QuizBowl(Dataset):
         remaining_kwargs = kwargs.copy()
         del remaining_kwargs['qnum_field']
         del remaining_kwargs['sent_field']
-        del remaining_kwargs['text_field']
         del remaining_kwargs['page_field']
+
+        remaining_kwargs.pop('text_field', None)
+        remaining_kwargs.pop('unigram_field', None)
+        remaining_kwargs.pop('bigram_field', None)
+        remaining_kwargs.pop('trigram_field', None)
         return super(QuizBowl, cls).splits(
             root=root, train=train, validation=validation, test=test, example_mode=example_mode,
-            qnum_field=kwargs['qnum_field'], sent_field=kwargs['sent_field'],
-            text_field=kwargs['text_field'], page_field=kwargs['page_field'],
+            qnum_field=kwargs['qnum_field'], sent_field=kwargs['sent_field'], page_field=kwargs['page_field'],
+            text_field=kwargs.get('text_field', None),
+            unigram_field=kwargs.get('unigram_field', None),
+            bigram_field=kwargs.get('bigram_field', None),
+            trigram_field=kwargs.get('trigram_field', None),
             use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
             **remaining_kwargs
         )
@@ -247,21 +263,63 @@ class QuizBowl(Dataset):
               **kwargs):
         QNUM = LongField()
         SENT = LongField()
-        TEXT = QBTextField(
-            batch_first=True,
-            tokenize=qb_tokenize_bigrams if bigrams else qb_tokenize,
-            include_lengths=True, lower=lower
-        )
         PAGE = Field(sequential=False, tokenize=str_split)
+        if combined_ngrams:
+            tokenizer = create_qb_tokenizer(unigrams=unigrams, bigrams=bigrams, trigrams=trigrams)
+            TEXT = QBTextField(
+                batch_first=True,
+                tokenize=tokenizer,
+                include_lengths=True, lower=lower
+            )
+            train, val, dev = cls.splits(
+                qnum_field=QNUM, sent_field=SENT, text_field=TEXT, page_field=PAGE,
+                root=root, example_mode=example_mode,
+                use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
+                **kwargs
+            )
+            TEXT.build_vocab(train, vectors=vectors, max_size=combined_max_vocab_size)
+            PAGE.build_vocab(train)
+        else:
+            if unigrams:
+                unigram_tokenizer = create_qb_tokenizer(unigrams=True, bigrams=False, trigrams=False)
+                UNIGRAM_TEXT = QBTextField(
+                    batch_first=True, tokenize=unigram_tokenizer,
+                    include_lengths=True, lower=lower
+                )
+            else:
+                UNIGRAM_TEXT = None
 
-        train, val, dev = cls.splits(
-            qnum_field=QNUM, sent_field=SENT, text_field=TEXT, page_field=PAGE,
-            root=root, example_mode=example_mode,
-            use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
-            **kwargs)
+            if bigrams:
+                bigram_tokenizer = create_qb_tokenizer(unigrams=False, bigrams=True, trigrams=False)
+                BIGRAM_TEXT = QBTextField(
+                    batch_first=True, tokenize=bigram_tokenizer,
+                    include_lengths=True, lower=lower
+                )
+            else:
+                BIGRAM_TEXT = None
 
-        TEXT.build_vocab(train, vectors=vectors, max_size=max_vocab_size)
-        PAGE.build_vocab(train)
+            if trigrams:
+                trigram_tokenizer = create_qb_tokenizer(unigrams=False, bigrams=False, trigrams=True)
+                TRIGRAM_TEXT = QBTextField(
+                    batch_first=True, tokenize=trigram_tokenizer,
+                    include_lengths=True, lower=lower
+                )
+            else:
+                TRIGRAM_TEXT = None
+
+            train, val, dev = cls.splits(
+                qnum_field=QNUM, sent_field=SENT, page_field=PAGE,
+                unigram_field=UNIGRAM_TEXT, bigram_field=BIGRAM_TEXT, trigram_field=TRIGRAM_TEXT,
+                root=root, example_mode=example_mode, use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences,
+                replace_title_mentions=replace_title_mentions, **kwargs
+            )
+            if UNIGRAM_TEXT is not None:
+                UNIGRAM_TEXT.build_vocab(train, vectors=vectors, max_size=unigram_max_vocab_size)
+            if BIGRAM_TEXT is not None:
+                BIGRAM_TEXT.build_vocab(train, max_size=bigram_max_vocab_size)
+            if TRIGRAM_TEXT is not None:
+                TRIGRAM_TEXT.build_vocab(train, max_size=trigram_max_vocab_size)
+            PAGE.build_vocab(train)
 
         return BucketIterator.splits(
             (train, val, dev),

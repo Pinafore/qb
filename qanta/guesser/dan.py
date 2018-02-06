@@ -2,7 +2,7 @@ import re
 import os
 import shutil
 import time
-import pickle
+import cloudpickle
 from typing import List, Optional, Dict
 
 import numpy as np
@@ -81,13 +81,13 @@ class DanEncoder(nn.Module):
         return self.encoder(x_array)
 
 
-class TiedModel(nn.Module):
-    def __init__(self, text_field: Field, n_classes,
+class DanModel(nn.Module):
+    def __init__(self, n_classes, *,
+                 text_field=None,
+                 unigram_field=None, bigram_field=None, trigram_field=None,
                  init_embeddings=True, emb_dim=300,
                  n_hidden_units=1000, n_hidden_layers=1, nn_dropout=.265, sm_dropout=.158):
-        super(TiedModel, self).__init__()
-        vocab = text_field.vocab
-        self.vocab_size = len(vocab)
+        super(DanModel, self).__init__()
         self.emb_dim = emb_dim
         self.n_classes = n_classes
         self.n_hidden_units = n_hidden_units
@@ -96,58 +96,128 @@ class TiedModel(nn.Module):
         self.sm_dropout = sm_dropout
 
         self.dropout = nn.Dropout(nn_dropout)
-        pad_idx = vocab.stoi[text_field.pad_token]
-        self.general_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
-        self.qb_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
-        self.wiki_embeddings = nn.Embedding(self.vocab_size, emb_dim, padding_idx=pad_idx)
-        qb_mask = torch.cat([torch.ones(1, 600), torch.zeros(1, 300)], dim=1)
-        wiki_mask = torch.cat([torch.ones(1, 300), torch.zeros(1, 300), torch.ones(1, 300)], dim=1)
-        self.combined_mask = torch.cat([qb_mask, wiki_mask], dim=0).float().cuda()
 
-        if init_embeddings:
-            mean_emb = vocab.vectors.mean(0)
-            vocab.vectors[vocab.stoi[text_field.unk_token]] = mean_emb
-            self.general_embeddings.weight.data = vocab.vectors.cuda()
-            self.qb_embeddings.weight.data = vocab.vectors.cuda()
-            self.wiki_embeddings.weight.data = vocab.vectors.cuda()
+        if (text_field is not None) and (unigram_field is not None or bigram_field is not None or trigram_field is not None):
+            raise ValueError('Textfield being not None and any ngram field being not None is not allowed')
 
-        # One averaged embedding for each of general, qb, and wiki
-        self.encoder = DanEncoder(3 * emb_dim, self.n_hidden_layers, self.n_hidden_units, self.nn_dropout)
+        if text_field is None and unigram_field is None and bigram_field is None and trigram_field is None:
+            raise ValueError('Must have at least one text field')
+
+        if text_field is None:
+            self.text_vocab_size = None
+            self.text_embeddings = None
+            self.text_field = None
+        else:
+            text_vocab = text_field.vocab
+            self.text_vocab_size = len(text_vocab)
+            text_pad_idx = text_vocab.stoi[text_field.pad_token]
+            self.text_embeddings = nn.Embedding(self.text_vocab_size, emb_dim, padding_idx=text_pad_idx)
+            self.text_field = text_field
+            if init_embeddings:
+                mean_emb = text_vocab.vectors.mean(0)
+                text_vocab.vectors[text_vocab.stoi[text_field.unk_token]] = mean_emb
+                self.text_embeddings.weight.data = text_vocab.vectors.cuda()
+
+        if unigram_field is None:
+            self.unigram_vocab_size = None
+            self.unigram_embeddings = None
+            self.unigram_field = None
+        else:
+            unigram_vocab = unigram_field.vocab
+            self.unigram_vocab_size = len(unigram_vocab)
+            unigram_pad_idx = unigram_vocab.stoi[unigram_field.pad_token]
+            self.unigram_embeddings = nn.Embedding(self.unigram_vocab_size, emb_dim, padding_idx=unigram_pad_idx)
+            self.unigram_field = unigram_field
+            if init_embeddings:
+                mean_emb = unigram_vocab.vectors.mean(0)
+                unigram_vocab.vectors[unigram_vocab.stoi[unigram_field.unk_token]] = mean_emb
+                self.unigram_embeddings.weight.data = unigram_vocab.vectors.cuda()
+
+        if bigram_field is None:
+            self.bigram_vocab_size = None
+            self.bigram_embeddings = None
+            self.bigram_field = None
+        else:
+            bigram_vocab = bigram_field.vocab
+            self.bigram_vocab_size = len(bigram_vocab)
+            bigram_pad_idx = bigram_vocab.stoi[bigram_field.pad_token]
+            self.bigram_embeddings = nn.Embedding(self.bigram_vocab_size, emb_dim, padding_idx=bigram_pad_idx)
+            self.bigram_field = bigram_field
+
+        if trigram_field is None:
+            self.trigram_vocab_size = None
+            self.trigram_embeddings = None
+            self.trigram_field = None
+        else:
+            trigram_vocab = trigram_field.vocab
+            self.trigram_vocab_size = len(trigram_vocab)
+            trigram_pad_idx = trigram_vocab.stoi[trigram_field.pad_token]
+            self.trigram_embeddings = nn.Embedding(self.trigram_vocab_size, emb_dim, padding_idx=trigram_pad_idx)
+            self.trigram_field = trigram_field
+
+
+
+        if text_field is not None:
+            n_fields = 1
+        else:
+            n_fields = 0
+            if unigram_field is not None:
+                n_fields += 1
+            if bigram_field is not None:
+                n_fields += 1
+            if trigram_field is not None:
+                n_fields += 1
+        self.encoder = DanEncoder(n_fields * emb_dim, self.n_hidden_layers, self.n_hidden_units, self.nn_dropout)
         self.classifier = nn.Sequential(
             nn.Linear(self.n_hidden_units, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(self.sm_dropout)
         )
 
-    def forward(self, input_: Variable, lengths, qnums):
+    def forward(self, input_: Dict[str, Variable], lengths: Dict, qnums):
         """
         :param input_: [batch_size, seq_len] of word indices
         :param lengths: Length of each example
         :param qnums: QB qnum if a qb question, otherwise -1 for wikipedia, used to get domain as source/target
         :return:
         """
-        if not isinstance(lengths, Variable):
-            lengths = Variable(lengths.float(), volatile=not self.training)
+        for key in lengths:
+            if not isinstance(lengths[key], Variable):
+                lengths[key] = Variable(lengths[key].float(), volatile=not self.training)
 
-        g_embed = self.general_embeddings(input_)
-        gb_embed = g_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
-        g_embed = self.dropout(g_embed)
+        if self.text_field is not None:
+            text_input = input_['text']
+            embed = self.text_embeddings(text_input)
+            embed = embed.sum(1) / lengths['text'].float().view(text_input.size()[0], -1)
+            embed = self.dropout(embed)
+            encoded = self.encoder(embed)
+            return self.classifier(encoded)
+        else:
+            embedding_list = []
+            if self.unigram_field is not None:
+                unigram_input = input_['unigram']
+                embed = self.unigram_embeddings(unigram_input)
+                embed = embed.sum(1) / lengths['unigram'].float().view(unigram_input.size()[0], -1)
+                embed = self.dropout(embed)
+                embedding_list.append(embed)
 
-        qb_embed = self.qb_embeddings(input_)
-        qb_embed = qb_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
-        qb_embed = self.dropout(qb_embed)
+            if self.bigram_field is not None:
+                bigram_input = input_['bigram']
+                embed = self.bigram_embeddings(bigram_input)
+                embed = embed.sum(1) / lengths['bigram'].float().view(bigram_input.size()[0], -1)
+                embed = self.dropout(embed)
+                embedding_list.append(embed)
 
-        wiki_embed = self.wiki_embeddings(input_)
-        wiki_embed = wiki_embed.sum(1) / lengths.float().view(input_.size()[0], -1)
-        wiki_embed = self.dropout(wiki_embed)
+            if self.trigram_field is not None:
+                trigram_input = input_['trigram']
+                embed = self.trigram_embeddings(trigram_input)
+                embed = embed.sum(1) / lengths['trigram'].float().view(trigram_input.size()[0], -1)
+                embed = self.dropout(embed)
+                embedding_list.append(embed)
 
-        # Need to use qnum to mask either qb or wiki embeddings here
-        concat_embed = torch.cat([g_embed, qb_embed, wiki_embed], dim=1)
-        mask = Variable(self.combined_mask[(qnums < 0).long()])
-        masked_embed = concat_embed * mask
-
-        encoded = self.encoder(masked_embed)
-        return self.classifier(encoded)
+            concat_embed = torch.cat(embedding_list, dim=1)
+            encoded = self.encoder(concat_embed)
+            return self.classifier(encoded)
 
 
 class DanGuesser(AbstractGuesser):
@@ -177,10 +247,10 @@ class DanGuesser(AbstractGuesser):
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
-        self.combined_text_field: Optional[Field] = None
-        self.unigram_text_field: Optional[Field] = None
-        self.bigram_text_field: Optional[Field] = None
-        self.trigram_text_field: Optional[Field] = None
+        self.text_field: Optional[Field] = None
+        self.unigram_field: Optional[Field] = None
+        self.bigram_field: Optional[Field] = None
+        self.trigram_field: Optional[Field] = None
         self.n_classes = None
         self.emb_dim = None
         self.kuro_trial_id = None
@@ -208,7 +278,12 @@ class DanGuesser(AbstractGuesser):
         train_iter, val_iter, dev_iter = QuizBowl.iters(
             batch_size=self.batch_size, lower=self.lowercase,
             use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
-            replace_title_mentions=self.wiki_title_replace_token
+            replace_title_mentions=self.wiki_title_replace_token,
+            combined_ngrams=False, unigrams=True, bigrams=True, trigrams=True,
+            combined_max_vocab_size=self.combined_max_vocab_size,
+            unigram_max_vocab_size=self.unigram_max_vocab_size,
+            bigram_max_vocab_size=self.bigram_max_vocab_size,
+            trigram_max_vocab_size=self.trigram_max_vocab_size
         )
         log.info(f'N Train={len(train_iter.dataset.examples)}')
         log.info(f'N Test={len(val_iter.dataset.examples)}')
@@ -216,13 +291,27 @@ class DanGuesser(AbstractGuesser):
         self.page_field = fields['page']
         self.n_classes = len(self.ans_to_i)
         self.qnum_field = fields['qnum']
-        self.text_field = fields['text']
-        self.emb_dim = self.text_field.vocab.vectors.shape[1]
-        log.info(f'Vocab={len(self.text_field.vocab)}')
+        self.emb_dim = 300
+
+        if 'text' in fields:
+            self.text_field = fields['text']
+            log.info(f'Text Vocab={len(self.text_field.vocab)}')
+        if 'unigram' in fields:
+            self.unigram_field = fields['unigram']
+            log.info(f'Unigram Vocab={len(self.unigram_field.vocab)}')
+        if 'bigram' in fields:
+            self.bigram_field = fields['bigram']
+            log.info(f'Bigram Vocab={len(self.bigram_field.vocab)}')
+        if 'trigram' in fields:
+            self.trigram_field = fields['trigram']
+            log.info(f'Trigram Vocab={len(self.trigram_field.vocab)}')
 
         log.info('Initializing Model')
-        self.model = TiedModel(
-            self.text_field, self.n_classes, emb_dim=self.emb_dim,
+        self.model = DanModel(
+            self.n_classes,
+            text_field=self.text_field,
+            unigram_field=self.unigram_field, bigram_field=self.bigram_field, trigram_field=self.trigram_field,
+            emb_dim=self.emb_dim,
             n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
             nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout
         )
@@ -241,6 +330,8 @@ class DanGuesser(AbstractGuesser):
 
         log.info('Starting training')
         try:
+            if bool(os.environ.get('KURO_DISABLE', False)):
+                raise ModuleNotFoundError
             import socket
             from kuro import Worker
             worker = Worker(socket.gethostname())
@@ -288,14 +379,35 @@ class DanGuesser(AbstractGuesser):
         batch_losses = []
         epoch_start = time.time()
         for batch in iterator:
-            text, lengths = batch.text
+            input_dict = {}
+            lengths_dict = {}
+            if hasattr(batch, 'text'):
+                text, lengths = batch.text
+                input_dict['text'] = text
+                lengths_dict['text'] = lengths
+
+            if hasattr(batch, 'unigram'):
+                text, lengths = batch.unigram
+                input_dict['unigram'] = text
+                lengths_dict['unigram'] = lengths
+
+            if hasattr(batch, 'bigram'):
+                text, lengths = batch.bigram
+                input_dict['bigram'] = text
+                lengths_dict['bigram'] = lengths
+
+            if hasattr(batch, 'trigram'):
+                text, lengths = batch.trigram
+                input_dict['trigram'] = text
+                lengths_dict['trigram'] = lengths
+
             page = batch.page
             qnums = batch.qnum.cuda()
 
             if is_train:
                 self.model.zero_grad()
 
-            out = self.model(text, lengths, qnums)
+            out = self.model(input_dict, lengths_dict, qnums)
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, page).float()).data[0]
             batch_loss = self.criterion(out, page)
@@ -312,11 +424,31 @@ class DanGuesser(AbstractGuesser):
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
-        examples = [self.text_field.preprocess(q) for q in questions]
-        text, lengths = self.text_field.process(examples, None, False)
+        input_dict = {}
+        lengths_dict = {}
+        if self.text_field is not None:
+            examples = [self.text_field.preprocess(q) for q in questions]
+            text, lengths = self.text_field.process(examples, None, False)
+            input_dict['text'] = text
+            lengths_dict['text'] = lengths
+        if self.unigram_field is not None:
+            examples = [self.unigram_field.preprocess(q) for q in questions]
+            text, lengths = self.unigram_field.process(examples, None, False)
+            input_dict['unigram'] = text
+            lengths_dict['unigram'] = lengths
+        if self.bigram_field is not None:
+            examples = [self.bigram_field.preprocess(q) for q in questions]
+            text, lengths = self.bigram_field.process(examples, None, False)
+            input_dict['bigram'] = text
+            lengths_dict['bigram'] = lengths
+        if self.trigram_field is not None:
+            examples = [self.trigram_field.preprocess(q) for q in questions]
+            text, lengths = self.trigram_field.process(examples, None, False)
+            input_dict['trigram'] = text
+            lengths_dict['trigram'] = lengths
         qnums = self.qnum_field.process([0 for _ in questions]).cuda()
         guesses = []
-        out = self.model(text, lengths, qnums)
+        out = self.model(input_dict, lengths_dict, qnums)
         probs = F.softmax(out)
         scores, preds = torch.max(probs, 1)
         scores = scores.data.cpu().numpy()
@@ -330,12 +462,12 @@ class DanGuesser(AbstractGuesser):
     def save(self, directory: str):
         shutil.copyfile('/tmp/dan.pt', os.path.join(directory, 'dan.pt'))
         with open(os.path.join(directory, 'dan.pkl'), 'wb') as f:
-            pickle.dump({
+            cloudpickle.dump({
                 'page_field': self.page_field,
-                'combined_text_field': self.combined_text_field,
-                'unigram_text_field': self.unigram_text_field,
-                'bigram_text_field': self.bigram_text_field,
-                'trigram_text_field': self.trigram_text_field,
+                'combined_text_field': self.text_field,
+                'unigram_text_field': self.unigram_field,
+                'bigram_text_field': self.bigram_field,
+                'trigram_text_field': self.trigram_field,
                 'combined_ngrams': self.combined_ngrams,
                 'unigrams': self.unigrams,
                 'bigrams': self.bigrams,
@@ -346,7 +478,6 @@ class DanGuesser(AbstractGuesser):
                 'trigram_max_vocab_size': self.trigram_max_vocab_size,
                 'qnum_field': self.qnum_field,
                 'n_classes': self.n_classes,
-                'emb_dim': self.emb_dim,
                 'gradient_clip': self.gradient_clip,
                 'n_hidden_units': self.n_hidden_units,
                 'n_hidden_layers': self.n_hidden_layers,
@@ -363,15 +494,16 @@ class DanGuesser(AbstractGuesser):
     @classmethod
     def load(cls, directory: str):
         with open(os.path.join(directory, 'dan.pkl'), 'rb') as f:
-            params = pickle.load(f)
+            params = cloudpickle.load(f)
 
         guesser = DanGuesser()
         guesser.page_field = params['page_field']
+        guesser.qnum_field = params['qnum_field']
 
-        guesser.combined_text_field = params['combined_text_field']
-        guesser.unigram_text_field = params['unigram_text_field']
-        guesser.bigram_text_field = params['bigram_text_field']
-        guesser.trigram_text_field = params['trigram_text_field']
+        guesser.text_field = params['combined_text_field']
+        guesser.unigram_field = params['unigram_text_field']
+        guesser.bigram_field = params['bigram_text_field']
+        guesser.trigram_field = params['trigram_text_field']
 
         guesser.combined_ngrams = params['combined_ngrams']
         guesser.unigrams = params['unigrams']
@@ -383,9 +515,7 @@ class DanGuesser(AbstractGuesser):
         guesser.bigram_max_vocab_size = params['bigram_max_vocab_size']
         guesser.trigram_max_vocab_size = params['trigram_max_vocab_size']
 
-        guesser.qnum_field = params['qnum_field']
         guesser.n_classes = params['n_classes']
-        guesser.emb_dim = params['emb_dim']
         guesser.gradient_clip = params['gradient_clip']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
@@ -396,9 +526,15 @@ class DanGuesser(AbstractGuesser):
         guesser.n_wiki_sentences = params['n_wiki_sentences']
         guesser.wiki_title_replace_token = params['wiki_title_replace_token']
         guesser.lowercase = params['lowercase']
-        guesser.model = TiedModel(
-            guesser.text_field, guesser.n_classes,
-            init_embeddings=False, emb_dim=guesser.emb_dim
+        guesser.model = DanModel(
+            guesser.n_classes,
+            text_field=guesser.text_field,
+            unigram_field=guesser.unigram_field,
+            bigram_field=guesser.bigram_field,
+            trigram_field=guesser.trigram_field,
+            init_embeddings=False, emb_dim=300,
+            n_hidden_layers=guesser.n_hidden_layers,
+            n_hidden_units=guesser.n_hidden_units
         )
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage
