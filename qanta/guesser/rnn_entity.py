@@ -939,7 +939,7 @@ class RnnEntityGuesser(AbstractGuesser):
         hidden_init = self.model.init_hidden(self.batch_size)
         for batch in batch_order:
             t_x_w_batch = Variable(batched_dataset.t_x_w_batches[batch], volatile=evaluate)
-            if self.word_mention_tokens:
+            if not self.word_mention_tokens:
                 t_x_pos_batch = Variable(batched_dataset.t_x_pos_batches[batch], volatile=evaluate)
                 t_x_iob_batch = Variable(batched_dataset.t_x_iob_batches[batch], volatile=evaluate)
                 t_x_type_batch = Variable(batched_dataset.t_x_type_batches[batch], volatile=evaluate)
