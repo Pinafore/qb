@@ -831,7 +831,6 @@ class RnnEntityGuesser(AbstractGuesser):
 
         self._fit(train_dataset, test_dataset)
 
-
     def _fit(self, train_dataset, test_dataset, hyper_params=None):
         model_params = {
             'sm_dropout': self.sm_dropout_prob,
@@ -940,10 +939,16 @@ class RnnEntityGuesser(AbstractGuesser):
         hidden_init = self.model.init_hidden(self.batch_size)
         for batch in batch_order:
             t_x_w_batch = Variable(batched_dataset.t_x_w_batches[batch], volatile=evaluate)
-            t_x_pos_batch = Variable(batched_dataset.t_x_pos_batches[batch], volatile=evaluate)
-            t_x_iob_batch = Variable(batched_dataset.t_x_iob_batches[batch], volatile=evaluate)
-            t_x_type_batch = Variable(batched_dataset.t_x_type_batches[batch], volatile=evaluate)
-            t_x_mention_batch = Variable(batched_dataset.t_x_mention_batches[batch], volatile=evaluate)
+            if self.word_mention_tokens:
+                t_x_pos_batch = Variable(batched_dataset.t_x_pos_batches[batch], volatile=evaluate)
+                t_x_iob_batch = Variable(batched_dataset.t_x_iob_batches[batch], volatile=evaluate)
+                t_x_type_batch = Variable(batched_dataset.t_x_type_batches[batch], volatile=evaluate)
+                t_x_mention_batch = Variable(batched_dataset.t_x_mention_batches[batch], volatile=evaluate)
+            else:
+                t_x_pos_batch = None
+                t_x_iob_batch = None
+                t_x_type_batch = None
+                t_x_mention_batch = None
             length_batch = batched_dataset.length_batches[batch]
             t_y_batch = Variable(batched_dataset.t_y_batches[batch], volatile=evaluate)
 
