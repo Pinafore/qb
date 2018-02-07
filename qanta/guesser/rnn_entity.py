@@ -537,16 +537,16 @@ class BatchedDataset:
             if len(self.x_array_w[i]) == 0:
                 self.x_array_w[i].append(multi_embedding_lookup.word[UNK])
 
-            if len(self.x_array_pos[i]) == 0 and not word_mention_tokens:
+            if not word_mention_tokens and len(self.x_array_pos[i]) == 0:
                 self.x_array_pos[i].append(multi_embedding_lookup.pos[UNK])
 
-            if len(self.x_array_iob[i]) == 0 and not word_mention_tokens:
+            if not word_mention_tokens and len(self.x_array_iob[i]) == 0:
                 self.x_array_iob[i].append(multi_embedding_lookup.iob[UNK])
 
-            if len(self.x_array_ent_type[i]) == 0 and not word_mention_tokens:
+            if not word_mention_tokens and len(self.x_array_ent_type[i]) == 0:
                 self.x_array_ent_type[i].append(multi_embedding_lookup.ent_type[UNK])
 
-            if len(self.x_array_mention[i]) == 0 and not word_mention_tokens:
+            if not word_mention_tokens and len(self.x_array_mention[i]) == 0:
                 self.x_array_mention[i].append(self.rel_position_lookup[UNK])
 
         self.x_array_w = np.array(self.x_array_w)
