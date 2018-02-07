@@ -52,8 +52,7 @@ guessers:
     enabled: false
     features:
     - word
-    hyper_opt: false
-    hyper_opt_steps: 100
+    word_mention_tokens: false
     learning_rate: 0.001
     luigi_dependency: qanta.pipeline.guesser.EmptyTask
     max_epochs: 100

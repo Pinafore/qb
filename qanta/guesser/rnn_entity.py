@@ -46,6 +46,8 @@ PT_RNN_ENTITY_WE_TMP = '/tmp/qanta/deep/pt_rnn_entity_we.pickle'
 PT_RNN_ENTITY_WE = 'pt_rnn_entity_we.pickle'
 UNK = 'UNK'
 EOS = 'EOS'
+START_MENTION = 'STARTMENTION'
+END_MENTION = 'ENDMENTION'
 WIKI_TITLE_MENTION = 'wikititlemention'
 CUDA = torch.cuda.is_available()
 
@@ -293,7 +295,9 @@ class MultiEmbeddingLookup:
         self.ent_type = ent_type_lookup
 
 
-def convert_tokens_to_representations(tokens: List[Token], embedding_lookup: MultiEmbeddingLookup):
+def convert_tokens_to_representations(
+        tokens: List[Token], embedding_lookup: MultiEmbeddingLookup,
+        word_mention_tokens=False, mention_sequence=None):
     w_indices = []
     pos_indices = []
     iob_indices = []
@@ -305,25 +309,52 @@ def convert_tokens_to_representations(tokens: List[Token], embedding_lookup: Mul
         else:
             w_indices.append(embedding_lookup.word[UNK])
 
-        if t.tag_ in embedding_lookup.pos:
-            pos_indices.append(embedding_lookup.pos[t.tag_])
-        else:
-            pos_indices.append(embedding_lookup.pos[UNK])
+        if not word_mention_tokens:
+            if t.tag_ in embedding_lookup.pos:
+                pos_indices.append(embedding_lookup.pos[t.tag_])
+            else:
+                pos_indices.append(embedding_lookup.pos[UNK])
 
-        if t.ent_iob_ in embedding_lookup.iob:
-            iob_indices.append(embedding_lookup.iob[t.ent_iob_])
-        else:
-            iob_indices.append(embedding_lookup.iob[UNK])
+            if t.ent_iob_ in embedding_lookup.iob:
+                iob_indices.append(embedding_lookup.iob[t.ent_iob_])
+            else:
+                iob_indices.append(embedding_lookup.iob[UNK])
 
-        if t.ent_type_ in embedding_lookup.ent_type:
-            ent_type_indices.append(embedding_lookup.ent_type[t.ent_type_])
-        else:
-            ent_type_indices.append(embedding_lookup.ent_type[UNK])
+            if t.ent_type_ in embedding_lookup.ent_type:
+                ent_type_indices.append(embedding_lookup.ent_type[t.ent_type_])
+            else:
+                ent_type_indices.append(embedding_lookup.ent_type[UNK])
 
     w_indices.append(embedding_lookup.word[EOS])
-    pos_indices.append(embedding_lookup.pos[EOS])
-    iob_indices.append(embedding_lookup.iob[EOS])
-    ent_type_indices.append(embedding_lookup.ent_type[EOS])
+
+    final_w_indices = []
+    if word_mention_tokens and mention_sequence is not None:
+        word_with_mentions = list(zip(w_indices, mention_sequence))
+        in_mention = False
+        for i in range(len(word_with_mentions) - 1, -1, -1):
+            w_idx, ment = word_with_mentions[i]
+            if ment == '0':
+                if in_mention:
+                    final_w_indices.append(w_idx)
+                else:
+                    in_mention = True
+                    final_w_indices.append(embedding_lookup.word[START_MENTION])
+                    final_w_indices.append(w_idx)
+            else:
+                if in_mention:
+                    in_mention = False
+                    final_w_indices.append(embedding_lookup.word[END_MENTION])
+                    final_w_indices.append(w_idx)
+                else:
+                    final_w_indices.append(w_idx)
+
+        final_w_indices.reverse()
+        w_indices = final_w_indices
+
+    if not word_mention_tokens:
+        pos_indices.append(embedding_lookup.pos[EOS])
+        iob_indices.append(embedding_lookup.iob[EOS])
+        ent_type_indices.append(embedding_lookup.ent_type[EOS])
 
     return w_indices, pos_indices, iob_indices, ent_type_indices
 
@@ -400,28 +431,47 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_ment
     max_length = np.max(lengths)
     length_sort = np.argsort(-lengths)
     x_w_batch = x_array_w[length_sort]
-    x_pos_batch = x_array_pos[length_sort]
-    x_iob_batch = x_array_iob[length_sort]
-    x_type_batch = x_array_type[length_sort]
-    x_mention_batch = x_array_mention[length_sort]
+    if x_array_pos is not None:
+        x_pos_batch = x_array_pos[length_sort]
+        x_batch_pos_padded = pad_batch(x_pos_batch, max_length)
+        if CUDA:
+            x_batch_pos_padded = x_batch_pos_padded.cuda()
+    else:
+        x_batch_pos_padded = None
+
+    if x_array_iob is not None:
+        x_iob_batch = x_array_iob[length_sort]
+        x_batch_iob_padded = pad_batch(x_iob_batch, max_length)
+        if CUDA:
+            x_batch_iob_padded = x_batch_iob_padded.cuda()
+    else:
+        x_batch_iob_padded = None
+
+    if x_array_type is not None:
+        x_type_batch = x_array_type[length_sort]
+        x_batch_type_padded = pad_batch(x_type_batch, max_length)
+        if CUDA:
+            x_batch_type_padded = x_batch_type_padded.cuda()
+    else:
+        x_batch_type_padded = None
+
+    if x_array_mention is not None:
+        x_mention_batch = x_array_mention[length_sort]
+        x_batch_mention_padded = pad_batch(x_mention_batch, max_length)
+        if CUDA:
+            x_batch_mention_padded = x_batch_mention_padded.cuda()
+    else:
+        x_batch_mention_padded = None
 
     y_batch = y_array[length_sort]
     lengths = lengths[length_sort]
 
     x_batch_w_padded = pad_batch(x_w_batch, max_length)
-    x_batch_pos_padded = pad_batch(x_pos_batch, max_length)
-    x_batch_iob_padded = pad_batch(x_iob_batch, max_length)
-    x_batch_type_padded = pad_batch(x_type_batch, max_length)
-    x_batch_mention_padded = pad_batch(x_mention_batch, max_length)
 
     y_batch = torch.from_numpy(y_batch).long()
 
     if CUDA:
         x_batch_w_padded = x_batch_w_padded.cuda()
-        x_batch_pos_padded = x_batch_pos_padded.cuda()
-        x_batch_iob_padded = x_batch_iob_padded.cuda()
-        x_batch_type_padded = x_batch_type_padded.cuda()
-        x_batch_mention_padded = x_batch_mention_padded.cuda()
         y_batch = y_batch.cuda()
 
     return (x_batch_w_padded, x_batch_pos_padded, x_batch_iob_padded, x_batch_type_padded, x_batch_mention_padded,
@@ -431,7 +481,8 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_ment
 class BatchedDataset:
     def __init__(self, batch_size, multi_embedding_lookup: MultiEmbeddingLookup,
                  rel_position_vocab, rel_position_lookup,
-                 x_tokens, y_array, truncate=True, shuffle=True, train=True):
+                 x_tokens, y_array, truncate=True, shuffle=True, train=True,
+                 word_mention_tokens=False):
         self.train = train
         self.x_array_w = []
         self.x_array_pos = []
@@ -441,12 +492,10 @@ class BatchedDataset:
         self.y_array = []
         self.rel_position_vocab = rel_position_vocab
         self.rel_position_lookup = rel_position_lookup
+        self.word_mention_tokens = word_mention_tokens
 
         rel_position_tags = []
         for q in x_tokens:
-            w_indicies, pos_indices, iob_indices, ent_type_indices = convert_tokens_to_representations(
-                q, multi_embedding_lookup
-            )
             this_mention_spans = extract_this_mentions(q)
             pronoun_mention_spans = [(i, i) for i in extract_pronoun_mentions(q)]
             title_mention_spans = extract_title_mentions(q)
@@ -455,48 +504,57 @@ class BatchedDataset:
             mention_tags = mentions_to_sequence(
                 mention_spans, q, self.rel_position_vocab if train else None
             )
-            rel_position_tags.append(mention_tags)
+            if not word_mention_tokens:
+                rel_position_tags.append(mention_tags)
+
+            w_indicies, pos_indices, iob_indices, ent_type_indices = convert_tokens_to_representations(
+                q, multi_embedding_lookup, mention_sequence=mention_tags
+            )
 
             self.x_array_w.append(w_indicies)
-            self.x_array_pos.append(pos_indices)
-            self.x_array_iob.append(iob_indices)
-            self.x_array_ent_type.append(ent_type_indices)
 
-        if train:
+            if not word_mention_tokens:
+                self.x_array_pos.append(pos_indices)
+                self.x_array_iob.append(iob_indices)
+                self.x_array_ent_type.append(ent_type_indices)
+
+        if train and not word_mention_tokens:
             for i, tag in enumerate(self.rel_position_vocab, start=2):
                 self.rel_position_lookup[tag] = i
 
-        for tag_list in rel_position_tags:
-            mention_indices = []
-            for t in tag_list:
-                if t in self.rel_position_lookup:
-                    mention_indices.append(self.rel_position_lookup[t])
-                else:
-                    mention_indices.append(self.rel_position_lookup[UNK])
+        if not word_mention_tokens:
+            for tag_list in rel_position_tags:
+                mention_indices = []
+                for t in tag_list:
+                    if t in self.rel_position_lookup:
+                        mention_indices.append(self.rel_position_lookup[t])
+                    else:
+                        mention_indices.append(self.rel_position_lookup[UNK])
 
-            self.x_array_mention.append(mention_indices)
+                self.x_array_mention.append(mention_indices)
 
         for i in range(len(x_tokens)):
             if len(self.x_array_w[i]) == 0:
                 self.x_array_w[i].append(multi_embedding_lookup.word[UNK])
 
-            if len(self.x_array_pos[i]) == 0:
+            if len(self.x_array_pos[i]) == 0 and not word_mention_tokens:
                 self.x_array_pos[i].append(multi_embedding_lookup.pos[UNK])
 
-            if len(self.x_array_iob[i]) == 0:
+            if len(self.x_array_iob[i]) == 0 and not word_mention_tokens:
                 self.x_array_iob[i].append(multi_embedding_lookup.iob[UNK])
 
-            if len(self.x_array_ent_type[i]) == 0:
+            if len(self.x_array_ent_type[i]) == 0 and not word_mention_tokens:
                 self.x_array_ent_type[i].append(multi_embedding_lookup.ent_type[UNK])
 
-            if len(self.x_array_mention[i]) == 0:
+            if len(self.x_array_mention[i]) == 0 and not word_mention_tokens:
                 self.x_array_mention[i].append(self.rel_position_lookup[UNK])
 
         self.x_array_w = np.array(self.x_array_w)
-        self.x_array_pos = np.array(self.x_array_pos)
-        self.x_array_iob = np.array(self.x_array_iob)
-        self.x_array_ent_type = np.array(self.x_array_ent_type)
-        self.x_array_mention = np.array(self.x_array_mention)
+        if not word_mention_tokens:
+            self.x_array_pos = np.array(self.x_array_pos)
+            self.x_array_iob = np.array(self.x_array_iob)
+            self.x_array_ent_type = np.array(self.x_array_ent_type)
+            self.x_array_mention = np.array(self.x_array_mention)
         self.y_array = np.array(y_array)
 
         self.n_examples = self.y_array.shape[0]
@@ -524,10 +582,11 @@ class BatchedDataset:
         if shuffle:
             random_order = np.random.permutation(self.n_examples)
             self.x_array_w = self.x_array_w[random_order]
-            self.x_array_pos = self.x_array_pos[random_order]
-            self.x_array_iob = self.x_array_iob[random_order]
-            self.x_array_ent_type = self.x_array_ent_type[random_order]
-            self.x_array_mention = self.x_array_mention[random_order]
+            if not self.word_mention_tokens:
+                self.x_array_pos = self.x_array_pos[random_order]
+                self.x_array_iob = self.x_array_iob[random_order]
+                self.x_array_ent_type = self.x_array_ent_type[random_order]
+                self.x_array_mention = self.x_array_mention[random_order]
             self.y_array = self.y_array[random_order]
 
         t_x_w_batches = []
@@ -541,10 +600,16 @@ class BatchedDataset:
 
         for b in range(self.n_batches):
             x_w_batch = self.x_array_w[b * batch_size:(b + 1) * batch_size]
-            x_pos_batch = self.x_array_pos[b * batch_size:(b + 1) * batch_size]
-            x_iob_batch = self.x_array_iob[b * batch_size:(b + 1) * batch_size]
-            x_type_batch = self.x_array_ent_type[b * batch_size:(b + 1) * batch_size]
-            x_mention_batch = self.x_array_mention[b * batch_size:(b + 1) * batch_size]
+            if not self.word_mention_tokens:
+                x_pos_batch = self.x_array_pos[b * batch_size:(b + 1) * batch_size]
+                x_iob_batch = self.x_array_iob[b * batch_size:(b + 1) * batch_size]
+                x_type_batch = self.x_array_ent_type[b * batch_size:(b + 1) * batch_size]
+                x_mention_batch = self.x_array_mention[b * batch_size:(b + 1) * batch_size]
+            else:
+                x_pos_batch = None
+                x_iob_batch = None
+                x_type_batch = None
+                x_mention_batch = None
             y_batch = self.y_array[b * batch_size:(b + 1) * batch_size]
             x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, sort = create_batch(
                 x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch,
@@ -552,20 +617,27 @@ class BatchedDataset:
             )
 
             t_x_w_batches.append(x_w_batch)
-            t_x_pos_batches.append(x_pos_batch)
-            t_x_iob_batches.append(x_iob_batch)
-            t_x_type_batches.append(x_type_batch)
-            t_x_mention_batches.append(x_mention_batch)
+            if not self.word_mention_tokens:
+                t_x_pos_batches.append(x_pos_batch)
+                t_x_iob_batches.append(x_iob_batch)
+                t_x_type_batches.append(x_type_batch)
+                t_x_mention_batches.append(x_mention_batch)
             length_batches.append(lengths)
             t_y_batches.append(y_batch)
             sort_batches.append(sort)
 
         if (not truncate) and (batch_size * self.n_batches < self.n_examples):
             x_w_batch = self.x_array_w[self.n_batches * batch_size:]
-            x_pos_batch = self.x_array_pos[self.n_batches * batch_size:]
-            x_iob_batch = self.x_array_iob[self.n_batches * batch_size:]
-            x_type_batch = self.x_array_ent_type[self.n_batches * batch_size:]
-            x_mention_batch = self.x_array_mention[self.n_batches * batch_size:]
+            if not self.word_mention_tokens:
+                x_pos_batch = self.x_array_pos[self.n_batches * batch_size:]
+                x_iob_batch = self.x_array_iob[self.n_batches * batch_size:]
+                x_type_batch = self.x_array_ent_type[self.n_batches * batch_size:]
+                x_mention_batch = self.x_array_mention[self.n_batches * batch_size:]
+            else:
+                x_pos_batch = None
+                x_iob_batch = None
+                x_type_batch = None
+                x_mention_batch = None
             y_batch = self.y_array[self.n_batches * batch_size:]
 
             x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, sort = create_batch(
@@ -574,19 +646,26 @@ class BatchedDataset:
             )
 
             t_x_w_batches.append(x_w_batch)
-            t_x_pos_batches.append(x_pos_batch)
-            t_x_iob_batches.append(x_iob_batch)
-            t_x_type_batches.append(x_type_batch)
-            t_x_mention_batches.append(x_mention_batch)
+            if not self.word_mention_tokens:
+                t_x_pos_batches.append(x_pos_batch)
+                t_x_iob_batches.append(x_iob_batch)
+                t_x_type_batches.append(x_type_batch)
+                t_x_mention_batches.append(x_mention_batch)
             length_batches.append(lengths)
             t_y_batches.append(y_batch)
             sort_batches.append(sort)
 
         self.t_x_w_batches = t_x_w_batches
-        self.t_x_pos_batches = t_x_pos_batches
-        self.t_x_iob_batches = t_x_iob_batches
-        self.t_x_type_batches = t_x_type_batches
-        self.t_x_mention_batches = t_x_mention_batches
+        if not self.word_mention_tokens:
+            self.t_x_pos_batches = t_x_pos_batches
+            self.t_x_iob_batches = t_x_iob_batches
+            self.t_x_type_batches = t_x_type_batches
+            self.t_x_mention_batches = t_x_mention_batches
+        else:
+            self.t_x_pos_batches = None
+            self.t_x_iob_batches = None
+            self.t_x_type_batches = None
+            self.t_x_mention_batches = None
         self.length_batches = length_batches
         self.t_y_batches = t_y_batches
         self.sort_batches = sort_batches
@@ -617,9 +696,8 @@ class RnnEntityGuesser(AbstractGuesser):
         self.use_cove = guesser_conf['use_cove']
         self.variational_dropout_prob = guesser_conf['variational_dropout_prob']
         self.use_locked_dropout = guesser_conf['use_locked_dropout']
-        self.hyper_opt = guesser_conf['hyper_opt']
-        self.hyper_opt_steps = guesser_conf['hyper_opt_steps']
         self.weight_decay = guesser_conf['weight_decay']
+        self.word_mention_tokens = guesser_conf['word_mention_tokens']
 
         self.kuro_trial_id = None
 
@@ -650,7 +728,7 @@ class RnnEntityGuesser(AbstractGuesser):
         dataset = BatchedDataset(
             self.batch_size, self.multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
             x_test_tokens, y_test,
-            truncate=False, shuffle=False, train=False
+            truncate=False, shuffle=False, train=False, word_mention_tokens=self.word_mention_tokens
         )
 
         self.model.eval()
@@ -743,67 +821,16 @@ class RnnEntityGuesser(AbstractGuesser):
         }
         train_dataset = BatchedDataset(
             self.batch_size, multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
-            x_train_tokens, y_train, train=True
+            x_train_tokens, y_train, train=True, word_mention_tokens=self.word_mention_tokens
         )
         test_dataset = BatchedDataset(
             self.batch_size, multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
-            x_test_tokens, y_test, train=False
+            x_test_tokens, y_test, train=False, word_mention_tokens=self.word_mention_tokens
         )
         self.n_classes = compute_n_classes(training_data[1])
 
-        if self.hyper_opt:
-            self.hyperparameter_optimize(train_dataset, test_dataset)
-        else:
-            self._fit(train_dataset, test_dataset)
+        self._fit(train_dataset, test_dataset)
 
-    def hyperparameter_optimize(self, train_dataset, test_dataset):
-        from advisor_client.client import AdvisorClient
-
-        client = AdvisorClient()
-        study_id = os.environ.get('QB_STUDY_ID')
-        if study_id is None:
-            study_config = {
-                'goal': 'MAXIMIZE',
-                'maxTrials': self.hyper_opt_steps,
-                'maxParallelTrials': 1,
-                'randomInitTrials': 1,
-                'params': [
-                    {
-                        'parameterName': 'sm_dropout',
-                        'type': 'DOUBLE',
-                        'minValue': 0,
-                        'maxValue': 1
-                    },
-                    {
-                        'parameterName': 'nn_dropout',
-                        'type': 'DOUBLE',
-                        'minValue': 0,
-                        'maxValue': 1
-                    },
-                    {
-                        'parameterName': 'variational_dropout',
-                        'type': 'DOUBLE',
-                        'minValue': 0,
-                        'maxValue': 1
-                    }
-                ]
-            }
-
-            study = client.create_study('rnn', study_config)
-        else:
-            study_id = int(study_id)
-            study = client.get_study_by_id(study_id)
-        is_done = False
-        while not is_done:
-            trial = client.get_suggestions(study.id, 1)[0]
-            trial_params = json.loads(trial.parameter_values)
-            acc_score = self._fit(train_dataset, test_dataset, hyper_params=trial_params)
-            client.complete_trial_with_one_metric(trial, acc_score)
-            best_trial = client.get_best_trial(study.id)
-            log.info(f'Best Trial: {best_trial}')
-            is_done = client.is_study_done(study.id)
-
-        raise ValueError('Hyperparameter optimization done, exiting')
 
     def _fit(self, train_dataset, test_dataset, hyper_params=None):
         model_params = {
@@ -843,33 +870,10 @@ class RnnEntityGuesser(AbstractGuesser):
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
-        tb_experiment = ' '.join(f'{param}={value}' for param, value in [
-            ('model', 'rnn_entity'),
-            ('features', '-'.join(sorted(self.features))),
-            ('dropout', self.dropout_prob),
-            ('sm_dropout', self.sm_dropout_prob),
-            ('sm_drop_before_linear', self.sm_dropout_before_linear),
-            ('lr', self.learning_rate),
-            ('hu', self.n_hidden_units),
-            ('n_layers', self.n_hidden_layers),
-            ('rnn', self.rnn_type),
-            ('bidirectional', self.bidirectional),
-            ('use_wiki', self.use_wiki),
-            ('use_triviaqa', self.use_triviaqa),
-            ('use_tagme', self.use_tagme),
-            ('n_wiki_sentences', self.n_wiki_sentences),
-            ('n_tagme_sentences', self.n_tagme_sentences),
-            ('use_cove', self.use_cove),
-            ('variational_dropout_prob', self.variational_dropout_prob),
-            ('use_locked_dropout', self.use_locked_dropout),
-            ('weight_decay', self.weight_decay)
-        ])
-
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(),
             EarlyStopping(monitor='test_acc', patience=10, verbose=1), MaxEpochStopping(self.max_epochs),
-            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc'),
-            Tensorboard(tb_experiment)
+            ModelCheckpoint(create_save_model(self.model), '/tmp/rnn_entity.pt', monitor='test_acc')
         ])
 
         log.info('Starting training...')
@@ -995,9 +999,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'variational_dropout_prob': self.variational_dropout_prob,
                 'use_cove': self.use_cove,
                 'use_locked_dropout': self.use_locked_dropout,
-                'hyper_opt': self.hyper_opt,
-                'hyper_opt_steps': self.hyper_opt_steps,
-                'weight_decay': self.weight_decay
+                'weight_decay': self.weight_decay,
+                'word_mention_tokens': self.word_mention_tokens
             }, f)
 
     @classmethod
@@ -1036,17 +1039,13 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.use_cove = params['use_cove']
         guesser.variational_dropout_prob = params['variational_dropout_prob']
         guesser.use_locked_dropout = params['use_locked_dropout']
-        guesser.hyper_opt = params['hyper_opt']
-        guesser.hyper_opt_steps = params['hyper_opt_steps']
         guesser.weight_decay = params['weight_decay']
+        guesser.word_mention_tokens = params['word_mention_tokens']
         return guesser
 
     @classmethod
     def targets(cls):
         return ['rnn_entity.pickle', 'rnn_entity.pt']
-
-    def qb_dataset(self):
-        return QuizBowlDataset(guesser_train=True)
 
 
 class RnnEntityModel(nn.Module):
