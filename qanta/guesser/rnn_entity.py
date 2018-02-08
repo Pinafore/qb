@@ -426,7 +426,7 @@ def pad_batch(x_batch, max_length):
     return torch.from_numpy(np.array(x_batch_padded)).long()
 
 
-def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_mention, y_array):
+def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_mention, y_array, domain_array):
     lengths = np.array([len(r) for r in x_array_w])
     max_length = np.max(lengths)
     length_sort = np.argsort(-lengths)
@@ -464,24 +464,27 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_ment
         x_batch_mention_padded = None
 
     y_batch = y_array[length_sort]
+    domain_batch = domain_array[length_sort]
     lengths = lengths[length_sort]
 
     x_batch_w_padded = pad_batch(x_w_batch, max_length)
 
     y_batch = torch.from_numpy(y_batch).long()
+    domain_batch = torch.from_numpy(y_batch).long()
 
     if CUDA:
         x_batch_w_padded = x_batch_w_padded.cuda()
         y_batch = y_batch.cuda()
+        domain_batch = domain_batch.cuda()
 
     return (x_batch_w_padded, x_batch_pos_padded, x_batch_iob_padded, x_batch_type_padded, x_batch_mention_padded,
-            lengths, y_batch, length_sort)
+            lengths, y_batch, domain_batch, length_sort)
 
 
 class BatchedDataset:
     def __init__(self, batch_size, multi_embedding_lookup: MultiEmbeddingLookup,
                  rel_position_vocab, rel_position_lookup,
-                 x_tokens, y_array, truncate=True, shuffle=True, train=True,
+                 x_tokens, y_array, domain_array, truncate=True, shuffle=True, train=True,
                  word_mention_tokens=False):
         self.train = train
         self.x_array_w = []
@@ -490,6 +493,7 @@ class BatchedDataset:
         self.x_array_ent_type = []
         self.x_array_mention = []
         self.y_array = []
+        self.domain_array = np.array(domain_array)
         self.rel_position_vocab = rel_position_vocab
         self.rel_position_lookup = rel_position_lookup
         self.word_mention_tokens = word_mention_tokens
@@ -588,6 +592,7 @@ class BatchedDataset:
                 self.x_array_ent_type = self.x_array_ent_type[random_order]
                 self.x_array_mention = self.x_array_mention[random_order]
             self.y_array = self.y_array[random_order]
+            self.domain_array = self.domain_array[random_order]
 
         t_x_w_batches = []
         t_x_pos_batches = []
@@ -596,6 +601,7 @@ class BatchedDataset:
         t_x_mention_batches = []
         length_batches = []
         t_y_batches = []
+        t_domain_batches = []
         sort_batches = []
 
         for b in range(self.n_batches):
@@ -611,9 +617,10 @@ class BatchedDataset:
                 x_type_batch = None
                 x_mention_batch = None
             y_batch = self.y_array[b * batch_size:(b + 1) * batch_size]
-            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, sort = create_batch(
+            domain_batch = self.domain_array[b * batch_size:(b + 1) * batch_size]
+            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, domain_batch, sort = create_batch(
                 x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch,
-                y_batch
+                y_batch, domain_batch
             )
 
             t_x_w_batches.append(x_w_batch)
@@ -624,6 +631,7 @@ class BatchedDataset:
                 t_x_mention_batches.append(x_mention_batch)
             length_batches.append(lengths)
             t_y_batches.append(y_batch)
+            t_domain_batches.append(domain_batch)
             sort_batches.append(sort)
 
         if (not truncate) and (batch_size * self.n_batches < self.n_examples):
@@ -639,10 +647,11 @@ class BatchedDataset:
                 x_type_batch = None
                 x_mention_batch = None
             y_batch = self.y_array[self.n_batches * batch_size:]
+            domain_batch = self.domain_array[self.n_batches * batch_size:]
 
-            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, sort = create_batch(
+            x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch, lengths, y_batch, domain_batch, sort = create_batch(
                 x_w_batch, x_pos_batch, x_iob_batch, x_type_batch, x_mention_batch,
-                y_batch
+                y_batch, domain_batch
             )
 
             t_x_w_batches.append(x_w_batch)
@@ -653,6 +662,7 @@ class BatchedDataset:
                 t_x_mention_batches.append(x_mention_batch)
             length_batches.append(lengths)
             t_y_batches.append(y_batch)
+            t_domain_batches.append(domain_batch)
             sort_batches.append(sort)
 
         self.t_x_w_batches = t_x_w_batches
@@ -668,6 +678,7 @@ class BatchedDataset:
             self.t_x_mention_batches = None
         self.length_batches = length_batches
         self.t_y_batches = t_y_batches
+        self.domain_batches = t_domain_batches
         self.sort_batches = sort_batches
 
 
@@ -698,6 +709,7 @@ class RnnEntityGuesser(AbstractGuesser):
         self.use_locked_dropout = guesser_conf['use_locked_dropout']
         self.weight_decay = guesser_conf['weight_decay']
         self.word_mention_tokens = guesser_conf['word_mention_tokens']
+        self.wiki_loss_coefficient = guesser_conf['wiki_loss_coefficient']
 
         self.kuro_trial_id = None
 
@@ -725,9 +737,10 @@ class RnnEntityGuesser(AbstractGuesser):
               max_n_guesses: Optional[int]):
         x_test_tokens = [self.nlp(clean_question(x)) for x in questions]
         y_test = np.zeros(len(questions))
+        domain_test = np.zeros(len(questions))
         dataset = BatchedDataset(
             self.batch_size, self.multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
-            x_test_tokens, y_test,
+            x_test_tokens, y_test, domain_test,
             truncate=False, shuffle=False, train=False, word_mention_tokens=self.word_mention_tokens
         )
 
@@ -776,6 +789,8 @@ class RnnEntityGuesser(AbstractGuesser):
         x_train_tokens, y_train, x_test_tokens, y_test, vocab, class_to_i, i_to_class = preprocess_dataset(
             self.nlp, training_data
         )
+        domain_train = [0 for _ in range(len(y_train))]
+        domain_test = [0 for  _ in range(len(y_test))]
 
         if self.use_wiki:
             wiki_dataset = WikipediaDataset(
@@ -788,6 +803,7 @@ class RnnEntityGuesser(AbstractGuesser):
             log.info(f'Adding {len(w_x_train_text)} Wikipedia sentences as training data')
             x_train_tokens.extend(w_x_train_text)
             y_train.extend(w_train_y)
+            domain_train.extend([1 for _ in range(len(w_train_y))])
 
         if self.use_tagme:
             wiki_dataset = TagmeWikipediaDataset(n_examples=self.n_tagme_sentences)
@@ -827,11 +843,13 @@ class RnnEntityGuesser(AbstractGuesser):
         }
         train_dataset = BatchedDataset(
             self.batch_size, multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
-            x_train_tokens, y_train, train=True, word_mention_tokens=self.word_mention_tokens
+            x_train_tokens, y_train, domain_train,
+            train=True, word_mention_tokens=self.word_mention_tokens
         )
         test_dataset = BatchedDataset(
             self.batch_size, multi_embedding_lookup, self.rel_position_vocab, self.rel_position_lookup,
-            x_test_tokens, y_test, train=False, word_mention_tokens=self.word_mention_tokens
+            x_test_tokens, y_test, domain_test,
+            train=False, word_mention_tokens=self.word_mention_tokens
         )
         self.n_classes = compute_n_classes(training_data[1])
 
@@ -872,7 +890,10 @@ class RnnEntityGuesser(AbstractGuesser):
             filter(lambda p: p.requires_grad, self.model.parameters()),
             lr=self.learning_rate, weight_decay=self.weight_decay
         )
-        self.criterion = nn.CrossEntropyLoss()
+        if self.wiki_loss_coefficient == 1.0:
+            self.criterion = nn.CrossEntropyLoss()
+        else:
+            self.criterion = nn.CrossEntropyLoss(reduce=False)
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
         manager = TrainingManager([
@@ -957,6 +978,7 @@ class RnnEntityGuesser(AbstractGuesser):
                 t_x_mention_batch = None
             length_batch = batched_dataset.length_batches[batch]
             t_y_batch = Variable(batched_dataset.t_y_batches[batch], volatile=evaluate)
+            t_domain_batch = Variable(batched_dataset.domain_batches[batch], volatile=evaluate)
 
             self.model.zero_grad()
             out, hidden = self.model(
@@ -965,7 +987,13 @@ class RnnEntityGuesser(AbstractGuesser):
             )
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, t_y_batch).float()).data[0]
-            batch_loss = self.criterion(out, t_y_batch)
+            if self.wiki_loss_coefficient == 1.0:
+                batch_loss = self.criterion(out, t_y_batch)
+            else:
+                batch_loss_per_example = self.criterion(out, t_y_batch)
+                loss_coefficients = (t_domain_batch == 1).float() * self.wiki_loss_coefficient
+                loss_coefficients += (t_domain_batch == 0).float() * 1.0
+                batch_loss = (batch_loss_per_example * loss_coefficients).mean()
             if not evaluate:
                 batch_loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), self.max_grad_norm)
@@ -1011,7 +1039,8 @@ class RnnEntityGuesser(AbstractGuesser):
                 'use_cove': self.use_cove,
                 'use_locked_dropout': self.use_locked_dropout,
                 'weight_decay': self.weight_decay,
-                'word_mention_tokens': self.word_mention_tokens
+                'word_mention_tokens': self.word_mention_tokens,
+                'wiki_loss_coefficient': self.wiki_loss_coefficient
             }, f)
 
     @classmethod
@@ -1052,6 +1081,7 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.use_locked_dropout = params['use_locked_dropout']
         guesser.weight_decay = params['weight_decay']
         guesser.word_mention_tokens = params['word_mention_tokens']
+        guesser.wiki_loss_coefficient = params['wiki_loss_coefficient']
         return guesser
 
     @classmethod
