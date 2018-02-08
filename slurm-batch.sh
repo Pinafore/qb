@@ -4,6 +4,7 @@
 #SBATCH --qos=gpu
 #SBATCH --nodes=5
 #SBATCH --gres=gpu:5
+#SBATCH --partition=gpu
 
 srun -N 1 -c "slurm-run.sh 0" &
 srun -N 1 -c "slurm-run.sh 1" &
