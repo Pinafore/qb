@@ -8,9 +8,9 @@
 #SBATCH --output qanta.out.%j
 #SBATCH --error qanta.out.%j
 
-srun -N 1 "/fs/clip-quiz/qb/slurm-run.sh 0" &
-srun -N 1 "/fs/clip-quiz/qb/slurm-run.sh 1" &
-srun -N 1 "/fs/clip-quiz/qb/slurm-run.sh 2" &
-srun -N 1 "/fs/clip-quiz/qb/slurm-run.sh 3" &
-srun -N 1 "/fs/clip-quiz/qb/slurm-run.sh 4" &
+srun -N 1 bash /fs/clip-quiz/qb/slurm-run.sh 0 &
+srun -N 1 bash /fs/clip-quiz/qb/slurm-run.sh 1 &
+srun -N 1 bash /fs/clip-quiz/qb/slurm-run.sh 2 &
+srun -N 1 bash /fs/clip-quiz/qb/slurm-run.sh 3 &
+srun -N 1 bash /fs/clip-quiz/qb/slurm-run.sh 4 &
 wait
