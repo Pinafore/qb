@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=qanta
 #SBATCH --qos=gpu
-#SBATCH --nodes=1
-#SBATCH --gres=gpu:5
+#SBATCH --nodes=5
+#SBATCH --gres=gpu:1
 #SBATCH --partition=gpu
 
 srun -N 1 -c "slurm-run.sh 0" &
