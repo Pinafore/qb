@@ -69,6 +69,7 @@ guessers:
     use_tagme: false
     use_triviaqa: false
     use_wiki: false
+    wiki_loss_coefficient: 1.0
     variational_dropout_prob: 0.25
     weight_decay: 0
   Tfidf:
