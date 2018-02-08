@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=qanta
 #SBATCH --qos=gpu
-#SBATCH --nodes=5
+#SBATCH --nodes=1
 #SBATCH --gres=gpu:5
 #SBATCH --partition=gpu
 
