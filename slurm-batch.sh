@@ -6,9 +6,9 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu
 #SBATCH --output qanta.out.%j
-#SBATCH --mem 32gb
+#SBATCH --mem 16gb
 #SBATCH --ntasks-per-node=4
 #SBATCH --error qanta.out.%j
 #SBATCH --ntasks=4
 
-srun -N 1 --qos=gpu --partition=gpu --gres=gpu:1 bash /fs/clip-quiz/qb/slurm-run.sh $1
+srun -N 1 --mem 16gb --qos=gpu --partition=gpu --gres=gpu:1 bash /fs/clip-quiz/qb/slurm-run.sh $1
