@@ -29,7 +29,7 @@ guessers:
     bigrams: false
     trigrams: false
     pooling: avg # [avg, max]
-    combined_max_vocab_size: null
+    combined_max_vocab_size: 300000
     unigram_max_vocab_size: null
     bigram_max_vocab_size: 50000
     trigram_max_vocab_size: 50000
