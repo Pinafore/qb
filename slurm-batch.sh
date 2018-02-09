@@ -11,4 +11,4 @@
 #SBATCH --error qanta.out.%j
 #SBATCH --ntasks=4
 
-srun -N 1 --mem 16gb --qos=gpu --partition=gpu --gres=gpu:1 bash /fs/clip-quiz/qb/slurm-run.sh $1
+srun -N 1 --ntasks-per-node=4 --ntasks=4 --mem 16gb --qos=gpu --partition=gpu --gres=gpu:1 bash /fs/clip-quiz/qb/slurm-run.sh $1
