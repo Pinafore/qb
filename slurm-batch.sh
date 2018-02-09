@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu
 #SBATCH --output qanta.out.%j
-#SBATCH --mem 16gb
+#SBATCH --mem 32gb
 #SBATCH --ntasks-per-node=4
 #SBATCH --error qanta.out.%j
 #SBATCH --ntasks=4
