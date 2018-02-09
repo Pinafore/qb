@@ -150,20 +150,15 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
         self.qb_boost = guesser_conf['qb_boost']
         self.wiki_boost = guesser_conf['wiki_boost']
+        self.kuro_trial_id = None
 
     def qb_dataset(self):
         return QuizBowlDataset(guesser_train=True)
 
     def parameters(self):
-        return {
-            'n_cores': self.n_cores,
-            'use_wiki': self.use_wiki,
-            'use_qb': self.use_qb,
-            'many_docs': self.many_docs,
-            'normalize_score_by_length': self.normalize_score_by_length,
-            'qb_boost': self.qb_boost,
-            'wiki_boost': self.wiki_boost
-        }
+        params = conf['guessers']['ElasticSearch'].copy()
+        params['kuro_trial_id'] = self.kuro_trial_id
+        return params
 
     def train(self, training_data):
         if self.many_docs:
@@ -190,6 +185,22 @@ class ElasticSearchGuesser(AbstractGuesser):
                 use_qb=self.use_qb,
                 use_wiki=self.use_wiki
             )
+
+        try:
+            if bool(os.environ.get('KURO_DISABLE', False)):
+                raise ModuleNotFoundError
+            import socket
+            from kuro import Worker
+            worker = Worker(socket.gethostname())
+            experiment = worker.experiment(
+                'guesser', 'ElasticSearch', hyper_parameters=conf['guessers']['ElasticSearch'],
+                n_trials=5
+            )
+            trial = experiment.trial()
+            if trial is not None:
+                self.kuro_trial_id = trial.id
+        except ModuleNotFoundError:
+            trial = None
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
         def es_search(query):
