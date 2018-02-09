@@ -86,7 +86,8 @@ class DanModel(nn.Module):
                  text_field=None,
                  unigram_field=None, bigram_field=None, trigram_field=None,
                  init_embeddings=True, emb_dim=300,
-                 n_hidden_units=1000, n_hidden_layers=1, nn_dropout=.265, sm_dropout=.158):
+                 n_hidden_units=1000, n_hidden_layers=1, nn_dropout=.265, sm_dropout=.158,
+                 pooling='avg'):
         super(DanModel, self).__init__()
         self.emb_dim = emb_dim
         self.n_classes = n_classes
@@ -94,6 +95,7 @@ class DanModel(nn.Module):
         self.n_hidden_layers = n_hidden_layers
         self.nn_dropout = nn_dropout
         self.sm_dropout = sm_dropout
+        self.pooling = pooling
 
         self.dropout = nn.Dropout(nn_dropout)
 
@@ -174,6 +176,15 @@ class DanModel(nn.Module):
             nn.Dropout(self.sm_dropout)
         )
 
+    def _pool(self, embed, lengths, batch_size):
+        if self.pooling == 'avg':
+            return embed.sum(1) / lengths.view(batch_size, -1)
+        elif self.pooling == 'max':
+            emb_max, _ = torch.max(embed, 1)
+            return emb_max
+        else:
+            raise ValueError(f'Unsupported pooling type f{self.pooling}, only avg and max are supported')
+
     def forward(self, input_: Dict[str, Variable], lengths: Dict, qnums):
         """
         :param input_: [batch_size, seq_len] of word indices
@@ -188,7 +199,7 @@ class DanModel(nn.Module):
         if self.text_field is not None:
             text_input = input_['text']
             embed = self.text_embeddings(text_input)
-            embed = embed.sum(1) / lengths['text'].float().view(text_input.size()[0], -1)
+            embed = self._pool(embed, lengths['text'].float(), text_input.size()[0])
             embed = self.dropout(embed)
             encoded = self.encoder(embed)
             return self.classifier(encoded)
@@ -197,21 +208,21 @@ class DanModel(nn.Module):
             if self.unigram_field is not None:
                 unigram_input = input_['unigram']
                 embed = self.unigram_embeddings(unigram_input)
-                embed = embed.sum(1) / lengths['unigram'].float().view(unigram_input.size()[0], -1)
+                embed = self._pool(embed, lengths['unigram'].float, unigram_input.size()[0])
                 embed = self.dropout(embed)
                 embedding_list.append(embed)
 
             if self.bigram_field is not None:
                 bigram_input = input_['bigram']
                 embed = self.bigram_embeddings(bigram_input)
-                embed = embed.sum(1) / lengths['bigram'].float().view(bigram_input.size()[0], -1)
+                embed = self._pool(embed, lengths['bigram'].float, bigram_input.size()[0])
                 embed = self.dropout(embed)
                 embedding_list.append(embed)
 
             if self.trigram_field is not None:
                 trigram_input = input_['trigram']
                 embed = self.trigram_embeddings(trigram_input)
-                embed = embed.sum(1) / lengths['trigram'].float().view(trigram_input.size()[0], -1)
+                embed = self._pool(embed, lengths['trigram'].float, trigram_input.size()[0])
                 embed = self.dropout(embed)
                 embedding_list.append(embed)
 
@@ -244,6 +255,7 @@ class DanGuesser(AbstractGuesser):
         self.unigram_max_vocab_size = guesser_conf['unigram_max_vocab_size']
         self.bigram_max_vocab_size = guesser_conf['bigram_max_vocab_size']
         self.trigram_max_vocab_size = guesser_conf['trigram_max_vocab_size']
+        self.pooling = guesser_conf['pooling']
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
@@ -279,7 +291,7 @@ class DanGuesser(AbstractGuesser):
             batch_size=self.batch_size, lower=self.lowercase,
             use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
             replace_title_mentions=self.wiki_title_replace_token,
-            combined_ngrams=False, unigrams=True, bigrams=True, trigrams=True,
+            combined_ngrams=self.combined_ngrams, unigrams=self.unigrams, bigrams=self.bigrams, trigrams=self.trigrams,
             combined_max_vocab_size=self.combined_max_vocab_size,
             unigram_max_vocab_size=self.unigram_max_vocab_size,
             bigram_max_vocab_size=self.bigram_max_vocab_size,
@@ -313,7 +325,8 @@ class DanGuesser(AbstractGuesser):
             unigram_field=self.unigram_field, bigram_field=self.bigram_field, trigram_field=self.trigram_field,
             emb_dim=self.emb_dim,
             n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
-            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout
+            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout,
+            pooling=self.pooling
         )
         if CUDA:
             self.model = self.model.cuda()
@@ -488,7 +501,8 @@ class DanGuesser(AbstractGuesser):
                 'use_wiki': self.use_wiki,
                 'n_wiki_sentences': self.n_wiki_sentences,
                 'wiki_title_replace_token': self.wiki_title_replace_token,
-                'lowercase': self.lowercase
+                'lowercase': self.lowercase,
+                'pooling': self.pooling
             }, f)
 
     @classmethod
@@ -526,6 +540,7 @@ class DanGuesser(AbstractGuesser):
         guesser.n_wiki_sentences = params['n_wiki_sentences']
         guesser.wiki_title_replace_token = params['wiki_title_replace_token']
         guesser.lowercase = params['lowercase']
+        guesser.pooling = params['pooling']
         guesser.model = DanModel(
             guesser.n_classes,
             text_field=guesser.text_field,
@@ -534,7 +549,8 @@ class DanGuesser(AbstractGuesser):
             trigram_field=guesser.trigram_field,
             init_embeddings=False, emb_dim=300,
             n_hidden_layers=guesser.n_hidden_layers,
-            n_hidden_units=guesser.n_hidden_units
+            n_hidden_units=guesser.n_hidden_units,
+            pooling=guesser.pooling
         )
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'dan.pt'), map_location=lambda storage, loc: storage

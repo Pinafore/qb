@@ -166,6 +166,7 @@ class TiedGuesser(AbstractGuesser):
         self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
         self.lowercase = guesser_conf['lowercase']
         self.tied_l2 = guesser_conf['tied_l2']
+        self.encoder_type = guesser_conf['encoder_type']
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
@@ -346,7 +347,8 @@ class TiedGuesser(AbstractGuesser):
                 'n_wiki_sentences': self.n_wiki_sentences,
                 'wiki_title_replace_token': self.wiki_title_replace_token,
                 'lowercase': self.lowercase,
-                'tied_l2': self.tied_l2
+                'tied_l2': self.tied_l2,
+                'encoder_type': self.encoder_type
             }, f)
 
     @classmethod
@@ -371,6 +373,7 @@ class TiedGuesser(AbstractGuesser):
         guesser.wiki_title_replace_token = params['wiki_title_replace_token']
         guesser.lowercase = params['lowercase']
         guesser.tied_l2 = params['tied_l2']
+        guesser.encoder_type = params['encoder_type']
         guesser.model = TiedModel(
             guesser.text_field, guesser.n_classes,
             init_embeddings=False, emb_dim=guesser.emb_dim
