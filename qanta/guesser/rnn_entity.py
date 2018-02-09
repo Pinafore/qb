@@ -470,7 +470,7 @@ def create_batch(x_array_w, x_array_pos, x_array_iob, x_array_type, x_array_ment
     x_batch_w_padded = pad_batch(x_w_batch, max_length)
 
     y_batch = torch.from_numpy(y_batch).long()
-    domain_batch = torch.from_numpy(y_batch).long()
+    domain_batch = torch.from_numpy(domain_batch).long()
 
     if CUDA:
         x_batch_w_padded = x_batch_w_padded.cuda()
