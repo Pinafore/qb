@@ -27,12 +27,16 @@ def main():
 
 
 @main.command()
+@click.option('--fold', multiple=True, default=['guess_train', 'guessdev'])
+@click.option('--merged_output', is_flag=True)
 @click.argument('output_dir')
-def export_db(output_dir):
+def export_db(fold, merged_output, output_dir):
+    fold_set = set(fold)
     db = QuestionDatabase()
     if not db.location.endswith('non_naqt.db'):
         raise ValueError('Will not export naqt.db to json format to prevent data leaks')
-    questions = [q for q in db.all_questions().values() if q.fold in {'guesstrain', 'guessdev'}]
+    log.info(f'Outputing data for folds: {fold_set}')
+    questions = [q for q in db.all_questions().values() if q.fold in fold_set]
 
     def to_example(question: Question):
         sentences = [question.text[i] for i in range(len(question.text))]
@@ -43,18 +47,24 @@ def export_db(output_dir):
             'fold': question.fold
         }
 
-    all_train = [to_example(q) for q in questions if q.fold == 'guesstrain']
-    train, val = train_test_split(all_train, train_size=.9, test_size=.1)
-    dev = [to_example(q) for q in questions if q.fold == 'guessdev']
+    if merged_output:
+        log.info(f'Writing output to: {path.join(output_dir, "quiz-bowl.all.json")}')
+        with safe_open(path.join(output_dir, 'quiz-bowl.all.json'), 'w') as f:
+            json.dump({'questions': [to_example(q) for q in questions]}, f)
+    else:
+        all_train = [to_example(q) for q in questions if 'train' in q.fold]
+        train, val = train_test_split(all_train, train_size=.9, test_size=.1)
+        dev = [to_example(q) for q in questions if 'dev' in q.fold]
 
-    with safe_open(path.join(output_dir, 'quiz-bowl.train.json'), 'w') as f:
-        json.dump({'questions': train}, f)
+        log.info(f'Writing output to: {output_dir}/*')
+        with safe_open(path.join(output_dir, 'quiz-bowl.train.json'), 'w') as f:
+            json.dump({'questions': train}, f)
 
-    with safe_open(path.join(output_dir, 'quiz-bowl.val.json'), 'w') as f:
-        json.dump({'questions': val}, f)
+        with safe_open(path.join(output_dir, 'quiz-bowl.val.json'), 'w') as f:
+            json.dump({'questions': val}, f)
 
-    with safe_open(path.join(output_dir, 'quiz-bowl.dev.json'), 'w') as f:
-        json.dump({'questions': dev}, f)
+        with safe_open(path.join(output_dir, 'quiz-bowl.dev.json'), 'w') as f:
+            json.dump({'questions': dev}, f)
 
 
 @main.command()
