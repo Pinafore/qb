@@ -13,9 +13,6 @@ QB_MAX_CORES = os.getenv('QB_MAX_CORES', multiprocessing.cpu_count())
 QB_TB_HOSTNAME = os.getenv('QB_TB_HOSTNAME', 'localhost')
 QB_TB_PORT = int(os.getenv('QB_TB_PORT', 6007))
 
-TAGME_GCUBE_TOKEN = os.getenv('TAGME_GCUBE_TOKEN')
-
-
 
 @lru_cache()
 def is_aws_authenticated():
@@ -24,8 +21,6 @@ def is_aws_authenticated():
         return True
     except NoCredentialsError:
         return False
-
-
 
 
 def data_path(other_path):
@@ -42,6 +37,5 @@ else:
 ENVIRONMENT = dict(
     QB_ROOT=QB_ROOT,
     QB_QUESTION_DB=QB_QUESTION_DB,
-    QB_SPARK_MASTER=QB_SPARK_MASTER,
-    TAGME_GCUBE_TOKEN=TAGME_GCUBE_TOKEN
+    QB_SPARK_MASTER=QB_SPARK_MASTER
 )
