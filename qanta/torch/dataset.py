@@ -117,6 +117,7 @@ class QBTextField(Field):
 s3_url_pattern = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/datasets/non_naqt/quiz-bowl.{fold}.json'
 s3_wiki = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/datasets/wikipedia/wiki_lookup.json'
 
+
 class QuizBowl(Dataset):
     name = 'quizbowl'
     dirname = ''

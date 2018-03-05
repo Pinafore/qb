@@ -298,17 +298,17 @@ class QuizBowlDataset(AbstractDataset):
         self.use_tagme_evidence = use_tagme_evidence
         if self.use_tagme_evidence:
             with open('output/tagme/tagme.pickle', 'rb') as f:
-                self.tagme_evidence = pickle.load(f) # type: Optional[Dict[int, Any]]
+                self.tagme_evidence = pickle.load(f)  # type: Optional[Dict[int, Any]]
         else:
-            self.tagme_evidence = None # type: Optional[Dict[int, Any]]
+            self.tagme_evidence = None  # type: Optional[Dict[int, Any]]
 
     def training_data(self) -> TrainingData:
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
         if self.use_tagme_evidence:
-            all_evidence = {'tagme': self.tagme_evidence} # type: Optional[Dict[str, Any]]
+            all_evidence = {'tagme': self.tagme_evidence}  # type: Optional[Dict[str, Any]]
         else:
-            all_evidence = None # type: Optional[Dict[str, Any]]
+            all_evidence = None  # type: Optional[Dict[str, Any]]
 
         filtered_questions = all_questions\
             .filter(lambda q: q.fold in self.training_folds)\
