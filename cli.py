@@ -12,6 +12,7 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_open, shell
 from qanta.config import conf
 from qanta.hyperparam import generate_configs
+from qanta.update_db import write_answer_map, merge_answer_mapping
 
 
 log = qlogging.get(__name__)
@@ -123,6 +124,23 @@ def guesser_sweep(n_times, workers, guesser_qualified_class, sweep_file):
 
     if path.exists('qanta-tmp.yaml'):
         shell('mv qanta-tmp.yaml qanta.yaml')
+
+
+@main.command()
+@click.argument('output_dir')
+def generate_additional_answer_mappings(output_dir):
+    write_answer_map(output_dir)
+
+
+@main.command()
+@click.argument('source_db')
+@click.argument('output_db')
+@click.argument('answer_map_path')
+@click.argument('page_assignments_path')
+def db_merge_answers(source_db, output_db, answer_map_path, page_assignments_path):
+    with open(answer_map_path) as f:
+        answer_map = json.load(f)['answer_map']
+    merge_answer_mapping(source_db, answer_map, output_db, page_assignments_path)
 
 
 if __name__ == '__main__':
