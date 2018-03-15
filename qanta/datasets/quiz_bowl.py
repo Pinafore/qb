@@ -159,8 +159,8 @@ class QuestionDatabase:
             'tournament, naqt, protobowl, fold ' + command
         c.execute(command, arguments)
 
-        for qnum, page, _, answer, tournaments, naqt, protobowl, fold in c:
-            questions[qnum] = Question(qnum, answer, None, naqt, protobowl, tournaments, page, fold)
+        for qnum, page, category, answer, tournaments, naqt, protobowl, fold in c:
+            questions[qnum] = Question(qnum, answer, category, naqt, protobowl, tournaments, page, fold)
 
         for q in self.expo_questions:
             questions[q.qnum] = q
