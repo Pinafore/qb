@@ -1,14 +1,9 @@
 data "aws_ami" "qanta_ami" {
+  owners = ["095925267750"]
+  name_regex = "qanta-gpu-cuda-9.*"
   most_recent = true
-  filter {
-    name = "tag-key"
-    values = ["Image"]
-  }
-  filter {
-    name = "tag-value"
-    values = ["qanta-gpu-cuda-9"]
-  }
 }
+
 
 variable "spot_price" {
   default = "3.10"

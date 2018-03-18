@@ -50,15 +50,9 @@ provider "aws" {
 }
 
 data "aws_ami" "qanta_ami" {
+  owners = ["095925267750"]
+  name_regex = "qanta-cpu.*"
   most_recent = true
-  filter {
-    name = "tag-key"
-    values = ["Image"]
-  }
-  filter {
-    name = "tag-value"
-    values = ["qanta-cpu"]
-  }
 }
 
 #  _   _      _                      _    _
