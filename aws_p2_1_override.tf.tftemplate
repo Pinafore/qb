@@ -1,13 +1,7 @@
 data "aws_ami" "qanta_ami" {
+  owners = ["095925267750"]
+  name_regex = "^qanta-gpu [0-9]+"
   most_recent = true
-  filter {
-    name = "tag-key"
-    values = ["Image"]
-  }
-  filter {
-    name = "tag-value"
-    values = ["qanta-gpu"]
-  }
 }
 
 variable "spot_price" {
