@@ -1,4 +1,9 @@
+"""
+CLI utilities for QANTA
+"""
+
 import json
+import sqlite3
 import pprint
 from os import path
 import click
@@ -7,7 +12,7 @@ import yaml
 
 from qanta import qlogging
 from qanta.util.environment import ENVIRONMENT
-from qanta.datasets.quiz_bowl import QuestionDatabase, Question
+from qanta.datasets.quiz_bowl import QuestionDatabase, Question, QB_QUESTION_DB
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_open, shell
 from qanta.config import conf
@@ -141,6 +146,26 @@ def db_merge_answers(source_db, output_db, answer_map_path, page_assignments_pat
     with open(answer_map_path) as f:
         answer_map = json.load(f)['answer_map']
     merge_answer_mapping(source_db, answer_map, output_db, page_assignments_path)
+
+
+@main.command()
+@click.option('--n', default=20)
+def sample_answer_pages(n):
+    """
+    Take a random sample of n questions, then return their answers and pages
+    formatted for latex in the journal paper
+    """
+    conn = sqlite3.connect(QB_QUESTION_DB)
+    c = conn.cursor()
+    rows = c.execute(f'select answer, page from questions order by random() limit {n}')
+    latex_format = r'{answer} & {page}\\ \hline'
+    for answer, page in rows:
+        answer = answer.replace('{', r'\{').replace('}', r'\}').replace('_', r'\_')
+        if page == '':
+            page = r'\textbf{No Mapping Found}'
+        else:
+            page = page.replace('{', r'\{').replace('}', r'\}').replace('_', r'\_')
+        print(latex_format.format(answer=answer, page=page))
 
 
 if __name__ == '__main__':
