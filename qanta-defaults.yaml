@@ -94,6 +94,19 @@ guessers:
     use_wiki: false
     wiki_title_replace_token: ''
     encoder_type: rnn # [rnn, dan]
+  VowpalWabbit:
+    class: qanta.guesser.vw.VWGuesser
+    luigi_dependency: qanta.pipeline.guesser.EmptyTask
+    enabled: false
+
+    multiclass_one_against_all: false
+    multiclass_online_trees: true
+    l2: 0.000001
+    l1: 0
+    passes: 20
+    learning_rate: 0.1
+    decay_learning_rate: 0.95
+    bits: 30
 n_guesses: 50
 use_pretrained_embeddings: true
 word_embeddings: data/external/deep/glove.6B.300d.txt
