@@ -26,6 +26,7 @@ class VWGuesser(AbstractGuesser):
         self.label_to_i = None
         self.i_to_label = None
         self.max_label = None
+        self.model_file = None
         guesser_conf = conf['guessers']['VowpalWabbit']
         self.multiclass_one_against_all = guesser_conf['multiclass_one_against_all']
         self.multiclass_online_trees = guesser_conf['multiclass_online_trees']
@@ -58,7 +59,7 @@ class VWGuesser(AbstractGuesser):
 
     def save(self, directory: str) -> None:
         model_path = os.path.join(directory, 'vw_guesser.model')
-        shell('cp /tmp/vw_guesser.model {}'.format(model_path))
+        shell(f'cp {self.model_file}.vw {model_path}')
         data = {
             'label_to_i': self.label_to_i,
             'i_to_label': self.i_to_label,
@@ -79,7 +80,9 @@ class VWGuesser(AbstractGuesser):
     @classmethod
     def load(cls, directory: str):
         model_path = os.path.join(directory, 'vw_guesser.model')
-        shell('cp {} /tmp/vw_guesser.model'.format(model_path))
+        with tempfile.NamedTemporaryFile(delete=True) as f:
+            model_file = f.name
+        shell(f'cp {model_path} {model_file}.vw')
         data_pickle_path = os.path.join(directory, 'vw_guesser.pickle')
         with open(data_pickle_path, 'rb') as f:
             data = pickle.load(f)
@@ -105,7 +108,7 @@ class VWGuesser(AbstractGuesser):
             for q in questions:
                 features = format_question(q)
                 f.write('1 |words {features}\n'.format(features=features))
-        shell(f'vw -t -i /tmp/vw_guesser.model -p {file_name}_preds -d {file_name}')
+        shell(f'vw -t -i {self.model_file}.vw -p {file_name}_preds -d {file_name}')
         predictions = []
         with open(f'{file_name}_preds') as f:
             for line in f:
@@ -146,13 +149,16 @@ class VWGuesser(AbstractGuesser):
         else:
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
+        with tempfile.NamedTemporaryFile(delete=True) as f:
+            self.model_file = f.name
+
         options = [
             'vw',
             '-k',
             f'{multiclass_flag}',
             f'{self.max_label}',
             f'-d {file_name}',
-            '-f /tmp/vw_guesser.model',
+            f'-f {self.model_file}.vw',
             '--loss_function logistic',
             '-c',
             f'--passes {self.passes}',
