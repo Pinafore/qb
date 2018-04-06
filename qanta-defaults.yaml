@@ -107,6 +107,8 @@ guessers:
     learning_rate: 0.1
     decay_learning_rate: 0.95
     bits: 30
+    ngrams: [1, 2]
+    skips: [1]
 n_guesses: 50
 use_pretrained_embeddings: true
 word_embeddings: data/external/deep/glove.6B.300d.txt
