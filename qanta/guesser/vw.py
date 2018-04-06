@@ -42,7 +42,7 @@ class VWGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls) -> List[str]:
-        return ['vw_guesser.model', 'vw_guesser.pickle']
+        return ['vw_guesser.vw', 'vw_guesser.pickle']
 
     def parameters(self):
         return {
@@ -57,7 +57,7 @@ class VWGuesser(AbstractGuesser):
         }
 
     def save(self, directory: str) -> None:
-        model_path = os.path.join(directory, 'vw_guesser.model')
+        model_path = os.path.join(directory, 'vw_guesser.vw')
         shell(f'cp {self.model_file}.vw {model_path}')
         data = {
             'label_to_i': self.label_to_i,
@@ -82,7 +82,7 @@ class VWGuesser(AbstractGuesser):
         with open(data_pickle_path, 'rb') as f:
             data = pickle.load(f)
         guesser = VWGuesser()
-        guesser.model_file = os.path.join(directory, 'vw_guesser.model')
+        guesser.model_file = os.path.join(directory, 'vw_guesser.vw')
         guesser.label_to_i = data['label_to_i']
         guesser.i_to_label = data['i_to_label']
         guesser.max_label = data['max_label']
@@ -104,7 +104,7 @@ class VWGuesser(AbstractGuesser):
             for q in questions:
                 features = format_question(q)
                 f.write(f'1 |words {features}\n')
-        shell(f'vw -t -i {self.model_file}.vw -p {file_name}_preds -d {file_name}')
+        shell(f'vw -t -i {self.model_file} -p {file_name}_preds -d {file_name}')
         predictions = []
         with open(f'{file_name}_preds') as f:
             for line in f:
