@@ -78,14 +78,11 @@ class VWGuesser(AbstractGuesser):
 
     @classmethod
     def load(cls, directory: str):
-        model_path = os.path.join(directory, 'vw_guesser.model')
-        with tempfile.NamedTemporaryFile(delete=True) as f:
-            model_file = f.name
-        shell(f'cp {model_path} {model_file}.vw')
         data_pickle_path = os.path.join(directory, 'vw_guesser.pickle')
         with open(data_pickle_path, 'rb') as f:
             data = pickle.load(f)
         guesser = VWGuesser()
+        guesser.model_file = os.path.join(directory, 'vw_guesser.model')
         guesser.label_to_i = data['label_to_i']
         guesser.i_to_label = data['i_to_label']
         guesser.max_label = data['max_label']
@@ -106,7 +103,7 @@ class VWGuesser(AbstractGuesser):
             file_name = f.name
             for q in questions:
                 features = format_question(q)
-                f.write('1 |words {features}\n'.format(features=features))
+                f.write(f'1 |words {features}\n')
         shell(f'vw -t -i {self.model_file}.vw -p {file_name}_preds -d {file_name}')
         predictions = []
         with open(f'{file_name}_preds') as f:
