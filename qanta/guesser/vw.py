@@ -1,4 +1,6 @@
 from typing import List, Tuple, Optional
+from pprint import pformat
+import tempfile
 import pickle
 import os
 import random
@@ -8,6 +10,10 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import shell
 from qanta.config import conf
+from qanta import qlogging
+
+
+log = qlogging.get(__name__)
 
 
 def format_question(text):
@@ -29,11 +35,10 @@ class VWGuesser(AbstractGuesser):
         self.learning_rate = guesser_conf['learning_rate']
         self.decay_learning_rate = guesser_conf['decay_learning_rate']
         self.bits = guesser_conf['bits']
+        self.ngrams = guesser_conf['ngrams']
+        self.skips = guesser_conf['skips']
         if not (self.multiclass_one_against_all != self.multiclass_online_trees):
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
-
-    def qb_dataset(self):
-        return QuizBowlDataset(guesser_train=True)
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -95,21 +100,23 @@ class VWGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        with open('/tmp/vw_test.txt', 'w') as f:
+        with tempfile.NamedTemporaryFile('w', delete=False) as f:
+            file_name = f.name
             for q in questions:
                 features = format_question(q)
                 f.write('1 |words {features}\n'.format(features=features))
-        shell('vw -t -i /tmp/vw_guesser.model -p /tmp/predictions.txt -d /tmp/vw_test.txt')
+        shell(f'vw -t -i /tmp/vw_guesser.model -p {file_name}_preds -d {file_name}')
         predictions = []
-        with open('/tmp/predictions.txt') as f:
+        with open(f'{file_name}_preds') as f:
             for line in f:
                 label = int(line)
                 predictions.append([(self.i_to_label[label], 0)])
         return predictions
 
     def train(self, training_data: TrainingData) -> None:
+        log.info(f'Config:\n{pformat(self.parameters())}')
         questions = training_data[0]
-        answers = set(training_data[1])
+        answers = training_data[1]
 
         x_data = []
         y_data = []
@@ -123,7 +130,8 @@ class VWGuesser(AbstractGuesser):
         self.i_to_label = {i: label for label, i in self.label_to_i.items()}
         self.max_label = len(self.label_to_i)
 
-        with open('/tmp/vw_train.txt', 'w') as f:
+        with tempfile.NamedTemporaryFile('w', delete=False) as f:
+            file_name = f.name
             zipped = list(zip(x_data, y_data))
             random.shuffle(zipped)
             for x, y in zipped:
@@ -138,11 +146,34 @@ class VWGuesser(AbstractGuesser):
         else:
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
-        shell('vw -k {multiclass_flag} {max_label} -d /tmp/vw_train.txt -f /tmp/vw_guesser.model --loss_function '
-              'logistic --ngram 1 --ngram 2 --skips 1 -c --passes {passes} -b {bits} '
-              '--l1 {l1} --l2 {l2} -l {learning_rate} --decay_learning_rate {decay_learning_rate}'.format(
-                    max_label=self.max_label,
-                    multiclass_flag=multiclass_flag, bits=self.bits,
-                    l1=self.l1, l2=self.l2, passes=self.passes,
-                    learning_rate=self.learning_rate, decay_learning_rate=self.decay_learning_rate
-                ))
+        options = [
+            'vw',
+            '-k',
+            f'{multiclass_flag}',
+            f'{self.max_label}',
+            f'-d {file_name}',
+            '-f /tmp/vw_guesser.model',
+            '--loss_function logistic',
+            '-c',
+            f'--passes {self.passes}',
+            f'-b {self.bits}',
+            f'-l {self.learning_rate}',
+            f'--decay_learning_rate {self.decay_learning_rate}'
+        ]
+
+        for n in self.ngrams:
+            options.append(f'--ngram {n}')
+
+        for n in self.skips:
+            options.append(f'--skips {n}')
+
+        if self.l1 != 0:
+            options.append(f'--l1 {self.l1}')
+
+        if self.l2 != 0:
+            options.append(f'--l2 {self.l2}')
+
+        command = ' '.join(options)
+        log.info(f'Running: {command}')
+
+        shell(command)
