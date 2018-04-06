@@ -6,7 +6,6 @@ import os
 import random
 import re
 from qanta.datasets.abstract import Answer, TrainingData, QuestionText
-from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import shell
 from qanta.config import conf
@@ -180,6 +179,6 @@ class VWGuesser(AbstractGuesser):
             options.append(f'--l2 {self.l2}')
 
         command = ' '.join(options)
-        log.info(f'Running: {command}')
+        log.info(f'Running:\n{command}')
 
         shell(command)
