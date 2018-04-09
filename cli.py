@@ -108,30 +108,6 @@ def guesser_pipeline(n_times, workers, guesser_qualified_class):
 
 
 @main.command()
-@click.option('--n_times', default=1)
-@click.option('--workers', default=1)
-@click.argument('guesser_qualified_class')
-@click.argument('sweep_file')
-def guesser_sweep(n_times, workers, guesser_qualified_class, sweep_file):
-    if path.exists('qanta.yaml'):
-        shell('mv qanta.yaml qanta-tmp.yaml')
-    with open(sweep_file) as f:
-        sweep_conf = yaml.load(f)
-    configurations = generate_configs(conf, sweep_conf)
-    log.info(f'Found {len(configurations)} parameter configurations to try')
-    for i, s_conf in enumerate(configurations):
-        log.info(f'Starting configuration run {i} / {len(configurations)}')
-        log.info(f'{pprint.pformat(s_conf)}')
-        with open('qanta.yaml', 'w') as f:
-            yaml.dump(s_conf, f)
-        run_guesser(n_times, workers, guesser_qualified_class)
-        log.info(f'Completed run {i} / {len(configurations)}')
-
-    if path.exists('qanta-tmp.yaml'):
-        shell('mv qanta-tmp.yaml qanta.yaml')
-
-
-@main.command()
 @click.argument('output_dir')
 def generate_additional_answer_mappings(output_dir):
     write_answer_map(output_dir)
