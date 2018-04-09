@@ -40,7 +40,7 @@ guessers:
       trigram_max_vocab_size: 50000
       random_seed: null
   qanta.guesser.elasticsearch.ElasticSearchGuesser:
-    - enabled: true
+    - enabled: false
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
       many_docs: false
       n_cores: 15

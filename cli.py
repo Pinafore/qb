@@ -4,19 +4,16 @@ CLI utilities for QANTA
 
 import json
 import sqlite3
-import pprint
 from os import path
 import click
 from sklearn.model_selection import train_test_split
-import yaml
 
 from qanta import qlogging
 from qanta.util.environment import ENVIRONMENT
 from qanta.datasets.quiz_bowl import QuestionDatabase, Question, QB_QUESTION_DB
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_open, shell
-from qanta.config import conf
-from qanta.hyperparam import generate_configs
+from qanta.hyperparam import expand_config
 from qanta.update_db import write_answer_map, merge_answer_mapping
 
 
@@ -142,6 +139,14 @@ def sample_answer_pages(n):
         else:
             page = page.replace('{', r'\{').replace('}', r'\}').replace('_', r'\_')
         print(latex_format.format(answer=answer, page=page))
+
+
+@main.command()
+@click.argument('base_file')
+@click.argument('hyper_file')
+@click.argument('output_file')
+def hyper_to_conf(base_file, hyper_file, output_file):
+    expand_config(base_file, hyper_file, output_file)
 
 
 if __name__ == '__main__':
