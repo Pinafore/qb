@@ -36,7 +36,8 @@ requirements = [
     'awscli',
     'pypandoc',
     'elasticsearch-dsl',
-    'chainer'
+    'chainer',
+    'py4j'
 ]
 
 

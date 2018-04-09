@@ -1,4 +1,3 @@
-import importlib
 import pickle
 import time
 
@@ -24,6 +23,7 @@ class TrainGuesser(Task):
     guesser_class = luigi.Parameter()  # type: str
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
+    config_num = luigi.IntParameter()  # type: int
 
     def requires(self):
         yield DownloadData()
@@ -38,10 +38,14 @@ class TrainGuesser(Task):
         start_time = time.time()
         guesser_instance.train(qb_dataset.training_data())
         end_time = time.time()
-        guesser_instance.save(AbstractGuesser.output_path(self.guesser_module, self.guesser_class, ''))
+        guesser_instance.save(AbstractGuesser.output_path(
+            self.guesser_module, self.guesser_class, self.config_num, ''
+        ))
         params = guesser_instance.parameters()
         params['training_time'] = end_time - start_time
-        params_path = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle')
+        params_path = AbstractGuesser.output_path(
+            self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
+        )
         with open(params_path, 'wb') as f:
             pickle.dump(params, f)
 
@@ -50,13 +54,17 @@ class TrainGuesser(Task):
         guesser_targets = [
             LocalTarget(file)
             for file in guesser_class.files(
-                AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
+                AbstractGuesser.output_path(self.guesser_module, self.guesser_class, self.config_num, '')
             )]
 
         return [
-            LocalTarget(AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')),
+            LocalTarget(AbstractGuesser.output_path(
+                self.guesser_module, self.guesser_class, self.config_num, ''
+            )),
             LocalTarget(
-                AbstractGuesser.output_path(self.guesser_module, self.guesser_class, 'guesser_params.pickle'))
+                AbstractGuesser.output_path(
+                    self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
+                ))
         ] + guesser_targets
 
 
@@ -65,6 +73,7 @@ class GenerateGuesses(Task):
     guesser_class = luigi.Parameter()  # type: str
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
+    config_num = luigi.IntParameter()  # type: int
     n_guesses = luigi.IntParameter(default=conf['n_guesses'])  # type: int
     fold = luigi.Parameter()  # type: str
 
@@ -73,12 +82,15 @@ class GenerateGuesses(Task):
             guesser_module=self.guesser_module,
             guesser_class=self.guesser_class,
             dependency_module=self.dependency_module,
-            dependency_class=self.dependency_class
+            dependency_class=self.dependency_class,
+            config_num=self.config_num
         )
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
-        guesser_directory = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
+        guesser_directory = AbstractGuesser.output_path(
+            self.guesser_module, self.guesser_class, self.config_num, ''
+        )
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
         if self.fold in {c.GUESSER_TRAIN_FOLD, c.GUESSER_DEV_FOLD}:
@@ -86,17 +98,18 @@ class GenerateGuesses(Task):
         else:
             word_skip = conf['buzzer_word_skip']
 
-        log.info('Generating and saving guesses for {} fold with word_skip={}...'.format(self.fold, word_skip))
+        log.info(f'Generating and saving guesses for {self.fold} fold with word_skip={word_skip}...')
         start_time = time.time()
         guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], word_skip=word_skip)
         end_time = time.time()
-        log.info('Guessing on {} fold took {}s, saving guesses...'.format(self.fold, end_time - start_time))
+        elapsed = end_time - start_time
+        log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
         guesser_class.save_guesses(guess_df, guesser_directory, [self.fold])
         log.info('Done saving guesses')
 
     def output(self):
         return LocalTarget(AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class,
+            self.guesser_module, self.guesser_class, self.config_num,
             'guesses_{}.pickle'.format(self.fold)
         ))
 
@@ -110,6 +123,7 @@ class GenerateAllGuesses(WrapperTask):
                     guesser_class=g_spec.guesser_class,
                     dependency_module=g_spec.dependency_module,
                     dependency_class=g_spec.dependency_class,
+                    config_num=g_spec.config_num,
                     fold=fold
                 )
 
@@ -119,6 +133,7 @@ class GuesserReport(Task):
     guesser_class = luigi.Parameter()  # type: str
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
+    config_num = luigi.IntParameter()  # type: int
 
     def requires(self):
         yield GenerateGuesses(
@@ -126,12 +141,15 @@ class GuesserReport(Task):
             guesser_class=self.guesser_class,
             dependency_module=self.dependency_module,
             dependency_class=self.dependency_class,
+            config_num=self.config_num,
             fold=c.GUESSER_DEV_FOLD
         )
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
-        guesser_directory = AbstractGuesser.output_path(self.guesser_module, self.guesser_class, '')
+        guesser_directory = AbstractGuesser.output_path(
+            self.guesser_module, self.guesser_class, self.config_num, ''
+        )
         guesser_instance = guesser_class()
         guesser_instance.create_report(guesser_directory)
 
@@ -139,10 +157,12 @@ class GuesserReport(Task):
         return [LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
+            self.config_num,
             'guesser_report.md')
         ), LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
+            self.config_num,
             'guesser_report.pickle'
         ))]
 
@@ -154,7 +174,8 @@ class AllSingleGuesserReports(WrapperTask):
                 guesser_module=g_spec.guesser_module,
                 guesser_class=g_spec.guesser_class,
                 dependency_module=g_spec.dependency_module,
-                dependency_class=g_spec.dependency_class
+                dependency_class=g_spec.dependency_class,
+                config_num=g_spec.config_num
             )
 
 
@@ -184,6 +205,7 @@ class GuesserExpo(WrapperTask):
                 guesser_class=g_spec.guesser_class,
                 dependency_module=g_spec.dependency_module,
                 dependency_class=g_spec.dependency_class,
+                config_num=g_spec.config_num,
                 fold='expo'
             )
 

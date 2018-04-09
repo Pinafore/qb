@@ -28,3 +28,4 @@ awscli
 pypandoc
 elasticsearch-dsl
 chainer
+py4j
