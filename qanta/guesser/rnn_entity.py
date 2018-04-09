@@ -699,10 +699,8 @@ class RnnEntityGuesser(AbstractGuesser):
         self.n_hidden_layers = guesser_conf['n_hidden_layers']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_triviaqa = guesser_conf['use_triviaqa']
-        self.use_tagme = guesser_conf['use_tagme']
         self.sm_dropout_prob = guesser_conf['sm_dropout_prob']
         self.sm_dropout_before_linear = guesser_conf['sm_dropout_before_linear']
-        self.n_tagme_sentences = guesser_conf['n_tagme_sentences']
         self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
         self.use_cove = guesser_conf['use_cove']
         self.variational_dropout_prob = guesser_conf['variational_dropout_prob']
@@ -804,16 +802,6 @@ class RnnEntityGuesser(AbstractGuesser):
             x_train_tokens.extend(w_x_train_text)
             y_train.extend(w_train_y)
             domain_train.extend([1 for _ in range(len(w_train_y))])
-
-        if self.use_tagme:
-            wiki_dataset = TagmeWikipediaDataset(n_examples=self.n_tagme_sentences)
-            wiki_train_data = wiki_dataset.training_data()
-            w_x_train_text, w_train_y, *_ = preprocess_dataset(
-                self.nlp, wiki_train_data, train_size=1, vocab=vocab, class_to_i=class_to_i, i_to_class=i_to_class
-            )
-            log.info(f'Adding {len(w_x_train_text)} Tagme Wikipedia sentences as training data')
-            x_train_tokens.extend(w_x_train_text)
-            y_train.extend(w_train_y)
 
         if self.use_triviaqa:
             tqa_dataset = TriviaQADataset(set(i_to_class))
@@ -1030,8 +1018,6 @@ class RnnEntityGuesser(AbstractGuesser):
                 'n_hidden_layers': self.n_hidden_layers,
                 'use_wiki': self.use_wiki,
                 'use_triviaqa': self.use_triviaqa,
-                'use_tagme': self.use_tagme,
-                'n_tagme_sentences': self.n_tagme_sentences,
                 'n_wiki_sentences': self.n_wiki_sentences,
                 'sm_dropout_prob': self.sm_dropout_prob,
                 'sm_dropout_before_linear': self.sm_dropout_before_linear,
@@ -1071,8 +1057,6 @@ class RnnEntityGuesser(AbstractGuesser):
         guesser.n_hidden_layers = params['n_hidden_layers']
         guesser.use_wiki = params['use_wiki']
         guesser.use_triviaqa = params['use_triviaqa']
-        guesser.use_tagme = params['use_tagme']
-        guesser.n_tagme_sentences = params['n_tagme_sentences']
         guesser.n_wiki_sentences = params['n_wiki_sentences']
         guesser.sm_dropout_prob = params['sm_dropout_prob']
         guesser.sm_dropout_before_linear = params['sm_dropout_before_linear']

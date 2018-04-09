@@ -99,10 +99,7 @@ class Question:
 
     def to_example(self, all_evidence: Optional[Dict[str, Dict[int, Any]]]=None) -> Tuple[List[QuestionText], Answer, Optional[Dict[str, Any]]]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
-        if all_evidence is not None and 'tagme' in all_evidence:
-            evidence = {'tagme': all_evidence['tagme'][self.qnum]}
-        else:
-            evidence = None
+        evidence = None
         return sentence_list, self.page, evidence
 
 
@@ -275,7 +272,7 @@ class QuestionDatabase:
 
 class QuizBowlDataset(AbstractDataset):
     def __init__(self, *, guesser_train=False, buzzer_train=False,
-                 qb_question_db: str=QB_QUESTION_DB, use_tagme_evidence=False) -> None:
+                 qb_question_db: str=QB_QUESTION_DB) -> None:
         """
         Initialize a new quiz bowl data set
         """
@@ -295,20 +292,11 @@ class QuizBowlDataset(AbstractDataset):
         if self.buzzer_train:
             self.training_folds.add(c.BUZZER_TRAIN_FOLD)
 
-        self.use_tagme_evidence = use_tagme_evidence
-        if self.use_tagme_evidence:
-            with open('output/tagme/tagme.pickle', 'rb') as f:
-                self.tagme_evidence = pickle.load(f)  # type: Optional[Dict[int, Any]]
-        else:
-            self.tagme_evidence = None  # type: Optional[Dict[int, Any]]
 
     def training_data(self) -> TrainingData:
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
-        if self.use_tagme_evidence:
-            all_evidence = {'tagme': self.tagme_evidence}  # type: Optional[Dict[str, Any]]
-        else:
-            all_evidence = None  # type: Optional[Dict[str, Any]]
+        all_evidence = None  # type: Optional[Dict[str, Any]]
 
         filtered_questions = all_questions\
             .filter(lambda q: q.fold in self.training_folds)\
