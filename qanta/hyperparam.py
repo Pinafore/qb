@@ -1,3 +1,5 @@
+import copy
+import json
 import yaml
 from sklearn.model_selection import ParameterGrid
 
@@ -33,10 +35,19 @@ def expand_config(base_file, hyper_file, output_file):
         parameter_list = list(ParameterGrid(param_grid))
         final_guessers[guesser] = parameter_list
 
-    for g in base_conf['guessers']:
+    final_conf = copy.deepcopy(base_conf)
+    for g in final_conf['guessers']:
         if g in final_guessers:
-            base_conf['guessers'][g] = final_guessers[g]
+            final_conf['guessers'][g] = copy.deepcopy(final_guessers[g])
+
+    # There is a bug in yaml.dump that doesn't handle outputting nested dicts/arrays correctly. I didn't want to debug
+    # So instead output to json then convert that to yaml
+    with open('/tmp/qanta-tmp.json', 'w') as f:
+        json.dump(final_conf, f)
+
+    with open('/tmp/qanta-tmp.json') as f:
+        conf = json.load(f)
 
     with open(output_file, 'w') as f:
-        yaml.dump(base_conf, f)
+        yaml.dump(conf, f)
 

@@ -47,13 +47,13 @@ Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
 
 
 class AbstractGuesser(metaclass=ABCMeta):
-    def __init__(self):
+    def __init__(self, config_num=0):
         """
         Abstract class representing a guesser. All abstract methods must be implemented. Class
         construction should be light and not load data since this is reserved for the
         AbstractGuesser.load method.
         """
-        pass
+        self.config_num = config_num
 
     def qb_dataset(self) -> QuizBowlDataset:
         return QuizBowlDataset(guesser_train=True)
