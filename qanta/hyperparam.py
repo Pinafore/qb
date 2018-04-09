@@ -1,32 +1,42 @@
-import copy
-from typing import Dict
+import yaml
 from sklearn.model_selection import ParameterGrid
 
 
-def generate_configs(original_conf: Dict, sweep_conf):
+def expand_config(base_file, hyper_file, output_file):
     """
     This is useful for taking the qanta.yaml config, a set of values to try for different hyper parameters, and
     generating a configuration representing each value in the parameter sweep
     """
+    with open(base_file) as f:
+        base_conf = yaml.load(f)
 
-    param_grid = {}
+    with open(hyper_file) as f:
+        hyper_conf = yaml.load(f)
 
-    for hp in sweep_conf['parameters']:
-        hp_name = '.'.join(hp['access'])
-        bound_values = []
-        for v in hp['values']:
-            bound_values.append((v, hp['access']))
-        param_grid[hp_name] = bound_values
+    all_base_guessers = base_conf['guessers']
+    final_guessers = {}
 
-    parameter_list = list(ParameterGrid(param_grid))
-    configurations = []
-    for param_spec in parameter_list:
-        new_conf = copy.deepcopy(original_conf)
-        for param_value, param_access in param_spec.values():
-            curr_obj = new_conf
-            for key in param_access[:-1]:
-                curr_obj = curr_obj[key]
-            curr_obj[param_access[-1]] = param_value
-        configurations.append(new_conf)
+    for guesser, params in hyper_conf['parameters'].items():
+        base_guesser_conf = all_base_guessers[guesser]
+        if len(base_guesser_conf) != 1:
+            raise ValueError('More than one configuration for parameter tuning base is invalid')
+        base_guesser_conf = base_guesser_conf[0]
 
-    return configurations
+        parameter_set = set(base_guesser_conf.keys()) | set(params.keys())
+        param_grid = {}
+        for p in parameter_set:
+            if p in params:
+                param_grid[p] = params[p]
+            else:
+                param_grid[p] = [base_guesser_conf[p]]
+
+        parameter_list = list(ParameterGrid(param_grid))
+        final_guessers[guesser] = parameter_list
+
+    for g in base_conf['guessers']:
+        if g in final_guessers:
+            base_conf['guessers'][g] = final_guessers[g]
+
+    with open(output_file, 'w') as f:
+        yaml.dump(base_conf, f)
+

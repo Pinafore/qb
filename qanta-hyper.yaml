@@ -1,16 +1,9 @@
 parameters:
   qanta.guesser.vw.VWGuesser:
-    - name: random_seed
-      values: [0, 1, 2, 3, 4]
-    - name: enabled
-      values: [true]
-    - name: l2
-      values: [0, .00001, .000001, .0000001]
-    - name: learning_rate
-      values: [.5, .1, .01, .001, .0001]
-    - name: ngrams
-      values: [[1, 2], [1]]
-    - name: skips
-      values: [[1], []]
-    - name: passes
-      values: [100]
+    random_seed: [0, 1, 2, 3, 4]
+    enabled: [true]
+    l2: [0, .00001, .000001, .0000001]
+    learning_rate: [.5, .1, .01, .001, .0001]
+    ngrams: [[1, 2], [1]]
+    skips: [[1], []]
+    passes: [100]
