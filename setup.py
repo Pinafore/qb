@@ -34,8 +34,6 @@ requirements = [
     'seaborn',
     'typing',
     'awscli',
-    'sqlalchemy',
-    'psycopg2',
     'pypandoc',
     'elasticsearch-dsl',
     'chainer'

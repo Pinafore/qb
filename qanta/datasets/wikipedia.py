@@ -1,12 +1,7 @@
 from typing import Set
-import random
-import pickle
-from collections import defaultdict
-import nltk
 
 from qanta.datasets.abstract import AbstractDataset, TrainingData
 from qanta.wikipedia.cached_wikipedia import Wikipedia, extract_wiki_sentences
-from qanta.util.io import safe_open
 
 
 class WikipediaDataset(AbstractDataset):
