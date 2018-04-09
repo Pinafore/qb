@@ -21,7 +21,7 @@ requirements = [
     'progressbar2',
     'boto3',
     'matplotlib',
-    'spacy',
+    'spacy==1.9',
     'pycountry',
     'flask',
     'dash',
@@ -30,7 +30,15 @@ requirements = [
     'dash-core-components',
     'plotly',
     'unidecode',
-    'pyyaml'
+    'pyyaml',
+    'seaborn',
+    'typing',
+    'awscli',
+    'sqlalchemy',
+    'psycopg2',
+    'pypandoc',
+    'elasticsearch-dsl',
+    'chainer'
 ]
 
 

@@ -39,7 +39,8 @@ GuesserSpec = NamedTuple('GuesserSpec', [
     ('dependency_module', Optional[str]),
     ('dependency_class', Optional[str]),
     ('guesser_module', str),
-    ('guesser_class', str)
+    ('guesser_class', str),
+    ('config_num', Optional[int])
 ])
 
 Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
@@ -433,7 +434,36 @@ class AbstractGuesser(metaclass=ABCMeta):
                     dependency_module = '.'.join(parts[:-1])
                     dependency_class = parts[-1]
 
-                enabled_guessers.append(GuesserSpec(dependency_module, dependency_class, guesser_module, guesser_class))
+                enabled_guessers.append(GuesserSpec(
+                    dependency_module, dependency_class, guesser_module, guesser_class, None
+                ))
+
+        return enabled_guessers
+
+
+    @staticmethod
+    def list_hyper_enabled_guessers() -> List[GuesserSpec]:
+        guessers = conf['guessers']
+        enabled_guessers = []
+        for g in guessers.values():
+            if g['enabled']:
+                guesser = g['class']
+                dependency = g['luigi_dependency']
+                parts = guesser.split('.')
+                guesser_module = '.'.join(parts[:-1])
+                guesser_class = parts[-1]
+
+                if dependency is None:
+                    dependency_module = None
+                    dependency_class = None
+                else:
+                    parts = dependency.split('.')
+                    dependency_module = '.'.join(parts[:-1])
+                    dependency_class = parts[-1]
+
+                enabled_guessers.append(GuesserSpec(
+                    dependency_module, dependency_class, guesser_module, guesser_class, None
+                ))
 
         return enabled_guessers
 
@@ -441,6 +471,11 @@ class AbstractGuesser(metaclass=ABCMeta):
     def output_path(guesser_module: str, guesser_class: str, file: str):
         guesser_path = '{}.{}'.format(guesser_module, guesser_class)
         return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, file))
+
+    @staticmethod
+    def output_hyper_path(guesser_module: str, guesser_class: str, config_num: int, file:str):
+        guesser_path = f'{guesser_module}.{guesser_class}'
+        return safe_path(os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, str(config_num), file))
 
     def web_api(self, host='0.0.0.0', port=5000, debug=False):
         from flask import Flask, jsonify, request

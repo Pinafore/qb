@@ -5,108 +5,111 @@ buzzer:
   n_cores: 16
   n_guesses: 50
 buzzer_word_skip: 2
-embedding_dimension: 300
 expo_questions: data/internal/expo/2016_hsnct.csv
-guesser_word_skip: -1
-guessers:
-  Dan:
-    batch_size: 512
-    class: qanta.guesser.dan.DanGuesser
-    enabled: false
-    gradient_clip: 0.25
-    lowercase: true
-    lr: 0.001
-    luigi_dependency: qanta.pipeline.guesser.EmptyTask
-    n_hidden_layers: 1
-    n_hidden_units: 1000
-    n_wiki_sentences: 5
-    nn_dropout: 0.265
-    sm_dropout: 0.158
-    use_wiki: false
-    wiki_title_replace_token: ''
-    combined_ngrams: true
-    unigrams: true
-    bigrams: false
-    trigrams: false
-    pooling: avg # [avg, max]
-    combined_max_vocab_size: 300000
-    unigram_max_vocab_size: null
-    bigram_max_vocab_size: 50000
-    trigram_max_vocab_size: 50000
-  ElasticSearch:
-    class: qanta.guesser.elasticsearch.ElasticSearchGuesser
-    enabled: true
-    luigi_dependency: qanta.pipeline.guesser.EmptyTask
-    many_docs: false
-    n_cores: 15
-    normalize_score_by_length: true
-    qb_boost: 1
-    use_all_wikipedia: false
-    use_qb: true
-    use_wiki: true
-    wiki_boost: 1
-  EntityRNN:
-    batch_size: 256
-    bidirectional: true
-    class: qanta.guesser.rnn_entity.RnnEntityGuesser
-    dropout_prob: 0.25
-    enabled: false
-    features:
-    - word
-    word_mention_tokens: false
-    learning_rate: 0.001
-    luigi_dependency: qanta.pipeline.guesser.EmptyTask
-    max_epochs: 100
-    max_grad_norm: 1.0
-    n_hidden_layers: 1
-    n_hidden_units: 1000
-    n_wiki_sentences: 10
-    rnn_type: gru
-    sm_dropout_before_linear: false
-    sm_dropout_prob: 0.15
-    use_cove: false
-    use_locked_dropout: false
-    use_triviaqa: false
-    use_wiki: false
-    wiki_loss_coefficient: 1.0
-    variational_dropout_prob: 0.25
-    weight_decay: 0
-  Tfidf:
-    class: qanta.guesser.tfidf.TfidfGuesser
-    enabled: false
-    luigi_dependency: qanta.pipeline.guesser.EmptyTask
-  Tied:
-    batch_size: 512
-    class: qanta.guesser.tied.TiedGuesser
-    enabled: false
-    gradient_clip: 0.25
-    lowercase: true
-    lr: 0.001
-    luigi_dependency: qanta.pipeline.guesser.EmptyTask
-    n_hidden_layers: 1
-    n_hidden_units: 1000
-    n_wiki_sentences: 5
-    nn_dropout: 0.265
-    sm_dropout: 0.158
-    tied_l2: 0.0
-    use_wiki: false
-    wiki_title_replace_token: ''
-    encoder_type: rnn # [rnn, dan]
-  VowpalWabbit:
-    class: qanta.guesser.vw.VWGuesser
-    luigi_dependency: qanta.pipeline.guesser.EmptyTask
-    enabled: false
 
-    multiclass_one_against_all: false
-    multiclass_online_trees: true
-    l2: 0
-    l1: 0
-    passes: 100
-    learning_rate: 0.1
-    decay_learning_rate: 0.97
-    bits: 30
-    ngrams: [1, 2]
-    skips: [1]
+guesser_word_skip: -1
 n_guesses: 50
+
 use_pretrained_embeddings: true
 word_embeddings: data/external/deep/glove.6B.300d.txt
+embedding_dimension: 300
+
+guessers:
+  qanta.guesser.dan.DanGuesser:
+    - batch_size: 512
+      enabled: false
+      gradient_clip: 0.25
+      lowercase: true
+      lr: 0.001
+      luigi_dependency: qanta.pipeline.guesser.EmptyTask
+      n_hidden_layers: 1
+      n_hidden_units: 1000
+      n_wiki_sentences: 5
+      nn_dropout: 0.265
+      sm_dropout: 0.158
+      use_wiki: false
+      wiki_title_replace_token: ''
+      combined_ngrams: true
+      unigrams: true
+      bigrams: false
+      trigrams: false
+      pooling: avg # [avg, max]
+      combined_max_vocab_size: 300000
+      unigram_max_vocab_size: null
+      bigram_max_vocab_size: 50000
+      trigram_max_vocab_size: 50000
+      random_seed: null
+  qanta.guesser.elasticsearch.ElasticSearchGuesser:
+    - enabled: true
+      luigi_dependency: qanta.pipeline.guesser.EmptyTask
+      many_docs: false
+      n_cores: 15
+      normalize_score_by_length: true
+      qb_boost: 1
+      use_all_wikipedia: false
+      use_qb: true
+      use_wiki: true
+      wiki_boost: 1
+      random_seed: null
+  qanta.guesser.rnn_entity.RnnEntityGUesser:
+    - batch_size: 256
+      bidirectional: true
+      dropout_prob: 0.25
+      enabled: false
+      features:
+      - word
+      word_mention_tokens: false
+      learning_rate: 0.001
+      luigi_dependency: qanta.pipeline.guesser.EmptyTask
+      max_epochs: 100
+      max_grad_norm: 1.0
+      n_hidden_layers: 1
+      n_hidden_units: 1000
+      n_wiki_sentences: 10
+      rnn_type: gru
+      sm_dropout_before_linear: false
+      sm_dropout_prob: 0.15
+      use_cove: false
+      use_locked_dropout: false
+      use_triviaqa: false
+      use_wiki: false
+      wiki_loss_coefficient: 1.0
+      variational_dropout_prob: 0.25
+      weight_decay: 0
+      random_seed: null
+  qanta.guesser.tfidf.TfidfGuesser:
+    - enabled: false
+      luigi_dependency: qanta.pipeline.guesser.EmptyTask
+      random_seed: null
+  qanta.guesser.tied.TiedGuesser:
+    - batch_size: 512
+      enabled: false
+      gradient_clip: 0.25
+      lowercase: true
+      lr: 0.001
+      luigi_dependency: qanta.pipeline.guesser.EmptyTask
+      n_hidden_layers: 1
+      n_hidden_units: 1000
+      n_wiki_sentences: 5
+      nn_dropout: 0.265
+      sm_dropout: 0.158
+      tied_l2: 0.0
+      use_wiki: false
+      wiki_title_replace_token: ''
+      encoder_type: rnn # [rnn, dan]
+      random_seed: null
+  qanta.guesser.vw.VWGuesser:
+    - luigi_dependency: qanta.pipeline.guesser.EmptyTask
+      enabled: false
+
+      multiclass_one_against_all: false
+      multiclass_online_trees: true
+      l2: 0.000001
+      l1: 0
+      passes: 20
+      learning_rate: 0.1
+      decay_learning_rate: 0.95
+      bits: 30
+      ngrams: [1, 2]
+      skips: [1]
+      random_seed: null
