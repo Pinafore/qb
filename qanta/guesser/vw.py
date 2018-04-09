@@ -20,13 +20,13 @@ def format_question(text):
 
 
 class VWGuesser(AbstractGuesser):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, config_num=0):
+        super().__init__(config_num=config_num)
         self.label_to_i = None
         self.i_to_label = None
         self.max_label = None
         self.model_file = None
-        guesser_conf = conf['guessers']['VowpalWabbit']
+        guesser_conf = conf['guessers']['qanta.guesser.vw.VWGuesser'][self.config_num]
         self.multiclass_one_against_all = guesser_conf['multiclass_one_against_all']
         self.multiclass_online_trees = guesser_conf['multiclass_online_trees']
         self.l1 = guesser_conf['l1']
@@ -37,6 +37,7 @@ class VWGuesser(AbstractGuesser):
         self.bits = guesser_conf['bits']
         self.ngrams = guesser_conf['ngrams']
         self.skips = guesser_conf['skips']
+        self.random_seed = guesser_conf['random_seed']
         if not (self.multiclass_one_against_all != self.multiclass_online_trees):
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
@@ -53,7 +54,8 @@ class VWGuesser(AbstractGuesser):
             'passes': self.passes,
             'learning_rate': self.learning_rate,
             'decay_learning_rate': self.decay_learning_rate,
-            'bits': self.bits
+            'bits': self.bits,
+            'random_seed': self.random_seed
         }
 
     def save(self, directory: str) -> None:
@@ -70,7 +72,9 @@ class VWGuesser(AbstractGuesser):
             'passes': self.passes,
             'learning_rate': self.learning_rate,
             'decay_learning_rate': self.decay_learning_rate,
-            'bits': self.bits
+            'bits': self.bits,
+            'config_num': self.config_num,
+            'random_seed': self.random_seed
         }
         data_pickle_path = os.path.join(directory, 'vw_guesser.pickle')
         with open(data_pickle_path, 'wb') as f:
@@ -82,6 +86,7 @@ class VWGuesser(AbstractGuesser):
         with open(data_pickle_path, 'rb') as f:
             data = pickle.load(f)
         guesser = VWGuesser()
+        guesser.config_num = data['config_num']
         guesser.model_file = os.path.join(directory, 'vw_guesser.vw')
         guesser.label_to_i = data['label_to_i']
         guesser.i_to_label = data['i_to_label']
@@ -94,6 +99,7 @@ class VWGuesser(AbstractGuesser):
         guesser.learning_rate = data['learning_rate']
         guesser.decay_learning_rate = data['decay_learning_rate']
         guesser.bits = data['bits']
+        guesser.random_seed = data['random_seed']
         return guesser
 
     def guess(self,
@@ -160,7 +166,8 @@ class VWGuesser(AbstractGuesser):
             f'--passes {self.passes}',
             f'-b {self.bits}',
             f'-l {self.learning_rate}',
-            f'--decay_learning_rate {self.decay_learning_rate}'
+            f'--decay_learning_rate {self.decay_learning_rate}',
+            f'--random_seed {self.random_seed}'
         ]
 
         for n in self.ngrams:
