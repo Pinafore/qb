@@ -60,14 +60,12 @@ guessers:
     max_grad_norm: 1.0
     n_hidden_layers: 1
     n_hidden_units: 1000
-    n_tagme_sentences: 20
     n_wiki_sentences: 10
     rnn_type: gru
     sm_dropout_before_linear: false
     sm_dropout_prob: 0.15
     use_cove: false
     use_locked_dropout: false
-    use_tagme: false
     use_triviaqa: false
     use_wiki: false
     wiki_loss_coefficient: 1.0
