@@ -39,7 +39,6 @@ def create_save_model(model):
     return save_model
 
 
-
 qb_patterns = {
     '\n',
     ', for 10 points,',
@@ -232,30 +231,31 @@ class DanModel(nn.Module):
 
 
 class DanGuesser(AbstractGuesser):
-    def __init__(self):
-        super(DanGuesser, self).__init__()
-        guesser_conf = conf['guessers']['Dan']
-        self.gradient_clip = guesser_conf['gradient_clip']
-        self.n_hidden_units = guesser_conf['n_hidden_units']
-        self.n_hidden_layers = guesser_conf['n_hidden_layers']
-        self.lr = guesser_conf['lr']
-        self.nn_dropout = guesser_conf['nn_dropout']
-        self.sm_dropout = guesser_conf['sm_dropout']
-        self.batch_size = guesser_conf['batch_size']
-        self.use_wiki = guesser_conf['use_wiki']
-        self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
-        self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
-        self.lowercase = guesser_conf['lowercase']
+    def __init__(self, config_num):
+        super(DanGuesser, self).__init__(config_num)
+        if self.config_num is not None:
+            guesser_conf = conf['guessers']['Dan'][self.config_num]
+            self.gradient_clip = guesser_conf['gradient_clip']
+            self.n_hidden_units = guesser_conf['n_hidden_units']
+            self.n_hidden_layers = guesser_conf['n_hidden_layers']
+            self.lr = guesser_conf['lr']
+            self.nn_dropout = guesser_conf['nn_dropout']
+            self.sm_dropout = guesser_conf['sm_dropout']
+            self.batch_size = guesser_conf['batch_size']
+            self.use_wiki = guesser_conf['use_wiki']
+            self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
+            self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
+            self.lowercase = guesser_conf['lowercase']
 
-        self.combined_ngrams = guesser_conf['combined_ngrams']
-        self.unigrams = guesser_conf['unigrams']
-        self.bigrams = guesser_conf['bigrams']
-        self.trigrams = guesser_conf['trigrams']
-        self.combined_max_vocab_size = guesser_conf['combined_max_vocab_size']
-        self.unigram_max_vocab_size = guesser_conf['unigram_max_vocab_size']
-        self.bigram_max_vocab_size = guesser_conf['bigram_max_vocab_size']
-        self.trigram_max_vocab_size = guesser_conf['trigram_max_vocab_size']
-        self.pooling = guesser_conf['pooling']
+            self.combined_ngrams = guesser_conf['combined_ngrams']
+            self.unigrams = guesser_conf['unigrams']
+            self.bigrams = guesser_conf['bigrams']
+            self.trigrams = guesser_conf['trigrams']
+            self.combined_max_vocab_size = guesser_conf['combined_max_vocab_size']
+            self.unigram_max_vocab_size = guesser_conf['unigram_max_vocab_size']
+            self.bigram_max_vocab_size = guesser_conf['bigram_max_vocab_size']
+            self.trigram_max_vocab_size = guesser_conf['trigram_max_vocab_size']
+            self.pooling = guesser_conf['pooling']
 
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
