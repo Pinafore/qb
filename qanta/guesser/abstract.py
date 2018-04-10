@@ -379,7 +379,8 @@ class AbstractGuesser(metaclass=ABCMeta):
             pickle.dump({
                 'dev_accuracy': dev_summary_accuracy,
                 'guesser_name': self.display_name(),
-                'guesser_params': params
+                'guesser_params': params,
+                'directory': directory
             }, f)
 
         md_output = safe_path(os.path.join(directory, 'guesser_report.md'))
@@ -446,6 +447,14 @@ class AbstractGuesser(metaclass=ABCMeta):
         return safe_path(os.path.join(
             c.GUESSER_TARGET_PREFIX, guesser_path, str(config_num), file
         ))
+
+    @staticmethod
+    def reporting_path(guesser_module: str, guesser_class: str, config_num: int, file: str):
+        guesser_path = '{}.{}'.format(guesser_module, guesser_class)
+        return safe_path(os.path.join(
+            c.GUESSER_TARGET_PREFIX, guesser_path, str(config_num), file
+        ))
+
 
     def web_api(self, host='0.0.0.0', port=5000, debug=False):
         from flask import Flask, jsonify, request
