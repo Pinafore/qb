@@ -150,17 +150,49 @@ def sample_answer_pages(n):
 def hyper_to_conf(base_file, hyper_file, output_file):
     expand_config(base_file, hyper_file, output_file)
 
+
+DPART_QOS = ['batch', 'deep']
+GPU_QOS = ['gpu-short', 'gpu-medium', 'gpu-long', 'gpu-epic']
+QOS = DPART_QOS + GPU_QOS
+QOS_MAX_WALL = {
+    'batch': '1-00:00:00',
+    'deep': '12:00:00',
+    'gpu-short': '02:00:00',
+    'gpu-medium': '1-00:00:00',
+    'gpu-long': '4-00:00:00',
+    'gpu-epic': '10-00:00:00'
+}
+
+
 @main.command()
-@click.option('--task', default='GuesserPerforamnce')
+@click.option('--task', default='GuesserPerformance')
+@click.option('--qos', default='batch', type=click.Choice(QOS))
+@click.option('--partition', default='dpart', type=click.Choice(['dpart', 'gpu']))
+@click.option('--mem-per-cpu', default='12g')
 @click.argument('output_dir')
-def generate_guesser_slurm(task, output_dir):
+def generate_guesser_slurm(task, qos, partition, output_dir, mem_per_cpu):
     env = Environment(loader=PackageLoader('qanta', 'slurm/templates'))
     template = env.get_template('guesser-luigi-template.sh')
     enabled_guessers = list(AbstractGuesser.list_enabled_guessers())
+    max_time = QOS_MAX_WALL[qos]
+    if partition == 'gpu':
+        gres = 'gpu:1'
+    else:
+        gres = None
+
     for i, gs in enumerate(enabled_guessers):
         script = template.render({
-            'gs': gs,
-            'task': task
+            'task': task,
+            'guesser_module': gs.guesser_module,
+            'guesser_class': gs.guesser_class,
+            'dependency_module': gs.dependency_module,
+            'dependency_class': gs.dependency_class,
+            'config_num': gs.config_num,
+            'partition': partition,
+            'qos': qos,
+            'mem_per_cpu': mem_per_cpu,
+            'max_time': max_time,
+            'gres': gres
         })
         slurm_file = path.join(output_dir, f'slurm-{i}.sh')
         with safe_open(slurm_file, 'w') as f:
@@ -172,7 +204,6 @@ def generate_guesser_slurm(task, output_dir):
     })
     with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
         f.write(master_script)
-
 
 
 if __name__ == '__main__':
