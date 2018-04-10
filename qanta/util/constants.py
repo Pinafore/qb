@@ -72,6 +72,7 @@ SENTENCE_STATS = 'output/guesser/sentence_stats.pickle'
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 GUESSER_TARGET_PREFIX = 'output/guesser'
+GUESSER_REPORTING_PREFIX = 'output/reporting/guesser'
 
 QB_SOURCE_LOCATION = 'data/internal/source'
 

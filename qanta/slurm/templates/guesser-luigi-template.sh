@@ -7,7 +7,7 @@
 
 set -x
 
-srun luigi --module qanta.pipeline.guesser --workers 1 GuesserReport \
+srun luigi --module qanta.pipeline.guesser --workers 1 {{ task }} \
   --guesser-module {{ gs.guesser_module }} --guesser-class {{ gs.guesser_class}} \
   --dependency-module {{ gs.dependency_module }} --dependency-class {{ gs.dependency_class }} \
   --config-num {{ gs.config_num }}

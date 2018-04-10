@@ -151,14 +151,16 @@ def hyper_to_conf(base_file, hyper_file, output_file):
     expand_config(base_file, hyper_file, output_file)
 
 @main.command()
+@click.option('--task', default='GuesserPerforamnce')
 @click.argument('output_dir')
-def generate_guesser_slurm(output_dir):
+def generate_guesser_slurm(task, output_dir):
     env = Environment(loader=PackageLoader('qanta', 'slurm/templates'))
     template = env.get_template('guesser-luigi-template.sh')
     enabled_guessers = list(AbstractGuesser.list_enabled_guessers())
     for i, gs in enumerate(enabled_guessers):
         script = template.render({
-            'gs': gs
+            'gs': gs,
+            'task': task
         })
         slurm_file = path.join(output_dir, f'slurm-{i}.sh')
         with safe_open(slurm_file, 'w') as f:

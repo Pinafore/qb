@@ -6,6 +6,7 @@ from luigi import LocalTarget, Task, WrapperTask
 
 from qanta.config import conf
 from qanta.util import constants as c
+from qanta.util.io import shell
 from qanta.guesser.abstract import AbstractGuesser, n_guesser_report, get_class
 from qanta.pipeline.preprocess import DownloadData
 from qanta import qlogging
@@ -165,6 +166,60 @@ class GuesserReport(Task):
             self.config_num,
             'guesser_report.pickle'
         ))]
+
+
+class GuesserPerformance(Task):
+    guesser_module = luigi.Parameter()  # type: str
+    guesser_class = luigi.Parameter()  # type: str
+    dependency_module = luigi.Parameter()  # type: str
+    dependency_class = luigi.Parameter()  # type: str
+    config_num = luigi.IntParameter()  # type: int
+
+    def requires(self):
+        yield GenerateGuesses(
+            guesser_module=self.guesser_module,
+            guesser_class=self.guesser_class,
+            dependency_module=self.dependency_module,
+            dependency_class=self.dependency_class,
+            config_num=self.config_num,
+            fold=c.GUESSER_DEV_FOLD
+        )
+
+    def run(self):
+        guesser_class = get_class(self.guesser_module, self.guesser_class)
+        reporting_directory = AbstractGuesser.reporting_path(
+            self.guesser_module, self.guesser_class, self.config_num, ''
+        )
+        guesser_instance = guesser_class()
+        guesser_instance.create_report(reporting_directory)
+
+        # In the cases of huge parameter sweeps on SLURM its easy to accidentally run out of /fs/ storage.
+        # Since we only care about the results we can get them, then delete the models. We can use the regular
+        # GuesserReport to preserve the model
+        guesser_directory = AbstractGuesser.reporting_path(
+            self.guesser_module, self.guesser_class, self.config_num, ''
+        )
+        shell(f'rm -rf {guesser_directory}')
+
+    def output(self):
+        return LocalTarget(AbstractGuesser.reporting_path(
+            self.guesser_module,
+            self.guesser_class,
+            self.config_num,
+            'guesser_report.pickle'
+        ))
+
+
+class AllGuesserPerformance(WrapperTask):
+    def requires(self):
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            yield GuesserPerformance(
+                guesser_module=g_spec.guesser_module,
+                guesser_class=g_spec.guesser_class,
+                dependency_module=g_spec.dependency_module,
+                dependency_class=g_spec.dependency_class,
+                config_num=g_spec.config_num
+            )
 
 
 class AllSingleGuesserReports(WrapperTask):
