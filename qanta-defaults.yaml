@@ -109,7 +109,7 @@ guessers:
       passes: 20
       learning_rate: 0.1
       decay_learning_rate: 0.95
-      bits: 30
+      bits: 29
       ngrams: [1, 2]
       skips: [1]
       random_seed: null

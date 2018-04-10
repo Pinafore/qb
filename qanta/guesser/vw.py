@@ -7,7 +7,7 @@ import random
 import re
 from qanta.datasets.abstract import Answer, TrainingData, QuestionText
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.io import shell
+from qanta.util.io import shell, safe_path
 from qanta.config import conf
 from qanta import qlogging
 
@@ -59,7 +59,7 @@ class VWGuesser(AbstractGuesser):
         }
 
     def save(self, directory: str) -> None:
-        model_path = os.path.join(directory, 'vw_guesser.vw')
+        model_path = safe_path(os.path.join(directory, 'vw_guesser.vw'))
         shell(f'cp {self.model_file}.vw {model_path}')
         data = {
             'label_to_i': self.label_to_i,

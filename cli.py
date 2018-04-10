@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 CLI utilities for QANTA
 """
@@ -7,6 +8,7 @@ import sqlite3
 from os import path
 import click
 from sklearn.model_selection import train_test_split
+from jinja2 import Environment, PackageLoader
 
 from qanta import qlogging
 from qanta.util.environment import ENVIRONMENT
@@ -147,6 +149,28 @@ def sample_answer_pages(n):
 @click.argument('output_file')
 def hyper_to_conf(base_file, hyper_file, output_file):
     expand_config(base_file, hyper_file, output_file)
+
+@main.command()
+@click.argument('output_dir')
+def generate_guesser_slurm(output_dir):
+    env = Environment(loader=PackageLoader('qanta', 'slurm/templates'))
+    template = env.get_template('guesser-luigi-template.sh')
+    enabled_guessers = list(AbstractGuesser.list_enabled_guessers())
+    for i, gs in enumerate(enabled_guessers):
+        script = template.render({
+            'gs': gs
+        })
+        slurm_file = path.join(output_dir, f'slurm-{i}.sh')
+        with safe_open(slurm_file, 'w') as f:
+            f.write(script)
+
+    master_template = env.get_template('guesser-master-template.sh')
+    master_script = master_template.render({
+        'script_list': [path.join(output_dir, f'slurm-{i}.sh') for i in range(len(enabled_guessers))]
+    })
+    with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
+        f.write(master_script)
+
 
 
 if __name__ == '__main__':
