@@ -47,11 +47,16 @@ Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
 
 
 class AbstractGuesser(metaclass=ABCMeta):
-    def __init__(self, config_num=0):
+    def __init__(self, config_num: Optional[int]):
         """
         Abstract class representing a guesser. All abstract methods must be implemented. Class
         construction should be light and not load data since this is reserved for the
         AbstractGuesser.load method.
+
+        :param config_num: Required parameter saying which configuration of the guesser to use or explicitly not
+            requesting one by passing None. If it is None implementors should not read the guesser config, otherwise
+            read the appropriate configuration. This is a positional argument to force all implementors to fail fast
+            rather than implicitly
         """
         self.config_num = config_num
 

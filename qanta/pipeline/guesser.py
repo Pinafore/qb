@@ -34,7 +34,7 @@ class TrainGuesser(Task):
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
-        guesser_instance = guesser_class(config_num=self.config_num)  # type: AbstractGuesser
+        guesser_instance = guesser_class(self.config_num)  # type: AbstractGuesser
         qb_dataset = guesser_instance.qb_dataset()
         start_time = time.time()
         guesser_instance.train(qb_dataset.training_data())
