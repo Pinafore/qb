@@ -457,7 +457,7 @@ class AbstractGuesser(metaclass=ABCMeta):
     def reporting_path(guesser_module: str, guesser_class: str, config_num: int, file: str):
         guesser_path = '{}.{}'.format(guesser_module, guesser_class)
         return safe_path(os.path.join(
-            c.GUESSER_TARGET_PREFIX, guesser_path, str(config_num), file
+            c.GUESSER_REPORTING_PREFIX, guesser_path, str(config_num), file
         ))
 
 
