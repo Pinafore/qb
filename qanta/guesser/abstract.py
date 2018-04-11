@@ -22,7 +22,7 @@ from qanta.datasets.abstract import TrainingData, QuestionText, Answer
 from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
 from qanta.config import conf
 from qanta.util import constants as c
-from qanta.util.io import safe_path
+from qanta.util.io import safe_path, safe_open
 from qanta import qlogging
 
 
@@ -294,7 +294,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         return guess_score_map
 
     def create_report(self, directory: str):
-        with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
+        with safe_open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
             params = pickle.load(f)
         dev_guesses = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
 

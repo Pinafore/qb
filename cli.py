@@ -168,7 +168,7 @@ QOS_MAX_WALL = {
 @click.option('--task', default='GuesserPerformance')
 @click.option('--qos', default='batch', type=click.Choice(QOS))
 @click.option('--partition', default='dpart', type=click.Choice(['dpart', 'gpu']))
-@click.option('--mem-per-cpu', default='13g')
+@click.option('--mem-per-cpu', default='14g')
 @click.argument('output_dir')
 def generate_guesser_slurm(task, qos, partition, output_dir, mem_per_cpu):
     env = Environment(loader=PackageLoader('qanta', 'slurm/templates'))

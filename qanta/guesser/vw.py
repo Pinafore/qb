@@ -106,7 +106,11 @@ class VWGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        with tempfile.NamedTemporaryFile('w', delete=False) as f:
+        if os.path.isdir('/scratch0'):
+            temp_dir = '/scratch0'
+        else:
+            temp_dir = '/tmp'
+        with tempfile.NamedTemporaryFile('w', delete=False, dir=temp_dir) as f:
             file_name = f.name
             for q in questions:
                 features = format_question(q)
@@ -117,7 +121,7 @@ class VWGuesser(AbstractGuesser):
             for line in f:
                 label = int(line)
                 predictions.append([(self.i_to_label[label], 0)])
-        shell(f'{file_name}.preds {file_name}')
+        shell(f'rm -f {file_name}.preds {file_name}')
         return predictions
 
     def train(self, training_data: TrainingData) -> None:
@@ -190,4 +194,4 @@ class VWGuesser(AbstractGuesser):
         try:
             shell(command)
         finally:
-            shell(f'rm {file_name} {file_name}.cache')
+            shell(f'rm -f {file_name} {file_name}.cache')
