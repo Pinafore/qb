@@ -106,7 +106,9 @@ class VWGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        if os.path.isdir('/scratch0'):
+        if os.path.isdir('/fs/clip-quiz/entilzha/scratch'):
+            temp_dir = '/fs/clip-quiz/entilzha/scratch'
+        elif os.path.isdir('/scratch0'):
             temp_dir = '/scratch0'
         else:
             temp_dir = '/tmp'
@@ -141,7 +143,14 @@ class VWGuesser(AbstractGuesser):
         self.i_to_label = {i: label for label, i in self.label_to_i.items()}
         self.max_label = len(self.label_to_i)
 
-        with tempfile.NamedTemporaryFile('w', delete=False) as f:
+        if os.path.isdir('/fs/clip-quiz/entilzha/scratch'):
+            temp_dir = '/fs/clip-quiz/entilzha/scratch'
+        elif os.path.isdir('/scratch0'):
+            temp_dir = '/scratch0'
+        else:
+            temp_dir = '/tmp'
+
+        with tempfile.NamedTemporaryFile('w', delete=False, dir=temp_dir) as f:
             file_name = f.name
             zipped = list(zip(x_data, y_data))
             random.shuffle(zipped)
@@ -157,7 +166,7 @@ class VWGuesser(AbstractGuesser):
         else:
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
-        with tempfile.NamedTemporaryFile(delete=True) as f:
+        with tempfile.NamedTemporaryFile(delete=True, dir=temp_dir) as f:
             self.model_file = f.name
 
         options = [
