@@ -61,7 +61,8 @@ class VWGuesser(AbstractGuesser):
 
     def save(self, directory: str) -> None:
         model_path = safe_path(os.path.join(directory, 'vw_guesser.vw'))
-        shell(f'cp {self.model_file}.vw {model_path}')
+        shell(f'mv {self.model_file}.vw {model_path}')
+        self.model_file = model_path
         data = {
             'label_to_i': self.label_to_i,
             'i_to_label': self.i_to_label,
@@ -116,6 +117,7 @@ class VWGuesser(AbstractGuesser):
             for line in f:
                 label = int(line)
                 predictions.append([(self.i_to_label[label], 0)])
+        shell(f'{file_name}.preds {file_name}')
         return predictions
 
     def train(self, training_data: TrainingData) -> None:
@@ -185,4 +187,7 @@ class VWGuesser(AbstractGuesser):
         command = ' '.join(options)
         log.info(f'Running:\n{command}')
 
-        shell(command)
+        try:
+            shell(command)
+        finally:
+            shell(f'rm {file_name} {file_name}.cache')

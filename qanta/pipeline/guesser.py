@@ -151,7 +151,7 @@ class GuesserReport(Task):
         guesser_directory = AbstractGuesser.output_path(
             self.guesser_module, self.guesser_class, self.config_num, ''
         )
-        guesser_instance = guesser_class()
+        guesser_instance = guesser_class(self.config_num)
         guesser_instance.create_report(guesser_directory)
 
     def output(self):
@@ -190,7 +190,7 @@ class GuesserPerformance(Task):
         reporting_directory = AbstractGuesser.reporting_path(
             self.guesser_module, self.guesser_class, self.config_num, ''
         )
-        guesser_instance = guesser_class()
+        guesser_instance = guesser_class(self.config_num)
         guesser_instance.create_report(reporting_directory)
 
         # In the cases of huge parameter sweeps on SLURM its easy to accidentally run out of /fs/ storage.
