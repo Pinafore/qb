@@ -190,8 +190,6 @@ class GuesserPerformance(Task):
         reporting_directory = AbstractGuesser.reporting_path(
             self.guesser_module, self.guesser_class, self.config_num, ''
         )
-        guesser_instance = guesser_class(self.config_num)
-        guesser_instance.create_report(reporting_directory)
 
         # In the cases of huge parameter sweeps on SLURM its easy to accidentally run out of /fs/ storage.
         # Since we only care about the results we can get them, then delete the models. We can use the regular
@@ -199,15 +197,36 @@ class GuesserPerformance(Task):
         guesser_directory = AbstractGuesser.reporting_path(
             self.guesser_module, self.guesser_class, self.config_num, ''
         )
+
+        param_path = AbstractGuesser.output_path(
+            self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
+        )
+
+        log.info(f'Running: "cp {param_path} {reporting_directory}"')
+        shell(f'cp {param_path} {reporting_directory}')
+
+
+        guesser_instance = guesser_class(self.config_num)
+        guesser_instance.create_report(reporting_directory)
+
+        log.info(f'Running: "rm -rf {guesser_directory}"')
         shell(f'rm -rf {guesser_directory}')
 
     def output(self):
-        return LocalTarget(AbstractGuesser.reporting_path(
-            self.guesser_module,
-            self.guesser_class,
-            self.config_num,
-            'guesser_report.pickle'
-        ))
+        return [
+            LocalTarget(AbstractGuesser.reporting_path(
+                self.guesser_module,
+                self.guesser_class,
+                self.config_num,
+                'guesser_report.pickle'
+            )),
+            LocalTarget(AbstractGuesser.reporting_path(
+                self.guesser_module,
+                self.guesser_class,
+                self.config_num,
+                'guesser_params.pickle'
+            ))
+        ]
 
 
 class AllGuesserPerformance(WrapperTask):

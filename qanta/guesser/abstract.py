@@ -294,7 +294,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         return guess_score_map
 
     def create_report(self, directory: str):
-        with safe_open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
+        with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
             params = pickle.load(f)
         dev_guesses = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
 
