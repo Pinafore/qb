@@ -54,3 +54,4 @@ tb-logs/
 tags
 .mypy_cache/
 tmp*
+luigi/*.pid
