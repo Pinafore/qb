@@ -53,3 +53,4 @@ tb-logs/
 .ignore
 tags
 .mypy_cache/
+tmp*
