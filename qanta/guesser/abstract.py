@@ -310,8 +310,10 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         report_to_kuro(params['kuro_trial_id'] if 'kuro_trial_id' in params else None, dev_summary_accuracy)
 
-        accuracy_plot('/tmp/dev_accuracy.png', dev_summary_accuracy, 'Guesser Dev')
-        recall_plot('/tmp/dev_recall.png', dev_questions, dev_summary_recall, 'Guesser Dev')
+        dev_summary_accuracy_png = os.path.join(directory, 'dev_accuracy.png')
+        dev_summary_recall_png = os.path.join(directory, 'dev_recall.png')
+        accuracy_plot(dev_summary_accuracy_png, dev_summary_accuracy, 'Guesser Dev')
+        recall_plot(dev_summary_recall_png, dev_questions, dev_summary_recall, 'Guesser Dev')
 
         # Obtain metrics on number of answerable questions based on the dataset requested
         all_answers = {g for g in qdb.all_answers().values()}
@@ -377,8 +379,12 @@ class AbstractGuesser(metaclass=ABCMeta):
             .groupby('n_examples')\
             .agg({'correct_int': np.mean, 'ones': np.sum})\
             .reset_index()
-        correct_by_n_count_plot('/tmp/dev_correct_by_count.png', dev_counts, 'Guesser Dev')
-        n_train_vs_fold_plot('/tmp/n_train_vs_dev.png', dev_counts, 'Guesser Dev')
+
+        dev_correct_by_count_png = os.path.join(directory, 'dev_correct_by_count.png')
+        n_train_vs_dev_png = os.path.join(directory, 'n_train_vs_dev.png')
+
+        correct_by_n_count_plot(dev_correct_by_count_png, dev_counts, 'Guesser Dev')
+        n_train_vs_fold_plot(n_train_vs_dev_png, dev_counts, 'Guesser Dev')
 
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
@@ -392,8 +398,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         pdf_output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
         report = ReportGenerator('guesser.md')
         report.create({
-            'dev_recall_plot': '/tmp/dev_recall.png',
-            'dev_accuracy_plot': '/tmp/dev_accuracy.png',
+            'dev_recall_plot': dev_summary_recall_png,
+            'dev_accuracy_plot': dev_summary_accuracy_png,
             'dev_accuracy': dev_summary_accuracy,
             'guesser_name': self.display_name(),
             'guesser_params': params,
@@ -416,8 +422,8 @@ class AbstractGuesser(metaclass=ABCMeta):
             'min_p_answerable_train': len(min_train_answerable_questions) / len(train_questions),
             'min_n_answerable_dev': len(min_dev_answerable_questions),
             'min_p_answerable_dev': len(min_dev_answerable_questions) / len(dev_questions),
-            'dev_correct_by_count_plot': '/tmp/dev_correct_by_count.png',
-            'n_train_vs_dev_plot': '/tmp/n_train_vs_dev.png',
+            'dev_correct_by_count_plot': dev_correct_by_count_png,
+            'n_train_vs_dev_plot': n_train_vs_dev_png,
         }, md_output, pdf_output)
 
     @staticmethod
