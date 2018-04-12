@@ -51,7 +51,7 @@ guessers:
       use_wiki: true
       wiki_boost: 1
       random_seed: null
-  qanta.guesser.rnn_entity.RnnEntityGUesser:
+  qanta.guesser.rnn_entity.RnnEntityGuesser:
     - batch_size: 256
       bidirectional: true
       dropout_prob: 0.25
