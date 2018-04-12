@@ -7,7 +7,7 @@ from luigi import LocalTarget, Task, WrapperTask
 from qanta.config import conf
 from qanta.util import constants as c
 from qanta.util.io import shell
-from qanta.guesser.abstract import AbstractGuesser, n_guesser_report, get_class
+from qanta.guesser.abstract import AbstractGuesser, get_class
 from qanta.pipeline.preprocess import DownloadData
 from qanta import qlogging
 
@@ -259,21 +259,9 @@ class AllSingleGuesserReports(WrapperTask):
             )
 
 
-class CompareGuessersReport(Task):
-    def requires(self):
-        yield AllSingleGuesserReports()
-
-    def run(self):
-        n_guesser_report(c.COMPARE_GUESSER_REPORT_PATH.format(c.GUESSER_DEV_FOLD), c.GUESSER_DEV_FOLD)
-
-    def output(self):
-        return LocalTarget(c.COMPARE_GUESSER_REPORT_PATH.format(c.GUESSER_DEV_FOLD))
-
-
 class AllGuesserReports(WrapperTask):
     def requires(self):
         yield AllSingleGuesserReports()
-        yield CompareGuessersReport()
 
 
 class GuesserExpo(WrapperTask):

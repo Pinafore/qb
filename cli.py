@@ -180,7 +180,14 @@ def generate_guesser_slurm(task, qos, partition, output_dir, mem_per_cpu):
     else:
         gres = None
 
+    gpu_guessers = {'RnnEntityGuesser', 'DanGuesser'}
+
     for i, gs in enumerate(enabled_guessers):
+        if gs.guesser_class in gpu_guessers:
+            qos = 'gpu-medium'
+            partition = 'gpu'
+            gres = 'gpu:1'
+            max_time = '1-00:00:00'
         script = template.render({
             'task': task,
             'guesser_module': gs.guesser_module,
