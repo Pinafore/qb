@@ -188,24 +188,26 @@ def merge_dfs():
 def load_protobowl():
     
     protobowl_df_dir = bc.PROTOBOWL_DIR + '.h5'
-    protobowl_user_dir = bc.PROTOBOWL_DIR + '.user.pkl'
+    protobowl_questions_dir = bc.PROTOBOWL_DIR + '.questions.pkl'
     if os.path.exists(protobowl_df_dir) and os.path.exists(protobowl_df_dir):
         with pd.HDFStore(protobowl_df_dir) as store:
             protobowl_df = store['data']
-        with open(protobowl_user_dir, 'rb') as f:
-            user_count = pickle.load(f)
-        return protobowl_df, user_count
+        with open(protobowl_questions_dir, 'rb') as f:
+            protobowl_questions = pickle.load(f)
+        return protobowl_df, protobowl_questions
 
     def process_line(x):
         total_time = x['object']['time_elapsed'] + x['object']['time_remaining']
         ratio = x['object']['time_elapsed'] / total_time
         position = int(len(x['object']['question_text'].split()) * ratio)
         return [x['object']['guess'], x['object']['qid'], 
-                position, x['object']['ruling'], x['object']['user']['id']]
+                position, x['object']['ruling'], x['object']['user']['id']],\
+            x['object']['qid'], x['object']['question_text']
 
     data = []
     count = 0
     user_count = defaultdict(lambda: 0)
+    questions = dict()
     with codecs.open(bc.PROTOBOWL_DIR, 'r', 'utf-8') as f:
         line = f.readline()
         while line is not None:
@@ -229,7 +231,9 @@ def load_protobowl():
             if count % 10000 == 0:
                 sys.stderr.write('\rdone: {}/9707590'.format(count))
             
-            x = process_line(line)
+            x, qid, question = process_line(line)
+            if qid not in questions:
+                questions[qid] = question
             user_count[x[-1]] += 1
             data.append(x)
             line = f.readline()
@@ -239,16 +243,15 @@ def load_protobowl():
 
     protobowl_df = df = pd.DataFrame(data, 
             columns=['guess', 'qid', 'position', 
-                     'result', 'uid', 'user_answers'])
+                     'result', 'uid', 'user_n_records'])
     
     with pd.HDFStore(protobowl_df_dir) as store:
         store['data'] = protobowl_df
     
-    user_count = dict(user_count)
-    with open(protobowl_user_dir, 'wb') as f:
-        pickle.dump(user_count, f)
+    with open(protobowl_questions_dir, 'wb') as f:
+        pickle.dump(questions, f)
         
-    return protobowl_df, user_count
+    return protobowl_df, questions
 
 def ultimate_buzzer(test_iter):
     buzzes = dict()
@@ -266,7 +269,6 @@ def ultimate_buzzer(test_iter):
     return buzzes
 
 if __name__ == "__main__":
-    merge_dfs()
-
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
-    # load_protobowl()
+    # merge_dfs()
+    # option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
+    load_protobowl()
