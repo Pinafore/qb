@@ -198,9 +198,15 @@ def generate_guesser_slurm(task, qos, partition, output_dir, mem_per_cpu):
         with safe_open(slurm_file, 'w') as f:
             f.write(script)
 
+    singleton_path = 'qanta/slurm/templates/guesser-singleton.sh'
+    singleton_output = path.join(output_dir, 'guesser-singleton.sh')
+    shell(f'cp {singleton_path} {singleton_output}')
+
     master_template = env.get_template('guesser-master-template.sh')
     master_script = master_template.render({
-        'script_list': [path.join(output_dir, f'slurm-{i}.sh') for i in range(len(enabled_guessers))]
+        'script_list': [
+            path.join(output_dir, f'slurm-{i}.sh') for i in range(len(enabled_guessers))
+        ] + [singleton_output]
     })
     with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
         f.write(master_script)

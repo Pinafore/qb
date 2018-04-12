@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=qb-{{ guesser_module }}.{{ guesser_class }}-{{ config_num }}
+#SBATCH --job-name=qanta-guesser
 #SBATCH --partition={{ partition }}
 #SBATCH --qos={{ qos }}
 #SBATCH --mem-per-cpu={{ mem_per_cpu }}
