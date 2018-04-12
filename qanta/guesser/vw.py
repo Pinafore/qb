@@ -56,6 +56,9 @@ class VWGuesser(AbstractGuesser):
             'learning_rate': self.learning_rate,
             'decay_learning_rate': self.decay_learning_rate,
             'bits': self.bits,
+            'ngrams': self.ngrams,
+            'skips': self.skips,
+            'config_num': self.config_num,
             'random_seed': self.random_seed
         }
 
@@ -75,6 +78,8 @@ class VWGuesser(AbstractGuesser):
             'learning_rate': self.learning_rate,
             'decay_learning_rate': self.decay_learning_rate,
             'bits': self.bits,
+            'ngram': self.ngrams,
+            'skips': self.skips,
             'config_num': self.config_num,
             'random_seed': self.random_seed
         }
@@ -87,7 +92,7 @@ class VWGuesser(AbstractGuesser):
         data_pickle_path = os.path.join(directory, 'vw_guesser.pickle')
         with open(data_pickle_path, 'rb') as f:
             data = pickle.load(f)
-        guesser = VWGuesser(None)
+        guesser = VWGuesser(data['config_num'])
         guesser.model_file = os.path.join(directory, 'vw_guesser.vw')
         guesser.label_to_i = data['label_to_i']
         guesser.i_to_label = data['i_to_label']
@@ -100,6 +105,8 @@ class VWGuesser(AbstractGuesser):
         guesser.learning_rate = data['learning_rate']
         guesser.decay_learning_rate = data['decay_learning_rate']
         guesser.bits = data['bits']
+        guesser.ngrams = data['ngrams']
+        guesser.skips = data['skips']
         guesser.random_seed = data['random_seed']
         return guesser
 
