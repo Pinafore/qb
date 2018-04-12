@@ -78,7 +78,7 @@ class VWGuesser(AbstractGuesser):
             'learning_rate': self.learning_rate,
             'decay_learning_rate': self.decay_learning_rate,
             'bits': self.bits,
-            'ngram': self.ngrams,
+            'ngrams': self.ngrams,
             'skips': self.skips,
             'config_num': self.config_num,
             'random_seed': self.random_seed
