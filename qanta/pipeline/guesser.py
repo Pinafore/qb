@@ -194,7 +194,7 @@ class GuesserPerformance(Task):
         # In the cases of huge parameter sweeps on SLURM its easy to accidentally run out of /fs/ storage.
         # Since we only care about the results we can get them, then delete the models. We can use the regular
         # GuesserReport to preserve the model
-        guesser_directory = AbstractGuesser.reporting_path(
+        guesser_directory = AbstractGuesser.output_path(
             self.guesser_module, self.guesser_class, self.config_num, ''
         )
 
