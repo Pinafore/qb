@@ -17,7 +17,7 @@ from torchtext.data.field import Field
 from torchtext.data.iterator import Iterator
 
 from qanta import qlogging
-from qanta.util.io import shell
+from qanta.util.io import shell, get_tmp_filename
 from qanta.torch.dataset import QuizBowl
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
@@ -268,6 +268,7 @@ class DanGuesser(AbstractGuesser):
         self.trigram_field: Optional[Field] = None
         self.n_classes = None
         self.emb_dim = None
+        self.model_file = None
         #self.kuro_trial_id = None
 
         self.model = None
@@ -339,9 +340,11 @@ class DanGuesser(AbstractGuesser):
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
+        temp_prefix = get_tmp_filename()
+        self.model_file = f'{temp_prefix}.pt'
         manager = TrainingManager([
             BaseLogger(log_func=log.info), TerminateOnNaN(), EarlyStopping(monitor='test_acc', patience=10, verbose=1),
-            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), '/tmp/dan.pt', monitor='test_acc')
+            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), self.model_file, monitor='test_acc')
         ])
 
         log.info('Starting training')
@@ -476,8 +479,8 @@ class DanGuesser(AbstractGuesser):
         return guesses
 
     def save(self, directory: str):
-        shutil.copyfile('/tmp/dan.pt', os.path.join(directory, 'dan.pt'))
-        shell('rm -f /tmp/dan.pt')
+        shutil.copyfile(self.model_file, os.path.join(directory, 'dan.pt'))
+        shell(f'rm -f {self.model_file}')
         with open(os.path.join(directory, 'dan.pkl'), 'wb') as f:
             cloudpickle.dump({
                 'page_field': self.page_field,
