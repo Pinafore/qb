@@ -1,9 +1,13 @@
 parameters:
-  qanta.guesser.vw.VWGuesser:
-    random_seed: [0, 1, 2, 3, 4]
+  qanta.guesser.dan.DanGuesser:
+    random_seed: [0]
     enabled: [true]
-    l2: [0, .00001, .000001, .0000001]
-    learning_rate: [.5, .1, .01, .001, .0001]
-    ngrams: [[1, 2], [1]]
-    skips: [[1], []]
-    passes: [100]
+
+  #qanta.guesser.vw.VWGuesser:
+  #  random_seed: [0, 1, 2, 3, 4]
+  #  enabled: [true]
+  #  l2: [0, .00001, .000001, .0000001]
+  #  learning_rate: [.5, .1, .01, .001, .0001]
+  #  ngrams: [[1, 2], [1]]
+  #  skips: [[1], []]
+  #  passes: [100]

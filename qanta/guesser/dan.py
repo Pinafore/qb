@@ -17,6 +17,7 @@ from torchtext.data.field import Field
 from torchtext.data.iterator import Iterator
 
 from qanta import qlogging
+from qanta.util.io import shell
 from qanta.torch.dataset import QuizBowl
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
@@ -234,7 +235,7 @@ class DanGuesser(AbstractGuesser):
     def __init__(self, config_num):
         super(DanGuesser, self).__init__(config_num)
         if self.config_num is not None:
-            guesser_conf = conf['guessers']['Dan'][self.config_num]
+            guesser_conf = conf['guessers']['qanta.guesser.dan.DanGuesser'][self.config_num]
             self.gradient_clip = guesser_conf['gradient_clip']
             self.n_hidden_units = guesser_conf['n_hidden_units']
             self.n_hidden_layers = guesser_conf['n_hidden_layers']
@@ -257,6 +258,8 @@ class DanGuesser(AbstractGuesser):
             self.trigram_max_vocab_size = guesser_conf['trigram_max_vocab_size']
             self.pooling = guesser_conf['pooling']
 
+            self.random_seed = guesser_conf['random_seed']
+
         self.page_field: Optional[Field] = None
         self.qnum_field: Optional[Field] = None
         self.text_field: Optional[Field] = None
@@ -265,7 +268,7 @@ class DanGuesser(AbstractGuesser):
         self.trigram_field: Optional[Field] = None
         self.n_classes = None
         self.emb_dim = None
-        self.kuro_trial_id = None
+        #self.kuro_trial_id = None
 
         self.model = None
         self.optimizer = None
@@ -281,8 +284,8 @@ class DanGuesser(AbstractGuesser):
         return self.page_field.vocab.itos
 
     def parameters(self):
-        params = conf['guessers']['Dan'].copy()
-        params['kuro_trial_id'] = self.kuro_trial_id
+        params = conf['guessers']['qanta.guesser.dan.DanGuesser'][self.config_num].copy()
+        #params['kuro_trial_id'] = self.kuro_trial_id
         return params
 
     def train(self, training_data):
@@ -342,23 +345,23 @@ class DanGuesser(AbstractGuesser):
         ])
 
         log.info('Starting training')
-        try:
-            if bool(os.environ.get('KURO_DISABLE', False)):
-                raise ModuleNotFoundError
-            import socket
-            from kuro import Worker
-            worker = Worker(socket.gethostname())
-            experiment = worker.experiment(
-                'guesser', 'Dan', hyper_parameters=conf['guessers']['Dan'],
-                metrics=[
-                    'train_acc', 'train_loss', 'test_acc', 'test_loss'
-                ], n_trials=5
-            )
-            trial = experiment.trial()
-            if trial is not None:
-                self.kuro_trial_id = trial.id
-        except ModuleNotFoundError:
-            trial = None
+        #try:
+        #    if bool(os.environ.get('KURO_DISABLE', False)):
+        #        raise ModuleNotFoundError
+        #    import socket
+        #    from kuro import Worker
+        #    worker = Worker(socket.gethostname())
+        #    experiment = worker.experiment(
+        #        'guesser', 'Dan', hyper_parameters=conf['guessers']['Dan'],
+        #        metrics=[
+        #            'train_acc', 'train_loss', 'test_acc', 'test_loss'
+        #        ], n_trials=5
+        #    )
+        #    trial = experiment.trial()
+        #    if trial is not None:
+        #        self.kuro_trial_id = trial.id
+        #except ModuleNotFoundError:
+        #    trial = None
 
         epoch = 0
         while True:
@@ -373,11 +376,11 @@ class DanGuesser(AbstractGuesser):
                 test_time, test_loss, test_acc
             )
 
-            if trial is not None:
-                trial.report_metric('test_acc', test_acc, step=epoch)
-                trial.report_metric('test_loss', test_loss, step=epoch)
-                trial.report_metric('train_acc', train_acc, step=epoch)
-                trial.report_metric('train_loss', train_loss, step=epoch)
+            #if trial is not None:
+            #    trial.report_metric('test_acc', test_acc, step=epoch)
+            #    trial.report_metric('test_loss', test_loss, step=epoch)
+            #    trial.report_metric('train_acc', train_acc, step=epoch)
+            #    trial.report_metric('train_loss', train_loss, step=epoch)
 
             if stop_training:
                 log.info(' '.join(reasons))
@@ -474,6 +477,7 @@ class DanGuesser(AbstractGuesser):
 
     def save(self, directory: str):
         shutil.copyfile('/tmp/dan.pt', os.path.join(directory, 'dan.pt'))
+        shell('rm -f /tmp/dan.pt')
         with open(os.path.join(directory, 'dan.pkl'), 'wb') as f:
             cloudpickle.dump({
                 'page_field': self.page_field,
@@ -502,7 +506,9 @@ class DanGuesser(AbstractGuesser):
                 'n_wiki_sentences': self.n_wiki_sentences,
                 'wiki_title_replace_token': self.wiki_title_replace_token,
                 'lowercase': self.lowercase,
-                'pooling': self.pooling
+                'pooling': self.pooling,
+                'random_seed': self.random_seed,
+                'config_num': self.config_num
             }, f)
 
     @classmethod
@@ -510,7 +516,7 @@ class DanGuesser(AbstractGuesser):
         with open(os.path.join(directory, 'dan.pkl'), 'rb') as f:
             params = cloudpickle.load(f)
 
-        guesser = DanGuesser()
+        guesser = DanGuesser(params['config_num'])
         guesser.page_field = params['page_field']
         guesser.qnum_field = params['qnum_field']
 
@@ -541,6 +547,7 @@ class DanGuesser(AbstractGuesser):
         guesser.wiki_title_replace_token = params['wiki_title_replace_token']
         guesser.lowercase = params['lowercase']
         guesser.pooling = params['pooling']
+        guesser.random_seed = params['random_seed']
         guesser.model = DanModel(
             guesser.n_classes,
             text_field=guesser.text_field,
