@@ -34,10 +34,11 @@ def main():
 
 
 @main.command()
-@click.option('--fold', multiple=True, default=['guess_train', 'guessdev'])
+@click.option('--fold', multiple=True, default=['guesstrain', 'guessdev'])
 @click.option('--merged_output', is_flag=True)
+@click.option('--random_state', default=0)
 @click.argument('output_dir')
-def export_db(fold, merged_output, output_dir):
+def export_db(fold, merged_output, random_state, output_dir):
     fold_set = set(fold)
     db = QuestionDatabase()
     if not db.location.endswith('non_naqt.db'):
@@ -60,7 +61,7 @@ def export_db(fold, merged_output, output_dir):
             json.dump({'questions': [to_example(q) for q in questions]}, f)
     else:
         all_train = [to_example(q) for q in questions if 'train' in q.fold]
-        train, val = train_test_split(all_train, train_size=.9, test_size=.1)
+        train, val = train_test_split(all_train, train_size=.9, test_size=.1, random_state=random_state)
         dev = [to_example(q) for q in questions if 'dev' in q.fold]
 
         log.info(f'Writing output to: {output_dir}/*')
