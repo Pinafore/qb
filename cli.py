@@ -5,8 +5,10 @@ CLI utilities for QANTA
 
 import json
 import sqlite3
+import yaml
 from os import path
 import click
+from typing import Dict, Optional
 from sklearn.model_selection import train_test_split
 from jinja2 import Environment, PackageLoader
 
@@ -151,43 +153,38 @@ def hyper_to_conf(base_file, hyper_file, output_file):
     expand_config(base_file, hyper_file, output_file)
 
 
-DPART_QOS = ['batch', 'deep']
-GPU_QOS = ['gpu-short', 'gpu-medium', 'gpu-long', 'gpu-epic']
-QOS = DPART_QOS + GPU_QOS
-QOS_MAX_WALL = {
-    'batch': '1-00:00:00',
-    'deep': '12:00:00',
-    'gpu-short': '02:00:00',
-    'gpu-medium': '1-00:00:00',
-    'gpu-long': '4-00:00:00',
-    'gpu-epic': '10-00:00:00'
-}
+def get_slurm_config_value(name: str, default_config: Dict, guesser_config: Optional[Dict]):
+    if guesser_config is None:
+        return default_config[name]
+    else:
+        if name in guesser_config:
+            return guesser_config[name]
+        else:
+            return default_config[name]
 
 
 @main.command()
+@click.option('--slurm-config-file', default='slurm-config.yaml')
 @click.option('--task', default='GuesserPerformance')
-@click.option('--qos', default='batch', type=click.Choice(QOS))
-@click.option('--partition', default='dpart', type=click.Choice(['dpart', 'gpu']))
-@click.option('--mem-per-cpu', default='14g')
 @click.argument('output_dir')
-def generate_guesser_slurm(task, qos, partition, output_dir, mem_per_cpu):
+def generate_guesser_slurm(slurm_config_file, task, output_dir):
+    with open(slurm_config_file) as f:
+        slurm_config = yaml.load(f)
+        default_slurm_config = slurm_config['default']
     env = Environment(loader=PackageLoader('qanta', 'slurm/templates'))
     template = env.get_template('guesser-luigi-template.sh')
     enabled_guessers = list(AbstractGuesser.list_enabled_guessers())
-    max_time = QOS_MAX_WALL[qos]
-    if partition == 'gpu':
-        gres = 'gpu:1'
-    else:
-        gres = None
-
-    gpu_guessers = {'RnnEntityGuesser', 'DanGuesser'}
 
     for i, gs in enumerate(enabled_guessers):
-        if gs.guesser_class in gpu_guessers:
-            qos = 'gpu-medium'
-            partition = 'gpu'
-            gres = 'gpu:1'
-            max_time = '1-00:00:00'
+        if gs.guesser_class in slurm_config:
+            guesser_slurm_config = slurm_config[gs.guesser_class]
+        else:
+            guesser_slurm_config = None
+        partition = get_slurm_config_value('partition', default_slurm_config, guesser_slurm_config)
+        qos = get_slurm_config_value('qos', default_slurm_config, guesser_slurm_config)
+        mem_per_cpu = get_slurm_config_value('mem_per_cpu', default_slurm_config, guesser_slurm_config)
+        gres = get_slurm_config_value('gres', default_slurm_config, guesser_slurm_config)
+        max_time = get_slurm_config_value('max_time', default_slurm_config, guesser_slurm_config)
         script = template.render({
             'task': task,
             'guesser_module': gs.guesser_module,
