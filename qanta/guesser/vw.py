@@ -7,7 +7,7 @@ import random
 import re
 from qanta.datasets.abstract import Answer, TrainingData, QuestionText
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.io import shell, safe_path
+from qanta.util.io import shell, safe_path, get_tmp_dir, get_tmp_filename
 from qanta.config import conf
 from qanta import qlogging
 
@@ -113,12 +113,7 @@ class VWGuesser(AbstractGuesser):
     def guess(self,
               questions: List[QuestionText],
               max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
-        if os.path.isdir('/fs/clip-quiz/entilzha/scratch'):
-            temp_dir = '/fs/clip-quiz/entilzha/scratch'
-        elif os.path.isdir('/scratch0'):
-            temp_dir = '/scratch0'
-        else:
-            temp_dir = '/tmp'
+        temp_dir = get_tmp_dir()
         with tempfile.NamedTemporaryFile('w', delete=False, dir=temp_dir) as f:
             file_name = f.name
             for q in questions:
@@ -150,13 +145,7 @@ class VWGuesser(AbstractGuesser):
         self.i_to_label = {i: label for label, i in self.label_to_i.items()}
         self.max_label = len(self.label_to_i)
 
-        if os.path.isdir('/fs/clip-quiz/entilzha/scratch'):
-            temp_dir = '/fs/clip-quiz/entilzha/scratch'
-        elif os.path.isdir('/scratch0'):
-            temp_dir = '/scratch0'
-        else:
-            temp_dir = '/tmp'
-
+        temp_dir = get_tmp_dir()
         with tempfile.NamedTemporaryFile('w', delete=False, dir=temp_dir) as f:
             file_name = f.name
             zipped = list(zip(x_data, y_data))
@@ -173,9 +162,7 @@ class VWGuesser(AbstractGuesser):
         else:
             raise ValueError('The options multiclass_one_against_all and multiclass_online_trees are XOR')
 
-        with tempfile.NamedTemporaryFile(delete=True, dir=temp_dir) as f:
-            self.model_file = f.name
-
+        self.model_file = get_tmp_filename()
         options = [
             'vw',
             '-k',
