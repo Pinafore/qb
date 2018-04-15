@@ -1,6 +1,6 @@
 parameters:
   qanta.guesser.dan.DanGuesser:
-    random_seed: [0]
+    random_seed: [0, 1, 2, 3]
     enabled: [true]
 
   #qanta.guesser.vw.VWGuesser:
