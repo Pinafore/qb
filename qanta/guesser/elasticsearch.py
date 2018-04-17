@@ -52,25 +52,53 @@ def stop_elasticsearch(pid_file):
         pid = int(f.read())
     subprocess.run(['kill', str(pid)])
 
+def create_doctype(index_name, similarity):
+    if similarity == 'default':
+        wiki_content_field = Text()
+        qb_content_field = Text()
+    else:
+        wiki_content_field = Text(similarity=similarity)
+        qb_content_field = Text(similarity=similarity)
+    class Answer(DocType):
+        page = Text(fields={'raw': Keyword()})
+        wiki_content = wiki_content_field
+        qb_content = qb_content_field
 
-class Answer(DocType):
-    page = Text(fields={'raw': Keyword()})
-    wiki_content = Text()
-    qb_content = Text()
+        class Meta:
+            index = index_name
+
+    return Answer
 
 
 class ElasticSearchIndex:
-    def __init__(self, name='qb'):
+    def __init__(self, name='qb', similarity='default', bm25_b=None, bm25_k1=None):
         self.name = name
+        self.ix = Index(self.name)
+        self.answer_doc = create_doctype(self.name, similarity)
+        if bm25_b is None:
+            bm25_b = .75
+        if bm25_k1 is None:
+            bm25_k1 = 1.2
+        self.bm25_b = bm25_b
+        self.bm25_k1 = bm25_k1
 
     def delete(self):
         try:
-            Index(self.name).delete()
+            self.ix.delete()
         except elasticsearch.exceptions.NotFoundError:
             log.info('Could not delete non-existent index.')
 
     def exists(self):
-        return Index(self.name).exists()
+        return self.ix.exists()
+
+    def init(self):
+        self.ix.create()
+        self.ix.close()
+        self.ix.put_settings(body={'similarity': {
+            'qb_bm25': {'type': 'BM25', 'b': self.bm25_b, 'k1': self.bm25_k1}}
+        })
+        self.ix.open()
+        self.answer_doc.init(index=self.name)
 
     def build_large_docs(self, documents: Dict[str, str], use_wiki=True, use_qb=True, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
@@ -81,7 +109,7 @@ class ElasticSearchIndex:
             log.info(f'Index {self.name} exists')
         else:
             log.info(f'Index {self.name} does not exist')
-            Answer.init(index=self.name)
+            self.init()
             wiki_lookup = Wikipedia()
             log.info('Indexing questions and corresponding wikipedia pages as large docs...')
             bar = progressbar.ProgressBar()
@@ -96,7 +124,7 @@ class ElasticSearchIndex:
                 else:
                     qb_content = ''
 
-                answer = Answer(
+                answer = self.answer_doc(
                     page=page,
                     wiki_content=wiki_content, qb_content=qb_content
                 )
@@ -111,13 +139,13 @@ class ElasticSearchIndex:
             log.info(f'Index {self.name} exists')
         else:
             log.info(f'Index {self.name} does not exist')
-            Answer.init(index=self.name)
+            self.init()
             log.info('Indexing questions and corresponding pages as many docs...')
             if use_qb:
                 log.info('Indexing questions...')
                 bar = progressbar.ProgressBar()
                 for page, doc in bar(documents):
-                    Answer(page=page, qb_content=doc).save(index=self.name)
+                    self.answer_doc(page=page, qb_content=doc).save()
 
             if use_wiki:
                 log.info('Indexing wikipedia...')
@@ -129,7 +157,7 @@ class ElasticSearchIndex:
                         for i in range(0, len(content), 200):
                             chunked_content = content[i:i + 200]
                             if len(chunked_content) > 0:
-                                Answer(page=page, wiki_content=' '.join(chunked_content)).save(index=self.name)
+                                self.answer_doc(page=page, wiki_content=' '.join(chunked_content)).save()
 
     def search(self, text: str, max_n_guesses: int,
                normalize_score_by_length=False,
@@ -148,7 +176,8 @@ class ElasticSearchIndex:
             qb_field = 'qb_content'
 
         s = Search(index=self.name)[0:max_n_guesses].query(
-            'multi_match', query=text, fields=[wiki_field, qb_field])
+            'multi_match', query=text, fields=[wiki_field, qb_field]
+        )
         results = s.execute()
         guess_set = set()
         guesses = []
@@ -176,7 +205,18 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
         self.qb_boost = guesser_conf['qb_boost']
         self.wiki_boost = guesser_conf['wiki_boost']
-        self.index = ElasticSearchIndex(name=f'qb_{self.config_num}')
+        similarity = guesser_conf['similarity']
+        self.similarity_name = similarity['name']
+        if self.similarity_name == 'BM25':
+            self.similarity_k1 = similarity['k1']
+            self.similarity_b = similarity['b']
+        else:
+            self.similarity_k1 = None
+            self.similarity_b = None
+        self.index = ElasticSearchIndex(
+            name=f'qb_{self.config_num}', similarity=self.similarity_name,
+            bm25_b=self.similarity_b, bm25_k1=self.similarity_k1
+        )
 
     def parameters(self):
         return conf['guessers']['qanta.guesser.elasticsearch.ElasticSearchGuesser'][self.config_num]
@@ -241,6 +281,10 @@ class ElasticSearchGuesser(AbstractGuesser):
         guesser.normalize_score_by_length = params['normalize_score_by_length']
         guesser.qb_boost = params['qb_boost']
         guesser.wiki_boost = params['wiki_boost']
+        guesser.similarity_name = params['similarity_name']
+        guesser.similarity_b = params['similarity_b']
+        guesser.similarity_k1 = params['similarity_k1']
+
         return guesser
 
     def save(self, directory: str):
@@ -253,7 +297,10 @@ class ElasticSearchGuesser(AbstractGuesser):
                 'normalize_score_by_length': self.normalize_score_by_length,
                 'qb_boost': self.qb_boost,
                 'wiki_boost': self.wiki_boost,
-                'config_num': self.config_num
+                'config_num': self.config_num,
+                'similarity_name': self.similarity_name,
+                'similarity_k1': self.similarity_k1,
+                'similarity_b': self.similarity_b
             }, f)
 
     def web_api(self, host='0.0.0.0', port=5000, debug=False):

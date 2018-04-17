@@ -51,6 +51,10 @@ guessers:
       use_wiki: true
       wiki_boost: 1
       random_seed: null
+      similarity:
+        name: default # [default, BM25]
+        # k1: 1.2
+        # b: 0.75
   qanta.guesser.rnn_entity.RnnEntityGuesser:
     - batch_size: 256
       bidirectional: true
