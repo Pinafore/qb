@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from jinja2 import Environment, PackageLoader
 
 from qanta import qlogging
+from qanta.guesser.elasticsearch import create_es_config, start_elasticsearch, stop_elasticsearch
 from qanta.util.environment import ENVIRONMENT
 from qanta.datasets.quiz_bowl import QuestionDatabase, Question, QB_QUESTION_DB
 from qanta.guesser.abstract import AbstractGuesser
@@ -21,7 +22,7 @@ from qanta.hyperparam import expand_config
 from qanta.update_db import write_answer_map, merge_answer_mapping
 
 
-log = qlogging.get(__name__)
+log = qlogging.get('cli')
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -177,7 +178,9 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
     enabled_guessers = list(AbstractGuesser.list_enabled_guessers())
 
     for i, gs in enumerate(enabled_guessers):
-        if gs.guesser_class in slurm_config:
+        if gs.guesser_class == 'ElasticSearchGuesser':
+            raise ValueError('ElasticSearchGuesser is not compatible with slurm')
+        elif gs.guesser_class in slurm_config:
             guesser_slurm_config = slurm_config[gs.guesser_class]
         else:
             guesser_slurm_config = None
@@ -215,6 +218,26 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
     })
     with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
         f.write(master_script)
+
+
+@main.command()
+@click.option('--generate-config/--no-generate-config', default=True, is_flag=True)
+@click.option('--config-dir', default='.')
+@click.option('--pid-file', default='elasticsearch.pid')
+@click.argument('command', type=click.Choice(['start', 'stop', 'configure']))
+def elasticsearch(generate_config, config_dir, pid_file, command):
+    if generate_config:
+        create_es_config(path.join(config_dir, 'elasticsearch.yml'))
+
+    if command == 'configure':
+        return
+
+    if command == 'start':
+        start_elasticsearch(config_dir, pid_file)
+    elif command == 'stop':
+        stop_elasticsearch(pid_file)
+
+
 
 
 if __name__ == '__main__':

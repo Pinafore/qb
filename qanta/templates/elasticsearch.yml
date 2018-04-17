@@ -1,0 +1,9 @@
+path:
+  logs: {{ log_dir }}
+  data: {{ data_dir }}
+
+network.host: {{ host }}
+http.port: {{ port }}
+
+cluster.name: qanta_cluster
+node.name: qanta_node
