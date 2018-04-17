@@ -52,6 +52,7 @@ This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-s
 * Python 3.6
 * Apache Spark 2.2.0
 * Vowpal Wabbit 8.1.1
+* Elastic Search 5.6.X (Not 6.X)
 * CUDA and Nvidia drivers if using a GPU instance
 * lz4
 * All python packages in `packer/requirements.txt`
@@ -186,9 +187,14 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 17/07/25 10:04:01 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
 ```
 
-2. Install ElasticSearch
+2. Install ElasticSearch 5.6
+
+Install version 5.6.X, do not use 6.X. Also be sure that the directory `bin/` within the extracted files is in your
+`$PATH` as it contains the necessary binary `elasticsearch`.
 
 https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
+
+https://www.elastic.co/downloads/past-releases/elasticsearch-5-6-8
 
 3. Install Python packages
 

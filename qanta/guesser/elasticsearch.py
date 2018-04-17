@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict
+import subprocess
 import os
 import pickle
 
@@ -7,19 +8,49 @@ from elasticsearch_dsl.connections import connections
 import elasticsearch
 import progressbar
 from nltk.tokenize import word_tokenize
+from jinja2 import Environment, PackageLoader
 
 from qanta.wikipedia.cached_wikipedia import Wikipedia
 from qanta.datasets.abstract import QuestionText
-from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.spark import create_spark_context
 from qanta.config import conf
+from qanta.util.io import get_tmp_dir, safe_path
 from qanta import qlogging
 
 
 log = qlogging.get(__name__)
+ES_PARAMS = 'es_params.pickle'
 connections.create_connection(hosts=['localhost'])
-INDEX_NAME = 'qb'
+
+
+def create_es_config(output_path, host='localhost', port=9200, tmp_dir=None):
+    if tmp_dir is None:
+        tmp_dir = get_tmp_dir()
+    data_dir = safe_path(os.path.join(tmp_dir, 'elasticsearch/data/'))
+    log_dir = safe_path(os.path.join(tmp_dir, 'elasticsearch/log/'))
+    env = Environment(loader=PackageLoader('qanta', 'templates'))
+    template = env.get_template('elasticsearch.yml')
+    config_content = template.render({
+        'host': host,
+        'port': port,
+        'log_dir': log_dir,
+        'data_dir': data_dir
+    })
+    with open(output_path, 'w') as f:
+        f.write(config_content)
+
+
+def start_elasticsearch(config_dir, pid_file):
+    subprocess.run(
+        ['elasticsearch', '-d', '-p', pid_file, f'-Epath.conf={config_dir}']
+    )
+
+
+def stop_elasticsearch(pid_file):
+    with open(pid_file) as f:
+        pid = int(f.read())
+    subprocess.run(['kill', str(pid)])
 
 
 class Answer(DocType):
@@ -27,33 +58,30 @@ class Answer(DocType):
     wiki_content = Text()
     qb_content = Text()
 
-    class Meta:
-        index = INDEX_NAME
-
 
 class ElasticSearchIndex:
-    @staticmethod
-    def delete():
+    def __init__(self, name='qb'):
+        self.name = name
+
+    def delete(self):
         try:
-            Index(INDEX_NAME).delete()
+            Index(self.name).delete()
         except elasticsearch.exceptions.NotFoundError:
-            log.info('Could not delete non-existent index, creating new index...')
+            log.info('Could not delete non-existent index.')
 
-    @staticmethod
-    def exists():
-        return Index(INDEX_NAME).exists()
+    def exists(self):
+        return Index(self.name).exists()
 
-    @staticmethod
-    def build_large_docs(documents: Dict[str, str], use_wiki=True, use_qb=True, rebuild_index=False):
+    def build_large_docs(self, documents: Dict[str, str], use_wiki=True, use_qb=True, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
-            log.info('Deleting index: {}'.format(INDEX_NAME))
-            ElasticSearchIndex.delete()
+            log.info(f'Deleting index: {self.name}')
+            self.delete()
 
-        if ElasticSearchIndex.exists():
-            log.info('Index {} exists'.format(INDEX_NAME))
+        if self.exists():
+            log.info(f'Index {self.name} exists')
         else:
-            log.info('Index {} does not exist'.format(INDEX_NAME))
-            Answer.init()
+            log.info(f'Index {self.name} does not exist')
+            Answer.init(index=self.name)
             wiki_lookup = Wikipedia()
             log.info('Indexing questions and corresponding wikipedia pages as large docs...')
             bar = progressbar.ProgressBar()
@@ -72,25 +100,24 @@ class ElasticSearchIndex:
                     page=page,
                     wiki_content=wiki_content, qb_content=qb_content
                 )
-                answer.save()
+                answer.save(index=self.name)
 
-    @staticmethod
-    def build_many_docs(pages, documents, use_wiki=True, use_qb=True, rebuild_index=False):
+    def build_many_docs(self, pages, documents, use_wiki=True, use_qb=True, rebuild_index=False):
         if rebuild_index or bool(int(os.getenv('QB_REBUILD_INDEX', 0))):
-            log.info('Deleting index: {}'.format(INDEX_NAME))
-            ElasticSearchIndex.delete()
+            log.info(f'Deleting index: {self.name}')
+            self.delete()
 
-        if ElasticSearchIndex.exists():
-            log.info('Index {} exists'.format(INDEX_NAME))
+        if self.exists():
+            log.info(f'Index {self.name} exists')
         else:
-            log.info('Index {} does not exist'.format(INDEX_NAME))
-            Answer.init()
+            log.info(f'Index {self.name} does not exist')
+            Answer.init(index=self.name)
             log.info('Indexing questions and corresponding pages as many docs...')
             if use_qb:
                 log.info('Indexing questions...')
                 bar = progressbar.ProgressBar()
                 for page, doc in bar(documents):
-                    Answer(page=page, qb_content=doc).save()
+                    Answer(page=page, qb_content=doc).save(index=self.name)
 
             if use_wiki:
                 log.info('Indexing wikipedia...')
@@ -102,12 +129,14 @@ class ElasticSearchIndex:
                         for i in range(0, len(content), 200):
                             chunked_content = content[i:i + 200]
                             if len(chunked_content) > 0:
-                                Answer(page=page, wiki_content=' '.join(chunked_content)).save()
+                                Answer(page=page, wiki_content=' '.join(chunked_content)).save(index=self.name)
 
-    @staticmethod
-    def search(text: str, max_n_guesses: int,
+    def search(self, text: str, max_n_guesses: int,
                normalize_score_by_length=False,
                wiki_boost=1, qb_boost=1):
+        if not self.exists():
+            raise ValueError('The index does not exist, you must create it before searching')
+
         if wiki_boost != 1:
             wiki_field = 'wiki_content^{}'.format(wiki_boost)
         else:
@@ -118,7 +147,7 @@ class ElasticSearchIndex:
         else:
             qb_field = 'qb_content'
 
-        s = Search(index='qb')[0:max_n_guesses].query(
+        s = Search(index=self.name)[0:max_n_guesses].query(
             'multi_match', query=text, fields=[wiki_field, qb_field])
         results = s.execute()
         guess_set = set()
@@ -135,14 +164,11 @@ class ElasticSearchIndex:
                 guesses.append((r.page, r.meta.score / query_length))
         return guesses
 
-ES_PARAMS = 'es_params.pickle'
-es_index = ElasticSearchIndex()
-
 
 class ElasticSearchGuesser(AbstractGuesser):
-    def __init__(self):
-        super().__init__()
-        guesser_conf = conf['guessers']['ElasticSearch']
+    def __init__(self, config_num):
+        super().__init__(config_num)
+        guesser_conf = conf['guessers']['qanta.guesser.elasticsearch.ElasticSearchGuesser'][self.config_num]
         self.n_cores = guesser_conf['n_cores']
         self.use_wiki = guesser_conf['use_wiki']
         self.use_qb = guesser_conf['use_qb']
@@ -150,15 +176,10 @@ class ElasticSearchGuesser(AbstractGuesser):
         self.normalize_score_by_length = guesser_conf['normalize_score_by_length']
         self.qb_boost = guesser_conf['qb_boost']
         self.wiki_boost = guesser_conf['wiki_boost']
-        self.kuro_trial_id = None
-
-    def qb_dataset(self):
-        return QuizBowlDataset(guesser_train=True)
+        self.index = ElasticSearchIndex(name=f'qb_{self.config_num}')
 
     def parameters(self):
-        params = conf['guessers']['ElasticSearch'].copy()
-        params['kuro_trial_id'] = self.kuro_trial_id
-        return params
+        return conf['guessers']['qanta.guesser.elasticsearch.ElasticSearchGuesser'][self.config_num]
 
     def train(self, training_data):
         if self.many_docs:
@@ -167,9 +188,9 @@ class ElasticSearchGuesser(AbstractGuesser):
             for sentences, page in zip(training_data[0], training_data[1]):
                 paragraph = ' '.join(sentences)
                 documents.append((page, paragraph))
-            ElasticSearchIndex.build_many_docs(
+            self.index.build_many_docs(
                 pages, documents,
-                use_qb=self.use_qb, use_wiki=self.use_wiki
+                use_qb=self.use_qb, use_wiki=self.use_wiki, rebuild_index=True
             )
         else:
             documents = {}
@@ -180,33 +201,21 @@ class ElasticSearchGuesser(AbstractGuesser):
                 else:
                     documents[page] = paragraph
 
-            ElasticSearchIndex.build_large_docs(
+            self.index.build_large_docs(
                 documents,
                 use_qb=self.use_qb,
-                use_wiki=self.use_wiki
+                use_wiki=self.use_wiki,
+                rebuild_index=True
             )
 
-        try:
-            if bool(os.environ.get('KURO_DISABLE', False)):
-                raise ModuleNotFoundError
-            import socket
-            from kuro import Worker
-            worker = Worker(socket.gethostname())
-            experiment = worker.experiment(
-                'guesser', 'ElasticSearch', hyper_parameters=conf['guessers']['ElasticSearch'],
-                n_trials=5
-            )
-            trial = experiment.trial()
-            if trial is not None:
-                self.kuro_trial_id = trial.id
-        except ModuleNotFoundError:
-            trial = None
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
         def es_search(query):
-                return es_index.search(query, max_n_guesses,
-                                       normalize_score_by_length=self.normalize_score_by_length,
-                                       wiki_boost=self.wiki_boost, qb_boost=self.qb_boost)
+            return self.index.search(
+                query, max_n_guesses,
+                normalize_score_by_length=self.normalize_score_by_length,
+                wiki_boost=self.wiki_boost, qb_boost=self.qb_boost
+            )
 
         if len(questions) > 1:
             sc = create_spark_context(configs=[('spark.executor.cores', self.n_cores), ('spark.executor.memory', '20g')])
@@ -218,26 +227,33 @@ class ElasticSearchGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls):
-        return []
+        return [ES_PARAMS]
 
     @classmethod
     def load(cls, directory: str):
         with open(os.path.join(directory, ES_PARAMS), 'rb') as f:
             params = pickle.load(f)
-        guesser = ElasticSearchGuesser()
+        guesser = ElasticSearchGuesser(params['config_num'])
+        guesser.n_cores = params['n_cores']
         guesser.use_wiki = params['use_wiki']
         guesser.use_qb = params['use_qb']
         guesser.many_docs = params['many_docs']
         guesser.normalize_score_by_length = params['normalize_score_by_length']
+        guesser.qb_boost = params['qb_boost']
+        guesser.wiki_boost = params['wiki_boost']
         return guesser
 
     def save(self, directory: str):
         with open(os.path.join(directory, ES_PARAMS), 'wb') as f:
             pickle.dump({
+                'n_cores': self.n_cores,
                 'use_wiki': self.use_wiki,
                 'use_qb': self.use_qb,
                 'many_docs': self.many_docs,
-                'normalize_score_by_length': self.normalize_score_by_length
+                'normalize_score_by_length': self.normalize_score_by_length,
+                'qb_boost': self.qb_boost,
+                'wiki_boost': self.wiki_boost,
+                'config_num': self.config_num
             }, f)
 
     def web_api(self, host='0.0.0.0', port=5000, debug=False):

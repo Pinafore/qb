@@ -1,7 +1,10 @@
 parameters:
-  qanta.guesser.dan.DanGuesser:
-    random_seed: [0, 1, 2, 3]
+  qanta.guesser.elasticsearch.ElasticSearchGuesser:
     enabled: [true]
+    use_wiki: [true, false]
+  #qanta.guesser.dan.DanGuesser:
+  #  random_seed: [0, 1, 2, 3]
+  #  enabled: [true]
 
   #qanta.guesser.vw.VWGuesser:
   #  random_seed: [0, 1, 2, 3, 4]
