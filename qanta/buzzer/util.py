@@ -200,7 +200,7 @@ def load_protobowl():
         total_time = x['object']['time_elapsed'] + x['object']['time_remaining']
         ratio = x['object']['time_elapsed'] / total_time
         position = int(len(x['object']['question_text'].split()) * ratio)
-        return [x['object']['guess'], x['object']['qid'], 
+        return [x['date'], x['object']['guess'], x['object']['qid'], 
                 position, x['object']['ruling'], x['object']['user']['id']],\
             x['object']['qid'], x['object']['question_text']
 
@@ -242,7 +242,7 @@ def load_protobowl():
         x.append(user_count[x[-1]])
 
     protobowl_df = df = pd.DataFrame(data, 
-            columns=['guess', 'qid', 'position', 
+            columns=['date', 'guess', 'qid', 'position', 
                      'result', 'uid', 'user_n_records'])
     
     with pd.HDFStore(protobowl_df_dir) as store:
