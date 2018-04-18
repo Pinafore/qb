@@ -186,7 +186,6 @@ def merge_dfs():
         log.info("Merging: {0} finished.".format(fold))
 
 def load_protobowl():
-    
     protobowl_df_dir = bc.PROTOBOWL_DIR + '.h5'
     protobowl_questions_dir = bc.PROTOBOWL_DIR + '.questions.pkl'
     if os.path.exists(protobowl_df_dir) and os.path.exists(protobowl_df_dir):
