@@ -1,5 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
 from torch.autograd import Variable
 
 
@@ -57,10 +59,10 @@ class WeightDrop(torch.nn.Module):
             if self.variational:
                 mask = torch.autograd.Variable(torch.ones(raw_w.size(0), 1))
                 if raw_w.is_cuda: mask = mask.cuda()
-                mask = torch.nn.functional.dropout(mask, p=self.dropout, training=True)
+                mask = F.dropout(mask, p=self.dropout, training=True)
                 w = mask.expand_as(raw_w) * raw_w
             else:
-                w = torch.nn.functional.dropout(raw_w, p=self.dropout, training=self.training)
+                w = F.dropout(raw_w, p=self.dropout, training=self.training)
             setattr(self.module, name_w, w)
 
     def forward(self, *args):
@@ -79,3 +81,25 @@ class LockedDropout(nn.Module):
         mask = Variable(m, requires_grad=False) / (1 - dropout)
         mask = mask.expand_as(x)
         return mask * x
+
+
+def masked_softmax(vector, mask):
+    result = F.softmax(vector)
+    result = result * mask
+    result = result / (result.sum(dim=1, keepdim=True) + 1e-13)
+    return result
+
+
+def create_mask(b_sents, b_lens):
+    mask = np.zeros(b_sents.size(), dtype='float32')
+    for z, curr_len in enumerate(b_lens):
+        mask[z, :curr_len] = 1.
+    mask = Variable(torch.from_numpy(mask).float().cuda())
+    return mask
+
+
+def to_torch_long(arr, cuda=True):
+    if cuda:
+        return torch.from_numpy(arr).long().cuda()
+    else:
+        return torch.from_numpy(arr).long()

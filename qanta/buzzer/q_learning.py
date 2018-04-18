@@ -8,13 +8,13 @@ import chainer.links as L
 from chainer import Variable
 from chainer import cuda
 
-from qanta import logging
+from qanta import qlogging
 
 from qanta.buzzer.progress import ProgressBar
 from qanta.buzzer.util import load_quizbowl
 from qanta.buzzer.iterator import QuestionIterator
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 class config:
     def __init__(self):

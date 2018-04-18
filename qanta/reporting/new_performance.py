@@ -20,7 +20,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 N_GUESSERS = len(GUESSERS)
 MAXINT = 99999
 HISTO_RATIOS = [0, 0.2, 0.4, 0.6, 0.8, 1.0]

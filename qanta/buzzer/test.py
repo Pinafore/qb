@@ -4,7 +4,7 @@ import pickle
 import chainer
 
 from qanta.guesser.abstract import AbstractGuesser
-from qanta import logging
+from qanta import qlogging
 from qanta.config import conf
 
 from qanta.buzzer import configs
@@ -18,7 +18,7 @@ from qanta.buzzer import constants as bc
 from qanta.util import constants as c
 
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 def generate(config, folds):
     N_GUESSERS = len(GUESSERS)

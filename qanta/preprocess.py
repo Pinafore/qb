@@ -2,13 +2,13 @@ import re
 from typing import List
 import string
 
-from qanta import logging
+from qanta import qlogging
 from nltk import word_tokenize
 from sklearn.model_selection import train_test_split
 
 from qanta.datasets.abstract import TrainingData
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 ftp_patterns = {
     '\n',
@@ -48,7 +48,7 @@ def format_guess(guess):
     return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
 
 
-def preprocess_dataset(data: TrainingData, train_size=.9,
+def preprocess_dataset(data: TrainingData, train_size=.9, test_size=.1,
                        vocab=None, class_to_i=None, i_to_class=None,
                        create_runs=False, full_question=False):
     """
@@ -71,6 +71,9 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
     if full_question and create_runs:
         raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
             create_runs, full_question))
+    if train_size + test_size > 1:
+        raise ValueError(
+            f'Train + test must sum to 1 or less: train={train_size} test={test_size} sum={train_size + test_size}')
 
     classes = set(data[1])
     if class_to_i is None or i_to_class is None:
@@ -89,7 +92,7 @@ def preprocess_dataset(data: TrainingData, train_size=.9,
 
     question_runs_with_answer = list(zip(data[0], data[1]))
     if train_size != 1:
-        train, test = train_test_split(question_runs_with_answer, train_size=train_size)
+        train, test = train_test_split(question_runs_with_answer, train_size=train_size, test_size=test_size)
     else:
         train = question_runs_with_answer
         test = []

@@ -62,7 +62,7 @@ WIKI_LOCATION = 'data/external/wikipedia'
 ALL_WIKI_REDIRECTS = 'data/external/wikipedia/all_wiki_redirects.csv'
 WIKI_DUMP_REDIRECT_PICKLE = 'data/external/wikipedia/dump_redirects.pickle'
 WIKI_TITLES_PICKLE = 'data/external/wikipedia/wikipedia-titles.pickle'
-WIKI_PAGE_PATH = 'data/external/wikipedia/pages/'
+WIKI_LOOKUP_PATH = 'data/external/wikipedia/wiki_lookup.json'
 WIKI_INSTANCE_OF_PICKLE = 'data/external/wikidata_instance-of.pickle'
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
@@ -72,6 +72,7 @@ SENTENCE_STATS = 'output/guesser/sentence_stats.pickle'
 GLOVE_WE = 'data/external/deep/glove.6B.300d.txt'
 
 GUESSER_TARGET_PREFIX = 'output/guesser'
+GUESSER_REPORTING_PREFIX = 'output/reporting/guesser'
 
 QB_SOURCE_LOCATION = 'data/internal/source'
 
@@ -83,8 +84,3 @@ META_TARGET = 'output/vw_input/{0}.meta'
 EXPO_BUZZ = 'output/expo/{}.buzz'
 EXPO_FINAL = 'output/expo/{}.final'
 EXPO_QUESTIONS = 'output/expo/{}.questions.csv'
-
-DOMAIN_TARGET_PREFIX = 'output/deep/domain_data'
-DOMAIN_MODEL_FORMAT = 'output/deep/domain_clf{}.vw'
-DOMAIN_PREDICTIONS_PREFIX = 'output/deep/domain_preds'
-DOMAIN_OUTPUT = 'output/deep/filtered_domain_data_{}.qb'
