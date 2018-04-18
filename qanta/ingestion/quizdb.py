@@ -33,7 +33,7 @@ def robust_fetch_page(login_cookie, page):
 def fetch_all_questions(start_page, end_page):
     quizdb_session = os.environ.get('QUIZ_DB_SESSION')
     if quizdb_session is None:
-        raise ValueError('Cannot scrap quizdb.org since no authentication credentials found in QUIZ_DB_SESSION')
+        raise ValueError('Cannot scrape quizdb.org since no authentication credentials found in QUIZ_DB_SESSION')
 
     delay = 2
     should_sleep = False
