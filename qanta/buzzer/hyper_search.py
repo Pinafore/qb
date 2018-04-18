@@ -14,10 +14,10 @@ from qanta.buzzer.trainer import Trainer
 from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
 from qanta.reporting.new_performance import generate as generate_report
-from qanta import logging
+from qanta import qlogging
 
 N_GUESSERS = len(GUESSERS)
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def run(cfg, fold, all_guesses, option2id):

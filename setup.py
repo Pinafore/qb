@@ -9,12 +9,9 @@ def read(fname):
 requirements = [
     'scipy',
     'numpy',
-    'wikipedia',
     'nltk',
     'scikit-learn',
-    'regex',
     'fuzzywuzzy',
-    'py4j',
     'python-Levenshtein',
     'requests',
     'click',
@@ -23,13 +20,24 @@ requirements = [
     'jinja2',
     'progressbar2',
     'boto3',
-    'pyhcl',
-    'pycrayon',
     'matplotlib',
-    'tagme',
-    'spacy',
+    'spacy==1.9',
     'pycountry',
-    'flask'
+    'flask',
+    'dash',
+    'dash-renderer',
+    'dash-html-components',
+    'dash-core-components',
+    'plotly',
+    'unidecode',
+    'pyyaml',
+    'seaborn',
+    'typing',
+    'awscli',
+    'pypandoc',
+    'elasticsearch-dsl',
+    'chainer',
+    'py4j'
 ]
 
 

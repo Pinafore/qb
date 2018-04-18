@@ -1,4 +1,4 @@
-from typing import List, Dict, Iterable, Tuple
+from typing import List, Dict, Iterable, Tuple, Optional, Any, Set
 import pickle
 import csv
 import os
@@ -8,7 +8,7 @@ import re
 
 import nltk
 
-from qanta import logging
+from qanta import qlogging
 from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util import constants as c
@@ -20,7 +20,7 @@ kBRACKET = re.compile(r'\[[^)]*\]')
 kMULT_SPACE = re.compile(r'\s+')
 kANGLE = re.compile(r'<[^>]*>')
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 class Question:
@@ -97,12 +97,9 @@ class Question:
     def flatten_text(self):
         return " ".join(self.text[x] for x in sorted(self.text))
 
-    def to_example(self, all_evidence=None) -> Tuple[List[QuestionText], Answer]:
+    def to_example(self, all_evidence: Optional[Dict[str, Dict[int, Any]]]=None) -> Tuple[List[QuestionText], Answer, Optional[Dict[str, Any]]]:
         sentence_list = [self.text[i] for i in range(len(self.text))]
-        if all_evidence is not None and 'tagme' in all_evidence:
-            evidence = {'tagme': all_evidence['tagme'][self.qnum]}
-        else:
-            evidence = None
+        evidence = None
         return sentence_list, self.page, evidence
 
 
@@ -145,6 +142,7 @@ def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum
 
 class QuestionDatabase:
     def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
+        self.location = location
         self._conn = sqlite3.connect(location)
         if os.path.exists(expo_csv) and load_expo:
             self.expo_questions = preprocess_expo_questions(expo_csv)
@@ -158,8 +156,8 @@ class QuestionDatabase:
             'tournament, naqt, protobowl, fold ' + command
         c.execute(command, arguments)
 
-        for qnum, page, _, answer, tournaments, naqt, protobowl, fold in c:
-            questions[qnum] = Question(qnum, answer, None, naqt, protobowl, tournaments, page, fold)
+        for qnum, page, category, answer, tournaments, naqt, protobowl, fold in c:
+            questions[qnum] = Question(qnum, answer, category, naqt, protobowl, tournaments, page, fold)
 
         for q in self.expo_questions:
             questions[q.qnum] = q
@@ -223,14 +221,11 @@ class QuestionDatabase:
             yield questions[ii]
 
     def questions_with_pages(self) -> Dict[str, List[Question]]:
-        page_map = {}
-
+        page_map = defaultdict(list) # type: Dict[str, List[Question]]
         questions = self.query('from questions where page != ""', ()).values()
 
         for q in questions:
             page = q.page
-            if page not in page_map:
-                page_map[page] = []
             page_map[page].append(q)
         return page_map
 
@@ -277,7 +272,7 @@ class QuestionDatabase:
 
 class QuizBowlDataset(AbstractDataset):
     def __init__(self, *, guesser_train=False, buzzer_train=False,
-                 qb_question_db: str=QB_QUESTION_DB, use_tagme_evidence=False):
+                 qb_question_db: str=QB_QUESTION_DB) -> None:
         """
         Initialize a new quiz bowl data set
         """
@@ -291,28 +286,17 @@ class QuizBowlDataset(AbstractDataset):
         self.db = QuestionDatabase(qb_question_db)
         self.guesser_train = guesser_train
         self.buzzer_train = buzzer_train
-        self.training_folds = set()
+        self.training_folds = set() # type: Set[str]
         if self.guesser_train:
             self.training_folds.add(c.GUESSER_TRAIN_FOLD)
         if self.buzzer_train:
             self.training_folds.add(c.BUZZER_TRAIN_FOLD)
 
-        self.use_tagme_evidence = use_tagme_evidence
-        if self.use_tagme_evidence:
-            with open('output/tagme/tagme.pickle', 'rb') as f:
-                self.tagme_evidence = pickle.load(f)
-        else:
-            self.tagme_evidence = None
 
     def training_data(self) -> TrainingData:
         from functional import seq
         all_questions = seq(self.db.all_questions().values())
-        if self.use_tagme_evidence:
-            all_evidence = {
-                'tagme': self.tagme_evidence
-            }
-        else:
-            all_evidence = None
+        all_evidence = None  # type: Optional[Dict[str, Any]]
 
         filtered_questions = all_questions\
             .filter(lambda q: q.fold in self.training_folds)\

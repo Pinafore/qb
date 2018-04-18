@@ -1,0 +1,24 @@
+parameters:
+  qanta.guesser.elasticsearch.ElasticSearchGuesser:
+    enabled: [true]
+    use_wiki: [true, false]
+    similarity:
+      - {name: default}
+      - {name: BM25, k1: 1.2, b: 1.0}
+      - {name: BM25, k1: 1.2, b: 0.75}
+      - {name: BM25, k1: 1.2, b: 0.5}
+      - {name: BM25, k1: 1.2, b: 0}
+      - {name: BM25, k1: 1.5, b: 0.75}
+      - {name: BM25, k1: 2.0, b: 0.75}
+  #qanta.guesser.dan.DanGuesser:
+  #  random_seed: [0, 1, 2, 3]
+  #  enabled: [true]
+
+  #qanta.guesser.vw.VWGuesser:
+  #  random_seed: [0, 1, 2, 3, 4]
+  #  enabled: [true]
+  #  l2: [0, .00001, .000001, .0000001]
+  #  learning_rate: [.5, .1, .01, .001, .0001]
+  #  ngrams: [[1, 2], [1]]
+  #  skips: [[1], []]
+  #  passes: [100]

@@ -13,9 +13,6 @@ QB_MAX_CORES = os.getenv('QB_MAX_CORES', multiprocessing.cpu_count())
 QB_TB_HOSTNAME = os.getenv('QB_TB_HOSTNAME', 'localhost')
 QB_TB_PORT = int(os.getenv('QB_TB_PORT', 6007))
 
-TAGME_GCUBE_TOKEN = os.getenv('TAGME_GCUBE_TOKEN')
-
-
 
 @lru_cache()
 def is_aws_authenticated():
@@ -24,8 +21,6 @@ def is_aws_authenticated():
         return True
     except NoCredentialsError:
         return False
-
-
 
 
 def data_path(other_path):
@@ -48,7 +43,5 @@ BONUS_PAIRS_JSON = data_path('data/internal/bonus_pairs.json')
 ENVIRONMENT = dict(
     QB_ROOT=QB_ROOT,
     QB_QUESTION_DB=QB_QUESTION_DB,
-    QB_SPARK_MASTER=QB_SPARK_MASTER,
-    BONUS_QUESTION_DB=BONUS_QUESTION_DB,
-    TAGME_GCUBE_TOKEN=TAGME_GCUBE_TOKEN
+    QB_SPARK_MASTER=QB_SPARK_MASTER
 )

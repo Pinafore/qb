@@ -8,6 +8,10 @@ variable "key_pair" {}
 variable "access_key" {}
 variable "secret_key" {}
 
+variable "kuro_server" {
+  default = ""
+}
+
 variable "spot_price" {
   default = "2.70"
 }
@@ -46,15 +50,9 @@ provider "aws" {
 }
 
 data "aws_ami" "qanta_ami" {
+  owners = ["095925267750"]
+  name_regex = "qanta-cpu.*"
   most_recent = true
-  filter {
-    name = "tag-key"
-    values = ["Image"]
-  }
-  filter {
-    name = "tag-value"
-    values = ["qanta-cpu"]
-  }
 }
 
 #  _   _      _                      _    _
@@ -143,6 +141,11 @@ resource "aws_security_group" "qanta_internal" {
   }
 }
 
+data "aws_iam_instance_profile" "s3_instance_profile" {
+  name = "s3-full-access"
+}
+
+
 #  _____ ____ ____    ___           _
 # | ____/ ___|___ \  |_ _|_ __  ___| |_ __ _ _ __   ___ ___  ___
 # |  _|| |     __) |  | || '_ \/ __| __/ _` | '_ \ / __/ _ \/ __|
@@ -157,6 +160,7 @@ resource "aws_spot_instance_request" "qanta" {
   spot_type = "one-time"
   wait_for_fulfillment = true
   count = "${var.instance_count}"
+  iam_instance_profile = "${data.aws_iam_instance_profile.s3_instance_profile.name}"
 
   vpc_security_group_ids = [
     "${aws_security_group.qanta_internal.id}",
@@ -192,26 +196,13 @@ resource "aws_spot_instance_request" "qanta" {
     script = "terraform/configure-swap.sh"
   }
 
-  # Configure AWS credentials
-  provisioner "remote-exec" {
-    inline = [
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7/conf/spark-env.sh",
-      "echo \"export AWS_ACCESS_KEY_ID=${var.access_key}\" >> /home/ubuntu/.bashrc",
-      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/dependencies/spark-2.2.0-bin-hadoop2.7/conf/spark-env.sh",
-      "echo \"export AWS_SECRET_ACCESS_KEY=${var.secret_key}\" >> /home/ubuntu/.bashrc",
-      "mkdir -p /home/ubuntu/.aws",
-      "echo \"[default]\" >> /home/ubuntu/.aws/credentials",
-      "echo \"aws_access_key_id = ${var.access_key}\" >> /home/ubuntu/.aws/credentials",
-      "echo \"aws_secret_access_key = ${var.secret_key}\" >> /home/ubuntu/.aws/credentials",
-    ]
-  }
-
   # Configure qanta environment variables
   provisioner "remote-exec" {
     inline = [
       "echo \"export PYSPARK_PYTHON=/home/ubuntu/anaconda3/bin/python\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_BUCKET=${var.qb_aws_s3_bucket}\" >> /home/ubuntu/.bashrc",
       "echo \"export QB_AWS_S3_NAMESPACE=${var.qb_aws_s3_namespace}\" >> /home/ubuntu/.bashrc",
+      "echo \"export KURO_SERVER=${var.kuro_server}\" >> /home/ubuntu/.bashrc",
     ]
   }
 

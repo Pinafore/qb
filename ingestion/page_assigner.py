@@ -1,6 +1,6 @@
-from qanta import logging
+from qanta import qlogging
 from unidecode import unidecode
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 # Answer lines that are differentiated only based on unicode
 # difference from another page.  Hopefully not many of these.

@@ -119,10 +119,16 @@ def load_protobowl(
             filtered_data.append(x)
 
     df = pd.DataFrame(
+<<<<<<< HEAD
             filtered_data,
             columns=['date', 'guess', 'qid', 'word_position',
                      'relative_position', 'result', 'uid',
                      'user_n_records'])
+=======
+            data, columns=['date', 'guess', 'qid', 'word_position',
+                           'relative_position', 'result', 'uid',
+                           'user_n_records'])
+>>>>>>> master
 
     df_grouped = df.groupby('uid')
     uids = list(df_grouped.groups.keys())
@@ -130,11 +136,14 @@ def load_protobowl(
     _remove_duplicate = partial(remove_duplicate, df_grouped)
     user_rows = pool.map(_remove_duplicate, uids)
     df = pd.DataFrame(list(itertools.chain(*user_rows)), columns=df.columns)
+<<<<<<< HEAD
     df_grouped = df.groupby('uid')
 
     print('{} users'.format(len(df_grouped)))
     print('{} records'.format(len(df)))
     print('{} questions'.format(len(set(df.qid))))
+=======
+>>>>>>> master
 
     # save
     with pd.HDFStore(df_dir) as store:
@@ -145,7 +154,11 @@ def load_protobowl(
 
 
 def plot():
+<<<<<<< HEAD
     outdir = 'output/protobowl/'
+=======
+    outdir = '/cliphomes/shifeng/protobowl/'
+>>>>>>> master
     pathlib.Path(outdir).mkdir(parents=True, exist_ok=True)
 
     df, questions = load_protobowl()

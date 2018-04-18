@@ -9,14 +9,14 @@ from qanta.config import conf
 from qanta.buzzer.util import GUESSERS
 from qanta.buzzer import constants as bc
 from qanta.util.multiprocess import _multiprocess
-from qanta import logging
+from qanta import qlogging
 
 Batch = namedtuple('Batch', ['qids', 'answers', 'mask', 'vecs', 'results'])
 
 N_GUESSERS = len(GUESSERS)
 N_GUESSES = conf['buzzer']['n_guesses']
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 random.seed(1234)
 

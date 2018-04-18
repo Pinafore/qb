@@ -52,6 +52,7 @@ This section is purely informative, you can skip to [Run AWS Scripts](#run-aws-s
 * Python 3.6
 * Apache Spark 2.2.0
 * Vowpal Wabbit 8.1.1
+* Elastic Search 5.6.X (Not 6.X)
 * CUDA and Nvidia drivers if using a GPU instance
 * lz4
 * All python packages in `packer/requirements.txt`
@@ -186,9 +187,14 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 17/07/25 10:04:01 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
 ```
 
-2. Install ElasticSearch
+2. Install ElasticSearch 5.6
+
+Install version 5.6.X, do not use 6.X. Also be sure that the directory `bin/` within the extracted files is in your
+`$PATH` as it contains the necessary binary `elasticsearch`.
 
 https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
+
+https://www.elastic.co/downloads/past-releases/elasticsearch-5-6-8
 
 3. Install Python packages
 
@@ -401,6 +407,18 @@ first three.
 > python3 ingestion/create_db.py
 
 Needs Protobowl files at https://s3.amazonaws.com/protobowl/questions-05-05-2017.json.xz
+
+## Last Mile Answer Matching
+
+In addition to the ingestion script above, we have mapped additional answers with a new script. Eventually we intend
+to merge this code into the main process/script, but for now it takes as input the database from the process above and
+outputs a new database. This new database is in the repository, but we document how to generate it below.
+
+```bash
+python cli.py generate_additional_answer_mappings ~/Downloads/
+python cli.py db_merge_answers data/internal/non_naqt.db /tmp/non_naqt.db ~/Downloads/answer_map.json /tmp/page_assignments.json
+mv /tmp/non_naqt.db data/internal/non_naqt.db
+```
 
 # Wikipedia Dumps
 

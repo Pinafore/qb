@@ -5,13 +5,13 @@ from string import ascii_lowercase, ascii_uppercase
 import qanta
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.wikipedia.cached_wikipedia import CachedWikipedia
-from qanta import logging
+from qanta import qlogging
 from ingestion.page_assigner import PageAssigner
 
 from fuzzywuzzy import process
 from fuzzywuzzy.fuzz import UWRatio
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 
 def scorer(left, right):

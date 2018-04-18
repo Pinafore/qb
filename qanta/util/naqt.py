@@ -4,10 +4,10 @@ import os
 
 import nltk
 
-from qanta import logging
+from qanta import qlogging
 from qanta.datasets.quiz_bowl import QuestionDatabase
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
 

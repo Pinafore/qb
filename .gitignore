@@ -3,6 +3,9 @@
 .idea
 data/external
 data/internal/naqt.db
+data/internal/naqt-unused.db
+.data/
+.vector_cache/
 output/
 metastore_db/
 *.o
@@ -32,6 +35,8 @@ security_groups.tf
 cynch.json
 naqt_db.tf
 qanta.hcl
+qanta-tmp.yaml
+qanta.yaml
 qb.egg-info/
 qanta_web/.vscode
 qanta_web/*.sqlite3
@@ -47,3 +52,8 @@ tb-logs/
 .terraform
 .ignore
 tags
+.mypy_cache/
+tmp*
+luigi/*.pid
+*.pid
+elasticsearch.yml

@@ -1,6 +1,7 @@
 import os
 import pickle
 from functools import wraps
+import tempfile
 import subprocess
 
 
@@ -24,6 +25,22 @@ def safe_path(path):
 
 def make_dirs(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
+
+
+def get_tmp_dir():
+    if os.path.isdir('/fs/clip-quiz/entilzha/scratch'):
+        return '/fs/clip-quiz/entilzha/scratch'
+    elif os.path.isdir('/scratch0'):
+        return '/scratch0'
+    else:
+        return '/tmp'
+
+
+def get_tmp_filename(dir=get_tmp_dir()):
+    with tempfile.NamedTemporaryFile('w', delete=True, dir=dir) as f:
+        file_name = f.name
+
+    return file_name
 
 
 def file_backed_cache_decorator(cache_location):

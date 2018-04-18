@@ -5,7 +5,7 @@ import pickle
 from collections import defaultdict, namedtuple
 from typing import List, Dict, Tuple, Optional
 
-from qanta import logging
+from qanta import qlogging
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 
@@ -19,7 +19,7 @@ from qanta.buzzer.models import MLP, RNN
 from qanta.buzzer import constants as bc
 from qanta.util import constants as c
 
-log = logging.get(__name__)
+log = qlogging.get(__name__)
 
 def train_cost_sensitive(config, folds):
     N_GUESSERS = len(GUESSERS)
