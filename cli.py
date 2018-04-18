@@ -238,7 +238,5 @@ def elasticsearch(generate_config, config_dir, pid_file, command):
         stop_elasticsearch(pid_file)
 
 
-
-
 if __name__ == '__main__':
     main()
