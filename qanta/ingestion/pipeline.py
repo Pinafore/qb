@@ -3,7 +3,7 @@ from os import path
 from luigi import LocalTarget, Task, WrapperTask, Parameter
 
 from qanta.util.io import shell, get_tmp_filename, safe_path
-from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets
+from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
 
 
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
@@ -61,7 +61,7 @@ class DownloadDatasets(WrapperTask):
         yield DownloadQuizdbOrg()
 
 
-class MergeDatasets(Task):
+class CreateQantaDataset(Task):
     def requires(self):
         yield DownloadDatasets()
 
@@ -74,6 +74,7 @@ class MergeDatasets(Task):
             quizdb_tournaments, quizdb_categories, quizdb_subcategories, QDB_TOSSUPS_PATH
         )
         qanta_questions = merge_datasets(protobowl_questions, quizdb_questions)
+        assign_folds(qanta_questions)
         with open(safe_path(QANTA_DATASET_PATH), 'w') as f:
             json.dump(qanta_questions, f)
 
