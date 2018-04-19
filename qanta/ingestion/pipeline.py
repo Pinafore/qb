@@ -8,7 +8,7 @@ from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, 
 
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
 DATASET_PREFIX = 'data/external/datasets'
-QANTA_DATASET_PATH = 'data/external/datasets/qanta.2018.04.18.json'
+QANTA_DATASET_PATH = 'data/external/datasets/qanta.unmapped.2018.04.18.json'
 
 
 QDB_CATEGORIES = 'quizdb.org-04182018.categories.json'
@@ -61,7 +61,7 @@ class DownloadDatasets(WrapperTask):
         yield DownloadQuizdbOrg()
 
 
-class CreateQantaDataset(Task):
+class CreateUnmappedQantaDataset(Task):
     def requires(self):
         yield DownloadDatasets()
 
