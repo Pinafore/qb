@@ -216,7 +216,10 @@ def assign_folds(qanta_questions, random_seed=0, guessbuzz_frac=.8):
     random.seed(random_seed)
     for q in qanta_questions:
         if q['tournament'] in TEST_TOURNAMENTS and q['year'] in TEST_YEARS:
-            q['fold'] = 'test'
+            if random.random() < .5:
+                q['fold'] = 'test'
+            else:
+                q['fold'] = 'dev'
         elif q['tournament'] in TEST_TOURNAMENTS and q['year'] in DEV_YEARS:
             if q['dataset'] == 'protobowl':
                 q['fold'] = 'buzzdev'
