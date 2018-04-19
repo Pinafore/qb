@@ -31,7 +31,9 @@ CANONICAL_TOURNAMENT_MAP = {
     'Tyrone Slothrop Lit': 'Tyrone Slothrop Literature Singles',
     'Terrapin': 'Terrapin Invitational Tournament',
     'Terrapin Invitational': 'Terrapin Invitational Tournament',
-    'Mavis Gallant Memorial': 'Mavis Gallant Memorial Tournament (Literature)'
+    'Mavis Gallant Memorial': 'Mavis Gallant Memorial Tournament (Literature)',
+    'Geography Monstrosity 4': 'Geography Monstrosity',
+    'Geography Monstrosity 2': 'Geography Monstrosity'
 }
 
 
