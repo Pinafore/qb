@@ -442,7 +442,21 @@ class DanGuesser(AbstractGuesser):
 
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
 
+
+
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
+        batch_size = 500
+        if len(questions) < batch_size:
+            return self._guess_batch(questions, max_n_guesses)
+        else:
+            all_guesses = []
+            for i in range(0, len(questions), batch_size):
+                batch_questions = questions[i:i + batch_size]
+                guesses = self._guess_batch(batch_questions, max_n_guesses)
+                all_guesses.extend(guesses)
+            return all_guesses
+
+    def _guess_batch(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
         input_dict = {}
         lengths_dict = {}
         if self.text_field is not None:
