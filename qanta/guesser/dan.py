@@ -445,6 +445,8 @@ class DanGuesser(AbstractGuesser):
 
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
+        if len(questions) == 0:
+            return []
         batch_size = 500
         if len(questions) < batch_size:
             return self._guess_batch(questions, max_n_guesses)
@@ -457,6 +459,8 @@ class DanGuesser(AbstractGuesser):
             return all_guesses
 
     def _guess_batch(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
+        if len(questions) == 0:
+            return []
         input_dict = {}
         lengths_dict = {}
         if self.text_field is not None:
