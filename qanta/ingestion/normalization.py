@@ -1,4 +1,6 @@
 import json
+import random
+import re
 import itertools
 from collections import Counter
 
@@ -75,11 +77,22 @@ class QuizdbOrg:
 
     @staticmethod
     def parse_subcategories(path):
+        categories = [
+            'Current Events', 'Fine Arts', 'Geography',
+            'History', 'Literature', 'Mythology', 'Philosophy',
+            'Religion', 'Science', 'Social Science', 'Trash'
+        ]
+        pattern = f"(?:{'|'.join(categories)}) (.*)"
         with open(path) as f:
             quizdb_subcategory_list = json.load(f)
-            quizdb_subcategories = {
-                r['id']: r['name'] for r in quizdb_subcategory_list
-            }
+            quizdb_subcategories = {}
+            for r in quizdb_subcategory_list:
+                m = re.match(pattern, r['name'])
+                if m is None:
+                    quizdb_subcategories[r['id']] = r['name']
+                else:
+                    quizdb_subcategories[r['id']] = m.group(1)
+
             return quizdb_subcategories
 
     @staticmethod
@@ -192,3 +205,26 @@ def merge_datasets(protobowl_questions, quizdb_questions):
                 questions.append(q)
 
     return questions
+
+
+TEST_TOURNAMENTS = {'ACF Regionals', 'PACE NSC', 'NASAT', 'ACF Nationals', 'ACF Fall'}
+TEST_YEARS = {2017, 2018}
+DEV_YEARS = {2016}
+
+
+def assign_folds(qanta_questions, random_seed=0, guessbuzz_frac=.8):
+    random.seed(random_seed)
+    for q in qanta_questions:
+        if q['tournament'] in TEST_TOURNAMENTS and q['year'] in TEST_YEARS:
+            q['fold'] = 'test'
+        elif q['tournament'] in TEST_TOURNAMENTS and q['year'] in DEV_YEARS:
+            if q['dataset'] == 'protobowl':
+                q['fold'] = 'buzzdev'
+            else:
+                q['fold'] = 'guessdev'
+        else:
+            if random.random() < guessbuzz_frac:
+                q['fold'] = 'guesstrain'
+            else:
+                q['fold'] = 'buzztrain'
+
