@@ -11,7 +11,7 @@ class RNNBuzzer(chainer.Chain):
     def __init__(self, n_input, n_layers, n_hidden, n_output, dropout=0.1):
         super(RNNBuzzer, self).__init__()
         with self.init_scope():
-            self.encoder = L.NStepBiLSTM(n_layers, n_input, n_hidden, dropout)
+            self.encoder = L.NStepLSTM(n_layers, n_input, n_hidden, dropout)
             self.linear = L.Linear(n_hidden, n_output)
         self.n_layers = n_layers
         self.n_output = n_output
