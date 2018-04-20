@@ -21,7 +21,7 @@ def mapping_rules_to_answer_map(
         expansion_rules: List[Tuple[str, ExpansionRule]],
         match_rules: List[Tuple[str, MatchRule]],
         lower_titles: Dict[str, str], unicode_titles: Dict[str, str],
-        wiki_redirects: Dict[str, str],
+        lower_wiki_redirects: Dict[str, str], unicode_wiki_redirects: Dict[str, str],
         unmapped_answers: Set[str]):
     answer_map = {}
 
@@ -74,11 +74,20 @@ def mapping_rules_to_answer_map(
                     else:
                         pass
 
-                    if mod_ans in wiki_redirects:
-                        answer_map[original_ans] = wiki_redirects[mod_ans]
+                    if mod_ans in lower_wiki_redirects:
+                        answer_map[original_ans] = lower_wiki_redirects[mod_ans]
                         continue
-                    elif und_mod_ans in wiki_redirects:
-                        answer_map[original_ans] = wiki_redirects[und_mod_ans]
+                    elif und_mod_ans in lower_wiki_redirects:
+                        answer_map[original_ans] = lower_wiki_redirects[und_mod_ans]
+                        continue
+                    else:
+                        pass
+
+                    if mod_ans in unicode_wiki_redirects:
+                        answer_map[original_ans] = unicode_wiki_redirects[mod_ans]
+                        continue
+                    elif und_mod_ans in unicode_wiki_redirects:
+                        answer_map[original_ans] = unicode_wiki_redirects[und_mod_ans]
                         continue
                     else:
                         pass
@@ -260,12 +269,15 @@ def create_answer_map(unmapped_qanta_questions):
         lower_title_map = {t.lower(): t for t in titles}
         unicode_title_map = {unidecode(t.lower()): t for t in titles}
 
-    wiki_redirect_map = read_wiki_redirects()
+    wiki_redirect_map = read_wiki_redirects(titles)
+    lower_wiki_redirect_map = {text.lower(): page for text, page in wiki_redirect_map.items()}
+    unicode_wiki_redirect_map = {unidecode(text.lower()): page for text, page in wiki_redirect_map.items()}
 
     log.info('Starting Answer Mapping Process')
     answer_map, unbound_answers = mapping_rules_to_answer_map(
         expansion_rules, match_rules,
-        lower_title_map, unicode_title_map, wiki_redirect_map,
+        lower_title_map, unicode_title_map,
+        lower_wiki_redirect_map, unicode_wiki_redirect_map,
         raw_unmapped_answers
     )
     return answer_map, unbound_answers
@@ -285,10 +297,16 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map):
             q['page'] = answer_map[q['answer']]
 
 
-def read_wiki_redirects(redirect_csv_path=ALL_WIKI_REDIRECTS) -> Dict[str, str]:
+def read_wiki_redirects(wiki_titles, redirect_csv_path=ALL_WIKI_REDIRECTS) -> Dict[str, str]:
     with open(redirect_csv_path) as f:
         redirect_lookup = {}
+        n = 0
         for source, target in csv.reader(f, escapechar='\\'):
-            redirect_lookup[source] = target
+            if target in wiki_titles:
+                redirect_lookup[source] = target
+            else:
+                n += 1
+
+        log.info(f'{n} titles in redirect not found in wiki titles')
 
         return redirect_lookup
