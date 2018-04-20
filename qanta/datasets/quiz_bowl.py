@@ -1,5 +1,4 @@
 from typing import List, Dict, Iterable, Tuple, Optional, Any, Set
-import pickle
 import csv
 import os
 import sqlite3
