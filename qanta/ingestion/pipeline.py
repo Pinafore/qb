@@ -4,11 +4,14 @@ from luigi import LocalTarget, Task, WrapperTask, Parameter
 
 from qanta.util.io import shell, get_tmp_filename, safe_path
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
+from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
 
 
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
 DATASET_PREFIX = 'data/external/datasets'
-QANTA_DATASET_PATH = 'data/external/datasets/qanta.unmapped.2018.04.18.json'
+QANTA_UNMAPPED_DATASET_PATH = 'data/external/datasets/qanta.unmapped.2018.04.18.json'
+ANSWER_MAP_PATH = 'data/external/answer_mapping/answer_map.json'
+UNBOUND_ANSWER_PATH = 'data/external/answer_mapping/unbound_answers.json'
 
 
 QDB_CATEGORIES = 'quizdb.org-04182018.categories.json'
@@ -75,8 +78,38 @@ class CreateUnmappedQantaDataset(Task):
         )
         qanta_questions = merge_datasets(protobowl_questions, quizdb_questions)
         assign_folds(qanta_questions)
-        with open(safe_path(QANTA_DATASET_PATH), 'w') as f:
+        with open(safe_path(QANTA_UNMAPPED_DATASET_PATH), 'w') as f:
             json.dump(qanta_questions, f)
 
     def output(self):
-        return LocalTarget(QANTA_DATASET_PATH)
+        return LocalTarget(QANTA_UNMAPPED_DATASET_PATH)
+
+
+class CreateAnswerMap(Task):
+    def requires(self):
+        yield CreateUnmappedQantaDataset()
+
+    def run(self):
+        with open(QANTA_UNMAPPED_DATASET_PATH) as f:
+            unmapped_qanta_questions = json.load(f)
+
+        answer_map, unbound_answers = create_answer_map(unmapped_qanta_questions)
+        write_answer_map(answer_map, unbound_answers, ANSWER_MAP_PATH, UNBOUND_ANSWER_PATH)
+
+    def output(self):
+        return [
+            LocalTarget(ANSWER_MAP_PATH),
+            LocalTarget(UNBOUND_ANSWER_PATH)
+        ]
+
+
+class CreateMappedQantaDataset(Task):
+    def requires(self):
+        yield CreateUnmappedQantaDataset()
+        yield CreateAnswerMap()
+
+    def run(self):
+        pass
+
+    def output(self):
+        return LocalTarget()

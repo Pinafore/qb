@@ -408,17 +408,6 @@ first three.
 
 Needs Protobowl files at https://s3.amazonaws.com/protobowl/questions-05-05-2017.json.xz
 
-## Last Mile Answer Matching
-
-In addition to the ingestion script above, we have mapped additional answers with a new script. Eventually we intend
-to merge this code into the main process/script, but for now it takes as input the database from the process above and
-outputs a new database. This new database is in the repository, but we document how to generate it below.
-
-```bash
-python cli.py generate_additional_answer_mappings ~/Downloads/
-python cli.py db_merge_answers data/internal/non_naqt.db /tmp/non_naqt.db ~/Downloads/answer_map.json /tmp/page_assignments.json
-mv /tmp/non_naqt.db data/internal/non_naqt.db
-```
 
 # Wikipedia Dumps
 
