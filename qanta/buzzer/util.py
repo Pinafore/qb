@@ -99,8 +99,7 @@ def read_data(
         guesser_module, guesser_class, guesser_config_num, '')
     questions = QuestionDatabase().all_questions()
     datasets = []
-    # for fold in [BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD]:
-    for fold in [BUZZER_DEV_FOLD, BUZZER_DEV_FOLD]:
+    for fold in [BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD]:
         output_path = AbstractGuesser.guess_path(guesser_directory, fold)
         with open(output_path, 'rb') as f:
             df = pickle.load(f)

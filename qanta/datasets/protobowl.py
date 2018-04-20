@@ -19,20 +19,20 @@ from plotnine import ggplot, aes, theme, geom_density, geom_histogram, \
 
 def process_log_line(x):
     '''Process a single line of the log'''
+    obj = x['object']
     date = datetime.strptime(x['date'][:-6], '%a %b %d %Y %H:%M:%S %Z%z')
-    total_time = x['object']['time_elapsed'] + x['object']['time_remaining']
-    relative_position = x['object']['time_elapsed'] / total_time
-    word_position = int(len(x['object']['question_text'].split()) *
-                        relative_position)
+    total_time = obj['time_elapsed'] + obj['time_remaining']
+    relative_position = obj['time_elapsed'] / obj['time_remaining']
     return [date,
-            x['object']['guess'],
-            x['object']['qid'],
-            word_position,
+            obj['guess'],
+            obj['qid'],
+            obj['time_elapsed'],
+            obj['time_remaining'],
             relative_position,
-            x['object']['ruling'],
-            x['object']['user']['id']],\
-        x['object']['qid'],\
-        x['object']['question_text']
+            obj['ruling'],
+            obj['user']['id']],\
+        obj['qid'],\
+        obj['question_text']
 
 
 # remove duplicate records
@@ -120,7 +120,8 @@ def load_protobowl(
 
     df = pd.DataFrame(
             filtered_data,
-            columns=['date', 'guess', 'qid', 'word_position',
+            columns=['date', 'guess', 'qid',
+                     'time_elapsed', 'time_remaining',
                      'relative_position', 'result', 'uid',
                      'user_n_records'])
 
