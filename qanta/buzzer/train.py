@@ -19,12 +19,12 @@ def main():
     train_iter = chainer.iterators.SerialIterator(train, args.batch_size)
     valid_iter = chainer.iterators.SerialIterator(
             valid, args.batch_size, repeat=False, shuffle=False)
-    
+
     model = nets.RNNBuzzer(args.n_input, args.n_layers, args.n_hidden,
-            args.n_output, args.dropout)
+                           args.n_output, args.dropout)
 
     if args.gpu >= 0:
-        chainer.backends.cuda.get_device_from_id(args.gpu).use()
+        chainer.backends.cuda.get_device_from_id(0).use()
         model.to_gpu()
 
     optimizer = chainer.optimizers.Adam()
