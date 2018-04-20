@@ -198,14 +198,16 @@ def merge_datasets(protobowl_questions, quizdb_questions):
             raise ValueError('This is impossible')
 
     questions = []
-    for q in itertools.chain(protobowl_questions, quizdb_questions):
+    for i, q in enumerate(itertools.chain(protobowl_questions, quizdb_questions)):
         ty = (q['tournament'], q['year'])
         if ty in selected_tournaments:
             is_proto = selected_tournaments[ty][0].startswith('proto')
             is_qdb = selected_tournaments[ty][0].startswith('qdb')
             if is_proto and q['dataset'] == 'protobowl':
+                q['qanta_id'] = i
                 questions.append(q)
             elif is_qdb and q['dataset'] == 'quizdb.org':
+                q['qanta_id'] = i
                 questions.append(q)
 
     return questions

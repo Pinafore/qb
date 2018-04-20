@@ -5,7 +5,7 @@ from luigi import LocalTarget, Task, WrapperTask, Parameter
 from qanta.util.io import shell, get_tmp_filename, safe_path
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
-from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
+from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions, questions_to_sqlite
 
 
 DS_VERSION = '2018.04.18'
@@ -13,6 +13,7 @@ S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jm
 DATASET_PREFIX = 'data/external/datasets'
 QANTA_UNMAPPED_DATASET_PATH = f'data/external/datasets/qanta.unmapped.{DS_VERSION}.json'
 QANTA_MAPPED_DATASET_PATH = f'data/external/datasets/qanta.mapped.{DS_VERSION}.json'
+QANTA_MAPPED_SQL_DS_PATH = f'data/external/datasets/qanta.mapped.{DS_VERSION}.sqlite3'
 ANSWER_MAP_PATH = 'data/external/answer_mapping/answer_map.json'
 UNBOUND_ANSWER_PATH = 'data/external/answer_mapping/unbound_answers.json'
 
@@ -124,5 +125,12 @@ class CreateMappedQantaDataset(Task):
         with open(QANTA_MAPPED_DATASET_PATH, 'w') as f:
             json.dump(qanta_questions, f)
 
+        tmp_db = get_tmp_filename()
+        questions_to_sqlite(qanta_questions, tmp_db)
+        shell(f'mv {tmp_db} {QANTA_MAPPED_SQL_DS_PATH}')
+
     def output(self):
-        return LocalTarget(QANTA_MAPPED_DATASET_PATH)
+        return [
+            LocalTarget(QANTA_MAPPED_DATASET_PATH),
+            LocalTarget(QANTA_MAPPED_SQL_DS_PATH)
+        ]
