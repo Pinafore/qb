@@ -1,4 +1,5 @@
 from typing import Tuple, Set, Dict, List, Callable, Iterable, Optional
+import sqlite3
 import csv
 import json
 import re
@@ -295,6 +296,31 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map):
     for q in unmapped_qanta_questions:
         if q['answer'] in answer_map:
             q['page'] = answer_map[q['answer']]
+
+
+def questions_to_sqlite(qanta_questions, db_path):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute('DROP TABLE IF EXISTS questions;')
+    c.execute("""
+        CREATE TABLE questions (
+          qanta_id INT PRIMARY KEY NOT NULL,
+          "text" TEXT NOT NULL, answer TEXT NOT NULL, page TEXT,
+          category TEXT, subcategory TEXT,
+          tournament TEXT, difficulty TEXT, year INT,
+          proto_id INT, qdb_id INT, dataset TEXT NOT NULL
+        )
+    """)
+    c.executemany(
+        'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [(
+            q['qanta_id'], q['text'], q['answer'], q['page'],
+            q['category'], q['subcategory'], q['tournament'], q['difficulty'],
+            q['year'], q['proto_id'], q['qdb_id'], q['dataset']
+        ) for q in qanta_questions]
+    )
+    conn.commit()
+    conn.close()
 
 
 def read_wiki_redirects(wiki_titles, redirect_csv_path=ALL_WIKI_REDIRECTS) -> Dict[str, str]:
