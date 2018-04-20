@@ -1,4 +1,5 @@
 from typing import Tuple, Set, Dict, List, Callable, Iterable, Optional
+import csv
 import json
 import re
 import pickle
@@ -6,7 +7,7 @@ from collections import defaultdict
 from unidecode import unidecode
 
 from qanta import qlogging
-from qanta.util.constants import WIKI_TITLES_PICKLE
+from qanta.util.constants import WIKI_TITLES_PICKLE, ALL_WIKI_REDIRECTS
 from qanta.util.io import safe_open
 
 
@@ -20,6 +21,7 @@ def mapping_rules_to_answer_map(
         expansion_rules: List[Tuple[str, ExpansionRule]],
         match_rules: List[Tuple[str, MatchRule]],
         lower_titles: Dict[str, str], unicode_titles: Dict[str, str],
+        wiki_redirects: Dict[str, str],
         unmapped_answers: Set[str]):
     answer_map = {}
 
@@ -68,6 +70,15 @@ def mapping_rules_to_answer_map(
                         continue
                     elif und_mod_ans in unicode_titles:
                         answer_map[original_ans] = unicode_titles[und_mod_ans]
+                        continue
+                    else:
+                        pass
+
+                    if mod_ans in wiki_redirects:
+                        answer_map[original_ans] = wiki_redirects[mod_ans]
+                        continue
+                    elif und_mod_ans in wiki_redirects:
+                        answer_map[original_ans] = wiki_redirects[und_mod_ans]
                         continue
                     else:
                         pass
@@ -249,14 +260,15 @@ def create_answer_map(unmapped_qanta_questions):
         lower_title_map = {t.lower(): t for t in titles}
         unicode_title_map = {unidecode(t.lower()): t for t in titles}
 
+    wiki_redirect_map = read_wiki_redirects()
+
     log.info('Starting Answer Mapping Process')
     answer_map, unbound_answers = mapping_rules_to_answer_map(
         expansion_rules, match_rules,
-        lower_title_map, unicode_title_map,
+        lower_title_map, unicode_title_map, wiki_redirect_map,
         raw_unmapped_answers
     )
     return answer_map, unbound_answers
-
 
 
 def write_answer_map(answer_map, unbound_answers, answer_map_path, unbound_answer_path):
@@ -267,7 +279,16 @@ def write_answer_map(answer_map, unbound_answers, answer_map_path, unbound_answe
         json.dump({'unbound_answers': list(sorted(unbound_answers))}, f)
 
 
-
 def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map):
-    pass
+    for q in unmapped_qanta_questions:
+        if q['answer'] in answer_map:
+            q['page'] = answer_map[q['answer']]
 
+
+def read_wiki_redirects(redirect_csv_path=ALL_WIKI_REDIRECTS) -> Dict[str, str]:
+    with open(redirect_csv_path) as f:
+        redirect_lookup = {}
+        for source, target in csv.reader(f, escapechar='\\'):
+            redirect_lookup[source] = target
+
+        return redirect_lookup
