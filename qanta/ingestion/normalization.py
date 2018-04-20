@@ -117,6 +117,7 @@ class QuizdbOrg:
                 quizdb_questions.append({
                     'text': q['text'],
                     'answer': q['answer'],
+                    'page': None,
                     'category': qdb_categories[category_id] if category_id is not None else None,
                     'subcategory': qdb_subcategories[subcategory_id] if subcategory_id is not None else None,
                     'tournament': tournament,
@@ -139,6 +140,7 @@ class Protobowl:
                 protobowl_questions.append({
                     'text': q['question'],
                     'answer': q['answer'],
+                    'page': None,
                     'category': q['category'],
                     'subcategory': q['subcategory'],
                     'tournament': q['tournament'],

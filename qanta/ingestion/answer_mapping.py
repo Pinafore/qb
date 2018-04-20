@@ -1,17 +1,13 @@
 from typing import Tuple, Set, Dict, List, Callable, Iterable, Optional
-import shutil
 import json
 import re
 import pickle
-from os import path
 from collections import defaultdict
 from unidecode import unidecode
-import sqlite3
 
 from qanta import qlogging
 from qanta.util.constants import WIKI_TITLES_PICKLE
 from qanta.util.io import safe_open
-from qanta.datasets.quiz_bowl import QuestionDatabase
 
 
 log = qlogging.get(__name__)
@@ -20,7 +16,7 @@ ExpansionRule = Callable[[str], Iterable[str]]
 MatchRule = Callable[[str], Optional[str]]
 
 
-def create_answer_map(
+def mapping_rules_to_answer_map(
         expansion_rules: List[Tuple[str, ExpansionRule]],
         match_rules: List[Tuple[str, MatchRule]],
         lower_titles: Dict[str, str], unicode_titles: Dict[str, str],
@@ -237,19 +233,15 @@ def create_match_rules():
     return match_rules
 
 
-def write_answer_map(output_dir):
+def create_answer_map(unmapped_qanta_questions):
     expansion_rules = create_expansion_rules()
     match_rules = create_match_rules()
 
     log.info('Loading questions')
-    db = QuestionDatabase()
-    question_lookup = db.all_questions(unfiltered=True)
-    questions = list(question_lookup.values())
-    unmapped_questions = [q for q in questions if q.page == '']
-    raw_unmapped_answers = {q.answer for q in unmapped_questions}
+    raw_unmapped_answers = {q['answer'] for q in unmapped_qanta_questions}
     unmapped_lookup = defaultdict(list)
-    for q in unmapped_questions:
-        unmapped_lookup[q.answer].append(q)
+    for q in unmapped_qanta_questions:
+        unmapped_lookup[q['answer']].append(q)
 
     log.info('Loading wikipedia titles')
     with open(WIKI_TITLES_PICKLE, 'rb') as f:
@@ -258,45 +250,24 @@ def write_answer_map(output_dir):
         unicode_title_map = {unidecode(t.lower()): t for t in titles}
 
     log.info('Starting Answer Mapping Process')
-    answer_map, unbound = create_answer_map(
+    answer_map, unbound_answers = mapping_rules_to_answer_map(
         expansion_rules, match_rules,
         lower_title_map, unicode_title_map,
         raw_unmapped_answers
     )
+    return answer_map, unbound_answers
 
-    answer_map_path = path.join(output_dir, 'answer_map.json')
-    log.info(f'Writing answer map to: {answer_map_path}')
+
+
+def write_answer_map(answer_map, unbound_answers, answer_map_path, unbound_answer_path):
     with safe_open(answer_map_path, 'w') as f:
         json.dump({'answer_map': answer_map}, f)
 
-    unbound_path = path.join(output_dir, 'unbound.json')
-    log.info(f'Writing unbound answers to: {unbound_path}')
-    with safe_open(unbound_path, 'w') as f:
-        json.dump({'unbound': list(sorted(unbound))}, f)
+    with safe_open(unbound_answer_path, 'w') as f:
+        json.dump({'unbound_answers': list(sorted(unbound_answers))}, f)
 
 
-def merge_answer_mapping(source_db_path, answer_map, output_db_path, page_assignments_path):
-    shutil.copyfile(source_db_path, output_db_path)
-    conn = sqlite3.connect(output_db_path)
-    c = conn.cursor()
-    questions = list(c.execute("select id, answer from questions where page=''"))
-    page_assignments = []
-    for qnum, answer in questions:
-        if answer in answer_map:
-            page = answer_map[answer]
-            page_assignments.append((page, qnum))
 
-    update_sql = """
-        UPDATE questions
-        SET page = ?
-        WHERE
-          id = ?;
-    """
-
-    c.executemany(update_sql, page_assignments)
-    conn.commit()
-    conn.close()
-
-    with safe_open(page_assignments_path, 'w') as f:
-        json.dump({'page_assignments': page_assignments}, f)
+def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map):
+    pass
 
