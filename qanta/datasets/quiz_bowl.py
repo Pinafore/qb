@@ -1,9 +1,9 @@
-from typing import List, Dict, Iterable, Tuple, Optional, Any, Set
+from typing import List, Dict, Iterable, Tuple, Optional, Any, Set, NamedTuple
+import json
 import csv
 import os
 import sqlite3
 from collections import defaultdict, Counter
-import re
 
 import nltk
 
@@ -14,92 +14,32 @@ from qanta.util import constants as c
 from qanta.util.io import file_backed_cache_decorator, safe_path
 from qanta.config import conf
 
-kPAREN = re.compile(r'\([^)]*\)')
-kBRACKET = re.compile(r'\[[^)]*\]')
-kMULT_SPACE = re.compile(r'\s+')
-kANGLE = re.compile(r'<[^>]*>')
 
 log = qlogging.get(__name__)
 
 
-class Question:
-    def __init__(self, qnum, answer, category, naqt, protobowl,
-                 tournaments, page, fold):
-        self.qnum = qnum
-        self.answer = answer
-        self.category = category
-        self.naqt = naqt
-        self.protobowl = protobowl
-        self.tournaments = tournaments
-        self.page = page
-        self.fold = fold
-        self.text = {}
-        self._last_query = None
+class Question(NamedTuple):
+    qanta_id: int
+    text: str
+    first_sentence: str
+    first_end_char: int
+    answer: str
+    page: Optional[str]
+    category: Optional[str]
+    subcategory: Optional[str]
+    tournament: str
+    difficulty: str
+    year: int
+    proto_id: Optional[int]
+    qdb_id: Optional[int]
+    dataset: str
 
-    def __repr__(self):
-        return '<Question qnum={} page="{}" text="{}...">'.format(
-            self.qnum,
-            self.page,
-            self.flatten_text()[0:20]
-        )
+    def to_json(self):
+        return json.dumps(self._asdict())
 
-    def normalized_answer(self):
-        return QuestionDatabase.normalize_answer(self.answer)
-
-    def raw_words(self):
-        """
-        Return a list of all words, removing all punctuation and normalizing
-        words
-        """
-        for i in sorted(self.text):
-            for j in self.split_and_remove_punc(self.text[i]):
-                yield j
-
-    @staticmethod
-    def split_and_remove_punc(text):
-        for i in text.split():
-            word = "".join(x for x in i.lower() if x not in c.PUNCTUATION)
-            if word:
-                yield word
-
-    def partials(self, word_skip=-1):
-        for i in sorted(self.text):
-            previous = [self.text[x] for x in sorted(self.text) if x < i]
-            if word_skip > 0:
-                words = self.text[i].split()
-                for j in range(word_skip, len(words), word_skip):
-                    yield i, j, previous + [" ".join(words[:j])]
-
-            yield i + 1, 0, [self.text[x] for x in sorted(self.text) if x <= i]
-
-    def text_lines(self):
-        d = {"id": self.qnum, "answer": self.page}
-        for i in sorted(self.text):
-            d["sent"] = i
-            d["text"] = self.text[i]
-            yield d
-
-    def get_text(self, sentence, token):
-        text = ""
-        for i in range(sentence):
-            if text == "":
-                text += self.text.get(i, "")
-            else:
-                text += " " + self.text.get(i, "")
-        if token > 0:
-            text += " ".join(self.text.get(sentence, "").split()[:token])
-        return text
-
-    def add_text(self, sent, text):
-        self.text[sent] = text
-
-    def flatten_text(self):
-        return " ".join(self.text[x] for x in sorted(self.text))
-
-    def to_example(self, all_evidence: Optional[Dict[str, Dict[int, Any]]]=None) -> Tuple[List[QuestionText], Answer, Optional[Dict[str, Any]]]:
-        sentence_list = [self.text[i] for i in range(len(self.text))]
-        evidence = None
-        return sentence_list, self.page, evidence
+    @classmethod
+    def from_json(cls, json_text):
+        return cls(**json.loads(json_text))
 
 
 @file_backed_cache_decorator(safe_path('data/external/preprocess_expo_questions.cache'))
