@@ -1,17 +1,13 @@
-from typing import List, Dict, Iterable, Tuple, Optional, Any, Set, NamedTuple
+from typing import List, Dict, Iterable, Optional, Any, Set, NamedTuple
 import json
-import csv
 import os
 import sqlite3
 from collections import defaultdict, Counter
 
-import nltk
-
 from qanta import qlogging
-from qanta.datasets.abstract import AbstractDataset, TrainingData, QuestionText, Answer
+from qanta.datasets.abstract import AbstractDataset, TrainingData
 from qanta.util.environment import QB_QUESTION_DB
 from qanta.util import constants as c
-from qanta.util.io import file_backed_cache_decorator, safe_path
 from qanta.config import conf
 
 
@@ -25,6 +21,7 @@ class Question(NamedTuple):
     first_end_char: int
     answer: str
     page: Optional[str]
+    fold: str
     category: Optional[str]
     subcategory: Optional[str]
     tournament: str
@@ -41,52 +38,21 @@ class Question(NamedTuple):
     def from_json(cls, json_text):
         return cls(**json.loads(json_text))
 
+    @classmethod
+    def from_dict(cls, dict_question):
+        return cls(**dict_question)
 
-@file_backed_cache_decorator(safe_path('data/external/preprocess_expo_questions.cache'))
-def preprocess_expo_questions(expo_csv: str, database=QB_QUESTION_DB, start_qnum=50000) -> List[Question]:
-    """
-    This function takes the expo fold and converts it to a list of questions in the same output format as the database.
-    
-    The start_qnum parameter was determined by looking at the distribution of qnums and finding a range where there are
-    no keys. Nonetheless for safety we still skip qnums if they clash with existing qnums
-    :param expo_csv: 
-    :param database: 
-    :param start_qnum: 
-    :return: 
-    """
-    db = QuestionDatabase(location=database, load_expo=False)
-    qnums = {q.qnum for q in db.all_questions(unfiltered=True).values()}
-    while start_qnum in qnums:
-        start_qnum += 1
-    curr_qnum = start_qnum
+    def to_dict(self):
+        return self._asdict()
 
-    with open(expo_csv) as f:
-        csv_questions = list(csv.DictReader(f))
 
-    questions = []
-    for q in csv_questions:
-        q['sentences'] = nltk.sent_tokenize(q['text'])
-        while curr_qnum in qnums:
-            curr_qnum += 1
-        qb_question = Question(
-            curr_qnum, None, None, None, None, None, q['answer'], 'expo'
-        )
-        for i, sent in enumerate(q['sentences']):
-            qb_question.add_text(i, sent)
-        questions.append(qb_question)
-        curr_qnum += 1
-
-    return questions
+class QantaDatabase:
+    pass
 
 
 class QuestionDatabase:
-    def __init__(self, location=QB_QUESTION_DB, expo_csv=conf['expo_questions'], load_expo=True):
-        self.location = location
-        self._conn = sqlite3.connect(location)
-        if os.path.exists(expo_csv) and load_expo:
-            self.expo_questions = preprocess_expo_questions(expo_csv)
-        else:
-            self.expo_questions = []
+    def __init__(self):
+        pass
 
     def query(self, command: str, arguments) -> Dict[str, Question]:
         questions = {}

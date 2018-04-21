@@ -236,4 +236,3 @@ def assign_folds(qanta_questions, random_seed=0, guessbuzz_frac=.8):
                 q['fold'] = 'guesstrain'
             else:
                 q['fold'] = 'buzztrain'
-

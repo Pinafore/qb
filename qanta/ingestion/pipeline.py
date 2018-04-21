@@ -3,23 +3,20 @@ from os import path
 from luigi import LocalTarget, Task, WrapperTask, Parameter
 
 from qanta.util.io import shell, get_tmp_filename, safe_path
+from qanta.util.constants import (
+    DATASET_PREFIX, DS_VERSION,
+    QANTA_MAPPED_DATASET_PATH, QANTA_SQL_DATASET_PATH,
+    QANTA_TRAIN_DATASET_PATH, QANTA_DEV_DATASET_PATH, QANTA_TEST_DATASET_PATH
+)
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
 from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
 from qanta.ingestion.preprocess import format_qanta_json, add_first_sentence, questions_to_sqlite
 
 
-DS_VERSION = '2018.04.18'
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
-DATASET_PREFIX = 'data/external/datasets'
-
 QANTA_UNMAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.unmapped.{DS_VERSION}.json')
 QANTA_PREPROCESSED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.processed.{DS_VERSION}.json')
-QANTA_MAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.mapped.{DS_VERSION}.json')
-QANTA_SQL_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.{DS_VERSION}.sqlite3')
-QANTA_TRAIN_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.train.{DS_VERSION}.json')
-QANTA_DEV_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.dev.{DS_VERSION}.json')
-QANTA_TEST_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.test.{DS_VERSION}.json')
 
 ANSWER_MAP_PATH = 'data/external/answer_mapping/answer_map.json'
 UNBOUND_ANSWER_PATH = 'data/external/answer_mapping/unbound_answers.json'
