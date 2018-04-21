@@ -305,16 +305,18 @@ def questions_to_sqlite(qanta_questions, db_path):
     c.execute("""
         CREATE TABLE questions (
           qanta_id INT PRIMARY KEY NOT NULL,
-          "text" TEXT NOT NULL, answer TEXT NOT NULL, page TEXT,
+          "text" TEXT NOT NULL, first_sentence TEXT NOT NULL, first_end_char INT NOT NULL,
+          answer TEXT NOT NULL, page TEXT,
           category TEXT, subcategory TEXT,
           tournament TEXT, difficulty TEXT, year INT,
           proto_id INT, qdb_id INT, dataset TEXT NOT NULL
         )
     """)
     c.executemany(
-        'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [(
-            q['qanta_id'], q['text'], q['answer'], q['page'],
+            q['qanta_id'], q['text'], q['first_sentence'], q['first_end_char'],
+            q['answer'], q['page'],
             q['category'], q['subcategory'], q['tournament'], q['difficulty'],
             q['year'], q['proto_id'], q['qdb_id'], q['dataset']
         ) for q in qanta_questions]

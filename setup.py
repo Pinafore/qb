@@ -21,7 +21,7 @@ requirements = [
     'progressbar2',
     'boto3',
     'matplotlib',
-    'spacy==1.9',
+    'spacy==2.0.11',
     'pycountry',
     'flask',
     'dash',
@@ -63,7 +63,7 @@ class DownloadCommand(Command):
 
 setup(
     name='qb',
-    version='2.0.0',
+    version='2018.05.01',
     description='Quiz Bowl AI system named QANTA',
     license='MIT',
     long_description=read('README.md'),
