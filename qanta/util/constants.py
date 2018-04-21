@@ -15,13 +15,15 @@ ALL_FOLDS = [
 # Training folds
 GUESSER_TRAIN_FOLD = 'guesstrain'
 BUZZER_TRAIN_FOLD = 'buzztrain'
+TRAIN_FOLDS = {GUESSER_TRAIN_FOLD, BUZZER_TRAIN_FOLD}
 
 # Guesser and buzzers produce reports on these for cross validation
 GUESSER_DEV_FOLD = 'guessdev'
 BUZZER_DEV_FOLD = 'buzzdev'
+SYSTEM_DEV_FOLD = 'dev'
+DEV_FOLDS = {GUESSER_DEV_FOLD, BUZZER_DEV_FOLD, SYSTEM_DEV_FOLD}
 
 # System-wide cross validation and testing
-SYSTEM_DEV_FOLD = 'dev'
 SYSTEM_TEST_FOLD = 'test'
 EXPO_FOLD = 'expo'
 
