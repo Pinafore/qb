@@ -5,7 +5,11 @@ from luigi import LocalTarget, Task, WrapperTask, Parameter
 from qanta.util.io import shell, get_tmp_filename, safe_path
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
-from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions, questions_to_sqlite
+from qanta.ingestion.answer_mapping import (
+    create_answer_map, write_answer_map,
+    unmapped_to_mapped_questions, questions_to_sqlite
+)
+from qanta.ingestion.preprocess import format_qanta_json, add_first_sentence
 
 
 DS_VERSION = '2018.04.18'
@@ -13,7 +17,12 @@ S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jm
 DATASET_PREFIX = 'data/external/datasets'
 QANTA_UNMAPPED_DATASET_PATH = f'data/external/datasets/qanta.unmapped.{DS_VERSION}.json'
 QANTA_MAPPED_DATASET_PATH = f'data/external/datasets/qanta.mapped.{DS_VERSION}.json'
-QANTA_MAPPED_SQL_DS_PATH = f'data/external/datasets/qanta.mapped.{DS_VERSION}.sqlite3'
+QANTA_PREPROCESSED_DATASET_PATH = f'data/external/datasets/qanta.processed.{DS_VERSION}.json'
+QANTA_SQL_DATASET_PATH = f'data/external/datasets/qanta.{DS_VERSION}.sqlite3'
+QANTA_TRAIN_DATASET_PATH = f'data/external/datasets/qanta.train.{DS_VERSION}.json'
+QANTA_DEV_DATASET_PATH = f'data/external/datasets/qanta.dev.{DS_VERSION}.json'
+QANTA_TEST_DATASET_PATH = f'data/external/datasets/qanta.test.{DS_VERSION}.json'
+
 ANSWER_MAP_PATH = 'data/external/answer_mapping/answer_map.json'
 UNBOUND_ANSWER_PATH = 'data/external/answer_mapping/unbound_answers.json'
 
@@ -84,7 +93,7 @@ class CreateUnmappedQantaDataset(Task):
         qanta_questions = merge_datasets(protobowl_questions, quizdb_questions)
         assign_folds(qanta_questions)
         with open(safe_path(QANTA_UNMAPPED_DATASET_PATH), 'w') as f:
-            json.dump(qanta_questions, f)
+            json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
     def output(self):
         return LocalTarget(QANTA_UNMAPPED_DATASET_PATH)
@@ -98,7 +107,7 @@ class CreateAnswerMap(Task):
 
     def run(self):
         with open(QANTA_UNMAPPED_DATASET_PATH) as f:
-            unmapped_qanta_questions = json.load(f)
+            unmapped_qanta_questions = json.load(f)['questions']
 
         answer_map, unbound_answers = create_answer_map(unmapped_qanta_questions)
         write_answer_map(answer_map, unbound_answers, ANSWER_MAP_PATH, UNBOUND_ANSWER_PATH)
@@ -119,18 +128,67 @@ class CreateMappedQantaDataset(Task):
         with open(ANSWER_MAP_PATH) as f:
             answer_map = json.load(f)['answer_map']
         with open(QANTA_UNMAPPED_DATASET_PATH) as f:
-            qanta_questions = json.load(f)
+            qanta_questions = json.load(f)['questions']
 
         unmapped_to_mapped_questions(qanta_questions, answer_map)
         with open(QANTA_MAPPED_DATASET_PATH, 'w') as f:
-            json.dump(qanta_questions, f)
+            json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
+
+
+    def output(self):
+        return LocalTarget(QANTA_MAPPED_DATASET_PATH),
+
+
+class PreprocessQantaDataset(Task):
+    def requires(self):
+        yield CreateMappedQantaDataset()
+
+    def run(self):
+        with open(QANTA_MAPPED_DATASET_PATH) as f:
+            qanta_questions = json.load(f)['questions']
+        add_first_sentence(qanta_questions)
+        with open(QANTA_PREPROCESSED_DATASET_PATH, 'w') as f:
+            json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
         tmp_db = get_tmp_filename()
         questions_to_sqlite(qanta_questions, tmp_db)
-        shell(f'mv {tmp_db} {QANTA_MAPPED_SQL_DS_PATH}')
+        shell(f'mv {tmp_db} {QANTA_SQL_DATASET_PATH}')
 
     def output(self):
         return [
-            LocalTarget(QANTA_MAPPED_DATASET_PATH),
-            LocalTarget(QANTA_MAPPED_SQL_DS_PATH)
+            LocalTarget(QANTA_PREPROCESSED_DATASET_PATH),
+            LocalTarget(QANTA_SQL_DATASET_PATH)
         ]
+
+
+class PartitionQantaDataset(Task):
+    def requires(self):
+        yield PreprocessQantaDataset()
+
+    def run(self):
+        with open(QANTA_PREPROCESSED_DATASET_PATH) as f:
+            questions = json.load(f)['questions']
+        train_questions = [q for q in questions if 'train' in q['fold']]
+        dev_questions = [q for q in questions if 'dev' in q['fold']]
+        test_questions = [q for q in questions if 'test' in q['fold']]
+
+        with open(QANTA_TRAIN_DATASET_PATH, 'w') as f:
+            json.dump(format_qanta_json(train_questions, DS_VERSION), f)
+
+        with open(QANTA_DEV_DATASET_PATH, 'w') as f:
+            json.dump(format_qanta_json(dev_questions, DS_VERSION), f)
+
+        with open(QANTA_TEST_DATASET_PATH, 'w') as f:
+            json.dump(format_qanta_json(test_questions, DS_VERSION), f)
+
+    def output(self):
+        return [
+            LocalTarget(QANTA_TRAIN_DATASET_PATH),
+            LocalTarget(QANTA_DEV_DATASET_PATH),
+            LocalTarget(QANTA_TEST_DATASET_PATH)
+        ]
+
+
+class QantaDataset(WrapperTask):
+    def requires(self):
+        yield PartitionQantaDataset()
