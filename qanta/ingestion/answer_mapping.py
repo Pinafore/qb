@@ -105,7 +105,7 @@ def mapping_rules_to_answer_map(
 
 # Expansion rule functions
 def or_rule(ans):
-    splits = ans.split('or')
+    splits = re.split('[^a-zA-Z]+or[^a-zA-Z]+', ans)
     if len(splits) > 1:
         formatted_splits = [s.strip() for s in splits]
         return formatted_splits
@@ -264,10 +264,9 @@ def create_answer_map(unmapped_qanta_questions):
         unmapped_lookup[q['answer']].append(q)
 
     log.info('Loading wikipedia titles')
-    with open(WIKI_TITLES_PICKLE, 'rb') as f:
-        titles = pickle.load(f)
-        lower_title_map = {t.lower(): t for t in titles}
-        unicode_title_map = {unidecode(t.lower()): t for t in titles}
+    titles = read_wiki_titles()
+    lower_title_map = {t.lower(): t for t in titles}
+    unicode_title_map = {unidecode(t.lower()): t for t in titles}
 
     wiki_redirect_map = read_wiki_redirects(titles)
     lower_wiki_redirect_map = {text.lower(): page for text, page in wiki_redirect_map.items()}
@@ -310,3 +309,8 @@ def read_wiki_redirects(wiki_titles, redirect_csv_path=ALL_WIKI_REDIRECTS) -> Di
         log.info(f'{n} titles in redirect not found in wiki titles')
 
         return redirect_lookup
+
+
+def read_wiki_titles(title_path=WIKI_TITLES_PICKLE):
+    with open(title_path, 'rb') as f:
+        return pickle.load(f)
