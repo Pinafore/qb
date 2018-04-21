@@ -18,7 +18,6 @@ requirements = [
     'pyfunctional',
     'luigi',
     'jinja2',
-    'progressbar2',
     'boto3',
     'matplotlib',
     'spacy==2.0.11',
