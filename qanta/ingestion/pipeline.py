@@ -5,11 +5,8 @@ from luigi import LocalTarget, Task, WrapperTask, Parameter
 from qanta.util.io import shell, get_tmp_filename, safe_path
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
-from qanta.ingestion.answer_mapping import (
-    create_answer_map, write_answer_map,
-    unmapped_to_mapped_questions, questions_to_sqlite
-)
-from qanta.ingestion.preprocess import format_qanta_json, add_first_sentence
+from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
+from qanta.ingestion.preprocess import format_qanta_json, add_first_sentence, questions_to_sqlite
 
 
 DS_VERSION = '2018.04.18'
@@ -150,15 +147,26 @@ class PreprocessQantaDataset(Task):
         with open(QANTA_PREPROCESSED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
+
+    def output(self):
+        return LocalTarget(QANTA_PREPROCESSED_DATASET_PATH)
+
+
+
+class GenerateSqliteDB(Task):
+    def requires(self):
+        yield PreprocessQantaDataset()
+
+    def run(self):
+        with open(QANTA_PREPROCESSED_DATASET_PATH) as f:
+            qanta_questions = json.load(f)['questions']
+
         tmp_db = get_tmp_filename()
         questions_to_sqlite(qanta_questions, tmp_db)
         shell(f'mv {tmp_db} {QANTA_SQL_DATASET_PATH}')
 
     def output(self):
-        return [
-            LocalTarget(QANTA_PREPROCESSED_DATASET_PATH),
-            LocalTarget(QANTA_SQL_DATASET_PATH)
-        ]
+        return LocalTarget(QANTA_SQL_DATASET_PATH)
 
 
 class PartitionQantaDataset(Task):
@@ -192,3 +200,4 @@ class PartitionQantaDataset(Task):
 class QantaDataset(WrapperTask):
     def requires(self):
         yield PartitionQantaDataset()
+        yield GenerateSqliteDB()

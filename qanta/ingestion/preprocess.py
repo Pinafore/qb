@@ -1,3 +1,4 @@
+import sqlite3
 import spacy
 from qanta.spark import create_spark_context
 
@@ -37,3 +38,31 @@ def add_first_sentence(questions):
     for q, sent, pos in zip(questions, first_sentences, first_sent_end_chars):
         q['first_sentence'] = sent
         q['first_end_char'] = pos
+
+
+def questions_to_sqlite(qanta_questions, db_path):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute('DROP TABLE IF EXISTS questions;')
+    c.execute("""
+        CREATE TABLE questions (
+          qanta_id INT PRIMARY KEY NOT NULL,
+          "text" TEXT NOT NULL, first_sentence TEXT NOT NULL, first_end_char INT NOT NULL,
+          answer TEXT NOT NULL, page TEXT,
+          fold TEXT NOT NULL,
+          category TEXT, subcategory TEXT,
+          tournament TEXT, difficulty TEXT, year INT,
+          proto_id INT, qdb_id INT, dataset TEXT NOT NULL
+        )
+    """)
+    c.executemany(
+        'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [(
+            q['qanta_id'], q['text'], q['first_sentence'], q['first_end_char'],
+            q['answer'], q['page'], q['fold'],
+            q['category'], q['subcategory'], q['tournament'], q['difficulty'],
+            q['year'], q['proto_id'], q['qdb_id'], q['dataset']
+        ) for q in qanta_questions]
+    )
+    conn.commit()
+    conn.close()
