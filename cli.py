@@ -11,10 +11,11 @@ from typing import Dict, Optional
 from jinja2 import Environment, PackageLoader
 
 from qanta import qlogging
+from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser.elasticsearch import create_es_config, start_elasticsearch, stop_elasticsearch
 from qanta.util.environment import ENVIRONMENT
-from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import safe_open, shell, get_tmp_filename
+from qanta.util.constants import QANTA_SQL_DATASET_PATH
 from qanta.hyperparam import expand_config
 
 
@@ -71,7 +72,7 @@ def sample_answer_pages(n):
     Take a random sample of n questions, then return their answers and pages
     formatted for latex in the journal paper
     """
-    conn = sqlite3.connect(QB_QUESTION_DB)
+    conn = sqlite3.connect(QANTA_SQL_DATASET_PATH)
     c = conn.cursor()
     rows = c.execute(f'select answer, page from questions order by random() limit {n}')
     latex_format = r'{answer} & {page}\\ \hline'

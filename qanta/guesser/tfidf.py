@@ -11,7 +11,8 @@ from qanta.datasets.abstract import QuestionText
 
 
 class TfidfGuesser(AbstractGuesser):
-    def __init__(self):
+    def __init__(self, config_num: Optional[int]):
+        super().__init__(config_num)
         self.tfidf_vectorizer = None
         self.tfidf_matrix = None
         self.i_to_ans = None
@@ -52,6 +53,7 @@ class TfidfGuesser(AbstractGuesser):
     def save(self, directory: str) -> None:
         with open(os.path.join(directory, 'params.pickle'), 'wb') as f:
             pickle.dump({
+                'config_num': self.config_num,
                 'i_to_ans': self.i_to_ans,
                 'tfidf_vectorizer': self.tfidf_vectorizer,
                 'tfidf_matrix': self.tfidf_matrix
@@ -61,7 +63,7 @@ class TfidfGuesser(AbstractGuesser):
     def load(cls, directory: str):
         with open(os.path.join(directory, 'params.pickle'), 'rb') as f:
             params = pickle.load(f)
-            guesser = TfidfGuesser()
+            guesser = TfidfGuesser(params['config_num'])
             guesser.tfidf_vectorizer = params['tfidf_vectorizer']
             guesser.tfidf_matrix = params['tfidf_matrix']
             guesser.i_to_ans = params['i_to_ans']
