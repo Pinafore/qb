@@ -1,8 +1,3 @@
-"""
-This temporarily exists to map additional questions in the database. It takes unmapped questions
-in the database and attempts to find mappings to wikipedia answers. It should eventually be merged
-into the ingestion code that generates the database in the first place
-"""
 from typing import Tuple, Set, Dict, List, Callable, Iterable, Optional
 import shutil
 import json
