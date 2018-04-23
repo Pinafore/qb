@@ -1,6 +1,5 @@
-from typing import List, Dict, Iterable, Optional, Any, Set, NamedTuple
+from typing import List, Dict, Iterable, Optional, Tuple, NamedTuple
 import json
-from collections import defaultdict, Counter
 
 from qanta import qlogging
 from qanta.datasets.abstract import AbstractDataset, TrainingData
@@ -8,9 +7,8 @@ from qanta.util.constants import (
     QANTA_MAPPED_DATASET_PATH,
     GUESSER_TRAIN_FOLD, GUESSER_DEV_FOLD, BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
     SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
-    TRAIN_FOLDS, DEV_FOLDS
+    TRAIN_FOLDS, DEV_FOLDS, ALL_FOLDS
 )
-from qanta.config import conf
 
 
 log = qlogging.get(__name__)
@@ -20,7 +18,7 @@ class Question(NamedTuple):
     qanta_id: int
     text: str
     first_sentence: str
-    first_end_char: int
+    tokenizations: List[Tuple[int, int]]
     answer: str
     page: Optional[str]
     fold: str
@@ -71,8 +69,7 @@ class QantaDatabase:
 
 
 class QuizBowlDataset(AbstractDataset):
-    def __init__(self, *, guesser_train=False, buzzer_train=False,
-                 qb_question_db: str=QB_QUESTION_DB) -> None:
+    def __init__(self, *, guesser_train=False, buzzer_train=False) -> None:
         """
         Initialize a new quiz bowl data set
         """
@@ -82,37 +79,30 @@ class QuizBowlDataset(AbstractDataset):
 
         if guesser_train and buzzer_train:
             log.warning(
-                'Using QuizBowlDataset with guesser and buzzer training data, make sure you know what you are doing!')
-        self.db = QuestionDatabase(qb_question_db)
+                'Using QuizBowlDataset with guesser and buzzer training data, make sure you know what you are doing!'
+            )
+
+        self.db = QantaDatabase()
         self.guesser_train = guesser_train
         self.buzzer_train = buzzer_train
-        self.training_folds = set() # type: Set[str]
-        if self.guesser_train:
-            self.training_folds.add(c.GUESSER_TRAIN_FOLD)
-        if self.buzzer_train:
-            self.training_folds.add(c.BUZZER_TRAIN_FOLD)
 
 
     def training_data(self) -> TrainingData:
-        from functional import seq
-        all_questions = seq(self.db.all_questions().values())
-        all_evidence = None  # type: Optional[Dict[str, Any]]
-
-        filtered_questions = all_questions\
-            .filter(lambda q: q.fold in self.training_folds)\
-            .map(lambda q: q.to_example(all_evidence=all_evidence))
         training_examples = []
-        training_answers = []
-        training_evidence = []
-        for example, answer, evidence in filtered_questions:
-            training_examples.append(example)
-            training_answers.append(answer)
-            training_evidence.append(evidence)
+        training_pages = []
+        questions = []  # type: List[Question]
+        if self.guesser_train:
+            questions.extend(self.db.guess_train_questions)
+        if self.buzzer_train:
+            questions.extend(self.db.buzz_train_questions)
 
-        return training_examples, training_answers, training_evidence
+        for q in questions:
+            training_examples.append(q.text)
+            training_pages.append(q.page)
 
-    def questions_by_fold(self, folds=c.ALL_FOLDS) -> Dict[str, List[Question]]:
-        from functional import seq
+        return training_examples, training_pages, None
+
+    def questions_by_fold(self, folds=ALL_FOLDS) -> Dict[str, List[Question]]:
         all_questions = seq(self.db.all_questions().values())
         train_questions = all_questions\
             .filter(lambda q: q.fold in self.training_folds)\

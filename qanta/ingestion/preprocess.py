@@ -13,8 +13,7 @@ def nlp(text):
 
     if len(nlp_ref) == 1:
         doc = nlp_ref[0](text)
-        sents = list(doc.sents)
-        return sents[0].end_char
+        return [(s.start_char, s.end_char) for s in doc.sents]
     else:
         raise ValueError('There should be exactly one nlp model per spark worker')
 
@@ -30,14 +29,14 @@ def format_qanta_json(questions, version):
     }
 
 
-def add_first_sentence(questions):
+def add_sentences(questions):
     text_questions = [q['text'] for q in questions]
     sc = create_spark_context()
-    first_sent_end_chars = sc.parallelize(text_questions, 4000).map(nlp).collect()
-    first_sentences = [q[:end_char] for q, end_char in zip(text_questions, first_sent_end_chars)]
-    for q, sent, pos in zip(questions, first_sentences, first_sent_end_chars):
-        q['first_sentence'] = sent
-        q['first_end_char'] = pos
+    sentence_tokenizations = sc.parallelize(text_questions, 4000).map(nlp).collect()
+    for q, text, tokenization in zip(questions, text_questions, sentence_tokenizations):
+        q['tokenizations'] = tokenization
+        # Get the first sentence, end character tokenization
+        q['first_sentence'] = text[:tokenization[0][1]]
 
 
 def questions_to_sqlite(qanta_questions, db_path):
@@ -47,7 +46,7 @@ def questions_to_sqlite(qanta_questions, db_path):
     c.execute("""
         CREATE TABLE questions (
           qanta_id INT PRIMARY KEY NOT NULL,
-          "text" TEXT NOT NULL, first_sentence TEXT NOT NULL, first_end_char INT NOT NULL,
+          "text" TEXT NOT NULL, first_sentence TEXT NOT NULL, tokenizations TEXT NOT NULL,
           answer TEXT NOT NULL, page TEXT,
           fold TEXT NOT NULL,
           category TEXT, subcategory TEXT,
@@ -58,7 +57,7 @@ def questions_to_sqlite(qanta_questions, db_path):
     c.executemany(
         'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [(
-            q['qanta_id'], q['text'], q['first_sentence'], q['first_end_char'],
+            q['qanta_id'], q['text'], q['first_sentence'], str(q['tokenizations']),
             q['answer'], q['page'], q['fold'],
             q['category'], q['subcategory'], q['tournament'], q['difficulty'],
             q['year'], q['proto_id'], q['qdb_id'], q['dataset']
