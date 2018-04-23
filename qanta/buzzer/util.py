@@ -1,3 +1,4 @@
+import os
 import pickle
 import numpy as np
 import chainer
@@ -8,9 +9,12 @@ from chainer import Variable
 from chainer.backends import cuda
 from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.constants import BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD
+from qanta.util.constants import BUZZER_DEV_FOLD
 
+# constanst
 N_GUESSES = 10
+output_dir = 'output/buzzer/'
+buzzes_dir = 'output/buzzer/{}_buzzes.pkl'
 
 
 def vector_converter_0(guesses_sequence):
@@ -91,6 +95,7 @@ def process_question(questions, vector_converter, item):
 
 
 def read_data(
+        fold,
         guesser_module='qanta.guesser.dan',
         guesser_class='DanGuesser',
         guesser_config_num=0,
@@ -98,15 +103,20 @@ def read_data(
     guesser_directory = AbstractGuesser.output_path(
         guesser_module, guesser_class, guesser_config_num, '')
     questions = QuestionDatabase().all_questions()
-    datasets = []
-    for fold in [BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD]:
-        output_path = AbstractGuesser.guess_path(guesser_directory, fold)
-        with open(output_path, 'rb') as f:
-            df = pickle.load(f)
-        pool = Pool(8)
-        worker = partial(process_question, questions, vector_converter)
-        datasets.append(pool.map(worker, df.items()))
-    return datasets
+    pkl_path = '{}_guesser_output.pkl'.format(fold)
+    pkl_path = os.path.join(output_dir, pkl_path)
+    if os.path.isfile(pkl_path):
+        with open(pkl_path, 'rb') as f:
+            return pickle.load(f)
+    output_path = AbstractGuesser.guess_path(guesser_directory, fold)
+    with open(output_path, 'rb') as f:
+        df = pickle.load(f)
+    pool = Pool(8)
+    worker = partial(process_question, questions, vector_converter)
+    dataset = pool.map(worker, df.items())
+    with open(pkl_path, 'wb') as f:
+        pickle.dump(dataset, f)
+    return dataset
 
 
 def convert_seq(batch, device=None):
@@ -129,4 +139,4 @@ def convert_seq(batch, device=None):
 
 
 if __name__ == '__main__':
-    train, valid = read_data()
+    valid = read_data(BUZZER_DEV_FOLD)
