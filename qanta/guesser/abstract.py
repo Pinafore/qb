@@ -1,7 +1,6 @@
 import os
 import importlib
 import warnings
-import random
 from collections import defaultdict, namedtuple
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple, Optional, NamedTuple
@@ -18,8 +17,8 @@ import numpy as np
 from functional import seq
 
 from qanta.reporting.report_generator import ReportGenerator
-from qanta.datasets.abstract import TrainingData, QuestionText, Answer
-from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
+from qanta.datasets.abstract import TrainingData, QuestionText, Page
+from qanta.datasets.quiz_bowl import QuizBowlDataset, QantaDatabase
 from qanta.config import conf
 from qanta.util import constants as c
 from qanta.util.io import safe_path, safe_open
@@ -85,7 +84,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
+    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Page, float]]]:
         """
         Given a list of questions as text, return n_guesses number of guesses per question. Guesses
         must be returned in canonical form, are returned with a score in which higher is better, and
