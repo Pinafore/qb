@@ -13,9 +13,8 @@ from jinja2 import Environment, PackageLoader
 from qanta import qlogging
 from qanta.guesser.elasticsearch import create_es_config, start_elasticsearch, stop_elasticsearch
 from qanta.util.environment import ENVIRONMENT
-from qanta.datasets.quiz_bowl import QB_QUESTION_DB
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.io import safe_open, shell
+from qanta.util.io import safe_open, shell, get_tmp_filename
 from qanta.hyperparam import expand_config
 
 
@@ -156,6 +155,35 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
     })
     with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
         f.write(master_script)
+
+
+@main.command()
+@click.option('--partition', default='dpart')
+@click.option('--qos', default='batch')
+@click.option('--mem-per-cpu', default='8g')
+@click.option('--max-time', default='1-00:00:00')
+@click.option('--nodelist', default=None)
+@click.option('--cpus-per-task', default=None)
+@click.argument('luigi_module')
+@click.argument('luigi_task')
+def slurm(partition, qos, mem_per_cpu, max_time, nodelist, cpus_per_task, luigi_module, luigi_task):
+    env = Environment(loader=PackageLoader('qanta', 'slurm/templates'))
+    template = env.get_template('luigi-template.sh.jinja2')
+    sbatch_script = template.render({
+        'luigi_module': luigi_module,
+        'luigi_task': luigi_task,
+        'partition': partition,
+        'qos': qos,
+        'mem_per_cpu': mem_per_cpu,
+        'max_time': max_time,
+        'nodelist': nodelist,
+        'cpus_per_task': cpus_per_task
+    })
+    tmp_file = get_tmp_filename()
+    with open(tmp_file, 'w') as f:
+        f.write(sbatch_script)
+    shell(f'sbatch {tmp_file}')
+    shell(f'rm -f {tmp_file}')
 
 
 @main.command()
