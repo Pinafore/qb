@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=qanta-guesser
+#SBATCH --job-name=qanta-{{ luigi_task }}
 #SBATCH --partition={{ partition }}
 #SBATCH --qos={{ qos }}
 #SBATCH --mem-per-cpu={{ mem_per_cpu }}
@@ -17,4 +17,4 @@
 
 set -x
 
-srun luigi --module {{ luigi_module }} {{ luigi_task }}
+srun luigi --local-scheduler --module {{ luigi_module }} {{ luigi_task }}
