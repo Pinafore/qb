@@ -1,3 +1,8 @@
+"""
+This code is not directly called anywhere in the codebase, but contains the scripts
+used to download QuizDB raw data dumps which are then hosted on AWS and processed
+via qanta.ingestion.pipeline.
+"""
 import time
 import os
 import requests
