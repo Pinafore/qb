@@ -7,7 +7,7 @@ from qanta.util.constants import (
     QANTA_MAPPED_DATASET_PATH,
     GUESSER_TRAIN_FOLD, GUESSER_DEV_FOLD, BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
     SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
-    TRAIN_FOLDS, DEV_FOLDS, ALL_FOLDS
+    TRAIN_FOLDS, DEV_FOLDS
 )
 
 
@@ -31,7 +31,7 @@ class Question(NamedTuple):
     qdb_id: Optional[int]
     dataset: str
 
-    def to_json(self):
+    def to_json(self) -> str:
         return json.dumps(self._asdict())
 
     @classmethod
@@ -42,8 +42,12 @@ class Question(NamedTuple):
     def from_dict(cls, dict_question):
         return cls(**dict_question)
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         return self._asdict()
+
+    @property
+    def sentences(self) -> List[str]:
+        return [self.text[start:end] for start, end in self.tokenizations]
 
 
 class QantaDatabase:
@@ -86,7 +90,6 @@ class QuizBowlDataset(AbstractDataset):
         self.guesser_train = guesser_train
         self.buzzer_train = buzzer_train
 
-
     def training_data(self) -> TrainingData:
         training_examples = []
         training_pages = []
@@ -97,36 +100,24 @@ class QuizBowlDataset(AbstractDataset):
             questions.extend(self.db.buzz_train_questions)
 
         for q in questions:
-            training_examples.append(q.text)
+            training_examples.append(q.sentences)
             training_pages.append(q.page)
 
         return training_examples, training_pages, None
 
-    def questions_by_fold(self, folds=ALL_FOLDS) -> Dict[str, List[Question]]:
-        all_questions = seq(self.db.all_questions().values())
-        train_questions = all_questions\
-            .filter(lambda q: q.fold in self.training_folds)\
-            .group_by(lambda q: q.page)\
-            .flat_map(lambda kv: kv[1])\
-            .list()
-
-        if len(self.training_folds) == 1:
-            fold = next(iter(self.training_folds))
-            question_fold_dict = {fold: train_questions}
-        else:
-            question_fold_dict = {'guessertrain': train_questions}
-
-        for fold in folds:
-            if fold not in self.training_folds:
-                fold_questions = all_questions.filter(lambda q: q.fold == fold).list()
-                question_fold_dict[fold] = fold_questions
-
-        return question_fold_dict
+    def questions_by_fold(self) -> Dict[str, List[Question]]:
+        return {
+            GUESSER_TRAIN_FOLD: self.db.guess_train_questions,
+            GUESSER_DEV_FOLD: self.db.guess_dev_questions,
+            BUZZER_TRAIN_FOLD: self.db.buzz_train_questions,
+            BUZZER_DEV_FOLD: self.db.buzz_dev_questions,
+            SYSTEM_DEV_FOLD: self.db.system_dev_questions,
+            SYSTEM_TEST_FOLD: self.db.test_questions
+        }
 
     def questions_in_folds(self, folds: Iterable[str]) -> List[Question]:
-        by_fold = self.questions_by_fold(folds=folds)
+        by_fold = self.questions_by_fold()
         questions = []
         for fold in folds:
             questions.extend(by_fold[fold])
-
         return questions
