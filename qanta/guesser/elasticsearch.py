@@ -11,7 +11,6 @@ from nltk.tokenize import word_tokenize
 from jinja2 import Environment, PackageLoader
 
 from qanta.wikipedia.cached_wikipedia import Wikipedia
-from qanta.datasets.abstract import QuestionText
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.spark import create_spark_context
 from qanta.config import conf

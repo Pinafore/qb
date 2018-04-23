@@ -9,7 +9,7 @@ import nltk
 from unidecode import unidecode
 
 from qanta import qlogging
-from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.datasets.quiz_bowl import QantaDatabase
 from qanta.util.constants import COUNTRY_LIST_PATH, WIKI_DUMP_REDIRECT_PICKLE, WIKI_LOOKUP_PATH
 
 
