@@ -3,6 +3,7 @@ import time
 from multiprocessing import Pool, Manager
 from qanta.config import conf
 
+
 def _multiprocess(worker, inputs, n_cores=conf['buzzer']['n_cores'], info='',
         multi=True):
 

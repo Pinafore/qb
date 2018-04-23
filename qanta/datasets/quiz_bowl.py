@@ -47,7 +47,26 @@ class Question(NamedTuple):
 
     @property
     def sentences(self) -> List[str]:
+        """
+        Returns a list of sentences in the question using preprocessed spacy 2.0.11
+        """
         return [self.text[start:end] for start, end in self.tokenizations]
+
+    def runs(self, char_skip: int) -> Tuple[List[str], List[int]]:
+        """
+        Returns runs of the question based on skipping char_skip characters at a time. Also returns the indices used
+
+        q: name this first united states president.
+        runs with char_skip=10:
+        ['name this ',
+         'name this first unit',
+         'name this first united state p',
+         'name this first united state president.']
+
+        :param char_skip: Number of characters to skip each time
+        """
+        char_indices = list(range(char_skip, len(self.text) + char_skip, char_skip))
+        return [self.text[:i] for i in char_indices], char_indices
 
 
 class QantaDatabase:
