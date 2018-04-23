@@ -95,13 +95,13 @@ class GenerateGuesses(Task):
         guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
 
         if self.fold in {c.GUESSER_TRAIN_FOLD, c.GUESSER_DEV_FOLD}:
-            word_skip = conf['guesser_word_skip']
+            char_skip = conf['guesser_char_skip']
         else:
-            word_skip = conf['buzzer_word_skip']
+            char_skip = conf['buzzer_char_skip']
 
-        log.info(f'Generating and saving guesses for {self.fold} fold with word_skip={word_skip}...')
+        log.info(f'Generating and saving guesses for {self.fold} fold with char_skip={char_skip}...')
         start_time = time.time()
-        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], word_skip=word_skip)
+        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], char_skip=char_skip)
         end_time = time.time()
         elapsed = end_time - start_time
         log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
@@ -155,17 +155,12 @@ class GuesserReport(Task):
         guesser_instance.create_report(guesser_directory)
 
     def output(self):
-        return [LocalTarget(AbstractGuesser.output_path(
-            self.guesser_module,
-            self.guesser_class,
-            self.config_num,
-            'guesser_report.md')
-        ), LocalTarget(AbstractGuesser.output_path(
+        return LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
             self.config_num,
             'guesser_report.pickle'
-        ))]
+        ))
 
 
 class GuesserPerformance(Task):
@@ -209,7 +204,6 @@ class GuesserPerformance(Task):
         shell(f'cp {param_path} {reporting_directory}')
         log.info(f'Running: "cp {guesses_path} {reporting_directory}"')
         shell(f'cp {guesses_path} {reporting_directory}')
-
 
         guesser_instance = guesser_class(self.config_num)
         guesser_instance.create_report(reporting_directory)
