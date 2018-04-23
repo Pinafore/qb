@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+#SBATCH --job-name=qanta-guesser
+#SBATCH --partition={{ partition }}
+#SBATCH --qos={{ qos }}
+#SBATCH --mem-per-cpu={{ mem_per_cpu }}
+#SBATCH --chdir=/fs/clip-quiz/entilzha/qb
+#SBATCH --output=/fs/clip-quiz/entilzha/slurm-out/slurm-%A_%a.out
+#SBATCH --error=/fs/clip-quiz/entilzha/slurm-err/slurm-%A_%a.out
+#SBATCH --time={{ max_time }}
+{% if gres %}#SBATCH --gres={{ gres }}
+{% endif %}
+{% if nodelist %}#SBATCH --nodelist={{ nodelist }}
+{% endif %}
+{% if cpus_per_task %}#SBATCH --cpus-per-task={{ cpus_per_task }}
+{% endif %}
+
+set -x
+
+srun luigi --module {{ luigi_module }} {{ luigi_task }}
