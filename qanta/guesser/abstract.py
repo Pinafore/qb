@@ -291,16 +291,18 @@ class AbstractGuesser(metaclass=ABCMeta):
             params = pickle.load(f)
         dev_guesses = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
 
-        qdb = QuestionDatabase()
-        questions = qdb.all_questions()
+        qdb = QantaDatabase()
+        guesser_train = qdb.guess_train_questions
+        guesser_dev = qdb.guess_dev_questions
 
+        train_pages = {q.page for q in guesser_train}
+        dev_pages = {q.page for q in guesser_dev}
 
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
-                'dev_accuracy': dev_summary_accuracy,
+                'dev_accuracy': 0,
                 'guesser_name': self.display_name(),
-                'guesser_params': params,
-                'directory': directory
+                'guesser_params': params
             }, f)
 
     @staticmethod
