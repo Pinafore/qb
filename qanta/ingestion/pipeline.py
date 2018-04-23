@@ -11,7 +11,7 @@ from qanta.util.constants import (
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
 from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
-from qanta.ingestion.preprocess import format_qanta_json, add_first_sentence, questions_to_sqlite
+from qanta.ingestion.preprocess import format_qanta_json, add_sentences, questions_to_sqlite
 
 
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
@@ -101,7 +101,7 @@ class CreateProcessedQantaDataset(Task):
     def run(self):
         with open(QANTA_UNMAPPED_DATASET_PATH) as f:
             qanta_questions = json.load(f)['questions']
-        add_first_sentence(qanta_questions)
+        add_sentences(qanta_questions)
         with open(QANTA_PREPROCESSED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
