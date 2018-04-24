@@ -256,17 +256,18 @@ class AbstractGuesser(metaclass=ABCMeta):
             fold_df.to_pickle(output_path)
 
     @staticmethod
-    def load_guesses(directory: str, folds=c.GUESSER_GENERATION_FOLDS) -> pd.DataFrame:
+    def load_guesses(directory: str, output_type='char', folds=c.GUESSER_GENERATION_FOLDS) -> pd.DataFrame:
         """
         Loads all the guesses pertaining to a guesser inferred from directory
         :param directory: where to load guesses from
+        :param output_type: One of: char, full, first
         :param folds: folds to load, by default all of them
         :return: guesses across all folds for given directory
         """
         assert len(folds) > 0
         guess_df = None
         for fold in folds:
-            input_path = AbstractGuesser.guess_path(directory, fold)
+            input_path = AbstractGuesser.guess_path(directory, fold, output_type)
             if guess_df is None:
                 guess_df = pd.read_pickle(input_path)
             else:
@@ -321,16 +322,20 @@ class AbstractGuesser(metaclass=ABCMeta):
                 answerable += 1
         unanswerable_question_percent = answerable / len(guesser_dev)
 
-        guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
+        char_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='char')
         dev_df = pd.DataFrame({
             'page': [q.page for q in guesser_dev],
             'qanta_id': [q.qanta_id for q in guesser_dev],
             'text_length': [len(q.text) for q in guesser_dev]
         })
 
-        df = guess_df.merge(dev_df, on='qanta_id')
-        df['correct'] = df.guess == df.page
-        df['char_percent'] = (df['char_index'] / df['text_length']).clip_upper(1.0)
+        char_df = char_guess_df.merge(dev_df, on='qanta_id')
+        char_df['correct'] = char_df.guess == char_df.page
+        char_df['char_percent'] = (char_df['char_index'] / char_df['text_length']).clip_upper(1.0)
+
+        first_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='first')
+
+        full_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='full')
 
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
