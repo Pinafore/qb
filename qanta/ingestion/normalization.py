@@ -146,7 +146,7 @@ class Protobowl:
                     'tournament': q['tournament'],
                     'difficulty': q['difficulty'],
                     'year': q['year'],
-                    'proto_id': q['num'],
+                    'proto_id': q['_id']['$oid'],
                     'qdb_id': None,
                     'dataset': 'protobowl'
                 })
