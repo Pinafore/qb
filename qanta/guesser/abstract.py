@@ -153,7 +153,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         return {}
 
-    def generate_guesses(self, max_n_guesses: int, folds: List[str], char_skip=25) -> pd.DataFrame:
+    def generate_guesses(self, max_n_guesses: int, folds: List[str],
+                         char_skip=25, full_question=False, first_sentence=False) -> pd.DataFrame:
         """
         Generates guesses for this guesser for all questions in specified folds and returns it as a
         DataFrame
@@ -165,6 +166,9 @@ class AbstractGuesser(metaclass=ABCMeta):
         :param char_skip: generate guesses every 10 characters
         :return: dataframe of guesses
         """
+        if full_question and first_sentence:
+            raise ValueError('Invalid option combination')
+
         dataset = self.qb_dataset()
         questions_by_fold = dataset.questions_by_fold()
 
@@ -177,12 +181,25 @@ class AbstractGuesser(metaclass=ABCMeta):
         for fold in folds:
             questions = questions_by_fold[fold]
             for q in questions:
-                for text_run, char_ix in zip(*q.runs(char_skip)):
-                    question_texts.append(text_run)
+                if full_question:
+                    question_texts.append(q.text)
                     q_folds.append(fold)
                     q_qnums.append(q.qanta_id)
-                    q_char_indices.append(char_ix)
-                    q_proto_id.append(q.proto_id)
+                    q_char_indices.append(len(q.text))
+                    q.proto_id.append(q.proto_id)
+                elif first_sentence:
+                    question_texts.append(q.first_sentence)
+                    q_folds.append(fold)
+                    q_qnums.append(q.qanta_id)
+                    q_char_indices.append(q.tokenizations[0][1])
+                    q.proto_id.append(q.proto_id)
+                else:
+                    for text_run, char_ix in zip(*q.runs(char_skip)):
+                        question_texts.append(text_run)
+                        q_folds.append(fold)
+                        q_qnums.append(q.qanta_id)
+                        q_char_indices.append(char_ix)
+                        q_proto_id.append(q.proto_id)
 
         guesses_per_question = self.guess(question_texts, max_n_guesses)
 
@@ -227,15 +244,15 @@ class AbstractGuesser(metaclass=ABCMeta):
         })
 
     @staticmethod
-    def guess_path(directory: str, fold: str) -> str:
-        return os.path.join(directory, 'guesses_{}.pickle'.format(fold))
+    def guess_path(directory: str, fold: str, output_type: str) -> str:
+        return os.path.join(directory, f'guesses_{output_type}_{fold}.pickle')
 
     @staticmethod
-    def save_guesses(guess_df: pd.DataFrame, directory: str, folds: List[str]):
+    def save_guesses(guess_df: pd.DataFrame, directory: str, folds: List[str], output_type):
         for fold in folds:
             log.info('Saving fold {}'.format(fold))
             fold_df = guess_df[guess_df.fold == fold]
-            output_path = AbstractGuesser.guess_path(directory, fold)
+            output_path = AbstractGuesser.guess_path(directory, fold, output_type)
             fold_df.to_pickle(output_path)
 
     @staticmethod
@@ -289,7 +306,6 @@ class AbstractGuesser(metaclass=ABCMeta):
     def create_report(self, directory: str):
         with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
             params = pickle.load(f)
-        dev_guesses = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
 
         qdb = QantaDatabase()
         guesser_train = qdb.guess_train_questions
@@ -298,9 +314,29 @@ class AbstractGuesser(metaclass=ABCMeta):
         train_pages = {q.page for q in guesser_train}
         dev_pages = {q.page for q in guesser_dev}
 
+        unanswerable_answer_percent = len(dev_pages - train_pages) / len(dev_pages)
+        answerable = 0
+        for q in guesser_dev:
+            if q.page in train_pages:
+                answerable += 1
+        unanswerable_question_percent = answerable / len(guesser_dev)
+
+        guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
+        dev_df = pd.DataFrame({
+            'page': [q.page for q in guesser_dev],
+            'qanta_id': [q.qanta_id for q in guesser_dev],
+            'text_length': [len(q.text) for q in guesser_dev]
+        })
+
+        df = guess_df.merge(dev_df, on='qanta_id')
+        df['correct'] = df.guess == df.page
+        df['char_percent'] = (df['char_index'] / df['text_length']).clip_upper(1.0)
+
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
                 'dev_accuracy': 0,
+                'unanswerable_answer_percent': unanswerable_answer_percent,
+                'unanswerable_question_percent': unanswerable_question_percent,
                 'guesser_name': self.display_name(),
                 'guesser_params': params
             }, f)

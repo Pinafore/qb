@@ -105,14 +105,37 @@ class GenerateGuesses(Task):
         end_time = time.time()
         elapsed = end_time - start_time
         log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
-        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold])
+        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], 'char')
+        log.info('Done saving guesses')
+
+        log.info(f'Generating and saving guesses for {self.fold} fold with full question...')
+        start_time = time.time()
+        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], full_question=True)
+        end_time = time.time()
+        elapsed = end_time - start_time
+        log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
+        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], 'full')
+        log.info('Done saving guesses')
+
+        log.info(f'Generating and saving guesses for {self.fold} fold with first sentence')
+        start_time = time.time()
+        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], first_sentence=True)
+        end_time = time.time()
+        elapsed = end_time - start_time
+        log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
+        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], 'first')
         log.info('Done saving guesses')
 
     def output(self):
-        return LocalTarget(AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num,
-            'guesses_{}.pickle'.format(self.fold)
-        ))
+        files = [
+            f'guesses_char_{self.fold}.pickle',
+            f'guesses_full_{self.fold}.pickle',
+            f'guesses_first_{self.fold}.pickle'
+        ]
+        return [
+            LocalTarget(AbstractGuesser.output_path(
+                self.guesser_module, self.guesser_class, self.config_num, f
+        )) for f in files]
 
 
 class GenerateAllGuesses(WrapperTask):
