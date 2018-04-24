@@ -175,7 +175,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         q_folds = []
         q_qnums = []
         q_char_indices = []
-        q_proto_id = []
+        q_proto_ids = []
         question_texts = []
 
         for fold in folds:
@@ -186,20 +186,20 @@ class AbstractGuesser(metaclass=ABCMeta):
                     q_folds.append(fold)
                     q_qnums.append(q.qanta_id)
                     q_char_indices.append(len(q.text))
-                    q.proto_id.append(q.proto_id)
+                    q_proto_ids.append(q.proto_id)
                 elif first_sentence:
                     question_texts.append(q.first_sentence)
                     q_folds.append(fold)
                     q_qnums.append(q.qanta_id)
                     q_char_indices.append(q.tokenizations[0][1])
-                    q.proto_id.append(q.proto_id)
+                    q_proto_ids.append(q.proto_id)
                 else:
                     for text_run, char_ix in zip(*q.runs(char_skip)):
                         question_texts.append(text_run)
                         q_folds.append(fold)
                         q_qnums.append(q.qanta_id)
                         q_char_indices.append(char_ix)
-                        q_proto_id.append(q.proto_id)
+                        q_proto_ids.append(q.proto_id)
 
         guesses_per_question = self.guess(question_texts, max_n_guesses)
 
@@ -222,7 +222,7 @@ class AbstractGuesser(metaclass=ABCMeta):
             guesses_with_scores = guesses_per_question[i]
             fold = q_folds[i]
             qnum = q_qnums[i]
-            proto_id = q_proto_id[i]
+            proto_id = q_proto_ids[i]
             char_ix = q_char_indices[i]
             for guess, score in guesses_with_scores:
                 df_qnums.append(qnum)
