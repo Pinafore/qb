@@ -334,12 +334,26 @@ class AbstractGuesser(metaclass=ABCMeta):
         char_df['char_percent'] = (char_df['char_index'] / char_df['text_length']).clip_upper(1.0)
 
         first_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='first')
+        first_df = first_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
+        first_df['correct'] = (first_df.guess == first_df.page).astype('int')
+        grouped_first_df = first_df.groupby('qanta_id')
+        first_accuracy = grouped_first_df.nth(0).correct.mean()
+        first_recall = grouped_first_df.agg({'correct': 'max'}).correct.mean()
 
         full_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='full')
+        full_df = full_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
+        full_df['correct'] = (full_df.guess == full_df.page).astype('int')
+        grouped_full_df = full_df.groupby('qanta_id')
+        full_accuracy = grouped_full_df.nth(0).correct.mean()
+        full_recall = grouped_full_df.agg({'correct': 'max'}).correct.mean()
 
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
-                'dev_accuracy': 0,
+                'first_accuracy': first_accuracy,
+                'first_recall': first_recall,
+                'full_accuracy': full_accuracy,
+                'full_recall': full_recall,
+                'n_guesses': conf['n_guesses'],
                 'unanswerable_answer_percent': unanswerable_answer_percent,
                 'unanswerable_question_percent': unanswerable_question_percent,
                 'guesser_name': self.display_name(),
