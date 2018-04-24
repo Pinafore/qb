@@ -6,6 +6,8 @@ import pickle
 from collections import defaultdict
 from unidecode import unidecode
 
+from nltk.corpus import wordnet
+
 from qanta import qlogging
 from qanta.util.constants import WIKI_TITLES_PICKLE, ALL_WIKI_REDIRECTS
 from qanta.util.io import safe_open
@@ -148,8 +150,9 @@ def the_rule(ans):
 
 
 def plural_rule(ans):
-    if ans.endswith('s'):
-        return ans[:-1]
+    singular = wordnet.morphy(ans)
+    if singular != ans:
+        return singular
     else:
         return ans
 

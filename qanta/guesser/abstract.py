@@ -1,7 +1,7 @@
 import os
 import importlib
 import warnings
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple, Optional, NamedTuple
 import pickle
@@ -11,13 +11,12 @@ with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     matplotlib.use('Agg')
 import pandas as pd
-import numpy as np
 
 from qanta.datasets.abstract import TrainingData, QuestionText, Page
 from qanta.datasets.quiz_bowl import QuizBowlDataset, QantaDatabase
 from qanta.config import conf
 from qanta.util import constants as c
-from qanta.util.io import safe_path, safe_open
+from qanta.util.io import safe_path
 from qanta import qlogging
 
 
@@ -322,13 +321,19 @@ class AbstractGuesser(metaclass=ABCMeta):
                 answerable += 1
         unanswerable_question_percent = answerable / len(guesser_dev)
 
-        char_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='char')
+        train_example_counts = Counter()
+        for q in guesser_train:
+            train_example_counts[q.page] += 1
+
         dev_df = pd.DataFrame({
             'page': [q.page for q in guesser_dev],
             'qanta_id': [q.qanta_id for q in guesser_dev],
-            'text_length': [len(q.text) for q in guesser_dev]
+            'text_length': [len(q.text) for q in guesser_dev],
+            'n_train': [train_example_counts[q.page] for q in guesser_dev],
+            'category': [q.category for q in guesser_dev]
         })
 
+        char_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='char')
         char_df = char_guess_df.merge(dev_df, on='qanta_id')
         char_df['correct'] = char_df.guess == char_df.page
         char_df['char_percent'] = (char_df['char_index'] / char_df['text_length']).clip_upper(1.0)
@@ -353,6 +358,9 @@ class AbstractGuesser(metaclass=ABCMeta):
                 'first_recall': first_recall,
                 'full_accuracy': full_accuracy,
                 'full_recall': full_recall,
+                'char_df': char_df,
+                'first_df': first_df,
+                'full_df': full_df,
                 'n_guesses': conf['n_guesses'],
                 'unanswerable_answer_percent': unanswerable_answer_percent,
                 'unanswerable_question_percent': unanswerable_question_percent,
