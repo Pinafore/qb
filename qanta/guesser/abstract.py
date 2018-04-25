@@ -1,8 +1,7 @@
 import os
 import importlib
 import warnings
-import random
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from abc import ABCMeta, abstractmethod
 from typing import List, Dict, Tuple, Optional, NamedTuple
 import pickle
@@ -11,18 +10,13 @@ import matplotlib
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sb
-import numpy as np
-from functional import seq
 
-from qanta.reporting.report_generator import ReportGenerator
-from qanta.datasets.abstract import TrainingData, QuestionText, Answer
-from qanta.datasets.quiz_bowl import QuizBowlDataset, QuestionDatabase
+from qanta.datasets.abstract import TrainingData, QuestionText, Page
+from qanta.datasets.quiz_bowl import QuizBowlDataset, QantaDatabase
 from qanta.config import conf
 from qanta.util import constants as c
-from qanta.util.io import safe_path, safe_open
+from qanta.util.io import safe_path
 from qanta import qlogging
 
 
@@ -85,7 +79,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
+    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Page, float]]]:
         """
         Given a list of questions as text, return n_guesses number of guesses per question. Guesses
         must be returned in canonical form, are returned with a score in which higher is better, and
@@ -147,7 +141,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         particular guesser. By default str() on the classname, but can be overriden
         :return: display name of this guesser
         """
-        return self.__class__.__name__
+        return self.__module__ + '.' + self.__class__.__name__
 
     def parameters(self) -> Dict:
         """
@@ -158,7 +152,8 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         return {}
 
-    def generate_guesses(self, max_n_guesses: int, folds: List[str], word_skip=-1) -> pd.DataFrame:
+    def generate_guesses(self, max_n_guesses: int, folds: List[str],
+                         char_skip=25, full_question=False, first_sentence=False) -> pd.DataFrame:
         """
         Generates guesses for this guesser for all questions in specified folds and returns it as a
         DataFrame
@@ -167,29 +162,43 @@ class AbstractGuesser(metaclass=ABCMeta):
         train. Unexpected behavior may occur if that is not the case.
         :param max_n_guesses: generate at most this many guesses per question, sentence, and token
         :param folds: which folds to generate guesses for
-        :param word_skip: by default, generate sentence level buzzes, if not set to -1 then generate
-        buzzes every word_skip words
+        :param char_skip: generate guesses every 10 characters
         :return: dataframe of guesses
         """
+        if full_question and first_sentence:
+            raise ValueError('Invalid option combination')
+
         dataset = self.qb_dataset()
         questions_by_fold = dataset.questions_by_fold()
 
         q_folds = []
         q_qnums = []
-        q_sentences = []
-        q_tokens = []
+        q_char_indices = []
+        q_proto_ids = []
         question_texts = []
 
         for fold in folds:
             questions = questions_by_fold[fold]
             for q in questions:
-                for sent, token, text_list in q.partials(word_skip=word_skip):
-                    text = ' '.join(text_list)
-                    question_texts.append(text)
+                if full_question:
+                    question_texts.append(q.text)
                     q_folds.append(fold)
-                    q_qnums.append(q.qnum)
-                    q_sentences.append(sent)
-                    q_tokens.append(token)
+                    q_qnums.append(q.qanta_id)
+                    q_char_indices.append(len(q.text))
+                    q_proto_ids.append(q.proto_id)
+                elif first_sentence:
+                    question_texts.append(q.first_sentence)
+                    q_folds.append(fold)
+                    q_qnums.append(q.qanta_id)
+                    q_char_indices.append(q.tokenizations[0][1])
+                    q_proto_ids.append(q.proto_id)
+                else:
+                    for text_run, char_ix in zip(*q.runs(char_skip)):
+                        question_texts.append(text_run)
+                        q_folds.append(fold)
+                        q_qnums.append(q.qanta_id)
+                        q_char_indices.append(char_ix)
+                        q_proto_ids.append(q.proto_id)
 
         guesses_per_question = self.guess(question_texts, max_n_guesses)
 
@@ -200,8 +209,8 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         log.info('Creating guess dataframe from guesses...')
         df_qnums = []
-        df_sentences = []
-        df_tokens = []
+        df_proto_id = []
+        df_char_indices = []
         df_guesses = []
         df_scores = []
         df_folds = []
@@ -212,21 +221,21 @@ class AbstractGuesser(metaclass=ABCMeta):
             guesses_with_scores = guesses_per_question[i]
             fold = q_folds[i]
             qnum = q_qnums[i]
-            sentence = q_sentences[i]
-            token = q_tokens[i]
+            proto_id = q_proto_ids[i]
+            char_ix = q_char_indices[i]
             for guess, score in guesses_with_scores:
                 df_qnums.append(qnum)
-                df_sentences.append(sentence)
-                df_tokens.append(token)
+                df_proto_id.append(proto_id)
+                df_char_indices.append(char_ix)
                 df_guesses.append(guess)
                 df_scores.append(score)
                 df_folds.append(fold)
                 df_guessers.append(guesser_name)
 
         return pd.DataFrame({
-            'qnum': df_qnums,
-            'sentence': df_sentences,
-            'token': df_tokens,
+            'qanta_id': df_qnums,
+            'proto_id': df_proto_id,
+            'char_index': df_char_indices,
             'guess': df_guesses,
             'score': df_scores,
             'fold': df_folds,
@@ -234,29 +243,30 @@ class AbstractGuesser(metaclass=ABCMeta):
         })
 
     @staticmethod
-    def guess_path(directory: str, fold: str) -> str:
-        return os.path.join(directory, 'guesses_{}.pickle'.format(fold))
+    def guess_path(directory: str, fold: str, output_type: str) -> str:
+        return os.path.join(directory, f'guesses_{output_type}_{fold}.pickle')
 
     @staticmethod
-    def save_guesses(guess_df: pd.DataFrame, directory: str, folds: List[str]):
+    def save_guesses(guess_df: pd.DataFrame, directory: str, folds: List[str], output_type):
         for fold in folds:
             log.info('Saving fold {}'.format(fold))
             fold_df = guess_df[guess_df.fold == fold]
-            output_path = AbstractGuesser.guess_path(directory, fold)
+            output_path = AbstractGuesser.guess_path(directory, fold, output_type)
             fold_df.to_pickle(output_path)
 
     @staticmethod
-    def load_guesses(directory: str, folds=c.GUESSER_GENERATION_FOLDS) -> pd.DataFrame:
+    def load_guesses(directory: str, output_type='char', folds=c.GUESSER_GENERATION_FOLDS) -> pd.DataFrame:
         """
         Loads all the guesses pertaining to a guesser inferred from directory
         :param directory: where to load guesses from
+        :param output_type: One of: char, full, first
         :param folds: folds to load, by default all of them
         :return: guesses across all folds for given directory
         """
         assert len(folds) > 0
         guess_df = None
         for fold in folds:
-            input_path = AbstractGuesser.guess_path(directory, fold)
+            input_path = AbstractGuesser.guess_path(directory, fold, output_type)
             if guess_df is None:
                 guess_df = pd.read_pickle(input_path)
             else:
@@ -296,135 +306,67 @@ class AbstractGuesser(metaclass=ABCMeta):
     def create_report(self, directory: str):
         with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
             params = pickle.load(f)
-        dev_guesses = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD])
 
-        qdb = QuestionDatabase()
-        questions = qdb.all_questions()
+        qdb = QantaDatabase()
+        guesser_train = qdb.guess_train_questions
+        guesser_dev = qdb.guess_dev_questions
 
-        # Compute recall and accuracy
-        dev_recall = compute_fold_recall(dev_guesses, questions)
-        dev_questions = {qnum: q for qnum, q in questions.items() if q.fold == c.GUESSER_DEV_FOLD}
-        dev_recall_stats = compute_recall_at_positions(dev_recall)
-        dev_summary_accuracy = compute_summary_accuracy(dev_questions, dev_recall_stats)
-        dev_summary_recall = compute_summary_recall(dev_questions, dev_recall_stats)
+        train_pages = {q.page for q in guesser_train}
+        dev_pages = {q.page for q in guesser_dev}
 
-        report_to_kuro(params['kuro_trial_id'] if 'kuro_trial_id' in params else None, dev_summary_accuracy)
+        unanswerable_answer_percent = len(dev_pages - train_pages) / len(dev_pages)
+        answerable = 0
+        for q in guesser_dev:
+            if q.page in train_pages:
+                answerable += 1
+        unanswerable_question_percent = answerable / len(guesser_dev)
 
-        dev_summary_accuracy_png = os.path.join(directory, 'dev_accuracy.png')
-        dev_summary_recall_png = os.path.join(directory, 'dev_recall.png')
-        accuracy_plot(dev_summary_accuracy_png, dev_summary_accuracy, 'Guesser Dev')
-        recall_plot(dev_summary_recall_png, dev_questions, dev_summary_recall, 'Guesser Dev')
+        train_example_counts = Counter()
+        for q in guesser_train:
+            train_example_counts[q.page] += 1
 
-        # Obtain metrics on number of answerable questions based on the dataset requested
-        all_answers = {g for g in qdb.all_answers().values()}
-        all_questions = list(qdb.all_questions().values())
-        answer_lookup = {qnum: guess for qnum, guess in qdb.all_answers().items()}
-        dataset = self.qb_dataset()
-        training_data = dataset.training_data()
+        dev_df = pd.DataFrame({
+            'page': [q.page for q in guesser_dev],
+            'qanta_id': [q.qanta_id for q in guesser_dev],
+            'text_length': [len(q.text) for q in guesser_dev],
+            'n_train': [train_example_counts[q.page] for q in guesser_dev],
+            'category': [q.category for q in guesser_dev]
+        })
 
-        min_n_answers = {g for g in training_data[1]}
+        char_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='char')
+        char_df = char_guess_df.merge(dev_df, on='qanta_id')
+        char_df['correct'] = (char_df.guess == char_df.page).astype('int')
+        char_df['char_percent'] = (char_df['char_index'] / char_df['text_length']).clip_upper(1.0)
 
-        train_questions = [q for q in all_questions if q.fold == c.GUESSER_TRAIN_FOLD]
-        train_answers = {q.page for q in train_questions}
+        first_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='first')
+        first_df = first_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
+        first_df['correct'] = (first_df.guess == first_df.page).astype('int')
+        grouped_first_df = first_df.groupby('qanta_id')
+        first_accuracy = grouped_first_df.nth(0).correct.mean()
+        first_recall = grouped_first_df.agg({'correct': 'max'}).correct.mean()
 
-        dev_questions = [q for q in all_questions if q.fold == c.GUESSER_DEV_FOLD]
-        dev_answers = {q.page for q in dev_questions}
-
-        min_n_train_questions = [q for q in train_questions if q.page in min_n_answers]
-
-        all_common_train_dev = train_answers.intersection(dev_answers)
-        min_common_train_dev = min_n_answers.intersection(dev_answers)
-
-        all_train_answerable_questions = [q for q in train_questions if q.page in train_answers]
-        all_dev_answerable_questions = [q for q in dev_questions if q.page in train_answers]
-
-        min_train_answerable_questions = [q for q in train_questions if q.page in min_n_answers]
-        min_dev_answerable_questions = [q for q in dev_questions if q.page in min_n_answers]
-
-        # The next section of code generates the percent of questions correct by the number
-        # of training examples.
-        Row = namedtuple('Row', [
-            'fold', 'guess', 'guesser',
-            'qnum', 'score', 'sentence', 'token',
-            'correct', 'answerable_1', 'answerable_2',
-            'n_examples'
-        ])
-
-        train_example_count_lookup = seq(train_questions) \
-            .group_by(lambda q: q.page) \
-            .smap(lambda page, group: (page, len(group))) \
-            .dict()
-
-        def guess_to_row(*args):
-            guess = args[1]
-            qnum = args[3]
-            answer = answer_lookup[qnum]
-
-            return Row(
-                *args,
-                answer == guess,
-                answer in train_answers,
-                answer in min_n_answers,
-                train_example_count_lookup[answer] if answer in train_example_count_lookup else 0
-            )
-
-        dev_data = seq(dev_guesses) \
-            .smap(guess_to_row) \
-            .group_by(lambda r: (r.qnum, r.sentence)) \
-            .smap(lambda key, group: seq(group).max_by(lambda q: q.sentence)) \
-            .to_pandas(columns=Row._fields)
-        dev_data['correct_int'] = dev_data['correct'].astype(int)
-        dev_data['ones'] = 1
-        dev_counts = dev_data\
-            .groupby('n_examples')\
-            .agg({'correct_int': np.mean, 'ones': np.sum})\
-            .reset_index()
-
-        dev_correct_by_count_png = os.path.join(directory, 'dev_correct_by_count.png')
-        n_train_vs_dev_png = os.path.join(directory, 'n_train_vs_dev.png')
-
-        correct_by_n_count_plot(dev_correct_by_count_png, dev_counts, 'Guesser Dev')
-        n_train_vs_fold_plot(n_train_vs_dev_png, dev_counts, 'Guesser Dev')
+        full_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='full')
+        full_df = full_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
+        full_df['correct'] = (full_df.guess == full_df.page).astype('int')
+        grouped_full_df = full_df.groupby('qanta_id')
+        full_accuracy = grouped_full_df.nth(0).correct.mean()
+        full_recall = grouped_full_df.agg({'correct': 'max'}).correct.mean()
 
         with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
             pickle.dump({
-                'dev_accuracy': dev_summary_accuracy,
+                'first_accuracy': first_accuracy,
+                'first_recall': first_recall,
+                'full_accuracy': full_accuracy,
+                'full_recall': full_recall,
+                'char_df': char_df,
+                'first_df': first_df,
+                'full_df': full_df,
+                'n_guesses': conf['n_guesses'],
+                'unanswerable_answer_percent': unanswerable_answer_percent,
+                'unanswerable_question_percent': unanswerable_question_percent,
                 'guesser_name': self.display_name(),
-                'guesser_params': params,
-                'directory': directory
+                'guesser_params': params
             }, f)
-
-        md_output = safe_path(os.path.join(directory, 'guesser_report.md'))
-        pdf_output = safe_path(os.path.join(directory, 'guesser_report.pdf'))
-        report = ReportGenerator('guesser.md')
-        report.create({
-            'dev_recall_plot': dev_summary_recall_png,
-            'dev_accuracy_plot': dev_summary_accuracy_png,
-            'dev_accuracy': dev_summary_accuracy,
-            'guesser_name': self.display_name(),
-            'guesser_params': params,
-            'n_answers_all_folds': len(all_answers),
-            'n_total_train_questions': len(train_questions),
-            'n_train_questions': len(min_n_train_questions),
-            'n_dev_questions': len(dev_questions),
-            'n_total_train_answers': len(train_answers),
-            'n_train_answers': len(min_n_answers),
-            'n_dev_answers': len(dev_answers),
-            'all_n_common_train_dev': len(all_common_train_dev),
-            'all_p_common_train_dev': len(all_common_train_dev) / max(1, len(dev_answers)),
-            'min_n_common_train_dev': len(min_common_train_dev),
-            'min_p_common_train_dev': len(min_common_train_dev) / max(1, len(dev_answers)),
-            'all_n_answerable_train': len(all_train_answerable_questions),
-            'all_p_answerable_train': len(all_train_answerable_questions) / len(train_questions),
-            'all_n_answerable_dev': len(all_dev_answerable_questions),
-            'all_p_answerable_dev': len(all_dev_answerable_questions) / len(dev_questions),
-            'min_n_answerable_train': len(min_train_answerable_questions),
-            'min_p_answerable_train': len(min_train_answerable_questions) / len(train_questions),
-            'min_n_answerable_dev': len(min_dev_answerable_questions),
-            'min_p_answerable_dev': len(min_dev_answerable_questions) / len(dev_questions),
-            'dev_correct_by_count_plot': dev_correct_by_count_png,
-            'n_train_vs_dev_plot': n_train_vs_dev_png,
-        }, md_output, pdf_output)
 
     @staticmethod
     def list_enabled_guessers() -> List[GuesserSpec]:
@@ -465,7 +407,6 @@ class AbstractGuesser(metaclass=ABCMeta):
         return safe_path(os.path.join(
             c.GUESSER_REPORTING_PREFIX, guesser_path, str(config_num), file
         ))
-
 
     def web_api(self, host='0.0.0.0', port=5000, debug=False):
         from flask import Flask, jsonify, request
@@ -529,202 +470,3 @@ class AbstractGuesser(metaclass=ABCMeta):
             return jsonify({'guess': guess, 'score': float(score)})
 
         app.run(host=host, port=port, debug=debug)
-
-QuestionRecall = namedtuple('QuestionRecall', ['start', 'p_25', 'p_50', 'p_75', 'end'])
-
-
-def report_to_kuro(kuro_trial_id, summary_accuracy):
-    if kuro_trial_id is not None:
-        try:
-            from kuro.client import Trial
-            trial = Trial.from_trial_id(kuro_trial_id)
-            trial.report_metric('dev_acc_start', summary_accuracy['start'])
-            trial.report_metric('dev_acc_25', summary_accuracy['p_25'])
-            trial.report_metric('dev_acc_50', summary_accuracy['p_50'])
-            trial.report_metric('dev_acc_75', summary_accuracy['p_75'])
-            trial.report_metric('dev_acc_end', summary_accuracy['end'])
-            trial.end()
-            log.info('Logged guesser accuracies to kuro and ended trial')
-        except:
-            pass
-
-
-def question_recall(guesses, qst, question_lookup):
-    qnum, sentence, token = qst
-    answer = question_lookup[qnum].page
-    sorted_guesses = sorted(guesses, reverse=True, key=lambda g: g.score)
-    for i, guess_row in enumerate(sorted_guesses, 1):
-        if answer == guess_row.guess:
-            return qnum, sentence, token, i
-    return qnum, sentence, token, None
-
-
-def compute_fold_recall(guess_df, questions):
-    return seq(guess_df)\
-        .smap(Guess)\
-        .group_by(lambda g: (g.qnum, g.sentence, g.token))\
-        .smap(lambda qst, guesses: question_recall(guesses, qst, questions))\
-        .group_by(lambda x: x[0])\
-        .dict()
-
-
-def start_of_question(group):
-    return seq(group).min_by(lambda g: g[1])[3]
-
-
-def make_percent_of_question(percent):
-    def percent_of_question(group):
-        n_sentences = len(group)
-        middle = max(1, round(n_sentences * percent))
-        middle_element = seq(group).filter(lambda g: g[1] == middle).head_option()
-        if middle_element is None:
-            return None
-        else:
-            return middle_element[3]
-    return percent_of_question
-
-
-def end_of_question(group):
-    return seq(group).max_by(lambda g: g[1])[3]
-
-percent_25_of_question = make_percent_of_question(.25)
-percent_50_of_question = make_percent_of_question(.5)
-percent_75_of_question = make_percent_of_question(.75)
-
-
-def compute_recall_at_positions(recall_lookup):
-    recall_stats = {}
-    for q in recall_lookup:
-        g = recall_lookup[q]
-        start = start_of_question(g)
-        p_25 = percent_25_of_question(g)
-        p_50 = percent_50_of_question(g)
-        p_75 = percent_75_of_question(g)
-        end = end_of_question(g)
-        recall_stats[q] = QuestionRecall(start, p_25, p_50, p_75, end)
-    return recall_stats
-
-
-def compute_summary_accuracy(questions, recall_stats):
-    accuracy_stats = {
-        'start': 0,
-        'p_25': 0,
-        'p_50': 0,
-        'p_75': 0,
-        'end': 0
-    }
-    n_questions = len(questions)
-    for q in questions:
-        if q in recall_stats:
-            if recall_stats[q].start == 1:
-                accuracy_stats['start'] += 1
-            if recall_stats[q].p_25 == 1:
-                accuracy_stats['p_25'] += 1
-            if recall_stats[q].p_50 == 1:
-                accuracy_stats['p_50'] += 1
-            if recall_stats[q].p_75 == 1:
-                accuracy_stats['p_75'] += 1
-            if recall_stats[q].end == 1:
-                accuracy_stats['end'] += 1
-
-    accuracy_stats['start'] /= n_questions
-    accuracy_stats['p_25'] /= n_questions
-    accuracy_stats['p_50'] /= n_questions
-    accuracy_stats['p_75'] /= n_questions
-    accuracy_stats['end'] /= n_questions
-    return accuracy_stats
-
-
-def compute_summary_recall(questions, recall_stats):
-    recall_numbers = {
-        'start': [],
-        'p_25': [],
-        'p_50': [],
-        'p_75': [],
-        'end': []
-    }
-    for q in questions:
-        if q in recall_stats:
-            if recall_stats[q].start is not None:
-                recall_numbers['start'].append(recall_stats[q].start)
-            if recall_stats[q].p_25 is not None:
-                recall_numbers['p_25'].append(recall_stats[q].p_25)
-            if recall_stats[q].p_50 is not None:
-                recall_numbers['p_50'].append(recall_stats[q].p_50)
-            if recall_stats[q].p_75 is not None:
-                recall_numbers['p_75'].append(recall_stats[q].p_75)
-            if recall_stats[q].end is not None:
-                recall_numbers['end'].append(recall_stats[q].end)
-
-    return recall_numbers
-
-
-def compute_recall_plot_data(recall_positions, n_questions,
-                             max_recall=conf['n_guesses'] + int(conf['n_guesses'] * .1)):
-    """
-    Compute the recall, compute recall out a little further than number of guesses to give the
-    plot that uses this data some margin on the right side
-    """
-    x = list(range(1, max_recall + 1))
-    y = [0] * max_recall
-    for r in recall_positions:
-        y[r - 1] += 1
-    y = np.cumsum(y) / n_questions
-    return x, y
-
-
-def recall_plot(output, questions, summary_recall, fold_name):
-    data = []
-    for position, recall_positions in summary_recall.items():
-        x_data, y_data = compute_recall_plot_data(recall_positions, len(questions))
-        for x, y in zip(x_data, y_data):
-            data.append({'x': x, 'y': y, 'position': position})
-    data = pd.DataFrame(data)
-    g = sb.FacetGrid(data=data, hue='position', size=5, aspect=1.5)
-    g.map(plt.plot, 'x', 'y')
-    g.add_legend()
-    plt.xlabel('Number of Guesses')
-    plt.ylabel('Recall')
-    plt.subplots_adjust(top=.9)
-    g.fig.suptitle('Guesser Recall Through Question on {}'.format(fold_name))
-    plt.savefig(output, dpi=200, format='png')
-    plt.clf()
-    plt.cla()
-    plt.close()
-
-
-def accuracy_plot(output, summary_accuracy, fold_name):
-    pd.DataFrame([
-        ('start', summary_accuracy['start']),
-        ('25%', summary_accuracy['p_25']),
-        ('50%', summary_accuracy['p_50']),
-        ('75%', summary_accuracy['p_75']),
-        ('end', summary_accuracy['end'])],
-        columns=['Position', 'Accuracy']
-    ).plot.bar('Position', 'Accuracy', title='Accuracy by Position on {}'.format(fold_name))
-    plt.savefig(output, dpi=200, format='png')
-    plt.clf()
-    plt.cla()
-    plt.close()
-
-
-def correct_by_n_count_plot(output, counts, fold):
-    counts.plot('n_examples', 'correct_int')
-    plt.title('{} fold'.format(fold))
-    plt.xlabel('Number of Training Examples')
-    plt.ylabel('Percent Correct')
-    plt.savefig(output, dpi=200, format='png')
-    plt.clf()
-    plt.cla()
-    plt.close()
-
-
-def n_train_vs_fold_plot(output, counts, fold):
-    counts.plot('n_examples', 'ones')
-    plt.title('{} fold'.format(fold))
-    plt.xlabel('Number of Training Examples')
-    plt.ylabel('Number of {} Examples'.format(fold))
-    plt.savefig(output, dpi=200, format='png')
-    plt.clf()
-    plt.cla()
-    plt.close()

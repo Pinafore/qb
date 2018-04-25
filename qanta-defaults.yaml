@@ -4,10 +4,10 @@ buzzer:
   gpu: 0
   n_cores: 16
   n_guesses: 50
-buzzer_word_skip: 2
 expo_questions: data/internal/expo/2016_hsnct.csv
 
-guesser_word_skip: -1
+guesser_char_skip: 25
+buzzer_char_skip: 25
 n_guesses: 50
 
 use_pretrained_embeddings: true

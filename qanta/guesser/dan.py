@@ -270,7 +270,6 @@ class DanGuesser(AbstractGuesser):
         self.n_classes = None
         self.emb_dim = None
         self.model_file = None
-        #self.kuro_trial_id = None
 
         self.model = None
         self.optimizer = None
@@ -286,9 +285,7 @@ class DanGuesser(AbstractGuesser):
         return self.page_field.vocab.itos
 
     def parameters(self):
-        params = conf['guessers']['qanta.guesser.dan.DanGuesser'][self.config_num].copy()
-        #params['kuro_trial_id'] = self.kuro_trial_id
-        return params
+        return conf['guessers']['qanta.guesser.dan.DanGuesser'][self.config_num]
 
     def train(self, training_data):
         log.info('Loading Quiz Bowl dataset')
@@ -362,12 +359,6 @@ class DanGuesser(AbstractGuesser):
                 train_time, train_loss, train_acc,
                 test_time, test_loss, test_acc
             )
-
-            #if trial is not None:
-            #    trial.report_metric('test_acc', test_acc, step=epoch)
-            #    trial.report_metric('test_loss', test_loss, step=epoch)
-            #    trial.report_metric('train_acc', train_acc, step=epoch)
-            #    trial.report_metric('train_loss', train_loss, step=epoch)
 
             if stop_training:
                 log.info(' '.join(reasons))

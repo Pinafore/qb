@@ -6,10 +6,12 @@ from functools import partial
 from qanta.config import conf
 from qanta.spark import create_spark_context
 
+
 def queue_wrapper(func, inputs):
     real_inputs, queue = inputs
     queue.put(0)
     return func(*real_inputs)
+  
 
 def _multiprocess(func, inputs, n_cores=0, info='', 
                   progress=True, multi=True, spark=None):
