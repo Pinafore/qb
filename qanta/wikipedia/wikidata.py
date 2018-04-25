@@ -455,3 +455,7 @@ def create_instance_of_map(wikidata_claims_instance_of_path, output_path, n_type
 
     with open(output_path, 'wb') as f:
         pickle.dump(instance_of_map, f)
+
+if __name__ == '__main__':
+    output = 'data/external/parsed_wikidata.pkl'
+    parse_raw_wikidata(output)
