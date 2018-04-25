@@ -145,7 +145,6 @@ class CreateMappedQantaDataset(Task):
         with open(QANTA_MAPPED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
-
     def output(self):
         return LocalTarget(QANTA_MAPPED_DATASET_PATH),
 
