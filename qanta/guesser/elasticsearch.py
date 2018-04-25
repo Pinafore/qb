@@ -6,7 +6,7 @@ import pickle
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 import elasticsearch
-import progressbar
+import tqdm
 from nltk.tokenize import word_tokenize
 from jinja2 import Environment, PackageLoader
 
@@ -52,6 +52,7 @@ def stop_elasticsearch(pid_file):
         pid = int(f.read())
     subprocess.run(['kill', str(pid)])
 
+
 def create_doctype(index_name, similarity):
     if similarity == 'default':
         wiki_content_field = Text()
@@ -59,6 +60,7 @@ def create_doctype(index_name, similarity):
     else:
         wiki_content_field = Text(similarity=similarity)
         qb_content_field = Text(similarity=similarity)
+
     class Answer(DocType):
         page = Text(fields={'raw': Keyword()})
         wiki_content = wiki_content_field
@@ -112,8 +114,7 @@ class ElasticSearchIndex:
             self.init()
             wiki_lookup = Wikipedia()
             log.info('Indexing questions and corresponding wikipedia pages as large docs...')
-            bar = progressbar.ProgressBar()
-            for page in bar(documents):
+            for page in tqdm.tqdm(documents):
                 if use_wiki and page in wiki_lookup:
                     wiki_content = wiki_lookup[page].text
                 else:
@@ -143,15 +144,13 @@ class ElasticSearchIndex:
             log.info('Indexing questions and corresponding pages as many docs...')
             if use_qb:
                 log.info('Indexing questions...')
-                bar = progressbar.ProgressBar()
-                for page, doc in bar(documents):
+                for page, doc in tqdm.tqdm(documents):
                     self.answer_doc(page=page, qb_content=doc).save()
 
             if use_wiki:
                 log.info('Indexing wikipedia...')
                 wiki_lookup = Wikipedia()
-                bar = progressbar.ProgressBar()
-                for page in bar(pages):
+                for page in tqdm.tqdm(pages):
                     if page in wiki_lookup:
                         content = word_tokenize(wiki_lookup[page].text)
                         for i in range(0, len(content), 200):
@@ -247,7 +246,6 @@ class ElasticSearchGuesser(AbstractGuesser):
                 use_wiki=self.use_wiki,
                 rebuild_index=True
             )
-
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
         def es_search(query):

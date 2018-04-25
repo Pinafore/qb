@@ -1,18 +1,10 @@
-import string
+from os import path
 
-from nltk.corpus import stopwords
-
-ENGLISH_STOP_WORDS = set(stopwords.words('english'))
-QB_STOP_WORDS = {"10", "ten", "points", "tenpoints", "one", "name", ",", ")", "``", "(", '"', ']',
-                 '[', ":", "due", "!", "'s", "''", 'ftp'}
-STOP_WORDS = ENGLISH_STOP_WORDS | QB_STOP_WORDS
-
-PUNCTUATION = string.punctuation
 ALL_FOLDS = [
     # Guessers should train and cross validate on these folds
     'guesstrain', 'guessdev',
     # Guessers should produce output for these, only buzzer should train and cross validate on these
-    'buzzertrain', 'buzzerdev',
+    'buzztrain', 'buzzdev',
     # Parameter tuning of system should be done on dev. This should be reserved for system-wide parameters and not as
     # a second buzzerdev or guessdev fold test should be reserved for final paper results
     'dev', 'test',
@@ -22,14 +14,16 @@ ALL_FOLDS = [
 
 # Training folds
 GUESSER_TRAIN_FOLD = 'guesstrain'
-BUZZER_TRAIN_FOLD = 'buzzertrain'
+BUZZER_TRAIN_FOLD = 'buzztrain'
+TRAIN_FOLDS = {GUESSER_TRAIN_FOLD, BUZZER_TRAIN_FOLD}
 
 # Guesser and buzzers produce reports on these for cross validation
 GUESSER_DEV_FOLD = 'guessdev'
-BUZZER_DEV_FOLD = 'buzzerdev'
+BUZZER_DEV_FOLD = 'buzzdev'
+SYSTEM_DEV_FOLD = 'dev'
+DEV_FOLDS = {GUESSER_DEV_FOLD, BUZZER_DEV_FOLD, SYSTEM_DEV_FOLD}
 
 # System-wide cross validation and testing
-SYSTEM_DEV_FOLD = 'dev'
 SYSTEM_TEST_FOLD = 'test'
 EXPO_FOLD = 'expo'
 
@@ -76,11 +70,17 @@ GUESSER_REPORTING_PREFIX = 'output/reporting/guesser'
 
 QB_SOURCE_LOCATION = 'data/internal/source'
 
-COMPARE_GUESSER_REPORT_PATH = 'output/guesser/guesser_comparison_report_{}.pdf'
-
 PRED_TARGET = 'output/predictions/{0}.pred'
 META_TARGET = 'output/vw_input/{0}.meta'
 
 EXPO_BUZZ = 'output/expo/{}.buzz'
 EXPO_FINAL = 'output/expo/{}.final'
 EXPO_QUESTIONS = 'output/expo/{}.questions.csv'
+
+DS_VERSION = '2018.04.18'
+DATASET_PREFIX = 'data/external/datasets'
+QANTA_MAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.mapped.{DS_VERSION}.json')
+QANTA_SQL_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.{DS_VERSION}.sqlite3')
+QANTA_TRAIN_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.train.{DS_VERSION}.json')
+QANTA_DEV_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.dev.{DS_VERSION}.json')
+QANTA_TEST_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.test.{DS_VERSION}.json')

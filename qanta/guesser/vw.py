@@ -5,7 +5,7 @@ import pickle
 import os
 import random
 import re
-from qanta.datasets.abstract import Answer, TrainingData, QuestionText
+from qanta.datasets.abstract import Page, TrainingData, QuestionText
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.util.io import shell, safe_path, get_tmp_dir, get_tmp_filename
 from qanta.config import conf
@@ -112,7 +112,7 @@ class VWGuesser(AbstractGuesser):
 
     def guess(self,
               questions: List[QuestionText],
-              max_n_guesses: Optional[int]) -> List[List[Tuple[Answer, float]]]:
+              max_n_guesses: Optional[int]) -> List[List[Tuple[Page, float]]]:
         temp_dir = get_tmp_dir()
         with tempfile.NamedTemporaryFile('w', delete=False, dir=temp_dir) as f:
             file_name = f.name
