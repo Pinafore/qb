@@ -8,7 +8,6 @@ import torch
 from torch.autograd import Variable
 
 from qanta import qlogging
-from qanta.util.environment import QB_TB_HOSTNAME, QB_TB_PORT
 
 
 log = qlogging.get(__name__)
@@ -76,7 +75,7 @@ class BaseLogger(Callback):
 
 class TerminateOnNaN(Callback):
     def on_epoch_end(self, logs):
-        for key, arr in logs.items():
+        for _, arr in logs.items():
             if np.any(np.isnan(arr)):
                 raise ValueError('NaN encountered')
         else:
@@ -160,32 +159,6 @@ class ModelCheckpoint(Callback):
                 if self.verbose > 0:
                     self.log_func('New best model, saving to: {}'.format(path))
                 self.save_function(path)
-
-
-class Tensorboard(Callback):
-    def __init__(self, experiment_name: str, hostname=QB_TB_HOSTNAME, port=QB_TB_PORT):
-        if host_is_up(hostname, port):
-            from pycrayon import CrayonClient
-            self.client = CrayonClient(hostname=hostname, port=port)
-            self.experiment_name = experiment_name
-            try:
-                self.client.remove_experiment(experiment_name)
-            except ValueError:
-                pass
-            self.experiment = self.client.create_experiment(experiment_name)
-        else:
-            log.info(f'Tensorboard not found on http://{hostname}:{port}, experiment logging disabled')
-            self.client = None
-            self.experiment_name = None
-            self.experiment = None
-
-    def on_epoch_end(self, logs):
-        if self.client is not None:
-            self.experiment.add_scalar_value('train_loss', logs['train_loss'][-1])
-            self.experiment.add_scalar_value('train_acc', logs['train_acc'][-1])
-            self.experiment.add_scalar_value('test_loss', logs['test_loss'][-1])
-            self.experiment.add_scalar_value('test_acc', logs['test_acc'][-1])
-            self.experiment.add_scalar_value('train_time', logs['train_time'][-1])
 
 
 class TrainingManager:
