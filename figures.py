@@ -46,7 +46,7 @@ def int_to_correct(num):
 
 
 def save_plot(output_dir, guesser_name, name, plot):
-    plot.save(safe_path(os.path.join(output_dir, name)))
+    plot.save(safe_path(os.path.join(output_dir, guesser_name, name)))
 
 
 class GuesserReport:
@@ -106,7 +106,7 @@ class GuesserReport:
             return (
                     ggplot(self.char_plot_df)
                     + aes(x='char_percent', y='correct')
-                    + geom_smooth()
+                    + geom_smooth(method='mavg')
             )
 
 
