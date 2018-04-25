@@ -144,8 +144,7 @@ class ElasticSearchIndex:
             log.info('Indexing questions and corresponding pages as many docs...')
             if use_qb:
                 log.info('Indexing questions...')
-                bar = progressbar.ProgressBar()
-                for page, doc in bar(documents):
+                for page, doc in tqdm.tqdm(documents):
                     self.answer_doc(page=page, qb_content=doc).save()
 
             if use_wiki:
