@@ -141,7 +141,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         particular guesser. By default str() on the classname, but can be overriden
         :return: display name of this guesser
         """
-        return self.__class__.__name__
+        return self.__module__ + '.' + self.__class__.__name__
 
     def parameters(self) -> Dict:
         """
@@ -335,7 +335,7 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         char_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='char')
         char_df = char_guess_df.merge(dev_df, on='qanta_id')
-        char_df['correct'] = char_df.guess == char_df.page
+        char_df['correct'] = (char_df.guess == char_df.page).astype('int')
         char_df['char_percent'] = (char_df['char_index'] / char_df['text_length']).clip_upper(1.0)
 
         first_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='first')
