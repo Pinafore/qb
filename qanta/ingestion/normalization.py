@@ -76,7 +76,7 @@ TRASH_PREFIX_PATTERN = '^({})'.format('|'.join(TRASH_PREFIXES))
 
 
 def normalize_text(text):
-    return text
+    return text.replace('“','"').replace('”','"').replace('’')
 
 
 class QuizdbOrg:
