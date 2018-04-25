@@ -2,7 +2,7 @@ import os
 
 from luigi import LocalTarget, Task, WrapperTask, ExternalTask
 
-from qanta.util.io import shell
+from qanta.util.io import shell, safe_path
 from qanta.util.constants import (
     ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE, WIKI_INSTANCE_OF_PICKLE, WIKI_LOOKUP_PATH
 )
@@ -26,6 +26,7 @@ class NLTKDownload(ExternalTask):
 
 class WikipediaRawRedirects(Task):
     def run(self):
+        safe_path(ALL_WIKI_REDIRECTS)
         if is_aws_authenticated():
             s3_location = 's3://pinafore-us-west-2/public/wiki_redirects.csv'
             shell('aws s3 cp {} {}'.format(s3_location, ALL_WIKI_REDIRECTS))
@@ -50,6 +51,7 @@ class WikipediaRedirectPickle(Task):
 
 class WikipediaDumps(Task):
     def run(self):
+        safe_path('data/external/wikipedia/parsed-wiki.tar.lz4')
         if is_aws_authenticated():
             s3_location = 's3://pinafore-us-west-2/public/wikipedia-dumps/parsed-wiki.tar.lz4'
             shell('aws s3 cp {} data/external/wikipedia/parsed-wiki.tar.lz4'.format(s3_location))
