@@ -151,7 +151,7 @@ def the_rule(ans):
 
 def plural_rule(ans):
     singular = wordnet.morphy(ans)
-    if singular != ans:
+    if singular is not None and singular != ans:
         return singular
     else:
         return ans
