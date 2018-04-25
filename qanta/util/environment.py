@@ -14,7 +14,7 @@ def is_aws_authenticated():
     try:
         boto3.client('iam').get_user()
         return True
-    except NoCredentialsError:
+    except:
         return False
 
 
