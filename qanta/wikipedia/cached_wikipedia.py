@@ -40,9 +40,8 @@ def create_wikipedia_cache(parsed_wiki_path='data/external/wikipedia/parsed-wiki
     from qanta.spark import create_spark_context
 
     sc = create_spark_context()
-    db = QuestionDatabase()
-    questions = list(db.all_questions().values())
-    train_questions = [q for q in questions if q.fold == 'guesstrain' or q.fold == 'buzzertrain']
+    db = QantaDatabase()
+    train_questions = db.train_questions
     answers = {q.page for q in train_questions}
     b_answers = sc.broadcast(answers)
     # Paths used in spark need to be absolute and it needs to exist
@@ -72,8 +71,8 @@ def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
             k, v = line.split('\t')
             countries[k] = v.strip()
 
-    db = QuestionDatabase()
-    pages = set(db.all_answers().values())
+    db = QantaDatabase()
+    pages = {q.page for q in db.train_questions}
 
     with open(redirect_csv) as redirect_f:
         redirects = {}
@@ -169,7 +168,8 @@ class Wikipedia:
                 self.redirects = pickle.load(f)
         else:
             raise ValueError(
-                f'{self.dump_redirect_path} missing, run: luigi --module qanta.pipeline.preprocess WikipediaRedirectPickle')
+                f'{self.dump_redirect_path} missing, run: luigi --module qanta.pipeline.preprocess '
+                f'WikipediaRedirectPickle')
 
     def load_country(self, key: str):
         content = self.lookup[key]
