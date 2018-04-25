@@ -57,3 +57,4 @@ tmp*
 luigi/*.pid
 *.pid
 elasticsearch.yml
+*.ipynb
