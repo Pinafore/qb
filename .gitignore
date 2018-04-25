@@ -1,3 +1,4 @@
+*.swp
 *.pyc
 .idea
 data/external
@@ -48,7 +49,6 @@ build/
 dist/
 tagme.ipynb
 tb-logs/
-*.ipynb
 .terraform
 .ignore
 tags

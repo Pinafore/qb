@@ -32,8 +32,7 @@ class BuzzerModel(Task):
 
     def run(self):
         make_dirs(safe_path('output/buzzers/'))
-        args = Namespace(config=conf['buzzer']['config'], epochs=6, load=False)
-        train_cost_sensitive(args)
+        train_cost_sensitive(conf['buzzer']['config'], c.BUZZER_GENERATION_FOLDS)
 
 
 class BuzzerBuzzes(Task):
@@ -54,11 +53,11 @@ class BuzzerBuzzes(Task):
         make_dirs(safe_path('output/predictions/'))
         make_dirs(safe_path('output/expo/'))
         make_dirs(safe_path('output/vw_input/'))
-        args = Namespace(fold=self.fold, config=conf['buzzer']['config'])
-        buzzer_test.generate(args)
+        config=conf['buzzer']['config']
+        buzzer_test.generate(config, [self.fold])
 
 
 class AllBuzzes(WrapperTask):
     def requires(self):
-        for fold in c.BUZZ_FOLDS:
+        for fold in c.BUZZER_GENERATION_FOLDS:
             yield BuzzerBuzzes(fold=fold)

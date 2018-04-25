@@ -4,6 +4,7 @@ import shutil
 import time
 import cloudpickle
 from typing import List, Optional, Dict
+from tqdm import tqdm
 
 import numpy as np
 
@@ -416,8 +417,6 @@ class DanGuesser(AbstractGuesser):
 
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
 
-
-
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
         if len(questions) == 0:
             return []
@@ -426,7 +425,7 @@ class DanGuesser(AbstractGuesser):
             return self._guess_batch(questions, max_n_guesses)
         else:
             all_guesses = []
-            for i in range(0, len(questions), batch_size):
+            for i in tqdm(range(0, len(questions), batch_size)):
                 batch_questions = questions[i:i + batch_size]
                 guesses = self._guess_batch(batch_questions, max_n_guesses)
                 all_guesses.extend(guesses)
@@ -458,17 +457,44 @@ class DanGuesser(AbstractGuesser):
             input_dict['trigram'] = text
             lengths_dict['trigram'] = lengths
         qnums = self.qnum_field.process([0 for _ in questions]).cuda()
-        guesses = []
+
         out = self.model(input_dict, lengths_dict, qnums)
-        probs = F.softmax(out)
-        scores, preds = torch.max(probs, 1)
-        scores = scores.data.cpu().numpy()
-        preds = preds.data.cpu().numpy()
-
-        for p, s in zip(preds, scores):
-            guesses.append([(self.i_to_ans[p], s)])
-
+        probs = [p for p in F.softmax(out).data.cpu().numpy()]
+        logits = [l for l in out.data.cpu().numpy()]
+        preds = [np.argsort(-l)[:10] for l in logits]
+        guesses = []
+        for i, ps in enumerate(preds):
+            guesses.append([])
+            for p in ps:
+                guesses[-1].append((self.i_to_ans[p], logits[i][p], probs[i][p]))
         return guesses
+
+    def generate_guesses(self, max_n_guesses: int, folds: List[str], word_skip=-1):
+        dataset = self.qb_dataset()
+        questions_by_fold = dataset.questions_by_fold()
+
+        q_qnum = []
+        q_word_position = []
+        q_relative_position = []
+        question_texts = []
+
+        for fold in folds:
+            questions = questions_by_fold[fold]
+            for q in questions:
+                qt = q.flatten_text().split()
+                for i in range(word_skip, len(qt), word_skip):
+                    q_qnum.append(q.qnum)
+                    q_word_position.append(i)
+                    q_relative_position.append(i / len(qt))
+                    question_texts.append(' '.join(qt[:i]))
+        guesses = self.guess(question_texts, max_n_guesses)
+        results = dict()
+        for i in range(len(question_texts)):
+            qid = q_qnum[i]
+            if qid not in results:
+                results[qid] = dict()
+            results[qid][q_word_position[i]] = guesses[i]
+        return results
 
     def save(self, directory: str):
         shutil.copyfile(self.model_file, os.path.join(directory, 'dan.pt'))

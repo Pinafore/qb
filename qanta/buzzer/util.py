@@ -1,272 +1,142 @@
 import os
-import sys
-import json
-import time
 import pickle
-import codecs
 import numpy as np
-import pandas as pd
-from collections import namedtuple, defaultdict
-from multiprocessing import Pool, Manager
+import chainer
+from tqdm import tqdm
+from multiprocessing import Pool
 from functools import partial
-from typing import List, Dict, Tuple
-
-from qanta.datasets.quiz_bowl import Question, QuestionDatabase, QuizBowlDataset
+from chainer import Variable
+from chainer.backends import cuda
+from qanta.datasets.quiz_bowl import QuestionDatabase
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util import constants as c
-from qanta.util.io import safe_path
-from qanta import qlogging
-from qanta.buzzer import constants as bc
-from qanta.util.multiprocess import _multiprocess
+from qanta.util.constants import BUZZER_DEV_FOLD
 
-log = qlogging.get(__name__)
-
-GUESSERS = [x.guesser_class for x in AbstractGuesser.list_enabled_guessers()]
+# constanst
+N_GUESSES = 10
+output_dir = 'output/buzzer/'
+buzzes_dir = 'output/buzzer/{}_buzzes.pkl'
 
 
-def stupid_buzzer(iterator) -> Dict[int, int]:
-    '''Buzz by several heuristics.
+def vector_converter_0(guesses_sequence):
+    '''default vector converter / feature extractor
+
+    Args:
+        guesses_sequence: a sequence (length of question) of list of guesses
+            (n_guesses), each entry is (guess, logit, prob)
+    Returns:
+        a sequence of vectors
     '''
+    length = len(guesses_sequence)
+    prev_logit_vec = [0. for _ in range(N_GUESSES)]
+    prev_prob_vec = [0. for _ in range(N_GUESSES)]
+    prev_dict = dict()
 
-    def _do_one(vecs_results_masks):
-        vecs, results, masks = vecs_results_masks
-        hopeful = any(results == 1)
-        prev_top_score = vecs[0][0]
-        prev_variance = np.var(vecs[0])
-        for i in range(len(masks)):
-            if masks[i] == 0:
-                return hopeful, results[i - 1], - 1
-            if vecs[i][0] - prev_top_score > 0.3:
-                if np.var(vecs[i]) - prev_variance > 0.005:
-                    return hopeful, results[i], i
-        return hopeful, results[-1], - 1
-
-    num_hopeful = 0
-    num_results = 0
-    tot_reward = 0
-    buzz_dict = dict()
-    count = 0
-    for i in range(iterator.size):
-        batch = iterator.next_batch(np)
-        count += len(batch.qids)
-        vecs = np.swapaxes(batch.vecs, 0, 1)
-        results = batch.results.T
-        masks = batch.mask.T
-        returns = map(_do_one, zip(vecs, results, masks))
-        returns = list(map(list, zip(*returns)))
-        hopeful = sum(returns[0])
-        results = sum(returns[1])
-        buzzes = list(returns[2])
-        reward = ((results * 10) - (hopeful - results) * 5) / hopeful \
-                if hopeful > 0 else 0
-        num_hopeful += hopeful
-        num_results += results
-        tot_reward += reward
-        for qid, buzz in zip(batch.qids, buzzes):
-            qid = qid.tolist()
-            buzz_dict[qid] = buzz
-    tot_reward /= iterator.size
-    log.info('[stupid] {0} {1} {2}'.format(
-        num_hopeful, num_results, tot_reward))
-    return buzz_dict
-
-def _process_question(option2id: Dict[str, int], 
-        all_questions: Dict[int, Question], qnum, question) -> \
-            Tuple[int, int, List[List[Dict[str, int]]], List[List[int]]]:
-    '''Process one question.
-    return:
-        qnum: question id,
-        answer_id: answer id
-        guess_dicts: a sequence of guess dictionaries for each guesser
-        results: sequence of 0 and 1 for each guesser
-    '''
-    qnum = int(qnum)
-    try:
-        answer = all_questions[qnum].page
-    except KeyError:
-        return None
-    if answer in option2id:
-        answer_id = option2id[answer]
-    else:
-        answer_id = len(option2id)
-
-    guess_dicts = []
-    results = []
-    for pos, pos_group in question.groupby(['sentence', 'token']):
-        pos_group = pos_group.groupby('guesser')
-        guess_dicts.append([])
-        results.append([])
-        for guesser in GUESSERS:
-            if guesser not in pos_group.groups:
-                log.info("{0} missing guesser {1}.".format(qnum, guesser))
-                guess_dicts[-1].append({})
-                results[-1].append(0)
+    vecs = []
+    for i in range(length):
+        logit_vec = []
+        prob_vec = []
+        logit_diff_vec = []
+        prob_diff_vec = []
+        isnew_vec = []
+        guesses = guesses_sequence[i]
+        for guess, logit, prob in guesses:
+            logit_vec.append(logit)
+            prob_vec.append(prob)
+            if i > 0 and guess in prev_dict:
+                prev_logit, prev_prob = prev_dict[guess]
+                logit_diff_vec.append(logit - prev_logit)
+                prob_diff_vec.append(prob - prev_prob)
+                isnew_vec.append(0)
             else:
-                guesses = pos_group.get_group(guesser)
-                guesses = guesses.sort_values('score', ascending=False)
-                top_guess = guesses.iloc[0].guess
-                results[-1].append(int(top_guess == answer))
-                
-                # s = sum(guesses.score)
-                s = 1
-                dic = {x.guess: x.score / s for x in guesses.itertuples()}
-                
-                guess_dicts[-1].append(dic)
+                logit_diff_vec.append(logit)
+                prob_diff_vec.append(prob)
+                isnew_vec.append(1)
+        if len(guesses) < N_GUESSES:
+            for k in range(max(N_GUESSES - len(guesses), 0)):
+                logit_vec.append(0)
+                prob_vec.append(0)
+                logit_diff_vec.append(0)
+                prob_diff_vec.append(0)
+                isnew_vec.append(0)
+        features = logit_vec[:3] \
+            + prob_vec[:3] \
+            + isnew_vec[:3] \
+            + logit_diff_vec[:3] \
+            + prob_diff_vec[:3] \
+            + [logit_vec[0] - logit_vec[1], logit_vec[1] - logit_vec[2]] \
+            + [prob_vec[0] - prob_vec[1], prob_vec[1] - prob_vec[2]] \
+            + [logit_vec[0] - prev_logit_vec[0], logit_vec[1] - prev_logit_vec[1]] \
+            + [prob_vec[0] - prev_prob_vec[0], prob_vec[1] - prev_prob_vec[1]] \
+            + [sum(isnew_vec[:5])] \
+            + [np.average(logit_vec), np.average(prev_logit_vec)] \
+            + [np.average(prob_vec), np.average(prev_prob_vec)] \
+            + [np.average(logit_vec[:6]), np.average(prev_logit_vec[:5])] \
+            + [np.average(prob_vec[:6]), np.average(prev_prob_vec[:5])] \
+            + [np.var(logit_vec), np.var(prev_logit_vec)] \
+            + [np.var(prob_vec), np.var(prev_prob_vec)] \
+            + [np.var(logit_vec[:5]), np.var(prev_logit_vec[:5])] \
+            + [np.var(prob_vec[:5]), np.var(prev_prob_vec[:5])]
+        vecs.append(np.array(features, dtype=np.float32))
+        prev_logit_vec = logit_vec
+        prev_prob_vec = prob_vec
+        prev_dict = {x: (y, z) for x, y, z in guesses}
+    return vecs
 
-    return qnum, answer_id, guess_dicts, results
 
-def load_quizbowl(folds=c.BUZZER_INPUT_FOLDS) \
-                    -> Tuple[Dict[str, int], Dict[str, list]]:
-    # merge_dfs()
-    log.info('Loading data')
-    question_db = QuestionDatabase()
-    quizbowl_db = QuizBowlDataset(bc.MIN_ANSWERS, guesser_train=True, buzzer_train=True)
-    all_questions = question_db.all_questions()
-    if not os.path.isfile(bc.OPTIONS_DIR):
-        log.info('Loading the set of options')
-        all_options = set(quizbowl_db.training_data()[1])
+def process_question(questions, vector_converter, item):
+    qid, q_group = item
+    answer = questions[qid].page
+    q_group = sorted(q_group.items(), key=lambda x: x[0])
+    word_positions, guesses = list(map(list, zip(*q_group)))
+    # each entry is a list of (guess, logit, prob) sorted by logit
+    labels = np.array([int(g[0][0] == answer) for g in guesses], dtype=np.int32)
+    vectors = vector_converter(guesses)
+    return qid, vectors, labels, word_positions
 
-        id2option = list(all_options)
-        with open(safe_path(bc.OPTIONS_DIR), 'wb') as outfile:
-            pickle.dump(id2option, outfile)
-    else:
-        with open(safe_path(bc.OPTIONS_DIR), 'rb') as infile:
-            id2option = pickle.load(infile)
-    option2id = {o: i for i, o in enumerate(id2option)}
-    num_options = len(id2option)
-    log.info('Number of options {0}'.format(len(id2option)))
 
-    guesses_by_fold = dict()
-    for fold in folds:
-        save_dir = '%s_processed.pickle' % (os.path.join(bc.GUESSES_DIR, fold))
-        if os.path.isfile(save_dir):
-            with open(safe_path(save_dir), 'rb') as infile:
-                guesses_by_fold[fold] = pickle.load(infile)
-            log.info('Loading {0} guesses'.format(fold))
-            continue
+def read_data(
+        fold,
+        guesser_module='qanta.guesser.dan',
+        guesser_class='DanGuesser',
+        guesser_config_num=0,
+        vector_converter=vector_converter_0):
+    guesser_directory = AbstractGuesser.output_path(
+        guesser_module, guesser_class, guesser_config_num, '')
+    questions = QuestionDatabase().all_questions()
+    pkl_path = '{}_guesser_output.pkl'.format(fold)
+    pkl_path = os.path.join(output_dir, pkl_path)
+    if os.path.isfile(pkl_path):
+        with open(pkl_path, 'rb') as f:
+            return pickle.load(f)
+    output_path = AbstractGuesser.guess_path(guesser_directory, fold)
+    with open(output_path, 'rb') as f:
+        df = pickle.load(f)
+    pool = Pool(8)
+    worker = partial(process_question, questions, vector_converter)
+    dataset = pool.map(worker, df.items())
+    with open(pkl_path, 'wb') as f:
+        pickle.dump(dataset, f)
+    return dataset
 
-        log.info('Processing {0} guesses'.format(fold))
-        guesses = AbstractGuesser.load_guesses(bc.GUESSES_DIR, folds=[fold])
 
-        worker = partial(_process_question, option2id, all_questions)
-        inputs = guesses.groupby('qnum')
-        guesses_by_fold[fold] = _multiprocess(worker, inputs, info='df data',
-                multi=True)
-        guesses_by_fold[fold] = [x for x in guesses_by_fold[fold] if x is not None]
-        print(len(guesses_by_fold[fold]))
+def convert_seq(batch, device=None):
+    def to_device_batch(batch):
+        if device is None:
+            return batch
+        elif device < 0:
+            return [chainer.dataset.to_device(device, x) for x in batch]
+        else:
+            xp = cuda.cupy.get_array_module(*batch)
+            concat = xp.concatenate(batch, axis=0)
+            sections = np.cumsum([len(x) for x in batch[:-1]], dtype=np.int32)
+            concat_dev = chainer.dataset.to_device(device, concat)
+            batch_dev = cuda.cupy.split(concat_dev, sections)
+            return batch_dev
+    qids, vectors, labels, positions = list(map(list, zip(*batch)))
+    xs = [Variable(x) for x in to_device_batch(vectors)]
+    ys = to_device_batch(labels)
+    return {'xs': xs, 'ys': ys}
 
-        with open(safe_path(save_dir), 'wb') as outfile:
-            pickle.dump(guesses_by_fold[fold], outfile)
 
-        log.info('Processed {0} guesses saved to {1}'.format(fold, save_dir))
-
-    return option2id, guesses_by_fold
-
-def merge_dfs():
-    GUESSERS = ["{0}.{1}".format(
-        x.guesser_module, x.guesser_class) \
-        for x in AbstractGuesser.list_enabled_guessers()]
-    log.info("Merging guesser DataFrames.")
-    merged_dir = os.path.join(c.GUESSER_TARGET_PREFIX, 'merged')
-    if not os.path.exists(merged_dir):
-        os.makedirs(merged_dir)
-    for fold in c.BUZZER_INPUT_FOLDS:
-        if os.path.exists(AbstractGuesser.guess_path(merged_dir, fold)):
-            log.info("Merged {0} exists, skipping.".format(fold))
-            continue
-        new_guesses = pd.DataFrame(columns=['fold', 'guess', 'guesser', 'qnum',
-            'score', 'sentence', 'token'], dtype='object')
-        for guesser in GUESSERS:
-            guesser_dir = os.path.join(c.GUESSER_TARGET_PREFIX, guesser)
-            guesses = AbstractGuesser.load_guesses(guesser_dir, folds=[fold])
-            new_guesses = new_guesses.append(guesses)
-        for col in ['qnum', 'sentence', 'token', 'score']:
-            new_guesses[col] = pd.to_numeric(new_guesses[col], downcast='integer')
-        AbstractGuesser.save_guesses(new_guesses, merged_dir, folds=[fold])
-        log.info("Merging: {0} finished.".format(fold))
-
-def load_protobowl():
-    
-    protobowl_df_dir = bc.PROTOBOWL_DIR + '.h5'
-    protobowl_user_dir = bc.PROTOBOWL_DIR + '.user.pkl'
-    if os.path.exists(protobowl_df_dir) and os.path.exists(protobowl_df_dir):
-        with pd.HDFStore(protobowl_df_dir) as store:
-            protobowl_df = store['data']
-        with open(protobowl_user_dir, 'rb') as f:
-            user_count = pickle.load(f)
-        return protobowl_df, user_count
-
-    def process_line(x):
-        total_time = x['object']['time_elapsed'] + x['object']['time_remaining']
-        ratio = x['object']['time_elapsed'] / total_time
-        position = int(len(x['object']['question_text'].split()) * ratio)
-        return [x['object']['guess'], x['object']['qid'], 
-                position, x['object']['ruling'], x['object']['user']['id']]
-
-    data = []
-    count = 0
-    user_count = defaultdict(lambda: 0)
-    with codecs.open(bc.PROTOBOWL_DIR, 'r', 'utf-8') as f:
-        line = f.readline()
-        while line is not None:
-            line = line.strip()
-            if len(line) < 1:
-                break
-            while not line.endswith('}}'):
-                l = f.readline()
-                if l is None:
-                    break
-                line += l.strip()
-            try:
-                line = json.loads(line)
-            except ValueError:
-                line = f.readline()
-                if line == None:
-                    break
-                continue
-                
-            count += 1
-            if count % 10000 == 0:
-                sys.stderr.write('\rdone: {}/9707590'.format(count))
-            
-            x = process_line(line)
-            user_count[x[-1]] += 1
-            data.append(x)
-            line = f.readline()
-    
-    for x in data:
-        x.append(user_count[x[-1]])
-
-    protobowl_df = df = pd.DataFrame(data, 
-            columns=['guess', 'qid', 'position', 
-                     'result', 'uid', 'user_answers'])
-    
-    with pd.HDFStore(protobowl_df_dir) as store:
-        store['data'] = protobowl_df
-    
-    user_count = dict(user_count)
-    with open(protobowl_user_dir, 'wb') as f:
-        pickle.dump(user_count, f)
-        
-    return protobowl_df, user_count
-
-def ultimate_buzzer(test_iter):
-    buzzes = dict()
-    for i in range(test_iter.size):
-        batch = test_iter.next_batch(np)
-        masks = batch.mask.T.tolist()
-        results = np.swapaxes(batch.results, 0, 1).tolist()
-        for qnum, mask, result in zip(batch.qids, masks, results):
-            if isinstance(qnum, np.ndarray):
-                qnum = qnum.tolist()
-            length = int(sum(mask))
-            scores = result[:length]
-            buzzes[qnum] = scores
-    print(list(buzzes.values())[0])
-    return buzzes
-
-if __name__ == "__main__":
-    merge_dfs()
-
-    option2id, guesses_by_fold = load_quizbowl(c.BUZZER_INPUT_FOLDS)
-    # load_protobowl()
+if __name__ == '__main__':
+    valid = read_data(BUZZER_DEV_FOLD)
