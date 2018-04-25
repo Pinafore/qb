@@ -56,7 +56,8 @@ class WikipediaDumps(Task):
             s3_location = 's3://pinafore-us-west-2/public/wikipedia-dumps/parsed-wiki.tar.lz4'
             shell('aws s3 cp {} data/external/wikipedia/parsed-wiki.tar.lz4'.format(s3_location))
         else:
-            https_location = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/wikipedia-dumps/parsed-wiki.tar.lz4'
+            https_location = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/wikipedia-dumps/parsed' \
+                             '-wiki.tar.lz4 '
             shell('wget -O {} {}'.format('data/external/wikipedia/parsed-wiki.tar.lz4', https_location))
 
         shell('lz4 -d data/external/wikipedia/parsed-wiki.tar.lz4 | tar -x -C data/external/wikipedia/')
