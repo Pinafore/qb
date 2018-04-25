@@ -51,6 +51,33 @@ def parse_tournament_name(tournament_name):
         else:
             return name, maybe_year
 
+TRASH_PREFIXES = [
+    r'*\(Note to moderator:.*\)',
+    'Chemistry', 'Nonfiction', 'Vocabulary', 'US History',
+    'Extra Toss-Up #[0-9]+',
+    'Toss-Up #[0-9]+',
+    'Music', 'Biology', r'\.', r'\?', r'\|', r'\_', r'\)',
+    r'[0-9]+[\.:]?', 'C:', r'\[[A-Z/]+\]', r'\([A-Z/]+\)', r'BONUS\.?',
+    '10 pts:', '15 pts:', '10 points:', '15 points:', 'Round [0-9]+:',
+    'BHSAT 2008 Packet #[0-9]+ Packet by Robert, Ian, Danila, and Linna',
+    'Tiebreaker [0-9]+.', 'Pop Culture', 'US Literature', 'World History',
+    'Extra Tossups', 'Current Events',
+    'Art/Architecture', 'Art/Archictecture', 'World Literature',
+    'Interdisciplinary', 'British Literature', 'Religion/Mythology',
+    r'Two answers required\.', r"The name's the same\.", 'TWO ANSWERS REQUIRED\.',
+    'NOTE:', 'WARNING:', 'MODERATOR NOTE:', r'Physics \([0-9]+ Seconds\)', r'Pencil and paper ready\.',
+    r'Pencil and Paper Ready\.', 'United States History', 'United States Literature',
+    'Description acceptable\.', r'Pyramidal Math \([0-9]+ Seconds\)',
+    'Geography/Earth Science/Astronomy', 'Geography/Astronomy/Earth Science',
+    r'\([A-Z]+\) Computational - pencil and paper ready\.',
+    'Warning: two answers required\.'
+]
+TRASH_PREFIX_PATTERN = '^({})'.format('|'.join(TRASH_PREFIXES))
+
+
+def normalize_text(text):
+    return text
+
 
 class QuizdbOrg:
     @staticmethod
@@ -114,8 +141,10 @@ class QuizdbOrg:
                     tournament = t['name']
                     difficulty = t['difficulty']
                     year = int(t['year'])
+                if q['text'] == '[missing]':
+                    continue
                 quizdb_questions.append({
-                    'text': q['text'],
+                    'text': normalize_text(q['text']),
                     'answer': q['answer'],
                     'page': None,
                     'category': qdb_categories[category_id] if category_id is not None else None,
@@ -137,8 +166,10 @@ class Protobowl:
             protobowl_raw = [json.loads(l) for l in f]
             protobowl_questions = []
             for q in protobowl_raw:
+                if q['text'] == '[missing]':
+                    continue
                 protobowl_questions.append({
-                    'text': q['question'],
+                    'text': normalize_text(q['question']),
                     'answer': q['answer'],
                     'page': None,
                     'category': q['category'],

@@ -1,6 +1,11 @@
 import sqlite3
 import spacy
+import unidecode
+from qanta import qlogging
 from qanta.spark import create_spark_context
+
+
+log = qlogging.get(__name__)
 
 # Each spark worker needs to load its own copy of the NLP model
 # separately since its not serializable and thus not broadcastable
@@ -12,7 +17,12 @@ def nlp(text):
         nlp_ref.append(spacy.load('en_core_web_lg'))
 
     if len(nlp_ref) == 1:
-        doc = nlp_ref[0](text)
+        decoded_text = unidecode.unidecode(text)
+        if len(decoded_text) != len(text):
+            log.warning('Text must have the same length, falling back to normal text')
+            doc = nlp_ref[0](text)
+        else:
+            doc = nlp_ref[0](decoded_text)
         return [(s.start_char, s.end_char) for s in doc.sents]
     else:
         raise ValueError('There should be exactly one nlp model per spark worker')
