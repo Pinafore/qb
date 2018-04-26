@@ -52,31 +52,34 @@ def parse_tournament_name(tournament_name):
             return name, maybe_year
 
 TRASH_PREFIXES = [
-    r'*\(Note to moderator:.*\)',
-    'Chemistry', 'Nonfiction', 'Vocabulary', 'US History',
-    'Extra Toss-Up #[0-9]+',
-    'Toss-Up #[0-9]+',
-    'Music', 'Biology', r'\.', r'\?', r'\|', r'\_', r'\)',
+    r'.*\(Note to moderator:.*\)',
+    r'\.', r'\?', r'\|', r'\_', r'\)',
     r'[0-9]+[\.:]?', 'C:', r'\[[A-Z/]+\]', r'\([A-Z/]+\)', r'BONUS\.?',
     '10 pts:', '15 pts:', '10 points:', '15 points:', 'Round [0-9]+:',
     'BHSAT 2008 Packet #[0-9]+ Packet by Robert, Ian, Danila, and Linna',
-    'Tiebreaker [0-9]+.', 'Pop Culture', 'US Literature', 'World History',
-    'Extra Tossups', 'Current Events',
+    r'Two answers required\.', r"The name's the same\.", 'TWO ANSWERS REQUIRED\.',
+    'Warning: two answers required\.',
+    'NOTE:', 'WARNING:', 'MODERATOR NOTE:',
+    r'Pencil and paper ready\.',
+    r'\([A-Z]+\) Computational - pencil and paper ready\.',
+    r'Description acceptable\.',
+    r'Pyramidal Math \([0-9]+ Seconds\)',
+    r'Physics \([0-9]+ Seconds\)',
+    'Chemistry', 'Nonfiction', 'Vocabulary', 'US History', 'Music', 'Biology',
     'Art/Architecture', 'Art/Archictecture', 'World Literature',
     'Interdisciplinary', 'British Literature', 'Religion/Mythology',
-    r'Two answers required\.', r"The name's the same\.", 'TWO ANSWERS REQUIRED\.',
-    'NOTE:', 'WARNING:', 'MODERATOR NOTE:', r'Physics \([0-9]+ Seconds\)', r'Pencil and paper ready\.',
+    'Tiebreaker [0-9]+.', 'Pop Culture', 'US Literature', 'World History',
     r'Pencil and Paper Ready\.', 'United States History', 'United States Literature',
-    'Description acceptable\.', r'Pyramidal Math \([0-9]+ Seconds\)',
     'Geography/Earth Science/Astronomy', 'Geography/Astronomy/Earth Science',
-    r'\([A-Z]+\) Computational - pencil and paper ready\.',
-    'Warning: two answers required\.'
+    'Extra Tossups', 'Current Events',
+    'Extra Toss-Up #[0-9]+', 'Toss-Up #[0-9]+'
 ]
 TRASH_PREFIX_PATTERN = '^({})'.format('|'.join(TRASH_PREFIXES))
 
 
 def normalize_text(text):
-    return text.replace('“','"').replace('”','"').replace('’')
+    text = text.replace('“','"').replace('”','"').replace('’')
+    return re.sub(TRASH_PREFIX_PATTERN, '', text).lstrip()
 
 
 class QuizdbOrg:
