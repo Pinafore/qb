@@ -78,7 +78,7 @@ TRASH_PREFIX_PATTERN = '^({})'.format('|'.join(TRASH_PREFIXES))
 
 
 def normalize_text(text):
-    text = text.replace('“','"').replace('”','"').replace('’')
+    text = text.replace('“','"').replace('”','"').replace('’', "'")
     return re.sub(TRASH_PREFIX_PATTERN, '', text).lstrip()
 
 
@@ -169,7 +169,7 @@ class Protobowl:
             protobowl_raw = [json.loads(l) for l in f]
             protobowl_questions = []
             for q in protobowl_raw:
-                if q['text'] == '[missing]':
+                if q['question'] == '[missing]':
                     continue
                 protobowl_questions.append({
                     'text': normalize_text(q['question']),
