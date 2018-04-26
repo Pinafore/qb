@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib
 matplotlib.use('Agg')
-from plotnine import ggplot, aes, geom_area, geom_line
+from plotnine import ggplot, aes, geom_area, geom_smooth
 
 from qanta.buzzer.nets import RNNBuzzer
 from qanta.buzzer.args import args
@@ -75,7 +75,7 @@ def eval(fold=BUZZER_DEV_FOLD):
         freq['type'].append('0.7')
     freq_df = pd.DataFrame(freq)
 
-    p0 = ggplot(freq_df) + geom_line(aes(x='x', y='y', color='type'))
+    p0 = ggplot(freq_df) + geom_smooth(aes(x='x', y='y', color='type'))
     p0.save(os.path.join(output_dir, '{}_acc_buzz.pdf'.format(fold)))
 
     stack_freq = {'x': [], 'y': [], 'type': []}

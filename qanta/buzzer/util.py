@@ -18,7 +18,56 @@ buzzes_dir = 'output/buzzer/{}_buzzes.pkl'
 
 
 def vector_converter_0(guesses_sequence):
-    '''default vector converter / feature extractor
+    '''vector converter / feature extractor with only prob
+
+    Args:
+        guesses_sequence: a sequence (length of question) of list of guesses
+            (n_guesses), each entry is (guess, prob)
+    Returns:
+        a sequence of vectors
+    '''
+    length = len(guesses_sequence)
+    prev_prob_vec = [0. for _ in range(N_GUESSES)]
+    prev_dict = dict()
+
+    vecs = []
+    for i in range(length):
+        prob_vec = []
+        prob_diff_vec = []
+        isnew_vec = []
+        guesses = guesses_sequence[i]
+        for guess, prob in guesses:
+            prob_vec.append(prob)
+            if i > 0 and guess in prev_dict:
+                prev_prob = prev_dict[guess]
+                prob_diff_vec.append(prob - prev_prob)
+                isnew_vec.append(0)
+            else:
+                prob_diff_vec.append(prob)
+                isnew_vec.append(1)
+        if len(guesses) < N_GUESSES:
+            for k in range(max(N_GUESSES - len(guesses), 0)):
+                prob_vec.append(0)
+                prob_diff_vec.append(0)
+                isnew_vec.append(0)
+        features = prob_vec[:3] \
+            + isnew_vec[:3] \
+            + prob_diff_vec[:3] \
+            + [prob_vec[0] - prob_vec[1], prob_vec[1] - prob_vec[2]] \
+            + [prob_vec[0] - prev_prob_vec[0], prob_vec[1] - prev_prob_vec[1]] \
+            + [sum(isnew_vec[:5])] \
+            + [np.average(prob_vec), np.average(prev_prob_vec)] \
+            + [np.average(prob_vec[:6]), np.average(prev_prob_vec[:5])] \
+            + [np.var(prob_vec), np.var(prev_prob_vec)] \
+            + [np.var(prob_vec[:5]), np.var(prev_prob_vec[:5])]
+        vecs.append(np.array(features, dtype=np.float32))
+        prev_prob_vec = prob_vec
+        prev_dict = {g: p for g, p in guesses}
+    return vecs
+
+
+def vector_converter_1(guesses_sequence):
+    '''vector converter / feature extractor with both logit and prob
 
     Args:
         guesses_sequence: a sequence (length of question) of list of guesses
@@ -83,39 +132,39 @@ def vector_converter_0(guesses_sequence):
     return vecs
 
 
-def process_question(questions, vector_converter, item):
-    qid, q_group = item
+def process_question(questions, vector_converter, q_rows):
+    '''multiprocessing worker that converts the guesser output of a single
+        question into format used by the buzzer
+    '''
+    qid = q_rows.qanta_id.tolist()[0]
     answer = questions[qid].page
-    q_group = sorted(q_group.items(), key=lambda x: x[0])
-    word_positions, guesses = list(map(list, zip(*q_group)))
+    # q_group = sorted(q_group.items(), key=lambda x: x[0])
+    # word_positions, guesses = list(map(list, zip(*q_group)))
     # each entry is a list of (guess, logit, prob) sorted by logit
-    labels = np.array([int(g[0][0] == answer) for g in guesses], dtype=np.int32)
-    vectors = vector_converter(guesses)
+    # labels = np.array([int(g[0][0] == answer) for g in guesses], dtype=np.int32)
+    # vectors = vector_converter(guesses)
+    q_rows = q_rows.groupby('char_index')
+    q_rows = q_rows.apply(lambda x: x.sort_values('score'))
     return qid, vectors, labels, word_positions
 
 
 def read_data(
         fold,
+        output_type='char',
         guesser_module='qanta.guesser.dan',
         guesser_class='DanGuesser',
         guesser_config_num=0,
         vector_converter=vector_converter_0):
-    guesser_directory = AbstractGuesser.output_path(
+    g_dir = AbstractGuesser.output_path(
         guesser_module, guesser_class, guesser_config_num, '')
-    questions = QuestionDatabase().all_questions()
-    pkl_path = '{}_guesser_output.pkl'.format(fold)
-    pkl_path = os.path.join(output_dir, pkl_path)
-    if os.path.isfile(pkl_path):
-        with open(pkl_path, 'rb') as f:
-            return pickle.load(f)
-    output_path = AbstractGuesser.guess_path(guesser_directory, fold)
-    with open(output_path, 'rb') as f:
+    g_path = AbstractGuesser.guess_path(g_dir, fold, output_type)
+
+    with open(g_path, 'rb') as f:
         df = pickle.load(f)
-    pool = Pool(8)
+
+    df_groups = df.groupby('qanta_id')
     worker = partial(process_question, questions, vector_converter)
     dataset = pool.map(worker, df.items())
-    with open(pkl_path, 'wb') as f:
-        pickle.dump(dataset, f)
     return dataset
 
 
