@@ -12,7 +12,7 @@ option
 
 * `./dataset.py download`: Download only the qanta dataset
 * `./dataset.py download wikidata`: Download our preprocessed wikidata.org `instance of` attributes
-* `./dataset.py download plotting`: Download  the squad, simple questions, jeopardy, and triviaqa datasets we
+* `./dataset.py download plotting`: Download the squad, simple questions, jeopardy, and triviaqa datasets we
 compare against in our paper plots and tables
 
 ## Dependencies
