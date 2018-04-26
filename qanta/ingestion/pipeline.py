@@ -2,11 +2,13 @@ import json
 from os import path
 from luigi import LocalTarget, Task, WrapperTask, Parameter
 
+from sklearn.model_selection import train_test_split
 from qanta.util.io import shell, get_tmp_filename, safe_path
 from qanta.util.constants import (
     DATASET_PREFIX, DS_VERSION,
     QANTA_MAPPED_DATASET_PATH, QANTA_SQL_DATASET_PATH,
-    QANTA_TRAIN_DATASET_PATH, QANTA_DEV_DATASET_PATH, QANTA_TEST_DATASET_PATH
+    QANTA_TRAIN_DATASET_PATH, QANTA_DEV_DATASET_PATH, QANTA_TEST_DATASET_PATH,
+    QANTA_TORCH_TRAIN_LOCAL_PATH, QANTA_TORCH_VAL_LOCAL_PATH, QANTA_TORCH_DEV_LOCAL_PATH
 )
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
@@ -165,13 +167,13 @@ class GenerateSqliteDB(Task):
         return LocalTarget(QANTA_SQL_DATASET_PATH)
 
 
-class PartitionQantaDataset(Task):
+class FilterAndPartitionQantaDataset(Task):
     def requires(self):
         yield CreateMappedQantaDataset()
 
     def run(self):
         with open(QANTA_MAPPED_DATASET_PATH) as f:
-            questions = json.load(f)['questions']
+            questions = [q for q in json.load(f)['questions'] if q['page'] is not None]
         train_questions = [q for q in questions if 'train' in q['fold']]
         dev_questions = [q for q in questions if 'dev' in q['fold']]
         test_questions = [q for q in questions if 'test' in q['fold']]
@@ -193,7 +195,38 @@ class PartitionQantaDataset(Task):
         ]
 
 
+class TorchTextDataset(Task):
+    def requires(self):
+        yield FilterAndPartitionQantaDataset()
+
+    def run(self):
+        with open(QANTA_TRAIN_DATASET_PATH) as f:
+            all_guess_train = [q for q in json.load(f)['questions'] if q['fold'] == 'guesstrain']
+
+        guess_train, guess_val = train_test_split(all_guess_train, random_state=42, train_size=.9)
+
+        with open(QANTA_DEV_DATASET_PATH) as f:
+            guess_dev = [q for q in json.load(f)['questions'] if q['fold'] == 'guessdev']
+
+        with open(QANTA_TORCH_TRAIN_LOCAL_PATH, 'w') as f:
+            json.dump(format_qanta_json(guess_train, DS_VERSION), f)
+
+        with open(QANTA_TORCH_VAL_LOCAL_PATH, 'w') as f:
+            json.dump(format_qanta_json(guess_val, DS_VERSION), f)
+
+        with open(QANTA_TORCH_DEV_LOCAL_PATH, 'w') as f:
+            json.dump(format_qanta_json(guess_dev, DS_VERSION), f)
+
+    def output(self):
+        return [
+            LocalTarget(QANTA_TORCH_TRAIN_LOCAL_PATH),
+            LocalTarget(QANTA_TORCH_VAL_LOCAL_PATH),
+            LocalTarget(QANTA_TORCH_DEV_LOCAL_PATH)
+        ]
+
+
 class QantaDataset(WrapperTask):
     def requires(self):
-        yield PartitionQantaDataset()
+        yield FilterAndPartitionQantaDataset()
         yield GenerateSqliteDB()
+        yield TorchTextDataset()
