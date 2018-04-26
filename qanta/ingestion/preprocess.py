@@ -10,6 +10,9 @@ log = qlogging.get(__name__)
 # Each spark worker needs to load its own copy of the NLP model
 # separately since its not serializable and thus not broadcastable
 nlp_ref = []
+AVG_WORD_LENGTH = 5
+MIN_WORDS = 12
+MIN_CHAR_LENGTH = AVG_WORD_LENGTH * MIN_WORDS
 
 
 def nlp(text):
@@ -23,7 +26,29 @@ def nlp(text):
             doc = nlp_ref[0](text)
         else:
             doc = nlp_ref[0](decoded_text)
-        return [(s.start_char, s.end_char) for s in doc.sents]
+        tokenizations = [(s.start_char, s.end_char) for s in doc.sents]
+        first_end_pos = None
+        if len(tokenizations) == 0:
+            raise ValueError('Zero length question with respect to sentences not allowed')
+
+        for start, end in tokenizations:
+            if end < MIN_CHAR_LENGTH:
+                continue
+            else:
+                first_end_pos = end
+                break
+
+        if first_end_pos is None:
+            first_end_pos = tokenizations[-1][1]
+
+        final_tokenizations = [(0, first_end_pos)]
+        for start, end in tokenizations:
+            if end <= first_end_pos:
+                continue
+            else:
+                final_tokenizations.append((start, end))
+
+        return final_tokenizations
     else:
         raise ValueError('There should be exactly one nlp model per spark worker')
 
@@ -39,13 +64,14 @@ def format_qanta_json(questions, version):
     }
 
 
+
 def add_sentences(questions):
     text_questions = [q['text'] for q in questions]
     sc = create_spark_context()
     sentence_tokenizations = sc.parallelize(text_questions, 4000).map(nlp).collect()
     for q, text, tokenization in zip(questions, text_questions, sentence_tokenizations):
         q['tokenizations'] = tokenization
-        # Get the first sentence, end character tokenization
+        # Get the 0th sentence, end character tokenization (tuple position 1)
         q['first_sentence'] = text[:tokenization[0][1]]
 
 
