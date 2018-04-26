@@ -22,6 +22,7 @@ def main():
     valid_iter = chainer.iterators.SerialIterator(
             valid, args.batch_size, repeat=False, shuffle=False)
 
+    args.n_input = train[0][1][0].shape[0]
     model = RNNBuzzer(args.n_input, args.n_layers, args.n_hidden,
                       args.n_output, args.dropout)
 

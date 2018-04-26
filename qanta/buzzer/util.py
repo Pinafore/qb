@@ -7,14 +7,16 @@ from multiprocessing import Pool
 from functools import partial
 from chainer import Variable
 from chainer.backends import cuda
-from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.util.constants import BUZZER_DEV_FOLD
+from qanta.util.constants import BUZZER_DEV_FOLD, BUZZER_TRAIN_FOLD
 
-# constanst
+# constansts
 N_GUESSES = 10
-output_dir = 'output/buzzer/'
+output_dir = 'output/buzzer'
+dataset_dir = 'output/buzzer/data_{}.pkl'
 buzzes_dir = 'output/buzzer/{}_buzzes.pkl'
+report_dir = 'output/buzzer/report'
 
 
 def vector_converter_0(guesses_sequence):
@@ -132,20 +134,23 @@ def vector_converter_1(guesses_sequence):
     return vecs
 
 
-def process_question(questions, vector_converter, q_rows):
+def process_question(questions, vector_converter, item):
     '''multiprocessing worker that converts the guesser output of a single
         question into format used by the buzzer
     '''
+    qid, q_rows = item
     qid = q_rows.qanta_id.tolist()[0]
     answer = questions[qid].page
-    # q_group = sorted(q_group.items(), key=lambda x: x[0])
-    # word_positions, guesses = list(map(list, zip(*q_group)))
-    # each entry is a list of (guess, logit, prob) sorted by logit
-    # labels = np.array([int(g[0][0] == answer) for g in guesses], dtype=np.int32)
-    # vectors = vector_converter(guesses)
     q_rows = q_rows.groupby('char_index')
-    q_rows = q_rows.apply(lambda x: x.sort_values('score'))
-    return qid, vectors, labels, word_positions
+    char_indices = sorted(q_rows.groups.keys())
+    guesses_sequence = []
+    labels = []
+    for idx in char_indices:
+        p = q_rows.get_group(idx).sort_values('score', ascending=False)
+        guesses_sequence.append(list(zip(p.guess, p.score))[:N_GUESSES])
+        labels.append(int(p.guess.tolist()[0] == answer))
+    vectors = vector_converter(guesses_sequence)
+    return qid, vectors, labels, char_indices
 
 
 def read_data(
@@ -155,16 +160,28 @@ def read_data(
         guesser_class='DanGuesser',
         guesser_config_num=0,
         vector_converter=vector_converter_0):
+
+    if os.path.isfile(dataset_dir.format(fold)):
+        with open(dataset_dir.format(fold), 'rb') as f:
+            return pickle.load(f)
+
     g_dir = AbstractGuesser.output_path(
         guesser_module, guesser_class, guesser_config_num, '')
     g_path = AbstractGuesser.guess_path(g_dir, fold, output_type)
-
     with open(g_path, 'rb') as f:
         df = pickle.load(f)
-
     df_groups = df.groupby('qanta_id')
+
+    questions = QuizBowlDataset(buzzer_train=True).questions_by_fold()
+    questions = {q.qanta_id: q for q in questions[fold]}
+
+    pool = Pool(8)
     worker = partial(process_question, questions, vector_converter)
-    dataset = pool.map(worker, df.items())
+    dataset = pool.map(worker, df_groups)
+
+    with open(dataset_dir.format(fold), 'wb') as f:
+        return pickle.dump(dataset, f)
+
     return dataset
 
 
@@ -188,4 +205,5 @@ def convert_seq(batch, device=None):
 
 
 if __name__ == '__main__':
-    valid = read_data(BUZZER_DEV_FOLD)
+    data = read_data(BUZZER_TRAIN_FOLD)
+    print(data)

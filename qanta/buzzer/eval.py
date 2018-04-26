@@ -9,16 +9,20 @@ from plotnine import ggplot, aes, geom_area, geom_smooth
 
 from qanta.buzzer.nets import RNNBuzzer
 from qanta.buzzer.args import args
-from qanta.buzzer.util import read_data, convert_seq, output_dir
+from qanta.buzzer.util import read_data, convert_seq, report_dir
 from qanta.util.constants import BUZZER_DEV_FOLD
 
 
 def eval(fold=BUZZER_DEV_FOLD):
+    if not os.path.isdir(report_dir):
+        os.mkdir(report_dir)
+
     valid = read_data(fold)
     print('# {} data: {}'.format(fold, len(valid)))
     valid_iter = chainer.iterators.SerialIterator(
             valid, args.batch_size, repeat=False, shuffle=False)
 
+    args.n_input = valid[0][1][0].shape[0]
     model = RNNBuzzer(args.n_input, args.n_layers, args.n_hidden,
                       args.n_output, args.dropout)
     chainer.serializers.load_npz(args.model_path, model)
@@ -40,7 +44,7 @@ def eval(fold=BUZZER_DEV_FOLD):
                 buzzes[qids[i]].append((pos, pred))
             buzzes[qids[i]] = list(map(list, zip(*buzzes[qids[i]])))
 
-    buzz_dir = os.path.join(output_dir, '{}_buzzes.pkl'.format(fold))
+    buzz_dir = os.path.join(report_dir, '{}_buzzes.pkl'.format(fold))
     with open(buzz_dir, 'wb') as f:
         pickle.dump(buzzes, f)
 
@@ -76,7 +80,7 @@ def eval(fold=BUZZER_DEV_FOLD):
     freq_df = pd.DataFrame(freq)
 
     p0 = ggplot(freq_df) + geom_smooth(aes(x='x', y='y', color='type'))
-    p0.save(os.path.join(output_dir, '{}_acc_buzz.pdf'.format(fold)))
+    p0.save(os.path.join(report_dir, '{}_acc_buzz.pdf'.format(fold)))
 
     stack_freq = {'x': [], 'y': [], 'type': []}
     threshold = 0.5
@@ -106,7 +110,7 @@ def eval(fold=BUZZER_DEV_FOLD):
     stack_freq_df = pd.DataFrame(stack_freq)
 
     p1 = ggplot(stack_freq_df) + geom_area(aes(x='x', y='y', fill='type'))
-    p1.save(os.path.join(output_dir, '{}_stack_area.pdf'.format(fold)))
+    p1.save(os.path.join(report_dir, '{}_stack_area.pdf'.format(fold)))
 
 
 if __name__ == '__main__':
