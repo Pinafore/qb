@@ -38,11 +38,17 @@ def shell(command):
 
 @click.group()
 def main():
+    """
+    CLI utility for managing any datasets related to qanta
+    """
     pass
 
 
 @main.command()
 def download():
+    """
+    Download the qanta dataset
+    """
     makedirs(LOCAL_PREFIX, exist_ok=True)
     for s3_file, local_file in make_file_pairs(S3_HTTP_PREFIX, LOCAL_PREFIX):
         print(f'Downloading {s3_file} to {local_file}')
@@ -51,6 +57,9 @@ def download():
 
 @main.command()
 def upload():
+    """
+    Upload the qanta dataset to S3. This requires write permissions on s3://pinafore-us-west-2
+    """
     for local_file, s3_file in make_file_pairs(LOCAL_PREFIX, S3_AWS_PREFIX):
         print(f'Uploading {local_file} to {s3_file}')
         shell(f'aws s3 cp {local_file} {s3_file}')
