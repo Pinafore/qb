@@ -6,7 +6,7 @@ from os import path, makedirs
 
 DS_VERSION = '2018.04.18'
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
-S3_AWS_PREFIX = 's3://pinafore-us-west-2/qanta-jmlr/datasets/'
+S3_AWS_PREFIX = 's3://pinafore-us-west-2/qanta-jmlr-datasets/'
 LOCAL_PLOTTING_PREFIX = 'data/external/'
 LOCAL_QANTA_PREFIX = 'data/external/datasets/'
 
