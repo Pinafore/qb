@@ -1,9 +1,19 @@
 # QANTA
 
-NOTE: This project is actively maintained, but is going through changes rapidly since it is
-research code. We do our best to make sure the code works after cloning and running installation
-steps, but greatly appreciate any bug reports and encourage you to open a pull request to fix the
-bug or add documentation. We will make a note here when we create a stable `2.0` tag.
+## Downloading Data
+
+Whether you would like to use our system or use only our dataset, the easiest way to do so is
+use our `dataset.py` script. It is a standalone script whose only dependencies are python 3.6 and the package `click`
+which can be installed via `pip install click`.
+
+The following commands can be used to download our dataset, or datasets we use in either the system or paper plots.
+Data will be downloaded to `data/external/datasets` by default, but can be changed with the `--local-qanta-prefix`
+option
+
+* `./dataset.py download`: Download only the qanta dataset
+* `./dataset.py download wikidata`: Download our preprocessed wikidata.org `instance of` attributes
+* `./dataset.py download plotting`: Download  the squad, simple questions, jeopardy, and triviaqa datasets we
+compare against in our paper plots and tables
 
 ## Setup
 The primary way to run Qanta is using our [Packer](https://www.packer.io/) and
