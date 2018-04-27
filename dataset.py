@@ -54,7 +54,7 @@ def shell(command):
 
 def download_file(http_location, local_location):
     print(f'Downloading {http_location} to {local_location}')
-    makedirs(local_location, exist_ok=True)
+    makedirs(path.dirname(local_location), exist_ok=True)
     shell(f'wget -O {local_location} {http_location}')
 
 
