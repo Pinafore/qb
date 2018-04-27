@@ -1,18 +1,22 @@
 parameters:
-  qanta.guesser.elasticsearch.ElasticSearchGuesser:
-    enabled: [true]
-    use_wiki: [true, false]
-    similarity:
-      - {name: default}
-      - {name: BM25, k1: 1.2, b: 1.0}
-      - {name: BM25, k1: 1.2, b: 0.75}
-      - {name: BM25, k1: 1.2, b: 0.5}
-      - {name: BM25, k1: 1.2, b: 0}
-      - {name: BM25, k1: 1.5, b: 0.75}
-      - {name: BM25, k1: 2.0, b: 0.75}
-  #qanta.guesser.dan.DanGuesser:
-  #  random_seed: [0, 1, 2, 3]
+  #qanta.guesser.elasticsearch.ElasticSearchGuesser:
   #  enabled: [true]
+  #  use_wiki: [true, false]
+  #  similarity:
+  #    - {name: default}
+  #    - {name: BM25, k1: 1.2, b: 1.0}
+  #    - {name: BM25, k1: 1.2, b: 0.75}
+  #    - {name: BM25, k1: 1.2, b: 0.5}
+  #    - {name: BM25, k1: 1.2, b: 0}
+  #    - {name: BM25, k1: 1.5, b: 0.75}
+  #    - {name: BM25, k1: 2.0, b: 0.75}
+  qanta.guesser.dan.DanGuesser:
+    random_seed: [0, 1, 2, 3]
+    n_hidden_layers: [1, 2]
+    n_hidden_units: [500, 1000, 1500, 2000]
+    nn_dropout: [.265, .5]
+    sm_dropout: [.15, .3, .5]
+    enabled: [true]
 
   #qanta.guesser.vw.VWGuesser:
   #  random_seed: [0, 1, 2, 3, 4]
