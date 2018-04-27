@@ -319,7 +319,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         for q in guesser_dev:
             if q.page in train_pages:
                 answerable += 1
-        unanswerable_question_percent = answerable / len(guesser_dev)
+        unanswerable_question_percent = 1 - answerable / len(guesser_dev)
 
         train_example_counts = Counter()
         for q in guesser_train:
