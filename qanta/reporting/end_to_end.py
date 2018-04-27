@@ -20,7 +20,7 @@ curve_score = CurveScore()
 
 def _protobowl_scores(q, labels, buzzes, word_positions, records_grouped):
     '''score against protobowl players with system and oracle buzzer'''
-    if q.protobowl_id not in records_grouped.groups:
+    if q.proto_id not in records_grouped.groups:
         return None, None
 
     rel_pos_buzz = 1
@@ -36,7 +36,7 @@ def _protobowl_scores(q, labels, buzzes, word_positions, records_grouped):
 
     score_buzz = 0
     score_oracle = 0
-    records = records_grouped.get_group(q.protobowl)
+    records = records_grouped.get_group(q.proto_id)
     for r in records.itertuples():
         if r.relative_position <= rel_pos_buzz:
             score_buzz += -10 if r.result else 5 + 10 * labels[-1]
