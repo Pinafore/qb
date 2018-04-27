@@ -11,6 +11,8 @@
 {% if gres %}
 #SBATCH --gres={{ gres }}
 {% endif %}
+{% if cpus_per_task %}#SBATCH --cpus-per-task={{ cpus_per_task }}
+{% endif %}
 
 set -x
 
