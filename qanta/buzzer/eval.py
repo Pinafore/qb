@@ -9,7 +9,7 @@ from plotnine import ggplot, aes, geom_area, geom_smooth
 
 from qanta.buzzer.nets import RNNBuzzer
 from qanta.buzzer.args import args
-from qanta.buzzer.util import read_data, convert_seq, report_dir
+from qanta.buzzer.util import read_data, convert_seq, report_dir, buzzes_dir
 from qanta.util.constants import BUZZER_DEV_FOLD
 
 
@@ -44,7 +44,7 @@ def eval(fold=BUZZER_DEV_FOLD):
                 buzzes[qids[i]].append((pos, pred))
             buzzes[qids[i]] = list(map(list, zip(*buzzes[qids[i]])))
 
-    buzz_dir = os.path.join(report_dir, '{}_buzzes.pkl'.format(fold))
+    buzz_dir = os.path.join(buzzes_dir.format(fold))
     with open(buzz_dir, 'wb') as f:
         pickle.dump(buzzes, f)
 
