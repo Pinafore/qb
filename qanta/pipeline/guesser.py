@@ -231,21 +231,31 @@ class GuesserPerformance(Task):
         param_path = AbstractGuesser.output_path(
             self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
         )
-        guesses_path = AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, f'guesses_{c.GUESSER_DEV_FOLD}.pickle'
-        )
+        guesses_files = [
+            f'guesses_char_{self.fold}.pickle',
+            f'guesses_full_{self.fold}.pickle',
+            f'guesses_first_{self.fold}.pickle'
+        ]
+        guesses_paths = [
+            AbstractGuesser.output_path(
+                self.guesser_module, self.guesser_class, self.config_num, f)
+            for f in guesses_files
+        ]
 
         log.info(f'Running: "cp {param_path} {reporting_directory}"')
         shell(f'cp {param_path} {reporting_directory}')
-        log.info(f'Running: "cp {guesses_path} {reporting_directory}"')
-        shell(f'cp {guesses_path} {reporting_directory}')
+
+        for g_path in guesses_paths:
+            log.info(f'Running: "cp {g_path} {reporting_directory}"')
+            shell(f'cp {g_path} {reporting_directory}')
 
         guesser_instance = guesser_class(self.config_num)
         guesser_instance.create_report(reporting_directory)
 
         log.info(f'Running: "rm -rf {guesser_directory}"')
         shell(f'rm -rf {guesser_directory}')
-        shell(f'rm -f {guesses_path}')
+        for g_path in guesses_paths:
+            shell(f'rm -f {g_path}')
 
     def output(self):
         return [
