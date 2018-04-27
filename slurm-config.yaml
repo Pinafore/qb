@@ -19,6 +19,7 @@ DanGuesser:
   qos: gpu-short
   max_time: "2:00:00"
   cpus_per_task: 4
+  mem_per_cpu: 4g
 RnnEntityGuesser:
   partition: gpu
   gres: gpu:1
@@ -26,5 +27,6 @@ RnnEntityGuesser:
   qos: gpu-medium
   max_time: "1-00:00:00"
   cpus_per_task: 4
+  mem_per_cpu: 4g
 VWGuesser:
   mem_per_cpu: 14g
