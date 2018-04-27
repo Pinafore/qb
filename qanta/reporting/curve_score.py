@@ -9,13 +9,16 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from qanta.datasets.protobowl import load_protobowl
-from qanta.buzzer.util import output_dir
+
+report_dir = 'output/reporting'
+if not os.path.isdir(report_dir):
+    os.mkdir(report_dir)
 
 
 class CurveScore:
 
     def __init__(self):
-        ckp_dir = os.path.join(output_dir, 'curve_pipeline.pkl')
+        ckp_dir = os.path.join(report_dir, 'curve_pipeline.pkl')
         if os.path.isfile(ckp_dir):
             print('loading pipeline')
             with open(ckp_dir, 'rb') as f:

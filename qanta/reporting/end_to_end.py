@@ -6,18 +6,21 @@ from functools import partial
 
 from qanta.util.constants import BUZZER_DEV_FOLD
 from qanta.datasets.protobowl import load_protobowl
-from qanta.datasets.quiz_bowl import QuestionDatabase
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.buzzer.util import read_data
 from qanta.reporting.curve_score import CurveScore
+from qanta.buzzer.util import buzzes_dir
 
 
-output_dir = 'output/reporting'
+report_dir = 'output/reporting'
+if not os.path.isdir(report_dir):
+    os.mkdir(report_dir)
 curve_score = CurveScore()
 
 
 def _protobowl_scores(q, labels, buzzes, word_positions, records_grouped):
     '''score against protobowl players with system and oracle buzzer'''
-    if q.protobowl not in records_grouped.groups:
+    if q.protobowl_id not in records_grouped.groups:
         return None, None
 
     rel_pos_buzz = 1
@@ -65,9 +68,8 @@ def _curve_scores(q, labels, buzzes, word_positions, records_grouped):
 
 
 def run_all_metrics(guesses, buzzes, record_groups, metrics, q):
-    word_positions, buzzer_scores = buzzes[q.qnum]
-    qid, vectors, labels, word_positions = guesses[q.qnum]
-    labels = labels.tolist()
+    word_positions, buzzer_scores = buzzes[q.qanta_id]
+    qid, vectors, labels, word_positions = guesses[q.qanta_id]
     buzzes = [b > a for a, b in buzzer_scores]
     scores = [m(q, labels, buzzes, word_positions, record_groups) for m in metrics]
     return scores
@@ -78,8 +80,8 @@ def main():
 
     # load questions
     print('loading questions')
-    questions = QuestionDatabase().all_questions()
-    questions = [x for x in questions.values() if x.fold == fold]
+    questions = QuizBowlDataset(buzzer_train=True).questions_by_fold()
+    questions = questions[fold]
 
     # load guesser outputs
     print('loading guesser outputs')
@@ -88,7 +90,7 @@ def main():
 
     # load buzzer outputs
     print('loading buzzer outputs')
-    buzz_dir = os.path.join(output_dir, '{}_buzzes.pkl'.format(fold))
+    buzz_dir = os.path.join(buzzes_dir.format(fold))
     with open(buzz_dir, 'rb') as f:
         buzzes = pickle.load(f)
 
