@@ -127,6 +127,7 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
         mem_per_cpu = get_slurm_config_value('mem_per_cpu', default_slurm_config, guesser_slurm_config)
         gres = get_slurm_config_value('gres', default_slurm_config, guesser_slurm_config)
         max_time = get_slurm_config_value('max_time', default_slurm_config, guesser_slurm_config)
+        cpus_per_task = get_slurm_config_value('cpus_per_task', default_slurm_config, guesser_slurm_config)
         script = template.render({
             'task': task,
             'guesser_module': gs.guesser_module,
@@ -138,7 +139,8 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
             'qos': qos,
             'mem_per_cpu': mem_per_cpu,
             'max_time': max_time,
-            'gres': gres
+            'gres': gres,
+            'cpus_per_task': cpus_per_task
         })
         slurm_file = path.join(output_dir, f'slurm-{i}.sh')
         with safe_open(slurm_file, 'w') as f:
