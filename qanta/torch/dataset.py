@@ -1,4 +1,3 @@
-from typing import List
 import os
 import six
 import re
@@ -12,6 +11,8 @@ from torchtext.vocab import Vocab, pretrained_aliases, Vectors
 from torchtext.utils import download_from_url
 
 from qanta.wikipedia.cached_wikipedia import extract_wiki_sentences
+
+DS_VERSION = '2018.04.18'
 
 
 ftp_patterns = {
@@ -113,15 +114,15 @@ class QBVocab(Vocab):
 class QBTextField(Field):
     vocab_cls = QBVocab
 
-
-s3_url_pattern = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/datasets/non_naqt/quiz-bowl.{fold}.json'
+HTTP_PREFIX = 'http://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets'
+S3_URL_PATTERN = os.path.join(HTTP_PREFIX, 'qanta.torchtext.{fold}.2018.04.18.json')
 s3_wiki = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/datasets/wikipedia/wiki_lookup.json'
 
 
 class QuizBowl(Dataset):
     name = 'quizbowl'
     dirname = ''
-    urls = [s3_url_pattern.format(fold=fold) for fold in ['train', 'val', 'dev']]
+    urls = [S3_URL_PATTERN.format(fold=fold) for fold in ['train', 'val', 'dev']]
 
 
     @staticmethod
@@ -137,7 +138,7 @@ class QuizBowl(Dataset):
         else:
             raise ValueError('Not valid length fields')
 
-    def __init__(self, path, qnum_field, sent_field, page_field,
+    def __init__(self, path, qanta_id_field, sent_field, page_field,
                  text_field, unigram_field, bigram_field, trigram_field,
                  example_mode='sentence',
                  use_wiki=False, n_wiki_sentences=3, replace_title_mentions='',
@@ -168,7 +169,7 @@ class QuizBowl(Dataset):
             text_dependent_fields.append(('trigram', trigram_field))
 
         example_fields = {
-            'qnum': [('qnum', qnum_field)],
+            'qanta_id': [('qanta_id', qanta_id_field)],
             'sent': [('sent', sent_field)],
             'page': [('page', page_field)],
             'text': text_dependent_fields
@@ -179,22 +180,26 @@ class QuizBowl(Dataset):
         with open(path) as f:
             for ex in json.load(f)['questions']:
                 if example_mode == 'sentence':
-                    sentences = ex['sentences']
+                    sentences = [ex['text'][start:end] for start, end in ex['tokenizations']]
                     for i, s in enumerate(sentences):
                         examples.append(Example.fromdict({
-                            'qnum': ex['qnum'],
+                            'qanta_id': ex['qanta_id'],
                             'sent': i,
                             'text': unidecode(s),
                             'page': ex['page']
                         }, example_fields))
                         answer_set.add(ex['page'])
                 elif example_mode == 'question':
-                    raise NotImplementedError('Question tokenization is not implemented yet, submit a PR!')
-                elif example_mode == 'runs':
-                    raise NotImplementedError('Run tokenization is not implemented yet, submit a PR!')
+                    examples.append(Example.fromdict({
+                        'qanta_id': ex['qanta_id'],
+                        'sent': -1,
+                        'text': unidecode(ex['text']),
+                        'page': ex['page']
+                    }, example_fields))
+                    answer_set.add(ex['page'])
                 else:
                     raise ValueError(
-                        f"Valid modes are 'sentence', 'question', and 'runs', but '{example_mode}' was given")
+                        f"Valid modes are 'sentence' and 'question', but '{example_mode}' was given")
 
         if use_wiki and n_wiki_sentences > 0 and 'train' in path:
             for page in answer_set:
@@ -205,7 +210,7 @@ class QuizBowl(Dataset):
                     )
                     for i, s in enumerate(sentences):
                         examples.append(Example.fromdict({
-                            'qnum': -1,
+                            'qanta_id': -1,
                             'sent': i,
                             'text': s,
                             'page': page
@@ -213,7 +218,7 @@ class QuizBowl(Dataset):
 
 
         dataset_fields = {
-            'qnum': qnum_field,
+            'qanta_id': qanta_id_field,
             'sent': sent_field,
             'page': page_field,
         }
@@ -232,10 +237,12 @@ class QuizBowl(Dataset):
     def splits(cls, example_mode='sentence',
                use_wiki=False, n_wiki_sentences=5, replace_title_mentions='',
                root='.data',
-               train='quiz-bowl.train.json', validation='quiz-bowl.val.json', test='quiz-bowl.dev.json',
+               train=f'qanta.torchtext.train.{DS_VERSION}.json',
+               validation=f'qanta.torchtext.val.{DS_VERSION}.json',
+               test=f'qanta.torchtext.dev.{DS_VERSION}.json',
                **kwargs):
         remaining_kwargs = kwargs.copy()
-        del remaining_kwargs['qnum_field']
+        del remaining_kwargs['qanta_id_field']
         del remaining_kwargs['sent_field']
         del remaining_kwargs['page_field']
 
@@ -245,7 +252,7 @@ class QuizBowl(Dataset):
         remaining_kwargs.pop('trigram_field', None)
         return super(QuizBowl, cls).splits(
             root=root, train=train, validation=validation, test=test, example_mode=example_mode,
-            qnum_field=kwargs['qnum_field'], sent_field=kwargs['sent_field'], page_field=kwargs['page_field'],
+            qanta_id_field=kwargs['qanta_id_field'], sent_field=kwargs['sent_field'], page_field=kwargs['page_field'],
             text_field=kwargs.get('text_field', None),
             unigram_field=kwargs.get('unigram_field', None),
             bigram_field=kwargs.get('bigram_field', None),
@@ -262,7 +269,7 @@ class QuizBowl(Dataset):
               combined_max_vocab_size=None,
               unigram_max_vocab_size=None, bigram_max_vocab_size=None, trigram_max_vocab_size=None,
               **kwargs):
-        QNUM = LongField()
+        QANTA_ID = LongField()
         SENT = LongField()
         PAGE = Field(sequential=False, tokenize=str_split)
         if combined_ngrams:
@@ -273,7 +280,7 @@ class QuizBowl(Dataset):
                 include_lengths=True, lower=lower
             )
             train, val, dev = cls.splits(
-                qnum_field=QNUM, sent_field=SENT, text_field=TEXT, page_field=PAGE,
+                qanta_id_field=QANTA_ID, sent_field=SENT, text_field=TEXT, page_field=PAGE,
                 root=root, example_mode=example_mode,
                 use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences, replace_title_mentions=replace_title_mentions,
                 **kwargs
@@ -309,7 +316,7 @@ class QuizBowl(Dataset):
                 TRIGRAM_TEXT = None
 
             train, val, dev = cls.splits(
-                qnum_field=QNUM, sent_field=SENT, page_field=PAGE,
+                qanta_id_field=QANTA_ID, sent_field=SENT, page_field=PAGE,
                 unigram_field=UNIGRAM_TEXT, bigram_field=BIGRAM_TEXT, trigram_field=TRIGRAM_TEXT,
                 root=root, example_mode=example_mode, use_wiki=use_wiki, n_wiki_sentences=n_wiki_sentences,
                 replace_title_mentions=replace_title_mentions, **kwargs

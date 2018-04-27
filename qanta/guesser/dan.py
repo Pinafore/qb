@@ -99,7 +99,8 @@ class DanModel(nn.Module):
 
         self.dropout = nn.Dropout(nn_dropout)
 
-        if (text_field is not None) and (unigram_field is not None or bigram_field is not None or trigram_field is not None):
+        if (text_field is not None) and (
+                unigram_field is not None or bigram_field is not None or trigram_field is not None):
             raise ValueError('Textfield being not None and any ngram field being not None is not allowed')
 
         if text_field is None and unigram_field is None and bigram_field is None and trigram_field is None:
@@ -185,11 +186,11 @@ class DanModel(nn.Module):
         else:
             raise ValueError(f'Unsupported pooling type f{self.pooling}, only avg and max are supported')
 
-    def forward(self, input_: Dict[str, Variable], lengths: Dict, qnums):
+    def forward(self, input_: Dict[str, Variable], lengths: Dict, qanta_ids):
         """
         :param input_: [batch_size, seq_len] of word indices
         :param lengths: Length of each example
-        :param qnums: QB qnum if a qb question, otherwise -1 for wikipedia, used to get domain as source/target
+        :param qanta_ids: QB qanta_id if a qb question, otherwise -1 for wikipedia, used to get domain as source/target
         :return:
         """
         for key in lengths:
@@ -261,7 +262,7 @@ class DanGuesser(AbstractGuesser):
             self.random_seed = guesser_conf['random_seed']
 
         self.page_field: Optional[Field] = None
-        self.qnum_field: Optional[Field] = None
+        self.qanta_id_field: Optional[Field] = None
         self.text_field: Optional[Field] = None
         self.unigram_field: Optional[Field] = None
         self.bigram_field: Optional[Field] = None
@@ -269,7 +270,6 @@ class DanGuesser(AbstractGuesser):
         self.n_classes = None
         self.emb_dim = None
         self.model_file = None
-        #self.kuro_trial_id = None
 
         self.model = None
         self.optimizer = None
@@ -285,9 +285,7 @@ class DanGuesser(AbstractGuesser):
         return self.page_field.vocab.itos
 
     def parameters(self):
-        params = conf['guessers']['qanta.guesser.dan.DanGuesser'][self.config_num].copy()
-        #params['kuro_trial_id'] = self.kuro_trial_id
-        return params
+        return conf['guessers']['qanta.guesser.dan.DanGuesser'][self.config_num]
 
     def train(self, training_data):
         log.info('Loading Quiz Bowl dataset')
@@ -306,7 +304,7 @@ class DanGuesser(AbstractGuesser):
         fields: Dict[str, Field] = train_iter.dataset.fields
         self.page_field = fields['page']
         self.n_classes = len(self.ans_to_i)
-        self.qnum_field = fields['qnum']
+        self.qanta_id_field = fields['qanta_id']
         self.emb_dim = 300
 
         if 'text' in fields:
@@ -348,23 +346,6 @@ class DanGuesser(AbstractGuesser):
         ])
 
         log.info('Starting training')
-        #try:
-        #    if bool(os.environ.get('KURO_DISABLE', False)):
-        #        raise ModuleNotFoundError
-        #    import socket
-        #    from kuro import Worker
-        #    worker = Worker(socket.gethostname())
-        #    experiment = worker.experiment(
-        #        'guesser', 'Dan', hyper_parameters=conf['guessers']['Dan'],
-        #        metrics=[
-        #            'train_acc', 'train_loss', 'test_acc', 'test_loss'
-        #        ], n_trials=5
-        #    )
-        #    trial = experiment.trial()
-        #    if trial is not None:
-        #        self.kuro_trial_id = trial.id
-        #except ModuleNotFoundError:
-        #    trial = None
 
         epoch = 0
         while True:
@@ -378,12 +359,6 @@ class DanGuesser(AbstractGuesser):
                 train_time, train_loss, train_acc,
                 test_time, test_loss, test_acc
             )
-
-            #if trial is not None:
-            #    trial.report_metric('test_acc', test_acc, step=epoch)
-            #    trial.report_metric('test_loss', test_loss, step=epoch)
-            #    trial.report_metric('train_acc', train_acc, step=epoch)
-            #    trial.report_metric('train_loss', train_loss, step=epoch)
 
             if stop_training:
                 log.info(' '.join(reasons))
@@ -421,12 +396,12 @@ class DanGuesser(AbstractGuesser):
                 lengths_dict['trigram'] = lengths
 
             page = batch.page
-            qnums = batch.qnum.cuda()
+            qanta_ids = batch.qanta_id.cuda()
 
             if is_train:
                 self.model.zero_grad()
 
-            out = self.model(input_dict, lengths_dict, qnums)
+            out = self.model(input_dict, lengths_dict, qanta_ids)
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, page).float()).data[0]
             batch_loss = self.criterion(out, page)
@@ -483,9 +458,9 @@ class DanGuesser(AbstractGuesser):
             text, lengths = self.trigram_field.process(examples, None, False)
             input_dict['trigram'] = text
             lengths_dict['trigram'] = lengths
-        qnums = self.qnum_field.process([0 for _ in questions]).cuda()
+        qanta_ids = self.qanta_id_field.process([0 for _ in questions]).cuda()
         guesses = []
-        out = self.model(input_dict, lengths_dict, qnums)
+        out = self.model(input_dict, lengths_dict, qanta_ids)
         probs = F.softmax(out).data.cpu().numpy()
         n_examples = probs.shape[0]
         preds = np.argsort(-probs, axis=1)
@@ -513,7 +488,7 @@ class DanGuesser(AbstractGuesser):
                 'unigram_max_vocab_size': self.unigram_max_vocab_size,
                 'bigram_max_vocab_size': self.bigram_max_vocab_size,
                 'trigram_max_vocab_size': self.trigram_max_vocab_size,
-                'qnum_field': self.qnum_field,
+                'qanta_id_field': self.qanta_id_field,
                 'n_classes': self.n_classes,
                 'gradient_clip': self.gradient_clip,
                 'n_hidden_units': self.n_hidden_units,
@@ -538,7 +513,7 @@ class DanGuesser(AbstractGuesser):
 
         guesser = DanGuesser(params['config_num'])
         guesser.page_field = params['page_field']
-        guesser.qnum_field = params['qnum_field']
+        guesser.qanta_id_field = params['qanta_id_field']
 
         guesser.text_field = params['combined_text_field']
         guesser.unigram_field = params['unigram_text_field']
