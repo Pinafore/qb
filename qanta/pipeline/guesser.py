@@ -232,9 +232,9 @@ class GuesserPerformance(Task):
             self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
         )
         guesses_files = [
-            f'guesses_char_{self.fold}.pickle',
-            f'guesses_full_{self.fold}.pickle',
-            f'guesses_first_{self.fold}.pickle'
+            f'guesses_char_{c.GUESSER_DEV_FOLD}.pickle',
+            f'guesses_full_{c.GUESSER_DEV_FOLD}.pickle',
+            f'guesses_first_{c.GUESSER_DEV_FOLD}.pickle'
         ]
         guesses_paths = [
             AbstractGuesser.output_path(
