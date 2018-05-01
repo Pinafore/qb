@@ -128,13 +128,13 @@ class QuizBowl(Dataset):
     @staticmethod
     def sort_key(example):
         if hasattr(example, 'text'):
-            return len(example.text)
+            return -len(example.text)
         elif hasattr(example, 'unigram'):
-            return len(example.unigram)
+            return -len(example.unigram)
         elif hasattr(example, 'bigram'):
-            return len(example.bigram)
+            return -len(example.bigram)
         elif hasattr(example, 'trigram'):
-            return len(example.trigram)
+            return -len(example.trigram)
         else:
             raise ValueError('Not valid length fields')
 

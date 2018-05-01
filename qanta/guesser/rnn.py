@@ -195,6 +195,7 @@ class RnnGuesser(AbstractGuesser):
             use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
             replace_title_mentions=self.wiki_title_replace_token
         )
+        log.info(f'Training Data={len(training_data)}')
         log.info(f'N Train={len(train_iter.dataset.examples)}')
         log.info(f'N Test={len(val_iter.dataset.examples)}')
         fields: Dict[str, Field] = train_iter.dataset.fields
