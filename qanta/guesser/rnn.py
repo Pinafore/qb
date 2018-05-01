@@ -310,13 +310,23 @@ class RnnGuesser(AbstractGuesser):
         if len(questions) == 0:
             return []
         examples = [self.text_field.preprocess(q) for q in questions]
-        text, lengths = self.text_field.process(examples, None, False)
+        padded_examples, lengths = self.text_field.pad(examples)
+        padded_examples = np.array(padded_examples, dtype=np.object)
+        lengths = np.array(lengths)
+        order = np.argsort(-lengths)
+        rev_order = np.argsort(order)
+        ordered_examples = padded_examples[order]
+        ordered_lengths = lengths[order]
+        text, lengths = self.text_field.numericalize((ordered_examples, ordered_lengths), device=None, train=False)
+        lengths = list(lengths.cpu().numpy())
 
         qanta_ids = self.qanta_id_field.process([0 for _ in questions]).cuda()
         guesses = []
         hidden_init = self.model.init_hidden(len(questions))
-        out = self.model(text, lengths, hidden_init, qanta_ids)
-        probs = F.softmax(out).data.cpu().numpy()
+        out, _ = self.model(text, lengths, hidden_init, qanta_ids)
+        ordered_probs = F.softmax(out).data.cpu().numpy()
+        probs = ordered_probs[rev_order]
+
         n_examples = probs.shape[0]
         preds = np.argsort(-probs, axis=1)
         for i in range(n_examples):
