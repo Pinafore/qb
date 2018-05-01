@@ -261,6 +261,7 @@ class RnnGuesser(AbstractGuesser):
         epoch_start = time.time()
         for batch in iterator:
             text, lengths = batch.text
+            lengths = list(lengths.cpu().numpy())
 
             page = batch.page
             qanta_ids = batch.qanta_id.cuda()
