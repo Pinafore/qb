@@ -193,7 +193,8 @@ class RnnGuesser(AbstractGuesser):
         train_iter, val_iter, dev_iter = QuizBowl.iters(
             batch_size=self.batch_size, lower=self.lowercase,
             use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
-            replace_title_mentions=self.wiki_title_replace_token
+            replace_title_mentions=self.wiki_title_replace_token,
+            sort_within_batch=True
         )
         log.info(f'Training Data={len(training_data)}')
         log.info(f'N Train={len(train_iter.dataset.examples)}')

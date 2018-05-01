@@ -128,13 +128,13 @@ class QuizBowl(Dataset):
     @staticmethod
     def sort_key(example):
         if hasattr(example, 'text'):
-            return -len(example.text)
+            return len(example.text)
         elif hasattr(example, 'unigram'):
-            return -len(example.unigram)
+            return len(example.unigram)
         elif hasattr(example, 'bigram'):
-            return -len(example.bigram)
+            return len(example.bigram)
         elif hasattr(example, 'trigram'):
-            return -len(example.trigram)
+            return len(example.trigram)
         else:
             raise ValueError('Not valid length fields')
 
@@ -268,6 +268,7 @@ class QuizBowl(Dataset):
               unigrams=True, bigrams=False, trigrams=False, combined_ngrams=True,
               combined_max_vocab_size=None,
               unigram_max_vocab_size=None, bigram_max_vocab_size=None, trigram_max_vocab_size=None,
+              sort_within_batch=None,
               **kwargs):
         QANTA_ID = LongField()
         SENT = LongField()
@@ -333,5 +334,6 @@ class QuizBowl(Dataset):
             (train, val, dev),
             batch_size=batch_size,
             device=device,
-            repeat=False
+            repeat=False,
+            sort_within_batch=sort_within_batch
         )
