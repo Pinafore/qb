@@ -93,7 +93,7 @@ class RnnModel(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(self.n_hidden_units, n_classes),
+            nn.Linear(self.num_directions * self.n_hidden_units, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(self.sm_dropout)
         )
@@ -128,9 +128,10 @@ class RnnModel(nn.Module):
         # we could try other things too.
         final_hidden = final_hidden.view(
             self.n_hidden_layers, self.num_directions, batch_size, self.n_hidden_units
-        )[-1].view(self.num_directions, batch_size, self.n_hidden_units)
+        )[-1]
+        combined_hidden = torch.cat([final_hidden[i] for i in range(self.num_directions)], dim=1)
 
-        return self.classifier(final_hidden), hidden
+        return self.classifier(combined_hidden), hidden
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
@@ -257,11 +258,15 @@ class RnnGuesser(AbstractGuesser):
         is_train = iterator.train
         batch_accuracies = []
         batch_losses = []
-        hidden_init = self.model.init_hidden(self.batch_size)
+        batch_size = self.batch_size
+        hidden_init = self.model.init_hidden(batch_size)
         epoch_start = time.time()
         for batch in iterator:
             text, lengths = batch.text
             lengths = list(lengths.cpu().numpy())
+            if len(lengths) != batch_size:
+                batch_size = len(lengths)
+                hidden_init = self.model.init_hidden(batch_size)
 
             page = batch.page
             qanta_ids = batch.qanta_id.cuda()
