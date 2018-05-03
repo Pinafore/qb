@@ -1,5 +1,5 @@
 from unidecode import unidecode
-from collections import defaultdict, Counter
+from collections import defaultdict
 import string
 import re
 
@@ -40,3 +40,15 @@ def parse_unambiguous_mappings(path):
                 mappings[source] = target
 
     return mappings
+
+
+def parse_ambiguous_mappings(path):
+    with open(path) as f:
+        mappings = defaultdict(list)
+        for line in f:
+            splits = line.strip().split('\t')
+            if len(splits) != 3:
+                continue
+            else:
+                source, target, words = splits
+                words = words.split(':')
