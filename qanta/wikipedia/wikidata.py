@@ -3,7 +3,7 @@ import pickle
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple, Counter, defaultdict
 
-from pyspark import SparkConf, SparkContext, RDD, Broadcast
+# from pyspark import SparkConf, SparkContext, RDD, Broadcast
 from qanta.util.environment import QB_SPARK_MASTER
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.wikipedia.cached_wikipedia import normalize_wikipedia_title
@@ -173,7 +173,7 @@ for wd in wiki_datatypes:
 Claim = namedtuple('Claim', 'item property object datatype title property_id item_id')
 
 
-def extract_property_map(parsed_wikidata: RDD):
+def extract_property_map(parsed_wikidata):
     def parse_property(prop):
         label = prop['labels']['en']['value']
         return prop['id'], label
@@ -183,7 +183,7 @@ def extract_property_map(parsed_wikidata: RDD):
         .collectAsMap()
 
 
-def extract_item_page_map(wikidata_items: RDD):
+def extract_item_page_map(wikidata_items):
     def parse_item_page(item):
         item_id = item['id']
         if 'enwiki' in item['sitelinks']:
@@ -193,7 +193,7 @@ def extract_item_page_map(wikidata_items: RDD):
     return wikidata_items.flatMap(parse_item_page).collectAsMap()
 
 
-def extract_item_map(wikidata_items: RDD):
+def extract_item_map(wikidata_items):
     def parse_item(item):
         if 'en' in item['labels']:
             label = item['labels']['en']['value']
@@ -203,7 +203,7 @@ def extract_item_map(wikidata_items: RDD):
     return wikidata_items.map(parse_item).filter(lambda i: i is not None).collectAsMap()
 
 
-def extract_claims(wikidata_items: RDD, b_property_map: Broadcast, b_item_map: Broadcast):
+def extract_claims(wikidata_items, b_property_map, b_item_map):
     def parse_item_claims(item):
         item_id = item['id']
         item_map = b_item_map.value
@@ -237,7 +237,7 @@ def extract_claims(wikidata_items: RDD, b_property_map: Broadcast, b_item_map: B
     return wikidata_items.flatMap(parse_item_claims)
 
 
-def clean_claims(claims: RDD, b_item_map: Broadcast):
+def clean_claims(claims, b_item_map):
     def clean(claim):
         item_map = b_item_map.value
         if claim.datatype == 'wikibase-item':
@@ -261,7 +261,7 @@ def clean_claims(claims: RDD, b_item_map: Broadcast):
     return claims.filter(lambda c: c.datatype in dt_filter).map(clean).filter(lambda c: c is not None)
 
 
-def extract_claim_types(wikidata_items: RDD):
+def extract_claim_types(wikidata_items):
     def parse_types(item):
         value_types = []
         for property_claims in item['claims'].values():
@@ -274,7 +274,7 @@ def extract_claim_types(wikidata_items: RDD):
     return set(wikidata_items.flatMap(parse_types).distinct().collect())
 
 
-def extract_items(wikidata_items: RDD, b_property_map: Broadcast, b_item_page_map: Broadcast):
+def extract_items(wikidata_items, b_property_map, b_item_page_map):
     def parse_item(item):
         property_map = b_property_map.value
         item_page_map = b_item_page_map.value

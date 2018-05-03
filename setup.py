@@ -27,7 +27,7 @@ requirements = [
     'pycrayon',
     'matplotlib',
     'tagme',
-    'spacy',
+#    'spacy',
     'pycountry',
     'flask'
 ]

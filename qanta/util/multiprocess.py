@@ -4,7 +4,7 @@ import multiprocessing
 from multiprocessing import Pool, Manager
 from functools import partial
 from qanta.config import conf
-from qanta.spark import create_spark_context
+# from qanta.spark import create_spark_context
 
 def queue_wrapper(func, inputs):
     real_inputs, queue = inputs

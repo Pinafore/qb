@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from qanta.datasets.abstract import QuestionText
-from qanta.spark import create_spark_context
+# from qanta.spark import create_spark_context
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.config import conf
