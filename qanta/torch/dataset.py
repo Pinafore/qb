@@ -1,5 +1,4 @@
 import os
-import six
 import re
 import json
 import torch
@@ -83,9 +82,7 @@ class QBVocab(Vocab):
         if not isinstance(vectors, list):
             vectors = [vectors]
         for idx, vector in enumerate(vectors):
-            if six.PY2 and isinstance(vector, str):
-                vector = six.text_type(vector)
-            if isinstance(vector, six.string_types):
+            if isinstance(vector, str):
                 # Convert the string pretrained vector identifier
                 # to a Vectors object
                 if vector not in pretrained_aliases:
