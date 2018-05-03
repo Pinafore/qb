@@ -43,6 +43,12 @@ SIMPLE_QUESTIONS_PATH = 'simplequestions/annotated_fb_data_train.txt'
 JEOPARDY_PATH = 'jeopardy/jeopardy_questions.json'
 DATASET_FILES = [SQUAD_PATH, TRIVIA_QA_PATH, SIMPLE_QUESTIONS_PATH, JEOPARDY_PATH]
 
+DATASET_CHOICES = {
+    'qanta_minimal': [QANTA_TRAIN_DATASET_PATH, QANTA_DEV_DATASET_PATH, QANTA_TEST_DATASET_PATH],
+    'qanta_full': FILES,
+    'plotting': DATASET_FILES
+}
+
 
 def make_file_pairs(file_list, source_prefix, target_prefix):
     return [(path.join(source_prefix, f), path.join(target_prefix, f)) for f in file_list]
@@ -69,13 +75,14 @@ def main():
 @main.command()
 @click.option('--local-qanta-prefix', default=LOCAL_QANTA_PREFIX)
 @click.option('--local-plotting-prefix', default=LOCAL_PLOTTING_PREFIX)
-@click.option('--dataset', default='qanta', type=click.Choice(['qanta', 'wikidata', 'plotting']))
+@click.option('--dataset', default='qanta_minimal',
+              type=click.Choice(['qanta_minimal', 'qanta_full', 'wikidata', 'plotting']))
 def download(local_qanta_prefix, local_plotting_prefix, dataset):
     """
     Download the qanta dataset
     """
-    if dataset == 'qanta':
-        for s3_file, local_file in make_file_pairs(FILES, S3_HTTP_PREFIX, local_qanta_prefix):
+    if dataset == 'qanta_minimal' or dataset == 'qanta_full':
+        for s3_file, local_file in make_file_pairs(DATASET_CHOICES[dataset], S3_HTTP_PREFIX, local_qanta_prefix):
             download_file(s3_file, local_file)
     elif dataset == 'wikidata':
         download_file(WIKIDATA_S3, WIKIDATA_PATH)
