@@ -15,6 +15,7 @@ from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, 
 from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
 from qanta.ingestion.annotated_mapping import PageAssigner
 from qanta.ingestion.preprocess import format_qanta_json, add_sentences, questions_to_sqlite
+from qanta.ingestion.protobowl import compute_question_player_counts
 
 
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
@@ -39,6 +40,11 @@ QDB_TOSSUPS_PATH = path.join(DATASET_PREFIX, 'quizdb', QDB_TOSSUPS)
 PROTOBOWL_TOSSUPS = 'protobowl-05052017.json'
 PROTOBOWL_TOSSUPS_PATH = path.join(DATASET_PREFIX, 'protobowl', PROTOBOWL_TOSSUPS)
 
+PROTOBOWL_LOGS = 'protobowl-042818.log'
+PROTOBOWL_LOGS_PATH = path.join(DATASET_PREFIX, 'protobowl', PROTOBOWL_LOGS)
+
+PROTOBOWL_QUESTION_PLAYER_COUNTS = path.join(DATASET_PREFIX, 'protobowl', 'question_player_counts.json')
+
 
 class Download(Task):
     url = Parameter()  # type: str
@@ -59,6 +65,10 @@ class DownloadProtobowl(WrapperTask):
         yield Download(
             url=path.join(S3_HTTP_PREFIX, PROTOBOWL_TOSSUPS),
             path=safe_path(PROTOBOWL_TOSSUPS_PATH)
+        )
+        yield Download(
+            url=path.join(S3_HTTP_PREFIX, PROTOBOWL_LOGS),
+            path=safe_path(PROTOBOWL_LOGS_PATH)
         )
 
 
@@ -171,9 +181,23 @@ class GenerateSqliteDB(Task):
         return LocalTarget(QANTA_SQL_DATASET_PATH)
 
 
+class CreateProtobowlQuestionPlayerCounts(Task):
+    def requires(self):
+        yield DownloadProtobowl()
+
+    def run(self):
+        question_player_counts = compute_question_player_counts(PROTOBOWL_LOGS_PATH)
+        with open(PROTOBOWL_QUESTION_PLAYER_COUNTS, 'w') as f:
+            json.dump(question_player_counts, f)
+
+    def output(self):
+        return LocalTarget(PROTOBOWL_QUESTION_PLAYER_COUNTS)
+
+
 class FilterAndPartitionQantaDataset(Task):
     def requires(self):
         yield CreateMappedQantaDataset()
+        yield CreateProtobowlQuestionPlayerCounts()
 
     def run(self):
         with open(QANTA_MAPPED_DATASET_PATH) as f:
