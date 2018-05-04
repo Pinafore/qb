@@ -4,6 +4,12 @@ import re
 import itertools
 from collections import Counter
 
+from qanta.util.constants import (
+    GUESSER_TRAIN_FOLD, BUZZER_TRAIN_FOLD,
+    GUESSER_DEV_FOLD, BUZZER_DEV_FOLD,
+    TEST_FOLD, BUZZER_TEST_FOLD
+)
+
 
 def try_parse_int(text):
     try:
@@ -248,25 +254,44 @@ def merge_datasets(protobowl_questions, quizdb_questions):
 
 
 TEST_TOURNAMENTS = {'ACF Regionals', 'PACE NSC', 'NASAT', 'ACF Nationals', 'ACF Fall'}
-TEST_YEARS = {2017, 2018}
-DEV_YEARS = {2016}
+TEST_YEARS = {2017, 2018}  # These years do not have gameplay data at all
+DEV_YEARS = {2015, 2016}
+BUZZTEST_YEARS = {2016}
+BUZZDEV_YEARS = {2015}
 
 
-def assign_folds(qanta_questions, random_seed=0, guessbuzz_frac=.8):
+def assign_folds(qanta_questions, question_player_counts, random_seed=0, guessbuzz_frac=.8):
+    """
+    Note that q['proto_id'] in question_player_counts being True implies the dataset source is protobowl.
+    """
     random.seed(random_seed)
     for q in qanta_questions:
-        if q['tournament'] in TEST_TOURNAMENTS and q['year'] in TEST_YEARS:
+        is_test_tournament = q['tournament'] in TEST_TOURNAMENTS
+        if is_test_tournament and q['year'] in TEST_YEARS:
+            q['fold'] = TEST_FOLD
+        elif is_test_tournament and q['year'] in DEV_YEARS:
+            # Attempt to split the dataset evenly and at random
             if random.random() < .5:
-                q['fold'] = 'test'
+                # Then filter to be sure we only include useful questions
+                if q['proto_id'] in question_player_counts:
+                    if q['year'] in BUZZDEV_YEARS:
+                        q['fold'] = BUZZER_DEV_FOLD
+                    elif q['year'] in BUZZTEST_YEARS:
+                        q['fold'] = BUZZER_TEST_FOLD
+                    else:
+                        raise ValueError('This code path should be unreachable, check year overlap agreement')
+                else:
+                    q['fold'] = BUZZER_DEV_FOLD
             else:
-                q['fold'] = 'dev'
-        elif q['tournament'] in TEST_TOURNAMENTS and q['year'] in DEV_YEARS:
-            if q['dataset'] == 'protobowl':
-                q['fold'] = 'buzzdev'
-            else:
-                q['fold'] = 'guessdev'
+                q['fold'] = GUESSER_DEV_FOLD
         else:
             if random.random() < guessbuzz_frac:
-                q['fold'] = 'guesstrain'
+                q['fold'] = GUESSER_TRAIN_FOLD
             else:
-                q['fold'] = 'buzztrain'
+                # assigning questions to buzzer train that have no gameplay is useless
+                if q['proto_id'] in question_player_counts:
+                    q['fold'] = BUZZER_TRAIN_FOLD
+                else:
+                    q['fold'] = GUESSER_TRAIN_FOLD
+        if 'fold' not in q:
+            raise ValueError('Cannot leave a question without an assigned fold')

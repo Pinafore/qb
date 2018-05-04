@@ -20,36 +20,36 @@ TRAIN_FOLDS = {GUESSER_TRAIN_FOLD, BUZZER_TRAIN_FOLD}
 # Guesser and buzzers produce reports on these for cross validation
 GUESSER_DEV_FOLD = 'guessdev'
 BUZZER_DEV_FOLD = 'buzzdev'
-SYSTEM_DEV_FOLD = 'dev'
-DEV_FOLDS = {GUESSER_DEV_FOLD, BUZZER_DEV_FOLD, SYSTEM_DEV_FOLD}
+DEV_FOLDS = {GUESSER_DEV_FOLD, BUZZER_DEV_FOLD}
 
 # System-wide cross validation and testing
-SYSTEM_TEST_FOLD = 'test'
+TEST_FOLD = 'test'
+BUZZER_TEST_FOLD = 'buzztest'
 EXPO_FOLD = 'expo'
 
 # Guessers should produce test-time guesses on these
 GUESSER_GENERATION_FOLDS = [
     GUESSER_DEV_FOLD,
     BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
-    SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
+    TEST_FOLD, BUZZER_TEST_FOLD,
     EXPO_FOLD
 ]
 
 BUZZER_INPUT_FOLDS = [
     BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
-    SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
+    BUZZER_TEST_FOLD,
     EXPO_FOLD
 ]
 
 # Buzzers should produce test-time guesses on these
 BUZZER_GENERATION_FOLDS = [
     BUZZER_DEV_FOLD,
-    SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
+    BUZZER_TEST_FOLD,
     EXPO_FOLD
 ]
 
 
-BUZZ_FOLDS = ['dev', 'test', 'expo']
+BUZZ_FOLDS = ['buzzdev', 'buzztest', 'expo']
 
 WIKI_LOCATION = 'data/external/wikipedia'
 
