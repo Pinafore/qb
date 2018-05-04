@@ -1,0 +1,41 @@
+ambiguous:
+  base:
+  - page: Base_(chemistry)
+    words:
+    - chemistry
+  - page: Base_(exponentiation)
+    words:
+    - logarithm
+    - exponent
+    - '10'
+    - ten
+  blindness:
+  - page: Blindness_(novel)
+    words:
+    - saramago
+  bones:
+  - page: Bones (TV series)
+    words:
+    - brennan
+    - deschanel
+  breakfast at tiffanys:
+  - page: Breakfast_at_Tiffany's (film)
+    words:
+    - hepburn
+  brown:
+  - page: Brown_University
+    words:
+    - providence
+    - ivy
+  buffers:
+  - page: Buffer_solution
+    words:
+    - acid
+  marathon:
+  - page: Battle_of_Marathon
+    words:
+    - pheidippides
+  plasma:
+  - page: Blood_plasma
+    words:
+    - blood

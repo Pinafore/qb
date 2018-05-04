@@ -1,0 +1,35 @@
+ambiguous:
+  friday:
+  - page: Joe_Friday
+    words:
+    - dragnet
+  java:
+  - page: Java
+    words:
+    - island
+  - page: Java (programming language)
+    words:
+    - gosling
+    - microsystems
+    - programming
+  - page: Java (programming language)
+    words:
+    - language
+  john:
+  - page: John_the_Apostle
+    words:
+    - apostle
+  joseph:
+  - page: Joseph_(Genesis)
+    words:
+    - slavery
+    - egypt
+    - pharaoh
+  julius caesar:
+  - page: Julius_Caesar_(play)
+    words:
+    - shakespeare
+  jupiter:
+  - page: Jupiter (mythology)
+    words:
+    - zeus

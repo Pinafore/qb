@@ -1,0 +1,32 @@
+ambiguous:
+  family:
+  - page: Family
+    words:
+    - kinship
+    - related
+  - page: Family_(biology)
+    words:
+    - taxonomic
+    - taxonomy
+  fields:
+  - page: Field_(mathematics)
+    words:
+    - galois
+    - algebraic
+    - division
+  firefly:
+  - page: Firefly_(TV_series)
+    words:
+    - wheedon
+    - reynolds
+  fog:
+  - page: Fog
+    words:
+    - water
+  friday:
+  - page: Friday_(Rebecca_Black_song)
+    words:
+    - rebecca
+  - page: Friday_(novel)
+    words:
+    - heinlein

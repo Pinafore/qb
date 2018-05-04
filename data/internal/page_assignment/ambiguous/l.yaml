@@ -1,0 +1,47 @@
+ambiguous:
+  laura:
+  - page: Laura_(Giorgione)
+    words:
+    - giorgione
+  leaf:
+  - page: Leaf
+    words:
+    - tree
+    - foliage
+  leviathan:
+  - page: Leviathan (book)
+    words:
+    - hobbes
+  life:
+  - page: Life_(magazine)
+    words:
+    - magazine
+  limit:
+  - page: Limit_(mathematics)
+    words:
+    - sequence
+  lines:
+  - page: Line_(geometry)
+    words:
+    - geometry
+    - slope
+    - intercept
+  lotus:
+  - page: Lotus_Software
+    words:
+    - ibm
+    - spreadsheet
+    - spreadsheets
+    - software
+  louis:
+  - page: Louis_(given_name)
+    words:
+    - name
+  lowell:
+  - page: Lowell,_Massachusetts
+    words:
+    - city
+  lusitania:
+  - page: Lusitania
+    words:
+    - Lusitania

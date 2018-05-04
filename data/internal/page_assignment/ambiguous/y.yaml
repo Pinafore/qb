@@ -1,0 +1,8 @@
+ambiguous:
+  yield:
+  - page: Yield_(chemistry)
+    words:
+    - reaction
+  - page: Yield_(engineering)
+    words:
+    - deformation

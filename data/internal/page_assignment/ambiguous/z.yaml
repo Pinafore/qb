@@ -1,0 +1,8 @@
+ambiguous:
+  zhuangzi:
+  - page: Zhuangzi
+    words:
+    - MUSTBEMANUAL
+  - page: Zhuangzi_(book)
+    words:
+    - MUSTBEMANUAL

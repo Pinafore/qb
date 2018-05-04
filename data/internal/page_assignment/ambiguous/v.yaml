@@ -1,0 +1,17 @@
+ambiguous:
+  velocity:
+  - page: Velocity_of_money
+    words:
+    - money
+  venus:
+  - page: Venus
+    words:
+    - planet
+  - page: Venus_(mythology)
+    words:
+    - pantheon
+    - foam
+    - aphrodite
+    - botticelli
+    - shell
+    - love

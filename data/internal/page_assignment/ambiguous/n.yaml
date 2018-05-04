@@ -1,0 +1,28 @@
+ambiguous:
+  neptune:
+  - page: Neptune
+    words:
+    - planet
+  - page: Neptune_(mythology)
+    words:
+    - medusa
+    - hercules
+    - salacia
+    - poseidon
+  night:
+  - page: Night_(book)
+    words:
+    - wiesel
+  nirvana:
+  - page: Nirvana (band)
+    words:
+    - kurt
+    - cobain
+  nut:
+  - page: Nut_(goddess)
+    words:
+    - cow
+    - godess
+    - geb
+    - egypt
+    - egyptian
