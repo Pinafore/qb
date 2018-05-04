@@ -36,7 +36,8 @@ requirements = [
     'pypandoc',
     'elasticsearch-dsl',
     'chainer',
-    'py4j'
+    'py4j',
+    'result'
 ]
 
 
