@@ -9,8 +9,9 @@ from unidecode import unidecode
 from nltk.corpus import wordnet
 
 from qanta import qlogging
-from qanta.util.constants import WIKI_TITLES_PICKLE, ALL_WIKI_REDIRECTS
+from qanta.util.constants import WIKI_TITLES_PICKLE, ALL_WIKI_REDIRECTS, GUESSER_TRAIN_FOLD, BUZZER_TRAIN_FOLD
 from qanta.util.io import safe_open
+from qanta.ingestion.annotated_mapping import PageAssigner
 
 
 log = qlogging.get(__name__)
@@ -293,10 +294,65 @@ def write_answer_map(answer_map, unbound_answers, answer_map_path, unbound_answe
         json.dump({'unbound_answers': list(sorted(unbound_answers))}, f)
 
 
-def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map):
+def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assigner: PageAssigner):
+    train_unmatched_questions = []
+    test_unmatched_questions = []
+    match_report = {}
     for q in unmapped_qanta_questions:
-        if q['answer'] in answer_map:
-            q['page'] = answer_map[q['answer']]
+        answer = q['answer']
+        qanta_id = int(q['qanta_id'])
+        proto_id = q['proto_id']
+        qdb_id = q['qdb_id']
+        fold = q['fold']
+        annotated_page, annotated_error = page_assigner.maybe_assign(
+            answer=answer, question_text=q['text'], qdb_id=qdb_id, proto_id=proto_id
+        )
+        automatic_page = answer_map[answer] if answer in answer_map else None
+        if (annotated_page is None) and (automatic_page is None):
+            match_report[qanta_id] = {
+                'result': 'none',
+                'annotated_error': annotated_error,
+                'automatic_error': None
+            }
+            if fold == GUESSER_TRAIN_FOLD or fold == BUZZER_TRAIN_FOLD:
+                train_unmatched_questions.append(q)
+            else:
+                test_unmatched_questions.append(q)
+        elif (annotated_page is not None) and (automatic_page is None):
+            q['page'] = annotated_page
+            match_report[qanta_id] = {
+                'result': 'annotated',
+                'annotated_error': annotated_error,
+                'automatic_error': None
+            }
+        elif (annotated_page is None) and (automatic_page is not None):
+            q['page'] = automatic_page
+            match_report[qanta_id] = {
+                'result': 'automatic',
+                'annotated_error': annotated_error,
+                'automatic_error': None
+            }
+        else:
+            if annotated_page == automatic_page:
+                q['page'] = automatic_page
+                match_report[qanta_id] = {
+                    'result': 'annotated+automatic',
+                    'annotated_error': annotated_error,
+                    'automatic_error': None
+                }
+            else:
+                q['page'] = annotated_page
+                match_report[qanta_id] = {
+                    'result': 'disagree',
+                    'annotated_error': annotated_error,
+                    'automatic_error': None
+                }
+
+    return {
+        'train_unmatched': train_unmatched_questions,
+        'test_unmatched': test_unmatched_questions,
+        'match_report': match_report
+    }
 
 
 def read_wiki_redirects(wiki_titles, redirect_csv_path=ALL_WIKI_REDIRECTS) -> Dict[str, str]:
