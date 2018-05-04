@@ -1,0 +1,30 @@
+ambiguous:
+  arthur:
+  - page: King_Arthur
+    words:
+    - pendragon
+    - merlin
+    - lancelot
+    - table
+    - camelot
+  kernel:
+  - page: Kernel (operating system)
+    words:
+    - operating
+  - page: Kernel method
+    words:
+    - inner
+  - page: Kernel_(algebra)
+    words:
+    - matrix
+  kites:
+  - page: Kite
+    words:
+    - fly
+  kublai khan:
+  - page: Kubla Khan
+    words:
+    - coleridge
+    - taylor
+    - poem
+    - samuel

@@ -1,0 +1,24 @@
+ambiguous:
+  elasticity:
+  - page: Elasticity (economics)
+    words:
+    - change
+    - quantity
+    - goods
+  - page: Elasticity (physics)
+    words:
+    - stress
+    - deformation
+    - property
+  entropy:
+  - page: Entropy_(information_theory)
+    words:
+    - shannon
+    - bits
+    - channel
+  ethics:
+  - page: Ethics (Spinoza)
+    words:
+    - bondage
+    - spinoza
+    - baruch

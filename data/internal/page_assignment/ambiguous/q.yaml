@@ -1,0 +1,17 @@
+ambiguous:
+  quark:
+  - page: Quark_(Star_Trek)
+    words:
+    - ferengi
+    - shimerman
+    - trek
+  - page: Quark_(company)
+    words:
+    - publishing
+    - xpress
+    - gill
+    - pope
+  queen:
+  - page: Queen_(band)
+    words:
+    - mercury

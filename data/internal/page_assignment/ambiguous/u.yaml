@@ -1,0 +1,35 @@
+ambiguous:
+  arizona:
+  - page: USS_Arizona_(BB-39)
+    words:
+    - pearl
+    - sunk
+    - japan
+    - japanese
+  ulysses:
+  - page: Ulysses (novel)
+    words:
+    - joyce
+  - page: Ulysses (poem)
+    words:
+    - tennyson
+  utilitarianism:
+  - page: Utilitarianism (book)
+    words:
+    - stuart
+    - mill
+  - page: Utilitarianism (book)
+    words:
+    - mill
+    - stuart
+  utility:
+  - page: Utility
+    words:
+    - economic
+    - economics
+    - preference
+    - function
+  utopia:
+  - page: Utopia (book)
+    words:
+    - moore

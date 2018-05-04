@@ -1,0 +1,24 @@
+ambiguous:
+  oklahoma:
+  - page: Oklahoma!
+    words:
+    - hammerstein
+  - page: Oklahoma!
+    words:
+    - hammerstein
+    - musical
+  orion:
+  - page: Orion_(constellation)
+    words:
+    - constellation
+    - belt
+  - page: Orion_(mythology)
+    words:
+    - artemis
+    - scorpion
+  otto:
+  - page: Otto_I,_Holy_Roman_Emperor
+    words:
+    - lechfeld
+    - great
+    - roman

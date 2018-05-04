@@ -1,0 +1,71 @@
+ambiguous:
+  assassinate gerald ford:
+  - page: Gerald_Ford_assassination_attempt_in_Sacramento
+    words:
+    - sacremento
+    - fromme
+  bulls:
+  - page: Golden_bull
+    words:
+    - roman
+  gamma:
+  - page: Gamma
+    words:
+    - letter
+  georgia:
+  - page: Georgia (U.S. state)
+    words:
+    - atlanta
+    - oglethorpe
+    - savannah
+    - carter
+    - gingrich
+    - peach
+    - peaches
+  - page: Georgia (country)
+    words:
+    - stalin
+    - caspian
+    - tbilisi
+    - shevardnadze
+    - caucasus
+  giants:
+  - page: Giant
+    words:
+    - mythology
+    - mythological
+    - jack
+    - bunyan
+    - titanomachy
+    - aesir
+  gotham:
+  - page: Gotham_(TV_series)
+    words:
+    - fox
+    - prequel
+  - page: Gotham_City
+    words:
+    - batman
+  graphs:
+  - page: Graph_(abstract_data_type)
+    words:
+    - edges
+  group:
+  - page: Group
+    words:
+    - closure
+  - page: Group_(periodic_table)
+    words:
+    - column
+  groups:
+  - page: Group
+    words:
+    - closure
+  - page: Group_(periodic_table)
+    words:
+    - column
+  singularity:
+  - page: Gravitational_singularity
+    words:
+    - gravity
+    - schwarzschild

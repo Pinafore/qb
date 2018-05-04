@@ -1,0 +1,49 @@
+ambiguous:
+  whig party:
+  - page: Whig_Party_(United_States)
+    words:
+    - american
+    - us
+  - page: Whigs_(British_political_party)
+    words:
+    - british
+  white noise:
+  - page: White_Noise_(novel)
+    words:
+    - hitler
+    - gladney
+  wicked:
+  - page: Wicked_(Maguire_novel)
+    words:
+    - maguire
+    - novel
+    - book
+  - page: Wicked_(musical)
+    words:
+    - musical
+    - chenoweth
+    - schwartz
+  will:
+  - page: Will_and_testament
+    words:
+    - legal
+    - document
+    - property
+    - death
+  work:
+  - page: Work_(film)
+    words:
+    - chaplin
+  - page: Work_(painting)
+    words:
+    - maddox
+  - page: Work_(physics)
+    words:
+    - joule
+  worms:
+  - page: Worms,_Germany
+    words:
+    - germany
+    - rhine
+    - rhineland
+    - diet

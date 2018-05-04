@@ -1,0 +1,128 @@
+ambiguous:
+  bridge:
+  - page: Contract_bridge
+    words:
+    - contract
+    - card
+  callisto:
+  - page: Callisto_(moon)
+    words:
+    - moon
+  - page: Callisto_(mythology)
+    words:
+    - nymph
+  calypso:
+  - page: Calypso (mythology)
+    words:
+    - nymph
+  - page: Calypso_music
+    words:
+    - music
+  camp:
+  - page: Camp_(style)
+    words:
+    - style
+    - kitsch
+    - aesthetic
+    - sontag
+  - page: Cyclic_adenosine_monophosphate
+    words:
+    - pathway
+    - biology
+    - signal
+  cancer:
+  - page: Cancer
+    words:
+    - cell
+    - cells
+    - disease
+    - diseases
+  - page: Cancer_(constellation)
+    words:
+    - zodiac
+    - crab
+  capital:
+  - page: Capital_(economics)
+    words:
+    - economics
+    - marx
+    - goods
+  carmina burana:
+  - page: Carmina_Burana (Orff)
+    words:
+    - orff
+  cassiopeia:
+  - page: Cassiopeia_(Queen_of_Ethiopia)
+    words:
+    - ethiopia
+  cats:
+  - page: Cats_(musical)
+    words:
+    - webber
+    - memory
+  charleston:
+  - page: Charleston,_South_Carolina
+    words:
+    - carolina
+  - page: Charleston,_West_Virginia
+    words:
+    - virginia
+  chicago:
+  - page: Chicago (poem)
+    words:
+    - sandburg
+    - shoulders
+  chimera:
+  - page: Chimera_(genetics)
+    words:
+    - zygote
+    - zygotes
+    - genetic
+    - genetics
+  - page: Chimera_(mythology)
+    words:
+    - monster
+  civilization:
+  - page: Civilization_(series)
+    words:
+    - meier
+  columns:
+  - page: Column
+    words:
+    - architecture
+    - shaft
+    - base
+    - capital
+  community:
+  - page: Community_(TV_series)
+    words:
+    - harmon
+  cones:
+  - page: Cone_cell
+    words:
+    - vision
+    - receptor
+    - photoreceptor
+    - color
+    - colour
+  creep:
+  - page: Creep_(Radiohead_song)
+    words:
+    - radiohead
+  crime:
+  - page: Crime
+    words:
+    - unlawful
+    - illegal
+    - punishment
+  grace:
+  - page: Charites
+    words:
+    - euphrosyne
+    - aglaea
+    - thalia
+  mouse:
+  - page: Computer_mouse
+    words:
+    - englebart
+    - pointer

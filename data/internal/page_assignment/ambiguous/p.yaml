@@ -1,0 +1,138 @@
+ambiguous:
+  '911':
+  - page: Porsche_911
+    words:
+    - car
+    - porsche
+  bulls:
+  - page: Papal_bull
+    words:
+    - pope
+  parallel:
+  - page: Parallel_(geometry)
+    words:
+    - postulate
+    - euclid
+    - intersect
+  paris:
+  - page: Paris (mythology)
+    words:
+    - aphrodite
+  parity:
+  - page: Parity_(physics)
+    words:
+    - chirality
+    - preserving
+    - rotation
+    - conserved
+    - invariance
+  paterson:
+  - page: Paterson_(poem)
+    words:
+    - epic
+    - williams
+  paul:
+  - page: Paul_the_Apostle
+    words:
+    - apostle
+  peanuts:
+  - page: Peanut
+    words:
+    - legume
+  - page: Peanuts
+    words:
+    - schulz
+    - charles
+    - comic
+  - page: Peanuts
+    words:
+    - schulz
+    - comic
+  peer gynt:
+  - page: Peer_Gynt
+    words:
+    - ibsen
+  - page: Peer_Gynt_(Grieg)
+    words:
+    - grieg
+  pericles:
+  - page: Pericles
+    words:
+    - athens
+    - athenian
+    - peloponnesian
+    - parthenon
+  - page: Pericles,_Prince_of_Tyre
+    words:
+    - shakespeare
+  phase:
+  - page: Phase_(matter)
+    words:
+    - solid
+    - liquid
+  - page: Phase_(waves)
+    words:
+    - wave
+    - amplitude
+    - radians
+    - degrees
+    - sine
+    - frequency
+  philip ii:
+  - page: Philip_II_of_France
+    words:
+    - france
+  - page: Philip_II_of_Macedon
+    words:
+    - macedonia
+  - page: Philip_II_of_Spain
+    words:
+    - spain
+  pierre:
+  - page: Pierre,_South_Dakota
+    words:
+    - dakota
+  plane:
+  - page: Plane_(geometry)
+    words:
+    - dimensions
+    - euclidean
+    - surface
+  pluto:
+  - page: Pluto
+    words:
+    - planet
+  - page: Pluto_(Disney)
+    words:
+    - disney
+    - dog
+  portal:
+  - page: Portal_(video_game)
+    words:
+    - glados
+    - cake
+    - coulton
+  possession:
+  - page: Possession_(Byatt_novel)
+    words:
+    - byatt
+  power:
+  - page: Power
+    words:
+    - watt
+    - watts
+  python:
+  - page: Python
+    words:
+    - programming
+    - rossum
+  registers:
+  - page: Processor_register
+    words:
+    - computer
+    - memory
+  stress:
+  - page: Psychological_stress
+    words:
+    - fight
+    - coping

@@ -1,0 +1,181 @@
+ambiguous:
+  entropy:
+  - page: Slow_Learner
+    words:
+    - pynchon
+    - mulligan
+    - meatball
+    - callisto
+  functions:
+  - page: Subroutine
+    words:
+    - programming
+  organ symphony:
+  - page: Symphony_No._3_(Saint-Saëns)
+    words:
+    - saëns
+    - camille
+    - saens
+    - sans
+  salt:
+  - page: Salt
+    words:
+    - seasoning
+    - nacl
+    - sodium
+    - gandhi
+    - food
+    - ionic
+    - ''
+  samuel butler:
+  - page: Samuel Butler (novelist)
+    words:
+    - flesh
+  - page: Samuel Butler (novelist)
+    words:
+    - flesh
+    - way
+  - page: Samuel Butler (poet)
+    words:
+    - hudibras
+    - elephant
+  - page: Samuel Butler (poet)
+    words:
+    - moon
+    - hudibras
+    - elephant
+  saturn:
+  - page: Saturn
+    words:
+    - rings
+    - planet
+  science:
+  - page: Science_(journal)
+    words:
+    - journal
+    - aaas
+  selma:
+  - page: Selma,_Alabama
+    words:
+    - alabama
+  set:
+  - page: Set_(deity)
+    words:
+    - egyptian
+  shields:
+  - page: Shield
+    words:
+    - armor
+    - armour
+    - block
+    - aegis
+    - protective
+  sigma:
+  - page: Sigma
+    words:
+    - letter
+  simpson:
+  - page: Simpson's paradox
+    words:
+    - udny
+  snow:
+  - page: Snow
+    words:
+    - precipitation
+  soap:
+  - page: Soap
+    words:
+    - surfactant
+    - emulsifier
+    - water
+    - fat
+    - fatty
+  soma:
+  - page: Soma_(biology)
+    words:
+    - neuron
+    - nucleus
+  - page: Soma_(drink)
+    words:
+    - vedic
+    - amrita
+    - hindu
+    - drink
+  soul:
+  - page: Soul
+    words:
+    - essence
+    - salvation
+    - immortal
+  spheres:
+  - page: Sphere
+    words:
+    - round
+    - circle
+    - radius
+  - page: Sphere_(novel)
+    words:
+    - chrichton
+  spring:
+  - page: Spring_(device)
+    words:
+    - coil
+  - page: Spring_(season)
+    words:
+    - season
+  square:
+  - page: Square
+    words:
+    - quadrilateral
+    - right
+    - angles
+    - angle
+  stacks:
+  - page: Stack_(abstract_data_type)
+    words:
+    - lifo
+    - peek
+    - computer
+    - data
+  steppenwolf:
+  - page: Steppenwolf_(band)
+    words:
+    - kay
+    - mcjohn
+    - edmonton
+  - page: Steppenwolf_(novel)
+    words:
+    - hesse
+  stress:
+  - page: Stress_(linguistics)
+    words:
+    - vowel
+    - syllable
+  strings:
+  - page: String_(computer_science)
+    words:
+    - sequence
+    - characters
+    - computer
+    - data
+  - page: String_(physics)
+    words:
+    - unified
+    - physics
+    - filaments
+    - theory
+  subway:
+  - page: Subway_(restaurant)
+    words:
+    - footlong
+    - restaurant
+    - restaurants
+    - sandwich
+  suicide:
+  - page: Suicide (book)
+    words:
+    - emile
+  summer:
+  - page: Summer
+    words:
+    - season

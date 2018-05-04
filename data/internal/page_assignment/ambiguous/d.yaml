@@ -1,0 +1,43 @@
+ambiguous:
+  buffers:
+  - page: Data_buffer
+    words:
+    - computer
+  compression:
+  - page: Data_compression
+    words:
+    - bit
+    - bits
+    - size
+    - file
+    - zip
+  delphi:
+  - page: Delphi
+    words:
+    - parnassus
+    - greece
+    - greek
+  delta:
+  - page: Delta_(letter)
+    words:
+    - letter
+  democracy:
+  - page: Democracy_(novel)
+    words:
+    - didion
+  don juan:
+  - page: Don Juan (Byron)
+    words:
+    - byron
+  donatello:
+  - page: Donatello_(Teenage_Mutant_Ninja_Turtles)
+    words:
+    - turtle
+  - page: Donatello_(Teenage_Mutant_Ninja_Turtles)
+    words:
+    - turtle
+    - turtles
+  dune:
+  - page: Dune_(novel)
+    words:
+    - herbert

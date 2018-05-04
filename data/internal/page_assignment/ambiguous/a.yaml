@@ -1,0 +1,92 @@
+ambiguous:
+  a midsummer nights dream:
+  - page: A_Midsummer_Night's_Dream_(Mendelssohn)
+    words:
+    - mendelssohn
+  a streetcar named desire:
+  - page: A_Streetcar_Named_Desire_(1951_film)
+    words:
+    - kazan
+    - brando
+    - leigh
+  airplane:
+  - page: Airplane!
+    words:
+    - zucker
+    - nielsen
+    - shirley
+    - ethel
+  ajax:
+  - page: Ajax (mythology)
+    words:
+    - achilles
+    - armor
+  - page: Ajax_(play)
+    words:
+    - sophocles
+  alice:
+  - page: Alice_(Alice's_Adventures_in_Wonderland)
+    words:
+    - carroll
+    - wonderland
+  alpha:
+  - page: Alpha
+    words:
+    - letter
+  amazon:
+  - page: Amazon
+    words:
+    - river
+    - brazil
+  - page: Amazon.com
+    words:
+    - bezos
+  apollo:
+  - page: Apollo_program
+    words:
+    - nasa
+  apple:
+  - page: Apple_Inc.
+    words:
+    - jobs
+    - cupertino
+    - ipad
+    - ipod
+    - imac
+    - steve
+    - wozniak
+  ares:
+  - page: Ares_(rocket)
+    words:
+    - rocket
+  argo:
+  - page: Argo_(2012_film)
+    words:
+    - affleck
+    - clooney
+    - iran
+  ariel:
+  - page: Ariel_(Disney)
+    words:
+    - mermaid
+  - page: Ariel_(The_Tempest)
+    words:
+    - tempest
+    - fathom
+    - sycorax
+    - prospero
+  - page: Ariel_(moon)
+    words:
+    - moon
+  - page: Ariel_(poetry_collection)
+    words:
+    - lazarus
+  array:
+  - page: Array_data_type
+    words:
+    - structure
+    - computer
+  aurora:
+  - page: Aurora_(mythology)
+    words:
+    - goddess
