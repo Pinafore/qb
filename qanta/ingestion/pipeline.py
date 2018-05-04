@@ -21,6 +21,7 @@ from qanta.ingestion.protobowl import compute_question_player_counts
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
 QANTA_UNMAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.unmapped.{DS_VERSION}.json')
 QANTA_PREPROCESSED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.processed.{DS_VERSION}.json')
+QANTA_FOLDED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.folded.{DS_VERSION}.json')
 
 ANSWER_MAP_PATH = 'data/external/answer_mapping/answer_map.json'
 UNBOUND_ANSWER_PATH = 'data/external/answer_mapping/unbound_answers.json'
@@ -99,7 +100,6 @@ class CreateUnmappedQantaDataset(Task):
             quizdb_tournaments, quizdb_categories, quizdb_subcategories, QDB_TOSSUPS_PATH
         )
         qanta_questions = merge_datasets(protobowl_questions, quizdb_questions)
-        assign_folds(qanta_questions)
         with open(safe_path(QANTA_UNMAPPED_DATASET_PATH), 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
@@ -140,16 +140,35 @@ class CreateAnswerMap(Task):
         return LocalTarget(ANSWER_MAP_PATH), LocalTarget(UNBOUND_ANSWER_PATH)
 
 
-class CreateMappedQantaDataset(Task):
+class CreateFoldedQantaDataset(Task):
     def requires(self):
         yield CreateProcessedQantaDataset()
+
+    def run(self):
+        with open(QANTA_PREPROCESSED_DATASET_PATH) as f:
+            qanta_questions = json.load(f)['questions']
+
+        with open(PROTOBOWL_QUESTION_PLAYER_COUNTS) as f:
+            question_player_counts = json.load(f)
+        assign_folds(qanta_questions, question_player_counts)
+
+        with open(QANTA_FOLDED_DATASET_PATH, 'w') as f:
+            json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
+
+    def output(self):
+        return LocalTarget(QANTA_FOLDED_DATASET_PATH)
+
+
+class CreateMappedQantaDataset(Task):
+    def requires(self):
+        yield CreateFoldedQantaDataset()
         yield CreateAnswerMap()
         yield WikipediaTitles()
 
     def run(self):
         with open(ANSWER_MAP_PATH) as f:
             answer_map = json.load(f)['answer_map']
-        with open(QANTA_PREPROCESSED_DATASET_PATH) as f:
+        with open(QANTA_FOLDED_DATASET_PATH) as f:
             qanta_questions = json.load(f)['questions']
 
         page_assigner = PageAssigner()

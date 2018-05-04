@@ -6,7 +6,7 @@ from qanta.datasets.abstract import AbstractDataset, TrainingData
 from qanta.util.constants import (
     QANTA_MAPPED_DATASET_PATH,
     GUESSER_TRAIN_FOLD, GUESSER_DEV_FOLD, BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
-    SYSTEM_DEV_FOLD, SYSTEM_TEST_FOLD,
+    BUZZER_TEST_FOLD, TEST_FOLD,
     TRAIN_FOLDS, DEV_FOLDS
 )
 
@@ -86,9 +86,9 @@ class QantaDatabase:
         self.dev_questions = [q for q in self.mapped_questions if q.fold in DEV_FOLDS]
         self.guess_dev_questions = [q for q in self.dev_questions if q.fold == GUESSER_DEV_FOLD]
         self.buzz_dev_questions = [q for q in self.dev_questions if q.fold == BUZZER_DEV_FOLD]
-        self.system_dev_questions = [q for q in self.dev_questions if q.fold == SYSTEM_DEV_FOLD]
 
-        self.test_questions = [q for q in self.mapped_questions if q.fold == SYSTEM_TEST_FOLD]
+        self.buzz_test_questions = [q for q in self.mapped_questions if q.fold == BUZZER_TEST_FOLD]
+        self.test_questions = [q for q in self.mapped_questions if q.fold == TEST_FOLD]
 
 
 class QuizBowlDataset(AbstractDataset):
@@ -130,8 +130,8 @@ class QuizBowlDataset(AbstractDataset):
             GUESSER_DEV_FOLD: self.db.guess_dev_questions,
             BUZZER_TRAIN_FOLD: self.db.buzz_train_questions,
             BUZZER_DEV_FOLD: self.db.buzz_dev_questions,
-            SYSTEM_DEV_FOLD: self.db.system_dev_questions,
-            SYSTEM_TEST_FOLD: self.db.test_questions
+            BUZZER_TEST_FOLD: self.db.buzz_test_questions,
+            TEST_FOLD: self.db.test_questions
         }
 
     def questions_in_folds(self, folds: Iterable[str]) -> List[Question]:
