@@ -5,7 +5,7 @@ from luigi import LocalTarget, Task, WrapperTask, Parameter
 from sklearn.model_selection import train_test_split
 from qanta.util.io import shell, get_tmp_filename, safe_path
 from qanta.util.constants import (
-    DATASET_PREFIX, DS_VERSION,
+    DATASET_PREFIX, DS_VERSION, QANTA_MAP_REPORT_PATH,
     QANTA_MAPPED_DATASET_PATH, QANTA_SQL_DATASET_PATH,
     QANTA_TRAIN_DATASET_PATH, QANTA_DEV_DATASET_PATH, QANTA_TEST_DATASET_PATH,
     QANTA_TORCH_TRAIN_LOCAL_PATH, QANTA_TORCH_VAL_LOCAL_PATH, QANTA_TORCH_DEV_LOCAL_PATH
@@ -13,6 +13,7 @@ from qanta.util.constants import (
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
 from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
+from qanta.ingestion.annotated_mapping import PageAssigner
 from qanta.ingestion.preprocess import format_qanta_json, add_sentences, questions_to_sqlite
 
 
@@ -126,16 +127,14 @@ class CreateAnswerMap(Task):
         write_answer_map(answer_map, unbound_answers, ANSWER_MAP_PATH, UNBOUND_ANSWER_PATH)
 
     def output(self):
-        return [
-            LocalTarget(ANSWER_MAP_PATH),
-            LocalTarget(UNBOUND_ANSWER_PATH)
-        ]
+        return LocalTarget(ANSWER_MAP_PATH), LocalTarget(UNBOUND_ANSWER_PATH)
 
 
 class CreateMappedQantaDataset(Task):
     def requires(self):
         yield CreateProcessedQantaDataset()
         yield CreateAnswerMap()
+        yield WikipediaTitles()
 
     def run(self):
         with open(ANSWER_MAP_PATH) as f:
@@ -143,12 +142,17 @@ class CreateMappedQantaDataset(Task):
         with open(QANTA_PREPROCESSED_DATASET_PATH) as f:
             qanta_questions = json.load(f)['questions']
 
-        unmapped_to_mapped_questions(qanta_questions, answer_map)
+        page_assigner = PageAssigner()
+        mapping_report = unmapped_to_mapped_questions(qanta_questions, answer_map, page_assigner)
+
         with open(QANTA_MAPPED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
+        with open(QANTA_MAP_REPORT_PATH, 'w') as f:
+            json.dump(mapping_report, f)
+
     def output(self):
-        return LocalTarget(QANTA_MAPPED_DATASET_PATH),
+        return LocalTarget(QANTA_MAPPED_DATASET_PATH), LocalTarget(QANTA_MAP_REPORT_PATH)
 
 
 class GenerateSqliteDB(Task):
