@@ -281,7 +281,7 @@ def assign_folds(qanta_questions, question_player_counts, random_seed=0, guessbu
                     else:
                         raise ValueError('This code path should be unreachable, check year overlap agreement')
                 else:
-                    q['fold'] = BUZZER_DEV_FOLD
+                    q['fold'] = GUESSER_DEV_FOLD
             else:
                 q['fold'] = GUESSER_DEV_FOLD
         else:
