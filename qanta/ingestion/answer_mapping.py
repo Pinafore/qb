@@ -312,7 +312,9 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
             match_report[qanta_id] = {
                 'result': 'none',
                 'annotated_error': annotated_error,
-                'automatic_error': None
+                'automatic_error': None,
+                'annotated_page': annotated_page,
+                'automatic_page': automatic_page
             }
             if fold == GUESSER_TRAIN_FOLD or fold == BUZZER_TRAIN_FOLD:
                 train_unmatched_questions.append(q)
@@ -323,14 +325,18 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
             match_report[qanta_id] = {
                 'result': 'annotated',
                 'annotated_error': annotated_error,
-                'automatic_error': None
+                'automatic_error': None,
+                'annotated_page': annotated_page,
+                'automatic_page': automatic_page
             }
         elif (annotated_page is None) and (automatic_page is not None):
             q['page'] = automatic_page
             match_report[qanta_id] = {
                 'result': 'automatic',
                 'annotated_error': annotated_error,
-                'automatic_error': None
+                'automatic_error': None,
+                'annotated_page': annotated_page,
+                'automatic_page': automatic_page
             }
         else:
             if annotated_page == automatic_page:
@@ -338,14 +344,18 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
                 match_report[qanta_id] = {
                     'result': 'annotated+automatic',
                     'annotated_error': annotated_error,
-                    'automatic_error': None
+                    'automatic_error': None,
+                    'annotated_page': annotated_page,
+                    'automatic_page': automatic_page
                 }
             else:
                 q['page'] = annotated_page
                 match_report[qanta_id] = {
                     'result': 'disagree',
                     'annotated_error': annotated_error,
-                    'automatic_error': None
+                    'automatic_error': None,
+                    'annotated_page': annotated_page,
+                    'automatic_page': automatic_page
                 }
 
     return {
