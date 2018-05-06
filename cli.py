@@ -207,5 +207,11 @@ def elasticsearch(generate_config, config_dir, pid_file, command):
         stop_elasticsearch(pid_file)
 
 
+@main.command()
+def answer_map_google_csvs():
+    from qanta.ingestion.gspreadsheets import create_answer_mapping_csvs
+    create_answer_mapping_csvs()
+
+
 if __name__ == '__main__':
     main()

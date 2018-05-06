@@ -11,10 +11,10 @@ from qanta.util.constants import (
     QANTA_TORCH_TRAIN_LOCAL_PATH, QANTA_TORCH_VAL_LOCAL_PATH, QANTA_TORCH_DEV_LOCAL_PATH
 )
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
-from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds
+from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds_
 from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, unmapped_to_mapped_questions
 from qanta.ingestion.annotated_mapping import PageAssigner
-from qanta.ingestion.preprocess import format_qanta_json, add_sentences, questions_to_sqlite
+from qanta.ingestion.preprocess import format_qanta_json, add_sentences_, questions_to_sqlite
 from qanta.ingestion.protobowl import compute_question_player_counts
 
 
@@ -114,10 +114,9 @@ class CreateProcessedQantaDataset(Task):
     def run(self):
         with open(QANTA_UNMAPPED_DATASET_PATH) as f:
             qanta_questions = json.load(f)['questions']
-        add_sentences(qanta_questions)
+        add_sentences_(qanta_questions)
         with open(QANTA_PREPROCESSED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
-
 
     def output(self):
         return LocalTarget(QANTA_PREPROCESSED_DATASET_PATH)
@@ -150,7 +149,7 @@ class CreateFoldedQantaDataset(Task):
 
         with open(PROTOBOWL_QUESTION_PLAYER_COUNTS) as f:
             question_player_counts = json.load(f)
-        assign_folds(qanta_questions, question_player_counts)
+        assign_folds_(qanta_questions, question_player_counts)
 
         with open(QANTA_FOLDED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)

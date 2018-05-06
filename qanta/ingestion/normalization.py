@@ -260,7 +260,7 @@ BUZZTEST_YEARS = {2016}
 BUZZDEV_YEARS = {2015}
 
 
-def assign_folds(qanta_questions, question_player_counts, random_seed=0, guessbuzz_frac=.8):
+def assign_folds_(qanta_questions, question_player_counts, random_seed=0, guessbuzz_frac=.8):
     """
     Note that q['proto_id'] in question_player_counts being True implies the dataset source is protobowl.
     """
