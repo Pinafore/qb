@@ -23,9 +23,18 @@ MatchRule = Callable[[str], Optional[str]]
 def mapping_rules_to_answer_map(
         expansion_rules: List[Tuple[str, ExpansionRule]],
         match_rules: List[Tuple[str, MatchRule]],
-        lower_titles: Dict[str, str], unicode_titles: Dict[str, str],
-        lower_wiki_redirects: Dict[str, str], unicode_wiki_redirects: Dict[str, str],
+        wiki_titles: Set[str], wiki_redirects_source,
         unmapped_answers: Set[str]):
+    exact_titles = {t: t for t in wiki_titles}
+    unicode_titles = {unidecode(t): t for t in wiki_titles}
+    lower_titles = {t.lower(): t for t in wiki_titles}
+    lower_unicode_titles = {unidecode(t.lower()): t for t in wiki_titles}
+
+    exact_wiki_redirects = {text: page for text, page in wiki_redirects_source.items()}
+    unicode_wiki_redirects = {unidecode(text): page for text, page in wiki_redirects_source.items()}
+    lower_wiki_redirects = {text.lower(): page for text, page in wiki_redirects_source.items()}
+    lower_unicode_wiki_redirects = {unidecode(text.lower()): page for text, page in wiki_redirects_source.items()}
+
     answer_map = {}
 
     # Clone the set to prevent accidental mutation of the original
@@ -50,50 +59,52 @@ def mapping_rules_to_answer_map(
 
         for original_ans, ans_expansions in expansion_answer_map.items():
             for raw_ans in ans_expansions:
-                rule_ans = re.sub(r'\s+', ' ', rule_func(raw_ans).strip())
-                if rule_ans is None:
+                rule_ans = re.sub(r'\s+', ' ', rule_func(raw_ans).strip()).strip()
+                lower_ans = rule_ans.lower()
+
+                # continue statements: We only need at least one expansion to match.
+                # Once we find it we can skip looking at the others
+                # Order here matters. We should go from the most strict match conditions to
+                # most flexible (eg exact before lowercase, unicode ignoring before lowercase).
+                m = try_match(rule_ans, exact_titles)
+                if m is not None:
+                    answer_map[original_ans] = m
                     continue
-                else:
-                    mod_ans = rule_ans.lower()
-                    und_mod_ans = mod_ans.replace(' ', '_')
 
-                    # continue statements: We only need at least one expansion to match.
-                    # Once we find it we can skip looking at the others
-                    if mod_ans in lower_titles:
-                        answer_map[original_ans] = lower_titles[mod_ans]
-                        continue
-                    elif und_mod_ans in lower_titles:
-                        answer_map[original_ans] = lower_titles[und_mod_ans]
-                        continue
-                    else:
-                        pass
+                m = try_match(rule_ans, exact_wiki_redirects)
+                if m is not None:
+                    answer_map[original_ans] = m
+                    continue
 
-                    if mod_ans in unicode_titles:
-                        answer_map[original_ans] = unicode_titles[mod_ans]
-                        continue
-                    elif und_mod_ans in unicode_titles:
-                        answer_map[original_ans] = unicode_titles[und_mod_ans]
-                        continue
-                    else:
-                        pass
+                m = try_match(rule_ans, unicode_titles)
+                if m is not None:
+                    answer_map[original_ans] = m
+                    continue
 
-                    if mod_ans in lower_wiki_redirects:
-                        answer_map[original_ans] = lower_wiki_redirects[mod_ans]
-                        continue
-                    elif und_mod_ans in lower_wiki_redirects:
-                        answer_map[original_ans] = lower_wiki_redirects[und_mod_ans]
-                        continue
-                    else:
-                        pass
+                m = try_match(rule_ans, unicode_wiki_redirects)
+                if m is not None:
+                    answer_map[original_ans] = m
+                    continue
 
-                    if mod_ans in unicode_wiki_redirects:
-                        answer_map[original_ans] = unicode_wiki_redirects[mod_ans]
-                        continue
-                    elif und_mod_ans in unicode_wiki_redirects:
-                        answer_map[original_ans] = unicode_wiki_redirects[und_mod_ans]
-                        continue
-                    else:
-                        pass
+                m = try_match(lower_ans, lower_titles)
+                if m is not None:
+                    answer_map[original_ans] = m
+                    continue
+
+                m = try_match(lower_ans, lower_wiki_redirects)
+                if m is not None:
+                    answer_map[original_ans] = m
+                    continue
+
+                m = try_match(lower_ans, lower_unicode_titles)
+                if m is not None:
+                    answer_map[original_ans] = m
+                    continue
+
+                m = try_match(lower_ans, lower_unicode_wiki_redirects)
+                if m is not None:
+                    answer_map[original_ans] = m
+                    continue
 
         unmapped_answers -= set(answer_map.keys())
         removed_num = curr_num - len(unmapped_answers)
@@ -268,22 +279,27 @@ def create_answer_map(unmapped_qanta_questions):
         unmapped_lookup[q['answer']].append(q)
 
     log.info('Loading wikipedia titles')
-    titles = read_wiki_titles()
-    lower_title_map = {t.lower(): t for t in titles}
-    unicode_title_map = {unidecode(t.lower()): t for t in titles}
+    wiki_titles = read_wiki_titles()
 
-    wiki_redirect_map = read_wiki_redirects(titles)
-    lower_wiki_redirect_map = {text.lower(): page for text, page in wiki_redirect_map.items()}
-    unicode_wiki_redirect_map = {unidecode(text.lower()): page for text, page in wiki_redirect_map.items()}
+    wiki_redirect_map = read_wiki_redirects(wiki_titles)
 
     log.info('Starting Answer Mapping Process')
     answer_map, unbound_answers = mapping_rules_to_answer_map(
         expansion_rules, match_rules,
-        lower_title_map, unicode_title_map,
-        lower_wiki_redirect_map, unicode_wiki_redirect_map,
+        wiki_titles, wiki_redirect_map,
         raw_unmapped_answers
     )
     return answer_map, unbound_answers
+
+
+def try_match(ans_text, title_map):
+    und_text = ans_text.replace(' ', '_')
+    if ans_text in title_map:
+        return title_map[ans_text]
+    elif und_text in title_map:
+        return title_map[und_text]
+    else:
+        return None
 
 
 def write_answer_map(answer_map, unbound_answers, answer_map_path, unbound_answer_path):
@@ -380,6 +396,6 @@ def read_wiki_redirects(wiki_titles, redirect_csv_path=ALL_WIKI_REDIRECTS) -> Di
         return redirect_lookup
 
 
-def read_wiki_titles(title_path=WIKI_TITLES_PICKLE):
+def read_wiki_titles(title_path=WIKI_TITLES_PICKLE) -> Set[str]:
     with open(title_path, 'rb') as f:
         return pickle.load(f)
