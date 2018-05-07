@@ -151,6 +151,12 @@ with the following command:
 $ WikiExtractor.py --processes 15 -o parsed-wiki --json --filter_disambig_pages enwiki-20170401-pages-articles-multistream.xml.bz2
 ```
 
+Afterwards we use the following command to tar it, compress it with lz4, and upload the archive to S3
+
+```bash
+tar cvf - parsed-wiki | lz4 - parsed-wiki.tar.lz4
+```
+
 NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
 
 #### Wikipedia Redirect Mapping Creation
