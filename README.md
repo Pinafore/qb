@@ -137,12 +137,19 @@ access to all the contents of the bucket so we suggest creating a dedicated buck
 As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
 dumps created on 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/
 
-Of these we use the following
+Of these we use the following (you may need to use more recent dumps)
 
 * [Wikipedia page text](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-pages-articles-multistream.xml.bz2): This is used to get the text, title, and id of wikipedia pages
 * [Wikipedia titles](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-all-titles.gz): This is used for more convenient access to wikipedia page titles
 * [Wikipedia redirects](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-redirect.sql.gz): DB dump for wikipedia redirects, used for resolving different ways of referencing the same wikipedia entity
 * [Wikipedia page to ids](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-page.sql.gz): Contains a mapping of wikipedia page and ids, necessary for making the redirect table useful
+
+To process wikipedia we use [https://github.com/attardi/wikiextractor](https://github.com/attardi/wikiextractor)
+with the following command:
+
+```bash
+$ WikiExtractor.py --processes 15 -o parsed-wiki --json --filter_disambig_pages enwiki-20170401-pages-articles-multistream.xml.bz2
+```
 
 NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
 
