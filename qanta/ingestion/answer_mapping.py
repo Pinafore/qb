@@ -1,10 +1,12 @@
 from typing import Tuple, Set, Dict, List, Callable, Iterable, Optional
+from pprint import pformat
 import csv
 import json
 import re
 import pickle
-from collections import defaultdict
+from collections import defaultdict, Counter
 from unidecode import unidecode
+import tqdm
 
 from nltk.corpus import wordnet
 
@@ -21,18 +23,27 @@ MatchRule = Callable[[str], Optional[str]]
 
 
 def mapping_rules_to_answer_map(
-        expansion_rules: List[Tuple[str, ExpansionRule]],
-        match_rules: List[Tuple[str, MatchRule]],
+        expansion_rules: List[Tuple[str, int, ExpansionRule]],
+        match_rules: List[Tuple[str, int, MatchRule]],
         wiki_titles: Set[str], wiki_redirects_source,
         unmapped_answers: Set[str]):
+    log.info('Creating wikipedia title variants for matching')
+    log.info('Exact titles ')
     exact_titles = {t: t for t in wiki_titles}
+    log.info('Unidecode titles')
     unicode_titles = {unidecode(t): t for t in wiki_titles}
+    log.info('Lower titles')
     lower_titles = {t.lower(): t for t in wiki_titles}
+    log.info('Lower unidecode titles')
     lower_unicode_titles = {unidecode(t.lower()): t for t in wiki_titles}
 
+    log.info('Exact redirects')
     exact_wiki_redirects = {text: page for text, page in wiki_redirects_source.items()}
+    log.info('Unidecode redirects')
     unicode_wiki_redirects = {unidecode(text): page for text, page in wiki_redirects_source.items()}
+    log.info('Lower redirects')
     lower_wiki_redirects = {text.lower(): page for text, page in wiki_redirects_source.items()}
+    log.info('Lower Unidecode redirects')
     lower_unicode_wiki_redirects = {unidecode(text.lower()): page for text, page in wiki_redirects_source.items()}
 
     answer_map = {}
@@ -40,27 +51,36 @@ def mapping_rules_to_answer_map(
     # Clone the set to prevent accidental mutation of the original
     unmapped_answers = set(unmapped_answers)
 
-    original_num = len(unmapped_answers)
-    log.info(f'{original_num} Unmapped Answers Exist\nStarting Answer Mapping\n')
-
-    expansion_answer_map = defaultdict(set)
-    for ans in unmapped_answers:
-        expansion_answer_map[ans].add(ans)
-
-    for name, rule_func in expansion_rules:
+    n_unmapped = len(unmapped_answers)
+    log.info(f'{n_unmapped} Unmapped Answers Exist\nStarting Answer Mapping\n')
+    expansion_answer_map = defaultdict(dict)  # type: Dict[str, Dict[str, Tuple[int, str]]]
+    for name, priority, rule_func in sorted(expansion_rules, key=lambda x: x[1], reverse=True):
         log.info(f'Applying expansion rule: {name}')
         for raw_ans in unmapped_answers:
             for exp_ans in rule_func(raw_ans):
-                expansion_answer_map[raw_ans].add(exp_ans.strip())
+                exp_ans = exp_ans.strip()
+                if exp_ans in expansion_answer_map[raw_ans]:
+                    curr_priority, _ = expansion_answer_map[raw_ans][exp_ans]
+                    if priority > curr_priority:
+                        expansion_answer_map[raw_ans][exp_ans] = priority, name
+                else:
+                    expansion_answer_map[raw_ans][exp_ans] = priority, name
 
-    for name, rule_func in match_rules:
-        curr_num = len(unmapped_answers)
-        log.info(f'Applying rule: {name}')
-
-        for original_ans, ans_expansions in expansion_answer_map.items():
-            for raw_ans in ans_expansions:
-                rule_ans = re.sub(r'\s+', ' ', rule_func(raw_ans).strip()).strip()
+    sorted_match_rules = sorted(match_rules, key=lambda x: x[1], reverse=True)
+    expansion_counts = Counter()
+    match_counts = Counter()
+    for original_ans, ans_expansions in tqdm.tqdm(expansion_answer_map.items()):
+        # We don't need the expansion priority anymore, its already been sorted
+        for match_name, _, rule_func in sorted_match_rules:
+            # We don't need the match priority anymore, its already been sorted
+            for raw_ans, (_, expansion_name) in sorted(ans_expansions.items(), key=lambda x: x[1], reverse=True):
+                rule_ans = re.sub(r'\s+', ' ', rule_func(raw_ans)).strip()
                 lower_ans = rule_ans.lower()
+
+                # If we already have an answer, be definition it must be of higher priority so we do not allow
+                # overwriting it.
+                if original_ans in answer_map:
+                    continue
 
                 # continue statements: We only need at least one expansion to match.
                 # Once we find it we can skip looking at the others
@@ -69,52 +89,65 @@ def mapping_rules_to_answer_map(
                 m = try_match(rule_ans, exact_titles)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
                 m = try_match(rule_ans, exact_wiki_redirects)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
                 m = try_match(rule_ans, unicode_titles)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
                 m = try_match(rule_ans, unicode_wiki_redirects)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
                 m = try_match(lower_ans, lower_titles)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
                 m = try_match(lower_ans, lower_wiki_redirects)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
                 m = try_match(lower_ans, lower_unicode_titles)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
                 m = try_match(lower_ans, lower_unicode_wiki_redirects)
                 if m is not None:
                     answer_map[original_ans] = m
+                    match_counts[match_name] += 1
+                    expansion_counts[expansion_name] += 1
                     continue
 
-        unmapped_answers -= set(answer_map.keys())
-        removed_num = curr_num - len(unmapped_answers)
-        log.info(f'{removed_num} Answers Mapped')
-        log.info(f'{len(unmapped_answers)} remain\n')
+    n_mapped = len(answer_map)
+    log.info(f'Expansion Breakdown:\n{pformat(expansion_counts)}')
+    log.info(f'Match Breakdown:\n{pformat(match_counts)}')
+    log.info(f'\nAnswer Mapping Complete\n{n_unmapped - n_mapped} Unmapped Remain, {n_mapped} Mappings Found')
 
-    end_num = len(unmapped_answers)
-    log.info(f'\nAnswer Mapping Complete\n{end_num} Unmapped Remain, {len(answer_map)} Mappings Found')
-
-    return answer_map, unmapped_answers
+    return answer_map, unmapped_answers, expansion_counts, match_counts
 
 
 # Expansion rule functions
@@ -127,24 +160,28 @@ def or_rule(ans):
         return ()
 
 
+def exact_rule(ans):
+    return (ans,)
+
+
 def prompt_rule(ans):
-    ans = ans.lower()
-    if 'accept' in ans or 'prompt' in ans or 'pronounce' in ans:
-        m = re.match(r'(.+)\(.*(?:accept|prompt|pronounce).*\)', ans)
+    l_ans = ans.lower()
+    if 'accept' in l_ans or 'prompt' in l_ans or 'pronounce' in l_ans:
+        m = re.match(r'(.+)\(.*(?:accept|prompt|pronounce).*\)', ans, flags=re.IGNORECASE)
         if m is not None:
             return (m.group(1).strip(),)
 
-        m = re.match(r'(.+)\[.*(?:accept|prompt|pronounce).*\]', ans)
+        m = re.match(r'(.+)\[.*(?:accept|prompt|pronounce).*\]', ans, flags=re.IGNORECASE)
         if m is not None:
             return (m.group(1).strip(),)
 
         return ()
-    elif 'or' in ans:
-        m = re.match(r'(.+)\(.*(?:or).*\)', ans)
+    elif 'or' in l_ans:
+        m = re.match(r'(.+)\(.*(?:or).*\)', ans, flags=re.IGNORECASE)
         if m is not None:
             return (m.group(1).strip(),)
 
-        m = re.match(r'(.+)\[.*(?:or).*\]', ans)
+        m = re.match(r'(.+)\[.*(?:or).*\]', ans, flags=re.IGNORECASE)
         if m is not None:
             return (m.group(1).strip(),)
 
@@ -156,9 +193,9 @@ def prompt_rule(ans):
 def the_rule(ans):
     l_ans = ans.lower()
     if 'the' in l_ans:
-        return (l_ans.replace('the', ''),)
+        return (re.sub('the', '', ans, flags=re.IGNORECASE),)
     else:
-        return ('the ' + l_ans.lower(),)
+        return ('the ' + ans, 'The ' + ans)
 
 
 def plural_rule(ans):
@@ -179,9 +216,9 @@ def apostraphe_rule(ans):
 def answer_rule(ans):
     l_ans = ans.lower()
     if 'answers:' in l_ans:
-        return (l_ans.replace('answers:', ''),)
+        return (re.sub(r'answers:', '', ans, flags=re.IGNORECASE),)
     elif 'answer:' in l_ans:
-        return (l_ans.replace('answer:', ''),)
+        return (re.sub(r'answer:', '', ans, flags=re.IGNORECASE),)
     else:
         return ()
 
@@ -203,7 +240,7 @@ def parens_rule(ans):
 
 def sir_rule(ans):
     if 'sir' in ans.lower():
-        return (ans.lower().replace('sir', ''),)
+        return (re.sub(r'sir', '', ans, flags=re.IGNORECASE),)
     else:
         return ()
 
@@ -238,32 +275,33 @@ def compose(*funcs):
     return composed_function
 
 
-def create_expansion_rules():
+def create_expansion_rules() -> List[Tuple[str, int, ExpansionRule]]:
     # Apply this rules to generate multiple possible answers from one distinct answer
     expansion_rules = [
-        ('or', or_rule),
-        ('the', the_rule),
-        ('prompt', prompt_rule),
-        ('apostraphe', apostraphe_rule),
-        ('parens', parens_rule),
-        ('unicode', unicode_rule),
-        ('sir', sir_rule),
-        ('answer', answer_rule),
-        ('optional-text', optional_text_rule)
+        ('exact', 100, exact_rule),
+        ('unicode', 50, unicode_rule),
+        ('optional-text', 40, optional_text_rule),
+        ('apostraphe', 30, apostraphe_rule),
+        ('parens', 25, parens_rule),
+        ('answer', 20, answer_rule),
+        ('the', 10, the_rule),
+        ('sir', 5, sir_rule),
+        ('or', 1, or_rule),
+        ('prompt', 0, prompt_rule),
     ]
     return expansion_rules
 
 
-def create_match_rules():
+def create_match_rules() -> List[Tuple[str, int, MatchRule]]:
     # Take an answer, format it, then check if there is an exact match
     match_rules = [
-        ('exact match', lambda x: x),
-        ('braces', remove_braces),
-        ('quotes', remove_quotes),
-        ('parens', remove_parens),
-        ('braces+quotes', compose(remove_braces, remove_quotes)),
-        ('braces+plural', compose(remove_braces, plural_rule)),
-        ('quotes+braces+plural', compose(remove_braces, remove_quotes, plural_rule))
+        ('exact match', 10, lambda x: x),
+        ('braces', 1, remove_braces),
+        ('quotes', 1, remove_quotes),
+        ('parens', 1, remove_parens),
+        ('braces+quotes', 1, compose(remove_braces, remove_quotes)),
+        ('braces+plural', 0, compose(remove_braces, plural_rule)),
+        ('quotes+braces+plural', 0, compose(remove_braces, remove_quotes, plural_rule))
     ]
     return match_rules
 
@@ -284,12 +322,12 @@ def create_answer_map(unmapped_qanta_questions):
     wiki_redirect_map = read_wiki_redirects(wiki_titles)
 
     log.info('Starting Answer Mapping Process')
-    answer_map, unbound_answers = mapping_rules_to_answer_map(
+    answer_map, unbound_answers, expansion_counts, match_counts = mapping_rules_to_answer_map(
         expansion_rules, match_rules,
         wiki_titles, wiki_redirect_map,
         raw_unmapped_answers
     )
-    return answer_map, unbound_answers
+    return answer_map, unbound_answers, expansion_counts, match_counts
 
 
 def try_match(ans_text, title_map):

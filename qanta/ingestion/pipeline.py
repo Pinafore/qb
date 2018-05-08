@@ -132,7 +132,7 @@ class CreateAnswerMap(Task):
         with open(QANTA_PREPROCESSED_DATASET_PATH) as f:
             unmapped_qanta_questions = json.load(f)['questions']
 
-        answer_map, unbound_answers = create_answer_map(unmapped_qanta_questions)
+        answer_map, unbound_answers, expansion_counts, match_counts = create_answer_map(unmapped_qanta_questions)
         write_answer_map(answer_map, unbound_answers, ANSWER_MAP_PATH, UNBOUND_ANSWER_PATH)
 
     def output(self):
