@@ -33,5 +33,7 @@ def main():
             page = normalize(option['page'])
             if page not in titles:
                 print(f'Title not found: {page}')
+
+
 if __name__ == '__main__':
     main()
