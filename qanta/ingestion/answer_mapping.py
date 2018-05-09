@@ -4,7 +4,7 @@ import csv
 import json
 import re
 import pickle
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, OrderedDict
 from unidecode import unidecode
 import tqdm
 
@@ -22,31 +22,100 @@ ExpansionRule = Callable[[str], Iterable[str]]
 MatchRule = Callable[[str], Optional[str]]
 
 
+def make_source_list(
+        wiki_titles: Set[str], wiki_redirects_source: Dict[str, str]) -> List[Tuple[str, Dict[str, str], bool]]:
+    exact_titles = {}
+    unicode_titles = {}
+    lower_titles = {}
+    lower_unicode_titles = {}
+    for title in wiki_titles:
+        # exact titles
+        exact_titles[title] = title
+
+        # unicode titles
+        u_title = unidecode(title)
+        if len(title) != 1 or len(title) == len(u_title):
+            unicode_titles[u_title] = title
+
+        # lower titles
+        l_title = title.lower()
+        lower_titles[l_title] = title
+
+        u_l_title = unidecode(l_title)
+        if len(title) != 1 or len(title) == len(u_l_title):
+            lower_unicode_titles[u_l_title] = title
+
+    exact_wiki_redirects = {}
+    unicode_wiki_redirects = {}
+    lower_wiki_redirects = {}
+    lower_unicode_wiki_redirects = {}
+    for text, page in wiki_redirects_source.items():
+        exact_wiki_redirects[text] = page
+
+        u_text = unidecode(text)
+        if len(text) != 1 or len(text) == len(u_text):
+            unicode_wiki_redirects[u_text] = page
+
+        l_text = text.lower()
+        lower_wiki_redirects[l_text] = page
+
+        u_l_text = unidecode(l_text)
+        if len(text) != 1 or len(text) == len(u_l_text):
+            lower_unicode_wiki_redirects[u_l_text] = page
+
+    return [
+        ('exact_title', exact_titles, False),
+        ('exact_redirect', exact_wiki_redirects, False),
+        ('unicode_title', unicode_titles, False),
+        ('unicode_redirect', unicode_wiki_redirects, False),
+        ('lower_title', lower_titles, True),
+        ('lower_redirect', lower_wiki_redirects, True),
+        ('lower_unicode_title', lower_unicode_titles, True),
+        ('lower_unicode_redirect', lower_unicode_wiki_redirects, True)
+    ]
+
+
+DISAMBIG_SYNONYMS = {
+    'mythology': {'myth', 'deity', 'god', 'goddess'}
+}
+DISAMB_KEYWORD_BLACKLIST = {'name', 'disambiguation'}
+
+# List of exact title with keyword indicating when the title should be used
+# For example, [('Paris_(mythology)', 'mythology'), ('Paris_(band)', 'band')]
+AmbigOptions = Set[Tuple[str, str]]
+# Answer string to AmbigOptions
+# Following the above example (referred to as paris_options, this could be {'Paris': paris_options}
+AmbigMap = Dict[str, AmbigOptions]
+
+
+def make_disamb_list(wiki_titles: Set[str]) -> AmbigMap:
+    disamb_candidates = defaultdict(set)
+    disamb_re = re.compile(r'(^[^\(\)]+)\_\((.+)\)$')
+    for t in wiki_titles:
+        m = re.match(disamb_re, t)
+        if m is not None:
+            amb_title, keyword = m.group(1), m.group(2)
+            if keyword not in DISAMB_KEYWORD_BLACKLIST:
+                if '_' in keyword:
+                    if 'film' in keyword:
+                        disamb_candidates[amb_title].add((t, 'film'))
+                else:
+                    disamb_candidates[amb_title].add((t, keyword))
+
+    return disamb_candidates
+
+
 def mapping_rules_to_answer_map(
         expansion_rules: List[Tuple[str, int, ExpansionRule]],
         match_rules: List[Tuple[str, int, MatchRule]],
         wiki_titles: Set[str], wiki_redirects_source,
         unmapped_answers: Set[str]):
     log.info('Creating wikipedia title variants for matching')
-    log.info('Exact titles ')
-    exact_titles = {t: t for t in wiki_titles}
-    log.info('Unidecode titles')
-    unicode_titles = {unidecode(t): t for t in wiki_titles}
-    log.info('Lower titles')
-    lower_titles = {t.lower(): t for t in wiki_titles}
-    log.info('Lower unidecode titles')
-    lower_unicode_titles = {unidecode(t.lower()): t for t in wiki_titles}
 
-    log.info('Exact redirects')
-    exact_wiki_redirects = {text: page for text, page in wiki_redirects_source.items()}
-    log.info('Unidecode redirects')
-    unicode_wiki_redirects = {unidecode(text): page for text, page in wiki_redirects_source.items()}
-    log.info('Lower redirects')
-    lower_wiki_redirects = {text.lower(): page for text, page in wiki_redirects_source.items()}
-    log.info('Lower Unidecode redirects')
-    lower_unicode_wiki_redirects = {unidecode(text.lower()): page for text, page in wiki_redirects_source.items()}
-
+    source_list = make_source_list(wiki_titles, wiki_redirects_source)
+    disamb_candidates = make_disamb_list(wiki_titles)
     answer_map = {}
+    amb_answer_map = defaultdict(list)
 
     # Clone the set to prevent accidental mutation of the original
     unmapped_answers = set(unmapped_answers)
@@ -69,6 +138,7 @@ def mapping_rules_to_answer_map(
     sorted_match_rules = sorted(match_rules, key=lambda x: x[1], reverse=True)
     expansion_counts = Counter()
     match_counts = Counter()
+    source_counts = Counter()
     for original_ans, ans_expansions in tqdm.tqdm(expansion_answer_map.items()):
         # We don't need the expansion priority anymore, its already been sorted
         for match_name, _, rule_func in sorted_match_rules:
@@ -76,78 +146,72 @@ def mapping_rules_to_answer_map(
             for raw_ans, (_, expansion_name) in sorted(ans_expansions.items(), key=lambda x: x[1], reverse=True):
                 rule_ans = re.sub(r'\s+', ' ', rule_func(raw_ans)).strip()
                 lower_ans = rule_ans.lower()
+                is_upper = rule_ans.isupper()
 
                 # If we already have an answer, be definition it must be of higher priority so we do not allow
                 # overwriting it.
-                if original_ans in answer_map:
-                    continue
+                rule_ans = re.sub(r'\s+', ' ', rule_func(raw_ans)).strip()
+                if original_ans not in answer_map:
+                    match, source = find_match(rule_ans, lower_ans, is_upper, source_list)
 
-                # continue statements: We only need at least one expansion to match.
-                # Once we find it we can skip looking at the others
-                # Order here matters. We should go from the most strict match conditions to
-                # most flexible (eg exact before lowercase, unicode ignoring before lowercase).
-                m = try_match(rule_ans, exact_titles)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
+                    if match is not None:
+                        answer_map[original_ans] = match
+                        match_counts[match_name] += 1
+                        expansion_counts[expansion_name] += 1
+                        source_counts[source] += 1
 
-                m = try_match(rule_ans, exact_wiki_redirects)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
+                amb_match, ambig_source = find_amb_match(rule_ans, lower_ans, is_upper, disamb_candidates)
+                if amb_match is not None:
+                    amb_answer_map[original_ans].extend(amb_match)
 
-                m = try_match(rule_ans, unicode_titles)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
-
-                m = try_match(rule_ans, unicode_wiki_redirects)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
-
-                m = try_match(lower_ans, lower_titles)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
-
-                m = try_match(lower_ans, lower_wiki_redirects)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
-
-                m = try_match(lower_ans, lower_unicode_titles)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
-
-                m = try_match(lower_ans, lower_unicode_wiki_redirects)
-                if m is not None:
-                    answer_map[original_ans] = m
-                    match_counts[match_name] += 1
-                    expansion_counts[expansion_name] += 1
-                    continue
+    # Ambig options should be unique, but respect insertion order. They must also be json serializable
+    for k in amb_answer_map:
+        options = amb_answer_map[k]
+        unique_options = OrderedDict()
+        for o in options:
+            unique_options[o] = None
+        amb_answer_map[k] = list(unique_options.keys())
 
     n_mapped = len(answer_map)
     log.info(f'Expansion Breakdown:\n{pformat(expansion_counts)}')
     log.info(f'Match Breakdown:\n{pformat(match_counts)}')
+    log.info(f'Source Breakdown:\n{pformat(source_counts)}')
     log.info(f'\nAnswer Mapping Complete\n{n_unmapped - n_mapped} Unmapped Remain, {n_mapped} Mappings Found')
 
-    return answer_map, unmapped_answers, expansion_counts, match_counts
+    return answer_map, amb_answer_map, unmapped_answers
+
+
+def try_match(ans_text, title_map):
+    und_text = ans_text.replace(' ', '_')
+    if ans_text in title_map:
+        return title_map[ans_text]
+    elif und_text in title_map:
+        return title_map[und_text]
+    else:
+        return None
+
+
+def find_match(rule_ans, lower_ans, is_upper, source_list) -> Tuple[Optional[str], Optional[str]]:
+    for source_name, source, lower in source_list:
+        if lower:
+            if not is_upper:
+                m = try_match(lower_ans, source)
+                if m is not None:
+                    return m, source_name
+        else:
+            m = try_match(rule_ans, source)
+            if m is not None:
+                return m, source_name
+    return None, None
+
+
+def find_amb_match(rule_ans, lower_ans, is_upper, source: AmbigMap) -> Tuple[Optional[AmbigOptions], Optional[str]]:
+    m = try_match(rule_ans, source)
+    if m is not None:
+        return m, 'disambig_exact'
+    else:
+        return None, None
+
 
 
 # Expansion rule functions
@@ -245,10 +309,22 @@ def sir_rule(ans):
         return ()
 
 
+def amp_rule(ans):
+    if '&' in ans:
+        return (ans.replace('&', 'and'),)
+    else:
+        return ()
+
+
 def unicode_rule(ans):
     unicode_ans = unidecode(ans)
     if ans != unicode_ans:
-        return (unicode_ans,)
+        # Handle things like Korean characters redirecting to Hannibal. unidecode expands these to multi-character
+        # sequences which are not words. We should ignore these
+        if len(ans) == 1 and len(ans) != len(unicode_ans):
+            return ()
+        else:
+            return (unicode_ans,)
     else:
         return ()
 
@@ -282,6 +358,7 @@ def create_expansion_rules() -> List[Tuple[str, int, ExpansionRule]]:
         ('unicode', 50, unicode_rule),
         ('optional-text', 40, optional_text_rule),
         ('apostraphe', 30, apostraphe_rule),
+        ('amp', 27, amp_rule),
         ('parens', 25, parens_rule),
         ('answer', 20, answer_rule),
         ('the', 10, the_rule),
@@ -322,27 +399,21 @@ def create_answer_map(unmapped_qanta_questions):
     wiki_redirect_map = read_wiki_redirects(wiki_titles)
 
     log.info('Starting Answer Mapping Process')
-    answer_map, unbound_answers, expansion_counts, match_counts = mapping_rules_to_answer_map(
+    answer_map, amb_answer_map, unbound_answers = mapping_rules_to_answer_map(
         expansion_rules, match_rules,
         wiki_titles, wiki_redirect_map,
         raw_unmapped_answers
     )
-    return answer_map, unbound_answers, expansion_counts, match_counts
+    return answer_map, amb_answer_map, unbound_answers
 
 
-def try_match(ans_text, title_map):
-    und_text = ans_text.replace(' ', '_')
-    if ans_text in title_map:
-        return title_map[ans_text]
-    elif und_text in title_map:
-        return title_map[und_text]
-    else:
-        return None
-
-
-def write_answer_map(answer_map, unbound_answers, answer_map_path, unbound_answer_path):
+def write_answer_map(answer_map, amb_answer_map,
+                     unbound_answers, answer_map_path, unbound_answer_path):
     with safe_open(answer_map_path, 'w') as f:
-        json.dump({'answer_map': answer_map}, f)
+        json.dump({
+            'answer_map': answer_map,
+            'ambig_answer_map': amb_answer_map
+        }, f)
 
     with safe_open(unbound_answer_path, 'w') as f:
         json.dump({'unbound_answers': list(sorted(unbound_answers))}, f)
