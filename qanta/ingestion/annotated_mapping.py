@@ -61,29 +61,29 @@ PROTOBOWL_DIRECT = 'data/internal/page_assignment/direct/protobowl.yaml'
 class PageAssigner:
     def __init__(self):
         with open(PROTOBOWL_DIRECT) as f:
-            self._protobowl_direct = yaml.load(f)['direct']
+            self.protobowl_direct = yaml.load(f)['direct']
         with open(QUIZDB_DIRECT) as f:
-            self._quizdb_direct = yaml.load(f)['direct']
+            self.quizdb_direct = yaml.load(f)['direct']
 
         with open(WIKI_TITLES_PICKLE, 'rb') as f:
             self._wiki_titles = pickle.load(f)
 
-        self._ambiguous = {}
-        self._unambiguous = {}
+        self.ambiguous = {}
+        self.unambiguous = {}
         for f in ANNOTATED_MAPPING_FILES:
             path = os.path.join(ANNOTATED_MAPPING_PATH, 'ambiguous', f'{f}.yaml')
             a_map = load_ambiguous_mapping(path)
             for k, v in a_map.items():
-                self._ambiguous[k] = v
+                self.ambiguous[k] = v
 
             path = os.path.join(ANNOTATED_MAPPING_PATH, 'unambiguous', f'{f}.yaml')
             u_map = load_unambiguous_mapping(path)
             for k, v in u_map.items():
-                self._unambiguous[k] = v
+                self.unambiguous[k] = v
 
     def maybe_ambiguous(self, answer: str, words: List[str]) -> Result[str, str]:
-        if answer in self._ambiguous:
-            matches = self._ambiguous[answer]
+        if answer in self.ambiguous:
+            matches = self.ambiguous[answer]
             maybe_page = None
             word_set = set(words)
             for m in matches:
@@ -109,17 +109,17 @@ class PageAssigner:
 
     def _maybe_assign(self, *, answer=None, question_text=None, qdb_id=None, proto_id=None) -> Result[str, str]:
         if answer is None:
-            if qdb_id in self._quizdb_direct:
-                return Ok(self._quizdb_direct[qdb_id])
-            elif proto_id in self._protobowl_direct:
-                return Ok(self._protobowl_direct[proto_id])
+            if qdb_id in self.quizdb_direct:
+                return Ok(self.quizdb_direct[qdb_id])
+            elif proto_id in self.protobowl_direct:
+                return Ok(self.protobowl_direct[proto_id])
             else:
                 return Err('Cannot have answer, qdb_id, and proto_id all be None')
         else:
             answer = normalize_answer(answer)
             if question_text is None:
-                if answer in self._unambiguous:
-                    return Ok(self._unambiguous[answer])
+                if answer in self.unambiguous:
+                    return Ok(self.unambiguous[answer])
                 else:
                     return Err('No match and no question text')
             else:
@@ -128,8 +128,8 @@ class PageAssigner:
                 if maybe_page.is_ok():
                     return maybe_page
                 else:
-                    if answer in self._unambiguous:
-                        return Ok(self._unambiguous[answer])
+                    if answer in self.unambiguous:
+                        return Ok(self.unambiguous[answer])
                     else:
                         return Err('No match found')
 
