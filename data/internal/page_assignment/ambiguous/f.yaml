@@ -30,3 +30,15 @@ ambiguous:
   - page: Friday_(novel)
     words:
     - heinlein
+  francis bacon:
+  - page: Francis_Bacon
+    words:
+    - philosopher
+    - scientist
+    - scientific
+    - organum
+  - page: Francis_Bacon_(artist)
+    words:
+    - artist
+    - irish
+    - pope
