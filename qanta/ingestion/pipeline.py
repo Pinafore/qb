@@ -173,7 +173,7 @@ class CreateMappedQantaDataset(Task):
             qanta_questions = json.load(f)['questions']
 
         page_assigner = PageAssigner()
-        mapping_report = unmapped_to_mapped_questions(qanta_questions, answer_map, page_assigner)
+        mapping_report = unmapped_to_mapped_questions(qanta_questions, answer_map, ambig_answer_map, page_assigner)
 
         with open(QANTA_MAPPED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)

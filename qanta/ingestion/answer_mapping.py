@@ -419,7 +419,7 @@ def write_answer_map(answer_map, amb_answer_map,
         json.dump({'unbound_answers': list(sorted(unbound_answers))}, f)
 
 
-def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assigner: PageAssigner):
+def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, ambig_answer_map, page_assigner: PageAssigner):
     train_unmatched_questions = []
     test_unmatched_questions = []
     match_report = {}
@@ -433,11 +433,44 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
             answer=answer, question_text=q['text'], qdb_id=qdb_id, proto_id=proto_id
         )
         automatic_page = answer_map[answer] if answer in answer_map else None
+        ambig_automatic_error = None
+        ambig_automatic_page = None
+        if answer in ambig_answer_map:
+            words = set(q['text'].lower().split())
+            options = ambig_answer_map[answer]
+            ambig_automatic_page = None
+            for page, keyword in options:
+                if keyword in words:
+                    if ambig_automatic_page is None and ambig_automatic_error is None:
+                        ambig_automatic_page = page
+                    else:
+                        if ambig_automatic_error is None:
+                            ambig_automatic_page = None
+                            ambig_automatic_error = 'Ambig Matches: ' + page
+                        else:
+                            ambig_automatic_page = None
+                            ambig_automatic_error += ' ' + page
+
+        automatic_error = None
+        if automatic_page is not None and ambig_automatic_page is not None:
+            if automatic_page != ambig_automatic_page:
+                # Use automatic_page, but emit a warning
+                automatic_error = f'Ambiguity Warning: {automatic_page} {ambig_automatic_page}'
+        elif automatic_page is None and ambig_automatic_page is not None:
+            # This is the safe case where we attempt to match when there isn't a match already
+            automatic_page = ambig_automatic_page
+        elif automatic_page is not None and ambig_automatic_page is None:
+            # Do nothing here since by default automatic_page is used
+            pass
+        else:
+            # if both are None, then there is no automatic match
+            automatic_error = 'No match'
+
         if (annotated_page is None) and (automatic_page is None):
             match_report[qanta_id] = {
                 'result': 'none',
                 'annotated_error': annotated_error,
-                'automatic_error': None,
+                'automatic_error': automatic_error,
                 'annotated_page': annotated_page,
                 'automatic_page': automatic_page
             }
@@ -450,7 +483,7 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
             match_report[qanta_id] = {
                 'result': 'annotated',
                 'annotated_error': annotated_error,
-                'automatic_error': None,
+                'automatic_error': automatic_error,
                 'annotated_page': annotated_page,
                 'automatic_page': automatic_page
             }
@@ -459,7 +492,7 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
             match_report[qanta_id] = {
                 'result': 'automatic',
                 'annotated_error': annotated_error,
-                'automatic_error': None,
+                'automatic_error': automatic_error,
                 'annotated_page': annotated_page,
                 'automatic_page': automatic_page
             }
@@ -469,7 +502,7 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
                 match_report[qanta_id] = {
                     'result': 'annotated+automatic',
                     'annotated_error': annotated_error,
-                    'automatic_error': None,
+                    'automatic_error': automatic_error,
                     'annotated_page': annotated_page,
                     'automatic_page': automatic_page
                 }
@@ -478,7 +511,7 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, page_assi
                 match_report[qanta_id] = {
                     'result': 'disagree',
                     'annotated_error': annotated_error,
-                    'automatic_error': None,
+                    'automatic_error': automatic_error,
                     'annotated_page': annotated_page,
                     'automatic_page': automatic_page
                 }
