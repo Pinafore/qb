@@ -106,7 +106,6 @@ class PageAssigner:
         else:
             return Err('No match found')
 
-
     def _maybe_assign(self, *, answer=None, question_text=None, qdb_id=None, proto_id=None) -> Result[str, str]:
         if answer is None:
             if qdb_id in self.quizdb_direct:
@@ -123,7 +122,7 @@ class PageAssigner:
                 else:
                     return Err('No match and no question text')
             else:
-                words = question_text.lower().split()
+                words = re.sub(r'[^a-zA-Z0-9\s]', '', question_text.lower()).split()
                 maybe_page = self.maybe_ambiguous(answer, words)
                 if maybe_page.is_ok():
                     return maybe_page
@@ -142,7 +141,6 @@ class PageAssigner:
             return maybe_page.value, None
         else:
             return None, maybe_page.value
-
 
     def _check_page_in_titles(self, maybe_page: Result[str, str]) -> Result[str, str]:
         if maybe_page.is_err():
