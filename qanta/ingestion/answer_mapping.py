@@ -67,11 +67,9 @@ def make_source_list(
         ('exact_title', exact_titles, False),
         ('exact_redirect', exact_wiki_redirects, False),
         ('unicode_title', unicode_titles, False),
-        ('unicode_redirect', unicode_wiki_redirects, False),
         ('lower_title', lower_titles, True),
         ('lower_redirect', lower_wiki_redirects, True),
-        ('lower_unicode_title', lower_unicode_titles, True),
-        ('lower_unicode_redirect', lower_unicode_wiki_redirects, True)
+        ('lower_unicode_title', lower_unicode_titles, True)
     ]
 
 
@@ -136,9 +134,11 @@ def mapping_rules_to_answer_map(
                     expansion_answer_map[raw_ans][exp_ans] = priority, name
 
     sorted_match_rules = sorted(match_rules, key=lambda x: x[1], reverse=True)
-    expansion_counts = Counter()
-    match_counts = Counter()
-    source_counts = Counter()
+    report = {
+        'expansion': {},
+        'match': {},
+        'source': {}
+    }
     for original_ans, ans_expansions in tqdm.tqdm(expansion_answer_map.items()):
         # We don't need the expansion priority anymore, its already been sorted
         for match_name, _, rule_func in sorted_match_rules:
@@ -156,9 +156,9 @@ def mapping_rules_to_answer_map(
 
                     if match is not None:
                         answer_map[original_ans] = match
-                        match_counts[match_name] += 1
-                        expansion_counts[expansion_name] += 1
-                        source_counts[source] += 1
+                        report['expansion'][original_ans] = match_name
+                        report['match'][original_ans] = expansion_name
+                        report['source'][original_ans] = source
 
                 amb_match, ambig_source = find_amb_match(rule_ans, disamb_candidates)
                 if amb_match is not None:
@@ -173,12 +173,18 @@ def mapping_rules_to_answer_map(
         amb_answer_map[k] = list(unique_options.keys())
 
     n_mapped = len(answer_map)
+    expansion_counts = Counter(report['expansion'].values())
+    match_counts = Counter(report['match'].values())
+    source_counts = Counter(report['source'].values())
+    report['expansion_counts'] = expansion_counts
+    report['match_counts'] = match_counts
+    report['source_counts'] = source_counts
     log.info(f'Expansion Breakdown:\n{pformat(expansion_counts)}')
     log.info(f'Match Breakdown:\n{pformat(match_counts)}')
     log.info(f'Source Breakdown:\n{pformat(source_counts)}')
     log.info(f'\nAnswer Mapping Complete\n{n_unmapped - n_mapped} Unmapped Remain, {n_mapped} Mappings Found')
 
-    return answer_map, amb_answer_map, unmapped_answers
+    return answer_map, amb_answer_map, unmapped_answers, report
 
 
 def try_match(ans_text, title_map):
@@ -211,7 +217,6 @@ def find_amb_match(rule_ans, source: AmbigMap) -> Tuple[Optional[AmbigOptions], 
         return m, 'disambig_exact'
     else:
         return None, None
-
 
 
 # Expansion rule functions
@@ -399,12 +404,12 @@ def create_answer_map(unmapped_qanta_questions):
     wiki_redirect_map = read_wiki_redirects(wiki_titles)
 
     log.info('Starting Answer Mapping Process')
-    answer_map, amb_answer_map, unbound_answers = mapping_rules_to_answer_map(
+    answer_map, amb_answer_map, unbound_answers, report = mapping_rules_to_answer_map(
         expansion_rules, match_rules,
         wiki_titles, wiki_redirect_map,
         raw_unmapped_answers
     )
-    return answer_map, amb_answer_map, unbound_answers
+    return answer_map, amb_answer_map, unbound_answers, report
 
 
 def write_answer_map(answer_map, amb_answer_map,
