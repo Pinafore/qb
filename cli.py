@@ -222,7 +222,7 @@ def answer_map_google_csvs():
 def categorylinks_to_disambiguation(category_csv, out_json):
     disambiguation_pages = set()
     with open(category_csv) as f:
-        reader = csv.reader(f, quoting=csv.QUOTE_MINIMAL)
+        reader = csv.reader(f)
         for r in tqdm.tqdm(reader, mininterval=1):
             page_id, category = r[0], r[1]
             if 'disambiguation' in category.lower():

@@ -161,6 +161,8 @@ NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this
 
 #### Wikipedia Redirect Mapping Creation
 
+The output of this process is stored in `s3://pinafore-us-west-2/public/wiki_redirects.csv`
+
 All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps. For this task we will need these tables:
 
 * Redirect table: https://www.mediawiki.org/wiki/Manual:Redirect_table
@@ -178,6 +180,22 @@ To install, prepare MySQL, and read in the Wikipedia SQL dumps execute the follo
 7. Finally run the query to fetch the redirect mapping and write it to a CSV by executing `bin/redirect.sql` with `source bin/redirect.sql`. The file will be located in `/var/lib/mysql/redirect.csv` which requires `sudo` access to copy
 8. The result of that query is CSV file containing a source page id, source page title, and target page title. This can be
 interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
+
+#### Wikipedia Category Links Creation
+
+The purpose of this step is to use wikipedia category links to filter out disambiguation pages. Every wikipedia page
+has a list of categories it belongs to. We filter out any pages which have a category which includes the string `disambiguation`
+in its name. The output of this process is a json file containing a list of page_ids that correspond to known disambiguation pages.
+These are then used downstream to filter down to only non-disambiguation wikipedia pages.
+
+The output of this process is stored in `s3://pinafore-us-west-2/public/disambiguation_pages.json` with the csv also
+saved at `s3://pinafore-us-west-2/public/categorylinks.csv`
+
+The process for this is similar to redirects, except that you should instead source a file named similar to `enwiki-20170401-categorylinks.sql`, run
+the script `bin/categories.sql`, and copy `categorylinks.csv`. Afterwards run `./cli.py categorylinks_to_disambiguation categorylinks.csv data/external/wikipedia/disambiguation_pages.json`.
+This file is automatically downloaded by the pipeline code like the redirects file so unless you would like to change this or inspect the results, you shouldn't need to worry about this.
+
+##### SQL References
 
 These references may be useful and are the source for these instructions:
 
