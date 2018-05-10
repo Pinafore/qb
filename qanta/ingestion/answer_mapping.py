@@ -256,8 +256,8 @@ def prompt_rule(ans):
 
 def the_rule(ans):
     l_ans = ans.lower()
-    if 'the' in l_ans:
-        return (re.sub('the', '', ans, flags=re.IGNORECASE),)
+    if 'the ' in l_ans:
+        return (re.sub('the ', '', ans, flags=re.IGNORECASE),)
     else:
         return ('the ' + ans, 'The ' + ans)
 
@@ -419,7 +419,10 @@ def write_answer_map(answer_map, amb_answer_map,
         json.dump({'unbound_answers': list(sorted(unbound_answers))}, f)
 
 
-def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, ambig_answer_map, page_assigner: PageAssigner):
+def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, ambig_answer_map,
+                                 unmappable, page_assigner: PageAssigner):
+    proto_unmappable = set(unmappable['proto'])
+    qdb_unmappable = set(unmappable['quizdb'])
     train_unmatched_questions = []
     test_unmatched_questions = []
     match_report = {}
@@ -429,6 +432,21 @@ def unmapped_to_mapped_questions(unmapped_qanta_questions, answer_map, ambig_ans
         proto_id = q['proto_id']
         qdb_id = q['qdb_id']
         fold = q['fold']
+
+        if proto_id in proto_unmappable or qdb_id in qdb_unmappable:
+            match_report[qanta_id] = {
+                'result': 'none',
+                'annotated_error': None,
+                'automatic_error': 'Unmappable answer',
+                'annotated_page': None,
+                'automatic_page': None
+            }
+            if fold == GUESSER_TRAIN_FOLD or fold == BUZZER_TRAIN_FOLD:
+                train_unmatched_questions.append(q)
+            else:
+                test_unmatched_questions.append(q)
+            continue
+
         annotated_page, annotated_error = page_assigner.maybe_assign(
             answer=answer, question_text=q['text'], qdb_id=qdb_id, proto_id=proto_id
         )

@@ -24,13 +24,18 @@ def normalize_wikipedia_title(title):
     return title.replace(' ', '_')
 
 
-def create_wikipedia_title_pickle(dump_path, output_path):
+def create_wikipedia_title_pickle(dump_path, disambiguation_pages_path, output_path):
     from qanta.spark import create_spark_session
+
+    with open(disambiguation_pages_path) as f:
+        disambiguation_pages = set(json.load(f))
 
     spark = create_spark_session()
     wiki_df = spark.read.json(dump_path)
-    raw_titles = wiki_df.select('title').distinct().collect()
-    clean_titles = {normalize_wikipedia_title(r.title) for r in raw_titles}
+    rows = wiki_df.select('title', 'id').distinct().collect()
+    content_pages = [r for r in rows if int(r.id) not in disambiguation_pages]
+    clean_titles = {normalize_wikipedia_title(r.title) for r in content_pages}
+
     with open(output_path, 'wb') as f:
         pickle.dump(clean_titles, f)
     spark.stop()

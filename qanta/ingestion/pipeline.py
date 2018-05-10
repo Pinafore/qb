@@ -1,6 +1,7 @@
 import json
 from os import path
 from luigi import LocalTarget, Task, WrapperTask, Parameter
+import yaml
 
 from sklearn.model_selection import train_test_split
 from qanta.util.io import shell, get_tmp_filename, safe_path
@@ -172,8 +173,15 @@ class CreateMappedQantaDataset(Task):
         with open(QANTA_FOLDED_DATASET_PATH) as f:
             qanta_questions = json.load(f)['questions']
 
+        with open('data/internal/page_assignment/unmappable.yaml') as f:
+            unmappable = yaml.load(f)
+
         page_assigner = PageAssigner()
-        mapping_report = unmapped_to_mapped_questions(qanta_questions, answer_map, ambig_answer_map, page_assigner)
+        mapping_report = unmapped_to_mapped_questions(
+            qanta_questions,
+            answer_map, ambig_answer_map,
+            unmappable, page_assigner
+        )
 
         with open(QANTA_MAPPED_DATASET_PATH, 'w') as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
