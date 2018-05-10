@@ -40,6 +40,15 @@ class WikipediaRawRedirects(Task):
 
 
 class WikipediaDisambiguationPages(ExternalTask):
+    def run(self):
+        safe_path(WIKI_DISAMBIGUATION_PAGES)
+        if is_aws_authenticated():
+            s3_location = 's3://pinafore-us-west-2/public/disambiguation_pages.json'
+            shell('aws s3 cp {} {}'.format(s3_location, WIKI_DISAMBIGUATION_PAGES))
+        else:
+            https_location = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/public/disambiguation_pages.json'
+            shell('wget -O {} {}'.format(WIKI_DISAMBIGUATION_PAGES, https_location))
+
     def output(self):
         return LocalTarget(WIKI_DISAMBIGUATION_PAGES)
 

@@ -160,7 +160,7 @@ def mapping_rules_to_answer_map(
                         expansion_counts[expansion_name] += 1
                         source_counts[source] += 1
 
-                amb_match, ambig_source = find_amb_match(rule_ans, lower_ans, is_upper, disamb_candidates)
+                amb_match, ambig_source = find_amb_match(rule_ans, disamb_candidates)
                 if amb_match is not None:
                     amb_answer_map[original_ans].extend(amb_match)
 
@@ -205,7 +205,7 @@ def find_match(rule_ans, lower_ans, is_upper, source_list) -> Tuple[Optional[str
     return None, None
 
 
-def find_amb_match(rule_ans, lower_ans, is_upper, source: AmbigMap) -> Tuple[Optional[AmbigOptions], Optional[str]]:
+def find_amb_match(rule_ans, source: AmbigMap) -> Tuple[Optional[AmbigOptions], Optional[str]]:
     m = try_match(rule_ans, source)
     if m is not None:
         return m, 'disambig_exact'
