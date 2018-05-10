@@ -4,7 +4,8 @@ from luigi import LocalTarget, Task, WrapperTask, ExternalTask
 
 from qanta.util.io import shell, safe_path
 from qanta.util.constants import (
-    ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE, WIKI_INSTANCE_OF_PICKLE, WIKI_LOOKUP_PATH
+    ALL_WIKI_REDIRECTS, WIKI_DUMP_REDIRECT_PICKLE, WIKI_TITLES_PICKLE, WIKI_INSTANCE_OF_PICKLE, WIKI_LOOKUP_PATH,
+    WIKI_DISAMBIGUATION_PAGES
 )
 from qanta.util.environment import is_aws_authenticated
 from qanta.wikipedia.wikidata import create_instance_of_map
@@ -36,6 +37,11 @@ class WikipediaRawRedirects(Task):
 
     def output(self):
         return LocalTarget(ALL_WIKI_REDIRECTS)
+
+
+class WikipediaDisambiguationPages(ExternalTask):
+    def output(self):
+        return LocalTarget(WIKI_DISAMBIGUATION_PAGES)
 
 
 class WikipediaRedirectPickle(Task):
@@ -73,11 +79,12 @@ class WikipediaDumps(Task):
 class WikipediaTitles(Task):
     def requires(self):
         yield WikipediaDumps()
+        yield WikipediaDisambiguationPages()
 
     def run(self):
         # Spark needs an absolute path for local files
         dump_path = os.path.abspath('data/external/wikipedia/parsed-wiki/*/*')
-        create_wikipedia_title_pickle(dump_path, WIKI_TITLES_PICKLE)
+        create_wikipedia_title_pickle(dump_path, WIKI_DISAMBIGUATION_PAGES, WIKI_TITLES_PICKLE)
 
     def output(self):
         return LocalTarget(WIKI_TITLES_PICKLE)

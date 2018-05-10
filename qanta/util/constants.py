@@ -58,6 +58,7 @@ WIKI_DUMP_REDIRECT_PICKLE = 'data/external/wikipedia/dump_redirects.pickle'
 WIKI_TITLES_PICKLE = 'data/external/wikipedia/wikipedia-titles.pickle'
 WIKI_LOOKUP_PATH = 'data/external/wikipedia/wiki_lookup.json'
 WIKI_INSTANCE_OF_PICKLE = 'data/external/wikidata_instance-of.pickle'
+WIKI_DISAMBIGUATION_PAGES = 'data/external/wikipedia/disambiguation_pages.json'
 
 COUNTRY_LIST_PATH = 'data/internal/country_list.txt'
 

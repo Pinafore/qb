@@ -5,10 +5,13 @@ CLI utilities for QANTA
 
 import sqlite3
 import yaml
+import csv
+import json
 from os import path
 import click
 from typing import Dict, Optional
 from jinja2 import Environment, PackageLoader
+import tqdm
 
 from qanta import qlogging
 from qanta.guesser.abstract import AbstractGuesser
@@ -211,6 +214,23 @@ def elasticsearch(generate_config, config_dir, pid_file, command):
 def answer_map_google_csvs():
     from qanta.ingestion.gspreadsheets import create_answer_mapping_csvs
     create_answer_mapping_csvs()
+
+
+@main.command()
+@click.argument('category_csv')
+@click.argument('out_json')
+def categorylinks_to_disambiguation(category_csv, out_json):
+    disambiguation_pages = set()
+    with open(category_csv) as f:
+        reader = csv.reader(f, quoting=csv.QUOTE_MINIMAL)
+        for r in tqdm.tqdm(reader, mininterval=1):
+            page_id, category = r[0], r[1]
+            if 'disambiguation' in category.lower():
+                disambiguation_pages.add(int(page_id))
+
+    with open(out_json, 'w') as f:
+        json.dump(list(disambiguation_pages), f)
+
 
 
 if __name__ == '__main__':
