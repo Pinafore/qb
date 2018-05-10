@@ -83,3 +83,10 @@ ambiguous:
   - page: Maslow's_hierarchy_of_needs
     words:
     - maslow
+  mantle:
+   - page: Mantle_(geology)
+     words:
+     - earth
+     - layer
+     - core
+     - crust
