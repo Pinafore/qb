@@ -58,7 +58,7 @@ def format_qanta_json(questions, version):
         'questions': questions,
         'version': version,
         'maintainer_name': 'Pedro Rodriguez',
-        'maintainer_contact': 'pedro@snowgeek.org',
+        'maintainer_contact': 'entilzha@umiacs.umd.edu',
         'maintainer_website': 'http://pedrorodriguez.io',
         'project_website': 'https://github.com/pinafore/qb'
     }
@@ -84,17 +84,17 @@ def questions_to_sqlite(qanta_questions, db_path):
           qanta_id INT PRIMARY KEY NOT NULL,
           "text" TEXT NOT NULL, first_sentence TEXT NOT NULL, tokenizations TEXT NOT NULL,
           answer TEXT NOT NULL, page TEXT,
-          fold TEXT NOT NULL,
+          fold TEXT NOT NULL, gameplay BOOLEAN,
           category TEXT, subcategory TEXT,
           tournament TEXT, difficulty TEXT, year INT,
           proto_id INT, qdb_id INT, dataset TEXT NOT NULL
         )
     """)
     c.executemany(
-        'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [(
             q['qanta_id'], q['text'], q['first_sentence'], str(q['tokenizations']),
-            q['answer'], q['page'], q['fold'],
+            q['answer'], q['page'], q['fold'], q['gameplay'],
             q['category'], q['subcategory'], q['tournament'], q['difficulty'],
             q['year'], q['proto_id'], q['qdb_id'], q['dataset']
         ) for q in qanta_questions]

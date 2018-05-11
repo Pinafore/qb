@@ -7,7 +7,7 @@ from collections import Counter
 from qanta.util.constants import (
     GUESSER_TRAIN_FOLD, BUZZER_TRAIN_FOLD,
     GUESSER_DEV_FOLD, BUZZER_DEV_FOLD,
-    TEST_FOLD, BUZZER_TEST_FOLD
+    GUESSER_TEST_FOLD, BUZZER_TEST_FOLD
 )
 
 
@@ -254,10 +254,9 @@ def merge_datasets(protobowl_questions, quizdb_questions):
 
 
 TEST_TOURNAMENTS = {'ACF Regionals', 'PACE NSC', 'NASAT', 'ACF Nationals', 'ACF Fall'}
-TEST_YEARS = {2017, 2018}  # These years do not have gameplay data at all
-DEV_YEARS = {2015, 2016}
+GUESSTEST_YEARS = {2017, 2018}  # These years do not have gameplay data at all
 BUZZTEST_YEARS = {2016}
-BUZZDEV_YEARS = {2015}
+DEV_YEARS = {2015}
 
 
 def assign_folds_(qanta_questions, question_player_counts, random_seed=0, guessbuzz_frac=.8):
@@ -266,25 +265,23 @@ def assign_folds_(qanta_questions, question_player_counts, random_seed=0, guessb
     """
     random.seed(random_seed)
     for q in qanta_questions:
+        if q['proto_id'] in question_player_counts:
+            q['gameplay'] = True
+        else:
+            q['gameplay'] = False
         is_test_tournament = q['tournament'] in TEST_TOURNAMENTS
-        if is_test_tournament and q['year'] in TEST_YEARS:
-            q['fold'] = TEST_FOLD
+        if is_test_tournament and q['year'] in GUESSTEST_YEARS:
+            q['fold'] = GUESSER_TEST_FOLD
+        elif is_test_tournament and q['year'] in BUZZTEST_YEARS:
+            q['fold'] = BUZZER_TEST_FOLD
         elif is_test_tournament and q['year'] in DEV_YEARS:
-            # Attempt to split the dataset evenly and at random
+            # Split randomly between guesser and buzzer to preserve data distribution
             if random.random() < .5:
-                # Then filter to be sure we only include useful questions
-                if q['proto_id'] in question_player_counts:
-                    if q['year'] in BUZZDEV_YEARS:
-                        q['fold'] = BUZZER_DEV_FOLD
-                    elif q['year'] in BUZZTEST_YEARS:
-                        q['fold'] = BUZZER_TEST_FOLD
-                    else:
-                        raise ValueError('This code path should be unreachable, check year overlap agreement')
-                else:
-                    q['fold'] = GUESSER_DEV_FOLD
+                q['fold'] = BUZZER_DEV_FOLD
             else:
                 q['fold'] = GUESSER_DEV_FOLD
         else:
+            # For Training we don't try to preserve as much since more data is more important
             if random.random() < guessbuzz_frac:
                 q['fold'] = GUESSER_TRAIN_FOLD
             else:

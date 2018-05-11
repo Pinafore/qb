@@ -1,17 +1,5 @@
 from os import path
 
-ALL_FOLDS = [
-    # Guessers should train and cross validate on these folds
-    'guesstrain', 'guessdev',
-    # Guessers should produce output for these, only buzzer should train and cross validate on these
-    'buzztrain', 'buzzdev',
-    # Parameter tuning of system should be done on dev. This should be reserved for system-wide parameters and not as
-    # a second buzzerdev or guessdev fold test should be reserved for final paper results
-    'dev', 'test',
-    # Produce output for anything in the expo fold
-    'expo'
-]
-
 # Training folds
 GUESSER_TRAIN_FOLD = 'guesstrain'
 BUZZER_TRAIN_FOLD = 'buzztrain'
@@ -23,7 +11,7 @@ BUZZER_DEV_FOLD = 'buzzdev'
 DEV_FOLDS = {GUESSER_DEV_FOLD, BUZZER_DEV_FOLD}
 
 # System-wide cross validation and testing
-TEST_FOLD = 'test'
+GUESSER_TEST_FOLD = 'guesstest'
 BUZZER_TEST_FOLD = 'buzztest'
 EXPO_FOLD = 'expo'
 
@@ -31,7 +19,7 @@ EXPO_FOLD = 'expo'
 GUESSER_GENERATION_FOLDS = [
     GUESSER_DEV_FOLD,
     BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
-    TEST_FOLD, BUZZER_TEST_FOLD,
+    GUESSER_TEST_FOLD, BUZZER_TEST_FOLD,
     EXPO_FOLD
 ]
 
