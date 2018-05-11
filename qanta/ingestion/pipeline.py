@@ -9,7 +9,8 @@ from qanta.util.constants import (
     DATASET_PREFIX, DS_VERSION, QANTA_MAP_REPORT_PATH,
     QANTA_MAPPED_DATASET_PATH, QANTA_SQL_DATASET_PATH,
     QANTA_TRAIN_DATASET_PATH, QANTA_DEV_DATASET_PATH, QANTA_TEST_DATASET_PATH,
-    QANTA_TORCH_TRAIN_LOCAL_PATH, QANTA_TORCH_VAL_LOCAL_PATH, QANTA_TORCH_DEV_LOCAL_PATH
+    QANTA_TORCH_TRAIN_LOCAL_PATH, QANTA_TORCH_VAL_LOCAL_PATH, QANTA_TORCH_DEV_LOCAL_PATH,
+    GUESSER_TRAIN_FOLD, GUESSER_DEV_FOLD
 )
 from qanta.pipeline.preprocess import WikipediaTitles, WikipediaRawRedirects
 from qanta.ingestion.normalization import Protobowl, QuizdbOrg, merge_datasets, assign_folds_
@@ -263,12 +264,12 @@ class TorchTextDataset(Task):
 
     def run(self):
         with open(QANTA_TRAIN_DATASET_PATH) as f:
-            all_guess_train = [q for q in json.load(f)['questions'] if q['fold'] == 'guesstrain']
+            all_guess_train = [q for q in json.load(f)['questions'] if q['fold'] == GUESSER_TRAIN_FOLD]
 
         guess_train, guess_val = train_test_split(all_guess_train, random_state=42, train_size=.9)
 
         with open(QANTA_DEV_DATASET_PATH) as f:
-            guess_dev = [q for q in json.load(f)['questions'] if q['fold'] == 'guessdev']
+            guess_dev = [q for q in json.load(f)['questions'] if q['fold'] == GUESSER_DEV_FOLD]
 
         with open(QANTA_TORCH_TRAIN_LOCAL_PATH, 'w') as f:
             json.dump(format_qanta_json(guess_train, DS_VERSION), f)
