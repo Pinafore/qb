@@ -64,7 +64,6 @@ def format_qanta_json(questions, version):
     }
 
 
-
 def add_sentences_(questions):
     text_questions = [q['text'] for q in questions]
     sc = create_spark_context()
