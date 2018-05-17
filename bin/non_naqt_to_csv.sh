@@ -1,0 +1,1 @@
+sqlite3 -header -csv data/external/non_naqt.db < bin/non_naqt_to_csv.sql > data/external/non_naqt.csv
