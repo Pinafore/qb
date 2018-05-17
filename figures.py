@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 import os
+
+if 'DISPLAY' not in os.environ:
+    import matplotlib
+    matplotlib.use('agg')
+
 import glob
 import pandas as pd
 import click
