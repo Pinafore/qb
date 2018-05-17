@@ -1,13 +1,14 @@
 from typing import List, Dict, Iterable, Optional, Tuple, NamedTuple
+import os
 import json
 
 from qanta import qlogging
 from qanta.datasets.abstract import AbstractDataset, TrainingData
 from qanta.util.constants import (
-    QANTA_MAPPED_DATASET_PATH,
+    QANTA_MAPPED_DATASET_PATH, QANTA_EXPO_DATASET_PATH,
     GUESSER_TRAIN_FOLD, GUESSER_DEV_FOLD, BUZZER_TRAIN_FOLD, BUZZER_DEV_FOLD,
     BUZZER_TEST_FOLD, GUESSER_TEST_FOLD,
-    TRAIN_FOLDS, DEV_FOLDS
+    TRAIN_FOLDS, DEV_FOLDS, EXPO_FOLD
 )
 
 
@@ -71,7 +72,7 @@ class Question(NamedTuple):
 
 
 class QantaDatabase:
-    def __init__(self, dataset_path=QANTA_MAPPED_DATASET_PATH):
+    def __init__(self, dataset_path=QANTA_MAPPED_DATASET_PATH, expo_path=QANTA_EXPO_DATASET_PATH):
         with open(dataset_path) as f:
             self.dataset = json.load(f)
 
@@ -90,6 +91,25 @@ class QantaDatabase:
 
         self.buzz_test_questions = [q for q in self.mapped_questions if q.fold == BUZZER_TEST_FOLD]
         self.guess_test_questions = [q for q in self.mapped_questions if q.fold == GUESSER_TEST_FOLD]
+
+        if os.path.exists(expo_path):
+            with open(expo_path) as f:
+                self.expo_dataset = json.load(f)
+                self.expo_questions = [Question(**q) for q in self.expo_dataset['questions']]
+        else:
+            self.expo_dataset = None
+            self.expo_questions = []
+
+    def by_fold(self):
+        return {
+            GUESSER_TRAIN_FOLD: self.guess_train_questions,
+            GUESSER_DEV_FOLD: self.guess_dev_questions,
+            BUZZER_TRAIN_FOLD: self.buzz_train_questions,
+            BUZZER_DEV_FOLD: self.buzz_dev_questions,
+            BUZZER_TEST_FOLD: self.buzz_test_questions,
+            GUESSER_TEST_FOLD: self.guess_test_questions,
+            EXPO_FOLD: self.expo_questions
+        }
 
 
 class QuizBowlDataset(AbstractDataset):
@@ -132,7 +152,8 @@ class QuizBowlDataset(AbstractDataset):
             BUZZER_TRAIN_FOLD: self.db.buzz_train_questions,
             BUZZER_DEV_FOLD: self.db.buzz_dev_questions,
             BUZZER_TEST_FOLD: self.db.buzz_test_questions,
-            GUESSER_TEST_FOLD: self.db.guess_test_questions
+            GUESSER_TEST_FOLD: self.db.guess_test_questions,
+            EXPO_FOLD: self.db.expo_questions
         }
 
     def questions_in_folds(self, folds: Iterable[str]) -> List[Question]:

@@ -64,10 +64,13 @@ def format_qanta_json(questions, version):
     }
 
 
-def add_sentences_(questions):
+def add_sentences_(questions, parallel=True):
     text_questions = [q['text'] for q in questions]
     sc = create_spark_context()
-    sentence_tokenizations = sc.parallelize(text_questions, 4000).map(nlp).collect()
+    if parallel:
+        sentence_tokenizations = sc.parallelize(text_questions, 4000).map(nlp).collect()
+    else:
+        sentence_tokenizations = [nlp(q) for q in text_questions]
     for q, text, tokenization in zip(questions, text_questions, sentence_tokenizations):
         q['tokenizations'] = tokenization
         # Get the 0th sentence, end character tokenization (tuple position 1)

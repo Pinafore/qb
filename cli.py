@@ -269,7 +269,7 @@ def nonnaqt_to_json(csv_input, json_dir):
             'subcategory': '',
             'tournament': '',
             'year': -1,
-            'dataset': '',
+            'dataset': 'non_naqt',
             'difficulty': '',
             'first_sentence': ordered_sentences[0]['text'],
             'qanta_id': q['qnum'],
@@ -284,7 +284,9 @@ def nonnaqt_to_json(csv_input, json_dir):
 
     train_questions = [q for q in questions if q['fold'] == 'guesstrain']
     dev_questions = [q for q in questions if q['fold'] == 'guessdev']
-    test_questions = []
+    test_questions = [q for q in questions if q['fold'] == 'test']
+    for q in test_questions:
+        q['fold'] = 'guesstest'
 
     from qanta.ingestion.preprocess import format_qanta_json
     from qanta.util.constants import DS_VERSION
@@ -313,6 +315,45 @@ def nonnaqt_to_json(csv_input, json_dir):
         json.dump(format_qanta_json(dev_questions, DS_VERSION), f)
 
 
+@main.command()
+@click.argument('adversarial_input')
+@click.argument('json_dir')
+def adversarial_to_json(adversarial_input, json_dir):
+    with open(adversarial_input) as f:
+        have_question = False
+        rows = []
+        question = None
+        for i, line in enumerate(f):
+            if line == '\n':
+                continue
+            elif have_question:
+                answer = line.strip().replace(' ', '_')
+                rows.append({
+                    'text': question,
+                    'page': answer,
+                    'answer': '',
+                    'qanta_id': 1000000 + i,
+                    'proto_id': None,
+                    'qdb_id': None,
+                    'category': '',
+                    'subcategory': '',
+                    'tournament': '',
+                    'difficulty': '',
+                    'dataset': 'adversarial',
+                    'year': -1,
+                    'fold': 'expo',
+                    'gameplay': False
+                })
+                have_question = False
+            else:
+                question = line.strip()
+                have_question = True
+
+    from qanta.ingestion.preprocess import add_sentences_, format_qanta_json
+    from qanta.util.constants import DS_VERSION
+    add_sentences_(rows, parallel=False)
+    with open(path.join(json_dir, f'qanta.expo.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(rows, DS_VERSION), f)
 
 
 if __name__ == '__main__':

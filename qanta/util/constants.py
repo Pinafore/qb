@@ -70,6 +70,7 @@ DS_VERSION = '2018.04.18'
 DATASET_PREFIX = 'data/external/datasets'
 QANTA_MAP_REPORT_PATH = 'data/external/answer_mapping/match_report.json'
 QANTA_MAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.mapped.{DS_VERSION}.json')
+QANTA_EXPO_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.expo.{DS_VERSION}.json')
 QANTA_SQL_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.{DS_VERSION}.sqlite3')
 QANTA_TRAIN_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.train.{DS_VERSION}.json')
 QANTA_DEV_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.dev.{DS_VERSION}.json')
