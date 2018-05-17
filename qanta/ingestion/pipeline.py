@@ -4,7 +4,7 @@ from luigi import LocalTarget, Task, WrapperTask, Parameter
 import yaml
 
 from sklearn.model_selection import train_test_split
-from qanta.util.io import shell, get_tmp_filename, safe_path
+from qanta.util.io import shell, get_tmp_filename, safe_path, safe_open
 from qanta.util.constants import (
     DATASET_PREFIX, DS_VERSION, QANTA_MAP_REPORT_PATH,
     QANTA_MAPPED_DATASET_PATH, QANTA_SQL_DATASET_PATH,
@@ -135,7 +135,7 @@ class CreateAnswerMap(Task):
             unmapped_qanta_questions = json.load(f)['questions']
 
         answer_map, amb_answer_map, unbound_answers, report = create_answer_map(unmapped_qanta_questions)
-        with open('data/external/answer_mapping/automatic_report.json', 'w') as f:
+        with safe_open('data/external/answer_mapping/automatic_report.json', 'w') as f:
             json.dump(report, f)
         write_answer_map(answer_map, amb_answer_map, unbound_answers, ANSWER_MAP_PATH, UNBOUND_ANSWER_PATH)
 
@@ -147,9 +147,23 @@ class CreateAnswerMap(Task):
         )
 
 
+class CreateProtobowlQuestionPlayerCounts(Task):
+    def requires(self):
+        yield DownloadProtobowl()
+
+    def run(self):
+        question_player_counts = compute_question_player_counts(PROTOBOWL_LOGS_PATH)
+        with open(PROTOBOWL_QUESTION_PLAYER_COUNTS, 'w') as f:
+            json.dump(question_player_counts, f)
+
+    def output(self):
+        return LocalTarget(PROTOBOWL_QUESTION_PLAYER_COUNTS)
+
+
 class CreateFoldedQantaDataset(Task):
     def requires(self):
         yield CreateProcessedQantaDataset()
+        yield CreateProtobowlQuestionPlayerCounts()
 
     def run(self):
         with open(QANTA_PREPROCESSED_DATASET_PATH) as f:
@@ -214,19 +228,6 @@ class GenerateSqliteDB(Task):
 
     def output(self):
         return LocalTarget(QANTA_SQL_DATASET_PATH)
-
-
-class CreateProtobowlQuestionPlayerCounts(Task):
-    def requires(self):
-        yield DownloadProtobowl()
-
-    def run(self):
-        question_player_counts = compute_question_player_counts(PROTOBOWL_LOGS_PATH)
-        with open(PROTOBOWL_QUESTION_PLAYER_COUNTS, 'w') as f:
-            json.dump(question_player_counts, f)
-
-    def output(self):
-        return LocalTarget(PROTOBOWL_QUESTION_PLAYER_COUNTS)
 
 
 class FilterAndPartitionQantaDataset(Task):
