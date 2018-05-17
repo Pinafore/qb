@@ -4,10 +4,12 @@ import glob
 import pandas as pd
 import click
 import pickle
+from typing import List
+import numpy as np
 from plotnine import (
     ggplot, aes, facet_wrap,
-    geom_smooth, geom_density, geom_histogram,
-    coord_flip
+    geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
+    coord_flip, stat_smooth, scale_y_continuous
 )
 
 
@@ -73,6 +75,10 @@ class GuesserReport:
             .nth(0).reset_index()
         self.char_plot_df['category_jmlr'] = self.char_plot_df.category.map(category_jmlr)
         self.char_plot_df['Outcome'] = self.char_plot_df.correct.map(int_to_correct)
+        self.first_accuracy = unpickled_report['first_accuracy']
+        self.full_accuracy = unpickled_report['full_accuracy']
+        self.unanswerable_answer_percent = unpickled_report['unanswerable_answer_percent']
+        self.unanswerable_question_percent = unpickled_report['unanswerable_question_percent']
 
     def plot_n_train_vs_accuracy(self):
         return (
@@ -110,14 +116,58 @@ class GuesserReport:
             )
 
 
+GUESSER_SHORT_NAMES = {
+    'qanta.guesser.rnn.RnnGuesser': 'RNN',
+    'qanta.guesser.dan.DanGuesser': 'DAN',
+    'qanta.guesser.elasticsearch.ElasticSearchGuesser': 'ES'
+}
+
+
+def to_shortname(name):
+    if name in GUESSER_SHORT_NAMES:
+        return GUESSER_SHORT_NAMES[name]
+    else:
+        return name
+
+
+class CompareGuesserReport:
+    def __init__(self, reports: List[GuesserReport]):
+        self.reports = reports
+        char_plot_dfs = []
+        acc_rows = []
+        for r in self.reports:
+            char_plot_dfs.append(r.char_plot_df)
+            name = to_shortname(r.guesser_name)
+            acc_rows.append((name, 'first', r.first_accuracy))
+            acc_rows.append((name, 'full', r.full_accuracy))
+        self.char_plot_df = pd.concat(char_plot_dfs)
+        self.char_plot_df['guesser_short'] = self.char_plot_df['guesser'].map(to_shortname)
+        self.acc_df = pd.DataFrame.from_records(acc_rows, columns=['guesser', 'position', 'accuracy'])
+
+    def plot_char_percent_vs_accuracy_smooth(self):
+        return (
+            ggplot(self.char_plot_df)
+            + aes(x='char_percent', y='correct', color='guesser_short')
+            + stat_smooth(method='mavg', se=False, method_args={'window': 500})
+            + scale_y_continuous(breaks=np.linspace(0, 1, 21))
+        )
+
+    def plot_compare_accuracy(self):
+        return (
+            ggplot(self.acc_df) + facet_wrap('position')
+            + aes(x='guesser', y='accuracy')
+            + geom_bar(stat='identity')
+        )
 
 
 @main.command()
 @click.argument('output_dir')
 def guesser(output_dir):
+    all_reports = []
     for path in glob.glob(REPORT_PATTERN):
         with open(path, 'rb') as f:
             report = GuesserReport(pickle.load(f))
+            all_reports.append(report)
 
         save_plot(
             output_dir, report.guesser_name,
@@ -140,6 +190,16 @@ def guesser(output_dir):
             output_dir, report.guesser_name,
             'char_percent_vs_accuracy_smooth_category.pdf', report.plot_char_percent_vs_accuracy_smooth(category=True)
         )
+
+    compare_report = CompareGuesserReport(all_reports)
+    save_plot(
+        output_dir, 'compare', 'position_accuracy.pdf',
+        compare_report.plot_compare_accuracy()
+    )
+    save_plot(
+        output_dir, 'compare', 'char_accuracy.pdf',
+        compare_report.plot_char_percent_vs_accuracy_smooth()
+    )
 
 
 if __name__ == '__main__':
