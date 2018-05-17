@@ -6,6 +6,7 @@ CLI utilities for QANTA
 import sqlite3
 import yaml
 import csv
+from collections import defaultdict
 import json
 from os import path
 import click
@@ -230,6 +231,87 @@ def categorylinks_to_disambiguation(category_csv, out_json):
 
     with open(out_json, 'w') as f:
         json.dump(list(disambiguation_pages), f)
+
+
+@main.command()
+@click.argument('csv_input')
+@click.argument('json_dir')
+def nonnaqt_to_json(csv_input, json_dir):
+    question_sentences = defaultdict(list)
+    with open(csv_input) as f:
+        csv_rows = list(csv.reader(f))
+        for r in csv_rows[1:]:
+            if len(r) != 5:
+                raise ValueError('Invalid csv row, must have 5 columns')
+            qnum, sent, text, page, fold = r
+            qnum = int(qnum)
+            sent = int(sent)
+            question_sentences[qnum].append({
+                'qnum': qnum, 'sent': sent,
+                'text': text, 'page': page, 'fold': fold
+            })
+
+    questions = []
+    for sentences in tqdm.tqdm(question_sentences.values()):
+        ordered_sentences = sorted(sentences, key=lambda s: s['sent'])
+        text = ' '.join(s['text'] for s in ordered_sentences)
+        tokenizations = []
+        position = 0
+        for i in range(len(ordered_sentences)):
+            sent = ordered_sentences[i]['text']
+            length = len(sent)
+            tokenizations.append((position, position + length))
+            position += length + 1
+        q = ordered_sentences[0]
+        questions.append({
+            'answer': '',
+            'category': '',
+            'subcategory': '',
+            'tournament': '',
+            'year': -1,
+            'dataset': '',
+            'difficulty': '',
+            'first_sentence': ordered_sentences[0]['text'],
+            'qanta_id': q['qnum'],
+            'fold': q['fold'],
+            'gameplay': False,
+            'page': q['page'],
+            'proto_id': None,
+            'qdb_id': None,
+            'text': text,
+            'tokenizations': tokenizations
+        })
+
+    train_questions = [q for q in questions if q['fold'] == 'guesstrain']
+    dev_questions = [q for q in questions if q['fold'] == 'guessdev']
+    test_questions = []
+
+    from qanta.ingestion.preprocess import format_qanta_json
+    from qanta.util.constants import DS_VERSION
+
+    with open(path.join(json_dir, f'qanta.mapped.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(questions, DS_VERSION), f)
+
+    with open(path.join(json_dir, f'qanta.train.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(train_questions, DS_VERSION), f)
+
+    with open(path.join(json_dir, f'qanta.dev.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(dev_questions, DS_VERSION), f)
+
+    with open(path.join(json_dir, f'qanta.test.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(test_questions, DS_VERSION), f)
+
+    from sklearn.model_selection import train_test_split
+    guess_train, guess_val = train_test_split(train_questions, random_state=42, train_size=.9)
+    with open(path.join(json_dir, f'qanta.torchtext.train.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(guess_train, DS_VERSION), f)
+
+    with open(path.join(json_dir, f'qanta.torchtext.val.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(guess_val, DS_VERSION), f)
+
+    with open(path.join(json_dir, f'qanta.torchtext.dev.{DS_VERSION}.json'), 'w') as f:
+        json.dump(format_qanta_json(dev_questions, DS_VERSION), f)
+
 
 
 
