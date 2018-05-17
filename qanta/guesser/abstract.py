@@ -303,56 +303,57 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         return guess_score_map
 
-    def create_report(self, directory: str):
-        with open(os.path.join(directory, 'guesser_params.pickle'), 'rb') as f:
+    def create_report(self, directory: str, fold):
+        with open(os.path.join(directory, f'guesser_params.pickle'), 'rb') as f:
             params = pickle.load(f)
 
         qdb = QantaDatabase()
         guesser_train = qdb.guess_train_questions
-        guesser_dev = qdb.guess_dev_questions
+        questions_by_fold = qdb.by_fold()
+        guesser_report_questions = questions_by_fold[fold]
 
         train_pages = {q.page for q in guesser_train}
-        dev_pages = {q.page for q in guesser_dev}
+        dev_pages = {q.page for q in guesser_report_questions}
 
         unanswerable_answer_percent = len(dev_pages - train_pages) / len(dev_pages)
         answerable = 0
-        for q in guesser_dev:
+        for q in guesser_report_questions:
             if q.page in train_pages:
                 answerable += 1
-        unanswerable_question_percent = 1 - answerable / len(guesser_dev)
+        unanswerable_question_percent = 1 - answerable / len(guesser_report_questions)
 
         train_example_counts = Counter()
         for q in guesser_train:
             train_example_counts[q.page] += 1
 
         dev_df = pd.DataFrame({
-            'page': [q.page for q in guesser_dev],
-            'qanta_id': [q.qanta_id for q in guesser_dev],
-            'text_length': [len(q.text) for q in guesser_dev],
-            'n_train': [train_example_counts[q.page] for q in guesser_dev],
-            'category': [q.category for q in guesser_dev]
+            'page': [q.page for q in guesser_report_questions],
+            'qanta_id': [q.qanta_id for q in guesser_report_questions],
+            'text_length': [len(q.text) for q in guesser_report_questions],
+            'n_train': [train_example_counts[q.page] for q in guesser_report_questions],
+            'category': [q.category for q in guesser_report_questions]
         })
 
-        char_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='char')
+        char_guess_df = AbstractGuesser.load_guesses(directory, folds=[fold], output_type='char')
         char_df = char_guess_df.merge(dev_df, on='qanta_id')
         char_df['correct'] = (char_df.guess == char_df.page).astype('int')
         char_df['char_percent'] = (char_df['char_index'] / char_df['text_length']).clip_upper(1.0)
 
-        first_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='first')
+        first_guess_df = AbstractGuesser.load_guesses(directory, folds=[fold], output_type='first')
         first_df = first_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
         first_df['correct'] = (first_df.guess == first_df.page).astype('int')
         grouped_first_df = first_df.groupby('qanta_id')
         first_accuracy = grouped_first_df.nth(0).correct.mean()
         first_recall = grouped_first_df.agg({'correct': 'max'}).correct.mean()
 
-        full_guess_df = AbstractGuesser.load_guesses(directory, folds=[c.GUESSER_DEV_FOLD], output_type='full')
+        full_guess_df = AbstractGuesser.load_guesses(directory, folds=[fold], output_type='full')
         full_df = full_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
         full_df['correct'] = (full_df.guess == full_df.page).astype('int')
         grouped_full_df = full_df.groupby('qanta_id')
         full_accuracy = grouped_full_df.nth(0).correct.mean()
         full_recall = grouped_full_df.agg({'correct': 'max'}).correct.mean()
 
-        with open(os.path.join(directory, 'guesser_report.pickle'), 'wb') as f:
+        with open(os.path.join(directory, f'guesser_report_{fold}.pickle'), 'wb') as f:
             pickle.dump({
                 'first_accuracy': first_accuracy,
                 'first_recall': first_recall,

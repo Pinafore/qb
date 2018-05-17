@@ -1,4 +1,5 @@
 import pickle
+import os
 import time
 
 import luigi
@@ -170,6 +171,7 @@ class GuesserReport(Task):
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
     config_num = luigi.IntParameter()  # type: int
+    fold = luigi.Parameter()  # type: str
 
     def requires(self):
         yield GenerateGuesses(
@@ -178,7 +180,7 @@ class GuesserReport(Task):
             dependency_module=self.dependency_module,
             dependency_class=self.dependency_class,
             config_num=self.config_num,
-            fold=c.GUESSER_DEV_FOLD
+            fold=self.fold
         )
 
     def run(self):
@@ -187,14 +189,14 @@ class GuesserReport(Task):
             self.guesser_module, self.guesser_class, self.config_num, ''
         )
         guesser_instance = guesser_class(self.config_num)
-        guesser_instance.create_report(guesser_directory)
+        guesser_instance.create_report(guesser_directory, self.fold)
 
     def output(self):
         return LocalTarget(AbstractGuesser.output_path(
             self.guesser_module,
             self.guesser_class,
             self.config_num,
-            'guesser_report.pickle'
+            f'guesser_report_{self.fold}.pickle'
         ))
 
 
@@ -204,6 +206,7 @@ class GuesserPerformance(Task):
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
     config_num = luigi.IntParameter()  # type: int
+    fold = luigi.Parameter()  # type: str
 
     def requires(self):
         yield GenerateGuesses(
@@ -212,7 +215,7 @@ class GuesserPerformance(Task):
             dependency_module=self.dependency_module,
             dependency_class=self.dependency_class,
             config_num=self.config_num,
-            fold=c.GUESSER_DEV_FOLD
+            fold=self.fold
         )
 
     def run(self):
@@ -229,12 +232,12 @@ class GuesserPerformance(Task):
         )
 
         param_path = AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
+            self.guesser_module, self.guesser_class, self.config_num, f'guesser_params.pickle'
         )
         guesses_files = [
-            f'guesses_char_{c.GUESSER_DEV_FOLD}.pickle',
-            f'guesses_full_{c.GUESSER_DEV_FOLD}.pickle',
-            f'guesses_first_{c.GUESSER_DEV_FOLD}.pickle'
+            f'guesses_char_{self.fold}.pickle',
+            f'guesses_full_{self.fold}.pickle',
+            f'guesses_first_{self.fold}.pickle'
         ]
         guesses_paths = [
             AbstractGuesser.output_path(
@@ -250,7 +253,7 @@ class GuesserPerformance(Task):
             shell(f'cp {g_path} {reporting_directory}')
 
         guesser_instance = guesser_class(self.config_num)
-        guesser_instance.create_report(reporting_directory)
+        guesser_instance.create_report(reporting_directory, self.fold)
 
         log.info(f'Running: "rm -rf {guesser_directory}"')
         shell(f'rm -rf {guesser_directory}')
@@ -263,13 +266,13 @@ class GuesserPerformance(Task):
                 self.guesser_module,
                 self.guesser_class,
                 self.config_num,
-                'guesser_report.pickle'
+                f'guesser_report_{self.fold}.pickle'
             )),
             LocalTarget(AbstractGuesser.reporting_path(
                 self.guesser_module,
                 self.guesser_class,
                 self.config_num,
-                'guesser_params.pickle'
+                f'guesser_params.pickle'
             ))
         ]
 
@@ -277,47 +280,44 @@ class GuesserPerformance(Task):
 class AllGuesserPerformance(WrapperTask):
     def requires(self):
         for g_spec in AbstractGuesser.list_enabled_guessers():
-            yield GuesserPerformance(
-                guesser_module=g_spec.guesser_module,
-                guesser_class=g_spec.guesser_class,
-                dependency_module=g_spec.dependency_module,
-                dependency_class=g_spec.dependency_class,
-                config_num=g_spec.config_num
-            )
-
-
-class AllSingleGuesserReports(WrapperTask):
-    def requires(self):
-        for g_spec in AbstractGuesser.list_enabled_guessers():
-            yield GuesserReport(
-                guesser_module=g_spec.guesser_module,
-                guesser_class=g_spec.guesser_class,
-                dependency_module=g_spec.dependency_module,
-                dependency_class=g_spec.dependency_class,
-                config_num=g_spec.config_num
-            )
+            for fold in [c.GUESSER_DEV_FOLD, c.GUESSER_TEST_FOLD]:
+                yield GuesserPerformance(
+                    guesser_module=g_spec.guesser_module,
+                    guesser_class=g_spec.guesser_class,
+                    dependency_module=g_spec.dependency_module,
+                    dependency_class=g_spec.dependency_class,
+                    config_num=g_spec.config_num,
+                    fold=fold
+                )
+            if os.path.exists(c.QANTA_EXPO_DATASET_PATH):
+                yield GuesserPerformance(
+                    guesser_module=g_spec.guesser_module,
+                    guesser_class=g_spec.guesser_class,
+                    dependency_module=g_spec.dependency_module,
+                    dependency_class=g_spec.dependency_class,
+                    config_num=g_spec.config_num,
+                    fold=c.EXPO_FOLD
+                )
 
 
 class AllGuesserReports(WrapperTask):
     def requires(self):
-        yield AllSingleGuesserReports()
-
-
-class GuesserExpo(WrapperTask):
-    def requires(self):
-        yield AllSingleGuesserReports()
         for g_spec in AbstractGuesser.list_enabled_guessers():
-            yield GenerateGuesses(
-                guesser_module=g_spec.guesser_module,
-                guesser_class=g_spec.guesser_class,
-                dependency_module=g_spec.dependency_module,
-                dependency_class=g_spec.dependency_class,
-                config_num=g_spec.config_num,
-                fold='expo'
-            )
-
-
-class AllGuesses(WrapperTask):
-    def requires(self):
-        yield AllGuesserReports()
-        yield GenerateAllGuesses()
+            for fold in [c.GUESSER_DEV_FOLD, c.GUESSER_TEST_FOLD]:
+                yield GuesserReport(
+                    guesser_module=g_spec.guesser_module,
+                    guesser_class=g_spec.guesser_class,
+                    dependency_module=g_spec.dependency_module,
+                    dependency_class=g_spec.dependency_class,
+                    config_num=g_spec.config_num,
+                    fold=fold
+                )
+            if os.path.exists(c.QANTA_EXPO_DATASET_PATH):
+                yield GuesserReport(
+                    guesser_module=g_spec.guesser_module,
+                    guesser_class=g_spec.guesser_class,
+                    dependency_module=g_spec.dependency_module,
+                    dependency_class=g_spec.dependency_class,
+                    config_num=g_spec.config_num,
+                    fold=c.EXPO_FOLD
+                )
