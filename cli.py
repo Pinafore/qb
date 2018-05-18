@@ -230,9 +230,10 @@ def categorylinks_to_disambiguation(category_csv, out_json):
         reader = csv.reader(f)
         for r in tqdm.tqdm(reader, mininterval=1):
             page_id, category = r[0], r[1]
+            l_category = category.lower()
             if ((category not in blacklist) and
-                    ('disambiguation' in category.lower()) and
-                    ('articles_with_links_needing_disambiguation' not in category)):
+                    ('disambiguation' in l_category) and
+                    ('articles_with_links_needing_disambiguation' not in l_category)):
                 disambiguation_pages.add(int(page_id))
 
     with open(out_json, 'w') as f:
