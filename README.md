@@ -148,16 +148,16 @@ To process wikipedia we use [https://github.com/attardi/wikiextractor](https://g
 with the following command:
 
 ```bash
-$ WikiExtractor.py --processes 15 -o parsed-wiki --json --filter_disambig_pages enwiki-20170401-pages-articles-multistream.xml.bz2
+$ WikiExtractor.py --processes 15 -o parsed-wiki --json enwiki-20170401-pages-articles-multistream.xml.bz2
 ```
+
+Do not use the flag to filter disambiguation pages. It uses a simple string regex to check the title and articles contents. This introduces both false positives and false negatives. We handle the problem of filtering these out by using the wikipedia categories dump
 
 Afterwards we use the following command to tar it, compress it with lz4, and upload the archive to S3
 
 ```bash
 tar cvf - parsed-wiki | lz4 - parsed-wiki.tar.lz4
 ```
-
-NOTE: If you are a Pinafore lab member with access to our S3 buckets on AWS this data is available at 
 
 #### Wikipedia Redirect Mapping Creation
 
