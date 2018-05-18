@@ -22,7 +22,6 @@ from qanta.util.io import safe_open, shell, get_tmp_filename
 from qanta.util.constants import QANTA_SQL_DATASET_PATH
 from qanta.hyperparam import expand_config
 
-
 log = qlogging.get('cli')
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -42,7 +41,8 @@ def main():
 @click.argument('guessers', nargs=-1)
 def guesser_api(host, port, debug, guessers):
     if debug:
-        log.warn('WARNING: debug mode in flask can expose environment variables, including AWS keys, NEVER use this when the API is exposed to the web')
+        log.warn(
+            'WARNING: debug mode in flask can expose environment variables, including AWS keys, NEVER use this when the API is exposed to the web')
         log.warn('Confirm that you would like to enable flask debugging')
         confirmation = input('yes/no:\n').strip()
         if confirmation != 'yes':
@@ -157,8 +157,8 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
     master_template = env.get_template('guesser-master-template.sh')
     master_script = master_template.render({
         'script_list': [
-            path.join(output_dir, f'slurm-{i}.sh') for i in range(len(enabled_guessers))
-        ] + [singleton_output]
+                           path.join(output_dir, f'slurm-{i}.sh') for i in range(len(enabled_guessers))
+                       ] + [singleton_output]
     })
     with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
         f.write(master_script)
@@ -222,11 +222,17 @@ def answer_map_google_csvs():
 @click.argument('out_json')
 def categorylinks_to_disambiguation(category_csv, out_json):
     disambiguation_pages = set()
+    blacklist = {
+        'Articles_with_links_needing_disambiguation_from_April_2018',
+        'All_articles_with_links_needing_disambiguation'
+    }
     with open(category_csv) as f:
         reader = csv.reader(f)
         for r in tqdm.tqdm(reader, mininterval=1):
             page_id, category = r[0], r[1]
-            if 'disambiguation' in category.lower():
+            if ((category not in blacklist) and
+                    ('disambiguation' in category.lower()) and
+                    ('articles_with_links_needing_disambiguation' not in category)):
                 disambiguation_pages.add(int(page_id))
 
     with open(out_json, 'w') as f:
