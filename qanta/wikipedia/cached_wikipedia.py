@@ -76,9 +76,6 @@ def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
             k, v = line.split('\t')
             countries[k] = v.strip()
 
-    db = QantaDatabase()
-    pages = {q.page for q in db.train_questions}
-
     with open(redirect_csv) as redirect_f:
         redirects = {}
         n_total = 0
@@ -87,7 +84,7 @@ def create_wikipedia_redirect_pickle(redirect_csv, output_pickle):
             n_total += 1
             source = row[0]
             target = row[1]
-            if (target not in pages or source in countries or
+            if (source in countries or
                     target.startswith('WikiProject') or
                     target.endswith("_topics") or
                     target.endswith("_(overview)")):
