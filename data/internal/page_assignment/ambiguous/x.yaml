@@ -1,1 +1,13 @@
-ambiguous: {}
+ambiguous:
+  xuanzong:
+  - page: Emperor_Xuanzong_of_Tang
+    words:
+    - "713"
+    - "756"
+    - "685"
+    - "762"
+  - page: Emperor_Xuanzong_of_Tang_(9th_century)
+    words:
+    - "810"
+    - "859"
+    - "846"

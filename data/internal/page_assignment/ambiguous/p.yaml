@@ -117,12 +117,12 @@ ambiguous:
     words:
     - byatt
   power:
-  - page: Power
+  - page: Power_(physics)
     words:
     - watt
     - watts
   python:
-  - page: Python
+  - page: Python_(programming_language)
     words:
     - programming
     - rossum

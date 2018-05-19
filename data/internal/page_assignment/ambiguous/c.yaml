@@ -52,7 +52,7 @@ ambiguous:
     words:
     - orff
   cassiopeia:
-  - page: Cassiopeia_(Queen_of_Ethiopia)
+  - page: Cassiopeia_(Queen_of_Ethiopia) # This doesn't exist in our current dump, but does in more recent dumps
     words:
     - ethiopia
   cats:

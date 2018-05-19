@@ -51,14 +51,14 @@ ambiguous:
     words:
     - edges
   group:
-  - page: Group
+  - page: Group_(mathematics)
     words:
     - closure
   - page: Group_(periodic_table)
     words:
     - column
   groups:
-  - page: Group
+  - page: Group_(mathematics)
     words:
     - closure
   - page: Group_(periodic_table)

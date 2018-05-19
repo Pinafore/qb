@@ -2,8 +2,8 @@ unambiguous:
   a ztest: Z-test
   chou enlai or zhou enlai: Zhou_Enlai
   chou or zhou dynasty: Zhou_dynasty
-  chuang tzu or zhuangzi: Zhuangzi
-  chuangtzu or zhuangzi or chuang tsu or chuang tse: Zhuangzi
+  chuang tzu or zhuangzi: Zhuang_Zhou
+  chuangtzu or zhuangzi or chuang tsu or chuang tse: Zhuang_Zhou
   il zuccone: Zuccone
   pieter zeeman or zeeman effect: Zeeman_effect
   republic of zambia: Zambia
@@ -19,18 +19,15 @@ unambiguous:
   zambia: Zambia
   zane grey: Zane_Grey
   zanzibar: Zanzibar
-  zapatistas: Zapatista
-  zapotecs: Zapotec
+  zapotecs: Zapotec_civilization
   zarathustra or zoroaster: Zoroaster
   zebulon montgomery pike: Zebulon_Pike
   zebulon pike: Zebulon_Pike
   zeeman effect: Zeeman_effect
   zelda sayre fitzgerald: Zelda_Fitzgerald
-  zembla: Zembla
   zemsky sobor: Zemsky_Sobor
   zemstvos: Zemstvo
   zen buddhism: Zen
-  zeno: Zeno
   zeno of elea: Zeno_of_Elea
   zeppelins: Zeppelin
   zeta potential: Zeta_potential
@@ -43,8 +40,8 @@ unambiguous:
   zhou enlai or chou enlai: Zhou_Enlai
   zhou or chou: Zhou_dynasty
   zhou or jo or chou dynasty: Zhou_dynasty
-  zhuangzhi or chuang tzu: Zhuangzi
-  zhuangzi or chuang tzu: Zhuangzi
+  zhuangzhi or chuang tzu: Zhuang_Zhou
+  zhuangzi or chuang tzu: Zhuang_Zhou
   zhōu ēnlái: Zhou_Enlai
   zieglernatta catalyst: Ziegler–Natta_catalyst
   zieglernatta catalyst or complex: Ziegler–Natta_catalyst
@@ -79,7 +76,7 @@ unambiguous:
   zorro also accept slashing “z” motion: Zorro
   zuihitsu: Zuihitsu
   zulfikar ali bhutto: Zulfikar_Ali_Bhutto
-  zulu: Zulu
+  zulu: Zulu_people
   zulu empire: Zulu_Kingdom
   zulu kingdom: Zulu_Kingdom
   zulus: Zulu_people
