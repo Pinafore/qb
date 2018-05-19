@@ -34,10 +34,15 @@ ambiguous:
     words:
     - letter
   amazon:
-  - page: Amazon
+  - page: Amazon_River
     words:
     - river
     - brazil
+  - page: Amazon_rainforest
+    words:
+    - forest
+    - rainforest
+    - jungle
   - page: Amazon.com
     words:
     - bezos

@@ -1,8 +1,13 @@
 ambiguous:
   zhuangzi:
-  - page: Zhuangzi
-    words:
-    - MUSTBEMANUAL
   - page: Zhuangzi_(book)
     words:
     - MUSTBEMANUAL
+  zapatista:
+  - page: Liberation_Army_of_the_South
+    words:
+    - "1910"
+    - "1914"
+  - page: Zapatista_Army_of_National_Liberation
+    words:
+    - chiapas
