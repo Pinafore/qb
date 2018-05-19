@@ -74,7 +74,8 @@ def make_source_list(
 
 
 DISAMBIG_SYNONYMS = {
-    'mythology': {'myth', 'deity', 'god', 'goddess'}
+    'mythology': {'myth', 'deity', 'god', 'goddess'},
+    'mathematics': {'math'}
 }
 DISAMB_KEYWORD_BLACKLIST = {'name', 'disambiguation'}
 
