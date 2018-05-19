@@ -126,3 +126,17 @@ ambiguous:
     words:
     - englebart
     - pointer
+  columbia:
+  - page: Space_Shuttle_Columbia
+    words:
+    - shuttle
+    - space
+    - nasa
+    - sts
+  challenger:
+  - page: Space_Shuttle_Challenger
+    words:
+    - shuttle
+    - space
+    - nasa
+    - sts
