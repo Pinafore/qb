@@ -17,7 +17,7 @@ ambiguous:
     - shirley
     - ethel
   ajax:
-  - page: Ajax (mythology)
+  - page: Ajax_the_Great
     words:
     - achilles
     - armor
@@ -43,9 +43,10 @@ ambiguous:
     - forest
     - rainforest
     - jungle
-  - page: Amazon.com
+  - page: Amazon_(company)
     words:
     - bezos
+    - company
   apollo:
   - page: Apollo_program
     words:
@@ -71,7 +72,7 @@ ambiguous:
     - clooney
     - iran
   ariel:
-  - page: Ariel_(Disney)
+  - page: Ariel_(The_Little_Mermaid)
     words:
     - mermaid
   - page: Ariel_(The_Tempest)
