@@ -76,3 +76,10 @@ ambiguous:
   - page: Rose
     words:
     - flower
+  resistence:
+  - page: Electrical_resistance_and_conductance
+    words:
+    - electric
+    - ohm
+    - ohms
+    - quantity

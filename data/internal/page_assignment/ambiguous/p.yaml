@@ -140,3 +140,40 @@ ambiguous:
   - page: Blood_plasma
     words:
     - blood
+  preludes:
+  - page: Préludes_(Debussy)
+    words:
+    - claude
+    - debussy
+  - page: Prelude_(music)
+    words:
+    - type
+    - form
+  phoenix:
+  - page: Phoenix_(mythology)
+    words:
+    - bird
+    - ashes
+    - flame
+  - page: Phoenix,_Arizona
+    words:
+    - arizona
+    - capital
+  phenomenology:
+  - page: Phenomenology_(philosophy)
+    words:
+    - philosophy
+    - philosophical
+    - edmund
+    - husserl
+  psyche:
+  - page: Cupid_and_Psyche
+    words:
+    - cupid
+    - myth
+  partition function:
+  - page: Partition_function_(statistical_mechanics)
+    words:
+    - statistical
+    - thermodynamics
+    - mechanics

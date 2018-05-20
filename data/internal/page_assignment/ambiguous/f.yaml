@@ -41,3 +41,9 @@ ambiguous:
     words:
     - artist
     - irish
+  fitness:
+  - page: Fitness_(biology)
+    words:
+    - biology
+    - reproduce
+    - genes

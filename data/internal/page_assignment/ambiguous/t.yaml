@@ -203,3 +203,9 @@ ambiguous:
   - page: Turkey (bird)
     words:
     - bird
+  tom jones:
+  - page: The_History_of_Tom_Jones,_a_Foundling
+    words:
+    - henry
+    - fielding
+    - foundling
