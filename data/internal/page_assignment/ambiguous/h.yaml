@@ -81,3 +81,11 @@ ambiguous:
     words:
     - bbc
     - urquhart
+  hamiltonian:
+  - page: Hamiltonian_(quantum_mechanics)
+    words:
+    - total energy
+    - kinetic
+    - potential
+    - quantity
+    - operator

@@ -45,3 +45,10 @@ ambiguous:
   - page: Lusitania
     words:
     - Lusitania
+  labour party:
+   - page: Labour_Party_(UK)
+     words:
+     - british
+     - blair
+     - brown
+     - uk

@@ -28,18 +28,11 @@ ambiguous:
     - ionic
     - ''
   samuel butler:
-  - page: Samuel Butler (novelist)
-    words:
-    - flesh
-  - page: Samuel Butler (novelist)
+  - page: Samuel_Butler_(novelist)
     words:
     - flesh
     - way
-  - page: Samuel Butler (poet)
-    words:
-    - hudibras
-    - elephant
-  - page: Samuel Butler (poet)
+  - page: Samuel_Butler_(poet)
     words:
     - moon
     - hudibras
