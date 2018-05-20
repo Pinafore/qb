@@ -323,38 +323,30 @@ def nonnaqt_to_json(csv_input, json_dir):
 
 
 @main.command()
-@click.argument('adversarial_input')
+@click.argument('adversarial_json')
 @click.argument('json_dir')
-def adversarial_to_json(adversarial_input, json_dir):
-    with open(adversarial_input) as f:
-        have_question = False
+def adversarial_to_json(adversarial_json, json_dir):
+    with open(adversarial_json) as f:
+        questions = json.loads(json.load(f))
         rows = []
-        question = None
-        for i, line in enumerate(f):
-            if line == '\n':
-                continue
-            elif have_question:
-                answer = line.strip().replace(' ', '_')
-                rows.append({
-                    'text': question,
-                    'page': answer,
-                    'answer': '',
-                    'qanta_id': 1000000 + i,
-                    'proto_id': None,
-                    'qdb_id': None,
-                    'category': '',
-                    'subcategory': '',
-                    'tournament': '',
-                    'difficulty': '',
-                    'dataset': 'adversarial',
-                    'year': -1,
-                    'fold': 'expo',
-                    'gameplay': False
-                })
-                have_question = False
-            else:
-                question = line.strip()
-                have_question = True
+        for i, q in enumerate(questions):
+            answer = q['wins'].strip().replace(' ', '_')
+            rows.append({
+                'text': q['question'].strip(),
+                'page': answer,
+                'answer': '',
+                'qanta_id': 1000000 + i,
+                'proto_id': None,
+                'qdb_id': None,
+                'category': '',
+                'subcategory': '',
+                'tournament': '',
+                'difficulty': '',
+                'dataset': 'adversarial',
+                'year': -1,
+                'fold': 'expo',
+                'gameplay': False
+            })
 
     from qanta.ingestion.preprocess import add_sentences_, format_qanta_json
     from qanta.util.constants import DS_VERSION
