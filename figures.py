@@ -14,12 +14,14 @@ import numpy as np
 from plotnine import (
     ggplot, aes, facet_wrap,
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
-    coord_flip, stat_smooth, scale_y_continuous
+    coord_flip, stat_smooth, scale_y_continuous,
+    xlab, ylab
 )
 
 
 QB_ROOT = os.environ.get('QB_ROOT', '')
-REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/**/0/guesser_report_guessdev.pickle')
+DEV_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/**/0/guesser_report_guessdev.pickle')
+TEST_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/**/0/guesser_report_guesstest.pickle')
 EXPO_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/**/0/guesser_report_expo.pickle')
 
 
@@ -118,7 +120,7 @@ class GuesserReport:
 GUESSER_SHORT_NAMES = {
     'qanta.guesser.rnn.RnnGuesser': 'RNN',
     'qanta.guesser.dan.DanGuesser': 'DAN',
-    'qanta.guesser.elasticsearch.ElasticSearchGuesser': 'ES'
+    'qanta.guesser.elasticsearch.ElasticSearchGuesser': 'IR'
 }
 
 
@@ -129,6 +131,14 @@ def to_shortname(name):
         return name
 
 
+def to_dataset(fold):
+    if fold == 'expo':
+        return 'Challenge Questions'
+    elif fold == 'guesstest':
+        return 'Test Questions'
+    else:
+        return fold
+
 class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport]):
         self.reports = reports
@@ -137,24 +147,28 @@ class CompareGuesserReport:
         for r in self.reports:
             char_plot_dfs.append(r.char_plot_df)
             name = to_shortname(r.guesser_name)
-            acc_rows.append((r.fold, name, 'first', r.first_accuracy))
-            acc_rows.append((r.fold, name, 'full', r.full_accuracy))
+            dataset = to_dataset(r.fold)
+            acc_rows.append((r.fold, name, 'First Sentence', r.first_accuracy, dataset))
+            acc_rows.append((r.fold, name, 'Full Question', r.full_accuracy, dataset))
         self.char_plot_df = pd.concat(char_plot_dfs)
-        self.char_plot_df['guesser_short'] = self.char_plot_df['guesser'].map(to_shortname)
-        self.acc_df = pd.DataFrame.from_records(acc_rows, columns=['fold', 'guesser', 'position', 'accuracy'])
+        self.char_plot_df['Guessing Model'] = self.char_plot_df['guesser'].map(to_shortname)
+        self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
+        self.acc_df = pd.DataFrame.from_records(acc_rows, columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset'])
 
     def plot_char_percent_vs_accuracy_smooth(self, expo=False):
         if expo:
             return (
-                ggplot(self.char_plot_df) + facet_wrap('fold')
-                + aes(x='char_percent', y='correct', color='guesser_short')
+                ggplot(self.char_plot_df) + facet_wrap('Dataset')
+                + aes(x='char_percent', y='correct', color='Guessing Model')
                 + stat_smooth(method='mavg', se=False, method_args={'window': 500})
                 + scale_y_continuous(breaks=np.linspace(0, 1, 21))
+                + xlab('Percent of Question Revealed')
+                + ylab('Accuracy')
             )
         else:
             return (
                 ggplot(self.char_plot_df)
-                + aes(x='char_percent', y='correct', color='guesser_short')
+                + aes(x='char_percent', y='correct', color='Guessing Model')
                 + stat_smooth(method='mavg', se=False, method_args={'window': 500})
                 + scale_y_continuous(breaks=np.linspace(0, 1, 21))
             )
@@ -163,8 +177,10 @@ class CompareGuesserReport:
         if expo:
             return (
                 ggplot(self.acc_df) + facet_wrap('position')
-                + aes(x='guesser', y='accuracy', fill='fold')
+                + aes(x='guesser', y='accuracy', fill='Dataset')
                 + geom_bar(stat='identity', position='dodge')
+                + xlab('Guessing Model')
+                + ylab('Accuracy')
             )
         else:
             return (
@@ -207,10 +223,16 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--use-test', is_flag=True, default=False)
 @click.argument('output_dir')
 def guesser(use_test, output_dir):
+    if use_test:
+        REPORT_PATTERN = TEST_REPORT_PATTERN
+        report_fold = 'guesstest'
+    else:
+        REPORT_PATTERN = DEV_REPORT_PATTERN
+        report_fold = 'guessdev'
     dev_reports = []
     for path in glob.glob(REPORT_PATTERN):
         with open(path, 'rb') as f:
-            report = GuesserReport(pickle.load(f), 'guessdev')
+            report = GuesserReport(pickle.load(f), report_fold)
             dev_reports.append(report)
 
         save_all_plots(output_dir, report)
