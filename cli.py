@@ -327,7 +327,7 @@ def nonnaqt_to_json(csv_input, json_dir):
 @click.argument('json_dir')
 def adversarial_to_json(adversarial_json, json_dir):
     with open(adversarial_json) as f:
-        questions = json.loads(json.load(f))
+        questions = json.load(f)
         rows = []
         for i, q in enumerate(questions):
             answer = q['wins'].strip().replace(' ', '_')
