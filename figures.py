@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import json
 
 if 'DISPLAY' not in os.environ:
     import matplotlib
@@ -14,8 +15,8 @@ import numpy as np
 from plotnine import (
     ggplot, aes, facet_wrap,
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
-    coord_flip, stat_smooth, scale_y_continuous,
-    xlab, ylab
+    coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
+    xlab, ylab, theme
 )
 
 
@@ -51,8 +52,8 @@ def int_to_correct(num):
         return 'Wrong'
 
 
-def save_plot(output_dir, guesser_name, name, plot):
-    plot.save(safe_path(os.path.join(output_dir, guesser_name, name)))
+def save_plot(output_dir, guesser_name, name, plot, width=None, height=None):
+    plot.save(safe_path(os.path.join(output_dir, guesser_name, name)), width=width, height=height)
 
 
 class GuesserReport:
@@ -151,24 +152,61 @@ class CompareGuesserReport:
             acc_rows.append((r.fold, name, 'First Sentence', r.first_accuracy, dataset))
             acc_rows.append((r.fold, name, 'Full Question', r.full_accuracy, dataset))
         self.char_plot_df = pd.concat(char_plot_dfs)
-        self.char_plot_df['Guessing Model'] = self.char_plot_df['guesser'].map(to_shortname)
+        self.char_plot_df['Guessing_Model'] = self.char_plot_df['guesser'].map(to_shortname)
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
         self.acc_df = pd.DataFrame.from_records(acc_rows, columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset'])
 
     def plot_char_percent_vs_accuracy_smooth(self, expo=False):
         if expo:
-            return (
-                ggplot(self.char_plot_df) + facet_wrap('Dataset')
-                + aes(x='char_percent', y='correct', color='Guessing Model')
-                + stat_smooth(method='mavg', se=False, method_args={'window': 500})
-                + scale_y_continuous(breaks=np.linspace(0, 1, 21))
+            p = (
+                ggplot(self.char_plot_df) + facet_wrap('Guessing_Model', nrow=1)
+                + aes(x='char_percent', y='correct', color='Dataset')
+                + stat_smooth(method='mavg', se=False, method_args={'window': 200})
+                + scale_y_continuous(breaks=np.linspace(0, 1, 11))
+                + scale_x_continuous(breaks=[0, .5, 1])
                 + xlab('Percent of Question Revealed')
                 + ylab('Accuracy')
+                + theme(legend_position='top')
             )
+            if os.path.exists('data/external/human_gameplay.json'):
+                with open('data/external/human_gameplay.json') as f:
+                    gameplay = json.load(f)
+                    control_correct_positions = gameplay['control_correct_positions']
+                    control_wrong_positions = gameplay['control_wrong_positions']
+                    control_positions = control_correct_positions + control_wrong_positions
+                    control_positions = np.array(control_positions)
+                    control_result = np.array(len(control_correct_positions) * [1] + len(control_wrong_positions) * [0])
+                    argsort_control = np.argsort(control_positions)
+                    control_x = control_positions[argsort_control]
+                    control_sorted_result = control_result[argsort_control]
+                    control_y = control_sorted_result.cumsum() / control_sorted_result.shape[0]
+                    control_df = pd.DataFrame({'correct': control_y, 'char_percent': control_x})
+                    control_df['Dataset'] = 'Test Questions'
+                    control_df['Guessing_Model'] = ' Human'
+
+                    adv_correct_positions = gameplay['adv_correct_positions']
+                    adv_wrong_positions = gameplay['adv_wrong_positions']
+                    adv_positions = adv_correct_positions + adv_wrong_positions
+                    adv_positions = np.array(control_positions)
+                    adv_result = np.array(len(adv_correct_positions) * [1] + len(adv_wrong_positions) * [0])
+                    argsort_adv = np.argsort(adv_positions)
+                    adv_x = adv_positions[argsort_adv]
+                    adv_sorted_result = adv_result[argsort_adv]
+                    adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
+                    adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
+                    adv_df['Dataset'] = 'Challenge Questions'
+                    adv_df['Guessing_Model'] = ' Human'
+
+                    human_df = pd.concat([control_df, adv_df])
+                    p = p + (
+                        geom_line(data=human_df)
+                    )
+
+            return p
         else:
             return (
                 ggplot(self.char_plot_df)
-                + aes(x='char_percent', y='correct', color='Guessing Model')
+                + aes(x='char_percent', y='correct', color='Guessing_Model')
                 + stat_smooth(method='mavg', se=False, method_args={'window': 500})
                 + scale_y_continuous(breaks=np.linspace(0, 1, 21))
             )
@@ -264,7 +302,8 @@ def guesser(use_test, output_dir):
         )
         save_plot(
             output_dir, 'compare', 'expo_char_accuracy.pdf',
-            compare_report.plot_char_percent_vs_accuracy_smooth(expo=True)
+            compare_report.plot_char_percent_vs_accuracy_smooth(expo=True),
+            height=2.0, width=6.4
         )
 
 
