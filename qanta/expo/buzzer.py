@@ -234,7 +234,7 @@ def write_readable(filename, ids, questions, power):
         o.write("%i) " % question_num)
         power_found = False
         for jj in questions[ii]:
-            if not power_found and power(ii).lower() in questions[ii][jj].lower():
+            if power(ii) and not power_found and power(ii).lower() in questions[ii][jj].lower():
                 power_found = True
                 o.write("%s  " %
                         questions[ii][jj].replace(power(ii), "(*) %s" %
@@ -555,6 +555,9 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=str, default="competition.csv")
     parser.add_argument('--finals', type=str, default="finals.csv")
     parser.add_argument('--players', type=int, default=0)
+    parser.add_argument('--human_start', type=int, default=0)
+    parser.add_argument('--computer_start', type=int, default=0)
+    parser.add_argument('--skip', type=int, default=0)
     parser.add_argument('--power', type=str, default="power.csv")
     parser.add_argument('--max_questions', type=int, default=40)
     parser.add_argument('--readable', type=str, default="readable.txt")
@@ -585,8 +588,8 @@ if __name__ == "__main__":
         sleep(1.5)
         answer("I'm ready too")
 
-    human = 0
-    computer = 0
+    human = flags.human_start
+    computer = flags.computer_start
     question_num = 0
     question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
 
@@ -597,6 +600,9 @@ if __name__ == "__main__":
 
     for ii in question_ids:
         question_num += 1
+        if flags.skip > 0 and question_num < flags.skip:
+            continue
+
         power_mark = power(ii)
         if power_mark == "10":
             print("Looking for power for %i, got %s %s" %
