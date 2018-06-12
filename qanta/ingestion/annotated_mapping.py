@@ -115,22 +115,27 @@ class PageAssigner:
             else:
                 return Err('Cannot have answer, qdb_id, and proto_id all be None')
         else:
-            answer = normalize_answer(answer)
-            if question_text is None:
-                if answer in self.unambiguous:
-                    return Ok(self.unambiguous[answer])
-                else:
-                    return Err('No match and no question text')
+            if qdb_id in self.quizdb_direct:
+                return Ok(self.quizdb_direct[qdb_id])
+            elif proto_id in self.protobowl_direct:
+                return Ok(self.protobowl_direct[proto_id])
             else:
-                words = re.sub(r'[^a-zA-Z0-9\s]', '', question_text.lower()).split()
-                maybe_page = self.maybe_ambiguous(answer, words)
-                if maybe_page.is_ok():
-                    return maybe_page
-                else:
+                answer = normalize_answer(answer)
+                if question_text is None:
                     if answer in self.unambiguous:
                         return Ok(self.unambiguous[answer])
                     else:
-                        return Err('No match found')
+                        return Err('No match and no question text')
+                else:
+                    words = re.sub(r'[^a-zA-Z0-9\s]', '', question_text.lower()).split()
+                    maybe_page = self.maybe_ambiguous(answer, words)
+                    if maybe_page.is_ok():
+                        return maybe_page
+                    else:
+                        if answer in self.unambiguous:
+                            return Ok(self.unambiguous[answer])
+                        else:
+                            return Err('No match found')
 
     def maybe_assign(self, *,
                      answer=None, question_text=None,

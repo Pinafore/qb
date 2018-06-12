@@ -331,8 +331,23 @@ def process_annotated_test(question_tsv):
     qdb_questions = df[df.proto_id.isna()]
     qdb_map = {int(q.qdb_id): q.page for q in qdb_questions.itertuples() if type(q.page) is str}
     proto_map = {q.proto_id: q.page for q in proto_questions.itertuples() if type(q.page) is str}
-    for qid, page in list(qdb_map.items()) + list(proto_map.items()):
+    print('Proto lines')
+    for qid, page in proto_map.items():
         print(f'  {qid}: {page}')
+
+    print('QDB lines')
+    for qid, page in qdb_map.items():
+        print(f'  {qid}: {page}')
+
+    print('Unmappable proto')
+    for r in proto_questions.itertuples():
+        if type(r.page) is not str:
+            print(f'  - {r.proto_id}')
+
+    print('Unmappable qdb')
+    for r in qdb_questions.itertuples():
+        if type(r.page) is not str:
+            print(f'  - {int(r.qdb_id)}')
 
 
 @main.command()
