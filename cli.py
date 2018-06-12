@@ -323,6 +323,19 @@ def nonnaqt_to_json(csv_input, json_dir):
 
 
 @main.command()
+@click.argument('question_tsv')
+def process_annotated_test(question_tsv):
+    import pandas as pd
+    df = pd.read_csv(question_tsv, delimiter='\t')
+    proto_questions = df[df.qdb_id.isna()]
+    qdb_questions = df[df.proto_id.isna()]
+    qdb_map = {int(q.qdb_id): q.page for q in qdb_questions.itertuples() if type(q.page) is str}
+    proto_map = {q.proto_id: q.page for q in proto_questions.itertuples() if type(q.page) is str}
+    for qid, page in list(qdb_map.items()) + list(proto_map.items()):
+        print(f'  {qid}: {page}')
+
+
+@main.command()
 @click.argument('adversarial_json')
 @click.argument('json_dir')
 def adversarial_to_json(adversarial_json, json_dir):
