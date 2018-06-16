@@ -70,52 +70,9 @@ guessers:
         name: default # [default, BM25]
         # k1: 1.2
         # b: 0.75
-  qanta.guesser.rnn_entity.RnnEntityGuesser:
-    - batch_size: 256
-      bidirectional: true
-      dropout_prob: 0.25
-      enabled: false
-      features:
-      - word
-      word_mention_tokens: false
-      learning_rate: 0.001
-      luigi_dependency: qanta.pipeline.guesser.EmptyTask
-      max_epochs: 100
-      max_grad_norm: 1.0
-      n_hidden_layers: 1
-      n_hidden_units: 1000
-      n_wiki_sentences: 10
-      rnn_type: gru
-      sm_dropout_before_linear: false
-      sm_dropout_prob: 0.15
-      use_cove: false
-      use_locked_dropout: false
-      use_triviaqa: false
-      use_wiki: false
-      wiki_loss_coefficient: 1.0
-      variational_dropout_prob: 0.25
-      weight_decay: 0
-      random_seed: null
   qanta.guesser.tfidf.TfidfGuesser:
     - enabled: false
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
-      random_seed: null
-  qanta.guesser.tied.TiedGuesser:
-    - batch_size: 512
-      enabled: false
-      gradient_clip: 0.25
-      lowercase: true
-      lr: 0.001
-      luigi_dependency: qanta.pipeline.guesser.EmptyTask
-      n_hidden_layers: 1
-      n_hidden_units: 1000
-      n_wiki_sentences: 5
-      nn_dropout: 0.265
-      sm_dropout: 0.158
-      tied_l2: 0.0
-      use_wiki: false
-      wiki_title_replace_token: ''
-      encoder_type: rnn # [rnn, dan]
       random_seed: null
   qanta.guesser.vw.VWGuesser:
     - luigi_dependency: qanta.pipeline.guesser.EmptyTask
