@@ -54,6 +54,10 @@ guessers:
       use_wiki: false
       wiki_title_replace_token: ''
       random_seed: null
+  qanta.guesser.elmo.ElmoGuesser:
+    - enabled: false
+      luigi_dependency: qanta.pipeline.guesser.EmptyTask
+      random_seed: null
   qanta.guesser.elasticsearch.ElasticSearchGuesser:
     - enabled: false
       luigi_dependency: qanta.pipeline.guesser.EmptyTask

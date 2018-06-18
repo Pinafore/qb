@@ -158,8 +158,6 @@ class DanModel(nn.Module):
             self.trigram_embeddings = nn.Embedding(self.trigram_vocab_size, emb_dim, padding_idx=trigram_pad_idx)
             self.trigram_field = trigram_field
 
-
-
         if text_field is not None:
             n_fields = 1
         else:
@@ -416,8 +414,6 @@ class DanGuesser(AbstractGuesser):
         epoch_end = time.time()
 
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
-
-
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]):
         if len(questions) == 0:
