@@ -62,7 +62,10 @@ def batchify(x_data, y_data, batch_size=128, shuffle=False):
     for i in range(0, len(x_data), batch_size):
         start, stop = i, i + batch_size
         x_batch = batch_to_ids(x_data[start:stop])
-        y_batch = Variable(torch.from_numpy(np.array(y_data[start:stop])))
+        if CUDA:
+            y_batch = Variable(torch.from_numpy(np.array(y_data[start:stop])).cuda())
+        else:
+            y_batch = Variable(torch.from_numpy(np.array(y_data[start:stop])))
         batches.append((x_batch, y_batch))
 
     if shuffle:
