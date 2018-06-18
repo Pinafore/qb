@@ -136,7 +136,7 @@ class ElmoGuesser(AbstractGuesser):
         for x_batch, y_batch in batches:
             if train:
                 self.model.zero_grad()
-            out = self.model(x_batch)
+            out = self.model(x_batch.cuda())
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, y_batch).float()).data[0]
             batch_loss = self.criterion(out, y_batch)
