@@ -82,7 +82,7 @@ class ElmoGuesser(AbstractGuesser):
     def __init__(self, config_num):
         super(ElmoGuesser, self).__init__(config_num)
         if config_num is not None:
-            guesser_conf = conf['guessers']['qanta.guesser.elmo.ElmoGUesser'][self.config_num]
+            guesser_conf = conf['guessers']['qanta.guesser.elmo.ElmoGuesser'][self.config_num]
             self.random_seed = guesser_conf['random_seed']
         else:
             self.random_seed = None
