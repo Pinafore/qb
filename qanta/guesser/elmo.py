@@ -1,19 +1,23 @@
 from typing import List, Optional, Tuple
+import os
+import shutil
 import random
 import time
 
 import numpy as np
+import cloudpickle
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from torch.nn import functional as F
+from torch.autograd import Variable
 from torch.optim import Adam, lr_scheduler
 from allennlp.modules.elmo import Elmo, batch_to_ids
 
 from qanta.datasets.abstract import QuestionText, Page, TrainingData
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.preprocess import preprocess_dataset
-from qanta.util.io import get_tmp_filename
+from qanta.preprocess import preprocess_dataset, tokenize_question
+from qanta.util.io import get_tmp_filename, shell
+from qanta.config import conf
 from qanta.torch import (
     BaseLogger, TerminateOnNaN, EarlyStopping, ModelCheckpoint,
     MaxEpochStopping, TrainingManager
@@ -77,9 +81,16 @@ def batchify(x_data, y_data, batch_size=128, shuffle=False):
 class ElmoGuesser(AbstractGuesser):
     def __init__(self, config_num):
         super(ElmoGuesser, self).__init__(config_num)
+        if config_num is not None:
+            guesser_conf = conf['guessers']['qanta.guesser.elmo.ElmoGUesser'][self.config_num]
+            self.random_seed = guesser_conf['random_seed']
+        else:
+            self.random_seed = None
+
         self.model = None
         self.i_to_class = None
         self.class_to_i = None
+
         self.optimizer = None
         self.criterion = None
         self.scheduler = None
@@ -151,7 +162,22 @@ class ElmoGuesser(AbstractGuesser):
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
 
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Page, float]]]:
-        pass
+        y_data = np.zeros((len(questions)))
+        x_data = [tokenize_question(q) for q in questions]
+        batches = batchify(x_data, y_data, shuffle=False)
+        guesses = []
+        for x_batch, y_batch in batches:
+            out = self.model(x_batch.cuda())
+            probs = F.softmax(out).data.cpu().numpy()
+            preds = np.argsort(-probs, axis=1)
+            n_examples = probs.shape[0]
+            for i in range(n_examples):
+                example_guesses = []
+                for p in preds[i][:max_n_guesses]:
+                    example_guesses.append((self.i_to_class[p], probs[i][p]))
+                guesses.append(example_guesses)
+
+        return guesses
 
     @classmethod
     def targets(cls) -> List[str]:
@@ -159,8 +185,30 @@ class ElmoGuesser(AbstractGuesser):
 
     @classmethod
     def load(cls, directory: str):
-        pass
+        with open(os.path.join(directory, 'elmo.pkl'), 'rb') as f:
+            params = cloudpickle.load(f)
+
+        guesser = ElmoGuesser(params['config_num'])
+        guesser.class_to_i = params['class_to_i']
+        guesser.i_to_class = params['i_to_class']
+        guesser.random_seed = params['random_seed']
+        guesser.model = ElmoModel(len(guesser.i_to_class))
+        guesser.model.load_state_dict(torch.load(
+            os.path.join(directory, 'elmo.pt'), map_location=lambda storage, loc: storage
+        ))
+        guesser.model.eval()
+        if CUDA:
+            guesser.model = guesser.model.cuda()
+        return guesser
 
     def save(self, directory: str) -> None:
-        pass
+        shutil.copyfile(self.model_file, os.path.join(directory, 'elmo.pt'))
+        shell(f'rm -f {self.model_file}')
+        with open(os.path.join(directory, 'elmo.pkl', 'wb')) as f:
+            cloudpickle.dump({
+                'class_to_i': self.class_to_i,
+                'i_to_class': self.i_to_class,
+                'config_num': self.config_num,
+                'random_seed': self.random_seed
+            }, f)
 
