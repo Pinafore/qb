@@ -9,24 +9,22 @@
 default:
   partition: dpart
   qos: batch
-  mem_per_cpu: 8g
+  mem_per_cpu: 4g
   max_time: "1-00:00:00"
   gres: null
+  cpus_per_task: 4
 DanGuesser:
   partition: gpu
   gres: gpu:1
   mem_per_cpu: 16g
   qos: gpu-short
   max_time: "2:00:00"
-  cpus_per_task: 4
   mem_per_cpu: 4g
-RnnEntityGuesser:
+RnnGuesser:
   partition: gpu
   gres: gpu:1
-  mem_per_cpu: 16g
   qos: gpu-medium
-  max_time: "1-00:00:00"
-  cpus_per_task: 4
+  max_time: "6:00:00"
   mem_per_cpu: 4g
 VWGuesser:
   mem_per_cpu: 14g
