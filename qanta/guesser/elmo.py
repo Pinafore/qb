@@ -204,7 +204,7 @@ class ElmoGuesser(AbstractGuesser):
     def save(self, directory: str) -> None:
         shutil.copyfile(self.model_file, os.path.join(directory, 'elmo.pt'))
         shell(f'rm -f {self.model_file}')
-        with open(os.path.join(directory, 'elmo.pkl', 'wb')) as f:
+        with open(os.path.join(directory, 'elmo.pkl'), 'wb') as f:
             cloudpickle.dump({
                 'class_to_i': self.class_to_i,
                 'i_to_class': self.i_to_class,
