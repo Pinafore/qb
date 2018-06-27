@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=qanta-guesser
+#SBATCH --job-name=qanta-guesser {{ guesser_class }} {{ config_num }}
 #SBATCH --partition={{ partition }}
 #SBATCH --qos={{ qos }}
 #SBATCH --mem-per-cpu={{ mem_per_cpu }}
@@ -8,10 +8,13 @@
 #SBATCH --output=/fs/clip-quiz/entilzha/slurm-logs/stdout-%A_%a.out
 #SBATCH --error=/fs/clip-quiz/entilzha/slurm-logs/stderr-%A_%a.out
 #SBATCH --time={{ max_time }}
-{% if gres %}
-#SBATCH --gres={{ gres }}
+{% if gres %}#SBATCH --gres={{ gres }}
 {% endif %}
 {% if cpus_per_task %}#SBATCH --cpus-per-task={{ cpus_per_task }}
+{% endif %}
+{% if nodelist %}#SBATCH --nodelist={{ nodelist }}
+{% endif %}
+{% if account %}#SBATCH --account={{ account }}
 {% endif %}
 
 set -x
