@@ -132,6 +132,7 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
         gres = get_slurm_config_value('gres', default_slurm_config, guesser_slurm_config)
         max_time = get_slurm_config_value('max_time', default_slurm_config, guesser_slurm_config)
         cpus_per_task = get_slurm_config_value('cpus_per_task', default_slurm_config, guesser_slurm_config)
+        account = get_slurm_config_value('account', default_slurm_config, guesser_slurm_config)
         script = template.render({
             'task': task,
             'guesser_module': gs.guesser_module,
@@ -144,7 +145,8 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
             'mem_per_cpu': mem_per_cpu,
             'max_time': max_time,
             'gres': gres,
-            'cpus_per_task': cpus_per_task
+            'cpus_per_task': cpus_per_task,
+            'account': account
         })
         slurm_file = path.join(output_dir, f'slurm-{i}.sh')
         with safe_open(slurm_file, 'w') as f:
@@ -158,7 +160,9 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
     master_script = master_template.render({
         'script_list': [
                            path.join(output_dir, f'slurm-{i}.sh') for i in range(len(enabled_guessers))
-                       ] + [singleton_output]
+                       ] + [singleton_output],
+        'is_scavenger': account == 'scavenger',
+        'gres': gres
     })
     with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
         f.write(master_script)
