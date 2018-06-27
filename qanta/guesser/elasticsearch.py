@@ -2,6 +2,7 @@ from typing import List, Optional, Dict
 import subprocess
 import os
 import pickle
+import numpy as np
 
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
@@ -345,3 +346,100 @@ class ElasticSearchGuesser(AbstractGuesser):
             return jsonify(highlights)
 
         app.run(host=host, port=port, debug=debug)
+
+        @app.route('/api/interface_get_highlights', methods=['POST'])
+        def get_highlights():
+            wiki_field = 'wiki_content'
+            qb_field = 'qb_content'
+            text = request.form['text']
+            s = Search(index='qb')[0:20].query(
+                'multi_match', query=text, fields=[wiki_field, qb_field])
+            s = s.highlight(wiki_field).highlight(qb_field)
+            results = list(s.execute())
+            
+            if len(results) == 0:
+                highlights = {'wiki': [''],
+                              'qb': [''],
+                              'guess': ''}
+            else:
+                guessForEvidence = request.form['guessForEvidence']
+                guessForEvidence = guessForEvidence.split("style=\"color:blue\">")[1].split("</a>")[0].lower()
+                
+                guess = None
+                for index, item in enumerate(results):
+                    if item.page.lower().replace("_", " ")[0:25]  == guessForEvidence:
+                        guess = results[index]
+                        break
+                if guess == None:
+                    print("expanding search")
+                    s = Search(index='qb')[0:80].query(
+                        'multi_match', query=text, fields=[wiki_field, qb_field])
+                    s = s.highlight(wiki_field).highlight(qb_field)
+                    results = list(s.execute()) 
+                    for index, item in enumerate(results):
+                        if item.page.lower().replace("_", " ")[0:25]  == guessForEvidence:
+                            guess = results[index]
+                            break
+                    if guess == None:
+                        highlights = {'wiki': [''],
+                                  'qb': [''],
+                                  'guess': ''}
+                        return jsonify(highlights)
+ 
+                _highlights = guess.meta.highlight 
+                try:
+                    wiki_content = list(_highlights.wiki_content)
+                except AttributeError:
+                    wiki_content = ['']
+
+                try:
+                    qb_content = list(_highlights.qb_content)
+                except AttributeError:
+                    qb_content = ['']
+
+                highlights = {'wiki': wiki_content,
+                              'qb': qb_content,
+                              'guess': guess.page}
+            return jsonify(highlights)
+
+        @app.route('/api/interface_answer_question', methods=['POST'])
+        def answer_question():
+            text = request.form['text']
+            answer = request.form['answer']
+            answer = answer.replace(" ", "_").lower()
+            guesses = self.guess([text], 20)[0]
+
+            score_fn = []
+            sum_normalize = 0.0
+            for (g,s) in guesses:
+                exp = np.exp(3*float(s))
+                score_fn.append(exp)
+                sum_normalize += exp
+            for index, (g,s) in enumerate(guesses):
+                guesses[index] = (g, score_fn[index] / sum_normalize)
+
+            guess = []
+            score = []
+            answer_found = False
+            num = 0
+            for index, (g,s) in enumerate(guesses):
+                if index >= 5:
+                    break
+                guess.append(g)
+                score.append(float(s))
+            for gue in guess:
+                if (gue.lower() == answer.lower()):
+                    answer_found = True
+                    num = -1
+            if (not answer_found):
+                for index, (g,s) in enumerate(guesses):
+                    if (g.lower() == answer.lower()):
+                        guess.append(g)
+                        score.append(float(s))
+                        num = index + 1
+            if (num == 0):
+                print("num was 0")
+                if (request.form['bell'] == 'true'):
+                    return "Num0"
+            guess = [g.replace("_"," ") for g in guess]
+            return jsonify({'guess': guess, 'score': score, 'num': num})
