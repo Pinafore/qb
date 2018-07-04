@@ -20,13 +20,11 @@ guessers:
       enabled: false
       gradient_clip: 0.25
       lowercase: true
-      lr: 0.001
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
       n_hidden_layers: 2
       n_hidden_units: 1500
       n_wiki_sentences: 5
       nn_dropout: 0.265
-      sm_dropout: 0.15
       use_wiki: false
       wiki_title_replace_token: ''
       combined_ngrams: true
@@ -44,13 +42,11 @@ guessers:
       enabled: false
       gradient_clip: 0.25
       lowercase: true
-      lr: 0.001
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
       n_hidden_layers: 1
       n_hidden_units: 1000
       n_wiki_sentences: 5
-      nn_dropout: 0.265
-      sm_dropout: 0.15
+      dropout: 0.265
       use_wiki: false
       wiki_title_replace_token: ''
       random_seed: null
@@ -58,6 +54,8 @@ guessers:
     - enabled: false
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
       random_seed: null
+      dropout: .5
+      elmo_unfreeze: 'never'
   qanta.guesser.elasticsearch.ElasticSearchGuesser:
     - enabled: false
       luigi_dependency: qanta.pipeline.guesser.EmptyTask

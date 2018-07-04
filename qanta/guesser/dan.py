@@ -86,7 +86,7 @@ class DanModel(nn.Module):
                  text_field=None,
                  unigram_field=None, bigram_field=None, trigram_field=None,
                  init_embeddings=True, emb_dim=300,
-                 n_hidden_units=1000, n_hidden_layers=1, nn_dropout=.265, sm_dropout=.158,
+                 n_hidden_units=1000, n_hidden_layers=1, nn_dropout=.265,
                  pooling='avg'):
         super(DanModel, self).__init__()
         self.emb_dim = emb_dim
@@ -94,7 +94,6 @@ class DanModel(nn.Module):
         self.n_hidden_units = n_hidden_units
         self.n_hidden_layers = n_hidden_layers
         self.nn_dropout = nn_dropout
-        self.sm_dropout = sm_dropout
         self.pooling = pooling
 
         self.dropout = nn.Dropout(nn_dropout)
@@ -172,7 +171,7 @@ class DanModel(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(self.n_hidden_units, n_classes),
             nn.BatchNorm1d(n_classes),
-            nn.Dropout(self.sm_dropout)
+            nn.Dropout(self.nn_dropout)
         )
 
     def _pool(self, embed, lengths, batch_size):
@@ -238,9 +237,7 @@ class DanGuesser(AbstractGuesser):
             self.gradient_clip = guesser_conf['gradient_clip']
             self.n_hidden_units = guesser_conf['n_hidden_units']
             self.n_hidden_layers = guesser_conf['n_hidden_layers']
-            self.lr = guesser_conf['lr']
             self.nn_dropout = guesser_conf['nn_dropout']
-            self.sm_dropout = guesser_conf['sm_dropout']
             self.batch_size = guesser_conf['batch_size']
             self.use_wiki = guesser_conf['use_wiki']
             self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
@@ -325,14 +322,14 @@ class DanGuesser(AbstractGuesser):
             unigram_field=self.unigram_field, bigram_field=self.bigram_field, trigram_field=self.trigram_field,
             emb_dim=self.emb_dim,
             n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
-            nn_dropout=self.nn_dropout, sm_dropout=self.sm_dropout,
+            nn_dropout=self.nn_dropout,
             pooling=self.pooling
         )
         if CUDA:
             self.model = self.model.cuda()
         log.info(f'Parameters:\n{self.parameters()}')
         log.info(f'Model:\n{self.model}')
-        self.optimizer = Adam(self.model.parameters(), lr=self.lr)
+        self.optimizer = Adam(self.model.parameters())
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
 
@@ -489,9 +486,7 @@ class DanGuesser(AbstractGuesser):
                 'gradient_clip': self.gradient_clip,
                 'n_hidden_units': self.n_hidden_units,
                 'n_hidden_layers': self.n_hidden_layers,
-                'lr': self.lr,
                 'nn_dropout': self.nn_dropout,
-                'sm_dropout': self.sm_dropout,
                 'batch_size': self.batch_size,
                 'use_wiki': self.use_wiki,
                 'n_wiki_sentences': self.n_wiki_sentences,
@@ -530,9 +525,7 @@ class DanGuesser(AbstractGuesser):
         guesser.gradient_clip = params['gradient_clip']
         guesser.n_hidden_units = params['n_hidden_units']
         guesser.n_hidden_layers = params['n_hidden_layers']
-        guesser.lr = params['lr']
         guesser.nn_dropout = params['nn_dropout']
-        guesser.sm_dropout = params['sm_dropout']
         guesser.use_wiki = params['use_wiki']
         guesser.n_wiki_sentences = params['n_wiki_sentences']
         guesser.wiki_title_replace_token = params['wiki_title_replace_token']

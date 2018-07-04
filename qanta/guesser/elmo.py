@@ -40,15 +40,19 @@ def create_save_model(model):
 
 
 class ElmoModel(nn.Module):
-    def __init__(self, n_classes, elmo_dropout=.5, sm_dropout=.15):
+    def __init__(self, n_classes, dropout=.5, unfreeze=None):
         super().__init__()
-        self.elmo_dropout = elmo_dropout
-        self.sm_dropout = sm_dropout
-        self.elmo = Elmo(ELMO_OPTIONS_FILE, ELMO_WEIGHTS_FILE, 2, dropout=elmo_dropout, requires_grad=False)
+        self.dropout = dropout
+        self.unfreeze = unfreeze
+        if unfreeze == 'never':
+            requires_grad = False
+        else:
+            requires_grad = True
+        self.elmo = Elmo(ELMO_OPTIONS_FILE, ELMO_WEIGHTS_FILE, 2, dropout=dropout, requires_grad=requires_grad)
         self.classifier = nn.Sequential(
             nn.Linear(2 * ELMO_DIM, n_classes),
             nn.BatchNorm1d(n_classes),
-            nn.Dropout(sm_dropout)
+            nn.Dropout(dropout)
         )
 
     def forward(self, questions):
@@ -84,8 +88,12 @@ class ElmoGuesser(AbstractGuesser):
         if config_num is not None:
             guesser_conf = conf['guessers']['qanta.guesser.elmo.ElmoGuesser'][self.config_num]
             self.random_seed = guesser_conf['random_seed']
+            self.dropout = guesser_conf['dropout']
+            self.elmo_unfreeze = guesser_conf['elmo_unfreeze']
         else:
             self.random_seed = None
+            self.dropout = None
+            self.elmo_unfreeze = None
 
         self.model = None
         self.i_to_class = None
@@ -104,12 +112,24 @@ class ElmoGuesser(AbstractGuesser):
         log.info('Batchifying data')
         train_batches = batchify(x_train, y_train, shuffle=True)
         val_batches = batchify(x_val, y_val, shuffle=False)
-        self.model = ElmoModel(len(i_to_class))
+        self.model = ElmoModel(len(i_to_class), dropout=self.dropout, unfreeze=self.elmo_unfreeze)
         if CUDA:
             self.model = self.model.cuda()
         log.info(f'Parameters:\n{self.parameters()}')
         log.info(f'Model:\n{self.model}')
-        self.optimizer = Adam([p for p in self.model.parameters() if p.requires_grad])
+        if self.elmo_unfreeze != 'never':
+            if self.elmo_unfreeze == 'start':
+                self.optimizer = Adam(self.model.parameters())
+            elif self.elmo_unfreeze == 'epoch_10':
+                # Start with LR set to 0, then increase it at epoch 10
+                self.optimizer = Adam([
+                    {'params': self.model.elmo.parameters(), 'lr': 0.0, 'name': 'elmo'},
+                    {'params': self.model.classifier.parameters(), 'name': 'classifier'}
+                ])
+            else:
+                raise ValueError('Invalid elmo unfreeze option')
+        else:
+            self.optimizer = Adam(self.model.classifier.parameters())
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
         temp_prefix = get_tmp_filename()
@@ -121,6 +141,9 @@ class ElmoGuesser(AbstractGuesser):
         log.info('Starting training')
         epoch = 0
         while True:
+            if epoch == 10 and self.elmo_unfreeze == 'epoch_10':
+                elmo_param_group = [pg for pg in self.optimizer.param_groups if pg['name'] == 'elmo'][0]
+                elmo_param_group['lr'] = 0.001
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(train_batches)
             random.shuffle(train_batches)
@@ -192,6 +215,8 @@ class ElmoGuesser(AbstractGuesser):
         guesser.class_to_i = params['class_to_i']
         guesser.i_to_class = params['i_to_class']
         guesser.random_seed = params['random_seed']
+        guesser.dropout = params['dropout']
+        guesser.elmo_unfreeze = params['elmo_unfreeze']
         guesser.model = ElmoModel(len(guesser.i_to_class))
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'elmo.pt'), map_location=lambda storage, loc: storage
@@ -209,6 +234,8 @@ class ElmoGuesser(AbstractGuesser):
                 'class_to_i': self.class_to_i,
                 'i_to_class': self.i_to_class,
                 'config_num': self.config_num,
-                'random_seed': self.random_seed
+                'random_seed': self.random_seed,
+                'dropout': self.dropout,
+                'elmo_unfreeze': self.elmo_unfreeze
             }, f)
 
