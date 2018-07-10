@@ -114,11 +114,10 @@ class ElmoGuesser(AbstractGuesser):
             self.model = self.model.cuda()
         log.info(f'Parameters:\n{self.parameters()}')
         log.info(f'Model:\n{self.model}')
-        if self.elmo_unfreeze != 'never':
-            parameters = list(self.model.classifier.parameters())
-            for mix in self.model.elmo._scalar_mixes:
-                parameters.extend(list(mix.parameters()))
-            self.optimizer = Adam(parameters)
+        parameters = list(self.model.classifier.parameters())
+        for mix in self.model.elmo._scalar_mixes:
+            parameters.extend(list(mix.parameters()))
+        self.optimizer = Adam(parameters)
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
         temp_prefix = get_tmp_filename()
@@ -130,9 +129,6 @@ class ElmoGuesser(AbstractGuesser):
         log.info('Starting training')
         epoch = 0
         while True:
-            if epoch == 10 and self.elmo_unfreeze == 'epoch_10':
-                elmo_param_group = [pg for pg in self.optimizer.param_groups if pg['name'] == 'elmo'][0]
-                elmo_param_group['lr'] = 0.001
             self.model.train()
             train_acc, train_loss, train_time = self.run_epoch(train_batches)
             random.shuffle(train_batches)
