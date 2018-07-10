@@ -161,8 +161,14 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
         'script_list': [
                            path.join(output_dir, f'slurm-{i}.sh') for i in range(len(enabled_guessers))
                        ] + [singleton_output],
-        'is_scavenger': account == 'scavenger',
-        'gres': gres
+        'gres': gres,
+        'partition': partition,
+        'qos': qos,
+        'mem_per_cpu': mem_per_cpu,
+        'max_time': max_time,
+        'gres': gres,
+        'cpus_per_task': cpus_per_task,
+        'account': account
     })
     with safe_open(path.join(output_dir, 'slurm-master.sh'), 'w') as f:
         f.write(master_script)
