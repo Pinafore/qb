@@ -21,10 +21,10 @@ guessers:
       gradient_clip: 0.25
       lowercase: true
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
-      n_hidden_layers: 2
-      n_hidden_units: 1500
+      n_hidden_layers: 1
+      n_hidden_units: 1000
       n_wiki_sentences: 5
-      nn_dropout: 0.265
+      nn_dropout: 0.5
       use_wiki: false
       wiki_title_replace_token: ''
       combined_ngrams: true
@@ -44,9 +44,9 @@ guessers:
       lowercase: true
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
       n_hidden_layers: 1
-      n_hidden_units: 1000
+      n_hidden_units: 1500
       n_wiki_sentences: 5
-      dropout: 0.265
+      dropout: 0.25
       use_wiki: false
       wiki_title_replace_token: ''
       random_seed: null
@@ -55,7 +55,6 @@ guessers:
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
       random_seed: null
       dropout: .5
-      elmo_unfreeze: 'never'
   qanta.guesser.elasticsearch.ElasticSearchGuesser:
     - enabled: false
       luigi_dependency: qanta.pipeline.guesser.EmptyTask
@@ -69,9 +68,9 @@ guessers:
       wiki_boost: 1
       random_seed: null
       similarity:
-        name: default # [default, BM25]
-        # k1: 1.2
-        # b: 0.75
+        name: BM25 # [default, BM25]
+        k1: 2.0
+        b: 0.75
   qanta.guesser.tfidf.TfidfGuesser:
     - enabled: false
       luigi_dependency: qanta.pipeline.guesser.EmptyTask

@@ -44,23 +44,22 @@ class ElmoModel(nn.Module):
         super().__init__()
         self.dropout = dropout
         self.unfreeze = unfreeze
-        if unfreeze == 'never':
-            requires_grad = False
-        else:
-            requires_grad = True
-        self.elmo = Elmo(ELMO_OPTIONS_FILE, ELMO_WEIGHTS_FILE, 2, dropout=dropout, requires_grad=requires_grad)
+        # This turns off gradient updates for the elmo model, but still leaves scalar mixture
+        # parameters as tunable, provided that references to the scalar mixtures are extracted
+        # and plugged into the optimizer
+        self.elmo = Elmo(ELMO_OPTIONS_FILE, ELMO_WEIGHTS_FILE, 2, dropout=dropout, requires_grad=False)
         self.classifier = nn.Sequential(
             nn.Linear(2 * ELMO_DIM, n_classes),
             nn.BatchNorm1d(n_classes),
             nn.Dropout(dropout)
         )
 
-    def forward(self, questions):
+    def forward(self, questions, lengths):
         embeddings = self.elmo(questions)
         layer_0 = embeddings['elmo_representations'][0]
-        layer_0 = layer_0.sum(1) / layer_0.shape[1]
+        layer_0 = layer_0.sum(1) / lengths
         layer_1 = embeddings['elmo_representations'][1]
-        layer_1 = layer_1.sum(1) / layer_1.shape[1]
+        layer_1 = layer_1.sum(1) / lengths
         layer = torch.cat([layer_0, layer_1], 1)
         return self.classifier(layer)
 
@@ -70,11 +69,12 @@ def batchify(x_data, y_data, batch_size=128, shuffle=False):
     for i in range(0, len(x_data), batch_size):
         start, stop = i, i + batch_size
         x_batch = batch_to_ids(x_data[start:stop])
+        lengths = torch.from_numpy(np.array([1.0 * len(x) for x in x_data[start:stop]]))
         if CUDA:
             y_batch = Variable(torch.from_numpy(np.array(y_data[start:stop])).cuda())
         else:
             y_batch = Variable(torch.from_numpy(np.array(y_data[start:stop])))
-        batches.append((x_batch, y_batch))
+        batches.append((x_batch, y_batch, lengths))
 
     if shuffle:
         random.shuffle(batches)
@@ -89,11 +89,9 @@ class ElmoGuesser(AbstractGuesser):
             guesser_conf = conf['guessers']['qanta.guesser.elmo.ElmoGuesser'][self.config_num]
             self.random_seed = guesser_conf['random_seed']
             self.dropout = guesser_conf['dropout']
-            self.elmo_unfreeze = guesser_conf['elmo_unfreeze']
         else:
             self.random_seed = None
             self.dropout = None
-            self.elmo_unfreeze = None
 
         self.model = None
         self.i_to_class = None
@@ -112,24 +110,16 @@ class ElmoGuesser(AbstractGuesser):
         log.info('Batchifying data')
         train_batches = batchify(x_train, y_train, shuffle=True)
         val_batches = batchify(x_val, y_val, shuffle=False)
-        self.model = ElmoModel(len(i_to_class), dropout=self.dropout, unfreeze=self.elmo_unfreeze)
+        self.model = ElmoModel(len(i_to_class), dropout=self.dropout)
         if CUDA:
             self.model = self.model.cuda()
         log.info(f'Parameters:\n{self.parameters()}')
         log.info(f'Model:\n{self.model}')
         if self.elmo_unfreeze != 'never':
-            if self.elmo_unfreeze == 'start':
-                self.optimizer = Adam(self.model.parameters())
-            elif self.elmo_unfreeze == 'epoch_10':
-                # Start with LR set to 0, then increase it at epoch 10
-                self.optimizer = Adam([
-                    {'params': self.model.elmo.parameters(), 'lr': 0.0, 'name': 'elmo'},
-                    {'params': self.model.classifier.parameters(), 'name': 'classifier'}
-                ])
-            else:
-                raise ValueError('Invalid elmo unfreeze option')
-        else:
-            self.optimizer = Adam(self.model.classifier.parameters())
+            parameters = list(self.model.classifier.parameters())
+            for mix in self.model.elmo._scalar_mixes:
+                parameters.extend(list(mix.parameters()))
+            self.optimizer = Adam(parameters)
         self.criterion = nn.CrossEntropyLoss()
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
         temp_prefix = get_tmp_filename()
@@ -167,10 +157,10 @@ class ElmoGuesser(AbstractGuesser):
         batch_accuracies = []
         batch_losses = []
         epoch_start = time.time()
-        for x_batch, y_batch in batches:
+        for x_batch, y_batch, length_batch in batches:
             if train:
                 self.model.zero_grad()
-            out = self.model(x_batch.cuda())
+            out = self.model(x_batch.cuda(), length_batch.cuda())
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, y_batch).float()).data[0]
             batch_loss = self.criterion(out, y_batch)
@@ -189,8 +179,8 @@ class ElmoGuesser(AbstractGuesser):
         x_data = [tokenize_question(q) for q in questions]
         batches = batchify(x_data, y_data, shuffle=False)
         guesses = []
-        for x_batch, y_batch in batches:
-            out = self.model(x_batch.cuda())
+        for x_batch, y_batch, length_batch in batches:
+            out = self.model(x_batch.cuda(), length_batch)
             probs = F.softmax(out).data.cpu().numpy()
             preds = np.argsort(-probs, axis=1)
             n_examples = probs.shape[0]
@@ -216,7 +206,6 @@ class ElmoGuesser(AbstractGuesser):
         guesser.i_to_class = params['i_to_class']
         guesser.random_seed = params['random_seed']
         guesser.dropout = params['dropout']
-        guesser.elmo_unfreeze = params['elmo_unfreeze']
         guesser.model = ElmoModel(len(guesser.i_to_class))
         guesser.model.load_state_dict(torch.load(
             os.path.join(directory, 'elmo.pt'), map_location=lambda storage, loc: storage
@@ -235,7 +224,6 @@ class ElmoGuesser(AbstractGuesser):
                 'i_to_class': self.i_to_class,
                 'config_num': self.config_num,
                 'random_seed': self.random_seed,
-                'dropout': self.dropout,
-                'elmo_unfreeze': self.elmo_unfreeze
+                'dropout': self.dropout
             }, f)
 

@@ -13,10 +13,10 @@ default:
   max_time: "1-00:00:00"
   gres: null
   cpus_per_task: 4
+  account: c_cluster
 DanGuesser:
   partition: gpu
   gres: gpu:1
-  mem_per_cpu: 16g
   qos: gpu-short
   max_time: "2:00:00"
   mem_per_cpu: 4g
@@ -30,3 +30,10 @@ RnnGuesser:
 VWGuesser:
   mem_per_cpu: 14g
   cpus_per_task: 1
+ElmoGuesser:
+  partition: gpu
+  gres: gpu:1
+  max_time: "4-00:00:00"
+  mem_per_cpu: 4g
+  cpus_per_task: 4
+  qos: gpu-long
