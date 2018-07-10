@@ -40,10 +40,9 @@ def create_save_model(model):
 
 
 class ElmoModel(nn.Module):
-    def __init__(self, n_classes, dropout=.5, unfreeze=None):
+    def __init__(self, n_classes, dropout=.5):
         super().__init__()
         self.dropout = dropout
-        self.unfreeze = unfreeze
         # This turns off gradient updates for the elmo model, but still leaves scalar mixture
         # parameters as tunable, provided that references to the scalar mixtures are extracted
         # and plugged into the optimizer
