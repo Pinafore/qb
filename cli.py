@@ -19,7 +19,7 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.guesser.elasticsearch import create_es_config, start_elasticsearch, stop_elasticsearch
 from qanta.util.environment import ENVIRONMENT
 from qanta.util.io import safe_open, shell, get_tmp_filename
-from qanta.util.constants import QANTA_SQL_DATASET_PATH
+from qanta.util.constants import QANTA_SQL_DATASET_PATH, GUESSER_GENERATION_FOLDS
 from qanta.hyperparam import expand_config
 
 log = qlogging.get('cli')
@@ -109,7 +109,7 @@ def get_slurm_config_value(name: str, default_config: Dict, guesser_config: Opti
 
 @main.command()
 @click.option('--slurm-config-file', default='slurm-config.yaml')
-@click.option('--task', default='GuesserPerformance')
+@click.argument('task')
 @click.argument('output_dir')
 def generate_guesser_slurm(slurm_config_file, task, output_dir):
     with open(slurm_config_file) as f:
@@ -133,6 +133,10 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
         max_time = get_slurm_config_value('max_time', default_slurm_config, guesser_slurm_config)
         cpus_per_task = get_slurm_config_value('cpus_per_task', default_slurm_config, guesser_slurm_config)
         account = get_slurm_config_value('account', default_slurm_config, guesser_slurm_config)
+        if task == 'GuesserReport':
+            folds = GUESSER_GENERATION_FOLDS
+        else:
+            folds = []
         script = template.render({
             'task': task,
             'guesser_module': gs.guesser_module,
@@ -146,7 +150,8 @@ def generate_guesser_slurm(slurm_config_file, task, output_dir):
             'max_time': max_time,
             'gres': gres,
             'cpus_per_task': cpus_per_task,
-            'account': account
+            'account': account,
+            'folds': folds
         })
         slurm_file = path.join(output_dir, f'slurm-{i}.sh')
         with safe_open(slurm_file, 'w') as f:

@@ -21,9 +21,9 @@ DanGuesser:
   max_time: "2:00:00"
   mem_per_cpu: 4g
 RnnGuesser:
-  partition: scavenger
-  qos: scavenger
-  account: scavenger
+  partition: gpu
+  qos: gpu-medium
+  account: c_cluster
   gres: gpu:1
   max_time: "1-00:00:00"
   mem_per_cpu: 4g
