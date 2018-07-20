@@ -68,7 +68,7 @@ def batchify(x_data, y_data, batch_size=128, shuffle=False):
     for i in range(0, len(x_data), batch_size):
         start, stop = i, i + batch_size
         x_batch = batch_to_ids(x_data[start:stop])
-        lengths = torch.from_numpy(np.array([1.0 * len(x) for x in x_data[start:stop]]))
+        lengths = Variable(torch.from_numpy(np.array([max(len(x), 1) for x in x_data[start:stop]])).float()).view(-1, 1)
         if CUDA:
             y_batch = Variable(torch.from_numpy(np.array(y_data[start:stop])).cuda())
         else:
@@ -100,6 +100,9 @@ class ElmoGuesser(AbstractGuesser):
         self.criterion = None
         self.scheduler = None
         self.model_file = None
+
+    def parameters(self):
+        return conf['guessers']['qanta.guesser.elmo.ElmoGuesser'][self.config_num]
 
     def train(self, training_data: TrainingData) -> None:
         x_train, y_train, x_val, y_val, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
@@ -172,10 +175,10 @@ class ElmoGuesser(AbstractGuesser):
     def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Page, float]]]:
         y_data = np.zeros((len(questions)))
         x_data = [tokenize_question(q) for q in questions]
-        batches = batchify(x_data, y_data, shuffle=False)
+        batches = batchify(x_data, y_data, shuffle=False, batch_size=32)
         guesses = []
         for x_batch, y_batch, length_batch in batches:
-            out = self.model(x_batch.cuda(), length_batch)
+            out = self.model(x_batch.cuda(), length_batch.cuda())
             probs = F.softmax(out).data.cpu().numpy()
             preds = np.argsort(-probs, axis=1)
             n_examples = probs.shape[0]
