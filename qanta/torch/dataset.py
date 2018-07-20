@@ -3,6 +3,8 @@ import re
 import json
 import torch
 
+from functional import pseq
+
 from torchtext.data.dataset import Dataset
 from torchtext.data.example import Example
 from torchtext.data import Field, RawField, BucketIterator
@@ -199,20 +201,23 @@ class QuizBowl(Dataset):
                         f"Valid modes are 'sentence' and 'question', but '{example_mode}' was given")
 
         if use_wiki and n_wiki_sentences > 0 and 'train' in path:
-            for page in answer_set:
-                if page in self.wiki_lookup:
-                    sentences = extract_wiki_sentences(
-                        page, self.wiki_lookup[page]['text'], n_wiki_sentences,
-                        replace_title_mentions=replace_title_mentions
-                    )
-                    for i, s in enumerate(sentences):
-                        examples.append(Example.fromdict({
-                            'qanta_id': -1,
-                            'sent': i,
-                            'text': s,
-                            'page': page
-                        }, example_fields))
-
+            print('Loading wikipedia')
+            pages = [(p, self.wiki_lookup[p]['text']) for p in answer_set if p in self.wiki_lookup]
+            def extract(args):
+                title, text = args
+                sentences = extract_wiki_sentences(
+                    title, text, n_wiki_sentences,
+                    replace_title_mentions=replace_title_mentions
+                )
+                return title, sentences
+            for page, sentences in pseq(pages).map(extract).list():
+                for i, s in enumerate(sentences):
+                    examples.append(Example.fromdict({
+                        'qanta_id': -1,
+                        'sent': i,
+                        'text': s,
+                        'page': page
+                    }, example_fields))
 
         dataset_fields = {
             'qanta_id': qanta_id_field,

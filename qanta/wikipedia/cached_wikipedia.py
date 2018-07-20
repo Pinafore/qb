@@ -130,6 +130,7 @@ def extract_wiki_sentences(title, text, n_sentences, replace_title_mentions=''):
         formatted_text = re.sub(title_word_pattern, replace_title_mentions, p, flags=re.IGNORECASE)
         # Cleanup whitespace
         formatted_text = re.sub('\s+', ' ', formatted_text).strip()
+
         sentences.extend(nltk.sent_tokenize(formatted_text))
 
     return sentences[:n_sentences]
