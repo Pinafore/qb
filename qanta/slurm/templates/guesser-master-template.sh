@@ -14,7 +14,8 @@ mkdir -p /fs/clip-quiz/entilzha/scratch
 {% if account == "scavenger" %}
 sbatch --job-name="qanta-guesser {{ slurm_script }}" \
   --chdir "/fs/clip-quiz/entilzha/qb" \
-  --mem-per-cpu 4g \
+  --mem-per-cpu {{ mem_per_cpu }} \
+  --cpus-per-task {{ cpus_per_task }} \
   --output "/fs/clip-quiz/entilzha/slurm-logs/stdout-%A_%a.out" --error "/fs/clip-quiz/entilzha/slurm-logs/stderr-%A_%a.out" \
   --time "1-00:00:00" \
   --account scavenger --partition scavenger \
@@ -22,7 +23,8 @@ sbatch --job-name="qanta-guesser {{ slurm_script }}" \
   {{ slurm_script }}{% elif partition == "gpu" %}
 sbatch --job-name="qanta-guesser {{ slurm_script }}" \
   --chdir "/fs/clip-quiz/entilzha/qb" \
-  --mem-per-cpu 4g \
+  --mem-per-cpu {{ mem_per_cpu }} \
+  --cpus-per-task {{ cpus_per_task }} \
   --output "/fs/clip-quiz/entilzha/slurm-logs/stdout-%A_%a.out" --error "/fs/clip-quiz/entilzha/slurm-logs/stderr-%A_%a.out" \
   --time "{{ max_time }}" \
   --account c_cluster --partition gpu --qos {{ qos }} \

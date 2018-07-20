@@ -25,13 +25,14 @@ parameters:
   #  ngrams: [[1, 2], [1]]
   #  skips: [[1], []]
   #  passes: [100]
-  qanta.guesser.elmo.ElmoGuesser:
-    enabled: [true]
-    random_seed: [0, 1, 2]
-    dropout: [.15, .25, .5]
-  #qanta.guesser.rnn.RnnGuesser:
+  #qanta.guesser.elmo.ElmoGuesser:
   #  enabled: [true]
   #  random_seed: [0, 1, 2]
-  #  n_hidden_layers: [1, 2]
-  #  n_hidden_units: [500, 1000, 1500]
   #  dropout: [.15, .25, .5]
+  qanta.guesser.rnn.RnnGuesser:
+    enabled: [true]
+    random_seed: [0, 1, 2, 3, 4]
+    n_hidden_layers: [1]
+    n_hidden_units: [1500]
+    dropout: [.25]
+    use_wiki: [true, false]

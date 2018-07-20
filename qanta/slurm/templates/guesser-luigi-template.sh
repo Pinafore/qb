@@ -18,8 +18,11 @@
 {% endif %}
 
 set -x
-
+{% if task == "GuesserPerformance" %}
 srun luigi --module qanta.pipeline.guesser --workers 1 {{ task }} \
   --guesser-module {{ guesser_module }} --guesser-class {{ guesser_class}} \
   --dependency-module {{ dependency_module }} --dependency-class {{ dependency_class }} \
   --config-num {{ config_num }}
+{% elif task == "AllGuesserReports" %}
+srun luigi --module qanta.pipeline.guesser --workers {{ task }}
+{% endif }
