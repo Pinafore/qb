@@ -23,6 +23,11 @@ srun luigi --module qanta.pipeline.guesser --workers 1 {{ task }} \
   --guesser-module {{ guesser_module }} --guesser-class {{ guesser_class}} \
   --dependency-module {{ dependency_module }} --dependency-class {{ dependency_class }} \
   --config-num {{ config_num }}
-{% elif task == "AllGuesserReports" %}
-srun luigi --module qanta.pipeline.guesser --workers {{ task }}
-{% endif }
+{% elif task == "GuesserReport" %}
+{% for fold in folds %}
+srun luigi --module qanta.pipeline.guesser --workers 1 {{ task }} \
+  --guesser-module {{ guesser_module }} --guesser-class {{ guesser_class}} \
+  --dependency-module {{ dependency_module }} --dependency-class {{ dependency_class }} \
+  --config-num {{ config_num }} --fold {{ fold }}
+{% endfor %}
+{% endif %}
