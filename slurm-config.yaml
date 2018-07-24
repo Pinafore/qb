@@ -27,6 +27,7 @@ RnnGuesser:
   gres: gpu:1
   max_time: "1-00:00:00"
   mem_per_cpu: 4g
+  cpus_per_task: 4
 VWGuesser:
   mem_per_cpu: 14g
   cpus_per_task: 1
