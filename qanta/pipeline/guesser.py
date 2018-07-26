@@ -10,6 +10,7 @@ from qanta.util import constants as c
 from qanta.util.io import shell
 from qanta.guesser.abstract import AbstractGuesser, get_class
 from qanta.pipeline.preprocess import DownloadData
+from qanta.reporting.guesser import merge_reports, find_best_guessers
 from qanta import qlogging
 
 log = qlogging.get(__name__)
@@ -342,3 +343,28 @@ class AllGuesserReports(WrapperTask):
                     config_num=g_spec.config_num,
                     fold=c.EXPO_FOLD
                 )
+
+
+class SelectBestGuesser(Task):
+    def requires(self):
+        yield AllGuesserReports()
+
+    def run(self):
+        guesser_types = set()
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            guesser_types.add(f'{g_spec.guesser_module}.{g_spec.guesser_class}')
+        _, _, all_dfs, _ = merge_reports(guesser_types)
+        best_guessers = find_best_guessers(all_dfs)
+        for g, config_num in best_guessers.items():
+            inp = f'output/guesser/{g}/{config_num}'
+            out = f'output/guesser/best/{g}/'
+            shell(f'touch {inp}/best.touch')
+            shell(f'mkdir -p {out}')
+            shell(f'cp -r {inp}/* {out}')
+
+    def output(self):
+        targets = []
+        for g_spec in AbstractGuesser.list_enabled_guessers():
+            guesser = f'{g_spec.guesser_module}.{g_spec.guesser_class}'
+            targets.append(LocalTarget(f'output/guesser/best/{guesser}/best.touch'))
+        return targets
