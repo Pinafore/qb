@@ -16,7 +16,7 @@ from plotnine import (
     ggplot, aes, facet_wrap,
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
-    xlab, ylab, theme, element_text
+    xlab, ylab, theme, element_text, element_blank
 )
 
 
@@ -156,23 +156,13 @@ class CompareGuesserReport:
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
         self.acc_df = pd.DataFrame.from_records(acc_rows, columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset'])
 
-    def plot_char_percent_vs_accuracy_smooth(self, expo=False):
+    def plot_char_percent_vs_accuracy_smooth(self, expo=False, no_models=False):
         if expo:
-            p = (
-                ggplot(self.char_plot_df) + facet_wrap('Guessing_Model', nrow=1)
-                + aes(x='char_percent', y='correct', color='Dataset')
-                + stat_smooth(method='mavg', se=False, method_args={'window': 400})
-                + scale_y_continuous(breaks=np.linspace(0, 1, 11))
-                + scale_x_continuous(breaks=[0, .5, 1])
-                + xlab('Percent of Question Revealed')
-                + ylab('Accuracy')
-                + theme(legend_position='top', legend_box_margin=0, strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5}))
-            )
             if os.path.exists('data/external/all_human_gameplay.json'):
                 with open('data/external/all_human_gameplay.json') as f:
                     all_gameplay = json.load(f)
                     frames = []
-                    for event, name in [('parents', 'Intermediate'), ('maryland', 'Collegiate'), ('live', 'National')]:
+                    for event, name in [('parents', 'Dilettante'), ('maryland', 'Expert'), ('live', 'National')]:
                         gameplay = all_gameplay[event]
                         if event != 'live':
                             control_correct_positions = gameplay['control_correct_positions']
@@ -186,7 +176,7 @@ class CompareGuesserReport:
                             control_y = control_sorted_result.cumsum() / control_sorted_result.shape[0]
                             control_df = pd.DataFrame({'correct': control_y, 'char_percent': control_x})
                             control_df['Dataset'] = 'Test Questions'
-                            control_df['Guessing_Model'] = f' {name}\nHuman'
+                            control_df['Guessing_Model'] = f' {name}'
                             frames.append(control_df)
 
                         adv_correct_positions = gameplay['adv_correct_positions']
@@ -200,14 +190,30 @@ class CompareGuesserReport:
                         adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                         adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
                         adv_df['Dataset'] = 'Challenge Questions'
-                        adv_df['Guessing_Model'] = f' {name}\nHuman'
+                        adv_df['Guessing_Model'] = f' {name}'
                         frames.append(adv_df)
 
                     human_df = pd.concat(frames)
-                    p = p + (
-                        geom_line(data=human_df)
-                    )
+            if no_models:
+                p = ggplot(human_df) + geom_line()
+            else:
+                p = ggplot(self.char_plot_df)
+                if os.path.exists('data/external/all_human_gameplay.json'):
+                    p = p + geom_line(data=human_df)
 
+            p = (
+                p + facet_wrap('Guessing_Model', nrow=1)
+                + aes(x='char_percent', y='correct', color='Dataset')
+                + stat_smooth(method='mavg', se=False, method_args={'window': 400})
+                + scale_y_continuous(breaks=np.linspace(0, 1, 11))
+                + scale_x_continuous(breaks=[0, .5, 1])
+                + xlab('Percent of Question Revealed')
+                + ylab('Accuracy')
+                + theme(
+                    legend_position='top', legend_box_margin=0, legend_title=element_blank(),
+                    strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
+                )
+            )
             return p
         else:
             return (
@@ -266,8 +272,9 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @main.command()
 @click.option('--use-test', is_flag=True, default=False)
 @click.option('--only-tacl', is_flag=True, default=False)
+@click.option('--no-models', is_flag=True, default=False)
 @click.argument('output_dir')
-def guesser(use_test, only_tacl, output_dir):
+def guesser(use_test, only_tacl, no_models, output_dir):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -316,7 +323,7 @@ def guesser(use_test, only_tacl, output_dir):
         )
         save_plot(
             output_dir, 'compare', 'expo_char_accuracy.pdf',
-            compare_report.plot_char_percent_vs_accuracy_smooth(expo=True),
+            compare_report.plot_char_percent_vs_accuracy_smooth(expo=True, no_models=no_models),
             height=1.7, width=7.0
         )
 
