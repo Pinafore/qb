@@ -110,6 +110,8 @@ class GenerateGuesses(Task):
 
         if self.fold in {c.GUESSER_TRAIN_FOLD, c.GUESSER_DEV_FOLD}:
             char_skip = conf['guesser_char_skip']
+        elif self.fold == c.EXPO_FOLD:
+            char_skip = conf['expo_char_skip']
         else:
             char_skip = conf['buzzer_char_skip']
 
