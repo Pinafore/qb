@@ -8,6 +8,7 @@ expo_questions: data/internal/expo/2016_hsnct.csv
 
 guesser_char_skip: 25
 buzzer_char_skip: 25
+expo_char_skip: 10
 n_guesses: 50
 
 use_pretrained_embeddings: true

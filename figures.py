@@ -16,14 +16,14 @@ from plotnine import (
     ggplot, aes, facet_wrap,
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
-    xlab, ylab, theme
+    xlab, ylab, theme, element_text
 )
 
 
 QB_ROOT = os.environ.get('QB_ROOT', '')
-DEV_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/**/0/guesser_report_guessdev.pickle')
-TEST_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/**/0/guesser_report_guesstest.pickle')
-EXPO_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/**/0/guesser_report_expo.pickle')
+DEV_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/best/**/guesser_report_guessdev.pickle')
+TEST_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/best/**/guesser_report_guesstest.pickle')
+EXPO_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/best/**/guesser_report_expo.pickle')
 
 
 @click.group()
@@ -161,43 +161,49 @@ class CompareGuesserReport:
             p = (
                 ggplot(self.char_plot_df) + facet_wrap('Guessing_Model', nrow=1)
                 + aes(x='char_percent', y='correct', color='Dataset')
-                + stat_smooth(method='mavg', se=False, method_args={'window': 200})
+                + stat_smooth(method='mavg', se=False, method_args={'window': 400})
                 + scale_y_continuous(breaks=np.linspace(0, 1, 11))
                 + scale_x_continuous(breaks=[0, .5, 1])
                 + xlab('Percent of Question Revealed')
                 + ylab('Accuracy')
-                + theme(legend_position='top')
+                + theme(legend_position='top', legend_box_margin=0, strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5}))
             )
-            if os.path.exists('data/external/human_gameplay.json'):
-                with open('data/external/human_gameplay.json') as f:
-                    gameplay = json.load(f)
-                    control_correct_positions = gameplay['control_correct_positions']
-                    control_wrong_positions = gameplay['control_wrong_positions']
-                    control_positions = control_correct_positions + control_wrong_positions
-                    control_positions = np.array(control_positions)
-                    control_result = np.array(len(control_correct_positions) * [1] + len(control_wrong_positions) * [0])
-                    argsort_control = np.argsort(control_positions)
-                    control_x = control_positions[argsort_control]
-                    control_sorted_result = control_result[argsort_control]
-                    control_y = control_sorted_result.cumsum() / control_sorted_result.shape[0]
-                    control_df = pd.DataFrame({'correct': control_y, 'char_percent': control_x})
-                    control_df['Dataset'] = 'Test Questions'
-                    control_df['Guessing_Model'] = ' Human'
+            if os.path.exists('data/external/all_human_gameplay.json'):
+                with open('data/external/all_human_gameplay.json') as f:
+                    all_gameplay = json.load(f)
+                    frames = []
+                    for event, name in [('parents', 'Intermediate'), ('maryland', 'Collegiate'), ('live', 'National')]:
+                        gameplay = all_gameplay[event]
+                        if event != 'live':
+                            control_correct_positions = gameplay['control_correct_positions']
+                            control_wrong_positions = gameplay['control_wrong_positions']
+                            control_positions = control_correct_positions + control_wrong_positions
+                            control_positions = np.array(control_positions)
+                            control_result = np.array(len(control_correct_positions) * [1] + len(control_wrong_positions) * [0])
+                            argsort_control = np.argsort(control_positions)
+                            control_x = control_positions[argsort_control]
+                            control_sorted_result = control_result[argsort_control]
+                            control_y = control_sorted_result.cumsum() / control_sorted_result.shape[0]
+                            control_df = pd.DataFrame({'correct': control_y, 'char_percent': control_x})
+                            control_df['Dataset'] = 'Test Questions'
+                            control_df['Guessing_Model'] = f' {name}\nHuman'
+                            frames.append(control_df)
 
-                    adv_correct_positions = gameplay['adv_correct_positions']
-                    adv_wrong_positions = gameplay['adv_wrong_positions']
-                    adv_positions = adv_correct_positions + adv_wrong_positions
-                    adv_positions = np.array(control_positions)
-                    adv_result = np.array(len(adv_correct_positions) * [1] + len(adv_wrong_positions) * [0])
-                    argsort_adv = np.argsort(adv_positions)
-                    adv_x = adv_positions[argsort_adv]
-                    adv_sorted_result = adv_result[argsort_adv]
-                    adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
-                    adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                    adv_df['Dataset'] = 'Challenge Questions'
-                    adv_df['Guessing_Model'] = ' Human'
+                        adv_correct_positions = gameplay['adv_correct_positions']
+                        adv_wrong_positions = gameplay['adv_wrong_positions']
+                        adv_positions = adv_correct_positions + adv_wrong_positions
+                        adv_positions = np.array(control_positions)
+                        adv_result = np.array(len(adv_correct_positions) * [1] + len(adv_wrong_positions) * [0])
+                        argsort_adv = np.argsort(adv_positions)
+                        adv_x = adv_positions[argsort_adv]
+                        adv_sorted_result = adv_result[argsort_adv]
+                        adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
+                        adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
+                        adv_df['Dataset'] = 'Challenge Questions'
+                        adv_df['Guessing_Model'] = f' {name}\nHuman'
+                        frames.append(adv_df)
 
-                    human_df = pd.concat([control_df, adv_df])
+                    human_df = pd.concat(frames)
                     p = p + (
                         geom_line(data=human_df)
                     )
@@ -259,8 +265,9 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 
 @main.command()
 @click.option('--use-test', is_flag=True, default=False)
+@click.option('--only-tacl', is_flag=True, default=False)
 @click.argument('output_dir')
-def guesser(use_test, output_dir):
+def guesser(use_test, only_tacl, output_dir):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -269,30 +276,37 @@ def guesser(use_test, output_dir):
         report_fold = 'guessdev'
     dev_reports = []
     for path in glob.glob(REPORT_PATTERN):
+        if only_tacl and 'VWGuesser' in path:
+            continue
         with open(path, 'rb') as f:
             report = GuesserReport(pickle.load(f), report_fold)
             dev_reports.append(report)
 
-        save_all_plots(output_dir, report)
+        if not only_tacl:
+            save_all_plots(output_dir, report)
 
     expo_reports = []
     expo_output_dir = safe_path(os.path.join(output_dir, 'expo'))
     for path in glob.glob(EXPO_REPORT_PATTERN):
+        if only_tacl and 'VWGuesser' in path:
+            continue
         with open(path, 'rb') as f:
             report = GuesserReport(pickle.load(f), 'expo')
             expo_reports.append(report)
 
-        save_all_plots(expo_output_dir, report, expo=True)
+        if not only_tacl:
+            save_all_plots(expo_output_dir, report, expo=True)
 
-    compare_report = CompareGuesserReport(dev_reports)
-    save_plot(
-        output_dir, 'compare', 'position_accuracy.pdf',
-        compare_report.plot_compare_accuracy()
-    )
-    save_plot(
-        output_dir, 'compare', 'char_accuracy.pdf',
-        compare_report.plot_char_percent_vs_accuracy_smooth()
-    )
+    if not only_tacl:
+        compare_report = CompareGuesserReport(dev_reports)
+        save_plot(
+            output_dir, 'compare', 'position_accuracy.pdf',
+            compare_report.plot_compare_accuracy()
+        )
+        save_plot(
+            output_dir, 'compare', 'char_accuracy.pdf',
+            compare_report.plot_char_percent_vs_accuracy_smooth()
+        )
 
     if len(expo_reports) > 0:
         compare_report = CompareGuesserReport(dev_reports + expo_reports)
@@ -303,7 +317,7 @@ def guesser(use_test, output_dir):
         save_plot(
             output_dir, 'compare', 'expo_char_accuracy.pdf',
             compare_report.plot_char_percent_vs_accuracy_smooth(expo=True),
-            height=2.0, width=6.4
+            height=1.7, width=7.0
         )
 
 
