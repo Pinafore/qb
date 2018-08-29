@@ -1,0 +1,42 @@
+name: qb
+dependencies:
+  - python=3.6
+  - pytorch=0.3.1
+  - numpy
+  - scipy
+  - pandas
+  - scikit-learn
+  - nltk
+  - matplotlib
+  - requests
+  - pyyaml
+  - jinja2
+  - spacy=2.0.*
+  - seaborn
+  - click
+  - luigi
+  - unidecode
+  - python-levenshtein
+  - fuzzywuzzy
+  - chainer
+  - dash
+  - dash-renderer
+  - dash-html-components
+  - dash-core-components
+  - plotly
+  - tensorflow # or tensorflow-gpu, mostly for tensorboard which doesn't need GPU
+  - tensorboardx
+  - awscli
+  - py4j
+  - boto3
+  - flask
+  - pycountry
+  - pypandoc
+  - elasticsearch-dsl=6.2.*
+  - pip:
+    - pyfunctional
+    - result==0.2.2
+    - git+https://github.com/EntilZha/text.git@cddf59085e137d95e8c3b7f57840ef48f1bcb6b8
+channels:
+  - pytorch
+  - conda-forge
