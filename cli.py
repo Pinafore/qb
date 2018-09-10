@@ -21,6 +21,7 @@ from qanta.util.environment import ENVIRONMENT
 from qanta.util.io import safe_open, shell, get_tmp_filename
 from qanta.util.constants import QANTA_SQL_DATASET_PATH, GUESSER_GENERATION_FOLDS
 from qanta.hyperparam import expand_config
+from qanta.categories import categorylinks_cli
 
 log = qlogging.get('cli')
 
@@ -32,6 +33,9 @@ def main():
     log.info("QANTA starting with configuration:")
     for k, v in ENVIRONMENT.items():
         log.info("{0}={1}".format(k, v))
+
+
+main.add_command(categorylinks_cli, name='categories')
 
 
 @main.command()
