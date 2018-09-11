@@ -16,12 +16,13 @@ import tqdm
 
 from qanta import qlogging
 from qanta.guesser.abstract import AbstractGuesser
-from qanta.guesser.elasticsearch import create_es_config, start_elasticsearch, stop_elasticsearch
+from qanta.guesser.elasticsearch import elasticsearch_cli
 from qanta.util.environment import ENVIRONMENT
 from qanta.util.io import safe_open, shell, get_tmp_filename
 from qanta.util.constants import QANTA_SQL_DATASET_PATH, GUESSER_GENERATION_FOLDS
 from qanta.hyperparam import expand_config
-from qanta.categories import categorylinks_cli
+from qanta.wikipedia.categories import categorylinks_cli
+from qanta.wikipedia.vital import vital_cli
 
 log = qlogging.get('cli')
 
@@ -36,6 +37,8 @@ def main():
 
 
 main.add_command(categorylinks_cli, name='categories')
+main.add_command(vital_cli, name='vital')
+main.add_command(elasticsearch_cli, name='elasticsearch')
 
 
 @main.command()
@@ -213,50 +216,9 @@ def slurm(partition, qos, mem_per_cpu, max_time, nodelist, cpus_per_task, luigi_
 
 
 @main.command()
-@click.option('--generate-config/--no-generate-config', default=True, is_flag=True)
-@click.option('--config-dir', default='.')
-@click.option('--pid-file', default='elasticsearch.pid')
-@click.argument('command', type=click.Choice(['start', 'stop', 'configure']))
-def elasticsearch(generate_config, config_dir, pid_file, command):
-    if generate_config:
-        create_es_config(path.join(config_dir, 'elasticsearch.yml'))
-
-    if command == 'configure':
-        return
-
-    if command == 'start':
-        start_elasticsearch(config_dir, pid_file)
-    elif command == 'stop':
-        stop_elasticsearch(pid_file)
-
-
-@main.command()
 def answer_map_google_csvs():
     from qanta.ingestion.gspreadsheets import create_answer_mapping_csvs
     create_answer_mapping_csvs()
-
-
-@main.command()
-@click.argument('category_csv')
-@click.argument('out_json')
-def categorylinks_to_disambiguation(category_csv, out_json):
-    disambiguation_pages = set()
-    blacklist = {
-        'Articles_with_links_needing_disambiguation_from_April_2018',
-        'All_articles_with_links_needing_disambiguation'
-    }
-    with open(category_csv) as f:
-        reader = csv.reader(f)
-        for r in tqdm.tqdm(reader, mininterval=1):
-            page_id, category = r[0], r[1]
-            l_category = category.lower()
-            if ((category not in blacklist) and
-                    ('disambiguation' in l_category) and
-                    ('articles_with_links_needing_disambiguation' not in l_category)):
-                disambiguation_pages.add(int(page_id))
-
-    with open(out_json, 'w') as f:
-        json.dump(list(disambiguation_pages), f)
 
 
 @main.command()

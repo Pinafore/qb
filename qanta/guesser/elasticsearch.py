@@ -4,6 +4,7 @@ import os
 import pickle
 import numpy as np
 
+import click
 from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 import elasticsearch
@@ -23,6 +24,7 @@ from qanta import qlogging
 log = qlogging.get(__name__)
 ES_PARAMS = 'es_params.pickle'
 connections.create_connection(hosts=['localhost'])
+
 
 
 def create_es_config(output_path, host='localhost', port=9200, tmp_dir=None):
@@ -443,3 +445,21 @@ class ElasticSearchGuesser(AbstractGuesser):
                     return "Num0"
             guess = [g.replace("_"," ") for g in guess]
             return jsonify({'guess': guess, 'score': score, 'num': num})
+
+
+@click.command()
+@click.option('--generate-config/--no-generate-config', default=True, is_flag=True)
+@click.option('--config-dir', default='.')
+@click.option('--pid-file', default='elasticsearch.pid')
+@click.argument('command', type=click.Choice(['start', 'stop', 'configure']))
+def elasticsearch_cli(generate_config, config_dir, pid_file, command):
+    if generate_config:
+        create_es_config(path.join(config_dir, 'elasticsearch.yml'))
+
+    if command == 'configure':
+        return
+
+    if command == 'start':
+        start_elasticsearch(config_dir, pid_file)
+    elif command == 'stop':
+        stop_elasticsearch(pid_file)

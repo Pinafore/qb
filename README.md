@@ -192,7 +192,7 @@ The output of this process is stored in `s3://pinafore-us-west-2/public/disambig
 saved at `s3://pinafore-us-west-2/public/categorylinks.csv`
 
 The process for this is similar to redirects, except that you should instead source a file named similar to `enwiki-20170401-categorylinks.sql`, run
-the script `bin/categories.sql`, and copy `categorylinks.csv`. Afterwards run `./cli.py categorylinks_to_disambiguation categorylinks.csv data/external/wikipedia/disambiguation_pages.json`.
+the script `bin/categories.sql`, and copy `categorylinks.csv`. Afterwards run `./cli.py categories disambiguate categorylinks.csv data/external/wikipedia/disambiguation_pages.json`.
 This file is automatically downloaded by the pipeline code like the redirects file so unless you would like to change this or inspect the results, you shouldn't need to worry about this.
 
 ##### SQL References
