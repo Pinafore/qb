@@ -5,6 +5,7 @@ but the target number Wikimedia has set to have is 50,000
 """
 
 import urllib
+import json
 from bs4 import BeautifulSoup
 import requests
 import click
@@ -23,7 +24,7 @@ def fetch_vital_titles():
 
     vital_articles = set()
     for link in vital_links:
-        soup = BeautifulSoup(requests.get(f'https://en.wikipedia.org/{link}').content)
+        soup = BeautifulSoup(requests.get(f'https://en.wikipedia.org/{link}').content, 'lxml')
         for page_link in soup.find_all('a'):
             url = page_link.get('href')
             if url is None:
@@ -37,3 +38,11 @@ def fetch_vital_titles():
 @click.group()
 def vital_cli():
     pass
+
+
+@vital_cli.command()
+@click.argument('path')
+def write(path):
+    vital_articles = list(fetch_vital_titles())
+    with open(path, 'w') as f:
+        json.dump(vital_articles, f)
