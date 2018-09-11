@@ -43,7 +43,8 @@ SQUAD_PATH = 'squad/train-v1.1.json'
 TRIVIA_QA_PATH = 'triviaqa/unfiltered-web-train.json'
 SIMPLE_QUESTIONS_PATH = 'simplequestions/annotated_fb_data_train.txt'
 JEOPARDY_PATH = 'jeopardy/jeopardy_questions.json'
-DATASET_FILES = [SQUAD_PATH, TRIVIA_QA_PATH, SIMPLE_QUESTIONS_PATH, JEOPARDY_PATH]
+VITAL_ARTICLES_PATH = 'wikipedia/vital_articles.json'
+DATASET_FILES = [SQUAD_PATH, TRIVIA_QA_PATH, SIMPLE_QUESTIONS_PATH, JEOPARDY_PATH, VITAL_ARTICLES_PATH]
 
 DATASET_CHOICES = {
     'qanta_minimal': [
