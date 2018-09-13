@@ -143,15 +143,15 @@ class PageAssigner:
         maybe_page = self._maybe_assign(answer=answer, question_text=question_text, qdb_id=qdb_id, proto_id=proto_id)
         maybe_page = self._check_page_in_titles(maybe_page)
         if maybe_page.is_ok():
-            return maybe_page.value, None
+            return maybe_page.ok(), None
         else:
-            return None, maybe_page.value
+            return None, maybe_page.err()
 
     def _check_page_in_titles(self, maybe_page: Result[str, str]) -> Result[str, str]:
         if maybe_page.is_err():
             return maybe_page
         else:
-            page = maybe_page.value.replace(' ', '_')
+            page = maybe_page.ok().replace(' ', '_')
             if page in self._wiki_titles:
                 return Ok(page)
             else:
