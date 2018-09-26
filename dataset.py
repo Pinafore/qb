@@ -44,7 +44,13 @@ TRIVIA_QA_PATH = 'triviaqa/unfiltered-web-train.json'
 SIMPLE_QUESTIONS_PATH = 'simplequestions/annotated_fb_data_train.txt'
 JEOPARDY_PATH = 'jeopardy/jeopardy_questions.json'
 VITAL_ARTICLES_PATH = 'wikipedia/vital_articles.json'
-DATASET_FILES = [SQUAD_PATH, TRIVIA_QA_PATH, SIMPLE_QUESTIONS_PATH, JEOPARDY_PATH, VITAL_ARTICLES_PATH]
+NGRAMS_ONE_PATH = 'ngrams/count_1w.txt'
+NGRAMS_TWO_PATH = 'ngrams/count_2w.txt'
+DATASET_FILES = [
+    SQUAD_PATH, TRIVIA_QA_PATH, SIMPLE_QUESTIONS_PATH, JEOPARDY_PATH,
+    VITAL_ARTICLES_PATH,
+    NGRAMS_ONE_PATH, NGRAMS_TWO_PATH
+]
 
 DATASET_CHOICES = {
     'qanta_minimal': [
