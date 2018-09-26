@@ -86,8 +86,12 @@ def sample_answer_pages(n):
     conn = sqlite3.connect(QANTA_SQL_DATASET_PATH)
     c = conn.cursor()
     rows = c.execute(f'select answer, page from questions order by random() limit {n}')
-    latex_format = r'{answer} & {page}\\ \hline'
-    for answer, page in rows:
+    n = len(rows)
+    for i, (answer, page) in enumerate(rows):
+        if i - 1 == n:
+            latex_format = r'{answer} & {page}\\ \midrule'
+        else:
+            latex_format = r'{answer} & {page}\\ \bottomrule'
         answer = answer.replace('{', r'\{').replace('}', r'\}').replace('_', r'\_')
         if page == '':
             page = r'\textbf{No Mapping Found}'
