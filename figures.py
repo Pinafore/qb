@@ -156,7 +156,7 @@ class CompareGuesserReport:
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
         self.acc_df = pd.DataFrame.from_records(acc_rows, columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset'])
 
-    def plot_char_percent_vs_accuracy_smooth(self, expo=False, no_models=False):
+    def plot_char_percent_vs_accuracy_smooth(self, expo=False, no_models=False, columns=False):
         if expo:
             if os.path.exists('data/external/all_human_gameplay.json'):
                 with open('data/external/all_human_gameplay.json') as f:
@@ -201,8 +201,12 @@ class CompareGuesserReport:
                 if os.path.exists('data/external/all_human_gameplay.json'):
                     p = p + geom_line(data=human_df)
 
+            if columns:
+                facet_conf = facet_wrap('Guessing_Model', ncol=1)
+            else:
+                facet_conf = facet_wrap('Guessing_Model', nrow=1)
             p = (
-                p + facet_wrap('Guessing_Model', nrow=1)
+                p + facet_conf
                 + aes(x='char_percent', y='correct', color='Dataset')
                 + stat_smooth(method='mavg', se=False, method_args={'window': 400})
                 + scale_y_continuous(breaks=np.linspace(0, 1, 11))
@@ -273,8 +277,10 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--use-test', is_flag=True, default=False)
 @click.option('--only-tacl', is_flag=True, default=False)
 @click.option('--no-models', is_flag=True, default=False)
+@click.option('--columns', is_flag=True, default=False)
+@click.option('--no-expo', is_flag=True, default=False)
 @click.argument('output_dir')
-def guesser(use_test, only_tacl, no_models, output_dir):
+def guesser(use_test, only_tacl, no_models, columns, output_dir, no_expo):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -292,17 +298,18 @@ def guesser(use_test, only_tacl, no_models, output_dir):
         if not only_tacl:
             save_all_plots(output_dir, report)
 
-    expo_reports = []
-    expo_output_dir = safe_path(os.path.join(output_dir, 'expo'))
-    for path in glob.glob(EXPO_REPORT_PATTERN):
-        if only_tacl and 'VWGuesser' in path:
-            continue
-        with open(path, 'rb') as f:
-            report = GuesserReport(pickle.load(f), 'expo')
-            expo_reports.append(report)
+    if not no_expo:
+        expo_reports = []
+        expo_output_dir = safe_path(os.path.join(output_dir, 'expo'))
+        for path in glob.glob(EXPO_REPORT_PATTERN):
+            if only_tacl and 'VWGuesser' in path:
+                continue
+            with open(path, 'rb') as f:
+                report = GuesserReport(pickle.load(f), 'expo')
+                expo_reports.append(report)
 
-        if not only_tacl:
-            save_all_plots(expo_output_dir, report, expo=True)
+            if not only_tacl:
+                save_all_plots(expo_output_dir, report, expo=True)
 
     if not only_tacl:
         compare_report = CompareGuesserReport(dev_reports)
@@ -315,16 +322,22 @@ def guesser(use_test, only_tacl, no_models, output_dir):
             compare_report.plot_char_percent_vs_accuracy_smooth()
         )
 
-    if len(expo_reports) > 0:
+    if not no_expo and len(expo_reports) > 0:
         compare_report = CompareGuesserReport(dev_reports + expo_reports)
         save_plot(
             output_dir, 'compare', 'expo_position_accuracy.pdf',
             compare_report.plot_compare_accuracy(expo=True)
         )
+        if columns:
+            height = 6.0
+            width = 1.7
+        else:
+            height = 1.7
+            width = 7.0
         save_plot(
             output_dir, 'compare', 'expo_char_accuracy.pdf',
-            compare_report.plot_char_percent_vs_accuracy_smooth(expo=True, no_models=no_models),
-            height=1.7, width=7.0
+            compare_report.plot_char_percent_vs_accuracy_smooth(expo=True, no_models=no_models, columns=columns),
+            height=height, width=width
         )
 
 
