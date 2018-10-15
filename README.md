@@ -34,8 +34,17 @@ page matches
 
 ## Dependencies
 
-The qanta system has the following dependencies. You must install all of these or equivalents for the software to
-function correctly.
+The recommended way to run our system is to use the Anaconda python
+distribution. The `environment.yaml` can be used to create a `conda`
+environment with all the necessary software versions installed.
+
+The qanta system has the following dependencies. Depending on your objective
+however not all are necessary. The python packages are generally required so
+that imports resolve, Apache Spark is required for many data preprocessing
+steps, Vowpal Wabbit is not needed for anything except training a linear model,
+Spacy is required for preprocessing, Elastic Search is required for the IR
+based models, and `lz4` and the AWS cli are necessary for downloading data not
+part of the `dataset.py` script.
 
 * Anaconda Distributed Python 3.6
 * PyTorch 0.3.X
@@ -45,9 +54,7 @@ function correctly.
 * Elastic Search 5.6.X
 * lz4
 * AWS CLI
-* All python packages listed in `setup.py` and/or in `packer/requirements.txt`
-
-The following scripts may be helpful in installing specific software
+* All python packages listed in `environment.yaml`
 
 ### Installing Apache Spark
 
@@ -73,11 +80,14 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 
 `packer/bin/install-elasticsearch.sh`
 
-Install version 5.6.X, do not use 6.X. Also be sure that the directory `bin/` within the extracted files is in your
-`$PATH` as it contains the necessary binary `elasticsearch`.
+Install version 5.6.X, do not use 6.X. Also be sure that the directory `bin/`
+within the extracted files is in your `$PATH` as it contains the necessary
+binary `elasticsearch`.
 
 
 ### Installing Python packages
+
+Either use `environment.yaml` or:
 
 ```
 pip install -r packer/requirements.txt
@@ -91,31 +101,56 @@ $ python3 setup.py download
 
 ### Qanta on Path
 
-In addition to these steps you need to either run `python setup.py develop` or include the qanta directory in your
-`PYTHONPATH` environment variable. We intend to fix path issues in the future by fixing absolute/relative paths.
+In addition to these steps you need to either run `python setup.py develop` or
+include the qanta directory in your `PYTHONPATH` environment variable. We
+intend to fix path issues in the future by fixing absolute/relative paths.
 
 
 ## Configuration
 
-QANTA configuration is done through a combination of environment variables and the `qanta-defaults.yaml`/`qanta.yaml`
-files. QANTA will read a `qanta.yaml`
-first if it exists, otherwise it will fall back to reading `qanta-defaults.yaml`. This is meant to allow for custom
-configuration of `qanta.yaml` after copying it via `cp qanta-defaults.yaml qanta.yaml`.
+QANTA configuration is done through a combination of environment variables and
+the `qanta-defaults.yaml`/`qanta.yaml` files. QANTA will read a `qanta.yaml`
+first if it exists, otherwise it will fall back to reading
+`qanta-defaults.yaml`. This is meant to allow for custom configuration of
+`qanta.yaml` after copying it via `cp qanta-defaults.yaml qanta.yaml`.
+
+The configuration of most interest is how to enable or disable specific guesser
+implementations. In the `guesser` config the keys such as
+`qanta.guesser.dan.DanGuesser` correspond to the fully qualified paths of each
+guesser. Each of these keys contain an array of configurations (this is
+signified in yaml by the `-`). Our code will inspect all of these
+configurations looking for those that have `enabled: true`, and only run those
+guessers. By default we have `enabled: false` for all models. If you simply
+want to perform a sanity check we recommend enabling
+`qanta.guesser.tfidf.TfidfGuesser`. If you are looking for our best model and
+configuration you should use enable `qanta.guesser.rnn.RnnGuesser`.
 
 ## Running QANTA
 
-
-Running qanta is managed primarily by two methods: `./cli.py` and [Luigi](https://github.com/spotify/luigi).
+Running qanta is managed primarily by two methods: `./cli.py` and
+[Luigi](https://github.com/spotify/luigi). The former is used to run specific
+commands such as starting/stopping elastic search, but in general `luigi` is
+the primary method for running our system.
 
 ### Luigi Pipelines
-Luigi is a pure python make-like framework for running data pipelines. Below we give sample commands for running
-different parts of our pipeline. In general, you should either append `--local-scheduler` to all commands or learn
-about using the [Luigi Central Scheduler](https://luigi.readthedocs.io/en/stable/central_scheduler.html).
+Luigi is a pure python make-like framework for running data pipelines. Below we
+give sample commands for running different parts of our pipeline. In general,
+you should either append `--local-scheduler` to all commands or learn about
+using the [Luigi Central
+Scheduler](https://luigi.readthedocs.io/en/stable/central_scheduler.html).
 
-To rerun any part of the pipeline it is sufficient to delete the target file generated by the task
-you wish to rerun.
+For these common tasks you can use command `luigi --local-scheduler` followed by:
 
-TODO
+* `--module qanta.pipeline.preprocess DownloadData`: This downloads any
+  necessary data and preprocesses it. This will download a copy of our
+preprocessed Wikipedia stored in AWS S3 and turn it into the format used by our
+code. This step requires the AWS CLI, `lz4`, Apache Spark, and may require a
+decent amount of RAM.
+* `--module qanta.pipeline.guesser AllGuesserReports`: Train all enabled
+  guessers, generate guesses for them, and produce a report of their
+performance into `output/guesser`.
+
+
 
 ### Qanta CLI
 
