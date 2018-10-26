@@ -59,8 +59,8 @@ def format_qanta_json(questions, version):
         'version': version,
         'maintainer_name': 'Pedro Rodriguez',
         'maintainer_contact': 'entilzha@umiacs.umd.edu',
-        'maintainer_website': 'http://pedrorodriguez.io',
-        'project_website': 'https://github.com/pinafore/qb'
+        'maintainer_website': 'https://www.entilzha.io',
+        'project_website': 'http://qanta.org/'
     }
 
 
