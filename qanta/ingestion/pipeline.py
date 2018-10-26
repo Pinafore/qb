@@ -294,3 +294,11 @@ class QantaDataset(WrapperTask):
         yield FilterAndPartitionQantaDataset()
         yield GenerateSqliteDB()
         yield TorchTextDataset()
+
+
+class TrickMeDataset(Task):
+    def requires(self):
+        yield QantaDataset()
+
+    def run(self):
+        pass
