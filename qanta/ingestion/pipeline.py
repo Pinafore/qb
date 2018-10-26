@@ -18,12 +18,14 @@ from qanta.ingestion.answer_mapping import create_answer_map, write_answer_map, 
 from qanta.ingestion.annotated_mapping import PageAssigner
 from qanta.ingestion.preprocess import format_qanta_json, add_sentences_, questions_to_sqlite
 from qanta.ingestion.protobowl import compute_question_player_counts
+from qanta.ingestion.trickme import Trickme
 
 
 S3_HTTP_PREFIX = 'https://s3-us-west-2.amazonaws.com/pinafore-us-west-2/qanta-jmlr-datasets/'
 QANTA_UNMAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.unmapped.{DS_VERSION}.json')
 QANTA_PREPROCESSED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.processed.{DS_VERSION}.json')
 QANTA_FOLDED_DATASET_PATH = path.join(DATASET_PREFIX, f'qanta.folded.{DS_VERSION}.json')
+TRICKME_PATH = path.join(DATASET_PREFIX, f'qanta.trickme.{DS_VERSION}.json')
 
 ANSWER_MAP_PATH = 'data/external/answer_mapping/answer_map.json'
 UNBOUND_ANSWER_PATH = 'data/external/answer_mapping/unbound_answers.json'
@@ -301,4 +303,9 @@ class TrickMeDataset(Task):
         yield QantaDataset()
 
     def run(self):
-        pass
+        dataset = Trickme.parse_tossups(version=DS_VERSION)
+        with open(TRICKME_PATH, 'w') as f:
+            json.dump(dataset, f)
+
+    def output(self):
+        return LocalTarget(TRICKME_PATH)
