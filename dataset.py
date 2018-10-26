@@ -46,10 +46,12 @@ JEOPARDY_PATH = 'jeopardy/jeopardy_questions.json'
 VITAL_ARTICLES_PATH = 'wikipedia/vital_articles.json'
 NGRAMS_ONE_PATH = 'ngrams/count_1w.txt'
 NGRAMS_TWO_PATH = 'ngrams/count_2w.txt'
+CURVE_PATH = 'curve_pipeline.pkl'
 DATASET_FILES = [
     SQUAD_PATH, TRIVIA_QA_PATH, SIMPLE_QUESTIONS_PATH, JEOPARDY_PATH,
     VITAL_ARTICLES_PATH,
-    NGRAMS_ONE_PATH, NGRAMS_TWO_PATH
+    NGRAMS_ONE_PATH, NGRAMS_TWO_PATH,
+    CURVE_PATH
 ]
 
 DATASET_CHOICES = {
