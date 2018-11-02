@@ -2,7 +2,6 @@ import os
 import pickle
 import numpy as np
 import chainer
-from tqdm import tqdm
 from multiprocessing import Pool
 from functools import partial
 from chainer import Variable
@@ -156,8 +155,8 @@ def process_question(questions, vector_converter, item):
 def read_data(
         fold,
         output_type='char',
-        guesser_module='qanta.guesser.dan',
-        guesser_class='DanGuesser',
+        guesser_module='qanta.guesser.rnn',
+        guesser_class='RnnGuesser',
         guesser_config_num=0,
         vector_converter=vector_converter_0):
 
@@ -179,8 +178,9 @@ def read_data(
     worker = partial(process_question, questions, vector_converter)
     dataset = pool.map(worker, df_groups)
 
+    os.makedirs(output_dir, exist_ok=True)
     with open(dataset_dir.format(fold), 'wb') as f:
-        return pickle.dump(dataset, f)
+        pickle.dump(dataset, f)
 
     return dataset
 
