@@ -1,16 +1,21 @@
 import os
+import json
 import pickle
 import chainer
 import pandas as pd
 from tqdm import tqdm
-import matplotlib
-matplotlib.use('Agg')
-from plotnine import ggplot, aes, geom_area, geom_smooth
 
 from qanta.buzzer.nets import RNNBuzzer
 from qanta.buzzer.args import args
+from qanta.guesser.abstract import AbstractGuesser
+from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.buzzer.util import read_data, convert_seq, report_dir, buzzes_dir
-from qanta.util.constants import BUZZER_DEV_FOLD
+from qanta.util.constants import BUZZER_DEV_FOLD, BUZZER_TEST_FOLD
+from qanta.reporting.curve_score import CurveScore
+
+import matplotlib
+matplotlib.use('Agg')
+from plotnine import ggplot, aes, geom_area, geom_smooth
 
 
 def eval(fold=BUZZER_DEV_FOLD):
@@ -47,6 +52,48 @@ def eval(fold=BUZZER_DEV_FOLD):
     buzz_dir = os.path.join(buzzes_dir.format(fold))
     with open(buzz_dir, 'wb') as f:
         pickle.dump(buzzes, f)
+
+    output_type = 'char'
+    guesser_module = 'qanta.guesser.rnn'
+    guesser_class = 'RnnGuesser'
+    guesser_config_num = 0
+    guesses_dir = AbstractGuesser.output_path(
+        guesser_module, guesser_class, guesser_config_num, '')
+    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, output_type)
+    with open(guesses_dir, 'rb') as f:
+        guesses = pickle.load(f)
+    guesses = guesses.groupby('qanta_id')
+
+    answers = dict()
+    for qid, bs in buzzes.items():
+        answers[qid] = []
+        groups = guesses.get_group(qid).groupby('char_index')
+        for char_index, scores in zip(*bs):
+            guess = groups.get_group(char_index).head(1)['guess']
+            guess = guess.values[0]
+            buzz = scores[0] < scores[1]
+            answers[qid].append({
+                'char_index': char_index,
+                'guess': guess,
+                'buzz': buzz,
+            })
+
+    questions = QuizBowlDataset(buzzer_train=True).questions_by_fold()
+    questions = {q.qanta_id: q for q in questions[fold]}
+
+    curve_score = CurveScore()
+    ew = []
+    ew_opt = []
+    for qid, answer in answers.items():
+        question = questions[qid]
+        q = {'text': question.text, 'page': question.page}
+        ew.append(curve_score.score(answer, q))
+        ew_opt.append(curve_score.score_optimal(answer, q))
+    eval_out = {
+        'expected_wins': sum(ew) * 1.0 / len(ew),
+        'expected_wins_optimal': sum(ew_opt) * 1.0 / len(ew_opt),
+    }
+    print(json.dumps(eval_out))
 
     results = dict()
     for example_idx in range(len(valid)):
@@ -114,4 +161,4 @@ def eval(fold=BUZZER_DEV_FOLD):
 
 
 if __name__ == '__main__':
-    eval()
+    eval(BUZZER_TEST_FOLD)

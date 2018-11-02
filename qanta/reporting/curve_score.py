@@ -2,13 +2,14 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use('agg')
-from plotnine import ggplot, aes, geom_point, stat_function, labs
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from qanta.datasets.protobowl import load_protobowl
+
+import matplotlib
+matplotlib.use('agg')
+from plotnine import ggplot, aes, geom_point, stat_function, labs
 
 report_dir = 'output/reporting'
 if not os.path.isdir(report_dir):
@@ -31,6 +32,30 @@ class CurveScore:
 
     def get_weight(self, x):
         return self.pipeline.predict(np.asarray([[x]]))[0]
+
+    def score(self, guesses, question):
+        '''guesses is a list of {'guess': GUESS, 'buzz': True/False}
+        '''
+        char_length = len(question['text'])
+        buzzes = [x['buzz'] for x in guesses]
+        if True not in buzzes:
+            return 0
+        buzz_index = buzzes.index(True)
+        rel_position = (1.0 * guesses[buzz_index]['char_index']) / char_length
+        weight = self.get_weight(rel_position)
+        result = guesses[buzz_index]['guess'] == question['page']
+        return weight * result
+
+    def score_optimal(self, guesses, question):
+        '''score with an optimal buzzer'''
+        char_length = len(question['text'])
+        buzz_index = char_length
+        for g in guesses[::-1]:
+            if g['guess'] != question['page']:
+                buzz_index = g['char_index']
+                break
+        rel_position = (1.0 * buzz_index) / char_length
+        return self.get_weight(rel_position)
 
     def fit_curve(self):
         df, questions = load_protobowl()
