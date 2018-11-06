@@ -2,35 +2,35 @@ name: qb
 dependencies:
   - python=3.6
   - pytorch=0.3.1
-  - numpy
-  - scipy
-  - pandas
-  - scikit-learn
-  - nltk
-  - matplotlib
-  - requests
-  - pyyaml
+  - numpy=1.15.*
+  - scipy=1.1.*
+  - pandas=0.23.*
+  - scikit-learn=0.20.*
+  - nltk=3.2.*
+  - matplotlib=3.0.*
+  - requests=2.20.*
+  - pyyaml=3.13.*
   - jinja2
   - spacy=2.0.*
-  - seaborn
-  - click
-  - luigi
-  - unidecode
+  - seaborn=0.9.*
+  - click=7.0.*
+  - luigi=2.7.*
+  - unidecode=1.0.*
   - python-levenshtein
   - fuzzywuzzy
-  - chainer
+  - chainer=4.5.*
   - dash
   - dash-renderer
   - dash-html-components
   - dash-core-components
   - plotly
-  - tensorflow # or tensorflow-gpu, mostly for tensorboard which doesn't need GPU
+  - tensorflow=1.10.* # or tensorflow-gpu, mostly for tensorboard which doesn't need GPU
   - tensorboardx
-  - awscli
+  - awscli=1.16.*
   - py4j
   - boto3
-  - flask
-  - pycountry
+  - flask=1.0.*
+  - pycountry=18.5.*
   - pypandoc
   - elasticsearch-dsl=6.2.*
   - pip:
