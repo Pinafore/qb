@@ -7,12 +7,12 @@ import pathlib
 import itertools
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
 from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool
 from datetime import datetime
+import matplotlib
+matplotlib.use('Agg')
 from plotnine import ggplot, aes, theme, geom_density, geom_histogram, \
     geom_point, scale_color_gradient, labs
 
@@ -53,8 +53,9 @@ def remove_duplicate(df_grouped, uid):
 
 
 def load_protobowl(
-        protobowl_dir='data/external/qanta-buzz.log',
-        min_user_questions=20):
+        protobowl_dir='data/external/datasets/protobowl/protobowl-042818.log',
+        min_user_questions=20,
+        get_questions=False):
     '''Parse protobowl log, return buzz data and questions.
     Filter users that answered less than `min_user_questions` questions.
     Remove duplicates: for each user, only keep the first record for each
@@ -75,7 +76,10 @@ def load_protobowl(
             df = store['data']
         with open(question_dir, 'rb') as f:
             questions = pickle.load(f)
-        return df, questions
+        if get_questions:
+            return df, questions
+        else:
+            return df
 
     # parse protobowl json log
     data = []
@@ -142,14 +146,17 @@ def load_protobowl(
         store['data'] = df
     with open(question_dir, 'wb') as f:
         pickle.dump(questions, f)
-    return df, questions
+    if get_questions:
+        return df, questions
+    else:
+        return df
 
 
 def plot():
     outdir = 'output/protobowl/'
     pathlib.Path(outdir).mkdir(parents=True, exist_ok=True)
 
-    df, questions = load_protobowl()
+    df = load_protobowl()
     df.result = df.result.apply(lambda x: x is True)
     df['log_n_records'] = df.user_n_records.apply(np.log)
 
@@ -157,7 +164,6 @@ def plot():
     user_stat = df_user_grouped.agg(np.mean)
     print('{} users'.format(len(user_stat)))
     print('{} records'.format(len(df)))
-    print('{} questions'.format(len(set(df.qid))))
     max_color = user_stat.log_n_records.max()
     user_stat['alpha'] = pd.Series(
         user_stat.log_n_records.apply(lambda x: x / max_color), index=user_stat.index)
