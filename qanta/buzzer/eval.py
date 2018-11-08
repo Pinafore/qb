@@ -4,7 +4,10 @@ import pickle
 import chainer
 import pandas as pd
 import numpy as np
+import itertools
 from tqdm import tqdm
+from functools import partial
+from multiprocessing import Pool
 
 from qanta.buzzer.nets import RNNBuzzer
 from qanta.buzzer.args import args
@@ -38,6 +41,59 @@ class ThresholdBuzzer:
             preds[-1] = np.array(preds[-1])
             preds[-1] = np.array(preds[-1])
         return preds
+
+
+def simulate_game(guesses, buzzes, df, question):
+    if question.proto_id not in df.groups:
+        return [], []
+
+    optimal_pos = 1.1
+    buzzing_pos = 1.1
+    guess = 'NULL'
+    final_guess = 'NULL'
+
+    char_indices, bs = buzzes[question.qanta_id]
+    bs = [x[1] > x[0] for x in bs]
+    gs = guesses.get_group(question.qanta_id).groupby('char_index')
+    if True in bs:
+        char_index = char_indices[bs.index(True)]
+        buzzing_pos = char_index / len(question.text)
+        guess = gs.get_group(char_index).head(1)['guess'].values[0]
+
+    final_guess = gs.get_group(char_indices[-1]).head(1)['guess'].values[0]
+    top_guesses = gs.aggregate(lambda x: x.head(1)).guess.tolist()
+    if question.page in top_guesses:
+        optimal_pos = top_guesses.index(question.page)
+        optimal_pos = char_indices[optimal_pos] / len(question.text)
+
+    # print('guess', guess)
+    # print('final_guess', final_guess)
+    # print('buzzing_pos', buzzing_pos)
+    # print('optimal_pos', optimal_pos)
+
+    possibility = []
+    outcome = []
+    records = df.get_group(question.proto_id)
+    # print('$$$$', len(records))
+    for record in records.itertuples():
+        if record.result and optimal_pos >= record.relative_position:
+            possibility.append(False)
+        else:
+            possibility.append(True)
+        score = 0
+        if buzzing_pos < record.relative_position:
+            if guess == question.page:
+                score = 10
+            else:
+                score = -15 if record.result else -5
+        else:
+            if record.result:
+                score = -10
+            else:
+                score = 15 if final_guess == question.page else 5
+        outcome.append(score)
+        # print(score)
+    return possibility, outcome
 
 
 def protobowl(fold=BUZZER_DEV_FOLD):
@@ -86,73 +142,30 @@ def protobowl(fold=BUZZER_DEV_FOLD):
     df = load_protobowl()
     df = df.groupby('qid')
 
+    worker = partial(simulate_game, guesses, buzzes, df)
+
     possibility = []
     outcome = []
-
-    for question in questions:
-        if question.proto_id not in df:
-            continue
-
-        optimal_pos = 1.1
-        buzzing_pos = 1.1
-        guess = 'NULL'
-        final_guess = 'NULL'
-
-        char_indices, bs = buzzes[question.qanta_id]
-        bs = [x[1] > x[0] for x in bs]
-        gs = guesses.get_group(question.qanta_id).groupby('char_index')
-        if True in bs:
-            char_index = char_indices[bs.index(True)]
-            buzzing_pos = char_index / len(question.text)
-            guess = gs.get_group(char_index).head(1)['guess'].values[0]
-
-        final_guess = gs.get_group(char_indices[-1]).head(1)['guess'].values[0]
-        top_guesses = gs.aggregate(lambda x: x.head(1)).guess.tolist()
-        if question.page in top_guesses:
-            optimal_pos = top_guesses.index(question.page)
-            optimal_pos = char_indices[optimal_pos] / len(question.text)
-
-        # print('guess', guess)
-        # print('final_guess', final_guess)
-        # print('buzzing_pos', buzzing_pos)
-        # print('optimal_pos', optimal_pos)
-
-        records = df.get_group(question.proto_id)
-        for record in records.itertuples():
-            if record.result and optimal_pos >= record.relative_position:
-                possibility.append(False)
-            else:
-                possibility.append(True)
-            score = 0
-            if buzzing_pos < record.relative_position:
-                if guess == question.page:
-                    score = 10
-                else:
-                    score = -15 if record.result else -5
-            else:
-                if record.result:
-                    score = -10
-                else:
-                    score = 15 if final_guess == question.page else 5
-            outcome.append(score)
-            # print(score)
+    for question in tqdm(questions):
+        pos, out = worker(question)
+        possibility += pos
+        outcome += out
 
     result_df = pd.DataFrame({
         'Possibility': possibility,
         'Outcome': outcome,
     })
 
+    with open('output/buzzer/{}_protobowl.pkl'.format(fold), 'wb') as f:
+        pickle.dump(result_df, f)
+
     result_df = result_df.groupby(['Possibility', 'Outcome'])
     result_df = result_df.size().reset_index().rename(columns={0: 'Count'})
-
     p = (
         ggplot(result_df)
         + geom_col(aes(x='Possibility', y='Count', fill='Outcome'))
     )
-    p.save(os.path.join(report_dir, 'protobowl_{}.pdf'.format(fold)))
-
-    with open('output/buzzer/protobowl_result.pkl', 'wb') as f:
-        pickle.dump(result_df, f)
+    p.save(os.path.join('output/buzzer/{}_protobowl.pdf'.format(fold)))
 
 
 def ew(fold=BUZZER_DEV_FOLD):
