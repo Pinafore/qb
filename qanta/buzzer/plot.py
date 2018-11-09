@@ -72,52 +72,17 @@ def protobowl(fold=BUZZER_DEV_FOLD):
 
     p = (
         ggplot(df)
-        + geom_col(aes(x='Possibility', y='Count', fill='Outcome'))
+        + geom_col(aes(x='Possibility', y='Count', fill='Outcome'),
+                   width=0.7)
         + facet_grid('Model ~')
         + coord_flip()
         + theme_fs()
-        + theme(aspect_ratio=0.2)
+        + theme(aspect_ratio=0.17)
         + scale_fill_brewer(type='div', palette=7)
     )
 
     figure_dir = os.path.join('output/buzzer/{}_protobowl.pdf'.format(fold))
     p.save(figure_dir)
-
-
-def what():
-    results = dict()
-    for example_idx in range(len(valid)):
-        qid, vectors, labels, positions = valid[example_idx]
-        preds = predictions[example_idx]
-        q_len = positions[-1]
-        for i, pos in enumerate(positions):
-            rel_pos = int(100 * pos / q_len)
-            if rel_pos not in results:
-                results[rel_pos] = []
-            results[rel_pos].append((labels[i], preds[i][1]))
-
-    freq = {'x': [], 'y': [], 'type': []}
-    for k, rs in results.items():
-        rs, scores = list(map(list, zip(*rs)))
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(rs) / len(rs))
-        freq['type'].append('acc')
-
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(x > 0.5 for x in scores) / len(scores))
-        freq['type'].append('0.5')
-
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(x > 0.3 for x in scores) / len(scores))
-        freq['type'].append('0.3')
-
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(x > 0.7 for x in scores) / len(scores))
-        freq['type'].append('0.7')
-    freq_df = pd.DataFrame(freq)
-
-    p0 = ggplot(freq_df) + geom_smooth(aes(x='x', y='y', color='type'))
-    p0.save(os.path.join(model.model_dir, '{}_acc_buzz.pdf'.format(fold)))
 
 
 def stack(model_dir, model_name, fold=BUZZER_DEV_FOLD):
@@ -190,6 +155,9 @@ def all_stack(fold=BUZZER_DEV_FOLD):
     df_thr = stack('output/buzzer/ThresholdBuzzer', 'Threshold', fold)
     df = df_rnn.append(df_mlp, ignore_index=True)
     df = df.append(df_thr, ignore_index=True)
+    model_type = CategoricalDtype(
+        categories=['Threshold', 'MLP', 'RNN'])
+    df['Model'] = df['Model'].astype(model_type)
     p = (
         ggplot(df)
         + geom_area(aes(x='Position', y='Frequency', fill='Buzzing'))
@@ -202,4 +170,5 @@ def all_stack(fold=BUZZER_DEV_FOLD):
 
 
 if __name__ == '__main__':
+    protobowl()
     all_stack()
