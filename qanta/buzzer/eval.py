@@ -4,17 +4,14 @@ import pickle
 import chainer
 import pandas as pd
 import numpy as np
-import itertools
 from tqdm import tqdm
 from functools import partial
-from multiprocessing import Pool
 
-from qanta.buzzer.nets import RNNBuzzer
-from qanta.buzzer.args import args
+from qanta.buzzer.nets import RNNBuzzer, MLPBuzzer
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.datasets.protobowl import load_protobowl
-from qanta.buzzer.util import read_data, convert_seq, report_dir, buzzes_dir
+from qanta.buzzer.util import read_data, convert_seq
 from qanta.util.constants import BUZZER_DEV_FOLD, BUZZER_TEST_FOLD, \
     GUESSER_TEST_FOLD
 from qanta.reporting.curve_score import CurveScore
@@ -28,6 +25,8 @@ class ThresholdBuzzer:
 
     def __init__(self, threshold=0.3):
         self.threshold = threshold
+        self.model_name = 'ThresholdBuzzer'
+        self.model_dir = 'output/buzzer/ThresholdBuzzer'
 
     def predict(self, xs, softmax=True):
         preds = []
@@ -96,25 +95,17 @@ def simulate_game(guesses, buzzes, df, question):
     return possibility, outcome
 
 
-def protobowl(fold=BUZZER_DEV_FOLD):
+def get_buzzes(model, fold=BUZZER_DEV_FOLD):
     valid = read_data(fold)
     print('# {} data: {}'.format(fold, len(valid)))
     valid_iter = chainer.iterators.SerialIterator(
-            valid, args.batch_size, repeat=False, shuffle=False)
-
-    args.n_input = valid[0][1][0].shape[0]
-    model = RNNBuzzer(args.n_input, args.n_layers, args.n_hidden,
-                      args.n_output, args.dropout)
-    chainer.serializers.load_npz(args.model_path, model)
-    if args.gpu >= 0:
-        chainer.backends.cuda.get_device_from_id(args.gpu).use()
-        model.to_gpu()
+            valid, 64, repeat=False, shuffle=False)
 
     predictions = []
     buzzes = dict()
     for batch in tqdm(valid_iter):
         qids, vectors, labels, positions = list(map(list, zip(*batch)))
-        batch = convert_seq(batch, device=args.gpu)
+        batch = convert_seq(batch, device=0)
         preds = model.predict(batch['xs'], softmax=True)
         preds = [p.tolist() for p in preds]
         predictions.extend(preds)
@@ -124,14 +115,20 @@ def protobowl(fold=BUZZER_DEV_FOLD):
                 buzzes[qid].append((pos, pred))
             buzzes[qid] = list(map(list, zip(*buzzes[qid])))
 
+    buzz_dir = os.path.join(model.model_dir,
+                            '{}_buzzes.pkl'.format(fold))
+    with open(buzz_dir, 'wb') as f:
+        pickle.dump(buzzes, f)
+    return buzzes
+
+
+def protobowl(model, fold=BUZZER_DEV_FOLD):
+    buzzes = get_buzzes(model, fold)
+
     '''eval'''
-    output_type = 'char'
-    guesser_module = 'qanta.guesser.rnn'
-    guesser_class = 'RnnGuesser'
-    guesser_config_num = 0
     guesses_dir = AbstractGuesser.output_path(
-        guesser_module, guesser_class, guesser_config_num, '')
-    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, output_type)
+        'qanta.guesser.rnn', 'RnnGuesser', 0, '')
+    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, 'char')
     with open(guesses_dir, 'rb') as f:
         guesses = pickle.load(f)
     guesses = guesses.groupby('qanta_id')
@@ -156,62 +153,18 @@ def protobowl(fold=BUZZER_DEV_FOLD):
         'Outcome': outcome,
     })
 
-    with open('output/buzzer/{}_protobowl.pkl'.format(fold), 'wb') as f:
+    result_dir = os.path.join(
+        model.model_dir, '{}_protobowl.pkl'.format(fold))
+    with open(result_dir, 'wb') as f:
         pickle.dump(result_df, f)
 
-    result_df = result_df.groupby(['Possibility', 'Outcome'])
-    result_df = result_df.size().reset_index().rename(columns={0: 'Count'})
-    p = (
-        ggplot(result_df)
-        + geom_col(aes(x='Possibility', y='Count', fill='Outcome'))
-    )
-    p.save(os.path.join('output/buzzer/{}_protobowl.pdf'.format(fold)))
 
+def ew(model, fold=BUZZER_DEV_FOLD):
+    buzzes = get_buzzes(model, fold)
 
-def ew(fold=BUZZER_DEV_FOLD):
-    if not os.path.isdir(report_dir):
-        os.mkdir(report_dir)
-
-    valid = read_data(fold)
-    print('# {} data: {}'.format(fold, len(valid)))
-    valid_iter = chainer.iterators.SerialIterator(
-            valid, args.batch_size, repeat=False, shuffle=False)
-
-    args.n_input = valid[0][1][0].shape[0]
-    model = RNNBuzzer(args.n_input, args.n_layers, args.n_hidden,
-                      args.n_output, args.dropout)
-    chainer.serializers.load_npz(args.model_path, model)
-    if args.gpu >= 0:
-        chainer.backends.cuda.get_device_from_id(args.gpu).use()
-        model.to_gpu()
-
-    # model = ThresholdBuzzer(0.1)
-
-    predictions = []
-    buzzes = dict()
-    for batch in tqdm(valid_iter):
-        qids, vectors, labels, positions = list(map(list, zip(*batch)))
-        batch = convert_seq(batch, device=args.gpu)
-        preds = model.predict(batch['xs'], softmax=True)
-        preds = [p.tolist() for p in preds]
-        predictions.extend(preds)
-        for i, qid in enumerate(qids):
-            buzzes[qid] = []
-            for pos, pred in zip(positions[i], preds[i]):
-                buzzes[qid].append((pos, pred))
-            buzzes[qid] = list(map(list, zip(*buzzes[qid])))
-
-    buzz_dir = os.path.join(buzzes_dir.format(fold))
-    with open(buzz_dir, 'wb') as f:
-        pickle.dump(buzzes, f)
-
-    output_type = 'char'
-    guesser_module = 'qanta.guesser.rnn'
-    guesser_class = 'RnnGuesser'
-    guesser_config_num = 0
     guesses_dir = AbstractGuesser.output_path(
-        guesser_module, guesser_class, guesser_config_num, '')
-    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, output_type)
+        'qanta.guesser.rnn', 'RnnGuesser', 0, '')
+    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, 'char')
     with open(guesses_dir, 'rb') as f:
         guesses = pickle.load(f)
     guesses = guesses.groupby('qanta_id')
@@ -249,74 +202,21 @@ def ew(fold=BUZZER_DEV_FOLD):
     print(json.dumps(eval_out))
     return eval_out
 
-    results = dict()
-    for example_idx in range(len(valid)):
-        qid, vectors, labels, positions = valid[example_idx]
-        preds = predictions[example_idx]
-        q_len = positions[-1]
-        for i, pos in enumerate(positions):
-            rel_pos = int(100 * pos / q_len)
-            if rel_pos not in results:
-                results[rel_pos] = []
-            results[rel_pos].append((labels[i], preds[i][1]))
-
-    freq = {'x': [], 'y': [], 'type': []}
-    for k, rs in results.items():
-        rs, scores = list(map(list, zip(*rs)))
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(rs) / len(rs))
-        freq['type'].append('acc')
-
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(x > 0.5 for x in scores) / len(scores))
-        freq['type'].append('0.5')
-
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(x > 0.3 for x in scores) / len(scores))
-        freq['type'].append('0.3')
-
-        freq['x'].append(k / 100)
-        freq['y'].append(sum(x > 0.7 for x in scores) / len(scores))
-        freq['type'].append('0.7')
-    freq_df = pd.DataFrame(freq)
-
-    p0 = ggplot(freq_df) + geom_smooth(aes(x='x', y='y', color='type'))
-    p0.save(os.path.join(report_dir, '{}_acc_buzz.pdf'.format(fold)))
-
-    stack_freq = {'x': [], 'y': [], 'type': []}
-    threshold = 0.5
-    for k, rs in results.items():
-        num = len(rs)
-        only_oracle = sum((c == 1 and b <= threshold) for c, b in rs)
-        only_buzzer = sum((c == 0 and b > threshold) for c, b in rs)
-        both = sum((c == 1 and b > threshold) for c, b in rs)
-        neither = sum((c == 0 and b <= threshold) for c, b in rs)
-
-        stack_freq['x'].append(k / 100)
-        stack_freq['y'].append(only_oracle / num)
-        stack_freq['type'].append('only_oracle')
-
-        stack_freq['x'].append(k / 100)
-        stack_freq['y'].append(only_buzzer / num)
-        stack_freq['type'].append('only_buzzer')
-
-        stack_freq['x'].append(k / 100)
-        stack_freq['y'].append(both / num)
-        stack_freq['type'].append('both')
-
-        stack_freq['x'].append(k / 100)
-        stack_freq['y'].append(neither / num)
-        stack_freq['type'].append('neither')
-
-    stack_freq_df = pd.DataFrame(stack_freq)
-
-    p1 = ggplot(stack_freq_df) + geom_area(aes(x='x', y='y', fill='type'))
-    p1.save(os.path.join(report_dir, '{}_stack_area.pdf'.format(fold)))
-
 
 if __name__ == '__main__':
-    protobowl(BUZZER_DEV_FOLD)
-    # r1 = ew(BUZZER_TEST_FOLD)
-    # r2 = ew(GUESSER_TEST_FOLD)
-    # print((r1['expected_wins'] + r2['expected_wins']) / (r1['n_examples'] + r2['n_examples']))
-    # print((r1['expected_wins_optimal'] + r2['expected_wins_optimal']) / (r1['n_examples'] + r2['n_examples']))
+    # model = RNNBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2,
+    #                   dropout=0.4)
+    # model = MLPBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2,
+    #                   dropout=0.4)
+    # model_path = os.path.join(model.model_dir, 'buzzer.npz')
+    # chainer.serializers.load_npz(model_path, model)
+    # chainer.backends.cuda.get_device_from_id(0).use()
+    # model.to_gpu()
+
+    model = ThresholdBuzzer(0.1)
+
+    protobowl(model, BUZZER_DEV_FOLD)
+    r1 = ew(model, BUZZER_TEST_FOLD)
+    r2 = ew(model, GUESSER_TEST_FOLD)
+    print((r1['expected_wins'] + r2['expected_wins']) / (r1['n_examples'] + r2['n_examples']))
+    print((r1['expected_wins_optimal'] + r2['expected_wins_optimal']) / (r1['n_examples'] + r2['n_examples']))
