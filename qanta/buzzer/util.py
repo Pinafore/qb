@@ -12,10 +12,8 @@ from qanta.util.constants import BUZZER_DEV_FOLD, BUZZER_TRAIN_FOLD
 
 # constansts
 N_GUESSES = 10
-output_dir = 'output/buzzer'
-dataset_dir = 'output/buzzer/data_{}.pkl'
-buzzes_dir = 'output/buzzer/{}_buzzes.pkl'
-report_dir = 'output/buzzer/report'
+os.makedirs('output/buzzer', exist_ok=True)
+dataset_dir = 'output/buzzer/{}_data.pkl'
 
 
 def vector_converter_0(guesses_sequence):
@@ -178,7 +176,6 @@ def read_data(
     worker = partial(process_question, questions, vector_converter)
     dataset = pool.map(worker, df_groups)
 
-    os.makedirs(output_dir, exist_ok=True)
     with open(dataset_dir.format(fold), 'wb') as f:
         pickle.dump(dataset, f)
 
