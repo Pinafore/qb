@@ -137,7 +137,7 @@ class ElmoGuesser(AbstractGuesser):
             random.shuffle(train_batches)
 
             self.model.eval()
-            test_acc, test_loss, test_time = self.run_epoch(val_batches)
+            test_acc, test_loss, test_time = self.run_epoch(val_batches, train=False)
 
             stop_training, reasons = manager.instruct(
                 train_time, train_loss, train_acc,
