@@ -4,7 +4,7 @@ from qanta.buzzer.util import output_dir
 
 args = Namespace()
 
-args.n_input = 40
+args.n_input = 22
 args.n_layers = 1
 args.n_hidden = 50
 args.n_output = 2
