@@ -4,7 +4,7 @@ from collections import defaultdict
 import argparse
 from csv import DictReader
 from time import sleep
-from string import lower
+#from str import lower
 from random import shuffle
 import sys
 import os
@@ -320,14 +320,15 @@ def show_score(left_score, right_score,
     print("%-30s" % "", end='')
     kCOLORS.print("%-15s\n" % right_header, right_color)
 
-    for line in xrange(1, 15):
+    for line in range(1, 15):
         for num, color in [(left_score, left_color),
                            (right_score, right_color)]:
             for place in [100, 10, 1]:
                 if place == 100 and num < 0:
                     val = -1
                 else:
-                    val = (abs(num) % (place * 10)) / place
+                    val = (abs(num) % (place * 10)) // place
+
                 kCOLORS.print("%-15s" % kBIGNUMBERS[val].split("\n")[line],
                               color=color, end=' ')
             print("|", end=" ")
@@ -401,7 +402,7 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     sep = "".join(["-"] * 80)
 
     current_text = ""
-    for ss in xrange(sent):
+    for ss in range(sent):
         current_text += "%s " % question_text[ss]
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
@@ -421,7 +422,7 @@ def load_finals(final_file):
     ff = DictReader(open(final_file))
     d = {}
     for ii in ff:
-        d[int(ii['question'])] = ii['answer']
+        d[int(ii['question'])] = ii['answer'].replace('_', ' ')
     return d
 
 
@@ -466,7 +467,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
     for ss in sorted(question_text):
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
-            if lower(ww).startswith(lower(power)):
+            if ww.lower().startswith(power.lower()):
                 question_value = 10
             press = interpret_keypress()
             current_guesses = buzzes.current_guesses(question_id, ss, ii - 2)
@@ -476,7 +477,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
                 while response is None:
-                    response = raw_input("Player %i, provide an answer:\t"
+                    response = input("Player %i, provide an answer:\t"
                                          % press)
                     if '+' in response:
                         return (human + question_value,
@@ -533,7 +534,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
         response = None
         while response is None:
             os.system("afplay /System/Library/Sounds/Glass.aiff")
-            response = raw_input("Player, take a guess:\t")
+            response = input("Player, take a guess:\t")
             if '+' in response:
                 return (human + 10,
                         computer + computer_delta,
@@ -550,11 +551,11 @@ def present_question(display_num, question_id, question_text, buzzes, final,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--questions', type=str, default='questions.csv')
-    parser.add_argument('--buzzes', type=str, default="ir_buzz.csv")
-    parser.add_argument('--output', type=str, default="competition.csv")
-    parser.add_argument('--finals', type=str, default="finals.csv")
-    parser.add_argument('--players', type=int, default=0)
+    parser.add_argument('--questions', type=str, default='qanta/expo/question.csv')
+    parser.add_argument('--buzzes', type=str, default="qanta/expo/buzz.csv")
+    parser.add_argument('--output', type=str, default="qanta/expo/competition.csv")
+    parser.add_argument('--finals', type=str, default="qanta/expo/final.csv")
+    parser.add_argument('--players', type=int, default=1)
     parser.add_argument('--human_start', type=int, default=0)
     parser.add_argument('--computer_start', type=int, default=0)
     parser.add_argument('--skip', type=int, default=0)
@@ -583,7 +584,7 @@ if __name__ == "__main__":
             os.system("afplay /System/Library/Sounds/Glass.aiff")
             print("Thanks for buzzing in, player %i!" % press)
             current_players.add(press)
-
+ 
     if flags.players > 0:
         sleep(1.5)
         answer("I'm ready too")
