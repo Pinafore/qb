@@ -50,6 +50,17 @@ class CurveScore:
         '''score with an optimal buzzer'''
         char_length = len(question['text'])
         buzz_index = char_length
+        for g in guesses:
+            if g['guess'] == question['page']:
+                buzz_index = g['char_index']
+                break
+        rel_position = (1.0 * buzz_index) / char_length
+        return self.get_weight(rel_position)
+
+    def score_stable(self, guesses, question):
+        '''score with an optimal buzzer'''
+        char_length = len(question['text'])
+        buzz_index = char_length
         for g in guesses[::-1]:
             if g['guess'] != question['page']:
                 buzz_index = g['char_index']
