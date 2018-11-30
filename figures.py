@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import os
 import json
+import sys
+
 
 if 'DISPLAY' not in os.environ:
     import matplotlib
@@ -24,6 +26,10 @@ QB_ROOT = os.environ.get('QB_ROOT', '')
 DEV_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/best/**/guesser_report_guessdev.pickle')
 TEST_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/best/**/guesser_report_guesstest.pickle')
 EXPO_REPORT_PATTERN = os.path.join(QB_ROOT, 'output/guesser/best/**/guesser_report_expo.pickle')
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 
 @click.group()
@@ -322,6 +328,7 @@ def guesser(use_test, only_tacl, no_models, columns, output_dir, no_expo):
             compare_report.plot_char_percent_vs_accuracy_smooth()
         )
 
+    eprint(f'N Expo Reports {len(expo_reports)}')
     if not no_expo and len(expo_reports) > 0:
         compare_report = CompareGuesserReport(dev_reports + expo_reports)
         save_plot(
