@@ -3,14 +3,14 @@
 CLI utilities for QANTA
 """
 
+from typing import Dict, Optional
 import sqlite3
-import yaml
 import csv
 from collections import defaultdict
 import json
 from os import path
 import click
-from typing import Dict, Optional
+import yaml
 from jinja2 import Environment, PackageLoader
 import tqdm
 
@@ -23,6 +23,7 @@ from qanta.util.constants import QANTA_SQL_DATASET_PATH, GUESSER_GENERATION_FOLD
 from qanta.hyperparam import expand_config
 from qanta.wikipedia.categories import categorylinks_cli
 from qanta.wikipedia.vital import vital_cli
+from qanta.ingestion.trickme import trick_cli
 
 log = qlogging.get('cli')
 
@@ -39,6 +40,7 @@ def main():
 main.add_command(categorylinks_cli, name='categories')
 main.add_command(vital_cli, name='vital')
 main.add_command(elasticsearch_cli, name='elasticsearch')
+main.add_command(trick_cli, name='trick')
 
 
 @main.command()
@@ -48,9 +50,9 @@ main.add_command(elasticsearch_cli, name='elasticsearch')
 @click.argument('guessers', nargs=-1)
 def guesser_api(host, port, debug, guessers):
     if debug:
-        log.warn(
-            'WARNING: debug mode in flask can expose environment variables, including AWS keys, NEVER use this when the API is exposed to the web')
-        log.warn('Confirm that you would like to enable flask debugging')
+        log.warning(
+            'WARNING: debug mode can expose environment variables (AWS keys), NEVER use when API is exposed to  web')
+        log.warning('Confirm that you would like to enable flask debugging')
         confirmation = input('yes/no:\n').strip()
         if confirmation != 'yes':
             raise ValueError('Most confirm enabling debug mode')
@@ -226,88 +228,6 @@ def answer_map_google_csvs():
 
 
 @main.command()
-@click.argument('csv_input')
-@click.argument('json_dir')
-def nonnaqt_to_json(csv_input, json_dir):
-    question_sentences = defaultdict(list)
-    with open(csv_input) as f:
-        csv_rows = list(csv.reader(f))
-        for r in csv_rows[1:]:
-            if len(r) != 5:
-                raise ValueError('Invalid csv row, must have 5 columns')
-            qnum, sent, text, page, fold = r
-            qnum = int(qnum)
-            sent = int(sent)
-            question_sentences[qnum].append({
-                'qnum': qnum, 'sent': sent,
-                'text': text, 'page': page, 'fold': fold
-            })
-
-    questions = []
-    for sentences in tqdm.tqdm(question_sentences.values()):
-        ordered_sentences = sorted(sentences, key=lambda s: s['sent'])
-        text = ' '.join(s['text'] for s in ordered_sentences)
-        tokenizations = []
-        position = 0
-        for i in range(len(ordered_sentences)):
-            sent = ordered_sentences[i]['text']
-            length = len(sent)
-            tokenizations.append((position, position + length))
-            position += length + 1
-        q = ordered_sentences[0]
-        questions.append({
-            'answer': '',
-            'category': '',
-            'subcategory': '',
-            'tournament': '',
-            'year': -1,
-            'dataset': 'non_naqt',
-            'difficulty': '',
-            'first_sentence': ordered_sentences[0]['text'],
-            'qanta_id': q['qnum'],
-            'fold': q['fold'],
-            'gameplay': False,
-            'page': q['page'],
-            'proto_id': None,
-            'qdb_id': None,
-            'text': text,
-            'tokenizations': tokenizations
-        })
-
-    train_questions = [q for q in questions if q['fold'] == 'guesstrain']
-    dev_questions = [q for q in questions if q['fold'] == 'guessdev']
-    test_questions = [q for q in questions if q['fold'] == 'test']
-    for q in test_questions:
-        q['fold'] = 'guesstest'
-
-    from qanta.ingestion.preprocess import format_qanta_json
-    from qanta.util.constants import DS_VERSION
-
-    with open(path.join(json_dir, f'qanta.mapped.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(questions, DS_VERSION), f)
-
-    with open(path.join(json_dir, f'qanta.train.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(train_questions, DS_VERSION), f)
-
-    with open(path.join(json_dir, f'qanta.dev.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(dev_questions, DS_VERSION), f)
-
-    with open(path.join(json_dir, f'qanta.test.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(test_questions, DS_VERSION), f)
-
-    from sklearn.model_selection import train_test_split
-    guess_train, guess_val = train_test_split(train_questions, random_state=42, train_size=.9)
-    with open(path.join(json_dir, f'qanta.torchtext.train.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(guess_train, DS_VERSION), f)
-
-    with open(path.join(json_dir, f'qanta.torchtext.val.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(guess_val, DS_VERSION), f)
-
-    with open(path.join(json_dir, f'qanta.torchtext.dev.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(dev_questions, DS_VERSION), f)
-
-
-@main.command()
 @click.argument('question_tsv')
 def process_annotated_test(question_tsv):
     import pandas as pd
@@ -333,50 +253,6 @@ def process_annotated_test(question_tsv):
     for r in qdb_questions.itertuples():
         if type(r.page) is not str:
             print(f'  - {int(r.qdb_id)}')
-
-
-@main.command()
-@click.argument('adversarial_json')
-@click.argument('json_dir')
-@click.argument('id_model_path')
-def adversarial_to_json(adversarial_json, json_dir, id_model_path):
-    from qanta.datasets.quiz_bowl import QantaDatabase
-    db = QantaDatabase()
-    lookup = {q.page.lower(): q.page for q in db.mapped_questions}
-    id_model_map = {}
-    with open(adversarial_json) as f:
-        questions = json.load(f)
-        rows = []
-        for i, q in enumerate(questions):
-            answer = q['answer'].strip().replace(' ', '_')
-            if answer in lookup:
-                answer = lookup[answer]
-            else:
-                log.warning(f'Could not find: {answer}')
-            entry = {
-                'text': q['question'].strip(),
-                'page': answer,
-                'answer': '',
-                'qanta_id': 1000000 + i,
-                'proto_id': None,
-                'qdb_id': None,
-                'category': '',
-                'subcategory': '',
-                'tournament': '',
-                'difficulty': '',
-                'dataset': 'adversarial',
-                'year': -1,
-                'fold': 'expo',
-                'gameplay': False
-            }
-            id_model_map[entry['qanta_id']] = q['model']
-            rows.append(entry)
-
-    from qanta.ingestion.preprocess import add_sentences_, format_qanta_json
-    from qanta.util.constants import DS_VERSION
-    add_sentences_(rows, parallel=False)
-    with open(path.join(json_dir, f'qanta.expo.{DS_VERSION}.json'), 'w') as f:
-        json.dump(format_qanta_json(rows, DS_VERSION), f)
 
 
 if __name__ == '__main__':
