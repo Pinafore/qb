@@ -26,7 +26,6 @@ ES_PARAMS = 'es_params.pickle'
 connections.create_connection(hosts=['localhost'])
 
 
-
 def create_es_config(output_path, host='localhost', port=9200, tmp_dir=None):
     if tmp_dir is None:
         tmp_dir = get_tmp_dir()
@@ -331,7 +330,7 @@ class ElasticSearchGuesser(AbstractGuesser):
                               'guess': ''}
             else:
                 guess = results[0] # take the best answer
-                _highlights = guess.meta.highlight 
+                _highlights = guess.meta.highlight
                 try:
                     wiki_content = list(_highlights.wiki_content)
                 except AttributeError:
@@ -358,7 +357,7 @@ class ElasticSearchGuesser(AbstractGuesser):
                 'multi_match', query=text, fields=[wiki_field, qb_field])
             s = s.highlight(wiki_field).highlight(qb_field)
             results = list(s.execute())
-            
+
             if len(results) == 0:
                 highlights = {'wiki': [''],
                               'qb': [''],
@@ -366,7 +365,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             else:
                 guessForEvidence = request.form['guessForEvidence']
                 guessForEvidence = guessForEvidence.split("style=\"color:blue\">")[1].split("</a>")[0].lower()
-                
+
                 guess = None
                 for index, item in enumerate(results):
                     if item.page.lower().replace("_", " ")[0:25]  == guessForEvidence:
@@ -454,7 +453,7 @@ class ElasticSearchGuesser(AbstractGuesser):
 @click.argument('command', type=click.Choice(['start', 'stop', 'configure']))
 def elasticsearch_cli(generate_config, config_dir, pid_file, command):
     if generate_config:
-        create_es_config(path.join(config_dir, 'elasticsearch.yml'))
+        create_es_config(os.path.join(config_dir, 'elasticsearch.yml'))
 
     if command == 'configure':
         return

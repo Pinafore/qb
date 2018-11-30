@@ -256,3 +256,9 @@ export LANG=en_US.UTF-8
 > TypeError: namedtuple() missing 3 required keyword-only arguments: 'verbose', 'rename', and 'module'
 
 Python 3.6 needs Spark 2.1.1
+
+## Qanta ID Numbering
+
+* Default dataset starts near 0
+* PACE Adversarial Writing Event May 2018 starts at 1,000,000
+* December 15 2018 event starts at 2,000,000

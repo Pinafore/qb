@@ -1,6 +1,9 @@
 import json
 from qanta.ingestion.preprocess import format_qanta_json, add_sentences_
 
+DIRECT_MAP = {}
+
+# Mapping for PACE 2018
 DIRECT_MAP = {
     2: ('syracuse', 'Syracuse,_Sicily'),
     40: ('fyodor_dostoyevsky', 'Fyodor_Dostoevsky'),
@@ -63,8 +66,8 @@ DIRECT_MAP = {
 class Trickme:
     @staticmethod
     def parse_tossups(qanta_ds_path='data/external/datasets/qanta.mapped.2018.04.18.json',
-                      trick_path='data/external/datasets/trickme_questions.json',
-                      start_idx=1000000, version='2018.04.18'):
+                      trick_path='data/external/datasets/trickme_questions_12-15-2018.json',
+                      start_idx=2000000, version='2018.04.18'):
         with open(qanta_ds_path) as f:
             qanta_ds = json.load(f)['questions']
         answer_set = {q['page'] for q in qanta_ds if q['page'] is not None}
@@ -72,8 +75,19 @@ class Trickme:
         with open(trick_path) as f:
             questions = []
             for i, q in enumerate(json.load(f)):
-                text = q['Question']
-                answer = q['Answer'].replace(' ', '_')
+                if 'Question' in q:
+                    text = q['Question']
+                elif 'question' in q:
+                    text = q['question']
+                else:
+                    raise ValueError('Could not find question field in question')
+
+                if 'Answer' in q:
+                    answer = q['Answer'].replace(' ', '_')
+                elif 'answer' in q:
+                    answer = q['answer'].replace(' ', '_')
+                else:
+                    raise ValueError('Could not find answer field in question')
                 if len(answer) == 0 or len(text) == 0:
                     continue
                 if i in DIRECT_MAP:
@@ -91,7 +105,7 @@ class Trickme:
                     page = lookup[answer]
                 else:
                     raise ValueError(f'Could not find: idx: {i} Q:"{text}" \nA: "{answer}"')
-                questions.append({
+                q_out = {
                     'text': text,
                     'answer': answer,
                     'page': page,
@@ -105,9 +119,14 @@ class Trickme:
                     'category': None,
                     'subcategory': None,
                     'qanta_id': start_idx + i,
-                    'tournament': 'Adversarial Question Writing PACE',
+                    'tournament': 'Adversarial Question Writing UMD December 15',
                     'gameplay': False
-                })
+                }
+                if 'email' in q:
+                    q_out['author_email'] = q['email']
+                if 'category' in q and q['category'] != "None":
+                    q_out['category'] = q['category']
+                questions.append(q_out)
             add_sentences_(questions, parallel=True)
             dataset = format_qanta_json(questions, version)
             return dataset

@@ -338,10 +338,12 @@ def process_annotated_test(question_tsv):
 @main.command()
 @click.argument('adversarial_json')
 @click.argument('json_dir')
-def adversarial_to_json(adversarial_json, json_dir):
+@click.argument('id_model_path')
+def adversarial_to_json(adversarial_json, json_dir, id_model_path):
     from qanta.datasets.quiz_bowl import QantaDatabase
     db = QantaDatabase()
     lookup = {q.page.lower(): q.page for q in db.mapped_questions}
+    id_model_map = {}
     with open(adversarial_json) as f:
         questions = json.load(f)
         rows = []
@@ -351,7 +353,7 @@ def adversarial_to_json(adversarial_json, json_dir):
                 answer = lookup[answer]
             else:
                 log.warning(f'Could not find: {answer}')
-            rows.append({
+            entry = {
                 'text': q['question'].strip(),
                 'page': answer,
                 'answer': '',
@@ -366,7 +368,9 @@ def adversarial_to_json(adversarial_json, json_dir):
                 'year': -1,
                 'fold': 'expo',
                 'gameplay': False
-            })
+            }
+            id_model_map[entry['qanta_id']] = q['model']
+            rows.append(entry)
 
     from qanta.ingestion.preprocess import add_sentences_, format_qanta_json
     from qanta.util.constants import DS_VERSION
