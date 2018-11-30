@@ -6,6 +6,48 @@ import chainer.links as L
 from chainer import reporter
 
 
+class LinearBuzzer(chainer.Chain):
+
+    def __init__(self, n_input, n_layers, n_hidden, n_output, dropout=0.1):
+        super(LinearBuzzer, self).__init__()
+        with self.init_scope():
+            self.linear = L.Linear(n_input, n_output)
+        self.n_layers = n_layers
+        self.n_output = n_output
+        self.dropout = dropout
+        self.model_name = 'LinearBuzzer'
+        self.model_dir = 'output/buzzer/LinearBuzzer'
+
+    def __call__(self, xs, ys):
+        concat_outputs = self.forward(xs)
+        concat_outputs = F.softmax(concat_outputs, axis=1)
+        concat_truths = F.concat(ys, axis=0)
+        loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
+        accuracy = F.accuracy(concat_outputs, concat_truths)
+        reporter.report({'loss': loss.data}, self)
+        reporter.report({'accuracy': accuracy.data}, self)
+        return loss
+
+    def forward(self, xs):
+        xs = F.concat(xs, axis=0)
+        ys = self.linear(xs)
+        return ys
+
+    def predict(self, xs, softmax=False, argmax=False):
+        sections = np.cumsum(
+                [len(x) for x in xs[:-1]], dtype=np.int32)
+        ys = self.forward(xs)
+        if softmax:
+            ys = F.softmax(ys, axis=1).data
+            ys = self.xp.split(ys, sections, axis=0)
+        elif argmax:
+            ys = self.xp.argmax(ys.data, axis=1)
+            ys = self.xp.split(ys, sections, axis=0)
+        else:
+            ys = self.xp.split(ys.data, sections, axis=0)
+        return ys
+
+
 class RNNBuzzer(chainer.Chain):
 
     def __init__(self, n_input, n_layers, n_hidden, n_output, dropout=0.1):
