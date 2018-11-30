@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from functools import partial
 
-from qanta.buzzer.nets import RNNBuzzer, MLPBuzzer
+from qanta.buzzer.nets import RNNBuzzer, MLPBuzzer, LinearBuzzer
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.datasets.protobowl import load_protobowl
@@ -204,6 +204,8 @@ def ew(model, fold=BUZZER_DEV_FOLD):
 
 
 if __name__ == '__main__':
+    model = LinearBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2,
+                         dropout=0.4)
     # model = RNNBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2,
     #                   dropout=0.4)
     # model = MLPBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2,
@@ -211,9 +213,7 @@ if __name__ == '__main__':
     # model_path = os.path.join(model.model_dir, 'buzzer.npz')
     # chainer.serializers.load_npz(model_path, model)
     # chainer.backends.cuda.get_device_from_id(0).use()
-    # model.to_gpu()
-
-    model = ThresholdBuzzer(0.1)
+    model.to_gpu()
 
     protobowl(model, BUZZER_DEV_FOLD)
     r1 = ew(model, BUZZER_TEST_FOLD)
