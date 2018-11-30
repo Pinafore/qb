@@ -163,7 +163,9 @@ def all_stack(fold=BUZZER_DEV_FOLD):
         + geom_area(aes(x='Position', y='Frequency', fill='Buzzing'))
         + facet_grid('~ Model')
         + theme_fs()
-        + theme(aspect_ratio=1)
+        + theme(
+            aspect_ratio=1,
+        )
         + scale_fill_brewer(type='div', palette=7)
     )
     p.save('output/buzzer/{}_stack.pdf'.format(fold))
