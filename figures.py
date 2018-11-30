@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+# pylint: disable=wrong-import-position
 import os
 import json
 import sys
+import pickle
+from typing import List
 
 
 if 'DISPLAY' not in os.environ:
@@ -9,14 +12,14 @@ if 'DISPLAY' not in os.environ:
     matplotlib.use('agg')
 
 import glob
-import pandas as pd
 import click
-import pickle
-from typing import List
+import pandas as pd
 import numpy as np
+from scipy.stats import binned_statistic
 from plotnine import (
     ggplot, aes, facet_wrap,
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
+    geom_errorbar, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
     xlab, ylab, theme, element_text, element_blank
 )
@@ -146,6 +149,7 @@ def to_dataset(fold):
     else:
         return fold
 
+
 class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport]):
         self.reports = reports
@@ -160,7 +164,10 @@ class CompareGuesserReport:
         self.char_plot_df = pd.concat(char_plot_dfs)
         self.char_plot_df['Guessing_Model'] = self.char_plot_df['guesser'].map(to_shortname)
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
-        self.acc_df = pd.DataFrame.from_records(acc_rows, columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset'])
+        self.acc_df = pd.DataFrame.from_records(
+            acc_rows,
+            columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset']
+        )
 
     def plot_char_percent_vs_accuracy_smooth(self, expo=False, no_models=False, columns=False):
         if expo:
@@ -214,7 +221,7 @@ class CompareGuesserReport:
             p = (
                 p + facet_conf
                 + aes(x='char_percent', y='correct', color='Dataset')
-                + stat_smooth(method='mavg', se=False, method_args={'window': 400})
+                + stat_summary_bin(fun_data='mean_se')
                 + scale_y_continuous(breaks=np.linspace(0, 1, 11))
                 + scale_x_continuous(breaks=[0, .5, 1])
                 + xlab('Percent of Question Revealed')
@@ -224,6 +231,20 @@ class CompareGuesserReport:
                     strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
                 )
             )
+            # Original fuzzy accuracy plot code
+            # p = (
+                # p + facet_conf
+                # + aes(x='char_percent', y='correct', color='Dataset')
+                # + stat_smooth(method='mavg', se=False, method_args={'window': 400})
+                # + scale_y_continuous(breaks=np.linspace(0, 1, 11))
+                # + scale_x_continuous(breaks=[0, .5, 1])
+                # + xlab('Percent of Question Revealed')
+                # + ylab('Accuracy')
+                # + theme(
+                    # legend_position='top', legend_box_margin=0, legend_title=element_blank(),
+                    # strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
+                # )
+            # )
             return p
         else:
             return (
