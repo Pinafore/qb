@@ -69,7 +69,7 @@ def trick_to_ds(answer_map_path, qanta_ds_path, trick_path, id_model_path, out_p
                 else:
                     raise ValueError(f'{m_page} not in answer set\n Q: {text}')
             else:
-                raise ValueError(f'Could not find: idx: {i} Q:"{text}" \nA: "{answer}"')
+                raise ValueError(f'Could not find: idx: {i} A: "{answer}"\nQ:"{text}"')
 
             q_out = {
                 'text': text,
