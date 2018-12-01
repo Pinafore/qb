@@ -130,7 +130,7 @@ class GuesserReport:
 GUESSER_SHORT_NAMES = {
     'qanta.guesser.rnn.RnnGuesser': 'RNN',
     'qanta.guesser.dan.DanGuesser': 'DAN',
-    'qanta.guesser.elasticsearch.ElasticSearchGuesser': 'IR'
+    'qanta.guesser.elasticsearch.ElasticSearchGuesser': ' IR'
 }
 
 
@@ -151,10 +151,14 @@ def to_dataset(fold):
 
 
 class CompareGuesserReport:
-    def __init__(self, reports: List[GuesserReport], mvg_avg_char=False, exclude_zero_train=False):
+    def __init__(self, reports: List[GuesserReport],
+                 mvg_avg_char=False, exclude_zero_train=False,
+                 merge_humans=False, no_humans=False):
         self.mvg_avg_char = mvg_avg_char
         self.reports = reports
         self.exclude_zero_train = exclude_zero_train
+        self.merge_humans = merge_humans
+        self.no_humans = no_humans
         char_plot_dfs = []
         acc_rows = []
         for r in self.reports:
@@ -187,7 +191,7 @@ class CompareGuesserReport:
 
     def plot_char_percent_vs_accuracy_smooth(self, expo=False, no_models=False, columns=False):
         if expo:
-            if os.path.exists('data/external/all_human_gameplay.json'):
+            if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
                 with open('data/external/all_human_gameplay.json') as f:
                     all_gameplay = json.load(f)
                     frames = []
@@ -227,7 +231,7 @@ class CompareGuesserReport:
                 p = ggplot(human_df) + geom_line()
             else:
                 p = ggplot(self.char_plot_df)
-                if os.path.exists('data/external/all_human_gameplay.json'):
+                if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
                     p = p + geom_line(data=human_df)
 
             if columns:
@@ -312,12 +316,16 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--use-test', is_flag=True, default=False)
 @click.option('--only-tacl', is_flag=True, default=False)
 @click.option('--no-models', is_flag=True, default=False)
+@click.option('--no-humans', is_flag=True, default=False)
 @click.option('--columns', is_flag=True, default=False)
 @click.option('--no-expo', is_flag=True, default=False)
 @click.option('--mvg-avg-char', is_flag=True, default=False)
 @click.option('--exclude-zero-train', is_flag=True, default=False)
+@click.option('--merge-humans', is_flag=True, default=False)
 @click.argument('output_dir')
-def guesser(use_test, only_tacl, no_models, columns, output_dir, no_expo, mvg_avg_char, exclude_zero_train):
+def guesser(
+        use_test, only_tacl, no_models, no_humans, columns,
+        output_dir, no_expo, mvg_avg_char, exclude_zero_train, merge_humans):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -364,7 +372,9 @@ def guesser(use_test, only_tacl, no_models, columns, output_dir, no_expo, mvg_av
         compare_report = CompareGuesserReport(
             dev_reports + expo_reports,
             mvg_avg_char=mvg_avg_char,
-            exclude_zero_train=exclude_zero_train
+            exclude_zero_train=exclude_zero_train,
+            merge_humans=merge_humans,
+            no_humans=no_humans
         )
         save_plot(
             output_dir, 'compare', 'expo_position_accuracy.pdf',
