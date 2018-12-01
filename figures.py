@@ -145,7 +145,7 @@ def to_dataset(fold):
     if fold == 'expo':
         return 'Challenge Questions'
     elif fold == 'guesstest':
-        return 'Test Questions'
+        return 'Regular Test'
     else:
         return fold
 
@@ -164,6 +164,22 @@ class CompareGuesserReport:
         self.char_plot_df = pd.concat(char_plot_dfs)
         self.char_plot_df['Guessing_Model'] = self.char_plot_df['guesser'].map(to_shortname)
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
+        self.char_plot_df['source'] = 'unknown'
+        if os.path.exists('data/external/datasets/trickme-id-model.json'):
+            eprint('Separating questions into rnn/es')
+            with open('data/external/datasets/trickme-id-model.json') as f:
+                trick_sources = json.load(f)
+                id_rows = []
+                for sqid, source in trick_sources.items():
+                    id_rows.append({'qanta_id': int(sqid), 'source': source, 'fold': 'expo'})
+                id_df = pd.DataFrame(id_rows)
+                self.char_plot_df = self.char_plot_df.merge(id_df, on=('qanta_id', 'fold'), how='left')
+                self.char_plot_df['source'] = self.char_plot_df['source_y'].fillna('unknown')
+                self.char_plot_df.loc[self.char_plot_df.source != 'unknown', 'Dataset'] = self.char_plot_df[self.char_plot_df.source != 'unknown']['source'].map(lambda x: 'IR Adversarial' if x == 'es' else 'RNN Adversarial')
+                eprint(self.char_plot_df)
+                eprint(self.char_plot_df.source.unique())
+                eprint(self.char_plot_df.Dataset.unique())
+                eprint(self.char_plot_df.groupby('Dataset').count())
         self.acc_df = pd.DataFrame.from_records(
             acc_rows,
             columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset']
@@ -188,7 +204,7 @@ class CompareGuesserReport:
                             control_sorted_result = control_result[argsort_control]
                             control_y = control_sorted_result.cumsum() / control_sorted_result.shape[0]
                             control_df = pd.DataFrame({'correct': control_y, 'char_percent': control_x})
-                            control_df['Dataset'] = 'Test Questions'
+                            control_df['Dataset'] = 'Regular Test'
                             control_df['Guessing_Model'] = f' {name}'
                             frames.append(control_df)
 
@@ -202,7 +218,7 @@ class CompareGuesserReport:
                         adv_sorted_result = adv_result[argsort_adv]
                         adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                         adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                        adv_df['Dataset'] = 'Challenge Questions'
+                        adv_df['Dataset'] = 'IR Adversarial'
                         adv_df['Guessing_Model'] = f' {name}'
                         frames.append(adv_df)
 
@@ -221,7 +237,7 @@ class CompareGuesserReport:
             p = (
                 p + facet_conf
                 + aes(x='char_percent', y='correct', color='Dataset')
-                + stat_summary_bin(fun_data='mean_se')
+                + stat_summary_bin(fun_data='mean_se', bins=20, shape='.')
                 + scale_y_continuous(breaks=np.linspace(0, 1, 11))
                 + scale_x_continuous(breaks=[0, .5, 1])
                 + xlab('Percent of Question Revealed')
@@ -231,20 +247,6 @@ class CompareGuesserReport:
                     strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
                 )
             )
-            # Original fuzzy accuracy plot code
-            # p = (
-                # p + facet_conf
-                # + aes(x='char_percent', y='correct', color='Dataset')
-                # + stat_smooth(method='mavg', se=False, method_args={'window': 400})
-                # + scale_y_continuous(breaks=np.linspace(0, 1, 11))
-                # + scale_x_continuous(breaks=[0, .5, 1])
-                # + xlab('Percent of Question Revealed')
-                # + ylab('Accuracy')
-                # + theme(
-                    # legend_position='top', legend_box_margin=0, legend_title=element_blank(),
-                    # strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
-                # )
-            # )
             return p
         else:
             return (
