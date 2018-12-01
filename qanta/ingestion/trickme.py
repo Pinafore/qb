@@ -14,6 +14,37 @@ def trick_cli():
 
 
 @trick_cli.command()
+@click.option('--id-model-path', default='data/external/datasets/trickme-id-model.json')
+@click.option('--expo-path', default='data/external/datasets/qanta.expo.2018.04.18.json')
+@click.option('--version', default='2018.04.18')
+@click.argument('rnn-out')
+@click.argument('es-out')
+def split_ds(id_model_path, expo_path, version, rnn_out, es_out):
+    with open(id_model_path) as f:
+        lookup = json.load(f)
+
+    with open(expo_path) as f:
+        questions = json.load(f)['questions']
+
+    es_questions = []
+    rnn_questions = []
+    for q in questions:
+        qanta_id = str(q['qanta_id'])
+        if lookup[qanta_id] == 'es':
+            es_questions.append(q)
+        elif lookup[qanta_id] == 'rnn':
+            rnn_questions.append(q)
+        else:
+            raise ValueError('Unhandled question source')
+
+    with open(rnn_out, 'w') as f:
+        json.dump(format_qanta_json(rnn_questions, version), f)
+
+    with open(es_out, 'w') as f:
+        json.dump(format_qanta_json(es_questions, version), f)
+
+
+@trick_cli.command()
 @click.option('--answer-map-path', default='data/internal/trickme_answer_map.yml')
 @click.option('--qanta-ds-path', default='data/external/datasets/qanta.mapped.2018.04.18.json')
 @click.option('--trick-path', default='data/external/datasets/trickme-expo.json')
@@ -34,6 +65,7 @@ def trick_to_ds(answer_map_path, qanta_ds_path, trick_path, id_model_path, out_p
     answer_set = {q['page'] for q in qanta_ds if q['page'] is not None}
     lookup = {a.lower().replace(' ', '_'): a for a in answer_set}
     id_model_map = {}
+    skipped = 0
     with open(trick_path) as f:
         questions = []
         for i, q in enumerate(json.load(f)):
@@ -54,22 +86,26 @@ def trick_to_ds(answer_map_path, qanta_ds_path, trick_path, id_model_path, out_p
             if len(answer) == 0 or len(text) == 0:
                 raise ValueError('Empty answer or text')
 
-            if answer in lookup:
+            if answer in answer_set:
+                page = answer
+            elif answer in lookup:
                 page = lookup[answer]
             elif answer in answer_map:
                 m_page = answer_map[answer]
                 if m_page is None:
                     if 'model' in q:
-                        log.info(f'Skipping f{answer}, int-model: {q["model"]}')
+                        log.info(f'Explicitly Skipping {answer}, int-model: {q["model"]}')
                     else:
-                        log.info(f'Skipping f{answer}')
+                        log.info(f'Explicitly Skipping {answer}')
                     continue  # Skip this explicitly
                 elif m_page in answer_set:
                     page = m_page
                 else:
                     raise ValueError(f'{m_page} not in answer set\n Q: {text}')
             else:
-                raise ValueError(f'Could not find: idx: {i} A: "{answer}"\nQ:"{text}"')
+                log.error(f'Unhandled Skipping: idx: {i} A: "{answer}"\nQ:"{text}"')
+                skipped += 1
+                continue
 
             q_out = {
                 'text': text,
@@ -94,6 +130,7 @@ def trick_to_ds(answer_map_path, qanta_ds_path, trick_path, id_model_path, out_p
             if 'model' in q:
                 id_model_map[q_out['qanta_id']] = q['model']
             questions.append(q_out)
+        log.info(f'Total: {len(questions)} Skipped: {skipped}')
         add_sentences_(questions, parallel=False)
         dataset = format_qanta_json(questions, version)
 
