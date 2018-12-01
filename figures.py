@@ -151,8 +151,10 @@ def to_dataset(fold):
 
 
 class CompareGuesserReport:
-    def __init__(self, reports: List[GuesserReport]):
+    def __init__(self, reports: List[GuesserReport], mvg_avg_char=False, exclude_zero_train=False):
+        self.mvg_avg_char = mvg_avg_char
         self.reports = reports
+        self.exclude_zero_train = exclude_zero_train
         char_plot_dfs = []
         acc_rows = []
         for r in self.reports:
@@ -162,6 +164,8 @@ class CompareGuesserReport:
             acc_rows.append((r.fold, name, 'First Sentence', r.first_accuracy, dataset))
             acc_rows.append((r.fold, name, 'Full Question', r.full_accuracy, dataset))
         self.char_plot_df = pd.concat(char_plot_dfs)
+        if self.exclude_zero_train:
+            self.char_plot_df = self.char_plot_df[self.char_plot_df.n_train > 0]
         self.char_plot_df['Guessing_Model'] = self.char_plot_df['guesser'].map(to_shortname)
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
         self.char_plot_df['source'] = 'unknown'
@@ -176,10 +180,6 @@ class CompareGuesserReport:
                 self.char_plot_df = self.char_plot_df.merge(id_df, on=('qanta_id', 'fold'), how='left')
                 self.char_plot_df['source'] = self.char_plot_df['source_y'].fillna('unknown')
                 self.char_plot_df.loc[self.char_plot_df.source != 'unknown', 'Dataset'] = self.char_plot_df[self.char_plot_df.source != 'unknown']['source'].map(lambda x: 'IR Adversarial' if x == 'es' else 'RNN Adversarial')
-                eprint(self.char_plot_df)
-                eprint(self.char_plot_df.source.unique())
-                eprint(self.char_plot_df.Dataset.unique())
-                eprint(self.char_plot_df.groupby('Dataset').count())
         self.acc_df = pd.DataFrame.from_records(
             acc_rows,
             columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset']
@@ -234,10 +234,15 @@ class CompareGuesserReport:
                 facet_conf = facet_wrap('Guessing_Model', ncol=1)
             else:
                 facet_conf = facet_wrap('Guessing_Model', nrow=1)
+
+            if self.mvg_avg_char:
+                chart = stat_smooth(method='mavg', se=False, method_args={'window': 400})
+            else:
+                chart = stat_summary_bin(fun_data='mean_se', bins=20, shape='.')
             p = (
                 p + facet_conf
                 + aes(x='char_percent', y='correct', color='Dataset')
-                + stat_summary_bin(fun_data='mean_se', bins=20, shape='.')
+                + chart
                 + scale_y_continuous(breaks=np.linspace(0, 1, 11))
                 + scale_x_continuous(breaks=[0, .5, 1])
                 + xlab('Percent of Question Revealed')
@@ -247,6 +252,7 @@ class CompareGuesserReport:
                     strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
                 )
             )
+
             return p
         else:
             return (
@@ -308,8 +314,10 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--no-models', is_flag=True, default=False)
 @click.option('--columns', is_flag=True, default=False)
 @click.option('--no-expo', is_flag=True, default=False)
+@click.option('--mvg-avg-char', is_flag=True, default=False)
+@click.option('--exclude-zero-train', is_flag=True, default=False)
 @click.argument('output_dir')
-def guesser(use_test, only_tacl, no_models, columns, output_dir, no_expo):
+def guesser(use_test, only_tacl, no_models, columns, output_dir, no_expo, mvg_avg_char, exclude_zero_train):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -353,7 +361,11 @@ def guesser(use_test, only_tacl, no_models, columns, output_dir, no_expo):
 
     eprint(f'N Expo Reports {len(expo_reports)}')
     if not no_expo and len(expo_reports) > 0:
-        compare_report = CompareGuesserReport(dev_reports + expo_reports)
+        compare_report = CompareGuesserReport(
+            dev_reports + expo_reports,
+            mvg_avg_char=mvg_avg_char,
+            exclude_zero_train=exclude_zero_train
+        )
         save_plot(
             output_dir, 'compare', 'expo_position_accuracy.pdf',
             compare_report.plot_compare_accuracy(expo=True)
