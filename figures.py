@@ -128,9 +128,9 @@ class GuesserReport:
 
 
 GUESSER_SHORT_NAMES = {
-    'qanta.guesser.rnn.RnnGuesser': 'RNN',
-    'qanta.guesser.dan.DanGuesser': 'DAN',
-    'qanta.guesser.elasticsearch.ElasticSearchGuesser': ' IR'
+    'qanta.guesser.rnn.RnnGuesser': ' RNN',
+    'qanta.guesser.dan.DanGuesser': ' DAN',
+    'qanta.guesser.elasticsearch.ElasticSearchGuesser': 'IR'
 }
 
 
@@ -196,6 +196,8 @@ class CompareGuesserReport:
                     all_gameplay = json.load(f)
                     frames = []
                     for event, name in [('parents', 'Dilettante'), ('maryland', 'Expert'), ('live', 'National')]:
+                        if self.merge_humans:
+                            name = 'Human'
                         gameplay = all_gameplay[event]
                         if event != 'live':
                             control_correct_positions = gameplay['control_correct_positions']
@@ -243,6 +245,7 @@ class CompareGuesserReport:
                 chart = stat_smooth(method='mavg', se=False, method_args={'window': 400})
             else:
                 chart = stat_summary_bin(fun_data='mean_se', bins=20, shape='.')
+
             p = (
                 p + facet_conf
                 + aes(x='char_percent', y='correct', color='Dataset')
