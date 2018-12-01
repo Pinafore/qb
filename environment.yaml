@@ -28,6 +28,7 @@ dependencies:
   - pycountry=18.5.*
   - pypandoc
   - elasticsearch-dsl=6.2.*
+  - plotnine=0.5.*
   - pip:
     - pyfunctional
     - git+https://github.com/EntilZha/result.git
