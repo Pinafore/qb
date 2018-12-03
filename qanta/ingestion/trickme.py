@@ -47,6 +47,7 @@ def split_ds(id_model_path, expo_path, version, rnn_out, es_out):
 @trick_cli.command()
 @click.option('--answer-map-path', default='data/internal/trickme_answer_map.yml')
 @click.option('--qanta-ds-path', default='data/external/datasets/qanta.mapped.2018.04.18.json')
+@click.option('--wiki-titles-path', default='data/external/wikipedia/wikipedia-titles.2018.04.18.json')
 @click.option('--trick-path', default='data/external/datasets/trickme-expo.json')
 @click.option('--id-model-path', default='data/external/datasets/trickme-id-model.json')
 @click.option('--out-path', default='data/external/datasets/qanta.expo.2018.04.18.json')
@@ -55,7 +56,8 @@ def split_ds(id_model_path, expo_path, version, rnn_out, es_out):
 @click.option('--fold', default='advtest')
 @click.option('--year', default=2018)
 @click.option('--tournament', default='Adversarial Question Writing UMD December 15')
-def trick_to_ds(answer_map_path, qanta_ds_path, trick_path, id_model_path, out_path,
+def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
+                id_model_path, out_path,
                 start_idx, version, fold, year, tournament):
     with open(answer_map_path) as f:
         answer_map = yaml.load(f)
@@ -63,6 +65,8 @@ def trick_to_ds(answer_map_path, qanta_ds_path, trick_path, id_model_path, out_p
     with open(qanta_ds_path) as f:
         qanta_ds = json.load(f)['questions']
     answer_set = {q['page'] for q in qanta_ds if q['page'] is not None}
+    with open(wiki_titles_path) as f:
+        titles = set(json.load(f))
     lookup = {a.lower().replace(' ', '_'): a for a in answer_set}
     id_model_map = {}
     skipped = 0
@@ -102,6 +106,8 @@ def trick_to_ds(answer_map_path, qanta_ds_path, trick_path, id_model_path, out_p
                     page = m_page
                 else:
                     raise ValueError(f'{m_page} not in answer set\n Q: {text}')
+            elif answer in titles:
+                log.info(f'Answer in title but not in train: idx: {i} A: "{answer}"')
             else:
                 log.error(f'Unhandled Skipping: idx: {i} A: "{answer}"\nQ:"{text}"')
                 skipped += 1
