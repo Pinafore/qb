@@ -90,7 +90,7 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
             if len(answer) == 0 or len(text) == 0:
                 raise ValueError('Empty answer or text')
 
-            if answer in answer_set:
+            if answer in titles or answer in answer_set:
                 page = answer
             elif answer in lookup:
                 page = lookup[answer]
@@ -106,8 +106,6 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                     page = m_page
                 else:
                     raise ValueError(f'{m_page} not in answer set\n Q: {text}')
-            elif answer in titles:
-                log.info(f'Answer in title but not in train: idx: {i} A: "{answer}"')
             else:
                 log.error(f'Unhandled Skipping: idx: {i} A: "{answer}"\nQ:"{text}"')
                 skipped += 1
