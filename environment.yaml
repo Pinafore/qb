@@ -29,6 +29,7 @@ dependencies:
   - pypandoc
   - elasticsearch-dsl=6.2.*
   - plotnine=0.5.*
+  - beautifulsoup4
   - pip:
     - pyfunctional
     - git+https://github.com/EntilZha/result.git
