@@ -30,6 +30,9 @@ dependencies:
   - elasticsearch-dsl=6.2.*
   - plotnine=0.5.*
   - beautifulsoup4
+  - jupyter
+  - cloudpickle=0.5.*
+  - ipython
   - pip:
     - pyfunctional
     - git+https://github.com/EntilZha/result.git
