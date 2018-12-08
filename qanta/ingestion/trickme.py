@@ -45,6 +45,26 @@ def split_ds(id_model_path, expo_path, version, rnn_out, es_out):
 
 
 @trick_cli.command()
+@click.argument('edited-tsv')
+@click.argument('out')
+def edited_to_json(edited_tsv, out):
+    trick_questions = []
+    with open(edited_tsv) as f:
+        # Burn the header
+        next(f)
+        for line in f:
+            fields = line.split('\t')
+            trick_id = fields[0]
+            question = fields[1]
+            answer = fields[2]
+            trick_questions.append({'trick_id': trick_id, 'question': question, 'answer': answer})
+
+    with open(out, 'w') as f:
+        json.dump(trick_questions, f)
+
+
+
+@trick_cli.command()
 @click.option('--answer-map-path', default='data/internal/trickme_answer_map.yml')
 @click.option('--qanta-ds-path', default='data/external/datasets/qanta.mapped.2018.04.18.json')
 @click.option('--wiki-titles-path', default='data/external/wikipedia/wikipedia-titles.2018.04.18.json')
@@ -87,8 +107,15 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
             else:
                 raise ValueError('Could not find answer field in question')
 
-            if len(answer) == 0 or len(text) == 0:
-                raise ValueError('Empty answer or text')
+            if 'trick_id' in q:
+                trick_id = q['trick_id']
+            else:
+                trick_id = None
+
+            if len(answer) == 0:
+                raise ValueError(f'Empty answer for trick_id={trick_id}')
+            elif len(text) == 0:
+                raise ValueError(f'Empty text for trick_id={trick_id}')
 
             if answer in titles or answer in answer_set:
                 page = answer
@@ -107,7 +134,7 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                 else:
                     raise ValueError(f'{m_page} not in answer set\n Q: {text}')
             else:
-                log.error(f'Unhandled Skipping: idx: {i} A: "{answer}"\nQ:"{text}"')
+                log.error(f'Unhandled Skipping: idx: {i} trick_id: {trick_id} A: "{answer}"\nQ:"{text}"')
                 skipped += 1
                 continue
 
@@ -125,7 +152,8 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                 'subcategory': None,
                 'qanta_id': start_idx + i,
                 'tournament': tournament,
-                'gameplay': False
+                'gameplay': False,
+                'trick_id': trick_id
             }
             if 'email' in q:
                 q_out['author_email'] = q['email']
