@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 import click
 import yaml
 from qanta.ingestion.preprocess import format_qanta_json, add_sentences_
@@ -57,7 +58,8 @@ def edited_to_json(edited_tsv, out):
             trick_id = fields[0]
             question = fields[1]
             answer = fields[2]
-            trick_questions.append({'trick_id': trick_id, 'question': question, 'answer': answer})
+            round_ = fields[6]
+            trick_questions.append({'trick_id': trick_id, 'question': question, 'answer': answer, 'round': round_})
 
     with open(out, 'w') as f:
         json.dump(trick_questions, f)
@@ -76,9 +78,11 @@ def edited_to_json(edited_tsv, out):
 @click.option('--fold', default='advtest')
 @click.option('--year', default=2018)
 @click.option('--tournament', default='Adversarial Question Writing UMD December 15')
+@click.option('--separate-rounds', default=False, is_flag=True)
 def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                 id_model_path, out_path,
-                start_idx, version, fold, year, tournament):
+                start_idx, version, fold, year, tournament,
+                separate_rounds):
     with open(answer_map_path) as f:
         answer_map = yaml.load(f)
 
@@ -111,6 +115,7 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                 trick_id = q['trick_id']
             else:
                 trick_id = None
+
 
             if len(answer) == 0:
                 raise ValueError(f'Empty answer for trick_id={trick_id}')
@@ -159,15 +164,34 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                 q_out['author_email'] = q['email']
             if 'category' in q and q['category'] != "None":
                 q_out['category'] = q['category']
+            if 'round' in q:
+                q_out['round'] = q['round']
             if 'model' in q:
                 id_model_map[q_out['qanta_id']] = q['model']
             questions.append(q_out)
         log.info(f'Total: {len(questions)} Skipped: {skipped}')
         add_sentences_(questions, parallel=False)
-        dataset = format_qanta_json(questions, version)
+        if separate_rounds:
+            rounds = defaultdict(list)
+            for q in questions:
+                rounds[q['round']].append(q)
+            for name, round_questions in rounds.items():
+                dataset = format_qanta_json(round_questions, version)
+                file_name = out_path.split('.')
+                if file_name[-1] == 'json':
+                    file_name.pop()
+                    file_name.extend([name, 'json'])
+                else:
+                    file_name.extend([name, 'json'])
+                round_out_path = '.'.join(file_name)
+                log.info(f'Writing round {name} to {round_out_path}')
+                with open(round_out_path, 'w') as f:
+                    json.dump(dataset, f)
+        else:
+            dataset = format_qanta_json(questions, version)
 
-        with open(out_path, 'w') as f:
-            json.dump(dataset, f)
+            with open(out_path, 'w') as f:
+                json.dump(dataset, f)
 
         with open(id_model_path, 'w') as f:
             json.dump(id_model_map, f)
