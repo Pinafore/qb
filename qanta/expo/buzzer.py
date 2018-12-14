@@ -213,6 +213,20 @@ X8888   8888:
 """}
 
 
+
+class Score:
+    def __init__(self, even=0, odd=0, human=0, computer=0):
+        self.even = even
+        self.odd = odd
+        self.human = human
+        self.computer = computer
+
+    def add(self, score):
+        return Score(self.even + score.even,
+                     self.odd + score.odd,
+                     self.human + score.human,
+                     self.computer + score.computer)
+
 class kCOLORS:
     PURPLE = '\033[95m'
     BLUE = '\033[94m'
@@ -230,8 +244,8 @@ class kCOLORS:
 
 def write_readable(filename, ids, questions):
     question_num = 0
-    o = open(flags.readable, 'w')
-    for ii in question_ids:
+    o = open(filename, 'w')
+    for ii in ids:
         question_num += 1
         o.write("%i) " % question_num)
         power_found = False
@@ -525,8 +539,11 @@ def answer(ans, system):
     print(ans)
 
 
-def present_question(display_num, question_id, question_text, buzzes, final,
-                     correct, human=0, computer=0, power="10"):
+def present_question_hc(display_num, question_id, question_text, buzzes, final,
+                        correct, score=Score(), power="10"):
+    """
+    Shows one question to a human and computer
+    """
 
     human_delta = 0
     computer_delta = 0
@@ -536,14 +553,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
         for ii, ww in enumerate(words):
             # if we've reached the end of the question
             if ss == max(question_text) and ii == len(question_text[ss].split()) - 1:
-                 # If humans haven't buzzed, let the computer buzz
+                 # If computer hasn't buzzed, let the computer buzz
                  if computer_delta == 0:
                     print(final)
                     system = random.choice(list(final.keys()))
                     answer(final[system].split('(')[0], system)
                     final = final[system]
                     if final == correct:
-                        return (human + human_delta, computer + 10, final)
+                        return(Score(human=human_delta, computer=10))
                     else:
                         print("Incorrect answer: %s" % final)
                  else:
@@ -552,7 +569,7 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             if ww.lower().startswith(power.lower()):
                 question_value = 10
             press = interpret_keypress()
-            current_guesses = buzzes.current_guesses(question_id, ss, ii - 2)
+            current_guesses = buzzes.current_guesses(question_id, ss, ii - 1)
             buzz_now = [x for x in current_guesses.values() if x.final]
             # Removing this assertion now that we can have multiple systems playing
             # assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
@@ -563,21 +580,20 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                     response = input("Player %i, provide an answer:\t"
                                          % press)
                     if '+' in response:
-                        return (human + question_value,
-                                computer + computer_delta,
-                                response[1:])
+                        return(Score(human=question_value,
+                                     computer=computer_delta))
                     elif '-' in response:
                         if computer_delta == -5:
-                            return (human, computer + computer_delta,
-                                    response[1:])
+                            # If computer already got it wrong, question is over
+                            return(Score(computer=computer_delta))
                         else:
                             human_delta = -5
                     else:
                         response = None
             # Don't buzz if anyone else has gotten it wrong
             elif buzz_now and human_delta == 0 and computer_delta == 0:
-                show_score(human + human_delta,
-                           computer + computer_delta,
+                show_score(score.human + human_delta,
+                           score.computer + computer_delta,
                            "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
@@ -586,22 +602,21 @@ def present_question(display_num, question_id, question_text, buzzes, final,
                 if buzz_now[0].page == correct:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(1)
-                    return (human + human_delta, computer + question_value,
-                            buzz_now[0].page)
+                    return(Score(human=human_delta, computer=question_value))
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
                     sleep(1)
                     computer_delta = -5
-                    show_score(human + human_delta,
-                               computer + computer_delta,
+                    show_score(score.human + human_delta,
+                               score.computer + computer_delta,
                                "HUMAN", "COMPUTER")
                     format_display(display_num, question_text,
                                    max(question_text), 0,
                                    current_guesses, answer=correct,
                                    points=question_value)
             else:
-                show_score(human + human_delta,
-                           computer + computer_delta,
+                show_score(score.human + human_delta,
+                           score.computer + computer_delta,
                            "HUMAN", "COMPUTER")
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
@@ -613,16 +628,14 @@ def present_question(display_num, question_id, question_text, buzzes, final,
             os.system("afplay /System/Library/Sounds/Glass.aiff")
             response = input("Player, take a guess:\t")
             if '+' in response:
-                return (human + 10,
-                        computer + computer_delta,
-                        response[1:])
+                return(Score(human=10,
+                             computer=computer_delta))
             elif '-' in response:
-                return (human, computer + computer_delta,
-                        response[1:])
+                return(Score(computer=computer_delta))
             else:
                 response = None
 
-    return (human + human_delta, computer + computer_delta, "")
+    return(Score(human=human_delta, computer=computer_delta))
 
 def create_parser():
     parser = argparse.ArgumentParser(description='')
@@ -633,6 +646,8 @@ def create_parser():
     parser.add_argument('--players', type=int, default=1)
     parser.add_argument('--human_start', type=int, default=0)
     parser.add_argument('--computer_start', type=int, default=0)
+    parser.add_argument('--odd_start', type=int, default=0)
+    parser.add_argument('--even_start', type=int, default=0)
     parser.add_argument('--skip', type=int, default=0)
     parser.add_argument('--power', type=str, default="")
     parser.add_argument('--max_questions', type=int, default=40)
@@ -680,16 +695,16 @@ def buzzer_check(players):
         sleep(1.5)
         answer("I'm ready too", "QANTA")
 
-if __name__ == "__main__":
-    flags = create_parser()
-    questions, buzzes = load_data(flags)
-    print("Done loading data")
-    
-    clear_screen()
-    buzzer_check(flags.players)
+def check_hc_tie(score):
+    """
+    For the computer-human and human-human programs, this needs to be
+    different.  This is why it's a silly function.
+    """
+    return score.human == score.computer
 
-    human = flags.human_start
-    computer = flags.computer_start
+def question_loop(flags, questions, buzzes, present_question, check_tie):
+    score = Score(odd=flags.odd_start, even=flags.even_start, 
+                  human=flags.human_start, computer=flags.computer_start)
     question_num = 0
     question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
 
@@ -707,14 +722,12 @@ if __name__ == "__main__":
         if power_mark == "10":
             print("Looking for power for %i, got %s %s" %
                   (ii, power_mark, str(ii in power._power_marks.keys())))
-        hum, comp, ans = present_question(question_num, ii, questions[ii],
-                                          buzzes, buzzes._finals[ii],
-                                          questions.answer(ii),
-                                          human=human,
-                                          computer=computer,
-                                          power=questions._power(ii))
-        human = hum
-        computer = comp
+        score_delta = present_question(question_num, ii, questions[ii],
+                                       buzzes, buzzes._finals[ii],
+                                       questions.answer(ii),
+                                       score=score,
+                                       power=questions._power(ii))
+        score = score.add(score_delta)
 
         print("Correct answer of Question %i: %s" % (question_num,
                                                      questions.answer(ii)))
@@ -723,25 +736,34 @@ if __name__ == "__main__":
         if question_num > flags.max_questions - 1:
             break
 
-    show_score(human, computer,
-               "HUMAN", "COMPUTER")
-
-    if human == computer:
+    if check_tie(score):
         print("Tiebreaker!")
         for ii in question_ids[question_num:]:
             question_num += 1
-            hum, comp, ans = present_question(question_num, ii, questions[ii],
-                                              buzzes, finals[ii],
-                                              questions.answer(ii),
-                                              human=human,
-                                              computer=computer,
-                                              power=power(ii))
-            human = hum
-            computer = comp
+            score_delta = present_question(question_num, ii, questions[ii],
+                                           buzzes, buzzes._finals[ii],
+                                           questions.answer(ii),
+                                           score=score,
+                                           power=questions._power(ii))
+            score = score.add(score_delta)
 
             print("Correct answer of Question %i: %s" % (question_num,
                                                          questions.answer(ii)))
             sleep(kPAUSE)
 
-    show_score(human, computer,
+    return(score)
+
+if __name__ == "__main__":
+    flags = create_parser()
+    questions, buzzes = load_data(flags)
+    print("Done loading data")
+    
+    clear_screen()
+    buzzer_check(flags.players)
+
+    score = question_loop(flags, questions, buzzes, present_question_hc, 
+                          check_hc_tie)
+
+    show_score(score.human, score.computer,
                "HUMAN", "COMPUTER")
+        
