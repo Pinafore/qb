@@ -96,6 +96,7 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                             question_done = True
                         elif computer_delta == 0:
                             human_delta = question_value
+                        question_done = True
                     elif '-' in response:
                         if even_delta == 0 and press % 2 != 0:
                             odd_delta = -5
