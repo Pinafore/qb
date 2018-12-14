@@ -49,14 +49,14 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
         for ii, ww in enumerate(words):
             if question_done:
                 break
-          
+
             if (ww == "~" and ss == max(question_text)) and \
               (computer_delta == 0 and human_delta <= 0):
               # Computer has reached end of question
               # answer(final_answer.split('(')[0], final_system)
               if final == correct:
                   computer_delta = 10
-            
+
             if computer_position[0] == ss and computer_position[1] == ii:
                 # This is where the computer buzzes
                 if human_delta <= 0:
@@ -98,7 +98,7 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                             even_delta = question_value
                         else:
                             odd_delta = question_value
-                            
+
                         if computer_delta < 0 and human_delta == 0:
                             # Computer got it wrong before
                             human_delta = question_value
@@ -106,7 +106,10 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                         elif computer_delta == 0 and human_delta < 0:
                             # Other team guessed wrong before
                             computer_delta = question_value
-                            
+                        elif computer_delta == 0:
+                            human_delta = question_value
+                            question_done = True
+
                         question_done = True
                     elif '-' in response:
                         if even_delta == 0 and press % 2 != 0:
@@ -123,7 +126,7 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                             question_done = True
                         if odd_delta != 0 and press % 2 == 0:
                             if computer_delta == 0 and final_answer == correct:
-                                computer_delta = 10                            
+                                computer_delta = 10
                             question_done = True
                     else:
                         response = None
@@ -158,13 +161,12 @@ if __name__ == "__main__":
     flags = create_parser()
     questions, buzzes = load_data(flags)
     print("Done loading data")
-    
+
     clear_screen()
     buzzer_check(flags.players)
 
-    score = question_loop(flags, questions, buzzes, present_question_hh, 
+    score = question_loop(flags, questions, buzzes, present_question_hh,
                           check_hh_tie)
 
     show_score(score.human, score.computer,
                "HUMAN", "COMPUTER")
-            
