@@ -49,7 +49,14 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
         for ii, ww in enumerate(words):
             if question_done:
                 break
-
+          
+            if (ww == "~" and ss == max(question_text)) and \
+              (computer_delta == 0 and human_delta <= 0):
+              # Computer has reached end of question
+              # answer(final_answer.split('(')[0], final_system)
+              if final == correct:
+                  computer_delta = 10
+            
             if computer_position[0] == ss and computer_position[1] == ii:
                 # This is where the computer buzzes
                 if human_delta <= 0:
@@ -91,24 +98,32 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                             even_delta = question_value
                         else:
                             odd_delta = question_value
+                            
                         if computer_delta < 0 and human_delta == 0:
+                            # Computer got it wrong before
                             human_delta = question_value
                             question_done = True
-                        elif computer_delta == 0:
-                            human_delta = question_value
+                        elif computer_delta == 0 and human_delta < 0:
+                            # Other team guessed wrong before
+                            computer_delta = question_value
+                            
                         question_done = True
                     elif '-' in response:
                         if even_delta == 0 and press % 2 != 0:
                             odd_delta = -5
                         if odd_delta == 0 and press % 2 == 0:
                             even_delta = -5
-                        if computer_delta < 0:
+                        if computer_delta == 0:
                             human_delta = -5
 
                         # Break if both teams have answered
                         if even_delta != 0 and press % 2 != 0:
+                            if computer_delta == 0 and final_answer == correct:
+                                computer_delta = 10
                             question_done = True
                         if odd_delta != 0 and press % 2 == 0:
+                            if computer_delta == 0 and final_answer == correct:
+                                computer_delta = 10                            
                             question_done = True
                     else:
                         response = None
@@ -128,19 +143,6 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                 print(format_display(display_num, question_text, ss, ii + 1,
                                      current_guesses, answer=correct,
                                      points=question_value))
-
-    # Now see what the computer would do
-    if computer_delta == 0 and human_delta <= 0:
-        # answer(final_answer.split('(')[0], final_system)
-        if final == correct:
-            computer_delta = 10
-        else:
-            print("Computer guesses incorrectly: %s" % final)
-    elif computer_delta > 0:
-        # answer(computer_guess, computer_system)
-        format_display(display_num, question_text, computer_position[0],
-                       computer_position[1], current_guesses, answer=correct,
-                       points=computer_delta)
 
     return(Score(even_delta, odd_delta, human_delta, computer_delta))
 
