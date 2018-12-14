@@ -170,3 +170,9 @@ if __name__ == "__main__":
 
     show_score(score.human, score.computer,
                "HUMAN", "COMPUTER")
+
+    show_score(score.even,
+               score.odd,
+               "TEAM A", "TEAM B",
+               left_color="RED",
+               right_color="YELLOW")
