@@ -1,6 +1,7 @@
 from __future__ import print_function
 import textwrap
 from collections import defaultdict
+from glob import glob
 import argparse
 import random
 from csv import DictReader
@@ -401,21 +402,24 @@ class Buzzes:
     def add_guess(self, question, sent, word, system, guess, evidence, final, weight):
         if not (sent, word) in self._buzzes[question]:
             self._buzzes[question][(sent, word)] = {}
+        if final != 0 and sent == 0 and word < 25:
+            final = 0
         self._buzzes[question][(sent, word)][guess] = \
             Guess(system,guess, evidence, final, weight)
         
     def add_system(self, file_path):
-        self.load_finals("%s.finals" % file_path)
-        
-        buzzfile = DictReader(open("%s.buzz" % buzz_file, 'r'))
-        system = buzzfile.split('/')[-1]
-        system = buzzfile.split('.')[0]
-        system = buzzfile.split("_")[0]
+        buzzfile = DictReader(open("%s.buzz.csv" % file_path, 'r'))
+        system = file_path.replace("CMSC723_", "").split('/')[-1]
+        system = system.split('.')[0]
+        system = system.split("_")[0]
 
         for ii in buzzfile:
             question, sent, word = int(ii["question"]), int(ii["sentence"]), int(ii["word"])
             self.add_guess(question, sent, word, system, ii["page"], ii["evidence"],
                            int(ii["final"]), float(ii["weight"]))
+            
+        self.load_finals(system, "%s.final.csv" % file_path)
+
 
     def load_finals(self, system, final_file):
         ff = DictReader(open(final_file))
@@ -500,9 +504,9 @@ def format_display(display_num, question_text, sent, word, current_guesses,
     for gg in sorted(current_guesses, key=lambda x: current_guesses[x].weight, reverse=True)[:guess_limit]:
         guess = current_guesses[gg]
         if guess.page == answer:
-            report += "%-10s\t%-50s\t%0.2f\t%s\n" % (guess.system, "***CORRECT***", guess.weight, guess.evidence[:60])
+            report += "%-18s\t%-50s\t%0.2f\t%s\n" % (guess.system, "***CORRECT***", guess.weight, guess.evidence[:60])
         else:
-            report += "%-10s\t%-50s\t%0.2f\t%s\n" % (guess.system, guess.page, guess.weight, guess.evidence[:60])
+            report += "%-18s\t%-50s\t%0.2f\t%s\n" % (guess.system, guess.page, guess.weight, guess.evidence[:60])
     return report
 
 
@@ -641,7 +645,7 @@ def create_parser():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--questions', type=str, default='')
     parser.add_argument('--model_directory', type=str, default="")
-    parser.add_argument('--model_name', type=str, default="")    
+    parser.add_argument('--model', type=str, default="")
     parser.add_argument('--output', type=str, default="GAMEPLAY %s.csv" % datetime.datetime.now().strftime("%I:%M%p on %B %d %Y"))
     parser.add_argument('--players', type=int, default=1)
     parser.add_argument('--human_start', type=int, default=0)
@@ -665,7 +669,7 @@ def load_data(flags):
         questions.debug()
 
     if flags.model_directory != "":
-        for ii in glob("%s/*" % flags.model_drectory):
+        for ii in glob("%s/*" % flags.model_directory):
             if ii.endswith(".buzz.csv"):
                 # if we have a specific model, only load that
                 if flags.model != "" and "%s.buzz.csv" % flags.model not in ii:

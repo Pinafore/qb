@@ -58,12 +58,12 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                         if human_delta <= 0:
                             computer_delta = question_value
                     else:
-                        answer(computer_guess, computer_system)
+                        # answer(computer_guess, computer_system)
                         # os.system("afplay sounds/sad_trombone.wav")
                         if human_delta == 0:
                             computer_delta = -5
                 else:
-                    answer(computer_guess, computer_system)
+                    # answer(computer_guess, computer_system)
                     question_done = True
                     computer_delta = 0
 
@@ -130,13 +130,13 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
 
     # Now see what the computer would do
     if computer_delta == 0 and human_delta <= 0:
-        answer(final_answer.split('(')[0], final_system)
+        # answer(final_answer.split('(')[0], final_system)
         if final == correct:
             computer_delta = 10
         else:
             print("Computer guesses incorrectly: %s" % final)
     elif computer_delta > 0:
-        answer(computer_guess, computer_system)
+        # answer(computer_guess, computer_system)
         format_display(display_num, question_text, computer_position[0],
                        computer_position[1], current_guesses, answer=correct,
                        points=computer_delta)
