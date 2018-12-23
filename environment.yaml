@@ -2,6 +2,7 @@ name: qb
 dependencies:
   - python=3.6
   - pytorch=0.3.1
+  - cudnn=7.0.5
   - numpy=1.15.*
   - scipy=1.1.*
   - pandas=0.23.*
@@ -38,5 +39,6 @@ dependencies:
     - git+https://github.com/EntilZha/result.git
     - git+https://github.com/EntilZha/text.git@cddf59085e137d95e8c3b7f57840ef48f1bcb6b8
 channels:
+  - anaconda
   - pytorch
   - conda-forge
