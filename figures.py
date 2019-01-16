@@ -228,6 +228,21 @@ class CompareGuesserReport:
                         adv_df['Guessing_Model'] = f' {name}'
                         frames.append(adv_df)
 
+                        if len(gameplay['advneural_correct_positions']) > 0:
+                            adv_correct_positions = gameplay['advneural_correct_positions']
+                            adv_wrong_positions = gameplay['advneural_wrong_positions']
+                            adv_positions = adv_correct_positions + adv_wrong_positions
+                            adv_positions = np.array(control_positions)
+                            adv_result = np.array(len(adv_correct_positions) * [1] + len(adv_wrong_positions) * [0])
+                            argsort_adv = np.argsort(adv_positions)
+                            adv_x = adv_positions[argsort_adv]
+                            adv_sorted_result = adv_result[argsort_adv]
+                            adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
+                            adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
+                            adv_df['Dataset'] = 'RNN Adversarial'
+                            adv_df['Guessing_Model'] = f' {name}'
+                            frames.append(adv_df)
+
                     human_df = pd.concat(frames)
             if no_models:
                 p = ggplot(human_df) + geom_line()
