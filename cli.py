@@ -4,6 +4,7 @@ CLI utilities for QANTA
 """
 
 from typing import Dict, Optional
+import random
 import sqlite3
 import csv
 from collections import defaultdict
@@ -80,22 +81,25 @@ def guesser_pipeline(n_times, workers, guesser_qualified_class):
 
 @main.command()
 @click.option('--n', default=20)
-def sample_answer_pages(n):
+@click.option('--seed', default=0)
+def sample_answer_pages(n, seed):
     """
     Take a random sample of n questions, then return their answers and pages
     formatted for latex in the journal paper
     """
-    conn = sqlite3.connect(QANTA_SQL_DATASET_PATH)
-    c = conn.cursor()
-    rows = c.execute(f'select answer, page from questions order by random() limit {n}')
-    n = len(rows)
-    for i, (answer, page) in enumerate(rows):
+    with open('data/external/datasets/qanta.mapped.2018.04.18.json') as f:
+        questions = json.load(f)['questions']
+        random.seed(seed)
+        random.shuffle(questions)
+    for i, q in enumerate(questions[:n]):
+        answer = q['answer']
+        page = q['page']
         if i - 1 == n:
             latex_format = r'{answer} & {page}\\ \midrule'
         else:
             latex_format = r'{answer} & {page}\\ \bottomrule'
         answer = answer.replace('{', r'\{').replace('}', r'\}').replace('_', r'\_')
-        if page == '':
+        if page is None:
             page = r'\textbf{No Mapping Found}'
         else:
             page = page.replace('{', r'\{').replace('}', r'\}').replace('_', r'\_')
