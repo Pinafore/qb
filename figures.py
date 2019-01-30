@@ -121,9 +121,9 @@ class GuesserReport:
             )
         else:
             return (
-                    ggplot(self.char_plot_df)
-                    + aes(x='char_percent', y='correct')
-                    + geom_smooth(method='mavg')
+                ggplot(self.char_plot_df)
+                + aes(x='char_percent', y='correct')
+                + geom_smooth(method='mavg')
             )
 
 
@@ -284,6 +284,18 @@ class CompareGuesserReport:
                 + aes(x='guesser', y='accuracy')
                 + geom_bar(stat='identity')
             )
+
+def ikuya_sys_plot():
+    if os.path.exists('data/external/ikuya_cdf.json'):
+        with open('data/external/ikuya_cdf.json') as f:
+            df = pd.DataFrame(json.load(f))
+            p = (
+                ggplot(df) + aes(x='x', y='y')
+                + geom_line()
+                + xlab('Percent of Question Revealed')
+                + ylab('Accuracy')
+            )
+            p.save('output/tacl/ikuya.pdf')
 
 
 def save_all_plots(output_dir, report: GuesserReport, expo=False):
