@@ -300,21 +300,6 @@ class CompareGuesserReport:
                 + geom_bar(stat='identity')
             )
 
-def ikuya_sys_plot():
-    if os.path.exists('data/external/ikuya_cdf.json'):
-        with open('data/external/ikuya_cdf.json') as f:
-            df = pd.DataFrame(json.load(f))
-            p = (
-                ggplot(df) + aes(x='x', y='y', color='model')
-                + geom_line()
-                + xlab('Percent of Question Revealed')
-                + ylab('Accuracy')
-                + theme(
-                    legend_position='top', legend_box_margin=0, legend_title=element_blank()
-                )
-            )
-            p.save('output/tacl/ikuya_manual_cdf.pdf')
-
 
 def save_all_plots(output_dir, report: GuesserReport, expo=False):
     if not expo:
