@@ -215,3 +215,26 @@ def merge(es_file, rnn_file, out_file):
 
     with open(out_file, 'w') as f:
         json.dump(out, f)
+
+
+@trick_cli.command()
+@click.argument('expo_in')
+@click.argument('server_out')
+def to_server(expo_in, server_out):
+    with open(expo_in) as f:
+        questions = json.load(f)['questions']
+        server_questions = []
+        for q in questions:
+            text = q['text']
+            answer = q['page']
+            qid = q['qanta_id']
+            fold = 'test'
+            server_questions.append({
+                'question': text,
+                'answer': answer,
+                'qid': qid,
+                'fold': fold
+            })
+
+    with open(server_out, 'w') as f:
+        json.dump({'questions': server_questions}, f)
