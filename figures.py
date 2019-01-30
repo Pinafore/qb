@@ -21,7 +21,7 @@ from plotnine import (
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
     geom_errorbar, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
-    xlab, ylab, theme, element_text, element_blank
+    xlab, ylab, theme, element_text, element_blank, stat_ecdf
 )
 
 
@@ -305,12 +305,15 @@ def ikuya_sys_plot():
         with open('data/external/ikuya_cdf.json') as f:
             df = pd.DataFrame(json.load(f))
             p = (
-                ggplot(df) + aes(x='x', y='y')
+                ggplot(df) + aes(x='x', y='y', color='model')
                 + geom_line()
                 + xlab('Percent of Question Revealed')
                 + ylab('Accuracy')
+                + theme(
+                    legend_position='top', legend_box_margin=0, legend_title=element_blank()
+                )
             )
-            p.save('output/tacl/ikuya.pdf')
+            p.save('output/tacl/ikuya_manual_cdf.pdf')
 
 
 def save_all_plots(output_dir, report: GuesserReport, expo=False):
