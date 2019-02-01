@@ -245,7 +245,7 @@ class CompareGuesserReport:
                         adv_sorted_result = adv_result[argsort_adv]
                         adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                         adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                        adv_df['Dataset'] = 'IR Interface'
+                        adv_df['Dataset'] = 'Round 1 - IR Interface'
                         adv_df['Guessing_Model'] = f' {name}'
                         frames.append(adv_df)
 
@@ -260,7 +260,7 @@ class CompareGuesserReport:
                             adv_sorted_result = adv_result[argsort_adv]
                             adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                             adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                            adv_df['Dataset'] = 'RNN Interface'
+                            adv_df['Dataset'] = 'Round 2 - NN Interface'
                             adv_df['Guessing_Model'] = f' {name}'
                             frames.append(adv_df)
 
@@ -277,6 +277,7 @@ class CompareGuesserReport:
                 p = ggplot(df)
 
                 if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
+                    eprint('Loading human data')
                     p = p + geom_line(data=human_df)
 
             if columns:
@@ -284,15 +285,22 @@ class CompareGuesserReport:
             else:
                 facet_conf = facet_wrap('Guessing_Model', nrow=1)
 
-            if self.mvg_avg_char:
-                chart = stat_smooth(method='mavg', se=False, method_args={'window': 400})
+            if not no_models:
+                if self.mvg_avg_char:
+                    chart = stat_smooth(method='mavg', se=False, method_args={'window': 400})
+                else:
+                    chart = stat_summary_bin(fun_data=mean_no_se, bins=20, shape='.')
             else:
-                chart = stat_summary_bin(fun_data=mean_no_se, bins=20, shape='.')
+                chart = None
 
             p = (
                 p + facet_conf
                 + aes(x='char_percent', y='correct', color='Dataset')
-                + chart
+            )
+            if chart is not None:
+                p += chart
+            p = (
+                p
                 + scale_y_continuous(breaks=np.linspace(0, 1, 11))
                 + scale_x_continuous(breaks=[0, .5, 1])
                 + xlab('Percent of Question Revealed')
@@ -420,7 +428,7 @@ def guesser(
         )
 
     eprint(f'N Expo Reports {len(expo_reports)}')
-    if not no_expo and len(expo_reports) > 0:
+    if not no_expo and (len(expo_reports) > 0 or no_models):
         compare_report = CompareGuesserReport(
             dev_reports + expo_reports,
             mvg_avg_char=mvg_avg_char,
