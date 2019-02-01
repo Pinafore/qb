@@ -150,10 +150,22 @@ def to_dataset(fold):
         return fold
 
 
+def label_source(original):
+    if original == 'es':
+        return 'Round 1 - IR Adversarial'
+    elif original == 'rnn':
+        return 'Round 2 - RNN Adversarial'
+    elif original == 'es-2':
+        return 'Round 2 - IR Adversarial'
+    else:
+        raise ValueError('unknown source')
+
+
 class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport],
                  mvg_avg_char=False, exclude_zero_train=False,
-                 merge_humans=False, no_humans=False):
+                 merge_humans=False, no_humans=False, rounds='1,2'):
+        self.rounds = {int(n) for n in rounds.split(',')}
         self.mvg_avg_char = mvg_avg_char
         self.reports = reports
         self.exclude_zero_train = exclude_zero_train
@@ -183,7 +195,7 @@ class CompareGuesserReport:
                 id_df = pd.DataFrame(id_rows)
                 self.char_plot_df = self.char_plot_df.merge(id_df, on=('qanta_id', 'fold'), how='left')
                 self.char_plot_df['source'] = self.char_plot_df['source_y'].fillna('unknown')
-                self.char_plot_df.loc[self.char_plot_df.source != 'unknown', 'Dataset'] = self.char_plot_df[self.char_plot_df.source != 'unknown']['source'].map(lambda x: 'IR Adversarial' if x == 'es' else 'RNN Adversarial')
+                self.char_plot_df.loc[self.char_plot_df.source != 'unknown', 'Dataset'] = self.char_plot_df[self.char_plot_df.source != 'unknown']['source'].map(label_source)
         self.acc_df = pd.DataFrame.from_records(
             acc_rows,
             columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset']
@@ -247,7 +259,13 @@ class CompareGuesserReport:
             if no_models:
                 p = ggplot(human_df) + geom_line()
             else:
-                p = ggplot(self.char_plot_df)
+                df = self.char_plot_df
+                if 1 not in self.rounds:
+                    df = df[df['Dataset'] != 'Round 1 - IR Adversarial']
+                if 2 not in self.rounds:
+                    df = df[df['Dataset'] != 'Round 2 - IR Adversarial']
+                    df = df[df['Dataset'] != 'Round 2 - RNN Adversarial']
+                p = ggplot(df)
                 if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
                     p = p + geom_line(data=human_df)
 
@@ -340,10 +358,12 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--mvg-avg-char', is_flag=True, default=False)
 @click.option('--exclude-zero-train', is_flag=True, default=False)
 @click.option('--merge-humans', is_flag=True, default=False)
+@click.option('--rounds', default='1,2')
 @click.argument('output_dir')
 def guesser(
         use_test, only_tacl, no_models, no_humans, columns,
-        output_dir, no_expo, mvg_avg_char, exclude_zero_train, merge_humans):
+        no_expo, mvg_avg_char, exclude_zero_train,
+        merge_humans, rounds, output_dir):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -375,7 +395,7 @@ def guesser(
                 save_all_plots(expo_output_dir, report, expo=True)
 
     if not only_tacl:
-        compare_report = CompareGuesserReport(dev_reports)
+        compare_report = CompareGuesserReport(dev_reports, rounds=rounds)
         save_plot(
             output_dir, 'compare', 'position_accuracy.pdf',
             compare_report.plot_compare_accuracy()
@@ -392,7 +412,8 @@ def guesser(
             mvg_avg_char=mvg_avg_char,
             exclude_zero_train=exclude_zero_train,
             merge_humans=merge_humans,
-            no_humans=no_humans
+            no_humans=no_humans,
+            rounds=rounds
         )
         save_plot(
             output_dir, 'compare', 'expo_position_accuracy.pdf',
