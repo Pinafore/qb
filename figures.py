@@ -21,7 +21,8 @@ from plotnine import (
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
     geom_errorbar, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
-    xlab, ylab, theme, element_text, element_blank, stat_ecdf
+    xlab, ylab, theme, element_text, element_blank, stat_ecdf,
+    scale_color_manual
 )
 
 
@@ -298,6 +299,7 @@ class CompareGuesserReport:
                     legend_position='top', legend_box_margin=0, legend_title=element_blank(),
                     strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
                 )
+                + scale_color_manual(values=['#FF3333', '#66CC00', '#3333FF'])
             )
 
             return p
