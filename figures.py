@@ -284,7 +284,7 @@ class CompareGuesserReport:
             if self.mvg_avg_char:
                 chart = stat_smooth(method='mavg', se=False, method_args={'window': 400})
             else:
-                chart = stat_summary_bin(fun_data='mean_se', bins=20, shape='.')
+                chart = stat_summary_bin(fun_data=mean_no_se, bins=20, shape='.')
 
             p = (
                 p + facet_conf
