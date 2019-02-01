@@ -301,8 +301,7 @@ class CompareGuesserReport:
                     #legend_position='top', legend_box_margin=0, legend_title=element_blank(),
                     strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
                 )
-                + scale_color_manual(values=['#FF3333', '#66CC00', '#3333FF'])
-                + scale_color_discrete(name='Questions')
+                + scale_color_manual(values=['#FF3333', '#66CC00', '#3333FF'], name='Questions')
             )
             if self.title != '':
                 p += ggtitle(self.title)
