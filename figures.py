@@ -17,12 +17,12 @@ import pandas as pd
 import numpy as np
 from scipy.stats import binned_statistic
 from plotnine import (
-    ggplot, aes, facet_wrap,
+    ggplot, aes, facet_wrap, ggtitle, labeller,
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
     geom_errorbar, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
     xlab, ylab, theme, element_text, element_blank, stat_ecdf,
-    scale_color_manual
+    scale_color_manual, scale_color_discrete
 )
 
 
@@ -153,11 +153,11 @@ def to_dataset(fold):
 
 def label_source(original):
     if original == 'es':
-        return 'Round 1 - IR Adversarial'
+        return 'Round 1 - IR Interface'
     elif original == 'rnn':
-        return 'Round 2 - RNN Adversarial'
+        return 'Round 2 - NN Interface'
     elif original == 'es-2':
-        return 'Round 2 - IR Adversarial'
+        return 'Round 2 - IR Interface'
     else:
         raise ValueError('unknown source')
 
@@ -172,8 +172,9 @@ def mean_no_se(series, mult=1):
 class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport],
                  mvg_avg_char=False, exclude_zero_train=False,
-                 merge_humans=False, no_humans=False, rounds='1,2'):
+                 merge_humans=False, no_humans=False, rounds='1,2', title=''):
         self.rounds = {int(n) for n in rounds.split(',')}
+        self.title = title
         self.mvg_avg_char = mvg_avg_char
         self.reports = reports
         self.exclude_zero_train = exclude_zero_train
@@ -244,7 +245,7 @@ class CompareGuesserReport:
                         adv_sorted_result = adv_result[argsort_adv]
                         adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                         adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                        adv_df['Dataset'] = 'IR Adversarial'
+                        adv_df['Dataset'] = 'IR Interface'
                         adv_df['Guessing_Model'] = f' {name}'
                         frames.append(adv_df)
 
@@ -259,7 +260,7 @@ class CompareGuesserReport:
                             adv_sorted_result = adv_result[argsort_adv]
                             adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                             adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                            adv_df['Dataset'] = 'RNN Adversarial'
+                            adv_df['Dataset'] = 'RNN Interface'
                             adv_df['Guessing_Model'] = f' {name}'
                             frames.append(adv_df)
 
@@ -269,11 +270,12 @@ class CompareGuesserReport:
             else:
                 df = self.char_plot_df
                 if 1 not in self.rounds:
-                    df = df[df['Dataset'] != 'Round 1 - IR Adversarial']
+                    df = df[df['Dataset'] != 'Round 1 - IR Interface']
                 if 2 not in self.rounds:
-                    df = df[df['Dataset'] != 'Round 2 - IR Adversarial']
-                    df = df[df['Dataset'] != 'Round 2 - RNN Adversarial']
+                    df = df[df['Dataset'] != 'Round 2 - IR Interface']
+                    df = df[df['Dataset'] != 'Round 2 - NN Interface']
                 p = ggplot(df)
+
                 if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
                     p = p + geom_line(data=human_df)
 
@@ -296,11 +298,14 @@ class CompareGuesserReport:
                 + xlab('Percent of Question Revealed')
                 + ylab('Accuracy')
                 + theme(
-                    legend_position='top', legend_box_margin=0, legend_title=element_blank(),
+                    #legend_position='top', legend_box_margin=0, legend_title=element_blank(),
                     strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
                 )
                 + scale_color_manual(values=['#FF3333', '#66CC00', '#3333FF'])
+                + scale_color_discrete(name='Questions')
             )
+            if self.title != '':
+                p += ggtitle(self.title)
 
             return p
         else:
@@ -368,11 +373,12 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--exclude-zero-train', is_flag=True, default=False)
 @click.option('--merge-humans', is_flag=True, default=False)
 @click.option('--rounds', default='1,2')
+@click.option('--title', default='')
 @click.argument('output_dir')
 def guesser(
         use_test, only_tacl, no_models, no_humans, columns,
         no_expo, mvg_avg_char, exclude_zero_train,
-        merge_humans, rounds, output_dir):
+        merge_humans, rounds, title, output_dir):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -404,7 +410,7 @@ def guesser(
                 save_all_plots(expo_output_dir, report, expo=True)
 
     if not only_tacl:
-        compare_report = CompareGuesserReport(dev_reports, rounds=rounds)
+        compare_report = CompareGuesserReport(dev_reports, rounds=rounds, title=title)
         save_plot(
             output_dir, 'compare', 'position_accuracy.pdf',
             compare_report.plot_compare_accuracy()
@@ -422,7 +428,8 @@ def guesser(
             exclude_zero_train=exclude_zero_train,
             merge_humans=merge_humans,
             no_humans=no_humans,
-            rounds=rounds
+            rounds=rounds,
+            title=title
         )
         save_plot(
             output_dir, 'compare', 'expo_position_accuracy.pdf',
