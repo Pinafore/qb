@@ -160,6 +160,13 @@ def label_source(original):
     else:
         raise ValueError('unknown source')
 
+def mean_no_se(series, mult=1):
+    m = np.mean(series)
+    se = mult * np.sqrt(np.var(series) / len(series))
+    return pd.DataFrame({'y': [m],
+                         'ymin': m,
+                         'ymax': m})
+
 
 class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport],
