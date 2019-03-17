@@ -33,6 +33,26 @@ log = qlogging.get(__name__)
 
 
 CUDA = torch.cuda.is_available()
+def colorize(words, color_array, colors='rdbu'):
+    # words is a list of words
+    # color_array is an array of numbers between 0 and 1
+    cmap = plt.cm.get_cmap(colors)
+    template = '<span class="barcode"; style="color: black; \
+                background-color: {}">{}</span>'
+    colored_string = ''
+    for word, color in zip(words, color_array):
+        color = matplotlib.colors.rgb2hex(cmap(color)[:3])
+        if word == '<unk>':
+            word = '&ltunk&gt'
+        colored_string += template.format(color, '&nbsp' + word + '&nbsp')
+    return colored_string
+
+
+extracted_grads = {}
+def extract_grad_hook(name):
+    def hook(grad):
+        extracted_grads[name] = grad
+    return hook
 
 
 def create_save_model(model):
