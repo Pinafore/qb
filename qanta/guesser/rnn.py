@@ -1,4 +1,5 @@
 import re
+import math
 import os
 import shutil
 import time
@@ -18,7 +19,7 @@ from torchtext.data.iterator import Iterator
 
 from qanta import qlogging
 from qanta.util.io import shell, get_tmp_filename
-from qanta.torch.dataset import QuizBowl
+from qanta.torch.dataset import QuizBowl, create_qb_tokenizer
 from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import QuestionText
@@ -395,142 +396,151 @@ class RnnGuesser(AbstractGuesser):
         return ['rnn.pt', 'rnn.pkl']
 
     def web_api(self, host='0.0.0.0', port=6000, debug=False):
-    from flask import Flask, jsonify, request
-    app = Flask(__name__)
+        from flask import Flask, jsonify, request
+        app = Flask(__name__)
 
-    @app.route('/api/interface_get_highlights', methods=['POST'])
-    def get_highlights():        
-        questions = [request.form['text']]
-        examples = [self.text_field.preprocess(q) for q in questions]
-        padded_examples, lengths = self.text_field.pad(examples)
-        padded_examples = np.array(padded_examples, dtype=np.object)
-        lengths = np.array(lengths)
-        order = np.argsort(-lengths)
-        rev_order = np.argsort(order)
-        ordered_examples = padded_examples[order]
-        ordered_lengths = lengths[order]
-        text, lengths = self.text_field.numericalize((ordered_examples, ordered_lengths), device=-1, train=False)
-        lengths = list(lengths.cpu().numpy())
+        @app.route('/api/answer_question', methods=['POST'])
+        def answer_question_base():
+            text = request.form['text']
+            guess, score = self.guess([text], 1)[0][0]
+            return jsonify({'guess': guess, 'score': float(score)})
 
-        qanta_ids = self.qanta_id_field.process([0 for _ in questions])#.cuda()
-        hidden_init = self.model.init_hidden(len(questions))
-        text = Variable(text.data, volatile=False)
+        @app.route('/api/interface_get_highlights', methods=['POST'])
+        def get_highlights():
+            questions = [request.form['text']]
+            examples = [self.text_field.preprocess(q) for q in questions]
+            padded_examples, lengths = self.text_field.pad(examples)
+            padded_examples = np.array(padded_examples, dtype=np.object)
+            lengths = np.array(lengths)
+            order = np.argsort(-lengths)
+            # rev_order = np.argsort(order)
+            ordered_examples = padded_examples[order]
+            ordered_lengths = lengths[order]
+            text, lengths = self.text_field.numericalize((ordered_examples, ordered_lengths), device=-1, train=False)
+            lengths = list(lengths.cpu().numpy())
 
-        out, _ = self.model(text, lengths, hidden_init, qanta_ids, extract_grad_hook('embed'))
+            qanta_ids = self.qanta_id_field.process([0 for _ in questions])  # .cuda()
+            hidden_init = self.model.init_hidden(len(questions))
+            text = Variable(text.data, volatile=False)
 
-        guessForEvidence = request.form['guessForEvidence']
-        guessForEvidence = guessForEvidence.split("style=\"color:blue\">")[1].split("</a>")[0].lower()
-        indicator = -1
+            out, _ = self.model(text, lengths, hidden_init, qanta_ids, extract_grad_hook('embed'))
 
-        guess = str(guessForEvidence)
-        guesses = self.guess([request.form['text']], 500)[0]
-        for index, (g,s) in enumerate(guesses):
-          print(g.lower().replace("_", " ")[0:25])
-          print(guessForEvidence)
-          if g.lower().replace("_", " ")[0:25]  == guessForEvidence:
-              print("INDICATOR SET")
-              indicator = index
-              guess = g.lower().replace("_", " ")[0:25]
-              break
-        if indicator == -1:
-            highlights = {'wiki': ['No Evidence','No Evidence'],
-                'qb': ['No Evidence','No Evidence'],
+            guessForEvidence = request.form['guessForEvidence']
+            guessForEvidence = guessForEvidence.split("style=\"color:blue\">")[1].split("</a>")[0].lower()
+            indicator = -1
+
+            guess = str(guessForEvidence)
+            guesses = self.guess([request.form['text']], 500)[0]
+            for index, (g, s) in enumerate(guesses):
+                print(g.lower().replace("_", " ")[0:25])
+                print(guessForEvidence)
+                if g.lower().replace("_", " ")[0:25] == guessForEvidence:
+                    print("INDICATOR SET")
+                    indicator = index
+                    guess = g.lower().replace("_", " ")[0:25]
+                    break
+            if indicator == -1:
+                highlights = {
+                    'wiki': ['No Evidence', 'No Evidence'],
+                    'qb': ['No Evidence', 'No Evidence'],
+                    'guess': guess,
+                    'visual': 'No Evidence'
+                }
+                return jsonify(highlights)
+
+            # label = torch.max(out,1)[1]
+            label = torch.topk(out, k=500, dim=1)
+            label = label[1][0][indicator]  # [0]
+
+            criterion = nn.CrossEntropyLoss()
+            loss = criterion(out, label)
+            self.model.zero_grad()
+            loss.backward()
+
+            grads = extracted_grads['embed'].transpose(0, 1)
+            grads = grads.data.cpu()
+            scores = grads.sum(dim=2).numpy()
+            grads = grads.numpy()
+            text = text.transpose(0, 1).data.cpu().numpy()
+
+            scores = scores.tolist()
+
+            normalized_scores = scores
+            # normalize scores across the words, doing positive and negatives seperately        
+            # final scores should be in range [0,1] 0 is dark red, 1 is dark blue. 0.5 is no highlight
+            total_score_pos = 1e-6    # 1e-6 for case where all positive/neg scores are 0
+            total_score_neg = 1e-6
+            for idx, s in enumerate(normalized_scores):
+                s[0] = s[0] * s[0] * s[0] / 5
+                if s[0] < 0:
+                    total_score_neg = total_score_neg + math.fabs(s[0])
+                else:
+                    total_score_pos = total_score_pos + s[0]
+            for idx, s in enumerate(normalized_scores):
+                if s[0] < 0:
+                    normalized_scores[idx] = (s[0] / total_score_neg) / 2   # / by 2 to get max of -0.5
+                else:
+                    normalized_scores[idx] = 0.0
+            normalized_scores = [0.5 + n for n in normalized_scores]  # center scores
+
+            returnVal = ""
+            for s in normalized_scores:
+                returnVal = returnVal + ' ' + str(s)
+
+            localPreprocess = create_qb_tokenizer()
+            examples = [localPreprocess(q) for q in questions]
+            words = []
+            for t in examples[0]:
+                words.append(str(t))
+
+            visual = colorize(words, normalized_scores, colors='RdBu')
+            print("Guess", guess)
+            highlights = {
+                'wiki': [returnVal, returnVal],
+                'qb': [returnVal, returnVal],
                 'guess': guess,
-                'visual': 'No Evidence'}
+                'visual': visual
+            }
             return jsonify(highlights)
 
+        @app.route('/api/interface_answer_question', methods=['POST'])
+        def answer_question():
+            text = request.form['text']
+            answer = request.form['answer']
+            answer = answer.replace(" ", "_").lower()
+            guesses = self.guess([text], 20)[0]
+            score_fn = []
+            sum_normalize = 0.0
+            for (g, s) in guesses:
+                exp = np.exp(3*float(s))
+                score_fn.append(exp)
+                sum_normalize += exp
+            for index, (g, s) in enumerate(guesses):
+                guesses[index] = (g, score_fn[index] / sum_normalize)
 
-        #label = torch.max(out,1)[1]
-        label = torch.topk(out,k=500,dim=1)
-        label = label[1][0][indicator]#[0]
-
-        criterion = nn.CrossEntropyLoss()
-        loss = criterion(out, label)
-        self.model.zero_grad()
-        loss.backward()
-
-        grads = extracted_grads['embed'].transpose(0, 1)
-        grads = grads.data.cpu()
-        scores = grads.sum(dim=2).numpy()
-        grads = grads.numpy()
-        text = text.transpose(0, 1).data.cpu().numpy()
-
-        scores = scores.tolist()        
-
-        normalized_scores = scores
-        # normalize scores across the words, doing positive and negatives seperately        
-        # final scores should be in range [0,1] 0 is dark red, 1 is dark blue. 0.5 is no highlight
-        total_score_pos = 1e-6    # 1e-6 for case where all positive/neg scores are 0
-        total_score_neg = 1e-6
-        for idx, s in enumerate(normalized_scores):
-            s[0] = s[0] * s[0] * s[0] / 5
-            if s[0] < 0:
-                total_score_neg = total_score_neg + math.fabs(s[0])
-            else:
-                total_score_pos = total_score_pos + s[0]
-        for idx, s in enumerate(normalized_scores):
-            if s[0] < 0:
-                normalized_scores[idx] = (s[0] / total_score_neg) / 2   # / by 2 to get max of -0.5
-            else:                
-                normalized_scores[idx] = 0.0
-        normalized_scores = [0.5 + n for n in normalized_scores]  # center scores
-
-        returnVal = ""        
-        for s in normalized_scores:
-              returnVal = returnVal + ' ' + str(s)
-
-        localPreprocess = create_qb_tokenizer()        
-        examples = [localPreprocess(q) for q in questions]
-        words = []        
-        for t in examples[0]:             
-            words.append(str(t))
-
-        visual = colorize(words, normalized_scores, colors='RdBu')        
-        print("Guess", guess)
-        highlights = {'wiki': [returnVal, returnVal],
-                   'qb': [returnVal,returnVal],
-                    'guess': guess,
-                     'visual': visual}                   
-        return jsonify(highlights)
-
-    @app.route('/api/interface_answer_question', methods=['POST'])
-    def answer_question():        
-        text = request.form['text']
-        answer = request.form['answer']
-        answer = answer.replace(" ", "_").lower()
-        guesses = self.guess([text], 20)[0]
-        score_fn = []
-        sum_normalize = 0.0
-        for (g,s) in guesses:
-            exp = np.exp(3*float(s))
-            score_fn.append(exp)
-            sum_normalize += exp
-        for index, (g,s) in enumerate(guesses):
-            guesses[index] = (g, score_fn[index] / sum_normalize)
-
-        guess = []
-        score = []
-        answer_found = False
-        num = 0
-        for index, (g,s) in enumerate(guesses):
-            if index >= 5:
-                break
-            guess.append(g)
-            score.append(float(s))
-        for gue in guess:
-            if (gue.lower() == answer.lower()):
-                answer_found = True
-                num = -1
-        if (not answer_found):
-            for index, (g,s) in enumerate(guesses):
-                if (g.lower() == answer.lower()):
-                    guess.append(g)
-                    score.append(float(s))
-                    num = index + 1
-        if (num == 0):
-            print("num was 0")
-            if (request.form['bell'] == 'true'):
-                return "Num0"           
-        guess = [g.replace("_"," ") for g in guess]        
-        return jsonify({'guess': guess, 'score': score, 'num': num})
-    app.run(host=host, port=port, debug=debug)
+            guess = []
+            score = []
+            answer_found = False
+            num = 0
+            for index, (g, s) in enumerate(guesses):
+                if index >= 5:
+                    break
+                guess.append(g)
+                score.append(float(s))
+            for gue in guess:
+                if (gue.lower() == answer.lower()):
+                    answer_found = True
+                    num = -1
+            if (not answer_found):
+                for index, (g, s) in enumerate(guesses):
+                    if (g.lower() == answer.lower()):
+                        guess.append(g)
+                        score.append(float(s))
+                        num = index + 1
+            if (num == 0):
+                print("num was 0")
+                if (request.form['bell'] == 'true'):
+                    return "Num0"
+            guess = [g.replace("_", " ") for g in guess]
+            return jsonify({'guess': guess, 'score': score, 'num': num})
+        app.run(host=host, port=port, debug=debug)
