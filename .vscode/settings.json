@@ -1,6 +1,0 @@
-{
-    "python.linting.pylintEnabled": false,
-    "python.linting.enabled": true,
-    "python.pythonPath": "/home/entilzha/anaconda3/envs/qb/bin/python",
-    "python.linting.flake8Enabled": true
-}
