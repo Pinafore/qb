@@ -58,3 +58,4 @@ luigi/*.pid
 *.pid
 elasticsearch.yml
 *.ipynb
+.vscode
