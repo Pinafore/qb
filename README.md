@@ -262,3 +262,4 @@ Python 3.6 needs Spark 2.1.1
 * Default dataset starts near 0
 * PACE Adversarial Writing Event May 2018 starts at 1,000,000
 * December 15 2018 event starts at 2,000,000
+* Dataset for HS student of ACF 2018 Regionals starts at 3,000,000

@@ -34,6 +34,9 @@ dependencies:
   - jupyter
   - cloudpickle=0.5.*
   - ipython
+  - pylint
+  - flake8
+  - msgpack<0.6.0 # Resolves max_map_len error https://github.com/explosion/spaCy/issues/2996
   - pip:
     - pyfunctional
     - git+https://github.com/EntilZha/result.git

@@ -25,6 +25,7 @@ from qanta.hyperparam import expand_config
 from qanta.wikipedia.categories import categorylinks_cli
 from qanta.wikipedia.vital import vital_cli
 from qanta.ingestion.trickme import trick_cli
+from qanta.ingestion.command import ingestion_cli
 
 log = qlogging.get('cli')
 
@@ -42,6 +43,7 @@ main.add_command(categorylinks_cli, name='categories')
 main.add_command(vital_cli, name='vital')
 main.add_command(elasticsearch_cli, name='elasticsearch')
 main.add_command(trick_cli, name='trick')
+main.add_command(ingestion_cli, name='map')
 
 
 @main.command()

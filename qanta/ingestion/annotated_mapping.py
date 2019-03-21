@@ -156,4 +156,3 @@ class PageAssigner:
                 return Ok(page)
             else:
                 return Err(f'page="{page}" not in wikipedia titles')
-
