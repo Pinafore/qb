@@ -153,11 +153,11 @@ def to_dataset(fold):
 
 def label_source(original):
     if original == 'es':
-        return 'Round 1 - IR Interface'
+        return 'Round 1 - IR Adversarial'
     elif original == 'rnn':
-        return 'Round 2 - NN Interface'
+        return 'Round 2 - NN Adversarial'
     elif original == 'es-2':
-        return 'Round 2 - IR Interface'
+        return 'Round 2 - IR Adversarial'
     else:
         raise ValueError('unknown source')
 
@@ -216,7 +216,7 @@ class CompareGuesserReport:
                 with open('data/external/all_human_gameplay.json') as f:
                     all_gameplay = json.load(f)
                     frames = []
-                    for event, name in [('parents', 'Dilettante'), ('maryland', 'Expert'), ('live', 'National')]:
+                    for event, name in [('parents', 'Intermediate'), ('maryland', 'Expert'), ('live', 'National')]:
                         if self.merge_humans:
                             name = 'Human'
                         gameplay = all_gameplay[event]
@@ -245,7 +245,7 @@ class CompareGuesserReport:
                         adv_sorted_result = adv_result[argsort_adv]
                         adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                         adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                        adv_df['Dataset'] = 'Round 1 - IR Interface'
+                        adv_df['Dataset'] = 'Round 1 - IR Adversarial'
                         adv_df['Guessing_Model'] = f' {name}'
                         frames.append(adv_df)
 
@@ -260,7 +260,7 @@ class CompareGuesserReport:
                             adv_sorted_result = adv_result[argsort_adv]
                             adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                             adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                            adv_df['Dataset'] = 'Round 2 - NN Interface'
+                            adv_df['Dataset'] = 'Round 2 - NN Adversarial'
                             adv_df['Guessing_Model'] = f' {name}'
                             frames.append(adv_df)
 
@@ -270,10 +270,10 @@ class CompareGuesserReport:
             else:
                 df = self.char_plot_df
                 if 1 not in self.rounds:
-                    df = df[df['Dataset'] != 'Round 1 - IR Interface']
+                    df = df[df['Dataset'] != 'Round 1 - IR Adversarial']
                 if 2 not in self.rounds:
-                    df = df[df['Dataset'] != 'Round 2 - IR Interface']
-                    df = df[df['Dataset'] != 'Round 2 - NN Interface']
+                    df = df[df['Dataset'] != 'Round 2 - IR Adversarial']
+                    df = df[df['Dataset'] != 'Round 2 - NN Adversarial']
                 p = ggplot(df)
 
                 if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
@@ -309,7 +309,7 @@ class CompareGuesserReport:
                     #legend_position='top', legend_box_margin=0, legend_title=element_blank(),
                     strip_text_x=element_text(margin={'t': 6, 'b': 6, 'l': 1, 'r': 5})
                 )
-                + scale_color_manual(values=['#FF3333', '#66CC00', '#3333FF'], name='Questions')
+                + scale_color_manual(values=['#FF3333', '#66CC00', '#3333FF', '#FFFF33'], name='Questions')
             )
             if self.title != '':
                 p += ggtitle(self.title)
