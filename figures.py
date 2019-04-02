@@ -14,6 +14,7 @@ if 'DISPLAY' not in os.environ:
 import glob
 import click
 import pandas as pd
+from pandas.api.types import CategoricalDtype
 import numpy as np
 from scipy.stats import binned_statistic
 from plotnine import (
@@ -169,6 +170,28 @@ def mean_no_se(series, mult=1):
                          'ymax': m})
 
 
+def sort_humans(humans):
+    def order(h):
+        if 'Intermediate' in h:
+            return -1
+        elif 'Expert' in h:
+            return 0
+        elif 'National' in h:
+            return 1
+    return sorted(humans, key=order)
+
+
+def sort_datasets(datasets):
+    def order(h):
+        if 'Regular Test' in h:
+            return -1
+        elif 'IR Adv' in h:
+            return 0
+        elif 'NN Adv' in h:
+            return 1
+    return sorted(datasets, key=order)
+
+
 class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport],
                  mvg_avg_char=False, exclude_zero_train=False,
@@ -238,14 +261,14 @@ class CompareGuesserReport:
                         adv_correct_positions = gameplay['adv_correct_positions']
                         adv_wrong_positions = gameplay['adv_wrong_positions']
                         adv_positions = adv_correct_positions + adv_wrong_positions
-                        adv_positions = np.array(control_positions)
+                        adv_positions = np.array(adv_positions)
                         adv_result = np.array(len(adv_correct_positions) * [1] + len(adv_wrong_positions) * [0])
                         argsort_adv = np.argsort(adv_positions)
                         adv_x = adv_positions[argsort_adv]
                         adv_sorted_result = adv_result[argsort_adv]
                         adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                         adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                        adv_df['Dataset'] = 'Round 1 - IR Adversarial'
+                        adv_df['Dataset'] = 'IR Adversarial'
                         adv_df['Guessing_Model'] = f' {name}'
                         frames.append(adv_df)
 
@@ -253,18 +276,24 @@ class CompareGuesserReport:
                             adv_correct_positions = gameplay['advneural_correct_positions']
                             adv_wrong_positions = gameplay['advneural_wrong_positions']
                             adv_positions = adv_correct_positions + adv_wrong_positions
-                            adv_positions = np.array(control_positions)
+                            adv_positions = np.array(adv_positions)
                             adv_result = np.array(len(adv_correct_positions) * [1] + len(adv_wrong_positions) * [0])
                             argsort_adv = np.argsort(adv_positions)
                             adv_x = adv_positions[argsort_adv]
                             adv_sorted_result = adv_result[argsort_adv]
                             adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                             adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                            adv_df['Dataset'] = 'Round 2 - NN Adversarial'
+                            adv_df['Dataset'] = 'NN Adversarial'
                             adv_df['Guessing_Model'] = f' {name}'
                             frames.append(adv_df)
 
                     human_df = pd.concat(frames)
+                    human_vals = sort_humans(list(human_df['Guessing_Model'].unique()))
+                    human_dtype = CategoricalDtype(human_vals, ordered=True)
+                    human_df['Guessing_Model'] = human_df['Guessing_Model'].astype(human_dtype)
+                    dataset_dtype = CategoricalDtype(['Regular Test', 'IR Adversarial', 'NN Adversarial'], ordered=True)
+                    human_df['Dataset'] = human_df['Dataset'].astype(dataset_dtype)
+
             if no_models:
                 p = ggplot(human_df) + geom_line()
             else:
