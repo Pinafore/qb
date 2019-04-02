@@ -156,7 +156,7 @@ def label_source(original):
     if original == 'es':
         return 'Round 1 - IR Adversarial'
     elif original == 'rnn':
-        return 'Round 2 - NN Adversarial'
+        return 'Round 2 - RNN Adversarial'
     elif original == 'es-2':
         return 'Round 2 - IR Adversarial'
     else:
@@ -179,17 +179,6 @@ def sort_humans(humans):
         elif 'National' in h:
             return 1
     return sorted(humans, key=order)
-
-
-def sort_datasets(datasets):
-    def order(h):
-        if 'Regular Test' in h:
-            return -1
-        elif 'IR Adv' in h:
-            return 0
-        elif 'NN Adv' in h:
-            return 1
-    return sorted(datasets, key=order)
 
 
 class CompareGuesserReport:
@@ -283,7 +272,7 @@ class CompareGuesserReport:
                             adv_sorted_result = adv_result[argsort_adv]
                             adv_y = adv_sorted_result.cumsum() / adv_sorted_result.shape[0]
                             adv_df = pd.DataFrame({'correct': adv_y, 'char_percent': adv_x})
-                            adv_df['Dataset'] = 'NN Adversarial'
+                            adv_df['Dataset'] = 'RNN Adversarial'
                             adv_df['Guessing_Model'] = f' {name}'
                             frames.append(adv_df)
 
@@ -291,7 +280,7 @@ class CompareGuesserReport:
                     human_vals = sort_humans(list(human_df['Guessing_Model'].unique()))
                     human_dtype = CategoricalDtype(human_vals, ordered=True)
                     human_df['Guessing_Model'] = human_df['Guessing_Model'].astype(human_dtype)
-                    dataset_dtype = CategoricalDtype(['Regular Test', 'IR Adversarial', 'NN Adversarial'], ordered=True)
+                    dataset_dtype = CategoricalDtype(['Regular Test', 'IR Adversarial', 'RNN Adversarial'], ordered=True)
                     human_df['Dataset'] = human_df['Dataset'].astype(dataset_dtype)
 
             if no_models:
@@ -302,7 +291,7 @@ class CompareGuesserReport:
                     df = df[df['Dataset'] != 'Round 1 - IR Adversarial']
                 if 2 not in self.rounds:
                     df = df[df['Dataset'] != 'Round 2 - IR Adversarial']
-                    df = df[df['Dataset'] != 'Round 2 - NN Adversarial']
+                    df = df[df['Dataset'] != 'Round 2 - RNN Adversarial']
                 p = ggplot(df)
 
                 if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
