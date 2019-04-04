@@ -7,6 +7,10 @@ Instead of including only the source data we provide intermediate output so that
 The code for all the analysis is provided, but will not run unless a flag to not use cached intermediate results is passed.
 """
 import json
+import math
+import pickle
+import glob
+from pprint import pprint
 import sys
 import csv
 from collections import defaultdict, Counter
@@ -16,7 +20,6 @@ import unidecode
 import nltk
 import numpy as np
 import pandas as pd
-import json
 from os import path, makedirs
 import requests
 import re
@@ -38,7 +41,8 @@ from plotnine import (
     scale_x_log10, scale_y_log10,
     coord_flip,
     theme, theme_light,
-    element_line, element_rect, element_text, element_blank
+    element_line, element_rect, element_text, element_blank,
+    arrow
 )
 
 COLORS = [
@@ -53,6 +57,178 @@ FILES = [
     (S3.format('qanta.mapped.2018.04.18.json'), 'data/external/datasets/qanta.mapped.2018.04.18.json'),
     (S3.format('paper/syntactic_diversity_table.json', 'data/external/syntactic_diversity_table.json'))
 ]
+GUESSER_SHORT_NAMES = {
+    'qanta.guesser.rnn.RnnGuesser': 'RNN',
+    'qanta.guesser.dan.DanGuesser': 'DAN',
+    'qanta.guesser.elasticsearch.ElasticSearchGuesser': 'IR',
+    'qanta.guesser.vw.VWGuesser': 'VW',
+    'ELASTICSEARCH': 'IR'
+}
+
+
+def to_shortname(name):
+    if name in GUESSER_SHORT_NAMES:
+        return GUESSER_SHORT_NAMES[name]
+    else:
+        return name
+
+
+def to_precision(x, p):
+    """
+    returns a string representation of x formatted with a precision of p
+
+    Based on the webkit javascript implementation taken from here:
+    https://code.google.com/p/webkit-mirror/source/browse/JavaScriptCore/kjs/number_object.cpp
+    """
+
+    x = float(x)
+
+    if x == 0.:
+        return "0." + "0"*(p-1)
+
+    out = []
+
+    if x < 0:
+        out.append("-")
+        x = -x
+
+    e = int(math.log10(x))
+    tens = math.pow(10, e - p + 1)
+    n = math.floor(x/tens)
+
+    if n < math.pow(10, p - 1):
+        e = e -1
+        tens = math.pow(10, e - p+1)
+        n = math.floor(x / tens)
+
+    if abs((n + 1.) * tens - x) <= abs(n * tens -x):
+        n = n + 1
+
+    if n >= math.pow(10,p):
+        n = n / 10.
+        e = e + 1
+
+    m = "%.*g" % (p, n)
+
+    if e < -2 or e >= p:
+        out.append(m[0])
+        if p > 1:
+            out.append(".")
+            out.extend(m[1:p])
+        out.append('e')
+        if e > 0:
+            out.append("+")
+        out.append(str(e))
+    elif e == (p -1):
+        out.append(m)
+    elif e >= 0:
+        out.append(m[:e+1])
+        if e+1 < len(m):
+            out.append(".")
+            out.extend(m[e+1:])
+    else:
+        out.append("0.")
+        out.extend(["0"]*-(e+1))
+        out.append(m)
+
+    return "".join(out)
+
+
+class CurveScore:
+    def __init__(self):
+        with open('output/reporting/curve_pipeline.pkl', 'rb') as f:
+            self.pipeline = pickle.load(f)
+
+    def get_weight(self, x):
+        return self.pipeline.predict(np.asarray([[x]]))[0]
+
+curve_score = CurveScore()
+
+def read_report(path, fold):
+    with open(path, 'rb') as f:
+        prp = pickle.load(f)
+        params = prp['guesser_params']
+        guesser_name = prp['guesser_name'].split('.')[-1].replace('Guesser', '').upper()
+        if guesser_name == 'ELASTICSEARCH':
+            guesser_name = 'IR'
+        return {
+            'First Sentence': prp['first_accuracy'],
+            'Full Question': prp['full_accuracy'],
+            'guesser_name': guesser_name,
+            'fold': 'guess' + fold,
+            'wiki': params['use_wiki'] if 'use_wiki' in params else str(False),
+            'random_seed': str(params['random_seed']),
+            'training_time': params['training_time'],
+            'char_df': prp['char_df'],
+            'first_df': prp['first_df'],
+            'full_df': prp['full_df']
+        }
+
+def compute_curve_score(group):
+    correct_percent = None
+    eager_percent = None
+    for r in group.itertuples():
+        if r.correct:
+            if correct_percent is None:
+                correct_percent = r.char_percent
+            if eager_percent is None:
+                eager_percent = r.char_percent
+        else:
+            correct_percent = None
+    if correct_percent is None:
+        correct_percent = 0
+    else:
+        correct_percent = curve_score.get_weight(correct_percent)
+
+    if eager_percent is None:
+        eager_percent = 0
+    else:
+        eager_percent = curve_score.get_weight(eager_percent)
+
+    return correct_percent, eager_percent
+
+def merge_devtest(group_reports):
+    folds = {r['fold'] for r in group_reports}
+    if 'guessdev' not in folds or 'guesstest' not in folds:
+        raise ValueError('Missing dev or test')
+    if len(group_reports) != 2:
+        raise ValueError('wrong length reports')
+    test = [r for r in group_reports if r['fold'] == 'guesstest'][0]
+    dev = [r for r in group_reports if r['fold'] == 'guessdev'][0]
+    test['Dev First Sentence'] = dev['First Sentence']
+    test['Dev Full Question'] = dev['Full Question']
+    return test
+
+def aggregate(group_reports):
+    summary = {}
+    top_model = max(group_reports, key=lambda r: r['Dev First Sentence'])
+    summary['Avg First Sentence'] = np.mean([r['First Sentence'] for r in group_reports])
+    summary['Std First Sentence'] = np.std([r['First Sentence'] for r in group_reports])
+    summary['Avg Full Question'] = np.mean([r['Full Question'] for r in group_reports])
+    summary['Std Full Question'] = np.std([r['Full Question'] for r in group_reports])
+    summary['First Sentence'] = top_model['First Sentence']
+    summary['Full Question'] = top_model['Full Question']
+    summary['Dev First Sentence'] = top_model['Dev First Sentence']
+    summary['Dev Full Question'] = top_model['Dev Full Question']
+    summary['first_df'] = top_model['first_df']
+    summary['full_df'] = top_model['full_df']
+    summary['char_df'] = top_model['char_df']
+    summary['fold'] = top_model['fold']
+    summary['guesser_name'] = top_model['guesser_name']
+    summary['random_seed'] = top_model['random_seed']
+    summary['wiki'] = top_model['wiki']
+    summary['training_time'] = top_model['training_time']
+
+    stable_scores = []
+    eager_scores = []
+    for _, group in top_model['char_df'].sort_values('score', ascending=False).groupby('qanta_id'):
+        group = group.groupby(['char_index']).first().reset_index()
+        stable, eager = compute_curve_score(group)
+        stable_scores.append(stable)
+        eager_scores.append(eager)
+    summary['curve_score_stable'] = np.mean(stable_scores)
+    summary['curve_score_eager'] = np.mean(eager_scores)
+    return summary
 
 
 def create_spark_context() -> SparkContext:
@@ -162,7 +338,7 @@ def qanta_2012_stats():
     """
     with open('data/external/emnlp_2012_questions.csv') as f:
         questions_2012 = list(csv.reader(f))
-    
+
     eprint('N EMNLP 2012 Questions', len(questions_2012))
     questions_2012 = [q[4] for q in questions_2012]
     tokenized_2012 = pseq(questions_2012).map(nltk.word_tokenize).list()
@@ -305,6 +481,79 @@ def syntactic_diversity_plots():
         + theme_fs()
     )
     p.save(path.join(output_path, 'parse_ratio.pdf'))
+
+
+@cli.command()
+def error_comparison():
+    char_frames = {}
+    first_frames = {}
+    full_frames = {}
+    train_times = {}
+    use_wiki = {}
+    best_accuracies = {}
+    for p in glob.glob(f'output/guesser/best/qanta.guesser*/guesser_report_guesstest.pickle', recursive=True):
+        with open(p, 'rb') as f:
+            report = pickle.load(f)
+            name = report['guesser_name']
+            params = report['guesser_params']
+            train_times[name] = params['training_time']
+            use_wiki[name] = params['use_wiki'] if 'use_wiki' in params else False
+            char_frames[name] = report['char_df']
+            first_frames[name] = report['first_df']
+            full_frames[name] = report['full_df']
+            best_accuracies[name] = (report['first_accuracy'], report['full_accuracy'])
+    first_df = pd.concat([f for f in first_frames.values()]).sort_values('score', ascending=False).groupby(['guesser', 'qanta_id']).first().reset_index()
+    first_df['position'] = ' Start'
+    full_df = pd.concat([f for f in full_frames.values()]).sort_values('score', ascending=False).groupby(['guesser', 'qanta_id']).first().reset_index()
+    full_df['position'] = 'End'
+    compare_df = pd.concat([first_df, full_df])
+    compare_df = compare_df[compare_df.guesser != 'qanta.guesser.vw.VWGuesser']
+    compare_results = {}
+    comparisons = ['qanta.guesser.dan.DanGuesser', 'qanta.guesser.rnn.RnnGuesser', 'qanta.guesser.elasticsearch.ElasticSearchGuesser']
+    cr_rows = []
+    for (qnum, position), group in compare_df.groupby(['qanta_id', 'position']):
+        group = group.set_index('guesser')
+        correct_guessers = []
+        wrong_guessers = []
+        for name in comparisons:
+            if group.loc[name].correct == 1:
+                correct_guessers.append(name)
+            else:
+                wrong_guessers.append(name)
+        if len(correct_guessers) > 3:
+            raise ValueError('this should be unreachable')
+        elif len(correct_guessers) == 3:
+            cr_rows.append({'qnum': qnum, 'Position': position, 'model': 'All', 'Result': 'Correct'})
+        elif len(correct_guessers) == 0:
+            cr_rows.append({'qnum': qnum, 'Position': position, 'model': 'All', 'Result': 'Wrong'})
+        elif len(correct_guessers) == 1:
+            cr_rows.append({
+                'qnum': qnum, 'Position': position,
+                'model': to_shortname(correct_guessers[0]),
+                'Result': 'Correct'
+            })
+        else:
+            cr_rows.append({
+                'qnum': qnum, 'Position': position,
+                'model': to_shortname(wrong_guessers[0]),
+                'Result': 'Wrong'
+            })
+    cr_df = pd.DataFrame(cr_rows)
+    # samples = cr_df[(cr_df.Position == ' Start') & (cr_df.Result == 'Correct') & (cr_df.model == 'RNN')].qnum.values
+    # for qid in samples:
+    #     q = lookup[qid]
+    #     print(q['first_sentence'])
+    #     print(q['page'])
+    #     print()
+    p = (
+        ggplot(cr_df)
+        + aes(x='model', fill='Result') + facet_grid(['Result', 'Position']) #+ facet_wrap('Position', labeller='label_both')
+        + geom_bar(aes(y='(..count..) / sum(..count..)'), position='dodge')
+        + labs(x='Models', y='Fraction with Corresponding Result') + coord_flip()
+        + theme_fs() + theme(aspect_ratio=.6)
+    )
+    p.save('output/plots/guesser_error_comparison.pdf')
+
 
 
 @cli.command()
