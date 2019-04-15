@@ -19,7 +19,7 @@ import numpy as np
 from scipy.stats import binned_statistic
 from plotnine import (
     ggplot, aes, facet_wrap, ggtitle, labeller,
-    geom_smooth, geom_density, geom_histogram, geom_bar, geom_line,
+    geom_smooth, geom_density, geom_histogram, geom_bar, geom_line, geom_point,
     geom_errorbar, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
     xlab, ylab, theme, element_text, element_blank, stat_ecdf,
@@ -284,7 +284,7 @@ class CompareGuesserReport:
                     human_df['Dataset'] = human_df['Dataset'].astype(dataset_dtype)
 
             if no_models:
-                p = ggplot(human_df) + geom_line()
+                p = ggplot(human_df) + geom_point()
             else:
                 df = self.char_plot_df
                 if 1 not in self.rounds:
