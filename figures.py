@@ -20,7 +20,7 @@ from scipy.stats import binned_statistic
 from plotnine import (
     ggplot, aes, facet_wrap, ggtitle, labeller,
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line, geom_point,
-    geom_errorbar, stat_summary_bin,
+    geom_errorbar, geom_errorbarh, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
     xlab, ylab, theme, element_text, element_blank, stat_ecdf,
     scale_color_manual, scale_color_discrete
@@ -284,7 +284,7 @@ class CompareGuesserReport:
                     human_df['Dataset'] = human_df['Dataset'].astype(dataset_dtype)
 
             if no_models:
-                p = ggplot(human_df) + geom_point()
+                p = ggplot(human_df) + geom_point(shape='.')
             else:
                 df = self.char_plot_df
                 if 1 not in self.rounds:
@@ -307,7 +307,7 @@ class CompareGuesserReport:
                 if self.mvg_avg_char:
                     chart = stat_smooth(method='mavg', se=False, method_args={'window': 400})
                 else:
-                    chart = stat_summary_bin(fun_data=mean_no_se, bins=20, shape='.')
+                    chart = stat_summary_bin(fun_data=mean_no_se, bins=20, shape='.', linetype='None')
             else:
                 chart = None
 
