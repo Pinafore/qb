@@ -346,10 +346,9 @@ class ElasticSearchGuesser(AbstractGuesser):
                               'guess': guess.page}
             return jsonify(highlights)
 
-        app.run(host=host, port=port, debug=debug)
 
         @app.route('/api/interface_get_highlights', methods=['POST'])
-        def get_highlights():
+        def interface_get_highlights():
             wiki_field = 'wiki_content'
             qb_field = 'qb_content'
             text = request.form['text']
@@ -404,7 +403,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             return jsonify(highlights)
 
         @app.route('/api/interface_answer_question', methods=['POST'])
-        def answer_question():
+        def interface_answer_question():
             text = request.form['text']
             answer = request.form['answer']
             answer = answer.replace(" ", "_").lower()
@@ -445,6 +444,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             guess = [g.replace("_"," ") for g in guess]
             return jsonify({'guess': guess, 'score': score, 'num': num})
 
+        app.run(host=host, port=port, debug=debug)
 
 @click.command()
 @click.option('--generate-config/--no-generate-config', default=True, is_flag=True)
