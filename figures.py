@@ -22,7 +22,7 @@ from plotnine import (
     geom_smooth, geom_density, geom_histogram, geom_bar, geom_line, geom_point,
     geom_errorbar, geom_errorbarh, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
-    xlab, ylab, theme, element_text, element_blank, stat_ecdf,
+    xlab, ylab, theme, element_text, element_blank, stat_ecdf, ylim,
     scale_color_manual, scale_color_discrete
 )
 
@@ -150,7 +150,6 @@ def to_dataset(fold):
         return 'Regular Test'
     else:
         return fold
-
 
 def label_source(original):
     if original == 'es':
@@ -307,7 +306,7 @@ class CompareGuesserReport:
                 if self.mvg_avg_char:
                     chart = stat_smooth(method='mavg', se=False, method_args={'window': 400})
                 else:
-                    chart = stat_summary_bin(fun_data=mean_no_se, bins=20, shape='.', linetype='None')
+                    chart = stat_summary_bin(fun_data=mean_no_se, bins=20, shape='.', linetype='None', size=0.5)
             else:
                 chart = None
 
@@ -319,7 +318,7 @@ class CompareGuesserReport:
                 p += chart
             p = (
                 p
-                + scale_y_continuous(breaks=np.linspace(0, 1, 11))
+                + scale_y_continuous(breaks=np.linspace(0, 1, 6), limits=[0, 1])
                 + scale_x_continuous(breaks=[0, .5, 1])
                 + xlab('Percent of Question Revealed')
                 + ylab('Accuracy')
@@ -338,7 +337,7 @@ class CompareGuesserReport:
                 ggplot(self.char_plot_df)
                 + aes(x='char_percent', y='correct', color='Guessing_Model')
                 + stat_smooth(method='mavg', se=False, method_args={'window': 500})
-                + scale_y_continuous(breaks=np.linspace(0, 1, 21))
+                + scale_y_continuous(breaks=np.linspace(0, 1, 6), limits=[0, 1])
             )
 
     def plot_compare_accuracy(self, expo=False):
