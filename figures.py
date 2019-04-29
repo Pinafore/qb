@@ -23,7 +23,7 @@ from plotnine import (
     geom_errorbar, geom_errorbarh, stat_summary_bin,
     coord_flip, stat_smooth, scale_y_continuous, scale_x_continuous,
     xlab, ylab, theme, element_text, element_blank, stat_ecdf, ylim,
-    scale_color_manual, scale_color_discrete
+    scale_color_manual, scale_color_discrete, coord_cartesian
 )
 
 
@@ -183,7 +183,9 @@ def sort_humans(humans):
 class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport],
                  mvg_avg_char=False, exclude_zero_train=False,
-                 merge_humans=False, no_humans=False, rounds='1,2', title=''):
+                 merge_humans=False, no_humans=False, rounds='1,2',
+                 title='', y_max=None):
+        self.y_max = y_max
         self.rounds = {int(n) for n in rounds.split(',')}
         self.title = title
         self.mvg_avg_char = mvg_avg_char
@@ -222,6 +224,11 @@ class CompareGuesserReport:
         )
 
     def plot_char_percent_vs_accuracy_smooth(self, expo=False, no_models=False, columns=False):
+        if self.y_max is not None:
+            limits = [0, float(self.y_max)]
+            eprint(f'Setting limits to: {limits}')
+        else:
+            limits = [0, 1]
         if expo:
             if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
                 with open('data/external/all_human_gameplay.json') as f:
@@ -318,8 +325,9 @@ class CompareGuesserReport:
                 p += chart
             p = (
                 p
-                + scale_y_continuous(breaks=np.linspace(0, 1, 6), limits=[0, 1])
+                + scale_y_continuous(breaks=np.linspace(0, 1, 6))
                 + scale_x_continuous(breaks=[0, .5, 1])
+                + coord_cartesian(ylim=limits)
                 + xlab('Percent of Question Revealed')
                 + ylab('Accuracy')
                 + theme(
@@ -337,7 +345,8 @@ class CompareGuesserReport:
                 ggplot(self.char_plot_df)
                 + aes(x='char_percent', y='correct', color='Guessing_Model')
                 + stat_smooth(method='mavg', se=False, method_args={'window': 500})
-                + scale_y_continuous(breaks=np.linspace(0, 1, 6), limits=[0, 1])
+                + scale_y_continuous(breaks=np.linspace(0, 1, 6))
+                + coord_cartesian(ylim=limits)
             )
 
     def plot_compare_accuracy(self, expo=False):
@@ -398,11 +407,12 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--merge-humans', is_flag=True, default=False)
 @click.option('--rounds', default='1,2')
 @click.option('--title', default='')
+@click.option('--y-max', default=None)
 @click.argument('output_dir')
 def guesser(
         use_test, only_tacl, no_models, no_humans, columns,
         no_expo, mvg_avg_char, exclude_zero_train,
-        merge_humans, rounds, title, output_dir):
+        merge_humans, rounds, title, y_max, output_dir):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -453,7 +463,8 @@ def guesser(
             merge_humans=merge_humans,
             no_humans=no_humans,
             rounds=rounds,
-            title=title
+            title=title,
+            y_max=y_max
         )
         save_plot(
             output_dir, 'compare', 'expo_position_accuracy.pdf',
