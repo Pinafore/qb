@@ -184,7 +184,8 @@ class CompareGuesserReport:
     def __init__(self, reports: List[GuesserReport],
                  mvg_avg_char=False, exclude_zero_train=False,
                  merge_humans=False, no_humans=False, rounds='1,2',
-                 title='', y_max=None):
+                 title='', y_max=None, save_df=None):
+        self.save_df = save_df
         self.y_max = y_max
         self.rounds = {int(n) for n in rounds.split(',')}
         self.title = title
@@ -299,6 +300,9 @@ class CompareGuesserReport:
                     df = df[df['Dataset'] != 'Round 2 - IR Adversarial']
                     df = df[df['Dataset'] != 'Round 2 - RNN Adversarial']
                 p = ggplot(df)
+                if self.save_df is not None:
+                    eprint(f'Saving df to: {self.save_df}')
+                    df.to_json(self.save_df)
 
                 if os.path.exists('data/external/all_human_gameplay.json') and not self.no_humans:
                     eprint('Loading human data')
@@ -341,6 +345,9 @@ class CompareGuesserReport:
 
             return p
         else:
+            if self.save_df is not None:
+                eprint(f'Saving df to: {self.save_df}')
+                df.to_json(self.save_df)
             return (
                 ggplot(self.char_plot_df)
                 + aes(x='char_percent', y='correct', color='Guessing_Model')
@@ -408,11 +415,12 @@ def save_all_plots(output_dir, report: GuesserReport, expo=False):
 @click.option('--rounds', default='1,2')
 @click.option('--title', default='')
 @click.option('--y-max', default=None)
+@click.option('--save-df', default=None, type=str)
 @click.argument('output_dir')
 def guesser(
         use_test, only_tacl, no_models, no_humans, columns,
         no_expo, mvg_avg_char, exclude_zero_train,
-        merge_humans, rounds, title, y_max, output_dir):
+        merge_humans, rounds, title, y_max, save_df, output_dir):
     if use_test:
         REPORT_PATTERN = TEST_REPORT_PATTERN
         report_fold = 'guesstest'
@@ -464,7 +472,8 @@ def guesser(
             no_humans=no_humans,
             rounds=rounds,
             title=title,
-            y_max=y_max
+            y_max=y_max,
+            save_df=save_df
         )
         save_plot(
             output_dir, 'compare', 'expo_position_accuracy.pdf',
