@@ -66,8 +66,8 @@ def format_qanta_json(questions, version):
 
 def add_sentences_(questions, parallel=True):
     text_questions = [q['text'] for q in questions]
-    sc = create_spark_context()
     if parallel:
+        sc = create_spark_context()
         sentence_tokenizations = sc.parallelize(text_questions, 4000).map(nlp).collect()
     else:
         sentence_tokenizations = [nlp(q) for q in text_questions]

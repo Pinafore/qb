@@ -1,4 +1,7 @@
 import json
+import csv
+import subprocess
+import os
 from collections import defaultdict
 import click
 import yaml
@@ -7,6 +10,26 @@ from qanta import qlogging
 
 
 log = qlogging.get(__name__)
+
+TOURNAMENT_DEC_15 = 'Adversarial Question Writing UMD December 15'
+
+
+def md5sum(filename):
+    return subprocess.run(
+        f'md5sum {filename}',
+        shell=True,
+        stdout=subprocess.PIPE,
+        check=True
+    ).stdout.decode('utf-8').split()[0]
+
+
+def verify_checksum(checksum, filename):
+    if os.path.exists(filename):
+        file_checksum = md5sum(filename)
+        if checksum != file_checksum:
+            raise ValueError(f'Incorrect checksum for: {filename}')
+    else:
+        raise ValueError(f'File does not exist: {filename}')
 
 
 @click.group()
@@ -65,6 +88,57 @@ def edited_to_json(edited_tsv, out):
         json.dump(trick_questions, f)
 
 
+@trick_cli.command()
+def format_additional():
+    """
+    Additional questions were added to dataset, this processes the csv version to match
+    the dataset format while verifying that page info is valid.
+    """
+    titles_checksum = '6fa134836b3a7e3b562cdaa8ad353f2d'
+    verify_checksum(titles_checksum, 'data/external/wikipedia/wikipedia-titles.2018.04.18.json')
+    with open('data/external/wikipedia/wikipedia-titles.2018.04.18.json') as f:
+        titles = set(json.load(f))
+
+    trick_checksum = '905594aab776ddb10b0d7f36d30633a2'
+    verify_checksum(trick_checksum, 'data/external/datasets/trick-additional.csv')
+
+    with open('data/external/datasets/trick-additional.csv') as f:
+        # Ignore header row
+        rows = list(csv.reader(f))[1:]
+
+    questions = []
+    for _, text, page in rows:
+        page = page.replace(' ', '_')
+        if page not in titles:
+            log.info(f'Page not in titles: {page}')
+        questions.append({
+            'text': text,
+            'answer': page,
+            'page': page,
+            'fold': 'advtest',
+            'year': 2018,
+            'dataset': 'trickme',
+            'proto_id': None,
+            'qdb_id': None,
+            'difficulty': None,
+            'category': None,
+            'subcategory': None,
+            'qanta_id': None,
+            'tournament': TOURNAMENT_DEC_15,
+            'gameplay': False,
+            'interface': 'ir-r2',
+            'dependent_checksums': {
+                'trick-additional.csv': trick_checksum,
+                'wikipedia-titles.2018.04.18.json': titles_checksum
+            }
+        })
+    add_sentences_(questions, parallel=False)
+    dataset = format_qanta_json(questions, '2018.04.18')
+    path_formatted = 'data/external/datasets/qanta.trick-additional-ir-round2.json'
+    with open(path_formatted, 'w') as f:
+        json.dump(dataset, f)
+    log.info(f'File: {path_formatted} Checksum: {md5sum(path_formatted)}')
+
 
 @trick_cli.command()
 @click.option('--answer-map-path', default='data/internal/trickme_answer_map.yml')
@@ -77,7 +151,7 @@ def edited_to_json(edited_tsv, out):
 @click.option('--version', default='2018.04.18')
 @click.option('--fold', default='advtest')
 @click.option('--year', default=2018)
-@click.option('--tournament', default='Adversarial Question Writing UMD December 15')
+@click.option('--tournament', default=TOURNAMENT_DEC_15)
 @click.option('--separate-rounds', default=False, is_flag=True)
 def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                 id_model_path, out_path,
@@ -115,7 +189,6 @@ def trick_to_ds(answer_map_path, qanta_ds_path, wiki_titles_path, trick_path,
                 trick_id = q['trick_id']
             else:
                 trick_id = None
-
 
             if len(answer) == 0:
                 raise ValueError(f'Empty answer for trick_id={trick_id}')

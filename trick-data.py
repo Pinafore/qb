@@ -1,7 +1,30 @@
 import json
+import os
 from collections import Counter
+import subprocess
 import pandas as pd
 import click
+
+
+TOURNAMENT_DEC_15 = 'Adversarial Question Writing UMD December 15'
+
+
+def md5sum(filename):
+    return subprocess.run(
+        f'md5sum {filename}',
+        shell=True,
+        stdout=subprocess.PIPE,
+        check=True
+    ).stdout.decode('utf-8').split()[0]
+
+
+def verify_checksum(checksum, filename):
+    if os.path.exists(filename):
+        file_checksum = md5sum(filename)
+        if checksum != file_checksum:
+            raise ValueError(f'Incorrect checksum for: {filename}')
+    else:
+        raise ValueError(f'File does not exist: {filename}')
 
 
 @click.group()
@@ -46,46 +69,107 @@ def validate():
 @main.command()
 def merge():
     """
-    To create final dataset we take the expo/adversarial question file and append
-    information about what interface was used to create it.
+    Merge various sources of questions:
+    - Round 1 data
+    - Edited Round 2 rnn data (done by filtering round 2 data out of expo file and using edited file)
+    - Round 2 IR data (~100 additional questions)
+    We also append information so that in the released data its clear what data comes from what interface.
+    Finally, verify checksums and other sanity checks to make sure data is coming from correct place.
     """
+    qanta_expo_checksum = 'c56a129b4d9c925187e2e58cc51c0b77'
+    trickme_id_model_checksum = 'cb0e26e5c9d1cada7b0b9cd0edb6c9e5'
+
+    verify_checksum(trickme_id_model_checksum, 'data/external/datasets/trickme-id-model.json')
     with open('data/external/datasets/trickme-id-model.json') as f:
         id_to_model = json.load(f)
         id_to_model = {int(k): v for k, v in id_to_model.items()}
 
+    verify_checksum(qanta_expo_checksum, 'data/external/datasets/qanta.expo.2018.04.18.json')
     with open('data/external/datasets/qanta.expo.2018.04.18.json') as f:
         data = json.load(f)
-        data['bibtex'] = (
-            '@inproceedings{Wallace2019Trick,'
-            '  title={Trick Me If You Can: Human-in-the-loop Generation of Adversarial Question Answering Examples},'
-            '  author={Eric Wallace and Pedro Rodriguez and Shi Feng and Ikuya Yamada and Jordan Boyd-Graber},'
-            '  booktitle = "Transactions of the Association for Computational Linguistics"'
-            '  year={2019}, '
-            '}'
-        )
-        data['date'] = '2019-04-30'
-        data['project_website'] = 'http://trickme.qanta.org'
-        data['dependent_checksums'] = {
-            'qanta.expo.2018.04.18.json': 'c56a129b4d9c925187e2e58cc51c0b77',
-            'trickme-id-model.json': 'cb0e26e5c9d1cada7b0b9cd0edb6c9e5'
-        }
 
-        questions = data['questions']
-        for q in questions:
-            q['fold'] = 'adversarial'
-            source = id_to_model[q['qanta_id']]
-            if source == 'es':
-                ui = 'ir-r1'
-            elif source == 'es-2':
-                ui = 'ir-r2'
-            elif source == 'rnn':
-                ui = 'rnn'
-            else:
-                raise ValueError(f'Unrecognized source: {source}')
-            q['interface'] = ui
+    edited_checksum = 'c96ccda167f5f855bbfdeb0c41f38c3e'
+    verify_checksum(edited_checksum, 'data/external/datasets/qanta.edited-expo.json')
+    with open('data/external/datasets/qanta.edited-expo.json') as f:
+        edited_questions = json.load(f)['questions']
 
-    with open('data/external/datasets/qanta.tacl-trick.json', 'w') as f:
-        json.dump(data, f)
+    additional_ir2_checksum = '58389e93d5bb772e9906b1db72633f3a'
+    verify_checksum(additional_ir2_checksum, 'data/external/datasets/qanta.trick-additional-ir-round2.json')
+    with open('data/external/datasets/qanta.trick-additional-ir-round2.json') as f:
+        additional_ir2_questions = json.load(f)['questions']
+
+    questions = data['questions']
+    merged_questions = []
+    for q in questions:
+        q['tournament'] = TOURNAMENT_DEC_15
+        q['fold'] = 'adversarial'
+        q['trick_id'] = None
+        source = id_to_model[q['qanta_id']]
+        if source == 'es':
+            # Keep IR Round 1
+            q['interface'] = 'ir-r1'
+            merged_questions.append(q)
+        elif source == 'es-2':
+            # Add IR Round 2 to additional Round 2
+            q['interface'] = 'ir-r2'
+            merged_questions.append(q)
+        elif source == 'rnn':
+            # Replace unedited Round 2 RNN with edited (below)
+            q['interface'] = 'rnn'
+        else:
+            raise ValueError(f'Unrecognized source: {source}')
+
+    # Calculate where to pickup on qanta_ids
+    max_id = max(q['qanta_id'] for q in questions)
+    curr_qanta_id = max_id + 1
+    # These are round 2 RNN questions
+    for q in edited_questions:
+        q['tournament'] = TOURNAMENT_DEC_15
+        q['fold'] = 'adversarial'
+        q['interface'] = 'rnn'
+        q['trick_id'] = int(q['trick_id'])
+        q['qanta_id'] = curr_qanta_id
+        curr_qanta_id += 1
+        merged_questions.append(q)
+
+    # Append these to existing round 2 IR
+    for q in additional_ir2_questions:
+        q['tournament'] = TOURNAMENT_DEC_15
+        q['fold'] = 'adversarial'
+        q['interface'] = 'ir-r2'
+        q['trick_id'] = None
+        q['qanta_id'] = curr_qanta_id
+        curr_qanta_id += 1
+        merged_questions.append(q)
+
+    tacl_data = {}
+    tacl_data['version'] = data['version']
+    tacl_data['maintainer_name'] = data['maintainer_name']
+    tacl_data['maintainer_contact'] = data['maintainer_contact']
+    tacl_data['maintainer_website'] = data['maintainer_website']
+    tacl_data['project_website'] = 'http://trickme.qanta.org'
+    tacl_data['bibtex'] = (
+        '@inproceedings{Wallace2019Trick,\n'
+        '  title={Trick Me If You Can: Human-in-the-loop Generation of Adversarial Question Answering Examples},\n'
+        '  author={Eric Wallace and Pedro Rodriguez and Shi Feng and Ikuya Yamada and Jordan Boyd-Graber},\n'
+        '  booktitle = "Transactions of the Association for Computational Linguistics"\n'
+        '  year={2019},\n'
+        '}'
+    )
+    tacl_data['dependent_checksums'] = {
+        'qanta.expo.2018.04.18.json': qanta_expo_checksum,
+        'trickme-id-model.json': trickme_id_model_checksum,
+        'qanta.trick-additional-ir-round2.json': additional_ir2_checksum,
+        'qanta.edited-expo.json': edited_checksum
+    }
+    tacl_data['questions'] = merged_questions
+    tacl_path = 'data/external/datasets/qanta.tacl-trick.json'
+    with open(tacl_path, 'w') as f:
+        json.dump(tacl_data, f, indent=2, sort_keys=True)
+    print(f'File: {tacl_path} Checksum: {md5sum(tacl_path)}')
+    counts = Counter(q['interface'] for q in merged_questions)
+    print(f'N: {len(merged_questions)}')
+    print(f'{counts}')
 
 
 if __name__ == '__main__':
