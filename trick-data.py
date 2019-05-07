@@ -42,7 +42,7 @@ def validate():
     * The number of questions in dataset matches how many the experimental results have
     * That the qanta_id and page for each question match in dataset and experimental results
     """
-    with open('data/external/datasets/qanta.expo.2018.04.18.json') as f:
+    with open('data/external/datasets/qanta.trick-no-edits.json') as f:
         questions = [q for q in json.load(f)['questions']]
     with open('data/external/datasets/trickme-id-model.json') as f:
         id_to_model = json.load(f)
@@ -84,8 +84,8 @@ def merge():
         id_to_model = json.load(f)
         id_to_model = {int(k): v for k, v in id_to_model.items()}
 
-    verify_checksum(qanta_expo_checksum, 'data/external/datasets/qanta.expo.2018.04.18.json')
-    with open('data/external/datasets/qanta.expo.2018.04.18.json') as f:
+    verify_checksum(qanta_expo_checksum, 'data/external/datasets/qanta.trick-no-edits.json')
+    with open('data/external/datasets/qanta.trick-no-edits.json') as f:
         data = json.load(f)
 
     edited_checksum = 'c96ccda167f5f855bbfdeb0c41f38c3e'
@@ -157,7 +157,7 @@ def merge():
         '}'
     )
     tacl_data['dependent_checksums'] = {
-        'qanta.expo.2018.04.18.json': qanta_expo_checksum,
+        'qanta.trick-no-edits.json': qanta_expo_checksum,
         'trickme-id-model.json': trickme_id_model_checksum,
         'qanta.trick-additional-ir-round2.json': additional_ir2_checksum,
         'qanta.edited-expo.json': edited_checksum
