@@ -208,9 +208,9 @@ class CompareGuesserReport:
         self.char_plot_df['Guessing_Model'] = self.char_plot_df['guesser'].map(to_shortname)
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
         self.char_plot_df['source'] = 'unknown'
-        if os.path.exists('data/external/datasets/trickme-id-model.json'):
+        if os.path.exists('data/external/datasets/merged_trickme-id-model.json'):
             eprint('Separating questions into rnn/es')
-            with open('data/external/datasets/trickme-id-model.json') as f:
+            with open('data/external/datasets/merged_trickme-id-model.json') as f:
                 trick_sources = json.load(f)
                 id_rows = []
                 for sqid, source in trick_sources.items():

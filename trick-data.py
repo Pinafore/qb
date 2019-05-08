@@ -1,4 +1,6 @@
+import sys
 import json
+import glob
 import os
 from collections import Counter
 import subprocess
@@ -7,6 +9,10 @@ import click
 
 
 TOURNAMENT_DEC_15 = 'Adversarial Question Writing UMD December 15'
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 
 def md5sum(filename):
@@ -88,12 +94,14 @@ def merge():
     with open('data/external/datasets/qanta.trick-no-edits.json') as f:
         data = json.load(f)
 
-    edited_checksum = 'c96ccda167f5f855bbfdeb0c41f38c3e'
-    verify_checksum(edited_checksum, 'data/external/datasets/qanta.edited-expo.json')
-    with open('data/external/datasets/qanta.edited-expo.json') as f:
-        edited_questions = json.load(f)['questions']
+    edited_questions = []
+    for path in glob.glob('data/external/datasets/qanta.qb-edited-1215.*.json'):
+        with open(path) as f:
+            edited_questions.extend(json.load(f)['questions'])
+    if len(edited_questions) != 410:
+        raise ValueError(f'Wrong number of questions: {len(edited_questions)}')
 
-    additional_ir2_checksum = '58389e93d5bb772e9906b1db72633f3a'
+    additional_ir2_checksum = 'e758156eb23f0f307982513be5011268'
     verify_checksum(additional_ir2_checksum, 'data/external/datasets/qanta.trick-additional-ir-round2.json')
     with open('data/external/datasets/qanta.trick-additional-ir-round2.json') as f:
         additional_ir2_questions = json.load(f)['questions']
@@ -160,13 +168,24 @@ def merge():
         'qanta.trick-no-edits.json': qanta_expo_checksum,
         'trickme-id-model.json': trickme_id_model_checksum,
         'qanta.trick-additional-ir-round2.json': additional_ir2_checksum,
-        'qanta.edited-expo.json': edited_checksum
     }
     tacl_data['questions'] = merged_questions
     tacl_path = 'data/external/datasets/qanta.tacl-trick.json'
     with open(tacl_path, 'w') as f:
         json.dump(tacl_data, f, indent=2, sort_keys=True)
+
     print(f'File: {tacl_path} Checksum: {md5sum(tacl_path)}')
+    merged_id_to_model = {}
+    for q in merged_questions:
+        if q['interface'] == 'ir-r2':
+            val = 'es-2'
+        elif q['interface'] == 'ir-r1':
+            val = 'es'
+        else:
+            val = q['interface']
+        merged_id_to_model[q['qanta_id']] = val
+    with open('data/external/datasets/merged_trickme-id-model.json', 'w') as f:
+        json.dump(merged_id_to_model, f)
     counts = Counter(q['interface'] for q in merged_questions)
     print(f'N: {len(merged_questions)}')
     print(f'{counts}')

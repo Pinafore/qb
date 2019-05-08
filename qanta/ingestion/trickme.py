@@ -126,14 +126,14 @@ def format_additional():
             'qanta_id': None,
             'tournament': TOURNAMENT_DEC_15,
             'gameplay': False,
-            'interface': 'ir-r2',
-            'dependent_checksums': {
-                'trick-additional.csv': trick_checksum,
-                'wikipedia-titles.2018.04.18.json': titles_checksum
-            }
+            'interface': 'ir-r2'
         })
     add_sentences_(questions, parallel=False)
     dataset = format_qanta_json(questions, '2018.04.18')
+    dataset['dependent_checksums'] = {
+        'trick-additional.csv': trick_checksum,
+        'wikipedia-titles.2018.04.18.json': titles_checksum
+    }
     path_formatted = 'data/external/datasets/qanta.trick-additional-ir-round2.json'
     with open(path_formatted, 'w') as f:
         json.dump(dataset, f)
