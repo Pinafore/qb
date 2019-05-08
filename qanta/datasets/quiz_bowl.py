@@ -32,6 +32,9 @@ class Question(NamedTuple):
     proto_id: Optional[int]
     qdb_id: Optional[int]
     dataset: str
+    interface: Optional[str] = None
+    trick_id: Optional[int] = None
+    round: Optional[str] = None
 
     def to_json(self) -> str:
         return json.dumps(self._asdict())
