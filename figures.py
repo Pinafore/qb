@@ -157,10 +157,24 @@ def label_source(original):
         return 'Round 1 - IR Adversarial'
     elif original == 'rnn':
         return 'Round 2 - RNN Adversarial'
+    elif original == 'rnn-exact':
+        return 'Round 2 - Exact-RNN Adversarial'
+    elif original == 'rnn-noexact':
+        return 'Round 2 - NoExact-RNN Adversarial'
+    elif original == 'rnn-paired':
+        return 'Round 2 - Paired-RNN Adversarial'
+    elif original == 'rnn-nopaired':
+        return 'Round 2 - NoPaired-RNN Adversarial'
+    elif original == 'rnn-sheet':
+        return 'Round 2 - Sheet-RNN Adversarial'
+    elif original == 'rnn-nosheet':
+        return 'Round 2 - NoSheet-RNN Adversarial'
+    elif original == 'rnn-packet34':
+        return 'Round 2 - P34-RNN Adversarial'
     elif original == 'es-2':
         return 'Round 2 - IR Adversarial'
     else:
-        raise ValueError('unknown source')
+        raise ValueError(f'unknown source: {original}')
 
 
 def mean_no_se(series, mult=1):
@@ -180,6 +194,9 @@ def sort_humans(humans):
         elif 'National' in h:
             return 1
     return sorted(humans, key=order)
+
+
+ENABLE_EDIT_INFO = False
 
 
 class CompareGuesserReport:
@@ -211,16 +228,61 @@ class CompareGuesserReport:
         self.char_plot_df['Dataset'] = self.char_plot_df['fold'].map(to_dataset)
         self.char_plot_df['source'] = 'unknown'
         if os.path.exists('data/external/datasets/merged_trickme-id-model.json'):
+            if ENABLE_EDIT_INFO and os.path.exists('output/tacl/edit_info.json'):
+                with open('output/tacl/edit_info.json') as f:
+                    eprint('Using output/tacl/edit_info.json')
+                    edit_info = {e['post_qanta_id']: e for e in json.load(f)}
+                    trick_to_email = None
+            elif os.path.exists('output/tacl/tacl-spreadsheet.tsv'):
+                with open('data/external/datasets/qanta.tacl-trick.json') as f:
+                    trick_to_qanta_id = {
+                        q['trick_id']: q['qanta_id']
+                        for q in json.load(f)['questions'] if q['trick_id'] is not None
+                    }
+                eprint('Using output/tacl/tacl-spreadsheet.tsv')
+                sheet_df = pd.read_csv('output/tacl/tacl-spreadsheet.tsv', header=0, sep='\t', index_col=None)
+                sheet_df = sheet_df.rename(columns={'ID': 'trick_id', 'Author (by e-mail)': 'email'})
+                sheet_df = sheet_df[['trick_id', 'email']]
+                trick_to_email = {}
+                for t in sheet_df.itertuples():
+                    if t.trick_id not in trick_to_qanta_id:
+                        raise ValueError(f'Trick id not in qanta id map: {t.trick_id}')
+                    trick_to_email[trick_to_qanta_id[t.trick_id]] = t.email
+                edit_info = None
+            else:
+                edit_info = None
+                trick_to_email = None
             eprint('Separating questions into rnn/es')
             with open('data/external/datasets/merged_trickme-id-model.json') as f:
                 trick_sources = json.load(f)
                 id_rows = []
                 for sqid, source in trick_sources.items():
-                    id_rows.append({'qanta_id': int(sqid), 'source': source, 'fold': 'expo'})
+                    sqid = int(sqid)
+                    if edit_info is not None:
+                        # Only update rnn source for debugging
+                        if source == 'rnn':
+                            if sqid in edit_info:
+                                if edit_info[sqid]['exact']:
+                                    source = 'rnn-exact'
+                                else:
+                                    source = 'rnn-noexact'
+                            else:
+                                raise ValueError(f'No edit info for: {sqid}')
+                    elif trick_to_email is not None:
+                        if sqid in trick_to_email:
+                            if trick_to_email[sqid] in ('kurtisPacket3@gmail.com', 'kurtisPacket4@gmail.com'):
+                                source = 'rnn-packet34'
+                    id_rows.append({'qanta_id': sqid, 'source': source, 'fold': 'expo'})
                 id_df = pd.DataFrame(id_rows)
                 self.char_plot_df = self.char_plot_df.merge(id_df, on=('qanta_id', 'fold'), how='left')
                 self.char_plot_df['source'] = self.char_plot_df['source_y'].fillna('unknown')
-                self.char_plot_df.loc[self.char_plot_df.source != 'unknown', 'Dataset'] = self.char_plot_df[self.char_plot_df.source != 'unknown']['source'].map(label_source)
+                if trick_to_email is not None:
+                    eprint(f'N Questions pre filter: {len(self.char_plot_df.qanta_id.unique())}')
+                    self.char_plot_df = self.char_plot_df[self.char_plot_df['source'] != 'rnn-packet34']
+                    eprint(f'N Questions post filter: {len(self.char_plot_df.qanta_id.unique())}')
+                self.char_plot_df.loc[
+                    self.char_plot_df.source != 'unknown', 'Dataset'
+                ] = self.char_plot_df[self.char_plot_df.source != 'unknown']['source'].map(label_source)
         self.acc_df = pd.DataFrame.from_records(
             acc_rows,
             columns=['fold', 'guesser', 'position', 'accuracy', 'Dataset']
