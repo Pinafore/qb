@@ -162,8 +162,7 @@ def read_data(
         with open(dataset_dir.format(fold), 'rb') as f:
             return pickle.load(f)
 
-    g_dir = AbstractGuesser.output_path(
-        guesser_module, guesser_class, guesser_config_num, '')
+    g_dir = AbstractGuesser.output_path(guesser_module, guesser_class, guesser_config_num, '')
     g_path = AbstractGuesser.guess_path(g_dir, fold, output_type)
     with open(g_path, 'rb') as f:
         df = pickle.load(f)

@@ -37,6 +37,9 @@ dependencies:
   - pylint
   - flake8
   - msgpack<0.6.0 # Resolves max_map_len error https://github.com/explosion/spaCy/issues/2996
+  - chainer=7.2.0
+  - cupy=7.3.0
+  - plotnine
   - pip:
     - pyfunctional
     - git+https://github.com/EntilZha/result.git

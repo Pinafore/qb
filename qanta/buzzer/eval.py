@@ -16,9 +16,8 @@ from qanta.util.constants import BUZZER_DEV_FOLD, BUZZER_TEST_FOLD, \
     GUESSER_TEST_FOLD
 from qanta.reporting.curve_score import CurveScore
 
-import matplotlib
-matplotlib.use('Agg')
-from plotnine import ggplot, aes, geom_area, geom_smooth, geom_col
+# import matplotlib
+# matplotlib.use('Agg')
 
 
 class ThresholdBuzzer:
@@ -98,8 +97,7 @@ def simulate_game(guesses, buzzes, df, question):
 def get_buzzes(model, fold=BUZZER_DEV_FOLD):
     valid = read_data(fold)
     print('# {} data: {}'.format(fold, len(valid)))
-    valid_iter = chainer.iterators.SerialIterator(
-            valid, 64, repeat=False, shuffle=False)
+    valid_iter = chainer.iterators.SerialIterator(valid, 64, repeat=False, shuffle=False)
 
     predictions = []
     buzzes = dict()

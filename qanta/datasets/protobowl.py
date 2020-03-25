@@ -21,7 +21,6 @@ def process_log_line(x):
     '''Process a single line of the log'''
     obj = x['object']
     date = datetime.strptime(x['date'][:-6], '%a %b %d %Y %H:%M:%S %Z%z')
-    total_time = obj['time_elapsed'] + obj['time_remaining']
     relative_position = obj['time_elapsed'] / obj['time_remaining']
     return [date,
             obj['guess'],
@@ -93,10 +92,10 @@ def load_protobowl(
             if len(line) < 1:
                 break
             while not line.endswith('}}'):
-                l = f.readline()
-                if l is None:
+                _line = f.readline()
+                if _line is None:
                     break
-                line += l.strip()
+                line += _line.strip()
             try:
                 line = json.loads(line)
             except ValueError:
@@ -106,7 +105,7 @@ def load_protobowl(
                 continue
             count += 1
             if count % 10000 == 0:
-                sys.stderr.write('\rdone: {}/9707590'.format(count))
+                sys.stderr.write('\rdone: {}/5130000'.format(count))
             x, qid, question_text = process_log_line(line)
             if qid not in questions:
                 questions[qid] = question_text
@@ -123,11 +122,9 @@ def load_protobowl(
             filtered_data.append(x)
 
     df = pd.DataFrame(
-            filtered_data,
-            columns=['date', 'guess', 'qid',
-                     'time_elapsed', 'time_remaining',
-                     'relative_position', 'result', 'uid',
-                     'user_n_records'])
+        filtered_data,
+        columns=['date', 'guess', 'qid', 'time_elapsed', 'time_remaining',
+                 'relative_position', 'result', 'uid', 'user_n_records'])
 
     df_grouped = df.groupby('uid')
     uids = list(df_grouped.groups.keys())

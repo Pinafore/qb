@@ -2,7 +2,7 @@ import pickle
 from tqdm import tqdm
 from elasticsearch_dsl import Search
 from elasticsearch_dsl.connections import connections
-from qanta.datasets.quiz_bowl import QuestionDatabase
+# from qanta.datasets.quiz_bowl import QuestionDatabase
 
 connections.create_connection(hosts=['localhost'])
 
@@ -20,7 +20,7 @@ class color:
 
 def get_highlights(text):
     # query top 10 guesses
-    s = Search(index='qb_ir_instance_of')[0:10].query('multi_match', query=text,
+    s = Search(index='qb_0')[0:10].query('multi_match', query=text,
             fields=['wiki_content', 'qb_content', 'source_content'])
     s = s.highlight('qb_content').highlight('wiki_content')
     results = list(s.execute())
@@ -48,25 +48,25 @@ def get_highlights(text):
                   'guess': guess.page}
     return highlights
 
-def test():
-    questions = QuestionDatabase().all_questions()
-    guessdev_questions = [x for x in questions.values() if x.fold == 'guessdev']
-    highlights = get_highlights(questions[0].flatten_text())
-    print(highlights['guess'])
-    for x in highlights['wiki']:
-        print('WIKI|' + x.replace('<em>', color.RED).replace('</em>', color.END))
-    for x in highlights['qb']:
-        print('QUIZ|' + x.replace('<em>', color.RED).replace('</em>', color.END))
-
-def main():
-    questions = QuestionDatabase().all_questions()
-    guessdev_questions = {k: v  for k, v in questions.items() 
-            if v.fold == 'guessdev'}
-    highlights = {}
-    for k, v in tqdm(guessdev_questions.items()):
-        highlights[k] = get_highlights(v.flatten_text())
-    with open('guessdev_highlight.pkl', 'wb') as f:
-        pickle.dump(highlights, f)
+# def test():
+#     questions = QuestionDatabase().all_questions()
+#     guessdev_questions = [x for x in questions.values() if x.fold == 'guessdev']
+#     highlights = get_highlights(questions[0].flatten_text())
+#     print(highlights['guess'])
+#     for x in highlights['wiki']:
+#         print('WIKI|' + x.replace('<em>', color.RED).replace('</em>', color.END))
+#     for x in highlights['qb']:
+#         print('QUIZ|' + x.replace('<em>', color.RED).replace('</em>', color.END))
+# 
+# def main():
+#     questions = QuestionDatabase().all_questions()
+#     guessdev_questions = {k: v  for k, v in questions.items() 
+#             if v.fold == 'guessdev'}
+#     highlights = {}
+#     for k, v in tqdm(guessdev_questions.items()):
+#         highlights[k] = get_highlights(v.flatten_text())
+#     with open('guessdev_highlight.pkl', 'wb') as f:
+#         pickle.dump(highlights, f)
 
 if __name__ == '__main__':
     test()

@@ -69,7 +69,7 @@ class CurveScore:
         return self.get_weight(rel_position)
 
     def fit_curve(self):
-        df, questions = load_protobowl()
+        df = load_protobowl()
         # convert prompt to false
         df.result = df.result.apply(lambda x: x is True)
 
