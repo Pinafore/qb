@@ -34,8 +34,7 @@ class LinearBuzzer(chainer.Chain):
         return ys
 
     def predict(self, xs, softmax=False, argmax=False):
-        sections = np.cumsum(
-                [len(x) for x in xs[:-1]], dtype=np.int32)
+        sections = np.cumsum([len(x) for x in xs[:-1]], dtype=np.int32)
         ys = self.forward(xs)
         if softmax:
             ys = F.softmax(ys, axis=1).data
@@ -80,8 +79,7 @@ class RNNBuzzer(chainer.Chain):
         return ys
 
     def predict(self, xs, softmax=False, argmax=False):
-        sections = np.cumsum(
-                [len(x) for x in xs[:-1]], dtype=np.int32)
+        sections = np.cumsum([len(x) for x in xs[:-1]], dtype=np.int32)
         ys = self.forward(xs)
         if softmax:
             ys = F.softmax(ys, axis=1).data
@@ -127,8 +125,7 @@ class MLPBuzzer(chainer.Chain):
         return ys
 
     def predict(self, xs, softmax=False, argmax=False):
-        sections = np.cumsum(
-                [len(x) for x in xs[:-1]], dtype=np.int32)
+        sections = np.cumsum([len(x) for x in xs[:-1]], dtype=np.int32)
         ys = self.forward(xs)
         if softmax:
             ys = F.softmax(ys, axis=1).data

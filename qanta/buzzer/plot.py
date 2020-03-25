@@ -10,7 +10,7 @@ from qanta.guesser.abstract import AbstractGuesser
 
 import matplotlib
 matplotlib.use('Agg')
-from plotnine import ggplot, aes, geom_area, geom_smooth, geom_col,\
+from plotnine import ggplot, aes, geom_area, geom_col,\
     facet_grid, coord_flip, theme, scale_fill_brewer, theme_light,\
     element_line, element_rect, element_text, element_blank
 
@@ -72,8 +72,7 @@ def protobowl(fold=BUZZER_DEV_FOLD):
 
     p = (
         ggplot(df)
-        + geom_col(aes(x='Possibility', y='Count', fill='Outcome'),
-                   width=0.7)
+        + geom_col(aes(x='Possibility', y='Count', fill='Outcome'), width=0.7)
         + facet_grid('Model ~')
         + coord_flip()
         + theme_fs()
@@ -163,9 +162,7 @@ def all_stack(fold=BUZZER_DEV_FOLD):
         + geom_area(aes(x='Position', y='Frequency', fill='Buzzing'))
         + facet_grid('~ Model')
         + theme_fs()
-        + theme(
-            aspect_ratio=1,
-        )
+        + theme(aspect_ratio=1)
         + scale_fill_brewer(type='div', palette=7)
     )
     p.save('output/buzzer/{}_stack.pdf'.format(fold))
