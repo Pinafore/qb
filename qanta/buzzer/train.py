@@ -44,7 +44,9 @@ def main(model):
 
 
 if __name__ == '__main__':
-    model = LinearBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2, dropout=0.4)
+    # model = LinearBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2, dropout=0.4)
+    # model = MLPBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2, dropout=0.4)
+    model = RNNBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2, dropout=0.4)
     chainer.backends.cuda.get_device_from_id(0).use()
     model.to_gpu()
     main(model)

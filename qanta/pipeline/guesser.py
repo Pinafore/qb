@@ -151,7 +151,7 @@ class GenerateGuesses(Task):
         return [
             LocalTarget(AbstractGuesser.output_path(
                 self.guesser_module, self.guesser_class, self.config_num, f
-        )) for f in files]
+            )) for f in files]
 
 
 class GenerateAllGuesses(WrapperTask):

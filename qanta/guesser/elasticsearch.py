@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 
 import click
-from elasticsearch_dsl import DocType, Text, Keyword, Search, Index
+from elasticsearch_dsl import Document, Text, Keyword, Search, Index
 from elasticsearch_dsl.connections import connections
 import elasticsearch
 import tqdm
@@ -63,7 +63,7 @@ def create_doctype(index_name, similarity):
         wiki_content_field = Text(similarity=similarity)
         qb_content_field = Text(similarity=similarity)
 
-    class Answer(DocType):
+    class Answer(Document):
         page = Text(fields={'raw': Keyword()})
         wiki_content = wiki_content_field
         qb_content = qb_content_field
