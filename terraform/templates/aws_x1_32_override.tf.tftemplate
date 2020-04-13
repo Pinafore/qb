@@ -1,7 +1,0 @@
-variable "spot_price" {
-  default = "4.00"
-}
-
-resource "aws_spot_instance_request" "qanta" {
-  instance_type = "x1.32xlarge"
-}
