@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "qanta"
+version = "0.1.0"
+description = ""
+authors = ["Pedro Rodriguez <me@pedro.ai>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+torch = "^1.5.1"
+luigi = "^3.0.1"
+numpy = "^1.19.1"
+scipy = "^1.5.2"
+pandas = "^1.0.5"
+scikit-learn = "^0.23.1"
+nltk = "^3.5"
+matplotlib = "^3.3.0"
+requests = "^2.24.0"
+pyyaml = "^5.3.1"
+jinja2 = "^2.11.2"
+spacy = "^2.3.2"
+seaborn = "^0.10.1"
+click = "^7.1.2"
+unidecode = "^1.1.1"
+python-levenshtein = "^0.12.0"
+fuzzywuzzy = "^0.18.0"
+chainer = "7.2"
+awscli = "^1.18.106"
+boto3 = "^1.14.29"
+py4j = "^0.10.9"
+flask = "^1.1.2"
+pypandoc = "^1.5"
+elasticsearch-dsl = "6.2"
+plotnine = "^0.7.0"
+beautifulsoup4 = "^4.9.1"
+cloudpickle = "^1.5.0"
+cupy = "7.3"
+pedroai = "^0.1.5"
+torchtext = {git = "https://github.com/EntilZha/text.git", rev = "cddf59085e137d95e8c3b7f57840ef48f1bcb6b8"}
+typer = "^0.3.1"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.5.3"
+black = "^19.10b0"
+jupyter = "^1.0.0"
+ipython = "^7.16.1"
+pyflakes = "^2.2.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

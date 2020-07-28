@@ -6,7 +6,7 @@ import yaml
 import string
 import re
 from qanta.util.constants import WIKI_TITLES_PICKLE
-from result import Ok, Err, Result
+from pedroai.result import Ok, Err, Result
 
 PUNCTUATION = string.punctuation
 PAREN = re.compile(r'\([^)]*\)')

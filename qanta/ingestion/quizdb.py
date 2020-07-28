@@ -4,19 +4,23 @@ used to download QuizDB raw data dumps which are then hosted on AWS and processe
 via qanta.ingestion.pipeline.
 """
 import time
+import json
 import os
 import requests
 from qanta import qlogging
 from tqdm import tqdm
+import typer
+
+app = typer.Typer()
 
 
 log = qlogging.get(__name__)
 
-TOSSUP_URL = 'https://www.quizdb.org/admin/tossups.json?order=id_desc&page={page}&per_page=100'
-TOURNAMENT_URL = 'https://www.quizdb.org/admin/tournaments.json?order=year_desc&page={page}&per_page=100'
-CATEGORY_URL = 'https://www.quizdb.org/admin/categories.json?page={page}&per_page=100'
-SUBCATEGORY_URL = 'https://www.quizdb.org/admin/subcategories.json?order=name_asc&page={page}&per_page=100'
-BONUSES_URL = 'https://www.quizdb.org/admin/bonuses.json?order=id_desc&page={page}&per_page=100'
+TOSSUP_URL = 'https://www.quizdb.org/admin/tossups.json?order=id_desc&page={page}&per_page=1000'
+TOURNAMENT_URL = 'https://www.quizdb.org/admin/tournaments.json?order=year_desc&page={page}&per_page=1000'
+CATEGORY_URL = 'https://www.quizdb.org/admin/categories.json?page={page}&per_page=1000'
+SUBCATEGORY_URL = 'https://www.quizdb.org/admin/subcategories.json?order=name_asc&page={page}&per_page=1000'
+BONUSES_URL = 'https://www.quizdb.org/admin/bonuses.json?order=id_desc&page={page}&per_page=1000'
 QUIZ_DB_SESSION = os.environ.get('QUIZ_DB_SESSION')
 
 
@@ -105,3 +109,17 @@ def fetch_all_tossups(start_page, end_page):
 
 def fetch_all_bonuses(start_page, end_page):
     return fetch_paginated_resource(fetch_bonuses_page, start_page, end_page)
+
+
+@app.command()
+def get_tossups(out_path: str):
+    tossups = fetch_all_tossups(1, 1000)
+    with open(out_path, 'w') as f:
+        json.dump({'tossups': tossups}, f)
+
+
+@app.command()
+def get_bonuses(out_path: str):
+    bonuses = fetch_all_bonuses(1, 1000)
+    with open(out_path, 'w') as f:
+        json.dump({'bonuses': bonuses}, f)
