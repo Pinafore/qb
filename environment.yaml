@@ -2,6 +2,7 @@ name: qb
 dependencies:
   - python=3.6
   - pytorch=0.3.1
+  - luigi=2.7.*
   - cudnn=7.0.5
   - numpy=1.15.*
   - scipy=1.1.*
@@ -15,13 +16,9 @@ dependencies:
   - spacy=2.0.0
   - seaborn=0.9.*
   - click=7.0.*
-  - luigi=2.7.*
   - unidecode=1.0.*
   - python-levenshtein
   - fuzzywuzzy
-  - chainer=4.5.*
-  - tensorflow=1.10.* # or tensorflow-gpu, mostly for tensorboard which doesn't need GPU
-  - tensorboardx
   - awscli=1.16.*
   - py4j
   - boto3
@@ -39,10 +36,9 @@ dependencies:
   - msgpack<0.6.0 # Resolves max_map_len error https://github.com/explosion/spaCy/issues/2996
   - chainer=7.2.0
   - cupy=7.3.0
-  - plotnine
   - pip:
     - pyfunctional
-    - git+https://github.com/EntilZha/result.git
+    - pedroai
     - git+https://github.com/EntilZha/text.git@cddf59085e137d95e8c3b7f57840ef48f1bcb6b8
 channels:
   - anaconda
