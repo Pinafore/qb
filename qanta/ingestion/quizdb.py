@@ -25,7 +25,11 @@ QUIZ_DB_SESSION = os.environ.get('QUIZ_DB_SESSION')
 
 
 def fetch_authenticated_url(url):
-    cookie = {'_quizdb_session': QUIZ_DB_SESSION}
+    cookie = {
+        '_quizdb_session': '',
+        '_remember_admin_user_token': '',
+        '_session_id': ''
+    }
     start = time.time()
     r = requests.get(url, cookies=cookie)
     end = time.time()
@@ -72,34 +76,18 @@ def fetch_bonuses_page(page):
 
 
 def fetch_paginated_resource(fetch_page_function, start_page, end_page):
-    delay = 2
-    should_sleep = False
+    delay = .5
     all_resources = []
     for page in tqdm(range(start_page, end_page)):
         log.info(f'Fetching page: {page}')
         resources, response_time = fetch_page_function(page)
         all_resources.extend(resources)
-        log.info(f'Found {len(resources)} questions in {response_time}s')
+        log.info(f'Found {len(resources)} items in {response_time}s')
 
         if len(resources) == 0:
             log.info(f'No resources found on page: {page}, exiting')
             break
-
-        if response_time > 1:
-            log.info(f'Response time is {response_time}s, waiting for 10s')
-            should_sleep = True
-        elif response_time > .5 and delay != 4:
-            log.info(f'Response time is {response_time}s, increasing delay to 4s')
-            delay = 4
-        elif delay != 2:
-            log.info(f'Response time is {response_time}s, decreasing delay to 2s')
-            delay = 2
-
-        if should_sleep:
-            should_sleep = False
-            time.sleep(10)
-        else:
-            time.sleep(delay)
+        time.sleep(delay)
     return all_resources
 
 
@@ -123,3 +111,27 @@ def get_bonuses(out_path: str):
     bonuses = fetch_all_bonuses(1, 1000)
     with open(out_path, 'w') as f:
         json.dump({'bonuses': bonuses}, f)
+
+
+@app.command()
+def get_tournaments(out_path: str):
+    tournaments = fetch_paginated_resource(fetch_tournament_page, 1, 1000)
+    with open(out_path, 'w') as f:
+        json.dump({'tournaments': tournaments}, f)
+
+
+@app.command()
+def get_categories(out_path: str):
+    categories = fetch_paginated_resource(fetch_category_page, 1, 1000)
+    with open(out_path, 'w') as f:
+        json.dump({'categories': categories}, f)
+
+        
+@app.command()
+def get_subcategories(out_path: str):
+    subcategories = fetch_paginated_resource(fetch_subcategory_page, 1, 1000)
+    with open(out_path, 'w') as f:
+        json.dump({'subcategories': subcategories}, f)
+
+if __name__ == "__main__":
+    app()
