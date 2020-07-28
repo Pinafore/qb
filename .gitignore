@@ -60,3 +60,4 @@ elasticsearch.yml
 *.ipynb
 .vscode
 pytype_output
+output.tar.gz
