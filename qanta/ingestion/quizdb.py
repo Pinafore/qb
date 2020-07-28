@@ -2,6 +2,10 @@
 This code is not directly called anywhere in the codebase, but contains the scripts
 used to download QuizDB raw data dumps which are then hosted on AWS and processed
 via qanta.ingestion.pipeline.
+
+This code should be called from the command line, but requires additional configuration
+to work correctly. Namely, the quizdb API requires setting up the cookies associated with
+an admin account. Be sure to fill these in where they are empty below the CHANGEME comment
 """
 import time
 import json
@@ -25,6 +29,7 @@ QUIZ_DB_SESSION = os.environ.get('QUIZ_DB_SESSION')
 
 
 def fetch_authenticated_url(url):
+    # CHANGEME
     cookie = {
         '_quizdb_session': '',
         '_remember_admin_user_token': '',
