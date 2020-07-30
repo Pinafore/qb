@@ -19,8 +19,12 @@ from qanta.preprocess import preprocess_dataset, tokenize_question
 from qanta.util.io import get_tmp_filename, shell
 from qanta.config import conf
 from qanta.torch import (
-    BaseLogger, TerminateOnNaN, EarlyStopping, ModelCheckpoint,
-    MaxEpochStopping, TrainingManager
+    BaseLogger,
+    TerminateOnNaN,
+    EarlyStopping,
+    ModelCheckpoint,
+    MaxEpochStopping,
+    TrainingManager,
 )
 from qanta import qlogging
 
@@ -36,28 +40,35 @@ CUDA = torch.cuda.is_available()
 def create_save_model(model):
     def save_model(path):
         torch.save(model.state_dict(), path)
+
     return save_model
 
 
 class ElmoModel(nn.Module):
-    def __init__(self, n_classes, dropout=.5):
+    def __init__(self, n_classes, dropout=0.5):
         super().__init__()
         self.dropout = dropout
         # This turns off gradient updates for the elmo model, but still leaves scalar mixture
         # parameters as tunable, provided that references to the scalar mixtures are extracted
         # and plugged into the optimizer
-        self.elmo = Elmo(ELMO_OPTIONS_FILE, ELMO_WEIGHTS_FILE, 2, dropout=dropout, requires_grad=False)
+        self.elmo = Elmo(
+            ELMO_OPTIONS_FILE,
+            ELMO_WEIGHTS_FILE,
+            2,
+            dropout=dropout,
+            requires_grad=False,
+        )
         self.classifier = nn.Sequential(
             nn.Linear(2 * ELMO_DIM, n_classes),
             nn.BatchNorm1d(n_classes),
-            nn.Dropout(dropout)
+            nn.Dropout(dropout),
         )
 
     def forward(self, questions, lengths):
         embeddings = self.elmo(questions)
-        layer_0 = embeddings['elmo_representations'][0]
+        layer_0 = embeddings["elmo_representations"][0]
         layer_0 = layer_0.sum(1) / lengths
-        layer_1 = embeddings['elmo_representations'][1]
+        layer_1 = embeddings["elmo_representations"][1]
         layer_1 = layer_1.sum(1) / lengths
         layer = torch.cat([layer_0, layer_1], 1)
         return self.classifier(layer)
@@ -68,7 +79,11 @@ def batchify(x_data, y_data, batch_size=128, shuffle=False):
     for i in range(0, len(x_data), batch_size):
         start, stop = i, i + batch_size
         x_batch = batch_to_ids(x_data[start:stop])
-        lengths = Variable(torch.from_numpy(np.array([max(len(x), 1) for x in x_data[start:stop]])).float()).view(-1, 1)
+        lengths = Variable(
+            torch.from_numpy(
+                np.array([max(len(x), 1) for x in x_data[start:stop]])
+            ).float()
+        ).view(-1, 1)
         if CUDA:
             y_batch = Variable(torch.from_numpy(np.array(y_data[start:stop])).cuda())
         else:
@@ -85,9 +100,11 @@ class ElmoGuesser(AbstractGuesser):
     def __init__(self, config_num):
         super(ElmoGuesser, self).__init__(config_num)
         if config_num is not None:
-            guesser_conf = conf['guessers']['qanta.guesser.elmo.ElmoGuesser'][self.config_num]
-            self.random_seed = guesser_conf['random_seed']
-            self.dropout = guesser_conf['dropout']
+            guesser_conf = conf["guessers"]["qanta.guesser.elmo.ElmoGuesser"][
+                self.config_num
+            ]
+            self.random_seed = guesser_conf["random_seed"]
+            self.dropout = guesser_conf["dropout"]
         else:
             self.random_seed = None
             self.dropout = None
@@ -102,34 +119,51 @@ class ElmoGuesser(AbstractGuesser):
         self.model_file = None
 
     def parameters(self):
-        return conf['guessers']['qanta.guesser.elmo.ElmoGuesser'][self.config_num]
+        return conf["guessers"]["qanta.guesser.elmo.ElmoGuesser"][self.config_num]
 
     def train(self, training_data: TrainingData) -> None:
-        x_train, y_train, x_val, y_val, vocab, class_to_i, i_to_class = preprocess_dataset(training_data)
+        (
+            x_train,
+            y_train,
+            x_val,
+            y_val,
+            vocab,
+            class_to_i,
+            i_to_class,
+        ) = preprocess_dataset(training_data)
         self.class_to_i = class_to_i
         self.i_to_class = i_to_class
 
-        log.info('Batchifying data')
+        log.info("Batchifying data")
         train_batches = batchify(x_train, y_train, shuffle=True)
         val_batches = batchify(x_val, y_val, shuffle=False)
         self.model = ElmoModel(len(i_to_class), dropout=self.dropout)
         if CUDA:
             self.model = self.model.cuda()
-        log.info(f'Parameters:\n{self.parameters()}')
-        log.info(f'Model:\n{self.model}')
+        log.info(f"Parameters:\n{self.parameters()}")
+        log.info(f"Model:\n{self.model}")
         parameters = list(self.model.classifier.parameters())
         for mix in self.model.elmo._scalar_mixes:
             parameters.extend(list(mix.parameters()))
         self.optimizer = Adam(parameters)
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, patience=5, verbose=True, mode="max"
+        )
         temp_prefix = get_tmp_filename()
-        self.model_file = f'{temp_prefix}.pt'
-        manager = TrainingManager([
-            BaseLogger(log_func=log.info), TerminateOnNaN(), EarlyStopping(monitor='test_acc', patience=10, verbose=1),
-            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), self.model_file, monitor='test_acc')
-        ])
-        log.info('Starting training')
+        self.model_file = f"{temp_prefix}.pt"
+        manager = TrainingManager(
+            [
+                BaseLogger(log_func=log.info),
+                TerminateOnNaN(),
+                EarlyStopping(monitor="test_acc", patience=10, verbose=1),
+                MaxEpochStopping(100),
+                ModelCheckpoint(
+                    create_save_model(self.model), self.model_file, monitor="test_acc"
+                ),
+            ]
+        )
+        log.info("Starting training")
         epoch = 0
         while True:
             self.model.train()
@@ -140,12 +174,11 @@ class ElmoGuesser(AbstractGuesser):
             test_acc, test_loss, test_time = self.run_epoch(val_batches, train=False)
 
             stop_training, reasons = manager.instruct(
-                train_time, train_loss, train_acc,
-                test_time, test_loss, test_acc
+                train_time, train_loss, train_acc, test_time, test_loss, test_acc
             )
 
             if stop_training:
-                log.info(' '.join(reasons))
+                log.info(" ".join(reasons))
                 break
             else:
                 self.scheduler.step(test_acc)
@@ -164,7 +197,7 @@ class ElmoGuesser(AbstractGuesser):
             batch_loss = self.criterion(out, y_batch)
             if train:
                 batch_loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), .25)
+                torch.nn.utils.clip_grad_norm(self.model.parameters(), 0.25)
                 self.optimizer.step()
             batch_accuracies.append(accuracy)
             batch_losses.append(batch_loss.data[0])
@@ -172,7 +205,9 @@ class ElmoGuesser(AbstractGuesser):
 
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
 
-    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Page, float]]]:
+    def guess(
+        self, questions: List[QuestionText], max_n_guesses: Optional[int]
+    ) -> List[List[Tuple[Page, float]]]:
         y_data = np.zeros((len(questions)))
         x_data = [tokenize_question(q) for q in questions]
         batches = batchify(x_data, y_data, shuffle=False, batch_size=32)
@@ -192,36 +227,41 @@ class ElmoGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls) -> List[str]:
-        return ['elmo.pt', 'elmo.pkl']
+        return ["elmo.pt", "elmo.pkl"]
 
     @classmethod
     def load(cls, directory: str):
-        with open(os.path.join(directory, 'elmo.pkl'), 'rb') as f:
+        with open(os.path.join(directory, "elmo.pkl"), "rb") as f:
             params = cloudpickle.load(f)
 
-        guesser = ElmoGuesser(params['config_num'])
-        guesser.class_to_i = params['class_to_i']
-        guesser.i_to_class = params['i_to_class']
-        guesser.random_seed = params['random_seed']
-        guesser.dropout = params['dropout']
+        guesser = ElmoGuesser(params["config_num"])
+        guesser.class_to_i = params["class_to_i"]
+        guesser.i_to_class = params["i_to_class"]
+        guesser.random_seed = params["random_seed"]
+        guesser.dropout = params["dropout"]
         guesser.model = ElmoModel(len(guesser.i_to_class))
-        guesser.model.load_state_dict(torch.load(
-            os.path.join(directory, 'elmo.pt'), map_location=lambda storage, loc: storage
-        ))
+        guesser.model.load_state_dict(
+            torch.load(
+                os.path.join(directory, "elmo.pt"),
+                map_location=lambda storage, loc: storage,
+            )
+        )
         guesser.model.eval()
         if CUDA:
             guesser.model = guesser.model.cuda()
         return guesser
 
     def save(self, directory: str) -> None:
-        shutil.copyfile(self.model_file, os.path.join(directory, 'elmo.pt'))
-        shell(f'rm -f {self.model_file}')
-        with open(os.path.join(directory, 'elmo.pkl'), 'wb') as f:
-            cloudpickle.dump({
-                'class_to_i': self.class_to_i,
-                'i_to_class': self.i_to_class,
-                'config_num': self.config_num,
-                'random_seed': self.random_seed,
-                'dropout': self.dropout
-            }, f)
-
+        shutil.copyfile(self.model_file, os.path.join(directory, "elmo.pt"))
+        shell(f"rm -f {self.model_file}")
+        with open(os.path.join(directory, "elmo.pkl"), "wb") as f:
+            cloudpickle.dump(
+                {
+                    "class_to_i": self.class_to_i,
+                    "i_to_class": self.i_to_class,
+                    "config_num": self.config_num,
+                    "random_seed": self.random_seed,
+                    "dropout": self.dropout,
+                },
+                f,
+            )

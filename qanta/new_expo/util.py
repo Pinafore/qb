@@ -4,6 +4,7 @@ class GetchUnix:
 
     def __call__(self):
         import sys, tty, termios
+
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
@@ -14,7 +15,9 @@ class GetchUnix:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
 
+
 getch = GetchUnix()
+
 
 def interpret_keypress():
     """
@@ -24,10 +27,10 @@ def interpret_keypress():
     """
     press = getch()
 
-    if press == 'Q':
-        raise Exception('Exiting expo by user request from pressing Q')
+    if press == "Q":
+        raise Exception("Exiting expo by user request from pressing Q")
 
-    if press == '\x1b':
+    if press == "\x1b":
         getch()
         getch()
         press = "direction"
@@ -38,4 +41,3 @@ def interpret_keypress():
         except ValueError:
             press = None
     return press
-

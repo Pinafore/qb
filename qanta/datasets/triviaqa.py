@@ -9,12 +9,12 @@ class TriviaQADataset(AbstractDataset):
         self.answers = answers
 
     def training_data(self):
-        with open('data/external/unfiltered-web-train.json') as f:
-            train = json.load(f)['Data']
+        with open("data/external/unfiltered-web-train.json") as f:
+            train = json.load(f)["Data"]
 
-        wiki_train = [q for q in train if q['Answer']['Type'] == 'WikipediaEntity']
-        x_train = [q['Question'] for q in wiki_train]
-        y_train = [q['Answer']['MatchedWikiEntityName'] for q in wiki_train]
+        wiki_train = [q for q in train if q["Answer"]["Type"] == "WikipediaEntity"]
+        x_train = [q["Question"] for q in wiki_train]
+        y_train = [q["Answer"]["MatchedWikiEntityName"] for q in wiki_train]
         questions = []
         answers = []
         for q, a in zip(x_train, y_train):

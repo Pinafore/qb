@@ -7,7 +7,7 @@ from qanta.new_expo.hook import GameInterfaceHook, NotifyBuzzingHook
 
 
 class Game(object):
-    '''A Game object represents a QuizBowl game with multiple rounds, where
+    """A Game object represents a QuizBowl game with multiple rounds, where
     each round is a Round object.
     Game process:
     - Beginning of a round
@@ -31,7 +31,8 @@ class Game(object):
         agents: players
         hooks: hooks that are callable are ones that need to created by passing
         the game control itself, they are internal hooks 
-    '''
+    """
+
     def __init__(self, question_list, agents, hooks=[]):
         self.question_iter = iter(question_list)
         self.agents = agents
@@ -43,43 +44,45 @@ class Game(object):
         self.setup_hooks()
 
     def setup_hooks(self):
-        '''Setup some extra hooks that need access to the internal state of
-        game control'''
-        # create internal hooks that requires access to game control 
+        """Setup some extra hooks that need access to the internal state of
+        game control"""
+        # create internal hooks that requires access to game control
         for i in range(len(self.hooks)):
             if callable(self.hooks[i]):
                 self.hooks[i] = self.hooks[i](self)
 
-        hooks = {'round': [x for x in self.hooks if x.call_every == 'round'], 
-                 'step': [x for x in self.hooks if x.call_every == 'step']}
+        hooks = {
+            "round": [x for x in self.hooks if x.call_every == "round"],
+            "step": [x for x in self.hooks if x.call_every == "step"],
+        }
         self.hooks = hooks
 
     def evaluate(self, agent):
-        '''Evaluate an agent's guess'''
+        """Evaluate an agent's guess"""
         guess = agent.action.guess
         if guess is None:
-            guess = ''
+            guess = ""
         if isinstance(agent, HumanAgent):
-            '''In the case of human agent, guess is an integer that indicates
+            """In the case of human agent, guess is an integer that indicates
             the player number in the human team. The evaluation of human agent
-            is determined by keyboard input.'''
+            is determined by keyboard input."""
             print()
-            print('=============================')
+            print("=============================")
             response = input("Player {}, provide an answer:\t".format(guess))
             # FIXME only accept + and -
-            if '+' in response:
+            if "+" in response:
                 result = True
             else:
                 result = False
         else:
             print()
-            print('=============================')
-            print('QANTA: {}'.format(guess))
-            print('=============================')
+            print("=============================")
+            print("QANTA: {}".format(guess))
+            print("=============================")
             print()
             result = self.round.evaluate(guess)
         return result
-    
+
     def run_hooks(self, call_every):
         for hook in self.hooks[call_every]:
             hook.run()
@@ -120,7 +123,7 @@ class Game(object):
                     if self.evaluate(self.agents[i]):
                         self.scores[i] += 10
                 break
-            
+
             for i, x in enumerate(self.agents):
                 x.update(state)
 
@@ -139,26 +142,28 @@ class Game(object):
             if all(self.buzzed) or terminate:
                 break
 
-            self.run_hooks('step')
+            self.run_hooks("step")
         # end of round
-        self.run_hooks('round')
+        self.run_hooks("round")
 
     def run(self, n_rounds):
         for round_num in range(n_rounds):
             self.round_num = round_num + 1
             self.run_round()
 
-class Round(object): 
-    '''A Round object represents a single question in the game. 
+
+class Round(object):
+    """A Round object represents a single question in the game. 
     State of the round is determined by a Quetion object and the progress.
     A Round can be seen as a RL game environment.
     It's either a TossUpRound or a BonusRound.
-    '''
+    """
+
     def __init__(self, question):
         self.question = question
 
-class TossUpRound(Round):
 
+class TossUpRound(Round):
     def __init__(self, question: TossUpQuestion):
         self.question = question
         self.position = 0
@@ -173,7 +178,7 @@ class TossUpRound(Round):
             return False
 
     def get_clue(self):
-        return ' '.join(self.question_text[:self.position])
+        return " ".join(self.question_text[: self.position])
 
     def get_answer(self):
         return self.question.page
@@ -184,6 +189,7 @@ class TossUpRound(Round):
             return None
         else:
             return self.get_clue()
+
 
 class BonusRound(Round):
     pass

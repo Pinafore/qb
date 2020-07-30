@@ -12,8 +12,7 @@ from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.datasets.protobowl import load_protobowl
 from qanta.buzzer.util import read_data, convert_seq
-from qanta.util.constants import BUZZER_DEV_FOLD, BUZZER_TEST_FOLD, \
-    GUESSER_TEST_FOLD
+from qanta.util.constants import BUZZER_DEV_FOLD, BUZZER_TEST_FOLD, GUESSER_TEST_FOLD
 from qanta.reporting.curve_score import CurveScore
 
 # import matplotlib
@@ -21,11 +20,10 @@ from qanta.reporting.curve_score import CurveScore
 
 
 class ThresholdBuzzer:
-
     def __init__(self, threshold=0.3):
         self.threshold = threshold
-        self.model_name = 'ThresholdBuzzer'
-        self.model_dir = 'output/buzzer/ThresholdBuzzer'
+        self.model_name = "ThresholdBuzzer"
+        self.model_dir = "output/buzzer/ThresholdBuzzer"
 
     def predict(self, xs, softmax=True):
         preds = []
@@ -47,18 +45,18 @@ def simulate_game(guesses, buzzes, df, question):
 
     optimal_pos = 1.1
     buzzing_pos = 1.1
-    guess = 'NULL'
-    final_guess = 'NULL'
+    guess = "NULL"
+    final_guess = "NULL"
 
     char_indices, bs = buzzes[question.qanta_id]
     bs = [x[1] > x[0] for x in bs]
-    gs = guesses.get_group(question.qanta_id).groupby('char_index')
+    gs = guesses.get_group(question.qanta_id).groupby("char_index")
     if True in bs:
         char_index = char_indices[bs.index(True)]
         buzzing_pos = char_index / len(question.text)
-        guess = gs.get_group(char_index).head(1)['guess'].values[0]
+        guess = gs.get_group(char_index).head(1)["guess"].values[0]
 
-    final_guess = gs.get_group(char_indices[-1]).head(1)['guess'].values[0]
+    final_guess = gs.get_group(char_indices[-1]).head(1)["guess"].values[0]
     top_guesses = gs.aggregate(lambda x: x.head(1)).guess.tolist()
     if question.page in top_guesses:
         optimal_pos = top_guesses.index(question.page)
@@ -96,15 +94,17 @@ def simulate_game(guesses, buzzes, df, question):
 
 def get_buzzes(model, fold=BUZZER_DEV_FOLD):
     valid = read_data(fold)
-    print('# {} data: {}'.format(fold, len(valid)))
-    valid_iter = chainer.iterators.SerialIterator(valid, 64, repeat=False, shuffle=False)
+    print("# {} data: {}".format(fold, len(valid)))
+    valid_iter = chainer.iterators.SerialIterator(
+        valid, 64, repeat=False, shuffle=False
+    )
 
     predictions = []
     buzzes = dict()
     for batch in tqdm(valid_iter):
         qids, vectors, labels, positions = list(map(list, zip(*batch)))
         batch = convert_seq(batch, device=0)
-        preds = model.predict(batch['xs'], softmax=True)
+        preds = model.predict(batch["xs"], softmax=True)
         preds = [p.tolist() for p in preds]
         predictions.extend(preds)
         for i, qid in enumerate(qids):
@@ -113,9 +113,8 @@ def get_buzzes(model, fold=BUZZER_DEV_FOLD):
                 buzzes[qid].append((pos, pred))
             buzzes[qid] = list(map(list, zip(*buzzes[qid])))
 
-    buzz_dir = os.path.join(model.model_dir,
-                            '{}_buzzes.pkl'.format(fold))
-    with open(buzz_dir, 'wb') as f:
+    buzz_dir = os.path.join(model.model_dir, "{}_buzzes.pkl".format(fold))
+    with open(buzz_dir, "wb") as f:
         pickle.dump(buzzes, f)
     return buzzes
 
@@ -123,19 +122,18 @@ def get_buzzes(model, fold=BUZZER_DEV_FOLD):
 def protobowl(model, fold=BUZZER_DEV_FOLD):
     buzzes = get_buzzes(model, fold)
 
-    '''eval'''
-    guesses_dir = AbstractGuesser.output_path(
-        'qanta.guesser.rnn', 'RnnGuesser', 0, '')
-    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, 'char')
-    with open(guesses_dir, 'rb') as f:
+    """eval"""
+    guesses_dir = AbstractGuesser.output_path("qanta.guesser.rnn", "RnnGuesser", 0, "")
+    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, "char")
+    with open(guesses_dir, "rb") as f:
         guesses = pickle.load(f)
-    guesses = guesses.groupby('qanta_id')
+    guesses = guesses.groupby("qanta_id")
 
     questions = QuizBowlDataset(buzzer_train=True).questions_by_fold()
     questions = questions[fold]
 
     df = load_protobowl()
-    df = df.groupby('qid')
+    df = df.groupby("qid")
 
     worker = partial(simulate_game, guesses, buzzes, df)
 
@@ -146,40 +144,33 @@ def protobowl(model, fold=BUZZER_DEV_FOLD):
         possibility += pos
         outcome += out
 
-    result_df = pd.DataFrame({
-        'Possibility': possibility,
-        'Outcome': outcome,
-    })
+    result_df = pd.DataFrame({"Possibility": possibility, "Outcome": outcome,})
 
-    result_dir = os.path.join(
-        model.model_dir, '{}_protobowl.pkl'.format(fold))
-    with open(result_dir, 'wb') as f:
+    result_dir = os.path.join(model.model_dir, "{}_protobowl.pkl".format(fold))
+    with open(result_dir, "wb") as f:
         pickle.dump(result_df, f)
 
 
 def ew(model, fold=BUZZER_DEV_FOLD):
     buzzes = get_buzzes(model, fold)
 
-    guesses_dir = AbstractGuesser.output_path(
-        'qanta.guesser.rnn', 'RnnGuesser', 0, '')
-    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, 'char')
-    with open(guesses_dir, 'rb') as f:
+    guesses_dir = AbstractGuesser.output_path("qanta.guesser.rnn", "RnnGuesser", 0, "")
+    guesses_dir = AbstractGuesser.guess_path(guesses_dir, fold, "char")
+    with open(guesses_dir, "rb") as f:
         guesses = pickle.load(f)
-    guesses = guesses.groupby('qanta_id')
+    guesses = guesses.groupby("qanta_id")
 
     answers = dict()
     for qid, bs in buzzes.items():
         answers[qid] = []
-        groups = guesses.get_group(qid).groupby('char_index')
+        groups = guesses.get_group(qid).groupby("char_index")
         for char_index, scores in zip(*bs):
-            guess = groups.get_group(char_index).head(1)['guess']
+            guess = groups.get_group(char_index).head(1)["guess"]
             guess = guess.values[0]
             buzz = scores[0] < scores[1]
-            answers[qid].append({
-                'char_index': char_index,
-                'guess': guess,
-                'buzz': buzz,
-            })
+            answers[qid].append(
+                {"char_index": char_index, "guess": guess, "buzz": buzz,}
+            )
 
     questions = QuizBowlDataset(buzzer_train=True).questions_by_fold()
     questions = {q.qanta_id: q for q in questions[fold]}
@@ -189,19 +180,19 @@ def ew(model, fold=BUZZER_DEV_FOLD):
     ew_opt = []
     for qid, answer in answers.items():
         question = questions[qid]
-        q = {'text': question.text, 'page': question.page}
+        q = {"text": question.text, "page": question.page}
         ew.append(curve_score.score(answer, q))
         ew_opt.append(curve_score.score_optimal(answer, q))
     eval_out = {
-        'expected_wins': sum(ew),
-        'n_examples': len(ew),
-        'expected_wins_optimal': sum(ew_opt),
+        "expected_wins": sum(ew),
+        "n_examples": len(ew),
+        "expected_wins_optimal": sum(ew_opt),
     }
     print(json.dumps(eval_out))
     return eval_out
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # model = LinearBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2, dropout=0.4)
     # model = RNNBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2, dropout=0.4)
     # model = MLPBuzzer(n_input=22, n_layers=1, n_hidden=50, n_output=2, dropout=0.4)
@@ -215,5 +206,11 @@ if __name__ == '__main__':
     protobowl(model, BUZZER_DEV_FOLD)
     r1 = ew(model, BUZZER_TEST_FOLD)
     r2 = ew(model, GUESSER_TEST_FOLD)
-    print((r1['expected_wins'] + r2['expected_wins']) / (r1['n_examples'] + r2['n_examples']))
-    print((r1['expected_wins_optimal'] + r2['expected_wins_optimal']) / (r1['n_examples'] + r2['n_examples']))
+    print(
+        (r1["expected_wins"] + r2["expected_wins"])
+        / (r1["n_examples"] + r2["n_examples"])
+    )
+    print(
+        (r1["expected_wins_optimal"] + r2["expected_wins_optimal"])
+        / (r1["n_examples"] + r2["n_examples"])
+    )

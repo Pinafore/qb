@@ -7,9 +7,10 @@ from typing import List, Dict, Tuple, Optional, NamedTuple
 import pickle
 
 import matplotlib
+
 with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
-    matplotlib.use('Agg')
+    warnings.simplefilter("ignore")
+    matplotlib.use("Agg")
 import pandas as pd
 
 from qanta.datasets.abstract import TrainingData, QuestionText, Page
@@ -29,15 +30,18 @@ def get_class(instance_module: str, instance_class: str):
     return py_instance_class
 
 
-GuesserSpec = NamedTuple('GuesserSpec', [
-    ('dependency_module', Optional[str]),
-    ('dependency_class', Optional[str]),
-    ('guesser_module', str),
-    ('guesser_class', str),
-    ('config_num', Optional[int])
-])
+GuesserSpec = NamedTuple(
+    "GuesserSpec",
+    [
+        ("dependency_module", Optional[str]),
+        ("dependency_class", Optional[str]),
+        ("guesser_module", str),
+        ("guesser_class", str),
+        ("config_num", Optional[int]),
+    ],
+)
 
-Guess = namedtuple('Guess', 'fold guess guesser qnum score sentence token')
+Guess = namedtuple("Guess", "fold guess guesser qnum score sentence token")
 
 
 class AbstractGuesser(metaclass=ABCMeta):
@@ -79,7 +83,9 @@ class AbstractGuesser(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[Page, float]]]:
+    def guess(
+        self, questions: List[QuestionText], max_n_guesses: Optional[int]
+    ) -> List[List[Tuple[Page, float]]]:
         """
         Given a list of questions as text, return n_guesses number of guesses per question. Guesses
         must be returned in canonical form, are returned with a score in which higher is better, and
@@ -117,7 +123,9 @@ class AbstractGuesser(metaclass=ABCMeta):
 
     @classmethod
     def files(cls, directory: str) -> List[str]:
-        return [os.path.join(directory, file) for file in cls.targets()] + cls.raw_targets()
+        return [
+            os.path.join(directory, file) for file in cls.targets()
+        ] + cls.raw_targets()
 
     @classmethod
     @abstractmethod
@@ -141,7 +149,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         particular guesser. By default str() on the classname, but can be overriden
         :return: display name of this guesser
         """
-        return self.__module__ + '.' + self.__class__.__name__
+        return self.__module__ + "." + self.__class__.__name__
 
     def parameters(self) -> Dict:
         """
@@ -152,8 +160,14 @@ class AbstractGuesser(metaclass=ABCMeta):
         """
         return {}
 
-    def generate_guesses(self, max_n_guesses: int, folds: List[str],
-                         char_skip=25, full_question=False, first_sentence=False) -> pd.DataFrame:
+    def generate_guesses(
+        self,
+        max_n_guesses: int,
+        folds: List[str],
+        char_skip=25,
+        full_question=False,
+        first_sentence=False,
+    ) -> pd.DataFrame:
         """
         Generates guesses for this guesser for all questions in specified folds and returns it as a
         DataFrame
@@ -166,7 +180,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         :return: dataframe of guesses
         """
         if full_question and first_sentence:
-            raise ValueError('Invalid option combination')
+            raise ValueError("Invalid option combination")
 
         dataset = self.qb_dataset()
         questions_by_fold = dataset.questions_by_fold()
@@ -204,10 +218,12 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         if len(guesses_per_question) != len(question_texts):
             raise ValueError(
-                'Guesser has wrong number of answers: len(guesses_per_question)={} len(question_texts)={}'.format(
-                    len(guesses_per_question), len(question_texts)))
+                "Guesser has wrong number of answers: len(guesses_per_question)={} len(question_texts)={}".format(
+                    len(guesses_per_question), len(question_texts)
+                )
+            )
 
-        log.info('Creating guess dataframe from guesses...')
+        log.info("Creating guess dataframe from guesses...")
         df_qnums = []
         df_proto_id = []
         df_char_indices = []
@@ -232,30 +248,36 @@ class AbstractGuesser(metaclass=ABCMeta):
                 df_folds.append(fold)
                 df_guessers.append(guesser_name)
 
-        return pd.DataFrame({
-            'qanta_id': df_qnums,
-            'proto_id': df_proto_id,
-            'char_index': df_char_indices,
-            'guess': df_guesses,
-            'score': df_scores,
-            'fold': df_folds,
-            'guesser': df_guessers
-        })
+        return pd.DataFrame(
+            {
+                "qanta_id": df_qnums,
+                "proto_id": df_proto_id,
+                "char_index": df_char_indices,
+                "guess": df_guesses,
+                "score": df_scores,
+                "fold": df_folds,
+                "guesser": df_guessers,
+            }
+        )
 
     @staticmethod
     def guess_path(directory: str, fold: str, output_type: str) -> str:
-        return os.path.join(directory, f'guesses_{output_type}_{fold}.pickle')
+        return os.path.join(directory, f"guesses_{output_type}_{fold}.pickle")
 
     @staticmethod
-    def save_guesses(guess_df: pd.DataFrame, directory: str, folds: List[str], output_type):
+    def save_guesses(
+        guess_df: pd.DataFrame, directory: str, folds: List[str], output_type
+    ):
         for fold in folds:
-            log.info('Saving fold {}'.format(fold))
+            log.info("Saving fold {}".format(fold))
             fold_df = guess_df[guess_df.fold == fold]
             output_path = AbstractGuesser.guess_path(directory, fold, output_type)
             fold_df.to_pickle(output_path)
 
     @staticmethod
-    def load_guesses(directory: str, output_type='char', folds=c.GUESSER_GENERATION_FOLDS) -> pd.DataFrame:
+    def load_guesses(
+        directory: str, output_type="char", folds=c.GUESSER_GENERATION_FOLDS
+    ) -> pd.DataFrame:
         """
         Loads all the guesses pertaining to a guesser inferred from directory
         :param directory: where to load guesses from
@@ -276,17 +298,19 @@ class AbstractGuesser(metaclass=ABCMeta):
         return guess_df
 
     @staticmethod
-    def load_all_guesses(directory_prefix='') -> pd.DataFrame:
+    def load_all_guesses(directory_prefix="") -> pd.DataFrame:
         """
         Loads all guesses from all guessers and folds
         :return:
         """
         guess_df = None
-        guessers = conf['guessers']
+        guessers = conf["guessers"]
         for guesser_key, g in guessers.items():
             g = guessers[guesser_key]
-            if g['enabled']:
-                input_path = os.path.join(directory_prefix, c.GUESSER_TARGET_PREFIX, g['class'])
+            if g["enabled"]:
+                input_path = os.path.join(
+                    directory_prefix, c.GUESSER_TARGET_PREFIX, g["class"]
+                )
                 if guess_df is None:
                     guess_df = AbstractGuesser.load_guesses(input_path)
                 else:
@@ -299,12 +323,14 @@ class AbstractGuesser(metaclass=ABCMeta):
     def load_guess_score_map(guess_df: pd.DataFrame) -> defaultdict:
         guess_score_map = defaultdict(dict)
         for row in guess_df.itertuples():
-            guess_score_map[row.guesser][(row.qnum, row.sentence, row.token, row.guess)] = row.score
+            guess_score_map[row.guesser][
+                (row.qnum, row.sentence, row.token, row.guess)
+            ] = row.score
 
         return guess_score_map
 
     def create_report(self, directory: str, fold):
-        with open(os.path.join(directory, f'guesser_params.pickle'), 'rb') as f:
+        with open(os.path.join(directory, f"guesser_params.pickle"), "rb") as f:
             params = pickle.load(f)
 
         qdb = QantaDatabase()
@@ -326,148 +352,185 @@ class AbstractGuesser(metaclass=ABCMeta):
         for q in guesser_train:
             train_example_counts[q.page] += 1
 
-        dev_df = pd.DataFrame({
-            'page': [q.page for q in guesser_report_questions],
-            'qanta_id': [q.qanta_id for q in guesser_report_questions],
-            'text_length': [len(q.text) for q in guesser_report_questions],
-            'n_train': [train_example_counts[q.page] for q in guesser_report_questions],
-            'category': [q.category for q in guesser_report_questions]
-        })
+        dev_df = pd.DataFrame(
+            {
+                "page": [q.page for q in guesser_report_questions],
+                "qanta_id": [q.qanta_id for q in guesser_report_questions],
+                "text_length": [len(q.text) for q in guesser_report_questions],
+                "n_train": [
+                    train_example_counts[q.page] for q in guesser_report_questions
+                ],
+                "category": [q.category for q in guesser_report_questions],
+            }
+        )
 
-        char_guess_df = AbstractGuesser.load_guesses(directory, folds=[fold], output_type='char')
-        char_df = char_guess_df.merge(dev_df, on='qanta_id')
-        char_df['correct'] = (char_df.guess == char_df.page).astype('int')
-        char_df['char_percent'] = (char_df['char_index'] / char_df['text_length']).clip_upper(1.0)
+        char_guess_df = AbstractGuesser.load_guesses(
+            directory, folds=[fold], output_type="char"
+        )
+        char_df = char_guess_df.merge(dev_df, on="qanta_id")
+        char_df["correct"] = (char_df.guess == char_df.page).astype("int")
+        char_df["char_percent"] = (
+            char_df["char_index"] / char_df["text_length"]
+        ).clip_upper(1.0)
 
-        first_guess_df = AbstractGuesser.load_guesses(directory, folds=[fold], output_type='first')
-        first_df = first_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
-        first_df['correct'] = (first_df.guess == first_df.page).astype('int')
-        grouped_first_df = first_df.groupby('qanta_id')
+        first_guess_df = AbstractGuesser.load_guesses(
+            directory, folds=[fold], output_type="first"
+        )
+        first_df = first_guess_df.merge(dev_df, on="qanta_id").sort_values(
+            "score", ascending=False
+        )
+        first_df["correct"] = (first_df.guess == first_df.page).astype("int")
+        grouped_first_df = first_df.groupby("qanta_id")
         first_accuracy = grouped_first_df.nth(0).correct.mean()
-        first_recall = grouped_first_df.agg({'correct': 'max'}).correct.mean()
+        first_recall = grouped_first_df.agg({"correct": "max"}).correct.mean()
 
-        full_guess_df = AbstractGuesser.load_guesses(directory, folds=[fold], output_type='full')
-        full_df = full_guess_df.merge(dev_df, on='qanta_id').sort_values('score', ascending=False)
-        full_df['correct'] = (full_df.guess == full_df.page).astype('int')
-        grouped_full_df = full_df.groupby('qanta_id')
+        full_guess_df = AbstractGuesser.load_guesses(
+            directory, folds=[fold], output_type="full"
+        )
+        full_df = full_guess_df.merge(dev_df, on="qanta_id").sort_values(
+            "score", ascending=False
+        )
+        full_df["correct"] = (full_df.guess == full_df.page).astype("int")
+        grouped_full_df = full_df.groupby("qanta_id")
         full_accuracy = grouped_full_df.nth(0).correct.mean()
-        full_recall = grouped_full_df.agg({'correct': 'max'}).correct.mean()
+        full_recall = grouped_full_df.agg({"correct": "max"}).correct.mean()
 
-        with open(os.path.join(directory, f'guesser_report_{fold}.pickle'), 'wb') as f:
-            pickle.dump({
-                'first_accuracy': first_accuracy,
-                'first_recall': first_recall,
-                'full_accuracy': full_accuracy,
-                'full_recall': full_recall,
-                'char_df': char_df,
-                'first_df': first_df,
-                'full_df': full_df,
-                'n_guesses': conf['n_guesses'],
-                'unanswerable_answer_percent': unanswerable_answer_percent,
-                'unanswerable_question_percent': unanswerable_question_percent,
-                'guesser_name': self.display_name(),
-                'guesser_params': params
-            }, f)
+        with open(os.path.join(directory, f"guesser_report_{fold}.pickle"), "wb") as f:
+            pickle.dump(
+                {
+                    "first_accuracy": first_accuracy,
+                    "first_recall": first_recall,
+                    "full_accuracy": full_accuracy,
+                    "full_recall": full_recall,
+                    "char_df": char_df,
+                    "first_df": first_df,
+                    "full_df": full_df,
+                    "n_guesses": conf["n_guesses"],
+                    "unanswerable_answer_percent": unanswerable_answer_percent,
+                    "unanswerable_question_percent": unanswerable_question_percent,
+                    "guesser_name": self.display_name(),
+                    "guesser_params": params,
+                },
+                f,
+            )
 
     @staticmethod
     def list_enabled_guessers() -> List[GuesserSpec]:
-        guessers = conf['guessers']
+        guessers = conf["guessers"]
         enabled_guessers = []
         for guesser, configs in guessers.items():
             for config_num, g_conf in enumerate(configs):
-                if g_conf['enabled']:
-                    dependency = g_conf['luigi_dependency']
-                    parts = guesser.split('.')
-                    guesser_module = '.'.join(parts[:-1])
+                if g_conf["enabled"]:
+                    dependency = g_conf["luigi_dependency"]
+                    parts = guesser.split(".")
+                    guesser_module = ".".join(parts[:-1])
                     guesser_class = parts[-1]
 
                     if dependency is None:
                         dependency_module = None
                         dependency_class = None
                     else:
-                        parts = dependency.split('.')
-                        dependency_module = '.'.join(parts[:-1])
+                        parts = dependency.split(".")
+                        dependency_module = ".".join(parts[:-1])
                         dependency_class = parts[-1]
 
-                    enabled_guessers.append(GuesserSpec(
-                        dependency_module, dependency_class, guesser_module, guesser_class, config_num
-                    ))
+                    enabled_guessers.append(
+                        GuesserSpec(
+                            dependency_module,
+                            dependency_class,
+                            guesser_module,
+                            guesser_class,
+                            config_num,
+                        )
+                    )
 
         return enabled_guessers
 
     @staticmethod
-    def output_path(guesser_module: str, guesser_class: str, config_num: int, file: str):
-        guesser_path = '{}.{}'.format(guesser_module, guesser_class)
-        return safe_path(os.path.join(
-            c.GUESSER_TARGET_PREFIX, guesser_path, str(config_num), file
-        ))
+    def output_path(
+        guesser_module: str, guesser_class: str, config_num: int, file: str
+    ):
+        guesser_path = "{}.{}".format(guesser_module, guesser_class)
+        return safe_path(
+            os.path.join(c.GUESSER_TARGET_PREFIX, guesser_path, str(config_num), file)
+        )
 
     @staticmethod
-    def reporting_path(guesser_module: str, guesser_class: str, config_num: int, file: str):
-        guesser_path = '{}.{}'.format(guesser_module, guesser_class)
-        return safe_path(os.path.join(
-            c.GUESSER_REPORTING_PREFIX, guesser_path, str(config_num), file
-        ))
+    def reporting_path(
+        guesser_module: str, guesser_class: str, config_num: int, file: str
+    ):
+        guesser_path = "{}.{}".format(guesser_module, guesser_class)
+        return safe_path(
+            os.path.join(
+                c.GUESSER_REPORTING_PREFIX, guesser_path, str(config_num), file
+            )
+        )
 
-    def web_api(self, host='0.0.0.0', port=5000, debug=False):
+    def web_api(self, host="0.0.0.0", port=5000, debug=False):
         from flask import Flask, jsonify, request
 
         app = Flask(__name__)
 
-        @app.route('/api/answer_question', methods=['POST'])
+        @app.route("/api/answer_question", methods=["POST"])
         def answer_question():
-            text = request.form['text']
+            text = request.form["text"]
             guess, score = self.guess([text], 1)[0][0]
-            return jsonify({'guess': guess, 'score': float(score)})
+            return jsonify({"guess": guess, "score": float(score)})
 
         app.run(host=host, port=port, debug=debug)
 
     @staticmethod
-    def multi_guesser_web_api(guesser_names: List[str], host='0.0.0.0', port=5000, debug=False):
+    def multi_guesser_web_api(
+        guesser_names: List[str], host="0.0.0.0", port=5000, debug=False
+    ):
         from flask import Flask, jsonify, request
 
         app = Flask(__name__)
 
         guesser_lookup = {}
-        for name, g in conf['guessers'].items():
-            g_qualified_name = g['class']
-            parts = g_qualified_name.split('.')
-            g_module = '.'.join(parts[:-1])
+        for name, g in conf["guessers"].items():
+            g_qualified_name = g["class"]
+            parts = g_qualified_name.split(".")
+            g_module = ".".join(parts[:-1])
             g_classname = parts[-1]
             guesser_lookup[name] = (get_class(g_module, g_classname), g_qualified_name)
 
-        log.info(f'Loading guessers: {guesser_names}')
+        log.info(f"Loading guessers: {guesser_names}")
         guessers = {}
         for name in guesser_names:
             if name in guesser_lookup:
                 g_class, g_qualified_name = guesser_lookup[name]
-                guesser_path = os.path.join('output/guesser', g_qualified_name)
-                log.info(f'Loading "{name}" corresponding to "{g_qualified_name}" located at "{guesser_path}"')
+                guesser_path = os.path.join("output/guesser", g_qualified_name)
+                log.info(
+                    f'Loading "{name}" corresponding to "{g_qualified_name}" located at "{guesser_path}"'
+                )
                 guessers[name] = g_class.load(guesser_path)
             else:
                 log.info(f'Guesser with name="{name}" not found')
 
-        @app.route('/api/guesser', methods=['POST'])
+        @app.route("/api/guesser", methods=["POST"])
         def guess():
-            if 'guesser_name' not in request.form:
-                response = jsonify({'errors': 'Missing expected field "guesser_name"'})
+            if "guesser_name" not in request.form:
+                response = jsonify({"errors": 'Missing expected field "guesser_name"'})
                 response.status_code = 400
                 return response
 
-            if 'text' not in request.form:
-                response = jsonify({'errors': 'Missing expected field "text"'})
+            if "text" not in request.form:
+                response = jsonify({"errors": 'Missing expected field "text"'})
                 response.status_code = 400
                 return response
 
-            g_name = request.form['guesser_name']
+            g_name = request.form["guesser_name"]
             if g_name not in guessers:
                 response = jsonify(
-                    {'errors': f'Guesser "{g_name}" invalid, options are: "{list(guessers.keys())}"'}
+                    {
+                        "errors": f'Guesser "{g_name}" invalid, options are: "{list(guessers.keys())}"'
+                    }
                 )
                 response.status_code = 400
                 return response
-            text = request.form['text']
+            text = request.form["text"]
             guess, score = guessers[g_name].guess([text], 1)[0][0]
-            return jsonify({'guess': guess, 'score': float(score)})
+            return jsonify({"guess": guess, "score": float(score)})
 
         app.run(host=host, port=port, debug=debug)

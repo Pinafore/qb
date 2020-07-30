@@ -16,8 +16,9 @@ from buzzer import interpret_keypress, answer, create_parser
 from buzzer import load_data, buzzer_check, question_loop, Score
 
 
-def present_question_hh(display_num, question_id, question_text, buzzes, final,
-                        correct, score, power="10"):
+def present_question_hh(
+    display_num, question_id, question_text, buzzes, final, correct, score, power="10"
+):
 
     even_delta = 0
     odd_delta = 0
@@ -50,12 +51,13 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
             if question_done:
                 break
 
-            if (ww == "~" and ss == max(question_text)) and \
-              (computer_delta == 0 and human_delta <= 0):
-              # Computer has reached end of question
-              # answer(final_answer.split('(')[0], final_system)
-              if final == correct:
-                  computer_delta = 10
+            if (ww == "~" and ss == max(question_text)) and (
+                computer_delta == 0 and human_delta <= 0
+            ):
+                # Computer has reached end of question
+                # answer(final_answer.split('(')[0], final_system)
+                if final == correct:
+                    computer_delta = 10
 
             if computer_position[0] == ss and computer_position[1] == ii:
                 # This is where the computer buzzes
@@ -91,9 +93,8 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
                 while response is None:
-                    response = input("Player %i, provide an answer:\t"
-                                     % press)
-                    if '+' in response:
+                    response = input("Player %i, provide an answer:\t" % press)
+                    if "+" in response:
                         if press % 2 == 0:
                             even_delta = question_value
                         else:
@@ -111,7 +112,7 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                             question_done = True
 
                         question_done = True
-                    elif '-' in response:
+                    elif "-" in response:
                         if even_delta == 0 and press % 2 != 0:
                             odd_delta = -5
                         if odd_delta == 0 and press % 2 == 0:
@@ -132,22 +133,37 @@ def present_question_hh(display_num, question_id, question_text, buzzes, final,
                         response = None
             # Don't buzz if anyone else has gotten it wrong
             else:
-                show_score(score.even + even_delta,
-                           score.odd + odd_delta,
-                           "TEAM A", "TEAM B",
-                           left_color="RED",
-                           right_color="YELLOW")
-                show_score(score.human + human_delta,
-                           score.computer + computer_delta,
-                           "HUMAN", "COMPUTER",
-                           flush=False)
+                show_score(
+                    score.even + even_delta,
+                    score.odd + odd_delta,
+                    "TEAM A",
+                    "TEAM B",
+                    left_color="RED",
+                    right_color="YELLOW",
+                )
+                show_score(
+                    score.human + human_delta,
+                    score.computer + computer_delta,
+                    "HUMAN",
+                    "COMPUTER",
+                    flush=False,
+                )
                 print(human_delta, computer_delta, even_delta, odd_delta)
 
-                print(format_display(display_num, question_text, ss, ii + 1,
-                                     current_guesses, answer=correct,
-                                     points=question_value))
+                print(
+                    format_display(
+                        display_num,
+                        question_text,
+                        ss,
+                        ii + 1,
+                        current_guesses,
+                        answer=correct,
+                        points=question_value,
+                    )
+                )
 
-    return(Score(even_delta, odd_delta, human_delta, computer_delta))
+    return Score(even_delta, odd_delta, human_delta, computer_delta)
+
 
 def check_hh_tie(score):
     """
@@ -165,14 +181,15 @@ if __name__ == "__main__":
     clear_screen()
     buzzer_check(flags.players)
 
-    score = question_loop(flags, questions, buzzes, present_question_hh,
-                          check_hh_tie)
+    score = question_loop(flags, questions, buzzes, present_question_hh, check_hh_tie)
 
-    show_score(score.human, score.computer,
-               "HUMAN", "COMPUTER")
+    show_score(score.human, score.computer, "HUMAN", "COMPUTER")
 
-    show_score(score.even,
-               score.odd,
-               "TEAM A", "TEAM B",
-               left_color="RED",
-               right_color="YELLOW")
+    show_score(
+        score.even,
+        score.odd,
+        "TEAM A",
+        "TEAM B",
+        left_color="RED",
+        right_color="YELLOW",
+    )

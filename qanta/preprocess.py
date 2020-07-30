@@ -11,23 +11,22 @@ from qanta.datasets.abstract import TrainingData
 log = qlogging.get(__name__)
 
 ftp_patterns = {
-    '\n',
-    ', for 10 points,',
-    ', for ten points,',
-    '--for 10 points--',
-    'for 10 points, ',
-    'for 10 points--',
-    'for ten points, ',
-    'for 10 points ',
-    'for ten points ',
-    ', ftp,'
-    'ftp,',
-    'ftp'
+    "\n",
+    ", for 10 points,",
+    ", for ten points,",
+    "--for 10 points--",
+    "for 10 points, ",
+    "for 10 points--",
+    "for ten points, ",
+    "for 10 points ",
+    "for ten points ",
+    ", ftp," "ftp,",
+    "ftp",
 }
 
 patterns = ftp_patterns | set(string.punctuation)
-regex_pattern = '|'.join([re.escape(p) for p in patterns])
-regex_pattern += r'|\[.*?\]|\(.*?\)'
+regex_pattern = "|".join([re.escape(p) for p in patterns])
+regex_pattern += r"|\[.*?\]|\(.*?\)"
 
 
 def clean_question(question: str):
@@ -37,7 +36,7 @@ def clean_question(question: str):
     :return:
     """
 
-    return re.sub(regex_pattern, '', question.strip().lower())
+    return re.sub(regex_pattern, "", question.strip().lower())
 
 
 def tokenize_question(text: str) -> List[str]:
@@ -45,12 +44,19 @@ def tokenize_question(text: str) -> List[str]:
 
 
 def format_guess(guess):
-    return guess.strip().lower().replace(' ', '_').replace(':', '').replace('|', '')
+    return guess.strip().lower().replace(" ", "_").replace(":", "").replace("|", "")
 
 
-def preprocess_dataset(data: TrainingData, train_size=.9, test_size=.1,
-                       vocab=None, class_to_i=None, i_to_class=None,
-                       create_runs=False, full_question=False):
+def preprocess_dataset(
+    data: TrainingData,
+    train_size=0.9,
+    test_size=0.1,
+    vocab=None,
+    class_to_i=None,
+    i_to_class=None,
+    create_runs=False,
+    full_question=False,
+):
     """
     This function does primarily text preprocessing on the dataset. It will return x_train and x_test as a list of
     examples where each word is a tokenized word list (not padded). y_train and y_test is a list of indices coresponding
@@ -69,11 +75,15 @@ def preprocess_dataset(data: TrainingData, train_size=.9, test_size=.1,
     :return:
     """
     if full_question and create_runs:
-        raise ValueError('The options create_runs={} and full_question={} are not compatible'.format(
-            create_runs, full_question))
+        raise ValueError(
+            "The options create_runs={} and full_question={} are not compatible".format(
+                create_runs, full_question
+            )
+        )
     if train_size + test_size > 1:
         raise ValueError(
-            f'Train + test must sum to 1 or less: train={train_size} test={test_size} sum={train_size + test_size}')
+            f"Train + test must sum to 1 or less: train={train_size} test={test_size} sum={train_size + test_size}"
+        )
 
     classes = set(data[1])
     if class_to_i is None or i_to_class is None:
@@ -92,7 +102,9 @@ def preprocess_dataset(data: TrainingData, train_size=.9, test_size=.1,
 
     question_runs_with_answer = list(zip(data[0], data[1]))
     if train_size != 1:
-        train, test = train_test_split(question_runs_with_answer, train_size=train_size, test_size=test_size)
+        train, test = train_test_split(
+            question_runs_with_answer, train_size=train_size, test_size=test_size
+        )
     else:
         train = question_runs_with_answer
         test = []
@@ -136,6 +148,4 @@ def preprocess_dataset(data: TrainingData, train_size=.9, test_size=.1,
             x_test.append(q_text)
             y_test.append(class_to_i[ans])
 
-    return (x_train, y_train,
-            x_test, y_test,
-            vocab, class_to_i, i_to_class)
+    return (x_train, y_train, x_test, y_test, vocab, class_to_i, i_to_class)

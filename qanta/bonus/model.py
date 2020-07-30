@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class BilinearSeqAttn(nn.Module):
 
+class BilinearSeqAttn(nn.Module):
     def __init__(self, x_size, y_size, normalize=True):
         super(BilinearSeqAttn, self).__init__()
         self.normalize = normalize
@@ -20,7 +20,7 @@ class BilinearSeqAttn(nn.Module):
         """
         Wy = self.linear(y)
         xWy = x.bmm(Wy.unsqueeze(2)).squeeze(2)
-        xWy.data.masked_fill_(x_mask.data, -float('inf'))
+        xWy.data.masked_fill_(x_mask.data, -float("inf"))
         if self.normalize:
             if self.training:
                 alpha = F.log_softmax(xWy)
@@ -29,24 +29,35 @@ class BilinearSeqAttn(nn.Module):
         else:
             alpha = xWy.exp()
         return alpha
-        
+
 
 class RNNReader(nn.Module):
-
     def __init__(self, cfg):
         super(RNNReader, self).__init__()
         self.cfg = cfg
         self.embedding = nn.Embedding(cfg.vocab_size, cfg.embed_size)
-        self.doc_rnn = nn.LSTM(cfg.embed_size, cfg.doc_hidden_size,
-                cfg.doc_num_layers, bidirectional=cfg.doc_bidirectional)
-        self.query_rnn = nn.LSTM(cfg.embed_size, cfg.query_hidden_size,
-                cfg.query_num_layers, bidirectional=cfg.query_bidirectional)
+        self.doc_rnn = nn.LSTM(
+            cfg.embed_size,
+            cfg.doc_hidden_size,
+            cfg.doc_num_layers,
+            bidirectional=cfg.doc_bidirectional,
+        )
+        self.query_rnn = nn.LSTM(
+            cfg.embed_size,
+            cfg.query_hidden_size,
+            cfg.query_num_layers,
+            bidirectional=cfg.query_bidirectional,
+        )
         doc_directions = 2 if cfg.doc_bidirectional else 1
         query_directions = 2 if cfg.query_bidirectional else 1
-        self.start_attn = BilinearSeqAttn(cfg.doc_hidden_size * doc_directions,
-                cfg.query_hidden_size * query_directions)
-        self.end_attn = BilinearSeqAttn(cfg.doc_hidden_size * doc_directions,
-                cfg.query_hidden_size * query_directions)
+        self.start_attn = BilinearSeqAttn(
+            cfg.doc_hidden_size * doc_directions,
+            cfg.query_hidden_size * query_directions,
+        )
+        self.end_attn = BilinearSeqAttn(
+            cfg.doc_hidden_size * doc_directions,
+            cfg.query_hidden_size * query_directions,
+        )
 
     def forward(self, doc, query, doc_mask, query_mask):
         """
@@ -68,7 +79,7 @@ class RNNReader(nn.Module):
         start_scores = self.start_attn(doc_hiddens, query_hidden, doc_mask)
         end_scores = self.end_attn(doc_hiddens, query_hidden, doc_mask)
         return start_scores, end_scores
-        
+
     def encode(self, xs, rnn):
         length, batch_size = xs.size()
         hidden = self.init_hidden(rnn, batch_size)
@@ -82,5 +93,7 @@ class RNNReader(nn.Module):
         hidden_size = rnn.hidden_size
         if rnn.bidirectional:
             hidden_size *= 2
-        return (Variable(w.new(num_layers, batch_size, hidden_size).zero_()),
-                Variable(w.new(num_layers, batch_size, hidden_size).zero_()))
+        return (
+            Variable(w.new(num_layers, batch_size, hidden_size).zero_()),
+            Variable(w.new(num_layers, batch_size, hidden_size).zero_()),
+        )

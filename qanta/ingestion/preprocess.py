@@ -17,19 +17,21 @@ MIN_CHAR_LENGTH = AVG_WORD_LENGTH * MIN_WORDS
 
 def nlp(text):
     if len(nlp_ref) == 0:
-        nlp_ref.append(spacy.load('en_core_web_lg'))
+        nlp_ref.append(spacy.load("en_core_web_lg"))
 
     if len(nlp_ref) == 1:
         decoded_text = unidecode.unidecode(text)
         if len(decoded_text) != len(text):
-            log.warning('Text must have the same length, falling back to normal text')
+            log.warning("Text must have the same length, falling back to normal text")
             doc = nlp_ref[0](text)
         else:
             doc = nlp_ref[0](decoded_text)
         tokenizations = [(s.start_char, s.end_char) for s in doc.sents]
         first_end_pos = None
         if len(tokenizations) == 0:
-            raise ValueError('Zero length question with respect to sentences not allowed')
+            raise ValueError(
+                "Zero length question with respect to sentences not allowed"
+            )
 
         for start, end in tokenizations:
             if end < MIN_CHAR_LENGTH:
@@ -50,38 +52,39 @@ def nlp(text):
 
         return final_tokenizations
     else:
-        raise ValueError('There should be exactly one nlp model per spark worker')
+        raise ValueError("There should be exactly one nlp model per spark worker")
 
 
 def format_qanta_json(questions, version):
     return {
-        'questions': questions,
-        'version': version,
-        'maintainer_name': 'Pedro Rodriguez',
-        'maintainer_contact': 'entilzha@umiacs.umd.edu',
-        'maintainer_website': 'https://www.entilzha.io',
-        'project_website': 'http://qanta.org/'
+        "questions": questions,
+        "version": version,
+        "maintainer_name": "Pedro Rodriguez",
+        "maintainer_contact": "entilzha@umiacs.umd.edu",
+        "maintainer_website": "https://www.entilzha.io",
+        "project_website": "http://qanta.org/",
     }
 
 
 def add_sentences_(questions, parallel=True):
-    text_questions = [q['text'] for q in questions]
+    text_questions = [q["text"] for q in questions]
     if parallel:
         sc = create_spark_context()
         sentence_tokenizations = sc.parallelize(text_questions, 4000).map(nlp).collect()
     else:
         sentence_tokenizations = [nlp(q) for q in text_questions]
     for q, text, tokenization in zip(questions, text_questions, sentence_tokenizations):
-        q['tokenizations'] = tokenization
+        q["tokenizations"] = tokenization
         # Get the 0th sentence, end character tokenization (tuple position 1)
-        q['first_sentence'] = text[:tokenization[0][1]]
+        q["first_sentence"] = text[: tokenization[0][1]]
 
 
 def questions_to_sqlite(qanta_questions, db_path):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS questions;')
-    c.execute("""
+    c.execute("DROP TABLE IF EXISTS questions;")
+    c.execute(
+        """
         CREATE TABLE questions (
           qanta_id INT PRIMARY KEY NOT NULL,
           "text" TEXT NOT NULL, first_sentence TEXT NOT NULL, tokenizations TEXT NOT NULL,
@@ -91,15 +94,31 @@ def questions_to_sqlite(qanta_questions, db_path):
           tournament TEXT, difficulty TEXT, year INT,
           proto_id INT, qdb_id INT, dataset TEXT NOT NULL
         )
-    """)
+    """
+    )
     c.executemany(
-        'INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [(
-            q['qanta_id'], q['text'], q['first_sentence'], str(q['tokenizations']),
-            q['answer'], q['page'], q['fold'], q['gameplay'],
-            q['category'], q['subcategory'], q['tournament'], q['difficulty'],
-            q['year'], q['proto_id'], q['qdb_id'], q['dataset']
-        ) for q in qanta_questions]
+        "INSERT INTO questions values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+            (
+                q["qanta_id"],
+                q["text"],
+                q["first_sentence"],
+                str(q["tokenizations"]),
+                q["answer"],
+                q["page"],
+                q["fold"],
+                q["gameplay"],
+                q["category"],
+                q["subcategory"],
+                q["tournament"],
+                q["difficulty"],
+                q["year"],
+                q["proto_id"],
+                q["qdb_id"],
+                q["dataset"],
+            )
+            for q in qanta_questions
+        ],
     )
     conn.commit()
     conn.close()

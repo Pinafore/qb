@@ -10,18 +10,20 @@ class Summary(Task):
     fold = luigi.Parameter()
 
     def output(self):
-        return LocalTarget('output/summary/{0}.json'.format(self.fold))
+        return LocalTarget("output/summary/{0}.json".format(self.fold))
 
     def run(self):
-        make_dirs('output/summary/')
-        call([
-            'python3',
-            'qanta/reporting/performance.py',
-            'generate',
-            c.PRED_TARGET.format(self.fold),
-            c.META_TARGET.format(self.fold),
-            'output/summary/{0}.json'.format(self.fold)
-        ])
+        make_dirs("output/summary/")
+        call(
+            [
+                "python3",
+                "qanta/reporting/performance.py",
+                "generate",
+                c.PRED_TARGET.format(self.fold),
+                c.META_TARGET.format(self.fold),
+                "output/summary/{0}.json".format(self.fold),
+            ]
+        )
 
 
 class AllSummaries(WrapperTask):
@@ -31,28 +33,30 @@ class AllSummaries(WrapperTask):
 
 
 class ConcatReports(Task):
-    resources = {'report_write': 1}
+    resources = {"report_write": 1}
 
     def requires(self):
         yield AllSummaries()
 
     def output(self):
-        return LocalTarget('output/reporting/report.pdf')
+        return LocalTarget("output/reporting/report.pdf")
 
     def run(self):
-        shell('pdftk output/reporting/*.pdf cat output /tmp/report.pdf')
-        shell('mv /tmp/report.pdf output/reporting/report.pdf')
+        shell("pdftk output/reporting/*.pdf cat output /tmp/report.pdf")
+        shell("mv /tmp/report.pdf output/reporting/report.pdf")
 
 
 class PerformancePlot(Task):
     def requires(self):
-        yield Summary(fold='test')
+        yield Summary(fold="test")
 
     def output(self):
-        return LocalTarget('output/summary/performance.png')
+        return LocalTarget("output/summary/performance.png")
 
     def run(self):
-        performance.plot_summary(False, 'output/summary/', 'output/summary/performance.png')
+        performance.plot_summary(
+            False, "output/summary/", "output/summary/performance.png"
+        )
 
 
 class All(WrapperTask):

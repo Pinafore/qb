@@ -14,5 +14,5 @@ args.batch_size = 64
 args.epoch = 20
 args.gpu = 0
 
-args.model_name = 'best_model.npz'
+args.model_name = "best_model.npz"
 args.model_path = os.path.join(output_dir, args.model_name)
