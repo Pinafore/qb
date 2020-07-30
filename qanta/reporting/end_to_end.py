@@ -12,14 +12,14 @@ from qanta.reporting.curve_score import CurveScore
 from qanta.buzzer.util import buzzes_dir
 
 
-report_dir = 'output/reporting'
+report_dir = "output/reporting"
 if not os.path.isdir(report_dir):
     os.mkdir(report_dir)
 curve_score = CurveScore()
 
 
 def _protobowl_scores(q, labels, buzzes, word_positions, records_grouped):
-    '''score against protobowl players with system and oracle buzzer'''
+    """score against protobowl players with system and oracle buzzer"""
     if q.proto_id not in records_grouped.groups:
         return None, None
 
@@ -51,7 +51,7 @@ def _protobowl_scores(q, labels, buzzes, word_positions, records_grouped):
 
 
 def _curve_scores(q, labels, buzzes, word_positions, records_grouped):
-    '''weighted accuracy with system and oracle buzzer'''
+    """weighted accuracy with system and oracle buzzer"""
     score_buzz = None
     score_oracle = None
     if True in buzzes:
@@ -79,25 +79,25 @@ def main():
     fold = BUZZER_DEV_FOLD
 
     # load questions
-    print('loading questions')
+    print("loading questions")
     questions = QuizBowlDataset(buzzer_train=True).questions_by_fold()
     questions = questions[fold]
 
     # load guesser outputs
-    print('loading guesser outputs')
+    print("loading guesser outputs")
     guesses = read_data(fold)
     guesses = {x[0]: x for x in guesses}
 
     # load buzzer outputs
-    print('loading buzzer outputs')
+    print("loading buzzer outputs")
     buzz_dir = os.path.join(buzzes_dir.format(fold))
-    with open(buzz_dir, 'rb') as f:
+    with open(buzz_dir, "rb") as f:
         buzzes = pickle.load(f)
 
     # load protobowl records
-    print('loading protobowl records')
+    print("loading protobowl records")
     df, _ = load_protobowl()
-    record_groups = df.groupby('qid')
+    record_groups = df.groupby("qid")
 
     metrics = [_protobowl_scores, _curve_scores]
     pool = Pool(8)
@@ -117,5 +117,5 @@ def main():
     print([np.mean(s) for s in curve_scores])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -41,15 +41,20 @@ class TrainGuesser(Task):
         start_time = time.time()
         guesser_instance.train(qb_dataset.training_data())
         end_time = time.time()
-        guesser_instance.save(AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, ''
-        ))
-        params = guesser_instance.parameters()
-        params['training_time'] = end_time - start_time
-        params_path = AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
+        guesser_instance.save(
+            AbstractGuesser.output_path(
+                self.guesser_module, self.guesser_class, self.config_num, ""
+            )
         )
-        with open(params_path, 'wb') as f:
+        params = guesser_instance.parameters()
+        params["training_time"] = end_time - start_time
+        params_path = AbstractGuesser.output_path(
+            self.guesser_module,
+            self.guesser_class,
+            self.config_num,
+            "guesser_params.pickle",
+        )
+        with open(params_path, "wb") as f:
             pickle.dump(params, f)
 
     def output(self):
@@ -57,29 +62,37 @@ class TrainGuesser(Task):
         guesser_targets = [
             LocalTarget(file)
             for file in guesser_class.files(
-                AbstractGuesser.output_path(self.guesser_module, self.guesser_class, self.config_num, '')
-            )]
+                AbstractGuesser.output_path(
+                    self.guesser_module, self.guesser_class, self.config_num, ""
+                )
+            )
+        ]
 
         return [
-            LocalTarget(AbstractGuesser.output_path(
-                self.guesser_module, self.guesser_class, self.config_num, ''
-            )),
             LocalTarget(
                 AbstractGuesser.output_path(
-                    self.guesser_module, self.guesser_class, self.config_num, 'guesser_params.pickle'
-                ))
+                    self.guesser_module, self.guesser_class, self.config_num, ""
+                )
+            ),
+            LocalTarget(
+                AbstractGuesser.output_path(
+                    self.guesser_module,
+                    self.guesser_class,
+                    self.config_num,
+                    "guesser_params.pickle",
+                )
+            ),
         ] + guesser_targets
 
 
 class TrainAllGuessers(WrapperTask):
-
     def requires(self):
         for g_spec in AbstractGuesser.list_enabled_guessers():
             yield TrainGuesser(
                 guesser_module=g_spec.guesser_module,
                 guesser_class=g_spec.guesser_class,
                 dependency_module=g_spec.dependency_module,
-                dependency_class=g_spec.dependency_class
+                dependency_class=g_spec.dependency_class,
             )
 
 
@@ -89,7 +102,7 @@ class GenerateGuesses(Task):
     dependency_module = luigi.Parameter()  # type: str
     dependency_class = luigi.Parameter()  # type: str
     config_num = luigi.IntParameter()  # type: int
-    n_guesses = luigi.IntParameter(default=conf['n_guesses'])  # type: int
+    n_guesses = luigi.IntParameter(default=conf["n_guesses"])  # type: int
     fold = luigi.Parameter()  # type: str
 
     def requires(self):
@@ -98,60 +111,78 @@ class GenerateGuesses(Task):
             guesser_class=self.guesser_class,
             dependency_module=self.dependency_module,
             dependency_class=self.dependency_class,
-            config_num=self.config_num
+            config_num=self.config_num,
         )
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_directory = AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, ''
+            self.guesser_module, self.guesser_class, self.config_num, ""
         )
-        guesser_instance = guesser_class.load(guesser_directory)  # type: AbstractGuesser
+        guesser_instance = guesser_class.load(
+            guesser_directory
+        )  # type: AbstractGuesser
 
         if self.fold in {c.GUESSER_TRAIN_FOLD, c.GUESSER_DEV_FOLD}:
-            char_skip = conf['guesser_char_skip']
+            char_skip = conf["guesser_char_skip"]
         elif self.fold == c.EXPO_FOLD:
-            char_skip = conf['expo_char_skip']
+            char_skip = conf["expo_char_skip"]
         else:
-            char_skip = conf['buzzer_char_skip']
+            char_skip = conf["buzzer_char_skip"]
 
-        log.info(f'Generating and saving guesses for {self.fold} fold with char_skip={char_skip}...')
+        log.info(
+            f"Generating and saving guesses for {self.fold} fold with char_skip={char_skip}..."
+        )
         start_time = time.time()
-        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], char_skip=char_skip)
+        guess_df = guesser_instance.generate_guesses(
+            self.n_guesses, [self.fold], char_skip=char_skip
+        )
         end_time = time.time()
         elapsed = end_time - start_time
-        log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
-        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], 'char')
-        log.info('Done saving guesses')
+        log.info(f"Guessing on {self.fold} fold took {elapsed}s, saving guesses...")
+        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], "char")
+        log.info("Done saving guesses")
 
-        log.info(f'Generating and saving guesses for {self.fold} fold with full question...')
+        log.info(
+            f"Generating and saving guesses for {self.fold} fold with full question..."
+        )
         start_time = time.time()
-        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], full_question=True)
+        guess_df = guesser_instance.generate_guesses(
+            self.n_guesses, [self.fold], full_question=True
+        )
         end_time = time.time()
         elapsed = end_time - start_time
-        log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
-        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], 'full')
-        log.info('Done saving guesses')
+        log.info(f"Guessing on {self.fold} fold took {elapsed}s, saving guesses...")
+        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], "full")
+        log.info("Done saving guesses")
 
-        log.info(f'Generating and saving guesses for {self.fold} fold with first sentence')
+        log.info(
+            f"Generating and saving guesses for {self.fold} fold with first sentence"
+        )
         start_time = time.time()
-        guess_df = guesser_instance.generate_guesses(self.n_guesses, [self.fold], first_sentence=True)
+        guess_df = guesser_instance.generate_guesses(
+            self.n_guesses, [self.fold], first_sentence=True
+        )
         end_time = time.time()
         elapsed = end_time - start_time
-        log.info(f'Guessing on {self.fold} fold took {elapsed}s, saving guesses...')
-        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], 'first')
-        log.info('Done saving guesses')
+        log.info(f"Guessing on {self.fold} fold took {elapsed}s, saving guesses...")
+        guesser_class.save_guesses(guess_df, guesser_directory, [self.fold], "first")
+        log.info("Done saving guesses")
 
     def output(self):
         files = [
-            f'guesses_char_{self.fold}.pickle',
-            f'guesses_full_{self.fold}.pickle',
-            f'guesses_first_{self.fold}.pickle'
+            f"guesses_char_{self.fold}.pickle",
+            f"guesses_full_{self.fold}.pickle",
+            f"guesses_first_{self.fold}.pickle",
         ]
         return [
-            LocalTarget(AbstractGuesser.output_path(
-                self.guesser_module, self.guesser_class, self.config_num, f
-            )) for f in files]
+            LocalTarget(
+                AbstractGuesser.output_path(
+                    self.guesser_module, self.guesser_class, self.config_num, f
+                )
+            )
+            for f in files
+        ]
 
 
 class GenerateAllGuesses(WrapperTask):
@@ -164,7 +195,7 @@ class GenerateAllGuesses(WrapperTask):
                     dependency_module=g_spec.dependency_module,
                     dependency_class=g_spec.dependency_class,
                     config_num=g_spec.config_num,
-                    fold=fold
+                    fold=fold,
                 )
 
 
@@ -183,24 +214,26 @@ class GuesserReport(Task):
             dependency_module=self.dependency_module,
             dependency_class=self.dependency_class,
             config_num=self.config_num,
-            fold=self.fold
+            fold=self.fold,
         )
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         guesser_directory = AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, ''
+            self.guesser_module, self.guesser_class, self.config_num, ""
         )
         guesser_instance = guesser_class(self.config_num)
         guesser_instance.create_report(guesser_directory, self.fold)
 
     def output(self):
-        return LocalTarget(AbstractGuesser.output_path(
-            self.guesser_module,
-            self.guesser_class,
-            self.config_num,
-            f'guesser_report_{self.fold}.pickle'
-        ))
+        return LocalTarget(
+            AbstractGuesser.output_path(
+                self.guesser_module,
+                self.guesser_class,
+                self.config_num,
+                f"guesser_report_{self.fold}.pickle",
+            )
+        )
 
 
 class GuesserPerformance(Task):
@@ -217,7 +250,7 @@ class GuesserPerformance(Task):
             dependency_module=self.dependency_module,
             dependency_class=self.dependency_class,
             config_num=self.config_num,
-            fold=c.GUESSER_DEV_FOLD
+            fold=c.GUESSER_DEV_FOLD,
         )
         yield GenerateGuesses(
             guesser_module=self.guesser_module,
@@ -225,7 +258,7 @@ class GuesserPerformance(Task):
             dependency_module=self.dependency_module,
             dependency_class=self.dependency_class,
             config_num=self.config_num,
-            fold=c.GUESSER_TEST_FOLD
+            fold=c.GUESSER_TEST_FOLD,
         )
         if os.path.exists(c.QANTA_EXPO_DATASET_PATH):
             yield GenerateGuesses(
@@ -234,24 +267,27 @@ class GuesserPerformance(Task):
                 dependency_module=self.dependency_module,
                 dependency_class=self.dependency_class,
                 config_num=self.config_num,
-                fold=c.EXPO_FOLD
+                fold=c.EXPO_FOLD,
             )
 
     def run(self):
         guesser_class = get_class(self.guesser_module, self.guesser_class)
         reporting_directory = AbstractGuesser.reporting_path(
-            self.guesser_module, self.guesser_class, self.config_num, ''
+            self.guesser_module, self.guesser_class, self.config_num, ""
         )
 
         # In the cases of huge parameter sweeps on SLURM its easy to accidentally run out of /fs/ storage.
         # Since we only care about the results we can get them, then delete the models. We can use the regular
         # GuesserReport to preserve the model
         guesser_directory = AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, ''
+            self.guesser_module, self.guesser_class, self.config_num, ""
         )
 
         param_path = AbstractGuesser.output_path(
-            self.guesser_module, self.guesser_class, self.config_num, f'guesser_params.pickle'
+            self.guesser_module,
+            self.guesser_class,
+            self.config_num,
+            f"guesser_params.pickle",
         )
         guesses_files = []
         if os.path.exists(c.QANTA_EXPO_DATASET_PATH):
@@ -260,33 +296,36 @@ class GuesserPerformance(Task):
             folds = [c.GUESSER_DEV_FOLD, c.GUESSER_TEST_FOLD]
 
         for f in folds:
-            guesses_files.extend([
-                f'guesses_char_{f}.pickle',
-                f'guesses_full_{f}.pickle',
-                f'guesses_first_{f}.pickle'
-            ])
+            guesses_files.extend(
+                [
+                    f"guesses_char_{f}.pickle",
+                    f"guesses_full_{f}.pickle",
+                    f"guesses_first_{f}.pickle",
+                ]
+            )
 
         guesses_paths = [
             AbstractGuesser.output_path(
-                self.guesser_module, self.guesser_class, self.config_num, f)
+                self.guesser_module, self.guesser_class, self.config_num, f
+            )
             for f in guesses_files
         ]
 
         log.info(f'Running: "cp {param_path} {reporting_directory}"')
-        shell(f'cp {param_path} {reporting_directory}')
+        shell(f"cp {param_path} {reporting_directory}")
 
         for g_path in guesses_paths:
             log.info(f'Running: "cp {g_path} {reporting_directory}"')
-            shell(f'cp {g_path} {reporting_directory}')
+            shell(f"cp {g_path} {reporting_directory}")
 
         guesser_instance = guesser_class(self.config_num)
         for f in folds:
             guesser_instance.create_report(reporting_directory, f)
 
         log.info(f'Running: "rm -rf {guesser_directory}"')
-        shell(f'rm -rf {guesser_directory}')
+        shell(f"rm -rf {guesser_directory}")
         for g_path in guesses_paths:
-            shell(f'rm -f {g_path}')
+            shell(f"rm -f {g_path}")
 
     def output(self):
         if os.path.exists(c.QANTA_EXPO_DATASET_PATH):
@@ -294,20 +333,26 @@ class GuesserPerformance(Task):
         else:
             folds = [c.GUESSER_DEV_FOLD, c.GUESSER_TEST_FOLD]
 
-        targets = [LocalTarget(AbstractGuesser.reporting_path(
-            self.guesser_module,
-            self.guesser_class,
-            self.config_num,
-            f'guesser_params.pickle'))
-        ]
-        for f in folds:
-            targets.append(
-                LocalTarget(AbstractGuesser.reporting_path(
+        targets = [
+            LocalTarget(
+                AbstractGuesser.reporting_path(
                     self.guesser_module,
                     self.guesser_class,
                     self.config_num,
-                    f'guesser_report_{f}.pickle'
-                ))
+                    f"guesser_params.pickle",
+                )
+            )
+        ]
+        for f in folds:
+            targets.append(
+                LocalTarget(
+                    AbstractGuesser.reporting_path(
+                        self.guesser_module,
+                        self.guesser_class,
+                        self.config_num,
+                        f"guesser_report_{f}.pickle",
+                    )
+                )
             )
         return targets
 
@@ -334,7 +379,7 @@ class AllGuesserReports(WrapperTask):
                     dependency_module=g_spec.dependency_module,
                     dependency_class=g_spec.dependency_class,
                     config_num=g_spec.config_num,
-                    fold=fold
+                    fold=fold,
                 )
             if os.path.exists(c.QANTA_EXPO_DATASET_PATH):
                 yield GuesserReport(
@@ -343,7 +388,7 @@ class AllGuesserReports(WrapperTask):
                     dependency_module=g_spec.dependency_module,
                     dependency_class=g_spec.dependency_class,
                     config_num=g_spec.config_num,
-                    fold=c.EXPO_FOLD
+                    fold=c.EXPO_FOLD,
                 )
 
 
@@ -354,19 +399,19 @@ class SelectBestGuesser(Task):
     def run(self):
         guesser_types = set()
         for g_spec in AbstractGuesser.list_enabled_guessers():
-            guesser_types.add(f'{g_spec.guesser_module}.{g_spec.guesser_class}')
+            guesser_types.add(f"{g_spec.guesser_module}.{g_spec.guesser_class}")
         _, _, all_dfs, _ = merge_reports(guesser_types)
         best_guessers = find_best_guessers(all_dfs)
         for g, config_num in best_guessers.items():
-            inp = f'output/guesser/{g}/{config_num}'
-            out = f'output/guesser/best/{g}/'
-            shell(f'touch {inp}/best.touch')
-            shell(f'mkdir -p {out}')
-            shell(f'cp -r {inp}/* {out}')
+            inp = f"output/guesser/{g}/{config_num}"
+            out = f"output/guesser/best/{g}/"
+            shell(f"touch {inp}/best.touch")
+            shell(f"mkdir -p {out}")
+            shell(f"cp -r {inp}/* {out}")
 
     def output(self):
         targets = []
         for g_spec in AbstractGuesser.list_enabled_guessers():
-            guesser = f'{g_spec.guesser_module}.{g_spec.guesser_class}'
-            targets.append(LocalTarget(f'output/guesser/best/{guesser}/best.touch'))
+            guesser = f"{g_spec.guesser_module}.{g_spec.guesser_class}"
+            targets.append(LocalTarget(f"output/guesser/best/{guesser}/best.touch"))
         return targets

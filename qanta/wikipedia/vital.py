@@ -13,25 +13,29 @@ import click
 
 def fetch_vital_titles():
     vital_parent_html = requests.get(
-        'https://en.wikipedia.org/wiki/Wikipedia:Vital_articles/Level/5'
+        "https://en.wikipedia.org/wiki/Wikipedia:Vital_articles/Level/5"
     ).content.decode()
-    parent_soup = BeautifulSoup(vital_parent_html, 'html.parser')
+    parent_soup = BeautifulSoup(vital_parent_html, "html.parser")
     vital_links = []
-    for link in parent_soup.find_all('a'):
-        url = link.get('href')
-        if url is not None and url.startswith('/wiki/Wikipedia:Vital_articles/Level/5/'):
+    for link in parent_soup.find_all("a"):
+        url = link.get("href")
+        if url is not None and url.startswith(
+            "/wiki/Wikipedia:Vital_articles/Level/5/"
+        ):
             vital_links.append(url)
 
     vital_articles = set()
     for link in vital_links:
-        soup = BeautifulSoup(requests.get(f'https://en.wikipedia.org/{link}').content, 'lxml')
-        for page_link in soup.find_all('a'):
-            url = page_link.get('href')
+        soup = BeautifulSoup(
+            requests.get(f"https://en.wikipedia.org/{link}").content, "lxml"
+        )
+        for page_link in soup.find_all("a"):
+            url = page_link.get("href")
             if url is None:
                 continue
             url = urllib.parse.unquote(url)
-            if url is not None and url.startswith('/wiki') and ':' not in url:
-                vital_articles.add(url.split('/')[2])
+            if url is not None and url.startswith("/wiki") and ":" not in url:
+                vital_articles.add(url.split("/")[2])
     return vital_articles
 
 
@@ -41,8 +45,8 @@ def vital_cli():
 
 
 @vital_cli.command()
-@click.argument('path')
+@click.argument("path")
 def write(path):
     vital_articles = list(fetch_vital_titles())
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(vital_articles, f)

@@ -24,8 +24,12 @@ from qanta.config import conf
 from qanta.guesser.abstract import AbstractGuesser
 from qanta.datasets.abstract import QuestionText
 from qanta.torch import (
-    BaseLogger, TerminateOnNaN, EarlyStopping, ModelCheckpoint,
-    MaxEpochStopping, TrainingManager
+    BaseLogger,
+    TerminateOnNaN,
+    EarlyStopping,
+    ModelCheckpoint,
+    MaxEpochStopping,
+    TrainingManager,
 )
 
 
@@ -33,59 +37,71 @@ log = qlogging.get(__name__)
 
 
 CUDA = torch.cuda.is_available()
-def colorize(words, color_array, colors='rdbu'):
+
+
+def colorize(words, color_array, colors="rdbu"):
     # words is a list of words
     # color_array is an array of numbers between 0 and 1
     cmap = plt.cm.get_cmap(colors)
     template = '<span class="barcode"; style="color: black; \
                 background-color: {}">{}</span>'
-    colored_string = ''
+    colored_string = ""
     for word, color in zip(words, color_array):
         color = matplotlib.colors.rgb2hex(cmap(color)[:3])
-        if word == '<unk>':
-            word = '&ltunk&gt'
-        colored_string += template.format(color, '&nbsp' + word + '&nbsp')
+        if word == "<unk>":
+            word = "&ltunk&gt"
+        colored_string += template.format(color, "&nbsp" + word + "&nbsp")
     return colored_string
 
 
 extracted_grads = {}
+
+
 def extract_grad_hook(name):
     def hook(grad):
         extracted_grads[name] = grad
+
     return hook
 
 
 def create_save_model(model):
     def save_model(path):
         torch.save(model.state_dict(), path)
+
     return save_model
 
 
 qb_patterns = {
-    '\n',
-    ', for 10 points,',
-    ', for ten points,',
-    '--for 10 points--',
-    'for 10 points, ',
-    'for 10 points--',
-    'for ten points, ',
-    'for 10 points ',
-    'for ten points ',
-    ', ftp,'
-    'ftp,',
-    'ftp',
-    '(*)'
+    "\n",
+    ", for 10 points,",
+    ", for ten points,",
+    "--for 10 points--",
+    "for 10 points, ",
+    "for 10 points--",
+    "for ten points, ",
+    "for 10 points ",
+    "for ten points ",
+    ", ftp," "ftp,",
+    "ftp",
+    "(*)",
 }
-re_pattern = '|'.join([re.escape(p) for p in qb_patterns])
-re_pattern += r'|\[.*?\]|\(.*?\)'
+re_pattern = "|".join([re.escape(p) for p in qb_patterns])
+re_pattern += r"|\[.*?\]|\(.*?\)"
 
 
 class RnnModel(nn.Module):
-    def __init__(self, n_classes, *,
-                 text_field=None,
-                 init_embeddings=True, emb_dim=300,
-                 n_hidden_units=1000, n_hidden_layers=1,
-                 nn_dropout=.265, bidirectional=True):
+    def __init__(
+        self,
+        n_classes,
+        *,
+        text_field=None,
+        init_embeddings=True,
+        emb_dim=300,
+        n_hidden_units=1000,
+        n_hidden_layers=1,
+        nn_dropout=0.265,
+        bidirectional=True,
+    ):
         super(RnnModel, self).__init__()
         self.emb_dim = emb_dim
         self.n_classes = n_classes
@@ -100,7 +116,9 @@ class RnnModel(nn.Module):
         text_vocab = text_field.vocab
         self.text_vocab_size = len(text_vocab)
         text_pad_idx = text_vocab.stoi[text_field.pad_token]
-        self.text_embeddings = nn.Embedding(self.text_vocab_size, emb_dim, padding_idx=text_pad_idx)
+        self.text_embeddings = nn.Embedding(
+            self.text_vocab_size, emb_dim, padding_idx=text_pad_idx
+        )
         self.text_field = text_field
         if init_embeddings:
             mean_emb = text_vocab.vectors.mean(0)
@@ -108,21 +126,23 @@ class RnnModel(nn.Module):
             self.text_embeddings.weight.data = text_vocab.vectors.cuda()
 
         self.rnn = nn.GRU(
-            self.emb_dim, n_hidden_units, n_hidden_layers,
-            dropout=self.nn_dropout, batch_first=True, bidirectional=True
+            self.emb_dim,
+            n_hidden_units,
+            n_hidden_layers,
+            dropout=self.nn_dropout,
+            batch_first=True,
+            bidirectional=True,
         )
 
         self.classifier = nn.Sequential(
             nn.Linear(self.num_directions * self.n_hidden_units, n_classes),
             nn.BatchNorm1d(n_classes),
-            nn.Dropout(self.nn_dropout)
+            nn.Dropout(self.nn_dropout),
         )
 
-    def forward(self,
-                text_input: Variable,
-                lengths: List[int],
-                hidden: Variable,
-                qanta_ids):
+    def forward(
+        self, text_input: Variable, lengths: List[int], hidden: Variable, qanta_ids
+    ):
         """
         :param text_input: [batch_size, seq_len] of word indices
         :param lengths: Length of each example
@@ -133,7 +153,9 @@ class RnnModel(nn.Module):
         embed = self.text_embeddings(text_input)
         embed = self.dropout(embed)
 
-        packed_input = nn.utils.rnn.pack_padded_sequence(embed, lengths, batch_first=True)
+        packed_input = nn.utils.rnn.pack_padded_sequence(
+            embed, lengths, batch_first=True
+        )
         output, hidden = self.rnn(packed_input, hidden)
 
         if type(hidden) == tuple:
@@ -149,7 +171,9 @@ class RnnModel(nn.Module):
         final_hidden = final_hidden.view(
             self.n_hidden_layers, self.num_directions, batch_size, self.n_hidden_units
         )[-1]
-        combined_hidden = torch.cat([final_hidden[i] for i in range(self.num_directions)], dim=1)
+        combined_hidden = torch.cat(
+            [final_hidden[i] for i in range(self.num_directions)], dim=1
+        )
 
         return self.classifier(combined_hidden), hidden
 
@@ -157,32 +181,49 @@ class RnnModel(nn.Module):
         weight = next(self.parameters()).data
         if isinstance(self.rnn, nn.LSTM):
             return (
-                Variable(weight.new(
-                    self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_()),
                 Variable(
-                    weight.new(self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
+                    weight.new(
+                        self.n_hidden_layers * self.num_directions,
+                        batch_size,
+                        self.n_hidden_units,
+                    ).zero_()
+                ),
+                Variable(
+                    weight.new(
+                        self.n_hidden_layers * self.num_directions,
+                        batch_size,
+                        self.n_hidden_units,
+                    ).zero_()
+                ),
             )
         else:
-            return Variable(weight.new(
-                self.n_hidden_layers * self.num_directions, batch_size, self.n_hidden_units).zero_())
+            return Variable(
+                weight.new(
+                    self.n_hidden_layers * self.num_directions,
+                    batch_size,
+                    self.n_hidden_units,
+                ).zero_()
+            )
 
 
 class RnnGuesser(AbstractGuesser):
     def __init__(self, config_num):
         super(RnnGuesser, self).__init__(config_num)
         if self.config_num is not None:
-            guesser_conf = conf['guessers']['qanta.guesser.rnn.RnnGuesser'][self.config_num]
-            self.gradient_clip = guesser_conf['gradient_clip']
-            self.n_hidden_units = guesser_conf['n_hidden_units']
-            self.n_hidden_layers = guesser_conf['n_hidden_layers']
-            self.nn_dropout = guesser_conf['dropout']
-            self.batch_size = guesser_conf['batch_size']
-            self.use_wiki = guesser_conf['use_wiki']
-            self.n_wiki_sentences = guesser_conf['n_wiki_sentences']
-            self.wiki_title_replace_token = guesser_conf['wiki_title_replace_token']
-            self.lowercase = guesser_conf['lowercase']
+            guesser_conf = conf["guessers"]["qanta.guesser.rnn.RnnGuesser"][
+                self.config_num
+            ]
+            self.gradient_clip = guesser_conf["gradient_clip"]
+            self.n_hidden_units = guesser_conf["n_hidden_units"]
+            self.n_hidden_layers = guesser_conf["n_hidden_layers"]
+            self.nn_dropout = guesser_conf["dropout"]
+            self.batch_size = guesser_conf["batch_size"]
+            self.use_wiki = guesser_conf["use_wiki"]
+            self.n_wiki_sentences = guesser_conf["n_wiki_sentences"]
+            self.wiki_title_replace_token = guesser_conf["wiki_title_replace_token"]
+            self.lowercase = guesser_conf["lowercase"]
 
-            self.random_seed = guesser_conf['random_seed']
+            self.random_seed = guesser_conf["random_seed"]
 
         self.page_field: Optional[Field] = None
         self.qanta_id_field: Optional[Field] = None
@@ -205,52 +246,64 @@ class RnnGuesser(AbstractGuesser):
         return self.page_field.vocab.itos
 
     def parameters(self):
-        return conf['guessers']['qanta.guesser.rnn.RnnGuesser'][self.config_num]
+        return conf["guessers"]["qanta.guesser.rnn.RnnGuesser"][self.config_num]
 
     def train(self, training_data):
-        log.info('Loading Quiz Bowl dataset')
+        log.info("Loading Quiz Bowl dataset")
         train_iter, val_iter, dev_iter = QuizBowl.iters(
-            batch_size=self.batch_size, lower=self.lowercase,
-            use_wiki=self.use_wiki, n_wiki_sentences=self.n_wiki_sentences,
+            batch_size=self.batch_size,
+            lower=self.lowercase,
+            use_wiki=self.use_wiki,
+            n_wiki_sentences=self.n_wiki_sentences,
             replace_title_mentions=self.wiki_title_replace_token,
-            sort_within_batch=True
+            sort_within_batch=True,
         )
-        log.info(f'Training Data={len(training_data[0])}')
-        log.info(f'N Train={len(train_iter.dataset.examples)}')
-        log.info(f'N Test={len(val_iter.dataset.examples)}')
+        log.info(f"Training Data={len(training_data[0])}")
+        log.info(f"N Train={len(train_iter.dataset.examples)}")
+        log.info(f"N Test={len(val_iter.dataset.examples)}")
         fields: Dict[str, Field] = train_iter.dataset.fields
-        self.page_field = fields['page']
+        self.page_field = fields["page"]
         self.n_classes = len(self.ans_to_i)
-        self.qanta_id_field = fields['qanta_id']
+        self.qanta_id_field = fields["qanta_id"]
         self.emb_dim = 300
 
-        self.text_field = fields['text']
-        log.info(f'Text Vocab={len(self.text_field.vocab)}')
+        self.text_field = fields["text"]
+        log.info(f"Text Vocab={len(self.text_field.vocab)}")
 
-        log.info('Initializing Model')
+        log.info("Initializing Model")
         self.model = RnnModel(
             self.n_classes,
             text_field=self.text_field,
             emb_dim=self.emb_dim,
-            n_hidden_units=self.n_hidden_units, n_hidden_layers=self.n_hidden_layers,
-            nn_dropout=self.nn_dropout
+            n_hidden_units=self.n_hidden_units,
+            n_hidden_layers=self.n_hidden_layers,
+            nn_dropout=self.nn_dropout,
         )
         if CUDA:
             self.model = self.model.cuda()
-        log.info(f'Parameters:\n{self.parameters()}')
-        log.info(f'Model:\n{self.model}')
+        log.info(f"Parameters:\n{self.parameters()}")
+        log.info(f"Model:\n{self.model}")
         self.optimizer = Adam(self.model.parameters())
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5, verbose=True, mode='max')
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, patience=5, verbose=True, mode="max"
+        )
 
         temp_prefix = get_tmp_filename()
-        self.model_file = f'{temp_prefix}.pt'
-        manager = TrainingManager([
-            BaseLogger(log_func=log.info), TerminateOnNaN(), EarlyStopping(monitor='test_acc', patience=10, verbose=1),
-            MaxEpochStopping(100), ModelCheckpoint(create_save_model(self.model), self.model_file, monitor='test_acc')
-        ])
+        self.model_file = f"{temp_prefix}.pt"
+        manager = TrainingManager(
+            [
+                BaseLogger(log_func=log.info),
+                TerminateOnNaN(),
+                EarlyStopping(monitor="test_acc", patience=10, verbose=1),
+                MaxEpochStopping(100),
+                ModelCheckpoint(
+                    create_save_model(self.model), self.model_file, monitor="test_acc"
+                ),
+            ]
+        )
 
-        log.info('Starting training')
+        log.info("Starting training")
 
         epoch = 0
         while True:
@@ -261,12 +314,11 @@ class RnnGuesser(AbstractGuesser):
             test_acc, test_loss, test_time = self.run_epoch(val_iter)
 
             stop_training, reasons = manager.instruct(
-                train_time, train_loss, train_acc,
-                test_time, test_loss, test_acc
+                train_time, train_loss, train_acc, test_time, test_loss, test_acc
             )
 
             if stop_training:
-                log.info(' '.join(reasons))
+                log.info(" ".join(reasons))
                 break
             else:
                 self.scheduler.step(test_acc)
@@ -292,15 +344,15 @@ class RnnGuesser(AbstractGuesser):
             if is_train:
                 self.model.zero_grad()
 
-            out, hidden = self.model(
-                text, lengths, hidden_init, qanta_ids
-            )
+            out, hidden = self.model(text, lengths, hidden_init, qanta_ids)
             _, preds = torch.max(out, 1)
             accuracy = torch.mean(torch.eq(preds, page).float()).data[0]
             batch_loss = self.criterion(out, page)
             if is_train:
                 batch_loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), self.gradient_clip)
+                torch.nn.utils.clip_grad_norm(
+                    self.model.parameters(), self.gradient_clip
+                )
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)
@@ -319,7 +371,7 @@ class RnnGuesser(AbstractGuesser):
         else:
             all_guesses = []
             for i in range(0, len(questions), batch_size):
-                batch_questions = questions[i:i + batch_size]
+                batch_questions = questions[i : i + batch_size]
                 guesses = self._guess_batch(batch_questions, max_n_guesses)
                 all_guesses.extend(guesses)
             return all_guesses
@@ -335,7 +387,9 @@ class RnnGuesser(AbstractGuesser):
         rev_order = np.argsort(order)
         ordered_examples = padded_examples[order]
         ordered_lengths = lengths[order]
-        text, lengths = self.text_field.numericalize((ordered_examples, ordered_lengths), device=None, train=False)
+        text, lengths = self.text_field.numericalize(
+            (ordered_examples, ordered_lengths), device=None, train=False
+        )
         lengths = list(lengths.cpu().numpy())
 
         qanta_ids = self.qanta_id_field.process([0 for _ in questions]).cuda()
@@ -354,58 +408,65 @@ class RnnGuesser(AbstractGuesser):
         return guesses
 
     def save(self, directory: str):
-        shutil.copyfile(self.model_file, os.path.join(directory, 'rnn.pt'))
-        shell(f'rm -f {self.model_file}')
-        with open(os.path.join(directory, 'rnn.pkl'), 'wb') as f:
-            cloudpickle.dump({
-                'page_field': self.page_field,
-                'text_field': self.text_field,
-                'qanta_id_field': self.qanta_id_field,
-                'n_classes': self.n_classes,
-                'gradient_clip': self.gradient_clip,
-                'n_hidden_units': self.n_hidden_units,
-                'n_hidden_layers': self.n_hidden_layers,
-                'nn_dropout': self.nn_dropout,
-                'batch_size': self.batch_size,
-                'use_wiki': self.use_wiki,
-                'n_wiki_sentences': self.n_wiki_sentences,
-                'wiki_title_replace_token': self.wiki_title_replace_token,
-                'lowercase': self.lowercase,
-                'random_seed': self.random_seed,
-                'config_num': self.config_num
-            }, f)
+        shutil.copyfile(self.model_file, os.path.join(directory, "rnn.pt"))
+        shell(f"rm -f {self.model_file}")
+        with open(os.path.join(directory, "rnn.pkl"), "wb") as f:
+            cloudpickle.dump(
+                {
+                    "page_field": self.page_field,
+                    "text_field": self.text_field,
+                    "qanta_id_field": self.qanta_id_field,
+                    "n_classes": self.n_classes,
+                    "gradient_clip": self.gradient_clip,
+                    "n_hidden_units": self.n_hidden_units,
+                    "n_hidden_layers": self.n_hidden_layers,
+                    "nn_dropout": self.nn_dropout,
+                    "batch_size": self.batch_size,
+                    "use_wiki": self.use_wiki,
+                    "n_wiki_sentences": self.n_wiki_sentences,
+                    "wiki_title_replace_token": self.wiki_title_replace_token,
+                    "lowercase": self.lowercase,
+                    "random_seed": self.random_seed,
+                    "config_num": self.config_num,
+                },
+                f,
+            )
 
     @classmethod
     def load(cls, directory: str):
-        with open(os.path.join(directory, 'rnn.pkl'), 'rb') as f:
+        with open(os.path.join(directory, "rnn.pkl"), "rb") as f:
             params = cloudpickle.load(f)
 
-        guesser = RnnGuesser(params['config_num'])
-        guesser.page_field = params['page_field']
-        guesser.qanta_id_field = params['qanta_id_field']
+        guesser = RnnGuesser(params["config_num"])
+        guesser.page_field = params["page_field"]
+        guesser.qanta_id_field = params["qanta_id_field"]
 
-        guesser.text_field = params['text_field']
+        guesser.text_field = params["text_field"]
 
-        guesser.n_classes = params['n_classes']
-        guesser.gradient_clip = params['gradient_clip']
-        guesser.n_hidden_units = params['n_hidden_units']
-        guesser.n_hidden_layers = params['n_hidden_layers']
-        guesser.nn_dropout = params['nn_dropout']
-        guesser.use_wiki = params['use_wiki']
-        guesser.n_wiki_sentences = params['n_wiki_sentences']
-        guesser.wiki_title_replace_token = params['wiki_title_replace_token']
-        guesser.lowercase = params['lowercase']
-        guesser.random_seed = params['random_seed']
+        guesser.n_classes = params["n_classes"]
+        guesser.gradient_clip = params["gradient_clip"]
+        guesser.n_hidden_units = params["n_hidden_units"]
+        guesser.n_hidden_layers = params["n_hidden_layers"]
+        guesser.nn_dropout = params["nn_dropout"]
+        guesser.use_wiki = params["use_wiki"]
+        guesser.n_wiki_sentences = params["n_wiki_sentences"]
+        guesser.wiki_title_replace_token = params["wiki_title_replace_token"]
+        guesser.lowercase = params["lowercase"]
+        guesser.random_seed = params["random_seed"]
         guesser.model = RnnModel(
             guesser.n_classes,
             text_field=guesser.text_field,
-            init_embeddings=False, emb_dim=300,
+            init_embeddings=False,
+            emb_dim=300,
             n_hidden_layers=guesser.n_hidden_layers,
-            n_hidden_units=guesser.n_hidden_units
+            n_hidden_units=guesser.n_hidden_units,
         )
-        guesser.model.load_state_dict(torch.load(
-            os.path.join(directory, 'rnn.pt'), map_location=lambda storage, loc: storage
-        ))
+        guesser.model.load_state_dict(
+            torch.load(
+                os.path.join(directory, "rnn.pt"),
+                map_location=lambda storage, loc: storage,
+            )
+        )
         guesser.model.eval()
         if CUDA:
             guesser.model = guesser.model.cuda()
@@ -413,21 +474,22 @@ class RnnGuesser(AbstractGuesser):
 
     @classmethod
     def targets(cls):
-        return ['rnn.pt', 'rnn.pkl']
+        return ["rnn.pt", "rnn.pkl"]
 
-    def web_api(self, host='0.0.0.0', port=6000, debug=False):
+    def web_api(self, host="0.0.0.0", port=6000, debug=False):
         from flask import Flask, jsonify, request
+
         app = Flask(__name__)
 
-        @app.route('/api/answer_question', methods=['POST'])
+        @app.route("/api/answer_question", methods=["POST"])
         def answer_question_base():
-            text = request.form['text']
+            text = request.form["text"]
             guess, score = self.guess([text], 1)[0][0]
-            return jsonify({'guess': guess, 'score': float(score)})
+            return jsonify({"guess": guess, "score": float(score)})
 
-        @app.route('/api/interface_get_highlights', methods=['POST'])
+        @app.route("/api/interface_get_highlights", methods=["POST"])
         def get_highlights():
-            questions = [request.form['text']]
+            questions = [request.form["text"]]
             examples = [self.text_field.preprocess(q) for q in questions]
             padded_examples, lengths = self.text_field.pad(examples)
             padded_examples = np.array(padded_examples, dtype=np.object)
@@ -436,21 +498,29 @@ class RnnGuesser(AbstractGuesser):
             # rev_order = np.argsort(order)
             ordered_examples = padded_examples[order]
             ordered_lengths = lengths[order]
-            text, lengths = self.text_field.numericalize((ordered_examples, ordered_lengths), device=-1, train=False)
+            text, lengths = self.text_field.numericalize(
+                (ordered_examples, ordered_lengths), device=-1, train=False
+            )
             lengths = list(lengths.cpu().numpy())
 
             qanta_ids = self.qanta_id_field.process([0 for _ in questions])  # .cuda()
             hidden_init = self.model.init_hidden(len(questions))
             text = Variable(text.data, volatile=False)
 
-            out, _ = self.model(text, lengths, hidden_init, qanta_ids, extract_grad_hook('embed'))
+            out, _ = self.model(
+                text, lengths, hidden_init, qanta_ids, extract_grad_hook("embed")
+            )
 
-            guessForEvidence = request.form['guessForEvidence']
-            guessForEvidence = guessForEvidence.split("style=\"color:blue\">")[1].split("</a>")[0].lower()
+            guessForEvidence = request.form["guessForEvidence"]
+            guessForEvidence = (
+                guessForEvidence.split('style="color:blue">')[1]
+                .split("</a>")[0]
+                .lower()
+            )
             indicator = -1
 
             guess = str(guessForEvidence)
-            guesses = self.guess([request.form['text']], 500)[0]
+            guesses = self.guess([request.form["text"]], 500)[0]
             for index, (g, s) in enumerate(guesses):
                 print(g.lower().replace("_", " ")[0:25])
                 print(guessForEvidence)
@@ -461,10 +531,10 @@ class RnnGuesser(AbstractGuesser):
                     break
             if indicator == -1:
                 highlights = {
-                    'wiki': ['No Evidence', 'No Evidence'],
-                    'qb': ['No Evidence', 'No Evidence'],
-                    'guess': guess,
-                    'visual': 'No Evidence'
+                    "wiki": ["No Evidence", "No Evidence"],
+                    "qb": ["No Evidence", "No Evidence"],
+                    "guess": guess,
+                    "visual": "No Evidence",
                 }
                 return jsonify(highlights)
 
@@ -477,7 +547,7 @@ class RnnGuesser(AbstractGuesser):
             self.model.zero_grad()
             loss.backward()
 
-            grads = extracted_grads['embed'].transpose(0, 1)
+            grads = extracted_grads["embed"].transpose(0, 1)
             grads = grads.data.cpu()
             scores = grads.sum(dim=2).numpy()
             grads = grads.numpy()
@@ -486,9 +556,9 @@ class RnnGuesser(AbstractGuesser):
             scores = scores.tolist()
 
             normalized_scores = scores
-            # normalize scores across the words, doing positive and negatives seperately        
+            # normalize scores across the words, doing positive and negatives seperately
             # final scores should be in range [0,1] 0 is dark red, 1 is dark blue. 0.5 is no highlight
-            total_score_pos = 1e-6    # 1e-6 for case where all positive/neg scores are 0
+            total_score_pos = 1e-6  # 1e-6 for case where all positive/neg scores are 0
             total_score_neg = 1e-6
             for idx, s in enumerate(normalized_scores):
                 s[0] = s[0] * s[0] * s[0] / 5
@@ -498,14 +568,16 @@ class RnnGuesser(AbstractGuesser):
                     total_score_pos = total_score_pos + s[0]
             for idx, s in enumerate(normalized_scores):
                 if s[0] < 0:
-                    normalized_scores[idx] = (s[0] / total_score_neg) / 2   # / by 2 to get max of -0.5
+                    normalized_scores[idx] = (
+                        s[0] / total_score_neg
+                    ) / 2  # / by 2 to get max of -0.5
                 else:
                     normalized_scores[idx] = 0.0
             normalized_scores = [0.5 + n for n in normalized_scores]  # center scores
 
             returnVal = ""
             for s in normalized_scores:
-                returnVal = returnVal + ' ' + str(s)
+                returnVal = returnVal + " " + str(s)
 
             localPreprocess = create_qb_tokenizer()
             examples = [localPreprocess(q) for q in questions]
@@ -513,26 +585,26 @@ class RnnGuesser(AbstractGuesser):
             for t in examples[0]:
                 words.append(str(t))
 
-            visual = colorize(words, normalized_scores, colors='RdBu')
+            visual = colorize(words, normalized_scores, colors="RdBu")
             print("Guess", guess)
             highlights = {
-                'wiki': [returnVal, returnVal],
-                'qb': [returnVal, returnVal],
-                'guess': guess,
-                'visual': visual
+                "wiki": [returnVal, returnVal],
+                "qb": [returnVal, returnVal],
+                "guess": guess,
+                "visual": visual,
             }
             return jsonify(highlights)
 
-        @app.route('/api/interface_answer_question', methods=['POST'])
+        @app.route("/api/interface_answer_question", methods=["POST"])
         def answer_question():
-            text = request.form['text']
-            answer = request.form['answer']
+            text = request.form["text"]
+            answer = request.form["answer"]
             answer = answer.replace(" ", "_").lower()
             guesses = self.guess([text], 20)[0]
             score_fn = []
             sum_normalize = 0.0
             for (g, s) in guesses:
-                exp = np.exp(3*float(s))
+                exp = np.exp(3 * float(s))
                 score_fn.append(exp)
                 sum_normalize += exp
             for index, (g, s) in enumerate(guesses):
@@ -548,19 +620,20 @@ class RnnGuesser(AbstractGuesser):
                 guess.append(g)
                 score.append(float(s))
             for gue in guess:
-                if (gue.lower() == answer.lower()):
+                if gue.lower() == answer.lower():
                     answer_found = True
                     num = -1
-            if (not answer_found):
+            if not answer_found:
                 for index, (g, s) in enumerate(guesses):
-                    if (g.lower() == answer.lower()):
+                    if g.lower() == answer.lower():
                         guess.append(g)
                         score.append(float(s))
                         num = index + 1
-            if (num == 0):
+            if num == 0:
                 print("num was 0")
-                if (request.form['bell'] == 'true'):
+                if request.form["bell"] == "true":
                     return "Num0"
             guess = [g.replace("_", " ") for g in guess]
-            return jsonify({'guess': guess, 'score': score, 'num': num})
+            return jsonify({"guess": guess, "score": score, "num": num})
+
         app.run(host=host, port=port, debug=debug)

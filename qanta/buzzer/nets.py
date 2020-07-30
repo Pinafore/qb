@@ -7,7 +7,6 @@ from chainer import reporter
 
 
 class LinearBuzzer(chainer.Chain):
-
     def __init__(self, n_input, n_layers, n_hidden, n_output, dropout=0.1):
         super(LinearBuzzer, self).__init__()
         with self.init_scope():
@@ -15,8 +14,8 @@ class LinearBuzzer(chainer.Chain):
         self.n_layers = n_layers
         self.n_output = n_output
         self.dropout = dropout
-        self.model_name = 'LinearBuzzer'
-        self.model_dir = 'output/buzzer/LinearBuzzer'
+        self.model_name = "LinearBuzzer"
+        self.model_dir = "output/buzzer/LinearBuzzer"
 
     def __call__(self, xs, ys):
         concat_outputs = self.forward(xs)
@@ -24,8 +23,8 @@ class LinearBuzzer(chainer.Chain):
         concat_truths = F.concat(ys, axis=0)
         loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
         accuracy = F.accuracy(concat_outputs, concat_truths)
-        reporter.report({'loss': loss.data}, self)
-        reporter.report({'accuracy': accuracy.data}, self)
+        reporter.report({"loss": loss.data}, self)
+        reporter.report({"accuracy": accuracy.data}, self)
         return loss
 
     def forward(self, xs):
@@ -48,7 +47,6 @@ class LinearBuzzer(chainer.Chain):
 
 
 class RNNBuzzer(chainer.Chain):
-
     def __init__(self, n_input, n_layers, n_hidden, n_output, dropout=0.1):
         super(RNNBuzzer, self).__init__()
         with self.init_scope():
@@ -57,8 +55,8 @@ class RNNBuzzer(chainer.Chain):
         self.n_layers = n_layers
         self.n_output = n_output
         self.dropout = dropout
-        self.model_name = 'RNNBuzzer'
-        self.model_dir = 'output/buzzer/RNNBuzzer'
+        self.model_name = "RNNBuzzer"
+        self.model_dir = "output/buzzer/RNNBuzzer"
 
     def __call__(self, xs, ys):
         concat_outputs = self.forward(xs)
@@ -66,14 +64,14 @@ class RNNBuzzer(chainer.Chain):
         concat_truths = F.concat(ys, axis=0)
         loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
         accuracy = F.accuracy(concat_outputs, concat_truths)
-        reporter.report({'loss': loss.data}, self)
-        reporter.report({'accuracy': accuracy.data}, self)
+        reporter.report({"loss": loss.data}, self)
+        reporter.report({"accuracy": accuracy.data}, self)
         return loss
 
     def forward(self, xs):
         _, _, ys = self.encoder(None, None, xs)
         # ys is a list of hidden sequences
-        ys = F.concat(ys, axis=0)   # batch_size * length, n_output
+        ys = F.concat(ys, axis=0)  # batch_size * length, n_output
         ys = F.dropout(ys, self.dropout)
         ys = self.linear(ys)
         return ys
@@ -93,7 +91,6 @@ class RNNBuzzer(chainer.Chain):
 
 
 class MLPBuzzer(chainer.Chain):
-
     def __init__(self, n_input, n_layers, n_hidden, n_output, dropout=0.1):
         super(MLPBuzzer, self).__init__()
         input_layer = L.Linear(n_input, n_hidden)
@@ -106,8 +103,8 @@ class MLPBuzzer(chainer.Chain):
         self.n_layers = n_layers
         self.n_output = n_output
         self.dropout = dropout
-        self.model_name = 'MLPBuzzer'
-        self.model_dir = 'output/buzzer/MLPBuzzer'
+        self.model_name = "MLPBuzzer"
+        self.model_dir = "output/buzzer/MLPBuzzer"
 
     def __call__(self, xs, ys):
         concat_outputs = self.forward(xs)
@@ -115,8 +112,8 @@ class MLPBuzzer(chainer.Chain):
         concat_truths = F.concat(ys, axis=0)
         loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
         accuracy = F.accuracy(concat_outputs, concat_truths)
-        reporter.report({'loss': loss.data}, self)
-        reporter.report({'accuracy': accuracy.data}, self)
+        reporter.report({"loss": loss.data}, self)
+        reporter.report({"accuracy": accuracy.data}, self)
         return loss
 
     def forward(self, xs):

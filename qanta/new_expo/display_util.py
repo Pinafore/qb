@@ -7,8 +7,8 @@ from csv import DictReader
 from time import sleep
 import os
 
-kBIGNUMBERS = {-1:
-"""
+kBIGNUMBERS = {
+    -1: """
 
 
 
@@ -25,8 +25,7 @@ kBIGNUMBERS = {-1:
 
 
 """,
-0:
-"""
+    0: """
 
     .n~~%x.
   x88X   888.
@@ -43,8 +42,7 @@ X8888X   88888
 
 
 """,
-1:
-"""
+    1: """
 
       oe
     .@88
@@ -61,8 +59,7 @@ X8888X   88888
 
 
 """,
-2:
-"""
+    2: """
 
   .--~*teu.
  dF     988Nx
@@ -79,8 +76,7 @@ d888b   `8888>
 
 
 """,
-3:
-"""
+    3: """
 
   .x~~"*Weu.
  d8Nu.  9888c
@@ -97,8 +93,7 @@ d888b   `8888>
 
 
 """,
-4:
-"""
+    4: """
 
         xeee
        d888R
@@ -115,8 +110,7 @@ d8eeeee88888eer
 
 
 """,
-5:
-"""
+    5: """
 
   cuuu....uK
   888888888
@@ -133,8 +127,7 @@ d8eeeee88888eer
 
 
 """,
-6:
-"""
+    6: """
 
     .ue~~%u.
   .d88   z88i
@@ -151,8 +144,7 @@ d8eeeee88888eer
 
 
 """,
-7:
-"""
+    7: """
 
 dL ud8Nu  :8c
 8Fd888888L %8
@@ -169,8 +161,7 @@ d       .z8
 
 
 """,
-8:
-"""
+    8: """
 
    u+=~~~+u.
  z8F      `8N.
@@ -187,8 +178,7 @@ d8F      ^%888E
 
 
 """,
-9:
-"""
+    9: """
 
   .xn!~%x.
  x888   888.
@@ -203,51 +193,59 @@ X8888   8888:
   ^"===""
 
 
-"""}
+""",
+}
+
 
 class kCOLORS:
-    PURPLE = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    PURPLE = "\033[95m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
     @staticmethod
-    def print(text, color="RED", end='\n'):
+    def print(text, color="RED", end="\n"):
         start = getattr(kCOLORS, color)
         print(start + text + kCOLORS.ENDC, end=end)
 
 
 def clear_screen():
     print("Clearing")
-    os.system('cls' if os.name == 'nt' else 'clear')
+    os.system("cls" if os.name == "nt" else "clear")
 
-def show_score(left_score, right_score,
-               left_header="HUMAN", right_header="COMPUTER",
-               left_color="GREEN", right_color="BLUE",
-               flush=True):
+
+def show_score(
+    left_score,
+    right_score,
+    left_header="HUMAN",
+    right_header="COMPUTER",
+    left_color="GREEN",
+    right_color="BLUE",
+    flush=True,
+):
     assert isinstance(left_score, int)
     assert isinstance(right_score, int)
     if flush:
         clear_screen()
     # Print the header
-    print("%-15s" % "", end='')
-    kCOLORS.print("%-15s" % left_header, left_color, end='')
-    print("%-30s" % "", end='')
+    print("%-15s" % "", end="")
+    kCOLORS.print("%-15s" % left_header, left_color, end="")
+    print("%-30s" % "", end="")
     kCOLORS.print("%-15s\n" % right_header, right_color)
 
     for line in range(1, 15):
-        for num, color in [(left_score, left_color),
-                           (right_score, right_color)]:
+        for num, color in [(left_score, left_color), (right_score, right_color)]:
             for place in [100, 10, 1]:
                 if place == 100 and num < 0:
                     val = -1
                 else:
                     val = (abs(num) % (place * 10)) // place
-                kCOLORS.print("%-15s" % kBIGNUMBERS[val].split("\n")[line],
-                              color=color, end=' ')
+                kCOLORS.print(
+                    "%-15s" % kBIGNUMBERS[val].split("\n")[line], color=color, end=" "
+                )
             print("|", end=" ")
         print(" ")

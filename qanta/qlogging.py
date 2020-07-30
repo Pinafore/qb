@@ -5,9 +5,11 @@ def get(name):
     log = logging.getLogger(name)
 
     if len(log.handlers) < 2:
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
 
-        fh = logging.FileHandler('qanta.log')
+        fh = logging.FileHandler("qanta.log")
         fh.setLevel(logging.INFO)
         fh.setFormatter(formatter)
 

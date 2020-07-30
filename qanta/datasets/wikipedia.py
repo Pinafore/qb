@@ -5,7 +5,7 @@ from qanta.wikipedia.cached_wikipedia import Wikipedia, extract_wiki_sentences
 
 
 class WikipediaDataset(AbstractDataset):
-    def __init__(self, answers: Set[str], n_sentences=5, replace_title_mentions=''):
+    def __init__(self, answers: Set[str], n_sentences=5, replace_title_mentions=""):
         super().__init__()
         self.answers = answers
         self.n_sentences = n_sentences
@@ -21,8 +21,10 @@ class WikipediaDataset(AbstractDataset):
             wiki_page = wiki_lookup[ans]
             if len(wiki_page.text) != 0:
                 sentences = extract_wiki_sentences(
-                    ans, wiki_page.text, self.n_sentences,
-                    replace_title_mentions=self.replace_title_mentions
+                    ans,
+                    wiki_page.text,
+                    self.n_sentences,
+                    replace_title_mentions=self.replace_title_mentions,
                 )
                 for sent in sentences:
                     wiki_content.append([sent])

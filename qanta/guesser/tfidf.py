@@ -22,8 +22,8 @@ class TfidfGuesser(AbstractGuesser):
         answers = training_data[1]
         answer_docs = defaultdict(str)
         for q, ans in zip(questions, answers):
-            text = ' '.join(q)
-            answer_docs[ans] += ' ' + text
+            text = " ".join(q)
+            answer_docs[ans] += " " + text
 
         x_array = []
         y_array = []
@@ -33,11 +33,13 @@ class TfidfGuesser(AbstractGuesser):
 
         self.i_to_ans = {i: ans for i, ans in enumerate(y_array)}
         self.tfidf_vectorizer = TfidfVectorizer(
-            ngram_range=(1, 3), min_df=2, max_df=.9
+            ngram_range=(1, 3), min_df=2, max_df=0.9
         ).fit(x_array)
         self.tfidf_matrix = self.tfidf_vectorizer.transform(x_array)
 
-    def guess(self, questions: List[QuestionText], max_n_guesses: Optional[int]) -> List[List[Tuple[str, float]]]:
+    def guess(
+        self, questions: List[QuestionText], max_n_guesses: Optional[int]
+    ) -> List[List[Tuple[str, float]]]:
         representations = self.tfidf_vectorizer.transform(questions)
         guess_matrix = self.tfidf_matrix.dot(representations.T).T
         guess_scores = guess_matrix.max(axis=1).toarray().reshape(-1)
@@ -51,24 +53,27 @@ class TfidfGuesser(AbstractGuesser):
         return guesses
 
     def save(self, directory: str) -> None:
-        with open(os.path.join(directory, 'params.pickle'), 'wb') as f:
-            pickle.dump({
-                'config_num': self.config_num,
-                'i_to_ans': self.i_to_ans,
-                'tfidf_vectorizer': self.tfidf_vectorizer,
-                'tfidf_matrix': self.tfidf_matrix
-            }, f)
+        with open(os.path.join(directory, "params.pickle"), "wb") as f:
+            pickle.dump(
+                {
+                    "config_num": self.config_num,
+                    "i_to_ans": self.i_to_ans,
+                    "tfidf_vectorizer": self.tfidf_vectorizer,
+                    "tfidf_matrix": self.tfidf_matrix,
+                },
+                f,
+            )
 
     @classmethod
     def load(cls, directory: str):
-        with open(os.path.join(directory, 'params.pickle'), 'rb') as f:
+        with open(os.path.join(directory, "params.pickle"), "rb") as f:
             params = pickle.load(f)
-            guesser = TfidfGuesser(params['config_num'])
-            guesser.tfidf_vectorizer = params['tfidf_vectorizer']
-            guesser.tfidf_matrix = params['tfidf_matrix']
-            guesser.i_to_ans = params['i_to_ans']
+            guesser = TfidfGuesser(params["config_num"])
+            guesser.tfidf_vectorizer = params["tfidf_vectorizer"]
+            guesser.tfidf_matrix = params["tfidf_matrix"]
+            guesser.i_to_ans = params["i_to_ans"]
             return guesser
 
     @classmethod
     def targets(cls) -> List[str]:
-        return ['params.pickle']
+        return ["params.pickle"]

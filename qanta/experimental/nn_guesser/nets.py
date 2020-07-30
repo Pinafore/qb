@@ -7,10 +7,10 @@ import chainer.functions as F
 import chainer.links as L
 from chainer import reporter
 
-embed_init = chainer.initializers.Uniform(.25)
+embed_init = chainer.initializers.Uniform(0.25)
 
 
-def sequence_embed(embed, xs, dropout=0.):
+def sequence_embed(embed, xs, dropout=0.0):
     """Efficient embedding function for variable-length sequences
 
     This output is equally to
@@ -39,7 +39,7 @@ def sequence_embed(embed, xs, dropout=0.):
     return exs
 
 
-def block_embed(embed, x, dropout=0.):
+def block_embed(embed, x, dropout=0.0):
     """Embedding function followed by convolution
 
     Args:
@@ -67,12 +67,12 @@ def block_embed(embed, x, dropout=0.):
 
 
 class RNNEncoder(chainer.Chain):
-
     def __init__(self, n_layers, n_vocab, embed_size, hidden_size, dropout=0.1):
         super(RNNEncoder, self).__init__()
         with self.init_scope():
-            self.embed = L.EmbedID(n_vocab, embed_size, ignore_label=-1,
-                    initialW=embed_init)
+            self.embed = L.EmbedID(
+                n_vocab, embed_size, ignore_label=-1, initialW=embed_init
+            )
             self.rnn = L.NStepLSTM(n_layers, embed_size, hidden_size, dropout)
         self.n_layers = n_layers
         self.output_size = hidden_size
@@ -81,28 +81,26 @@ class RNNEncoder(chainer.Chain):
     def __call__(self, xs):
         exs = sequence_embed(self.embed, xs, self.dropout)
         last_h, last_c, ys = self.rnn(None, None, exs)
-        assert(last_h.shape == (self.n_layers, len(xs), self.output_size))
+        assert last_h.shape == (self.n_layers, len(xs), self.output_size)
         concat_outputs = last_h[-1]
         return concat_outputs
 
 
 class CNNEncoder(chainer.Chain):
-
     def __init__(self, n_layers, n_vocab, embed_size, hidden_size, dropout=0.1):
         hidden_size /= 3
         super(CNNEncoder, self).__init__(
-            embed=L.EmbedID(n_vocab, embed_size, ignore_label=-1,
-                            initialW=embed_init),
+            embed=L.EmbedID(n_vocab, embed_size, ignore_label=-1, initialW=embed_init),
             cnn_w3=L.Convolution2D(
-                embed_size, hidden_size, ksize=(3, 1), stride=1, pad=(2, 0),
-                nobias=True),
+                embed_size, hidden_size, ksize=(3, 1), stride=1, pad=(2, 0), nobias=True
+            ),
             cnn_w4=L.Convolution2D(
-                embed_size, hidden_size, ksize=(4, 1), stride=1, pad=(3, 0),
-                nobias=True),
+                embed_size, hidden_size, ksize=(4, 1), stride=1, pad=(3, 0), nobias=True
+            ),
             cnn_w5=L.Convolution2D(
-                embed_size, hidden_size, ksize=(5, 1), stride=1, pad=(4, 0),
-                nobias=True),
-            mlp=MLP(n_layers, hidden_size * 3, dropout)
+                embed_size, hidden_size, ksize=(5, 1), stride=1, pad=(4, 0), nobias=True
+            ),
+            mlp=MLP(n_layers, hidden_size * 3, dropout),
         )
         self.output_size = hidden_size * 3
         self.dropout = dropout
@@ -121,21 +119,21 @@ class CNNEncoder(chainer.Chain):
 
 
 class DANEncoder(chainer.Chain):
-
     def __init__(self, n_vocab, embed_size, hidden_size, dropout):
         super(DANEncoder, self).__init__()
         with self.init_scope():
-            self.embed = L.EmbedID(n_vocab, embed_size, ignore_label=-1,
-                    initialW=embed_init)
+            self.embed = L.EmbedID(
+                n_vocab, embed_size, ignore_label=-1, initialW=embed_init
+            )
             self.linear = L.Linear(embed_size, hidden_size)
             self.batchnorm = L.BatchNormalization(hidden_size)
         self.dropout = dropout
         self.output_size = hidden_size
-    
+
     def __call__(self, xs):
         x_block = chainer.dataset.convert.concat_examples(xs, padding=-1)
         ex_block = block_embed(self.embed, x_block)
-        x_len = self.xp.array([len(x) for x in xs], 'i')[:, None, None]
+        x_len = self.xp.array([len(x) for x in xs], "i")[:, None, None]
         h = F.sum(ex_block, axis=2) / x_len
 
         h = self.linear(h)
@@ -146,7 +144,6 @@ class DANEncoder(chainer.Chain):
 
 
 class NNGuesser(chainer.Chain):
-
     def __init__(self, encoder, n_class, dropout):
         super(NNGuesser, self).__init__()
         with self.init_scope():
@@ -157,9 +154,9 @@ class NNGuesser(chainer.Chain):
         self.dropout = dropout
 
     def load_glove(self, raw_path, vocab, size):
-        print('Constructing embedding matrix')
+        print("Constructing embedding matrix")
         embed_w = np.random.uniform(-0.25, 0.25, size)
-        with open(raw_path, 'r') as f:
+        with open(raw_path, "r") as f:
             for line in tqdm(f):
                 line = line.strip().split(" ")
                 word = line[0]
@@ -168,15 +165,15 @@ class NNGuesser(chainer.Chain):
                     embed_w[vocab[word]] = vec
         embed_w = self.xp.array(embed_w, dtype=self.xp.float32)
         self.encoder.embed.W.data = embed_w
-    
+
     def __call__(self, xs, ys):
         concat_outputs = self.predict(xs)
         concat_truths = F.concat(ys, axis=0)
 
         loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
         accuracy = F.accuracy(concat_outputs, concat_truths)
-        reporter.report({'loss': loss.data}, self)
-        reporter.report({'accuracy': accuracy.data}, self)
+        reporter.report({"loss": loss.data}, self)
+        reporter.report({"accuracy": accuracy.data}, self)
         return loss
 
     def predict(self, xs, softmax=False, argmax=False):

@@ -9,11 +9,13 @@ from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.wikipedia.cached_wikipedia import normalize_wikipedia_title
 
 
-TimeData = namedtuple('TimeData', 'after before calendarmodel precision time timezone')
-QuantityData = namedtuple('QuantityData', 'amount unit upperbound lowerbound')
-GlobeCoordinateData = namedtuple('GlobeCoordinateData', 'globe latitude longitude altitude precision')
+TimeData = namedtuple("TimeData", "after before calendarmodel precision time timezone")
+QuantityData = namedtuple("QuantityData", "amount unit upperbound lowerbound")
+GlobeCoordinateData = namedtuple(
+    "GlobeCoordinateData", "globe latitude longitude altitude precision"
+)
 
-NO_MATCH = 'NO MATCH!'
+NO_MATCH = "NO MATCH!"
 
 
 class WikiDatatype(metaclass=ABCMeta):
@@ -31,52 +33,55 @@ class WikiDatatype(metaclass=ABCMeta):
 class WikiString(WikiDatatype):
     @property
     def datatype(self):
-        return 'string'
+        return "string"
 
     @staticmethod
     def parse(datavalue):
-        return datavalue['value']
+        return datavalue["value"]
 
 
 class WikiTime(WikiDatatype):
     @property
     def datatype(self):
-        return 'time'
+        return "time"
 
     @staticmethod
     def parse(datavalue):
-        value = datavalue['value']
+        value = datavalue["value"]
         return TimeData(
-            value['after'], value['before'],
-            value['calendarmodel'], value['precision'],
-            value['time'], value['timezone']
+            value["after"],
+            value["before"],
+            value["calendarmodel"],
+            value["precision"],
+            value["time"],
+            value["timezone"],
         )
 
 
 class WikiItem(WikiDatatype):
     @property
     def datatype(self):
-        return 'wikibase-item'
+        return "wikibase-item"
 
     @staticmethod
     def parse(datavalue):
-        return datavalue['value']['id']
+        return datavalue["value"]["id"]
 
 
 class WikiProperty(WikiDatatype):
     @property
     def datatype(self):
-        return 'wikibase-property'
+        return "wikibase-property"
 
     @staticmethod
     def parse(datavalue):
-        return datavalue['value']['id']
+        return datavalue["value"]["id"]
 
 
 class WikiExternalId(WikiDatatype):
     @property
     def datatype(self):
-        return 'external-id'
+        return "external-id"
 
     @staticmethod
     def parse(datavalue):
@@ -91,62 +96,70 @@ class WikiExternalId(WikiDatatype):
 class WikiMonolingualText(WikiDatatype):
     @property
     def datatype(self):
-        return 'monolingualtext'
+        return "monolingualtext"
 
     @staticmethod
     def parse(datavalue):
-        return datavalue['value']['text']
+        return datavalue["value"]["text"]
 
 
 class WikiCommonsMedia(WikiDatatype):
     @property
     def datatype(self):
-        return 'commonsMedia'
+        return "commonsMedia"
 
     @staticmethod
     def parse(datavalue):
-        return datavalue['value']
+        return datavalue["value"]
 
 
 class WikiQuantity(WikiDatatype):
     @property
     def datatype(self):
-        return 'quantity'
+        return "quantity"
 
     @staticmethod
     def parse(datavalue):
-        value = datavalue['value']
-        return QuantityData(value.get('amount'), value.get('unit'), value.get('upperbound'), value.get('lowerbound'))
+        value = datavalue["value"]
+        return QuantityData(
+            value.get("amount"),
+            value.get("unit"),
+            value.get("upperbound"),
+            value.get("lowerbound"),
+        )
 
 
 class WikiGlobeCoordinate(WikiDatatype):
     @property
     def datatype(self):
-        return 'globe-coordinate'
+        return "globe-coordinate"
 
     @staticmethod
     def parse(datavalue):
-        value = datavalue['value']
+        value = datavalue["value"]
         return GlobeCoordinateData(
-            value.get('globe'), value.get('latitude'), value.get('longitude'),
-            value.get('altitude'), value.get('precision')
+            value.get("globe"),
+            value.get("latitude"),
+            value.get("longitude"),
+            value.get("altitude"),
+            value.get("precision"),
         )
 
 
 class WikiUrl(WikiDatatype):
     @property
     def datatype(self):
-        return 'url'
+        return "url"
 
     @staticmethod
     def parse(datavalue):
-        return datavalue['value']
+        return datavalue["value"]
 
 
 class WikiMath(WikiDatatype):
     @property
     def datatype(self):
-        return 'math'
+        return "math"
 
     @staticmethod
     def parse(datavalue):
@@ -157,11 +170,19 @@ class WikiMath(WikiDatatype):
         """
         return None
 
+
 wiki_datatypes = [
-    WikiString(), WikiTime(),
-    WikiItem(), WikiProperty(), WikiExternalId(),
-    WikiMath(), WikiUrl(),
-    WikiMonolingualText(), WikiCommonsMedia(), WikiQuantity(), WikiGlobeCoordinate()
+    WikiString(),
+    WikiTime(),
+    WikiItem(),
+    WikiProperty(),
+    WikiExternalId(),
+    WikiMath(),
+    WikiUrl(),
+    WikiMonolingualText(),
+    WikiCommonsMedia(),
+    WikiQuantity(),
+    WikiGlobeCoordinate(),
 ]
 
 
@@ -170,67 +191,81 @@ for wd in wiki_datatypes:
     datatype = wd.datatype
     datatype_parsers[datatype] = wd.parse
 
-Claim = namedtuple('Claim', 'item property object datatype title property_id item_id')
+Claim = namedtuple("Claim", "item property object datatype title property_id item_id")
 
 
 def extract_property_map(parsed_wikidata: RDD):
     def parse_property(prop):
-        label = prop['labels']['en']['value']
-        return prop['id'], label
-    return parsed_wikidata\
-        .filter(lambda d: d['type'] == 'property')\
-        .map(parse_property)\
+        label = prop["labels"]["en"]["value"]
+        return prop["id"], label
+
+    return (
+        parsed_wikidata.filter(lambda d: d["type"] == "property")
+        .map(parse_property)
         .collectAsMap()
+    )
 
 
 def extract_item_page_map(wikidata_items: RDD):
     def parse_item_page(item):
-        item_id = item['id']
-        if 'enwiki' in item['sitelinks']:
-            return [(item_id, item['sitelinks']['enwiki']['title'])]
+        item_id = item["id"]
+        if "enwiki" in item["sitelinks"]:
+            return [(item_id, item["sitelinks"]["enwiki"]["title"])]
         else:
             return []
+
     return wikidata_items.flatMap(parse_item_page).collectAsMap()
 
 
 def extract_item_map(wikidata_items: RDD):
     def parse_item(item):
-        if 'en' in item['labels']:
-            label = item['labels']['en']['value']
-            return item['id'], label
+        if "en" in item["labels"]:
+            label = item["labels"]["en"]["value"]
+            return item["id"], label
         else:
             return None
+
     return wikidata_items.map(parse_item).filter(lambda i: i is not None).collectAsMap()
 
 
-def extract_claims(wikidata_items: RDD, b_property_map: Broadcast, b_item_map: Broadcast):
+def extract_claims(
+    wikidata_items: RDD, b_property_map: Broadcast, b_item_map: Broadcast
+):
     def parse_item_claims(item):
-        item_id = item['id']
+        item_id = item["id"]
         item_map = b_item_map.value
         if item_id not in item_map:
             return []
         item_label = item_map[item_id]
         property_map = b_property_map.value
-        if 'enwiki' in item['sitelinks']:
-            title = item['sitelinks']['enwiki']['title']
+        if "enwiki" in item["sitelinks"]:
+            title = item["sitelinks"]["enwiki"]["title"]
         else:
             title = None
         item_claims = []
-        for property_id, property_claims in item['claims'].items():
+        for property_id, property_claims in item["claims"].items():
             if property_id in property_map:
                 if property_id not in property_map:
                     continue
                 property_name = property_map[property_id]
                 for claim in property_claims:
-                    mainsnak = claim['mainsnak']
-                    if 'datatype' in mainsnak and 'datavalue' in mainsnak:
-                        datatype = mainsnak['datatype']
-                        datavalue = mainsnak['datavalue']
+                    mainsnak = claim["mainsnak"]
+                    if "datatype" in mainsnak and "datavalue" in mainsnak:
+                        datatype = mainsnak["datatype"]
+                        datavalue = mainsnak["datavalue"]
                         if datatype in datatype_parsers:
                             wiki_object = datatype_parsers[datatype](datavalue)
                             if wiki_object is not None:
                                 item_claims.append(
-                                    Claim(item_label, property_name, wiki_object, datatype, title, property_id, item_id)
+                                    Claim(
+                                        item_label,
+                                        property_name,
+                                        wiki_object,
+                                        datatype,
+                                        title,
+                                        property_id,
+                                        item_id,
+                                    )
                                 )
         return item_claims
 
@@ -240,15 +275,15 @@ def extract_claims(wikidata_items: RDD, b_property_map: Broadcast, b_item_map: B
 def clean_claims(claims: RDD, b_item_map: Broadcast):
     def clean(claim):
         item_map = b_item_map.value
-        if claim.datatype == 'wikibase-item':
+        if claim.datatype == "wikibase-item":
             if claim.object in item_map:
                 claim = claim._replace(object=item_map[claim.object])
                 return claim
             else:
                 return None
-        elif claim.datatype == 'quantity':
+        elif claim.datatype == "quantity":
             unit = claim.object.unit
-            unit = unit.split('/')[-1]
+            unit = unit.split("/")[-1]
             if unit in item_map:
                 claim = claim._replace(object=item_map[unit])
                 return claim
@@ -256,69 +291,79 @@ def clean_claims(claims: RDD, b_item_map: Broadcast):
                 return None
         return claim
 
-    dt_filter = {'wikibase-item', 'string', 'monolingualtext', 'quantity', 'time'}
+    dt_filter = {"wikibase-item", "string", "monolingualtext", "quantity", "time"}
 
-    return claims.filter(lambda c: c.datatype in dt_filter).map(clean).filter(lambda c: c is not None)
+    return (
+        claims.filter(lambda c: c.datatype in dt_filter)
+        .map(clean)
+        .filter(lambda c: c is not None)
+    )
 
 
 def extract_claim_types(wikidata_items: RDD):
     def parse_types(item):
         value_types = []
-        for property_claims in item['claims'].values():
+        for property_claims in item["claims"].values():
             for c in property_claims:
-                mainsnak = c['mainsnak']
-                if 'datatype' in mainsnak:
-                    value_types.append(mainsnak['datatype'])
+                mainsnak = c["mainsnak"]
+                if "datatype" in mainsnak:
+                    value_types.append(mainsnak["datatype"])
         return value_types
 
     return set(wikidata_items.flatMap(parse_types).distinct().collect())
 
 
-def extract_items(wikidata_items: RDD, b_property_map: Broadcast, b_item_page_map: Broadcast):
+def extract_items(
+    wikidata_items: RDD, b_property_map: Broadcast, b_item_page_map: Broadcast
+):
     def parse_item(item):
         property_map = b_property_map.value
         item_page_map = b_item_page_map.value
-        if 'enwiki' in item['sitelinks']:
-            page_title = item['sitelinks']['enwiki']['title']
+        if "enwiki" in item["sitelinks"]:
+            page_title = item["sitelinks"]["enwiki"]["title"]
         else:
             return None, None
 
         claims = {}
-        for prop_id, property_claims in item['claims'].items():
+        for prop_id, property_claims in item["claims"].items():
             if prop_id in property_map:
                 prop_name = property_map[prop_id]
                 parsed_claims = []
                 for c in property_claims:
-                    if 'datavalue' in c['mainsnak']:
-                        c = c['mainsnak']['datavalue']['value']
-                        if type(c) == dict and 'entity-type' in c:
-                            claim_item_id = c['id']
+                    if "datavalue" in c["mainsnak"]:
+                        c = c["mainsnak"]["datavalue"]["value"]
+                        if type(c) == dict and "entity-type" in c:
+                            claim_item_id = c["id"]
                             if claim_item_id in item_page_map:
-                                c = item_page_map[c['id']]
+                                c = item_page_map[c["id"]]
                             else:
                                 continue
                         parsed_claims.append(c)
                 claims[prop_name] = parsed_claims
         return page_title, claims
-    return wikidata_items\
-        .map(parse_item)\
-        .filter(lambda pc: pc[0] is not None)\
-        .reduceByKey(lambda x, y: x)\
+
+    return (
+        wikidata_items.map(parse_item)
+        .filter(lambda pc: pc[0] is not None)
+        .reduceByKey(lambda x, y: x)
         .collectAsMap()
+    )
 
 
 def parse_raw_wikidata(output):
-    spark_conf = SparkConf().setAppName('QB Wikidata').setMaster(QB_SPARK_MASTER)
+    spark_conf = SparkConf().setAppName("QB Wikidata").setMaster(QB_SPARK_MASTER)
     sc = SparkContext.getOrCreate(spark_conf)  # type: SparkContext
 
-    wikidata = sc.textFile('s3a://entilzha-us-west-2/wikidata/wikidata-20170306-all.json')
+    wikidata = sc.textFile(
+        "s3a://entilzha-us-west-2/wikidata/wikidata-20170306-all.json"
+    )
 
     def parse_line(line):
         if len(line) == 0:
             return []
-        if line[0] == '[' or line[0] == ']':
+        if line[0] == "[" or line[0] == "]":
             return []
-        elif line.endswith(','):
+        elif line.endswith(","):
             return [json.loads(line[:-1])]
         else:
             return [json.loads(line)]
@@ -327,74 +372,78 @@ def parse_raw_wikidata(output):
     property_map = extract_property_map(parsed_wikidata)
     b_property_map = sc.broadcast(property_map)
 
-    wikidata_items = parsed_wikidata.filter(lambda d: d['type'] == 'item').cache()
+    wikidata_items = parsed_wikidata.filter(lambda d: d["type"] == "item").cache()
     parsed_wikidata.unpersist()
     item_page_map = extract_item_page_map(wikidata_items)
     b_item_page_map = sc.broadcast(item_page_map)
 
     parsed_item_map = extract_items(wikidata_items, b_property_map, b_item_page_map)
 
-    with open(output, 'wb') as f:
-        pickle.dump({
-            'parsed_item_map': parsed_item_map,
-            'item_page_map': item_page_map,
-            'property_map': property_map
-        }, f)
+    with open(output, "wb") as f:
+        pickle.dump(
+            {
+                "parsed_item_map": parsed_item_map,
+                "item_page_map": item_page_map,
+                "property_map": property_map,
+            },
+            f,
+        )
 
     sc.stop()
 
+
 object_blacklist = {
-    'Wikimedia disambiguation page',
-    'common name',
-    'male given name',
-    'Wikimedia list article'
+    "Wikimedia disambiguation page",
+    "common name",
+    "male given name",
+    "Wikimedia list article",
 }
 
 object_merge_map = {
-    'sovereign state': 'country',
-    'member state of the United Nations': 'country',
-    'member state of the European Union': 'country',
-    'member state of the Council of Europe': 'country',
-    'permanent member of the United Nations Security Council': 'country',
-    'landlocked country': 'country',
-    'island nation': 'country',
-    'republic': 'country',
-    'former country': 'country',
-    'unitary state': 'country',
-    'communist state': 'country',
-    'Commonwealth realm': 'country',
-    'secular state': 'country',
-    'social state': 'country',
-    'legal state': 'country',
-    'dominion': 'country',
-    'member state of Mercosur': 'country',
-    'Islamic republic': 'country',
-    'member state of the Union of South American Nations': 'country',
-    'federal republic': 'country',
-    'constitutional republic': 'country',
-    'state': 'country',
-    'city with millions of inhabitants': 'city',
-    'big city': 'city',
-    'capital': 'city',
-    'port city': 'city',
-    'state or insular area capital in the United States': 'city',
-    'metropolis': 'city',
-    'one-act play': 'play',
-    'inner planet': 'planet',
-    'outer planet': 'planet',
-    'vector physical quantity': 'physical quantity',
-    'scalar physical quantity': 'physical quantity',
-    'extensive physical property': 'physical quantity',
-    'intensive property': 'physical quantity',
-    'thermodynamic system property (state function)': 'physical quantity',
-    'conflict': 'war'
+    "sovereign state": "country",
+    "member state of the United Nations": "country",
+    "member state of the European Union": "country",
+    "member state of the Council of Europe": "country",
+    "permanent member of the United Nations Security Council": "country",
+    "landlocked country": "country",
+    "island nation": "country",
+    "republic": "country",
+    "former country": "country",
+    "unitary state": "country",
+    "communist state": "country",
+    "Commonwealth realm": "country",
+    "secular state": "country",
+    "social state": "country",
+    "legal state": "country",
+    "dominion": "country",
+    "member state of Mercosur": "country",
+    "Islamic republic": "country",
+    "member state of the Union of South American Nations": "country",
+    "federal republic": "country",
+    "constitutional republic": "country",
+    "state": "country",
+    "city with millions of inhabitants": "city",
+    "big city": "city",
+    "capital": "city",
+    "port city": "city",
+    "state or insular area capital in the United States": "city",
+    "metropolis": "city",
+    "one-act play": "play",
+    "inner planet": "planet",
+    "outer planet": "planet",
+    "vector physical quantity": "physical quantity",
+    "scalar physical quantity": "physical quantity",
+    "extensive physical property": "physical quantity",
+    "intensive property": "physical quantity",
+    "thermodynamic system property (state function)": "physical quantity",
+    "conflict": "war",
 }
 
 
 def is_god(obj):
-    if obj == 'mythological Greek character' or obj == 'Twelve Olympians':
+    if obj == "mythological Greek character" or obj == "Twelve Olympians":
         return True
-    elif 'deity' in obj or 'deities' in obj or 'god' in obj:
+    elif "deity" in obj or "deities" in obj or "god" in obj:
         return True
     else:
         return False
@@ -409,21 +458,21 @@ def create_instance_of_map(wikidata_claims_instance_of_path, output_path, n_type
         claims = defaultdict(set)
         for line in f:
             c = json.loads(line)
-            if c['title'] is not None:
-                title = normalize_wikipedia_title(c['title'])
+            if c["title"] is not None:
+                title = normalize_wikipedia_title(c["title"])
                 if title in answers:
-                    c_object = c['object']
+                    c_object = c["object"]
                     if c_object in object_blacklist:
                         continue
                     if c_object in object_merge_map:
                         claims[title].add(object_merge_map[c_object])
                     elif is_god(c_object):
-                        claims[title].add('god')
+                        claims[title].add("god")
                     else:
                         claims[title].add(c_object)
     for k in claims:
-        if 'literary work' in claims[k] and len(claims[k]) > 1:
-            claims[k].remove('literary work')
+        if "literary work" in claims[k] and len(claims[k]) > 1:
+            claims[k].remove("literary work")
 
     total_counts = defaultdict(int)
     class_counts = defaultdict(int)
@@ -453,9 +502,10 @@ def create_instance_of_map(wikidata_claims_instance_of_path, output_path, n_type
         else:
             instance_of_map[a] = next(iter(top_class_types))
 
-    with open(output_path, 'wb') as f:
+    with open(output_path, "wb") as f:
         pickle.dump(instance_of_map, f)
 
-if __name__ == '__main__':
-    output = 'data/external/parsed_wikidata.pkl'
+
+if __name__ == "__main__":
+    output = "data/external/parsed_wikidata.pkl"
     parse_raw_wikidata(output)

@@ -10,21 +10,24 @@ class ReportGenerator:
         self.template = template
 
     def create(self, variables, md_output, pdf_output):
-        env = Environment(loader=PackageLoader('qanta', 'reporting/templates'))
+        env = Environment(loader=PackageLoader("qanta", "reporting/templates"))
         template = env.get_template(self.template)
         markdown = template.render(variables)
         if md_output is not None:
-            with open(md_output, 'w') as f:
+            with open(md_output, "w") as f:
                 f.write(markdown)
         try:
             import pypandoc
+
             pypandoc.convert_text(
                 markdown,
-                'pdf',
-                format='md',
+                "pdf",
+                format="md",
                 outputfile=pdf_output,
-                extra_args=['-V', 'geometry:margin=.75in']
+                extra_args=["-V", "geometry:margin=.75in"],
             )
         except Exception as e:
-            log.warn('Pandoc was not installed or there was an error calling it, omitting PDF report')
+            log.warn(
+                "Pandoc was not installed or there was an error calling it, omitting PDF report"
+            )
             log.warn(str(e))

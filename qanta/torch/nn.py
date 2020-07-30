@@ -6,23 +6,30 @@ from torch.autograd import Variable
 
 
 def embedded_dropout(embed, words, dropout=0.1, scale=None):
-      if dropout:
-        mask = embed.weight.data.new().resize_((embed.weight.size(0), 1)).bernoulli_(1 - dropout).expand_as(embed.weight) / (1 - dropout)
+    if dropout:
+        mask = embed.weight.data.new().resize_((embed.weight.size(0), 1)).bernoulli_(
+            1 - dropout
+        ).expand_as(embed.weight) / (1 - dropout)
         mask = Variable(mask)
         masked_embed_weight = mask * embed.weight
-      else:
+    else:
         masked_embed_weight = embed.weight
-      if scale:
+    if scale:
         masked_embed_weight = scale.expand_as(masked_embed_weight) * masked_embed_weight
 
-      padding_idx = embed.padding_idx
-      if padding_idx is None:
-          padding_idx = -1
-      X = embed._backend.Embedding.apply(words, masked_embed_weight,
-        padding_idx, embed.max_norm, embed.norm_type,
-        embed.scale_grad_by_freq, embed.sparse
-      )
-      return X
+    padding_idx = embed.padding_idx
+    if padding_idx is None:
+        padding_idx = -1
+    X = embed._backend.Embedding.apply(
+        words,
+        masked_embed_weight,
+        padding_idx,
+        embed.max_norm,
+        embed.norm_type,
+        embed.scale_grad_by_freq,
+        embed.sparse,
+    )
+    return X
 
 
 class WeightDrop(torch.nn.Module):
@@ -47,18 +54,19 @@ class WeightDrop(torch.nn.Module):
             self.module.flatten_parameters = self.widget_demagnetizer_y2k_edition
 
         for name_w in self.weights:
-            print('Applying weight drop of {} to {}'.format(self.dropout, name_w))
+            print("Applying weight drop of {} to {}".format(self.dropout, name_w))
             w = getattr(self.module, name_w)
             del self.module._parameters[name_w]
-            self.module.register_parameter(name_w + '_raw', nn.Parameter(w.data))
+            self.module.register_parameter(name_w + "_raw", nn.Parameter(w.data))
 
     def _setweights(self):
         for name_w in self.weights:
-            raw_w = getattr(self.module, name_w + '_raw')
+            raw_w = getattr(self.module, name_w + "_raw")
             w = None
             if self.variational:
                 mask = torch.autograd.Variable(torch.ones(raw_w.size(0), 1))
-                if raw_w.is_cuda: mask = mask.cuda()
+                if raw_w.is_cuda:
+                    mask = mask.cuda()
                 mask = F.dropout(mask, p=self.dropout, training=True)
                 w = mask.expand_as(raw_w) * raw_w
             else:
@@ -91,9 +99,9 @@ def masked_softmax(vector, mask):
 
 
 def create_mask(b_sents, b_lens):
-    mask = np.zeros(b_sents.size(), dtype='float32')
+    mask = np.zeros(b_sents.size(), dtype="float32")
     for z, curr_len in enumerate(b_lens):
-        mask[z, :curr_len] = 1.
+        mask[z, :curr_len] = 1.0
     mask = Variable(torch.from_numpy(mask).float().cuda())
     return mask
 

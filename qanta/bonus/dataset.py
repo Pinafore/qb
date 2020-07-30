@@ -14,7 +14,6 @@ from qanta.util.environment import BONUS_QUESTION_DB, BONUS_QUESTION_PKL, NAQT_Q
 
 
 class BonusQuestion:
-
     def __init__(self, qnum, texts, pages, answers, leadin=None, fold=None):
         self.qnum = qnum
         # assert len(texts) == 3 and len(pages) == 3 and len(answers) == 3
@@ -26,27 +25,26 @@ class BonusQuestion:
         assert len(pages) == len(texts)
 
     def __repr__(self):
-        s = '<BonusQuestion qnum={} fold={} \n' + \
-            'leadin: {}\n'
-        s += ' '.join([str(i) + ': page={}, text={}...\n' for i in
-            range(len(self.pages))])
+        s = "<BonusQuestion qnum={} fold={} \n" + "leadin: {}\n"
+        s += " ".join(
+            [str(i) + ": page={}, text={}...\n" for i in range(len(self.pages))]
+        )
         values = [self.qnum, self.fold, self.leadin]
         values += itertools.chain(*list(zip(self.pages, self.texts)))
         return s.format(*values)
 
 
 class BonusQuestionDatabase:
-    
     def __init__(self, location=BONUS_QUESTION_PKL):
         if os.path.isfile(BONUS_QUESTION_PKL):
-            with open(location, 'rb') as f:
+            with open(location, "rb") as f:
                 self.questions = pickle.load(f)
         else:
             self.questions = self.load_qbml(NAQT_QBML_DIR, location)
         self.questions = {x.qnum: x for x in self.questions}
 
     def _process_question(self, qnum, qstr):
-        '''
+        """
     
         For 10 points each--answer these questions about the U.S. Supreme Court's
         1995-96 term.
@@ -60,8 +58,8 @@ class BonusQuestionDatabase:
         the courts 41 contested rulings.
     
         answer: John Paul _Stevens_
-        '''
-        q = [x for x in qstr.strip().split('\n') if len(x)]
+        """
+        q = [x for x in qstr.strip().split("\n") if len(x)]
         leadin = q[0].strip()
         texts = []
         answers = []
@@ -83,29 +81,32 @@ class BonusQuestionDatabase:
         return q
 
     def load_qbml(self, dir, pkl_dir):
-        qbml_dirs = glob.glob(dir + '*.qbml')
+        qbml_dirs = glob.glob(dir + "*.qbml")
         bonus_questions = []
         for qbml_dir in tqdm(qbml_dirs):
             with open(qbml_dir) as f:
-                soup = BeautifulSoup(f.read(), 'xml')
-            questions = soup.find_all('QUESTION')
-            bonus_qs = [(q.attrs['ID'], next(q.children).title()) for q in questions if
-                    q.attrs['KIND'] == 'BONUS']
+                soup = BeautifulSoup(f.read(), "xml")
+            questions = soup.find_all("QUESTION")
+            bonus_qs = [
+                (q.attrs["ID"], next(q.children).title())
+                for q in questions
+                if q.attrs["KIND"] == "BONUS"
+            ]
             bonus_qs = _multiprocess(self._process_question, bonus_qs, progress=False)
             bonus_qs = [x for x in bonus_qs if x is not None]
             bonus_questions += bonus_qs
-        with open(pkl_dir, 'wb') as f:
+        with open(pkl_dir, "wb") as f:
             pickle.dump(bonus_questions, f)
         return bonus_questions
 
     def all_questions(self) -> Dict[int, BonusQuestion]:
         return self.questions
 
-class BonusQuestionDatabaseFromSQL:
 
+class BonusQuestionDatabaseFromSQL:
     def __init__(self, location=BONUS_QUESTION_DB):
         self._conn = sqlite3.connect(location)
-    
+
     def all_questions(self) -> Dict[int, BonusQuestion]:
         questions = {}
         c = self._conn.cursor()
@@ -115,15 +116,15 @@ class BonusQuestionDatabaseFromSQL:
             question_parts[int(qid)][int(number)] = (text, page, answer)
         bonus_questions = dict()
         for qnum, parts in question_parts.items():
-            if not set(parts.keys()) == {0,1,2}:
+            if not set(parts.keys()) == {0, 1, 2}:
                 # log.info('skipping {}, missing question parts'.format(qnum))
                 continue
             # transpose
-            parts = list(zip(*[parts[i] for i in [0,1,2]]))
+            parts = list(zip(*[parts[i] for i in [0, 1, 2]]))
             bonus_questions[qnum] = BonusQuestion(qnum, parts[0], parts[1], parts[2])
 
         c = self._conn.cursor()
-        c.execute('select * from questions')
+        c.execute("select * from questions")
         extra_parts = dict()
         for qnum, tour, leadin, _, fold in c:
             qnum = int(qnum)
