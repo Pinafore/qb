@@ -1,6 +1,7 @@
 import sqlite3
 import spacy
 import unidecode
+import ftfy
 from qanta import qlogging
 from qanta.spark import create_spark_context
 
@@ -67,7 +68,7 @@ def format_qanta_json(questions, version):
 
 
 def add_sentences_(questions, parallel=True):
-    text_questions = [q["text"] for q in questions]
+    text_questions = [ftfy.fix_text(q["text"]) for q in questions]
     if parallel:
         sc = create_spark_context()
         sentence_tokenizations = sc.parallelize(text_questions, 4000).map(nlp).collect()
