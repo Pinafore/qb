@@ -2,6 +2,7 @@ import sqlite3
 import spacy
 import unidecode
 import ftfy
+import re
 from qanta import qlogging
 from qanta.spark import create_spark_context
 
