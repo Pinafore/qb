@@ -36,6 +36,7 @@ from qanta.ingestion.annotated_mapping import PageAssigner
 from qanta.ingestion.preprocess import (
     format_qanta_json,
     add_sentences_,
+    add_answer_prompts_,
     questions_to_sqlite,
 )
 from qanta.ingestion.protobowl import compute_question_player_counts
@@ -160,6 +161,7 @@ class CreateProcessedQantaDataset(Task):
         with open(QANTA_UNMAPPED_DATASET_PATH) as f:
             qanta_questions = json.load(f)["questions"]
         add_sentences_(qanta_questions)
+        add_answer_prompts_(qanta_questions)
         with open(QANTA_PREPROCESSED_DATASET_PATH, "w") as f:
             json.dump(format_qanta_json(qanta_questions, DS_VERSION), f)
 
