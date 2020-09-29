@@ -2,6 +2,7 @@ import sqlite3
 import spacy
 import unidecode
 import ftfy
+import re
 from qanta import qlogging
 from qanta.spark import create_spark_context
 
@@ -79,6 +80,38 @@ def add_sentences_(questions, parallel=True):
         # Get the 0th sentence, end character tokenization (tuple position 1)
         q["first_sentence"] = text[: tokenization[0][1]]
 
+def extract_prompt(ans):
+    l_ans = ans.lower()
+    if "accept" in l_ans or "prompt" in l_ans or "pronounce" in l_ans:
+        m = re.match(
+            r"(.+)\((.*(accept|prompt|pronounce).*)\)", ans, flags=re.IGNORECASE
+        )
+        if m is not None:
+            return m.group(2).strip()
+
+        m = re.match(
+            r"(.+)\[(.*(accept|prompt|pronounce).*)\]", ans, flags=re.IGNORECASE
+        )
+        if m is not None:
+            return m.group(2).strip()
+
+        return ""
+    elif "or" in l_ans:
+        m = re.match(r"(.+)\((.*or.*)\)", ans, flags=re.IGNORECASE)
+        if m is not None:
+            return m.group(2).strip()
+
+        m = re.match(r"(.+)\[(.*or.*)\]", ans, flags=re.IGNORECASE)
+        if m is not None:
+            return m.group(2).strip()
+
+        return ""
+    else:
+        return ""
+
+def add_answer_prompts_(questions):
+    for q in questions:
+        q['answer_prompt'] = extract_prompt(q['answer'])
 
 def questions_to_sqlite(qanta_questions, db_path):
     conn = sqlite3.connect(db_path)
