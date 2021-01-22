@@ -3,14 +3,20 @@ import os
 import pickle
 from collections import defaultdict
 
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import plotnine as p9
 import typer
 from pedroai.io import read_json, write_json
+from pedroai.plot import theme_pedroai
 from rich.console import Console
 from rich.progress import track
 
 from qanta.datasets.quiz_bowl import QuizBowlDataset
 from qanta.guesser.abstract import AbstractGuesser
+from qanta.reporting.curve_score import CurveScore
 from qanta.util.constants import QANTA_MAPPED_DATASET_PATH
 
 console = Console()
@@ -180,6 +186,131 @@ def latex(qid: int, buzz_file: str, output_file: str):
 
     with open(output_file, "w") as f:
         f.write(tex_out)
+
+
+@app.command()
+def plot_empirical_buzz():
+    proto_df = pd.read_hdf("data/external/datasets/protobowl/protobowl-042818.log.h5")
+    dataset = read_json(QANTA_MAPPED_DATASET_PATH)
+    questions = {q["qanta_id"]: q for q in dataset["questions"]}
+    proto_to_question = {q["proto_id"]: q for q in dataset["questions"]}
+    folds = {
+        q["proto_id"]: q["fold"]
+        for q in questions.values()
+        if q["proto_id"] is not None
+    }
+    proto_df["fold"] = proto_df["qid"].map(lambda x: folds[x] if x in folds else None)
+    proto_df["n"] = 1
+    buzztest_df = proto_df[proto_df.fold == "buzztest"]
+    play_counts = (
+        buzztest_df.groupby("qid")
+        .count()
+        .reset_index()
+        .sort_values("fold", ascending=False)
+    )
+    qid_to_counts = {r.qid: r.n for r in play_counts.itertuples()}
+    popular_questions = play_counts.qid.tolist()
+    curve = CurveScore()
+    x = np.linspace(0, 1, 100)
+    y = [curve.get_weight(n) for n in x]
+    curve_df = pd.DataFrame({"buzzing_position": x, "result": y})
+    curve_df["qid"] = "Expected Wins Curve Score"
+    curve_df["source"] = "Curve Score | Average"
+    proto_ids = popular_questions[:10]
+    frames = []
+    for proto_id in proto_ids:
+        plays = buzztest_df[buzztest_df.qid == proto_id].sort_values("buzzing_position")
+        plays = plays[plays.result != "prompt"]
+        plays["result"] = plays["result"].astype(int)
+        frames.append(plays)
+    sample_df = pd.concat(frames)
+
+    rows = []
+    for qid, group_df in sample_df.groupby("qid"):
+        n_opp_correct = 0
+        n_opp_total = 0
+        n = qid_to_counts[qid]
+        rows.append(
+            {
+                "buzzing_position": 0,
+                "n_opp_correct": 0,
+                "n_opp_total": 1,
+                "qid": f"Question with {n} Plays",
+                "source": "Single Question",
+                "n_plays": n,
+            }
+        )
+        for r in group_df.itertuples():
+            if r.result == 1:
+                n_opp_correct += 1
+            n_opp_total += 1
+            rows.append(
+                {
+                    "buzzing_position": r.buzzing_position,
+                    "n_opp_correct": n_opp_correct,
+                    "n_opp_total": n_opp_total,
+                    "qid": f"Question with {n} Plays",
+                    "source": "Single Question",
+                    "n_plays": n,
+                }
+            )
+    n_opp_correct = 0
+    n_opp_total = 0
+    for r in sample_df.sort_values("buzzing_position").itertuples():
+        if r.result == 1:
+            n_opp_correct += 1
+        n_opp_total += 1
+        rows.append(
+            {
+                "buzzing_position": r.buzzing_position,
+                "n_opp_correct": n_opp_correct,
+                "n_opp_total": n_opp_total,
+                "qid": "Average of Most Played",
+                "source": "Curve Score | Average",
+            }
+        )
+
+    df = pd.DataFrame(rows)
+    df["p_opp_correct"] = df["n_opp_correct"] / df["n_opp_total"]
+    df["p_win"] = 1 - df["p_opp_correct"]
+    df["result"] = df["p_win"]
+
+    def order(c):
+        if c.startswith("Expected"):
+            return -1000
+        elif c.startswith("Average"):
+            return -999
+        elif c.startswith("Question with"):
+            return -int(c.split()[2])
+        else:
+            return 1000
+
+    categories = list(set(df.qid.tolist()) | set(curve_df.qid.tolist()))
+    categories = sorted(categories, key=order)
+    categories = pd.CategoricalDtype(categories, ordered=True)
+    df["qid"] = df["qid"].astype(categories)
+    cmap = plt.get_cmap("tab20")
+    colors = [matplotlib.colors.to_hex(c) for c in cmap.colors]
+    chart = (
+        p9.ggplot(
+            df[df.n_opp_total > 4],
+            p9.aes(x="buzzing_position", y="result", color="qid"),
+        )
+        + p9.geom_line(p9.aes(linetype="source"))
+        + p9.geom_line(
+            p9.aes(x="buzzing_position", y="result", linetype="source"), data=curve_df
+        )
+        + p9.labs(
+            x="Position in Question (%)",
+            y="Empirical Probability of Winning",
+            linetype="Data Type",
+            color="Data Source",
+        )
+        + p9.scale_color_manual(values=colors)
+        + theme_pedroai()
+        + p9.theme(legend_position="right")
+    )
+    chart.save("output/empirical_buzz.pdf")
 
 
 if __name__ == "__main__":
