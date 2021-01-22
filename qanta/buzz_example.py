@@ -190,8 +190,6 @@ def latex(qid: int, buzz_file: str, output_file: str):
 
 @app.command()
 def plot_empirical_buzz():
-    thick_size = 0.21
-    thin_size = 0.2
     proto_df = pd.read_hdf("data/external/datasets/protobowl/protobowl-042818.log.h5")
     dataset = read_json(QANTA_MAPPED_DATASET_PATH)
     questions = {q["qanta_id"]: q for q in dataset["questions"]}
@@ -216,7 +214,6 @@ def plot_empirical_buzz():
     y = [curve.get_weight(n) for n in x]
     curve_df = pd.DataFrame({"buzzing_position": x, "result": y})
     curve_df["qid"] = "Expected Wins Curve Score"
-    curve_df["line_size"] = thick_size
     curve_df["source"] = "Curve Score | Average"
     proto_ids = popular_questions[:10]
     frames = []
@@ -240,7 +237,6 @@ def plot_empirical_buzz():
                 "qid": f"Question with {n} Plays",
                 "source": "Single Question",
                 "n_plays": n,
-                "line_size": thin_size,
             }
         )
         for r in group_df.itertuples():
@@ -255,7 +251,6 @@ def plot_empirical_buzz():
                     "qid": f"Question with {n} Plays",
                     "source": "Single Question",
                     "n_plays": n,
-                    "line_size": thin_size,
                 }
             )
     n_opp_correct = 0
@@ -271,7 +266,6 @@ def plot_empirical_buzz():
                 "n_opp_total": n_opp_total,
                 "qid": "Average of Most Played",
                 "source": "Curve Score | Average",
-                "line_size": thick_size,
             }
         )
 
@@ -296,14 +290,23 @@ def plot_empirical_buzz():
     df["qid"] = df["qid"].astype(categories)
     cmap = plt.get_cmap("tab20")
     colors = [matplotlib.colors.to_hex(c) for c in cmap.colors]
+    filter_df = df[df.n_opp_total > 4]
     chart = (
-        p9.ggplot(
-            df[df.n_opp_total > 4],
-            p9.aes(x="buzzing_position", y="result", color="qid", size="line_size"),
-        )
-        + p9.geom_line(p9.aes(linetype="source"))
+        p9.ggplot(filter_df, p9.aes(x="buzzing_position", y="result", color="qid"),)
         + p9.geom_line(
-            p9.aes(x="buzzing_position", y="result", linetype="source"), data=curve_df,
+            p9.aes(linetype="source"),
+            data=filter_df[filter_df.source.map(lambda s: s.startswith("Curve"))],
+            size=2,
+        )
+        + p9.geom_line(
+            p9.aes(linetype="source"),
+            data=filter_df[filter_df.source.map(lambda s: not s.startswith("Curve"))],
+            size=0.5,
+        )
+        + p9.geom_line(
+            p9.aes(x="buzzing_position", y="result", linetype="source"),
+            data=curve_df,
+            size=2,
         )
         + p9.labs(
             x="Position in Question (%)",
