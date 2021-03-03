@@ -63,7 +63,7 @@ part of the `dataset.py` script.
 You can test is spark is installed property by running something like the following:
 ```
 > python
-Python 3.6.1 |Anaconda 4.4.0 (64-bit)| (default, May 11 2017, 13:09:58) 
+Python 3.6.1 |Anaconda 4.4.0 (64-bit)| (default, May 11 2017, 13:09:58)
 [GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
 Type "help", "copyright", "credits" or "license" for more information.
 >>> from qanta.spark import create_spark_context
@@ -150,7 +150,9 @@ decent amount of RAM.
   guessers, generate guesses for them, and produce a report of their
 performance into `output/guesser`.
 
-
+Certain tasks might require Spacy models (e.g `en_core_web_lg`) or nltk data
+(e.g `wordnet`) to be downloaded. See the [FAQ](## Debugging FAQ and Solutions)
+section for more information.
 
 ### Qanta CLI
 
@@ -256,6 +258,23 @@ export LANG=en_US.UTF-8
 > TypeError: namedtuple() missing 3 required keyword-only arguments: 'verbose', 'rename', and 'module'
 
 Python 3.6 needs Spark 2.1.1
+
+> OSError: [E050] Can't find model 'en_core_web_lg'. It doesn't seem to be a shortcut link, a Python package or a valid path to a data directory.
+
+To download the required Spacy model, run:
+
+```
+python -m spacy download en_core_web_lg
+```
+
+> Missing "wordnet" data for nltk
+
+In a Python interactive shell, run the following commands to download "wordnet" data:
+
+```python
+import nltk
+nltk.download('wordnet')
+```
 
 ## Qanta ID Numbering
 
