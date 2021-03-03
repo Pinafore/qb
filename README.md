@@ -151,7 +151,7 @@ decent amount of RAM.
 performance into `output/guesser`.
 
 Certain tasks might require Spacy models (e.g `en_core_web_lg`) or nltk data
-(e.g `wordnet`) to be downloaded. See the [FAQ](## Debugging FAQ and Solutions)
+(e.g `wordnet`) to be downloaded. See the [FAQ](#debugging-faq-and-solutions)
 section for more information.
 
 ### Qanta CLI
@@ -269,7 +269,7 @@ python -m spacy download en_core_web_lg
 
 > Missing "wordnet" data for nltk
 
-In a Python interactive shell, run the following commands to download "wordnet" data:
+In a Python interactive shell, run the following commands to download wordnet data:
 
 ```python
 import nltk
