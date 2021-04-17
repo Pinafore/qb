@@ -193,14 +193,14 @@ class ElmoGuesser(AbstractGuesser):
                 self.model.zero_grad()
             out = self.model(x_batch.cuda(), length_batch.cuda())
             _, preds = torch.max(out, 1)
-            accuracy = torch.mean(torch.eq(preds, y_batch).float()).data[0]
+            accuracy = torch.mean(torch.eq(preds, y_batch).float()).data
             batch_loss = self.criterion(out, y_batch)
             if train:
                 batch_loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 0.25)
                 self.optimizer.step()
             batch_accuracies.append(accuracy)
-            batch_losses.append(batch_loss.data[0])
+            batch_losses.append(batch_loss.data)
         epoch_end = time.time()
 
         return np.mean(batch_accuracies), np.mean(batch_losses), epoch_end - epoch_start
