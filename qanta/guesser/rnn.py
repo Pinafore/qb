@@ -346,7 +346,7 @@ class RnnGuesser(AbstractGuesser):
 
             out, hidden = self.model(text, lengths, hidden_init, qanta_ids)
             _, preds = torch.max(out, 1)
-            accuracy = torch.mean(torch.eq(preds, page).float()).data
+            accuracy = torch.mean(torch.eq(preds, page).float()).cpu().data
             batch_loss = self.criterion(out, page)
             if is_train:
                 batch_loss.backward()
@@ -356,7 +356,7 @@ class RnnGuesser(AbstractGuesser):
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)
-            batch_losses.append(batch_loss.data)
+            batch_losses.append(batch_loss.cpu().data)
 
         epoch_end = time.time()
 
