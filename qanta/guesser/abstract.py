@@ -371,7 +371,7 @@ class AbstractGuesser(metaclass=ABCMeta):
         char_df["correct"] = (char_df.guess == char_df.page).astype("int")
         char_df["char_percent"] = (
             char_df["char_index"] / char_df["text_length"]
-        ).clip_upper(1.0)
+        ).clip(upper=1.0)
 
         first_guess_df = AbstractGuesser.load_guesses(
             directory, folds=[fold], output_type="first"
