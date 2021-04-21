@@ -466,7 +466,7 @@ class DanGuesser(AbstractGuesser):
 
             out = self.model(input_dict, lengths_dict, qanta_ids)
             _, preds = torch.max(out, 1)
-            accuracy = torch.mean(torch.eq(preds, page).float()).data[0]
+            accuracy = torch.mean(torch.eq(preds, page).float()).cpu().data
             batch_loss = self.criterion(out, page)
             if is_train:
                 batch_loss.backward()
@@ -476,7 +476,7 @@ class DanGuesser(AbstractGuesser):
                 self.optimizer.step()
 
             batch_accuracies.append(accuracy)
-            batch_losses.append(batch_loss.data[0])
+            batch_losses.append(batch_loss.cpu().data)
 
         epoch_end = time.time()
 
