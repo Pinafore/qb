@@ -34,7 +34,7 @@ page matches
 
 ## Dependencies
 
-Install the necessary Python packages into a virtual environment by running `poetry install` in the qanta directory.
+Install all necessary Python packages into a virtual environment by running `poetry install` in the qanta directory. Further qanta setup should be performed in the virtual environment.
 
 The virtual environment can be accessed by running `poetry shell`.
 
