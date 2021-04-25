@@ -41,7 +41,7 @@ The virtual environment can be accessed by running `poetry shell`.
 #### NLTK Models
 ```bash
 # Download nltk data
-$ python3 setup.py
+$ python3 nltk_setup.py
 ```
 
 ### Qanta on Path
