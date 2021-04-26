@@ -38,11 +38,22 @@ Install all necessary Python packages into a virtual environment by running `poe
 
 The virtual environment can be accessed by running `poetry shell`.
 
-#### NLTK Models
+### NLTK Models
 ```bash
 # Download nltk data
 $ python3 nltk_setup.py
 ```
+
+### Installing Elastic Search 5.6
+
+```bash
+$ curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.2.tar.gz
+$ tar -xvf elasticsearch-5.6.2.tar.gz
+```
+
+Install version 5.6.X, do not use 6.X. Also be sure that the directory `bin/` within the extracted files is in your
+`$PATH` as it contains the necessary binary `elasticsearch`.
+
 
 ### Qanta on Path
 
