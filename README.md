@@ -45,6 +45,7 @@ $ python3 nltk_setup.py
 ```
 
 ### Installing Elastic Search 5.6
+(only needed for Elastic Search Guesser)
 
 ```bash
 $ curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.2.tar.gz
