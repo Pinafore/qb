@@ -34,76 +34,31 @@ page matches
 
 ## Dependencies
 
-The recommended way to run our system is to use the Anaconda python
-distribution. The `environment.yaml` can be used to create a `conda`
-environment with all the necessary software versions installed.
+Install all necessary Python packages into a virtual environment by running `poetry install` in the qanta directory. Further qanta setup requiring python depedencies should be performed in the virtual environment.
 
-The qanta system has the following dependencies. Depending on your objective
-however not all are necessary. The python packages are generally required so
-that imports resolve, Apache Spark is required for many data preprocessing
-steps, Vowpal Wabbit is not needed for anything except training a linear model,
-Spacy is required for preprocessing, Elastic Search is required for the IR
-based models, and `lz4` and the AWS cli are necessary for downloading data not
-part of the `dataset.py` script.
+The virtual environment can be accessed by running `poetry shell`.
 
-* Anaconda Distributed Python 3.6
-* PyTorch 0.3.X
-* Apache Spark 2.2.0 with Scala/JVM
-* Vowpal Wabbit 8.4
-* Spacy 2.0
-* Elastic Search 5.6.X
-* lz4
-* AWS CLI
-* All python packages listed in `environment.yaml`
-
-### Installing Apache Spark
-
-`packer/bin/install-spark.sh`
-
-You can test is spark is installed property by running something like the following:
-```
-> python
-Python 3.6.1 |Anaconda 4.4.0 (64-bit)| (default, May 11 2017, 13:09:58)
-[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
-Type "help", "copyright", "credits" or "license" for more information.
->>> from qanta.spark import create_spark_context
->>> sc = create_spark_context()
-Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
-Setting default log level to "WARN".
-To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
-17/07/25 10:04:01 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-17/07/25 10:04:01 WARN Utils: Your hostname, hongwu resolves to a loopback address: 127.0.0.2; using 192.168.2.2 instead (on interface eth0)
-17/07/25 10:04:01 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+### NLTK Models
+```bash
+# Download nltk data
+$ python3 nltk_setup.py
 ```
 
 ### Installing Elastic Search 5.6
+(only needed for Elastic Search Guesser)
 
-`packer/bin/install-elasticsearch.sh`
-
-Install version 5.6.X, do not use 6.X. Also be sure that the directory `bin/`
-within the extracted files is in your `$PATH` as it contains the necessary
-binary `elasticsearch`.
-
-
-### Installing Python packages
-
-Either use `environment.yaml` or:
-
-```
-pip install -r packer/requirements.txt
-```
-
-#### NLTK Models
 ```bash
-# Download nltk data
-$ python3 setup.py download
+$ curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.2.tar.gz
+$ tar -xvf elasticsearch-5.6.2.tar.gz
 ```
+
+Install version 5.6.X, do not use 6.X. Also be sure that the directory `bin/` within the extracted files is in your
+`$PATH` as it contains the necessary binary `elasticsearch`.
+
 
 ### Qanta on Path
 
-In addition to these steps you need to either run `python setup.py develop` or
-include the qanta directory in your `PYTHONPATH` environment variable. We
-intend to fix path issues in the future by fixing absolute/relative paths.
+In addition to these steps you need to include the qanta directory in your `PYTHONPATH` environment variable. We intend to fix path issues in the future by fixing absolute/relative paths.
 
 
 ## Configuration
