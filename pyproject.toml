@@ -42,6 +42,8 @@ typer = "^0.3.1"
 ftfy = "^5.8"
 rich = "^9.8.2"
 tables = "^3.6.1"
+pyspark = "^3.1.1"
+pyfunctional = "^1.4.3"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.5.3"
