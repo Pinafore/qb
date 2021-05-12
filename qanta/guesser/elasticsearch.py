@@ -229,8 +229,9 @@ class ElasticSearchGuesser(AbstractGuesser):
         else:
             self.similarity_k1 = None
             self.similarity_b = None
+        self.name = f"qb_{self.config_num}"
         self.index = ElasticSearchIndex(
-            name=f"qb_{self.config_num}",
+            name=self.name,
             similarity=self.similarity_name,
             bm25_b=self.similarity_b,
             bm25_k1=self.similarity_k1,
@@ -351,7 +352,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             wiki_field = "wiki_content"
             qb_field = "qb_content"
             text = request.form["text"]
-            s = Search(index="qb")[0:10].query(
+            s = Search(index=self.name)[0:10].query(
                 "multi_match", query=text, fields=[wiki_field, qb_field]
             )
             s = s.highlight(wiki_field).highlight(qb_field)
@@ -384,7 +385,7 @@ class ElasticSearchGuesser(AbstractGuesser):
             wiki_field = "wiki_content"
             qb_field = "qb_content"
             text = request.form["text"]
-            s = Search(index="qb")[0:20].query(
+            s = Search(index=self.name)[0:20].query(
                 "multi_match", query=text, fields=[wiki_field, qb_field]
             )
             s = s.highlight(wiki_field).highlight(qb_field)
@@ -407,7 +408,7 @@ class ElasticSearchGuesser(AbstractGuesser):
                         break
                 if guess == None:
                     print("expanding search")
-                    s = Search(index="qb")[0:80].query(
+                    s = Search(index=self.name)[0:80].query(
                         "multi_match", query=text, fields=[wiki_field, qb_field]
                     )
                     s = s.highlight(wiki_field).highlight(qb_field)
