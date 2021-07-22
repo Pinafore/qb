@@ -29,7 +29,6 @@ SUBCATEGORY_URL = "https://www.quizdb.org/admin/subcategories.json?order=name_as
 BONUSES_URL = (
     "https://www.quizdb.org/admin/bonuses.json?order=id_desc&page={page}&per_page=1000"
 )
-QUIZ_DB_SESSION = os.environ.get("QUIZ_DB_SESSION")
 
 
 def fetch_authenticated_url(url):
@@ -49,10 +48,6 @@ def fetch_authenticated_url(url):
 
 
 def robust_fetch_authenticated_url(url):
-    if QUIZ_DB_SESSION is None:
-        raise ValueError(
-            "Cannot scrap quizdb.org since no authentication credentials found in QUIZ_DB_SESSION"
-        )
     try:
         return fetch_authenticated_url(url)
     except Exception as e:
