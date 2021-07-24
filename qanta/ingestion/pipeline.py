@@ -57,7 +57,7 @@ ANSWER_MAP_PATH = "data/external/answer_mapping/answer_map.json"
 UNBOUND_ANSWER_PATH = "data/external/answer_mapping/unbound_answers.json"
 
 
-QDB_DATE = "04182018"
+QDB_DATE = "07222021"
 QDB_CATEGORIES = f"quizdb.org-{QDB_DATE}.categories.json"
 QDB_SUBCATEGORIES = f"quizdb.org-{QDB_DATE}.subcategories.json"
 QDB_TOURNAMENTS = f"quizdb.org-{QDB_DATE}.tournaments.json"
