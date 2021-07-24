@@ -4,6 +4,7 @@ import re
 import itertools
 from collections import Counter
 
+from qanta.ingestion.classifier import Classifier
 from qanta.util.constants import (
     GUESSER_TRAIN_FOLD,
     BUZZER_TRAIN_FOLD,
@@ -125,6 +126,9 @@ def normalize_text(text):
     return re.sub(TRASH_PREFIX_PATTERN, "", text).lstrip()
 
 
+classifier = Classifier()
+
+
 class QuizdbOrg:
     @staticmethod
     def parse_tournaments(path):
@@ -200,12 +204,8 @@ class QuizdbOrg:
                         "text": normalize_text(q["text"]),
                         "answer": q["answer"],
                         "page": None,
-                        "category": qdb_categories[category_id]
-                        if category_id is not None
-                        else None,
-                        "subcategory": qdb_subcategories[subcategory_id]
-                        if subcategory_id is not None
-                        else None,
+                        "category": classifier.predict_category(q["text"] + " ANSWER: " + q["answer"]),
+                        "subcategory": classifier.predict_subcategory(q["text"] + " ANSWER: " + q["answer"]),
                         "tournament": tournament,
                         "difficulty": difficulty,
                         "year": year,
@@ -226,13 +226,14 @@ class Protobowl:
             for q in protobowl_raw:
                 if q["question"] == "[missing]":
                     continue
+
                 protobowl_questions.append(
                     {
                         "text": normalize_text(q["question"]),
                         "answer": q["answer"],
                         "page": None,
-                        "category": q["category"],
-                        "subcategory": q["subcategory"],
+                        "category": classifier.predict_category(q["question"] + " ANSWER: " + q["answer"]),
+                        "subcategory": classifier.predict_subcategory(q["question"] + " ANSWER: " + q["answer"]),
                         "tournament": q["tournament"],
                         "difficulty": q["difficulty"],
                         "year": q["year"],
@@ -304,7 +305,6 @@ def merge_datasets(protobowl_questions, quizdb_questions):
                 questions.append(q)
 
     return questions
-
 
 TEST_TOURNAMENTS = {"ACF Regionals", "PACE NSC", "NASAT", "ACF Nationals", "ACF Fall"}
 GUESSTEST_YEARS = {2017, 2018}  # These years do not have gameplay data at all

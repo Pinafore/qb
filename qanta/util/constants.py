@@ -60,7 +60,7 @@ EXPO_BUZZ = "output/expo/{}.buzz"
 EXPO_FINAL = "output/expo/{}.final"
 EXPO_QUESTIONS = "output/expo/{}.questions.csv"
 
-DS_VERSION = "2018.04.18"
+DS_VERSION = "2021.07.25"
 DATASET_PREFIX = "data/external/datasets"
 QANTA_MAP_REPORT_PATH = "data/external/answer_mapping/match_report.json"
 QANTA_MAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f"qanta.mapped.{DS_VERSION}.json")
@@ -76,3 +76,5 @@ QANTA_TORCH_VAL = f"qanta.torchtext.val.{DS_VERSION}.json"
 QANTA_TORCH_VAL_LOCAL_PATH = path.join(DATASET_PREFIX, QANTA_TORCH_VAL)
 QANTA_TORCH_DEV = f"qanta.torchtext.dev.{DS_VERSION}.json"
 QANTA_TORCH_DEV_LOCAL_PATH = path.join(DATASET_PREFIX, QANTA_TORCH_DEV)
+
+CATEGORIZER_TRAIN_LOCAL_PATH = "data/external/quizdb_classifier_training_data.json"
