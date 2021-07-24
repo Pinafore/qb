@@ -111,35 +111,35 @@ def fetch_all_bonuses(start_page, end_page):
 def get_tossups(out_path: str):
     tossups = fetch_all_tossups(1, 1000)
     with open(out_path, "w") as f:
-        json.dump({"tossups": tossups}, f)
+        json.dump(tossups, f)
 
 
 @app.command()
 def get_bonuses(out_path: str):
     bonuses = fetch_all_bonuses(1, 1000)
     with open(out_path, "w") as f:
-        json.dump({"bonuses": bonuses}, f)
+        json.dump(bonuses, f)
 
 
 @app.command()
 def get_tournaments(out_path: str):
     tournaments = fetch_paginated_resource(fetch_tournament_page, 1, 1000)
     with open(out_path, "w") as f:
-        json.dump({"tournaments": tournaments}, f)
+        json.dump(tournaments, f)
 
 
 @app.command()
 def get_categories(out_path: str):
     categories = fetch_paginated_resource(fetch_category_page, 1, 1000)
     with open(out_path, "w") as f:
-        json.dump({"categories": categories}, f)
+        json.dump(categories, f)
 
 
 @app.command()
 def get_subcategories(out_path: str):
     subcategories = fetch_paginated_resource(fetch_subcategory_page, 1, 1000)
     with open(out_path, "w") as f:
-        json.dump({"subcategories": subcategories}, f)
+        json.dump(subcategories, f)
 
 
 if __name__ == "__main__":
