@@ -61,3 +61,10 @@ elasticsearch.yml
 .vscode
 pytype_output
 output.tar.gz
+
+# jenv
+.java-version
+
+
+# Distribution / packaging
+*.egg-info/
