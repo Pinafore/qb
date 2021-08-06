@@ -159,7 +159,7 @@ def mapping_rules_to_answer_map(
                 lower_ans = rule_ans.lower()
                 is_upper = rule_ans.isupper()
 
-                # If we already have an answer, be definition it must be of higher priority so we do not allow
+                # If we already have an answer, by definition it must be of higher priority so we do not allow
                 # overwriting it.
                 rule_ans = re.sub(r"\s+", " ", rule_func(raw_ans)).strip()
                 if original_ans not in answer_map:
