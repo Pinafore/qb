@@ -21,7 +21,7 @@ def split_and_remove_punc(text):
         if word:
             yield word
 
-
+# This could be expanded to provide multiple "normalized" answers
 def normalize_answer(answer):
     answer = unidecode(answer)
     answer = answer.lower().replace("_ ", " ").replace(" _", " ").replace("_", "")

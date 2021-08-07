@@ -195,6 +195,22 @@ These references may be useful and are the source for these instructions:
 * https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
 * http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
 
+## Ingestion Update Info
+
+Answer mapping is divided into two stages: (1) An automatic rule-based answer matcher linking answers to pages. (2) Manually annotated
+
+### Answer Mapping Files:
+
+* `automatic_report.json`: Shows all answers matched to a Wikipedia page through various rules. Answers mapped this way are classified as unambiguous.
+* `match_report.json`: Shows information about matched and unmatched answers
+  * `train_unmatched`: Shows all questions and associated metadata that are not matched to a wikipedia page in the train fold
+  * `test_unmatched`: Shows all questions and associated metadata that are not matched to a wikipedia page in the test fold
+  * `match_report`: Lists the result from annotated
+* `unbound_answers.json`: All the original answers to ingested quizbowl questions.
+* `answer_map.json`: Answer map linking given answer to a proposed Wikipedia page
+  * `answer_map`: Answers linked directly to a page through one of the rules found in `automatic_report.json` or through direct linkage (?)
+  * `ambig_answer_map`: Answers linked to a page (may include duplicates with above)
+
 ## Debugging FAQ and Solutions
 
 > pyspark uses the wrong version of python

@@ -484,12 +484,12 @@ def unmapped_to_mapped_questions(
             answer=answer, question_text=q["text"], qdb_id=qdb_id, proto_id=proto_id
         )
         automatic_page = answer_map[answer] if answer in answer_map else None
-        ambig_automatic_error = None
+        ambig_automatic_error = None # Note used past for loop?
         ambig_automatic_page = None
         if answer in ambig_answer_map:
             words = set(q["text"].lower().split())
             options = ambig_answer_map[answer]
-            ambig_automatic_page = None
+            ambig_automatic_page = None # Possible duplicate?
             for page, keyword in options:
                 if keyword in words:
                     if ambig_automatic_page is None and ambig_automatic_error is None:
