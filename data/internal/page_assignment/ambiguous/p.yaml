@@ -177,3 +177,8 @@ ambiguous:
     - statistical
     - thermodynamics
     - mechanics
+  python:
+  - page: Python_(programming_language)
+    words:
+    - NumPy
+    - Tkinter

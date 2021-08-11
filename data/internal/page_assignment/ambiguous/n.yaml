@@ -26,3 +26,7 @@ ambiguous:
     - geb
     - egypt
     - egyptian
+  nondeterministic [or word forms, such as nondeterminism]:
+  - page: NP_(complexity)
+    words:
+    - property

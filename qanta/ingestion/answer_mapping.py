@@ -43,10 +43,11 @@ def make_source_list(
         if len(title) != 1 or len(title) == len(u_title):
             unicode_titles[u_title] = title
 
-        # lower titles
+        # lowercase titles
         l_title = title.lower()
         lower_titles[l_title] = title
 
+        # lowercase unicode title
         u_l_title = unidecode(l_title)
         if len(title) != 1 or len(title) == len(u_l_title):
             lower_unicode_titles[u_l_title] = title
@@ -69,13 +70,16 @@ def make_source_list(
         if len(text) != 1 or len(text) == len(u_l_text):
             lower_unicode_wiki_redirects[u_l_text] = page
 
+    # Why not unicode redirects?
     return [
         ("exact_title", exact_titles, False),
         ("exact_redirect", exact_wiki_redirects, False),
         ("unicode_title", unicode_titles, False),
+        ("unicode_redirect", unicode_wiki_redirects, True),
         ("lower_title", lower_titles, True),
         ("lower_redirect", lower_wiki_redirects, True),
         ("lower_unicode_title", lower_unicode_titles, True),
+        ("lower_unicode_redirect", lower_unicode_wiki_redirects, True),
     ]
 
 
@@ -95,7 +99,7 @@ AmbigMap = Dict[str, AmbigOptions]
 
 def make_disamb_list(wiki_titles: Set[str]) -> AmbigMap:
     disamb_candidates = defaultdict(set)
-    disamb_re = re.compile(r"(^[^\(\)]+)\_\((.+)\)$")
+    disamb_re = re.compile(r"(^[^\(\)]+)\_\((.+)\)$") # Matches word_(category) (e.g., "chicken_(noodle)")
     for t in wiki_titles:
         m = re.match(disamb_re, t)
         if m is not None:
@@ -129,6 +133,7 @@ def mapping_rules_to_answer_map(
 
     n_unmapped = len(unmapped_answers)
     log.info(f"{n_unmapped} Unmapped Answers Exist\nStarting Answer Mapping\n")
+    # Expansion answers refer to additional possible answers for an answer line
     expansion_answer_map = defaultdict(
         dict
     )  # type: Dict[str, Dict[str, Tuple[int, str]]]
@@ -137,8 +142,10 @@ def mapping_rules_to_answer_map(
     ):
         log.info(f"Applying expansion rule: {name}")
         for raw_ans in unmapped_answers:
+            log.info(f"Raw answer: {raw_ans}")
             for exp_ans in rule_func(raw_ans):
                 exp_ans = exp_ans.strip()
+                log.info(f"Exp answer: {exp_ans}")
                 if exp_ans in expansion_answer_map[raw_ans]:
                     curr_priority, _ = expansion_answer_map[raw_ans][exp_ans]
                     if priority > curr_priority:
@@ -148,6 +155,7 @@ def mapping_rules_to_answer_map(
 
     sorted_match_rules = sorted(match_rules, key=lambda x: x[1], reverse=True)
     report = {"expansion": {}, "match": {}, "source": {}}
+    log.info(f"Expansion answer map: {expansion_answer_map}")
     for original_ans, ans_expansions in tqdm.tqdm(expansion_answer_map.items()):
         # We don't need the expansion priority anymore, its already been sorted
         for match_name, _, rule_func in sorted_match_rules:
@@ -155,9 +163,11 @@ def mapping_rules_to_answer_map(
             for raw_ans, (_, expansion_name) in sorted(
                 ans_expansions.items(), key=lambda x: x[1], reverse=True
             ):
+                # log.info(f"Raw answer: {raw_ans}")
                 rule_ans = re.sub(r"\s+", " ", rule_func(raw_ans)).strip()
                 lower_ans = rule_ans.lower()
                 is_upper = rule_ans.isupper()
+                # log.info(f"Rule answer: {raw_ans}, lower ans: {lower_ans}, is upper: {is_upper}")
 
                 # If we already have an answer, by definition it must be of higher priority so we do not allow
                 # overwriting it.
@@ -239,8 +249,9 @@ def find_amb_match(
 
 
 # Expansion rule functions
+# Semicolon also often acts as an or, or to separate from prompt/accept
 def or_rule(ans):
-    splits = re.split("[^a-zA-Z]+or[^a-zA-Z]+", ans)
+    splits = re.split("[^a-zA-Z0-9]+or|;[^a-zA-Z0-9]+", ans)
     if len(splits) > 1:
         formatted_splits = [s.strip() for s in splits]
         return formatted_splits
@@ -251,7 +262,7 @@ def or_rule(ans):
 def exact_rule(ans):
     return (ans,)
 
-
+# MS: Expand with more possibilities?
 def prompt_rule(ans):
     l_ans = ans.lower()
     if "accept" in l_ans or "prompt" in l_ans or "pronounce" in l_ans:
@@ -281,6 +292,14 @@ def prompt_rule(ans):
     else:
         return ()
 
+def remove_extra_punc(ans):
+    return unidecode(ans.lower().strip("!?")).replace('"', '')
+
+def remove_parenthetical(ans):
+    return remove_extra_punc(ans).split("<")[0].split("[")[0].split("(")[0].strip()
+
+def remove_middle(ans):
+    return remove_parenthetical(ans).replace("{","").replace("}","")
 
 def the_rule(ans):
     l_ans = ans.lower()
@@ -369,6 +388,8 @@ def remove_quotes(text):
 def remove_parens(text):
     return re.sub(r"[\(\)]", "", text)
 
+def remove_various_punc(text):
+    return re.sub(r'[<>\[\]"“”{}\(\)\!\?]', "", text)
 
 def compose(*funcs):
     def composed_function(x):
@@ -391,8 +412,11 @@ def create_expansion_rules() -> List[Tuple[str, int, ExpansionRule]]:
         ("answer", 20, answer_rule),
         ("the", 10, the_rule),
         ("sir", 5, sir_rule),
-        ("or", 1, or_rule),
-        ("prompt", 0, prompt_rule),
+        ("or", 4, or_rule),
+        ("prompt", 3, prompt_rule),
+        ("remove-extraneous", 2, remove_extra_punc),
+        ("remove-parenthetical", 1, remove_parenthetical),
+        ("remove-middle", 0, remove_middle),
     ]
     return expansion_rules
 
@@ -404,10 +428,14 @@ def create_match_rules() -> List[Tuple[str, int, MatchRule]]:
         ("braces", 1, remove_braces),
         ("quotes", 1, remove_quotes),
         ("parens", 1, remove_parens),
+        ("plural", 1, plural_rule),
         ("braces+quotes", 1, compose(remove_braces, remove_quotes)),
         ("braces+plural", 0, compose(remove_braces, plural_rule)),
         ("quotes+braces+plural", 0, compose(remove_braces, remove_quotes, plural_rule)),
+        ("various_punc", 0, remove_various_punc),
+        ("various_punc+plural", 0, compose(remove_various_punc, plural_rule)),
     ]
+
     return match_rules
 
 
