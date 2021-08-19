@@ -142,10 +142,10 @@ def mapping_rules_to_answer_map(
     ):
         log.info(f"Applying expansion rule: {name}")
         for raw_ans in unmapped_answers:
-            log.info(f"Raw answer: {raw_ans}")
+            # log.info(f"Raw answer: {raw_ans}")
             for exp_ans in rule_func(raw_ans):
                 exp_ans = exp_ans.strip()
-                log.info(f"Exp answer: {exp_ans}")
+                # log.info(f"Exp answer: {exp_ans}")
                 if exp_ans in expansion_answer_map[raw_ans]:
                     curr_priority, _ = expansion_answer_map[raw_ans][exp_ans]
                     if priority > curr_priority:
@@ -160,6 +160,7 @@ def mapping_rules_to_answer_map(
         # We don't need the expansion priority anymore, its already been sorted
         for match_name, _, rule_func in sorted_match_rules:
             # We don't need the match priority anymore, its already been sorted
+            log.info(f"Applying match rule: {match_name}")
             for raw_ans, (_, expansion_name) in sorted(
                 ans_expansions.items(), key=lambda x: x[1], reverse=True
             ):
@@ -292,15 +293,6 @@ def prompt_rule(ans):
     else:
         return ()
 
-def remove_extra_punc(ans):
-    return unidecode(ans.lower().strip("!?")).replace('"', '')
-
-def remove_parenthetical(ans):
-    return remove_extra_punc(ans).split("<")[0].split("[")[0].split("(")[0].strip()
-
-def remove_middle(ans):
-    return remove_parenthetical(ans).replace("{","").replace("}","")
-
 def the_rule(ans):
     l_ans = ans.lower()
     if "the " in l_ans:
@@ -391,6 +383,15 @@ def remove_parens(text):
 def remove_various_punc(text):
     return re.sub(r'[<>\[\]"“”{}\(\)\!\?]', "", text)
 
+def remove_extra_punc(ans):
+    return unidecode(ans.lower().strip("!?")).replace('"', '')
+
+def remove_parenthetical(ans):
+    return remove_extra_punc(ans).split("<")[0].split("[")[0].split("(")[0].strip()
+
+def remove_middle(ans):
+    return remove_parenthetical(ans).replace("{","").replace("}","")
+
 def compose(*funcs):
     def composed_function(x):
         for f in funcs:
@@ -414,9 +415,6 @@ def create_expansion_rules() -> List[Tuple[str, int, ExpansionRule]]:
         ("sir", 5, sir_rule),
         ("or", 4, or_rule),
         ("prompt", 3, prompt_rule),
-        ("remove-extraneous", 2, remove_extra_punc),
-        ("remove-parenthetical", 1, remove_parenthetical),
-        ("remove-middle", 0, remove_middle),
     ]
     return expansion_rules
 
@@ -434,6 +432,9 @@ def create_match_rules() -> List[Tuple[str, int, MatchRule]]:
         ("quotes+braces+plural", 0, compose(remove_braces, remove_quotes, plural_rule)),
         ("various_punc", 0, remove_various_punc),
         ("various_punc+plural", 0, compose(remove_various_punc, plural_rule)),
+        ("remove-extraneous", 2, remove_extra_punc),
+        ("remove-parenthetical", 1, remove_parenthetical),
+        ("remove-middle", 0, remove_middle),
     ]
 
     return match_rules
@@ -486,6 +487,8 @@ def unmapped_to_mapped_questions(
     qdb_unmappable = set(unmappable["quizdb"])
     train_unmatched_questions = []
     test_unmatched_questions = []
+    train_unmappable = []
+    test_unmappable = []
     match_report = {}
     for q in unmapped_qanta_questions:
         answer = q["answer"]
@@ -503,9 +506,9 @@ def unmapped_to_mapped_questions(
                 "automatic_page": None,
             }
             if fold == GUESSER_TRAIN_FOLD or fold == BUZZER_TRAIN_FOLD:
-                train_unmatched_questions.append(q)
+                train_unmappable.append(q)
             else:
-                test_unmatched_questions.append(q)
+                test_unmappable.append(q)
             continue
 
         annotated_page, annotated_error = page_assigner.maybe_assign(
@@ -600,6 +603,8 @@ def unmapped_to_mapped_questions(
     return {
         "train_unmatched": train_unmatched_questions,
         "test_unmatched": test_unmatched_questions,
+        "train_unmappable": train_unmappable,
+        "test_unmappable": test_unmappable,
         "match_report": match_report,
     }
 
