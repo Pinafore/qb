@@ -368,6 +368,12 @@ def unicode_rule(ans):
         return ()
 
 
+# Handles: Allegory of the Cave &lt;The above question is for the category RMP Philosophy and was written by Shan Kothari&gt;
+def unusual_ans_ending(ans):
+    if " &lt;" in ans:
+        return (ans.split("&lt;")[0].strip())
+
+
 # Match Rule Functions
 def remove_braces(text):
     return re.sub(r"[{}]", "", text)
@@ -415,6 +421,7 @@ def create_expansion_rules() -> List[Tuple[str, int, ExpansionRule]]:
         ("sir", 5, sir_rule),
         ("or", 4, or_rule),
         ("prompt", 3, prompt_rule),
+        ("unusual_ending", 3, unusual_ans_ending)
     ]
     return expansion_rules
 

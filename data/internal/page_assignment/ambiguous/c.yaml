@@ -18,6 +18,14 @@ ambiguous:
   - page: Calypso_music
     words:
     - music
+  cecrops:
+  - page: Cecrops_I
+    words:
+    - serpent
+    - pandion
+  - page: Calypso_music
+    words:
+    - music
   camp:
   - page: Camp_(style)
     words:
