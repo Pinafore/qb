@@ -98,12 +98,12 @@ For these common tasks you can use command `luigi --local-scheduler` followed by
 
 * `--module qanta.pipeline.preprocess DownloadData`: This downloads any
   necessary data and preprocesses it. This will download a copy of our
-preprocessed Wikipedia stored in AWS S3 and turn it into the format used by our
-code. This step requires the AWS CLI, `lz4`, Apache Spark, and may require a
-decent amount of RAM.
+  preprocessed Wikipedia stored in AWS S3 and turn it into the format used by our
+  code. This step requires the AWS CLI, `lz4`, Apache Spark, and may require a
+  decent amount of RAM.
 * `--module qanta.pipeline.guesser AllGuesserReports`: Train all enabled
   guessers, generate guesses for them, and produce a report of their
-performance into `output/guesser`.
+  performance into `output/guesser`.
 
 Certain tasks might require Spacy models (e.g `en_core_web_lg`) or nltk data
 (e.g `wordnet`) to be downloaded. See the [FAQ](#debugging-faq-and-solutions)
@@ -126,8 +126,8 @@ access to all the contents of the bucket so we suggest creating a dedicated buck
 ## Information on our data sources
 ### Wikipedia Dumps
 
-As part of our ingestion pipeline we access raw wikipedia dumps. The current code is based on the english wikipedia
-dumps created on 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/
+As part of our ingestion pipeline we access raw wikipedia dumps. Updated dumps can be found here: https://dumps.wikimedia.org/enwiki/. The current code is based on the english wikipedia
+dumps created on 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/.
 
 Of these we use the following (you may need to use more recent dumps)
 
@@ -197,16 +197,21 @@ These references may be useful and are the source for these instructions:
 
 ## Ingestion Update Info
 
-Answer mapping is divided into two stages: (1) An automatic rule-based answer matcher linking answers to pages. (2) Manually annotated
+Answer mapping is divided into two stages: (1) An automatic rule-based answer matcher linking answers to pages. (2) Manually annotated matches.
+
+Manually annotated matches may be direct one-to-one matches between question IDs and answers found in `data/internal/page_assignment/direct`. They may also be "ambiguous mappings," which link answers to pages conditionally based off if key phrases are in the question. These maps are found in `data/internal/page_assignment/ambiguous`
 
 ### Answer Mapping Files:
 
-* `automatic_report.json`: Shows all answers matched to a Wikipedia page through various rules. Answers mapped this way are classified as unambiguous.
+* `automatic_report.json`: There are two maps, one linking answers to Wikipedia pages (`answer_map`) and another linking to disambiguation pages (`ambig_answer_map`).
+  * `answer_map`: For each quizbowl question answer to Wikipedia page pairing, lists the following: the expansion rule that created the associated answer that matched with a page, the match rule used to match that answer to a page, and the which of the modified Wikipedia pages created the match (the "source").
+  * `ambig_answer_map`: Creates list of potential page matches for an answer based on disambiguation page results
+
 * `match_report.json`: Shows information about matched and unmatched answers
   * `train_unmatched`: Shows all questions and associated metadata that are not matched to a wikipedia page in the train fold
   * `test_unmatched`: Shows all questions and associated metadata that are not matched to a wikipedia page in the test fold
   * `match_report`: Lists the result from annotated
-* `unbound_answers.json`: All the original answers to ingested quizbowl questions.
+* `unbound_answers.json`: All the original answers to ingested quizbowl questions. Does NOT refer to answers that were not bound to a page after the process is done.
 * `answer_map.json`: Answer map linking given answer to a proposed Wikipedia page
   * `answer_map`: Answers linked directly to a page through one of the rules found in `automatic_report.json` or through direct linkage (?)
   * `ambig_answer_map`: Answers linked to a page (may include duplicates with above)

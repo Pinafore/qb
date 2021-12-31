@@ -70,7 +70,6 @@ def make_source_list(
         if len(text) != 1 or len(text) == len(u_l_text):
             lower_unicode_wiki_redirects[u_l_text] = page
 
-    # Why not unicode redirects?
     return [
         ("exact_title", exact_titles, False),
         ("exact_redirect", exact_wiki_redirects, False),
@@ -131,16 +130,22 @@ def mapping_rules_to_answer_map(
     # Clone the set to prevent accidental mutation of the original
     unmapped_answers = set(unmapped_answers)
 
+    # At this point, all answers in dataset are "unmapped answers"
     n_unmapped = len(unmapped_answers)
     log.info(f"{n_unmapped} Unmapped Answers Exist\nStarting Answer Mapping\n")
     # Expansion answers refer to additional possible answers for an answer line
     expansion_answer_map = defaultdict(
         dict
     )  # type: Dict[str, Dict[str, Tuple[int, str]]]
+    # Loops through the associated expansion rules
     for name, priority, rule_func in sorted(
         expansion_rules, key=lambda x: x[1], reverse=True
     ):
         log.info(f"Applying expansion rule: {name}")
+        # For each original answer, there is an array with associated expansion answers.
+        # The below for loop maps the answer created from the expansion rule with the original answer, and the value
+        # associated with this point in the array is the rule name and priority.
+        # In the event that multiple rules create the same expanded answer, this loop lists the highest priority rule
         for raw_ans in unmapped_answers:
             # log.info(f"Raw answer: {raw_ans}")
             for exp_ans in rule_func(raw_ans):
@@ -156,19 +161,22 @@ def mapping_rules_to_answer_map(
     sorted_match_rules = sorted(match_rules, key=lambda x: x[1], reverse=True)
     report = {"expansion": {}, "match": {}, "source": {}}
     log.info(f"Expansion answer map: {expansion_answer_map}")
+    # Loops through the original answer lines
     for original_ans, ans_expansions in tqdm.tqdm(expansion_answer_map.items()):
         # We don't need the expansion priority anymore, its already been sorted
+        # Loops through the match rules
         for match_name, _, rule_func in sorted_match_rules:
-            # We don't need the match priority anymore, its already been sorted
-            log.info(f"Applying match rule: {match_name}")
+            # We loop through the original answer line's associated expansion answers
+            # For each of those expansion answers, we create three possible answers, stripped, lowercase, and uppercase
+            # The answer map creates a match between page and the highest priority expansion answer.
+            # Ambiguous answer matches look at disambiguation pages in Wikipedia and finds possible matches to those
+            # pages given the answer line.
             for raw_ans, (_, expansion_name) in sorted(
                 ans_expansions.items(), key=lambda x: x[1], reverse=True
             ):
-                # log.info(f"Raw answer: {raw_ans}")
                 rule_ans = re.sub(r"\s+", " ", rule_func(raw_ans)).strip()
                 lower_ans = rule_ans.lower()
                 is_upper = rule_ans.isupper()
-                # log.info(f"Rule answer: {raw_ans}, lower ans: {lower_ans}, is upper: {is_upper}")
 
                 # If we already have an answer, by definition it must be of higher priority so we do not allow
                 # overwriting it.
@@ -210,6 +218,7 @@ def mapping_rules_to_answer_map(
         f"\nAnswer Mapping Complete\n{n_unmapped - n_mapped} Unmapped Remain, {n_mapped} Mappings Found"
     )
 
+    # Remember: unmapped answers doesn't refer to answers that were not matched in this process, but total answers
     return answer_map, amb_answer_map, unmapped_answers, report
 
 
