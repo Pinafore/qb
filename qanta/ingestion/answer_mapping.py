@@ -160,7 +160,6 @@ def mapping_rules_to_answer_map(
 
     sorted_match_rules = sorted(match_rules, key=lambda x: x[1], reverse=True)
     report = {"expansion": {}, "match": {}, "source": {}}
-    log.info(f"Expansion answer map: {expansion_answer_map}")
     # Loops through the original answer lines
     for original_ans, ans_expansions in tqdm.tqdm(expansion_answer_map.items()):
         # We don't need the expansion priority anymore, its already been sorted
@@ -381,6 +380,19 @@ def unicode_rule(ans):
 def unusual_ans_ending(ans):
     if " &lt;" in ans:
         return (ans.split("&lt;")[0].strip())
+    elif " Bonuses" in ans:
+        return (ans.split("1940s")[0].strip())
+    else:
+        return ()
+
+def unusual_ans_beginning(ans):
+    if ans.startswith(": "):
+        return (ans.split(": ")[1].strip())
+    else:
+        return ()
+
+def remove_last_letter(ans):
+    return ans[:-1]
 
 
 # Match Rule Functions
@@ -430,7 +442,8 @@ def create_expansion_rules() -> List[Tuple[str, int, ExpansionRule]]:
         ("sir", 5, sir_rule),
         ("or", 4, or_rule),
         ("prompt", 3, prompt_rule),
-        ("unusual_ending", 3, unusual_ans_ending)
+        ("unusual-ending", 3, unusual_ans_ending),
+        ("unusual-beginning", 3, unusual_ans_beginning),
     ]
     return expansion_rules
 
@@ -443,6 +456,7 @@ def create_match_rules() -> List[Tuple[str, int, MatchRule]]:
         ("quotes", 1, remove_quotes),
         ("parens", 1, remove_parens),
         ("plural", 1, plural_rule),
+        ("remove-last", 0, remove_last_letter),
         ("braces+quotes", 1, compose(remove_braces, remove_quotes)),
         ("braces+plural", 0, compose(remove_braces, plural_rule)),
         ("quotes+braces+plural", 0, compose(remove_braces, remove_quotes, plural_rule)),
@@ -451,6 +465,7 @@ def create_match_rules() -> List[Tuple[str, int, MatchRule]]:
         ("remove-extraneous", 2, remove_extra_punc),
         ("remove-parenthetical", 1, remove_parenthetical),
         ("remove-middle", 0, remove_middle),
+        ("remove-last+braces", 0, compose(remove_braces, remove_last_letter)),
     ]
 
     return match_rules
@@ -531,9 +546,11 @@ def unmapped_to_mapped_questions(
             answer=answer, question_text=q["text"], qdb_id=qdb_id, proto_id=proto_id
         )
         automatic_page = answer_map[answer] if answer in answer_map else None
-        ambig_automatic_error = None # Note used past for loop?
+        ambig_automatic_error = None # Not used past for loop?
         ambig_automatic_page = None
         if answer in ambig_answer_map:
+            # looks at the words in the quizbowl question and if there are associated keywords in the question,
+            # assign that wikipedia page
             words = set(q["text"].lower().split())
             options = ambig_answer_map[answer]
             ambig_automatic_page = None # Possible duplicate?
