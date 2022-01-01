@@ -127,20 +127,21 @@ access to all the contents of the bucket so we suggest creating a dedicated buck
 ### Wikipedia Dumps
 
 As part of our ingestion pipeline we access raw wikipedia dumps. Updated dumps can be found here: https://dumps.wikimedia.org/enwiki/. The current code is based on the english wikipedia
-dumps created on 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/.
+dumps created on 2021/12/20 available at https://dumps.wikimedia.org/enwiki/20211220/. Previously, the code used the dump from 2017/04/01 available at https://dumps.wikimedia.org/enwiki/20170401/.
 
 Of these we use the following (you may need to use more recent dumps)
 
-* [Wikipedia page text](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-pages-articles-multistream.xml.bz2): This is used to get the text, title, and id of wikipedia pages
-* [Wikipedia titles](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-all-titles.gz): This is used for more convenient access to wikipedia page titles
-* [Wikipedia redirects](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-redirect.sql.gz): DB dump for wikipedia redirects, used for resolving different ways of referencing the same wikipedia entity
-* [Wikipedia page to ids](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-page.sql.gz): Contains a mapping of wikipedia page and ids, necessary for making the redirect table useful
+* [Wikipedia page text](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-pages-articles-multistream.xml.bz2) (`enwiki-[date]-pages-articles-multistream.xml.bz2`): This is used to get the text, title, and id of wikipedia pages
+* [Wikipedia titles](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-all-titles.gz) (`enwiki-[date]-all-titles.gz`): This is used for more convenient access to wikipedia page titles
+* [Wikipedia redirects](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-redirect.sql.gz) (`enwiki-[date]-redirect.sql.gz`): DB dump for wikipedia redirects, used for resolving different ways of referencing the same wikipedia entity
+* [Wikipedia page to ids](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-page.sql.gz) (`enwiki-[date]-page.sql.gz`): Contains a mapping of wikipedia page and ids, necessary for making the redirect table useful
+* [Wikipedia category links](https://dumps.wikimedia.org/enwiki/20170401/enwiki-20170401-page.sql.gz) (`enwiki-[date]-page.sql.gz`): Contains a mapping of wikipedia page and ids, necessary for making the redirect table useful
 
 To process wikipedia we use [https://github.com/attardi/wikiextractor](https://github.com/attardi/wikiextractor)
 with the following command:
 
 ```bash
-$ WikiExtractor.py --processes 15 -o parsed-wiki --json enwiki-20170401-pages-articles-multistream.xml.bz2
+$ wikiextractor --processes 15 -o parsed-wiki --json enwiki-[date]-pages-articles-multistream.xml.bz2
 ```
 
 Do not use the flag to filter disambiguation pages. It uses a simple string regex to check the title and articles contents. This introduces both false positives and false negatives. We handle the problem of filtering these out by using the wikipedia categories dump
@@ -164,14 +165,16 @@ All the wikipedia database dumps are provided in MySQL sql files. This guide has
 To install, prepare MySQL, and read in the Wikipedia SQL dumps execute the following:
 
 1. Install MySQL `sudo apt-get install mysql-server` and `sudo mysql_secure_installation`
-2. Login with something like `mysql --user=root --password=something`
+   1. On Mac: Install with `brew install mysql`, start with `brew services start mysql`, `mysql_secure_installation`, see https://flaviocopes.com/mysql-how-to-install/ for more information about set up.
+
+2. Login with `mysql -u root -p`, entering password in the following prompt
 3. Create a database and use it with `create database wikipedia;` and `use wikipedia;`
-4. `source enwiki-20170401-redirect.sql;` (in MySQL session)
-5. `source enwiki-20170401-page.sql;` (in MySQL session)
+4. `source enwiki-20211220-redirect.sql;` (in MySQL session)
+5. `source enwiki-20211220-page.sql;` (in MySQL session)
 6. This will take quite a long time, so wait it out...
 7. Finally run the query to fetch the redirect mapping and write it to a CSV by executing `bin/redirect.sql` with `source bin/redirect.sql`. The file will be located in `/var/lib/mysql/redirect.csv` which requires `sudo` access to copy
 8. The result of that query is CSV file containing a source page id, source page title, and target page title. This can be
-interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
+  interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
 
 #### Wikipedia Category Links Creation
 
@@ -183,7 +186,7 @@ These are then used downstream to filter down to only non-disambiguation wikiped
 The output of this process is stored in `s3://pinafore-us-west-2/public/disambiguation_pages.json` with the csv also
 saved at `s3://pinafore-us-west-2/public/categorylinks.csv`
 
-The process for this is similar to redirects, except that you should instead source a file named similar to `enwiki-20170401-categorylinks.sql`, run
+The process for this is similar to redirects, except that you should instead source a file named similar to `enwiki-20211220-categorylinks.sql`, run
 the script `bin/categories.sql`, and copy `categorylinks.csv`. Afterwards run `./cli.py categories disambiguate categorylinks.csv data/external/wikipedia/disambiguation_pages.json`.
 This file is automatically downloaded by the pipeline code like the redirects file so unless you would like to change this or inspect the results, you shouldn't need to worry about this.
 
@@ -199,7 +202,11 @@ These references may be useful and are the source for these instructions:
 
 Answer mapping is divided into two stages: (1) An automatic rule-based answer matcher linking answers to pages. (2) Manually annotated matches.
 
-Manually annotated matches may be direct one-to-one matches between question IDs and answers found in `data/internal/page_assignment/direct`. They may also be "ambiguous mappings," which link answers to pages conditionally based off if key phrases are in the question. These maps are found in `data/internal/page_assignment/ambiguous`
+Manually annotated matches may be direct one-to-one matches between question IDs and answers. These manually created mappings are found in `data/internal/page_assignment/direct`. They may also be "unambiguous" links made by an annotator between an answer line and wikipedia page, `data/internal/page_assignment/unambiguous`. Lastly, they may also be "ambiguous mappings," which link answers to pages conditionally based off if key phrases are in the question. These maps are found in `data/internal/page_assignment/ambiguous`. Questions that can not be mapped are placed in `unmappable.yaml`. These manual annotations aim to ensure that questions in the test fold unmapped after the first stage of matching are all either mapped or confirmed as unmappable.
+
+Stage 1: Creates `automatic_report.json`, `unbound_answers.json`, and `answer_map.json`. Uses defined mapping rules, and in the later created `match_report.json`, represent the 'automatic' answers
+
+Stage 2: Uses the aforementioned manually annotated files to match between answer and wikipedia pages. In conflict cases, these annoted matches are preferred over stage 1's automatic matches. After this stage is done, `match_report.json` is created, indicating the questions that remain unmatched or have been annotated as unmappable.
 
 ### Answer Mapping Files:
 
@@ -210,6 +217,7 @@ Manually annotated matches may be direct one-to-one matches between question IDs
 * `match_report.json`: Shows information about matched and unmatched answers
   * `train_unmatched`: Shows all questions and associated metadata that are not matched to a wikipedia page in the train fold
   * `test_unmatched`: Shows all questions and associated metadata that are not matched to a wikipedia page in the test fold
+  * `train_unmappable` and `test_unmappable`: All questions that have been annotated as unmappable in the noted folds
   * `match_report`: Lists the result from annotated
 * `unbound_answers.json`: All the original answers to ingested quizbowl questions. Does NOT refer to answers that were not bound to a page after the process is done.
 * `answer_map.json`: Answer map linking given answer to a proposed Wikipedia page
@@ -250,6 +258,15 @@ In a Python interactive shell, run the following commands to download wordnet da
 ```python
 import nltk
 nltk.download('wordnet')
+```
+
+> Resource omw-1.4 not found
+
+In a Python interactive shell, run the following commands to download wordnet data:
+
+```python
+import nltk
+nltk.download('omw-1.4')
 ```
 
 ## Qanta ID Numbering
