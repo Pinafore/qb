@@ -198,6 +198,10 @@ These references may be useful and are the source for these instructions:
 * https://dev.mysql.com/doc/refman/5.7/en/mysql-batch-commands.html
 * http://stackoverflow.com/questions/356578/how-to-output-mysql-query-results-in-csv-format
 
+## Running Locally Updated Data Sources
+
+To ensure that luigi doesn't download parsed-wiki again, make sure to create an empty `parsed-wiki_SUCCESS` file in `data/external/wikipedia`.
+
 ## Ingestion Update Info
 
 Answer mapping is divided into two stages: (1) An automatic rule-based answer matcher linking answers to pages. (2) Manually annotated matches.
