@@ -17,19 +17,19 @@ compare against in our paper plots and tables
 
 ### File Description:
 
-* `qanta.unmapped.2018.04.18.json`: All questions in our dataset, without mapped Wikipedia answers. Sourced from
+* `qanta.unmapped.2021.12.20.json`: All questions in our dataset, without mapped Wikipedia answers. Sourced from
 protobowl and quizdb. Light preprocessing has been applied to remove quiz bowl specific syntax such as instructions
 to moderators
-* `qanta.processed.2018.04.18.json`: Prior dataset with added fields extracting the first sentence, and sentence tokenizations
+* `qanta.processed.2021.12.20.json`: Prior dataset with added fields extracting the first sentence, and sentence tokenizations
 of the question paragraph for convenience.
-* `qanta.mapped.2018.04.18.json`: The processed dataset with Wikipedia pages matched to the answer where possible. This
+* `qanta.mapped.2021.12.20.json`: The processed dataset with Wikipedia pages matched to the answer where possible. This
 includes all questions, even those without matched pages.
-* `qanta.2018.04.18.sqlite3`: Equivalent to `qanta.mapped.2018.04.18.json` but in sqlite3 format
-* `qanta.train.2018.04.18.json`: Training data which is the mapped dataset filtered down to only questions with non-null
+* `qanta.2021.12.20.sqlite3`: Equivalent to `qanta.mapped.2021.12.20.json` but in sqlite3 format
+* `qanta.train.2021.12.20.json`: Training data which is the mapped dataset filtered down to only questions with non-null
 page matches
-* `qanta.dev.2018.04.18.json`: Dev data which is the mapped dataset filtered down to only questions with non-null
+* `qanta.dev.2021.12.20.json`: Dev data which is the mapped dataset filtered down to only questions with non-null
 page matches
-* `qanta.test.2018.04.18.json`: Test data which is the mapped dataset filtered down to only questions with non-null
+* `qanta.test.2021.12.20.json`: Test data which is the mapped dataset filtered down to only questions with non-null
 page matches
 
 ## Dependencies

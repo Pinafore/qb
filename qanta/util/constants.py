@@ -60,7 +60,7 @@ EXPO_BUZZ = "output/expo/{}.buzz"
 EXPO_FINAL = "output/expo/{}.final"
 EXPO_QUESTIONS = "output/expo/{}.questions.csv"
 
-DS_VERSION = "2021.03.01"
+DS_VERSION = "2021.12.20"
 DATASET_PREFIX = "data/external/datasets"
 QANTA_MAP_REPORT_PATH = "data/external/answer_mapping/match_report.json"
 QANTA_MAPPED_DATASET_PATH = path.join(DATASET_PREFIX, f"qanta.mapped.{DS_VERSION}.json")

@@ -94,7 +94,7 @@ def sample_answer_pages(n, seed):
     Take a random sample of n questions, then return their answers and pages
     formatted for latex in the journal paper
     """
-    with open("data/external/datasets/qanta.mapped.2018.04.18.json") as f:
+    with open("data/external/datasets/qanta.mapped.2021.12.20.json") as f:
         questions = json.load(f)["questions"]
         random.seed(seed)
         random.shuffle(questions)
