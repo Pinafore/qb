@@ -154,7 +154,7 @@ tar cvf - parsed-wiki | lz4 - parsed-wiki.tar.lz4
 
 #### Wikipedia Redirect Mapping Creation
 
-The output of this process is stored in `s3://pinafore-us-west-2/public/wiki_redirects.csv`
+The output of this process is stored in `s3://pinafore-us-west-2/public/wiki_redirects.csv`. When downloaded into the project, it is renamed and stored at `data/external/wikipedia/all_wiki_redirects.csv`
 
 All the wikipedia database dumps are provided in MySQL sql files. This guide has a good explanation of how to install MySQL which is necessary to use SQL dumps. For this task we will need these tables:
 
@@ -172,9 +172,9 @@ To install, prepare MySQL, and read in the Wikipedia SQL dumps execute the follo
 4. `source enwiki-20211220-redirect.sql;` (in MySQL session)
 5. `source enwiki-20211220-page.sql;` (in MySQL session)
 6. This will take quite a long time, so wait it out...
-7. Finally run the query to fetch the redirect mapping and write it to a CSV by executing `bin/redirect.sql` with `source bin/redirect.sql`. The file will be located in `/var/lib/mysql/redirect.csv` which requires `sudo` access to copy
-8. The result of that query is CSV file containing a source page id, source page title, and target page title. This can be
-  interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
+7. Finally run the query to fetch the redirect mapping and write it to a CSV by executing `bin/redirect.sql` with `source bin/redirect.sql`. The file will be located in `/var/lib/mysql/redirect.csv` which requires `sudo` access to copy. This output file is the final step of this process, and renamed `wiki_redirects.csv`.
+8. The result of that query is a CSV file containing a source page id, source page title, and target page title. This can be
+    interpretted as the source page redirecting to the target page. We filter namespace=0 to keep only redirects/pages that are main pages and trash things like list/category pages
 
 #### Wikipedia Category Links Creation
 
