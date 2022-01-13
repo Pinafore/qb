@@ -45,6 +45,7 @@ proto:
   - 58b0b85470b9154095719578
   - 58b0b88e70b915409571a283 # page header
   - 58b0b89170b915409571a35e # redirect exists
+  - 58b0b89270b915409571a38f
 quizdb:
   - 140259
   - 123030
@@ -205,3 +206,12 @@ quizdb:
   - 154810
   - 154763
   - 154704
+  - 160411
+  - 154699
+  - 154572 # Work doesn't have Wiki page
+  - 154556 # Category pages are currently not in QANTA
+  - 151001
+  - 127368 # character
+  - 126956 # Various types of Binary
+  - 126594
+  
