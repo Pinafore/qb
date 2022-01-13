@@ -378,10 +378,10 @@ def unicode_rule(ans):
 
 # Handles: Allegory of the Cave &lt;The above question is for the category RMP Philosophy and was written by Shan Kothari&gt;
 def unusual_ans_ending(ans):
-    if " &lt;" in ans:
+    if "&lt;" in ans:
         return (ans.split("&lt;")[0].strip())
-    elif " Bonuses" in ans:
-        return (ans.split("1940s")[0].strip())
+    elif "bonuses" in ans.lower():
+        return (re.split("bonuses", ans, flags=re.IGNORECASE)[0].strip())
     else:
         return ()
 
