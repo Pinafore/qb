@@ -575,9 +575,7 @@ class RnnGuesser(AbstractGuesser):
                     normalized_scores[idx] = 0.0
             normalized_scores = [0.5 + n for n in normalized_scores]  # center scores
 
-            returnVal = ""
-            for s in normalized_scores:
-                returnVal = returnVal + " " + str(s)
+            returnVal =  " ".join(map(str,normalized_scores))
 
             localPreprocess = create_qb_tokenizer()
             examples = [localPreprocess(q) for q in questions]
