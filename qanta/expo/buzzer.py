@@ -778,6 +778,7 @@ def load_data(flags):
                 if flags.model != "" and "%s.buzz.csv" % flags.model not in ii:
                     print("Not loading model %s" % ii)
                 else:
+                    print("Loading model %s" % ii)
                     buzzes.add_system(ii.replace(".buzz.csv", ""))
                     #print('Got Buzzes')
                     #print(buzzes)
