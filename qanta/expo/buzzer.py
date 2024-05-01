@@ -391,9 +391,11 @@ class Guess:
 
 
 class Buzzes:
-    def __init__(self, file_path):
+    def __init__(self, file_path, questions):
         self._buzzes = defaultdict(dict)
         self._finals = defaultdict(dict)
+
+        self._questions = questions
         print("Initializing buzz files")
 
     def debug(self):
@@ -571,8 +573,7 @@ def format_display(
     current_guesses,
     answer=None,
     guess_limit=5,
-    points=10,
-    answer_check=lambda x,y: x==y
+    points=10
 ):
     sep = "".join(["-"] * 80)
 
@@ -594,7 +595,7 @@ def format_display(
         current_guesses, key=lambda x: current_guesses[x].weight, reverse=True
     )[:guess_limit]:
         guess = current_guesses[gg]
-        if answer_check(answer, guess.page):
+        if answer == guess.page:
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
@@ -651,8 +652,7 @@ def present_question_hc(
     final,
     correct,
     score=Score(),
-    power="10",
-    answer_check=lambda x,y: x==y
+    power="10"
 ):
     """
     Shows one question to a human and computer
@@ -672,7 +672,7 @@ def present_question_hc(
                     system = random.choice(list(final.keys()))
                     answer(final[system].split("(")[0], system)
                     final = final[system]
-                    if answer_check(correct, final):
+                    if correct == final:
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
@@ -717,12 +717,11 @@ def present_question_hc(
                         ii + 1,
                         current_guesses,
                         answer=correct,
-                        points=question_value,
-                        answer_check=questions.answer_check
+                        points=question_value
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
-                if answer_check(correct, buzz_now[0].page):
+                if correct == buzz_now[0].page:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(1)
                     return Score(human=human_delta, computer=question_value)
@@ -743,8 +742,7 @@ def present_question_hc(
                         0,
                         current_guesses,
                         answer=correct,
-                        points=question_value,
-                        answer_check=questions.answer_check
+                        points=question_value
                     )
             else:
                 show_score(
@@ -806,7 +804,6 @@ def create_parser():
 
 def load_data(flags):
     questions = Questions()
-    buzzes = Buzzes(flags.model_directory)
 
     if flags.questions != "":
         questions.load_questions(flags.questions)
@@ -815,6 +812,8 @@ def load_data(flags):
     else:
         questions.debug()
 
+    buzzes = Buzzes(flags.model_directory, questions)
+        
     if flags.model_directory != "":
         for ii in glob("%s/*" % flags.model_directory):
             if ii.endswith(".buzz.csv"):
@@ -897,8 +896,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
             buzzes._finals[ii],
             questions.answer(ii),
             score=score,
-            power=questions._power(ii),
-            answer_check=questions.answer_check
+            power=questions._power(ii)
         )
         score = score.add(score_delta)
 
