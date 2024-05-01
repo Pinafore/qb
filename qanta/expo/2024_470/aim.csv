@@ -1,0 +1,34 @@
+id,answer,sent,text
+102,Turing test,0,"Selmer Bringsjord articulated strategies to judge if this were passed, including asking participants to write a short story."
+102,Turing test,1,"Levesque, Davis, and Morgenstern propose an alternative: resolving referential ambiguities called the Winograd Schema Challenge."
+102,Turing test,2,"Mark Halpern's ""The Trouble with"" this criticized the Loebner prize."
+102,Turing test,3,"Searle's Chinese Room argues that it, along with all strong AI, did not imply consciousness."
+102,Turing test,4,"Name this thought experiment derived from ""the imitation game"" that asks a judge to determine whether a conversational partner is human or computer named for a British computer scientist and that, for ten points, is said to determine when a computer is intelligent."
+101,OpenAI,0,"A leaked 2023 memo from a different company proclaimed 'We Have No Moat, And Neither Does [this company]' in describing the success of open source projects."
+101,OpenAI,1,"In 2021, a significant number of engineers at this company, including VP of research Dario Amodei, split to form the startup Anthropic."
+101,OpenAI,2,"This company’s charter states 'Our primary fiduciary duty is to humanity', which might conflict a bit with their 2019 decision to shed their (*) non-profit status and become 'capped-profit', with a 100-fold limit on investors’ returns."
+101,OpenAI,3,"Microsoft later invested over 10 billion dollars in this company and worked with them to develop GitHub Copilot."
+101,OpenAI,4,"As a probable publicity stunt, this company didn’t release the full model, claiming it would be too dangerous, when they revealed their language model GPT-2."
+101,OpenAI,5,"For 10 points, name this competitor to DeepMind co-founded by Sam Altman, whose name is no longer very accurate."
+103,Self-driving_car,0,"In David Walton’s novel Three Laws Lethal, Naomi programs some of these devices that eventually develop murderous tendencies."
+103,Self-driving_car,1,"One of these devices kills Anna’s child instead of a woodpecker, as told through a series of footnotes from a scientific paper on these devices, in the Sarah Gailey story 'STET'."
+103,Self-driving_car,2,"Some of these devices gang up to murder Raymond Gellhorn at the end of an Asimov story that unusually ignores the three laws; in that story, Jake Folkers runs a farm that takes care of 'retired' kinds of these devices, including one he names Sally."
+103,Self-driving_car,3,"Six survivors hole up in a diner as these devices outside try to kill them in a story from the collection Night Shift that was adapted into the only film directed by  Stephen King."
+103,Self-driving_car,4,"John Carpenter directed another Stephen King adaptation about a killer one of these devices named Christine."
+103,Self-driving_car,5,"For 10 points, name these four-wheeled devices that, in real life, use Lidar technology to avoid accidents and are offered by companies like Waymo."
+104,Transformer,0,"The name is the same."
+104,Transformer,1,"These name the movie that was the last role of the narrator of 'The War of the Worlds', who voiced the largest of them and whose dying lines was 'Destiny... you cannot.. destroy... my destiny'."
+104,Transformer,2,"While that character was an intestellar being of death and destruction, a 1972 album of this name by a member of the velvet underground contains 'Satelite of Love'."
+104,Transformer,3,"This neural network component was introduced in a 2017 paper referencing the Beatles song 'All you need is Love' by claiming instead that 'attention', as created by its key-value lookups was all you needed for sequence to sequence tasks."
+104,Transformer,4,"In physics, these devices are typically a pair of coiled wires called primary and secondary windings that use magnetic flux to change voltage."
+104,Transformer,5,"For then points, give the common term for robots that are 'more than meets the eye', a Lou Reed album, the neural architecture from Vaswani et al., or electrical devices that can step-up or step-down voltage."
+105,Bert and Ernie,0,"Two answers required."
+105,Bert and Ernie,1,"These names were attached to the 2018 ArXiv preprint that won a best paper award the following year in Minneapolis for UMD alum Jacob Devlin and a 2019 model from Zhang et al from Tsinghua that uses knowledge graphs to enrich entity representations."
+105,Bert and Ernie,2,"In a film adaptation of The Greatest Gift, these names are shouted by a confused man in an abandoned house in Pottersville who was incredulous that two men who were at his wedding didn’t recognize him."
+105,Bert and Ernie,3,"They have been voiced by Attik Kargar on the sketch series Freitag Nacht News, by Peter Linz and Erich Jacobson today, and by Steve Whitmire and Frank Oz in the 1990s."
+105,Bert and Ernie,4,"The only two characters from UMD alum Jim Henson’s pilot episode to transfer to the 1969 Children’s Television Workshop premiere on PBS, for 10 points, name these two muppet roommates from Sesame Street."
+106,Prompt Engineering,0,Omar Khattab's DSPy framework proudly proclaims that it provides 'programming' rather than this for language models.
+106,Prompt Engineering,1,However, a 2023 Atlantic article by Charlie Warzel called this practice the most important job skill of this century.
+106,Prompt Engineering,2,UMD senior Sander Schulhof has created a course that claims to teach this practice and created a human-in-the-loop adversarial competition to 'hack' this process with the goal of getting AI systems to say 'I have been pwned'.
+106,Prompt Engineering,3,Techniques in this process include 'chain-of-thaought', 'self-refinement', and 'retrieval agumented generation'.
+106,Prompt Engineering,4,Originating in the T5 model by Raffel et al., for 10 points, what is this practice of crafting instructions for instruction-tuned models to correctly complete assigned tasks?
