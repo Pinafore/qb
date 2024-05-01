@@ -12,6 +12,7 @@ import datetime
 from random import shuffle
 import sys
 import os
+import json
 
 kSHOW_RIGHT = False
 kPAUSE = 0.25
@@ -237,6 +238,18 @@ class kCOLORS:
         start = getattr(kCOLORS, color)
         print(start + text + kCOLORS.ENDC, end=end)
 
+        
+def parse_final(final_string):
+    """
+    We have a string to show if we're at the end of the question, this code makes it more robust.
+    """
+    if final_string.lower() == "false":
+        return 0
+    if final_string.lower() == "true":
+        return 1
+    else:
+        return int(final_string)
+        
 
 def write_readable(filename, ids, questions):
     question_num = 0
@@ -440,7 +453,7 @@ class Buzzes:
                 system,
                 ii["page"],
                 ii["evidence"],
-                int(ii["final"]),
+                parse_final(ii["final"]),
                 float(ii["weight"]),
             )
 
@@ -474,8 +487,17 @@ class Questions:
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
         self._power = PowerPositions("")
+        self._equivalents = {}
+
         print("Initializing questions")
 
+    def answer_check(self, reference, guess):
+        """
+        Check an answer for correctness
+        """
+        
+        return guess==reference or guess in self._equivalents.get(reference, [])
+        
     def debug(self):
         self._questions[0] = {
             0: "His aliases include: Pastor Hansford of Free Will Baptist in Coushatta, Louisianna; Viktor with a K St. Claire, a South African who just inherited money from his uncle; Charlie Hustle, a mailboy in the HHM mailroom; and Gene Takavic, a Cinnabon manager in Omaha.",
@@ -501,6 +523,22 @@ class Questions:
         }
         self._answers[2] = "Potato"
 
+    def load_equivalents(self, equivalent_file):
+        if equivalent_file:
+            with open(equivalent_file, 'r') as infile:
+                self.equivalents = json.loads(infile.read())
+
+            normalized = []
+            for orig, replace in [(" ", "_"), ("_", " ")]:
+                for title in self.equivalents:
+                    if orig in title:
+                        normalized.append((title, title.replace(orig, replace)))
+
+            for orig, replace in normalized:
+                self.equivalents[replace] = self.equivalents[orig]
+
+        print("Equivalents: %s" % str(self.equivalents))
+                
     def load_power(self, power_file):
         self._power = PowerPositions(power_file)
 
@@ -534,6 +572,7 @@ def format_display(
     answer=None,
     guess_limit=5,
     points=10,
+    answer_check=lambda x,y: x==y
 ):
     sep = "".join(["-"] * 80)
 
@@ -555,7 +594,7 @@ def format_display(
         current_guesses, key=lambda x: current_guesses[x].weight, reverse=True
     )[:guess_limit]:
         guess = current_guesses[gg]
-        if guess.page == answer:
+        if answer_check(answer, guess.page):
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
@@ -613,6 +652,7 @@ def present_question_hc(
     correct,
     score=Score(),
     power="10",
+    answer_check=lambda x,y: x==y
 ):
     """
     Shows one question to a human and computer
@@ -632,7 +672,7 @@ def present_question_hc(
                     system = random.choice(list(final.keys()))
                     answer(final[system].split("(")[0], system)
                     final = final[system]
-                    if final == correct:
+                    if answer_check(correct, final):
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
@@ -678,10 +718,11 @@ def present_question_hc(
                         current_guesses,
                         answer=correct,
                         points=question_value,
+                        answer_check=questions.answer_check
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
-                if buzz_now[0].page == correct:
+                if answer_check(correct, buzz_now[0].page):
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(1)
                     return Score(human=human_delta, computer=question_value)
@@ -703,6 +744,7 @@ def present_question_hc(
                         current_guesses,
                         answer=correct,
                         points=question_value,
+                        answer_check=questions.answer_check
                     )
             else:
                 show_score(
@@ -757,6 +799,7 @@ def create_parser():
     parser.add_argument("--skip", type=int, default=0)
     parser.add_argument("--power", type=str, default="")
     parser.add_argument("--max_questions", type=int, default=40)
+    parser.add_argument("--answer_equivalents", type=str, default="")
     parser.add_argument("--readable", type=str, default="readable.txt")
     return parser.parse_args()
 
@@ -768,6 +811,7 @@ def load_data(flags):
     if flags.questions != "":
         questions.load_questions(flags.questions)
         questions.load_power(flags.power)
+        questions.load_equivalents(flags.answer_equivalents)
     else:
         questions.debug()
 
@@ -854,6 +898,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
             questions.answer(ii),
             score=score,
             power=questions._power(ii),
+            answer_check=questions.answer_check
         )
         score = score.add(score_delta)
 
