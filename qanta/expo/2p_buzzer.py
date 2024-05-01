@@ -136,8 +136,8 @@ def present_question_hh(
                 show_score(
                     score.even + even_delta,
                     score.odd + odd_delta,
-                    "TEAM A",
-                    "TEAM B",
+                    "EVEN TEAM",
+                    "ODD TEAM",
                     left_color="RED",
                     right_color="YELLOW",
                 )
@@ -185,11 +185,8 @@ if __name__ == "__main__":
 
     show_score(score.human, score.computer, "HUMAN", "COMPUTER")
 
-    show_score(
-        score.even,
-        score.odd,
-        "TEAM A",
-        "TEAM B",
-        left_color="RED",
-        right_color="YELLOW",
-    )
+    show_score(score.even,
+               score.odd,
+               "Even Team", "Odd Team",
+               left_color="RED",
+               right_color="YELLOW")

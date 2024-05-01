@@ -510,6 +510,9 @@ class Questions:
         for ii in qfile:
             self._questions[int(ii["id"])][int(ii["sent"])] = ii["text"]
             self._answers[int(ii["id"])] = ii["answer"].strip().replace("_", " ")
+        # print('In load_questions')
+        # print(self._questions)
+        # print(self._answers)
 
     def __iter__(self):
         for ii in self._questions:
@@ -776,6 +779,8 @@ def load_data(flags):
                     print("Not loading model %s" % ii)
                 else:
                     buzzes.add_system(ii.replace(".buzz.csv", ""))
+                    #print('Got Buzzes')
+                    #print(buzzes)
     else:
         buzzes.debug()
 
@@ -820,8 +825,10 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
     )
     question_num = 0
     question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
-
+    #print(question_ids)
+    #print(list(buzzes))
     question_ids = [x for x in question_ids if x in buzzes]
+    #print(question_ids)
 
     if flags.readable != "":
         write_readable(flags.readable, question_ids, questions)
