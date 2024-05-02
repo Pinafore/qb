@@ -30,5 +30,5 @@ id,answer,sent,text
 106,Prompt engineering,0,"Omar Khattab's DSPy framework proudly proclaims that it provides 'programming' rather than this for language models."
 106,Prompt engineering,1,"However, a 2023 Atlantic article by Charlie Warzel called this practice the most important job skill of this century."
 106,Prompt engineering,2,"UMD senior Sander Schulhof has created a course that claims to teach this practice and created a human-in-the-loop adversarial competition to 'hack' this process with the goal of getting AI systems to say 'I have been pwned'."
-106,Prompt engineering,3,"Techniques in this process include 'chain-of-thaought', 'self-refinement', and 'retrieval agumented generation'."
+106,Prompt engineering,3,"Techniques in this process include 'chain-of-thought', 'self-refinement', and 'retrieval augmented generation'."
 106,Prompt engineering,4,"Originating in the T5 model by Raffel et al., for 10 points, what is this practice of crafting instructions for instruction-tuned language models to correctly complete assigned tasks?"
