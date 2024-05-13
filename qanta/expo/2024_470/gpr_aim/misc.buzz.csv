@@ -1,105 +1,105 @@
-evidence,weight,question,page,sentence,word,final
-"{'confidence': -0.0121646961164125, 'final': False}",-0.01,128,Elena Kagan,0,7,False
-"{'confidence': -0.000305477885796, 'final': False}",-0.00,128,Roe v. Wade,0,12,False
-"{'confidence': -0.102181377874625, 'final': False}",-0.10,128,Stare decisis,0,18,False
-"{'confidence': -0.035483813682716255, 'final': True}",-0.04,128,"Kimble v. Marvel Entertainment, LLC",0,23,True
-"{'confidence': -0.00629169843704375, 'final': True}",-0.01,128,"Kimble v. Marvel Entertainment, LLC",0,23,True
-"{'confidence': -0.0026283102109124997, 'final': True}",-0.00,128,Stare decisis,1,7,True
-"{'confidence': -0.01815907673475, 'final': True}",-0.02,128,Stare decisis,1,12,True
-"{'confidence': -0.12291365172935716, 'final': True}",-0.12,128,Spider-Man trilogy (film series),1,18,True
-"{'confidence': -0.0341690875539125, 'final': True}",-0.03,128,Stare decisis,2,7,True
-"{'confidence': -0.03894255243580833, 'final': True}",-0.04,128,With great power comes great responsibility,2,13,True
-"{'confidence': -0.074584472740025, 'final': True}",-0.07,128,Spider-Man: Into the Spider-Verse,2,19,True
-"{'confidence': -0.04533401072271667, 'final': True}",-0.05,128,With great power comes great responsibility,2,26,True
-"{'confidence': -0.000523014599125, 'final': True}",-0.00,128,Spider-Man: Into the Spider-Verse,2,32,True
-"{'confidence': -0.133286460695, 'final': True}",-0.13,128,With Great Power Comes Great Responsibility,2,38,True
-"{'confidence': -0.009102921652666667, 'final': True}",-0.01,128,With Great Power Comes Great Responsibility,2,40,True
-"{'confidence': -0.11224004223154667, 'final': True}",-0.11,128,With great power comes great responsibility,3,7,True
-"{'confidence': -0.023225572846380004, 'final': True}",-0.02,128,With great power comes great responsibility,3,15,True
-"{'confidence': -0.030758490084009996, 'final': True}",-0.03,128,With great power comes great responsibility,3,22,True
-"{'confidence': -0.09641233905205, 'final': True}",-0.10,128,"With great power, comes great responsibility",3,25,True
-"{'confidence': -0.09641233905205, 'final': True}",-0.10,128,"With great power, comes great responsibility",3,25,True
-"{'confidence': -0.00017183277030624998, 'final': False}",-0.00,129,2023 FIBA Basketball World Cup,0,8,False
-"{'confidence': -4.54454645e-06, 'final': False}",-0.00,129,Basketball,0,13,False
-"{'confidence': -0.17709126240857143, 'final': False}",-0.18,129,2023 World Championship in Esports,0,18,False
-"{'confidence': -0.04660052099426667, 'final': True}",-0.05,129,League of Legends,0,24,True
-"{'confidence': -0.00095255213, 'final': True}",-0.00,129,Chess,1,7,True
-"{'confidence': -0.04729203910566667, 'final': True}",-0.05,129,League of Legends,1,12,True
-"{'confidence': -0.0004228281658666667, 'final': True}",-0.00,129,League of Legends,1,18,True
-"{'confidence': -7.703443416666668e-06, 'final': True}",-0.00,129,League of Legends,1,24,True
-"{'confidence': -4.08759905e-06, 'final': True}",-0.00,129,League of Legends,1,29,True
-"{'confidence': -1.1869765166666666e-06, 'final': True}",-0.00,129,League of Legends,1,36,True
-"{'confidence': -3.5313152100000003e-06, 'final': True}",-0.00,129,League of Legends,1,39,True
-"{'confidence': -9.485691499999999e-07, 'final': True}",-0.00,129,League of Legends,2,7,True
-"{'confidence': -6.3069276e-07, 'final': True}",-0.00,129,League of Legends,2,13,True
-"{'confidence': -7.896309333333333e-07, 'final': True}",-0.00,129,League of Legends,2,18,True
-"{'confidence': -4.4695154666666666e-07, 'final': True}",-0.00,129,League of Legends,2,19,True
-"{'confidence': -4.469515766666666e-07, 'final': True}",-0.00,129,League of Legends,3,7,True
-"{'confidence': -6.306927666666667e-07, 'final': True}",-0.00,129,League of Legends,3,12,True
-"{'confidence': -7.896309933333333e-07, 'final': True}",-0.00,129,League of Legends,3,17,True
-"{'confidence': -7.648279666666666e-07, 'final': True}",-0.00,129,League of Legends,3,23,True
-"{'confidence': -4.469515766666666e-07, 'final': True}",-0.00,129,League of Legends,3,25,True
-"{'confidence': -6.853588833333333e-07, 'final': True}",-0.00,129,League of Legends,4,6,True
-"{'confidence': -5.909582266666667e-07, 'final': True}",-0.00,129,League of Legends,4,11,True
-"{'confidence': -5.661552166666666e-07, 'final': True}",-0.00,129,League of Legends,4,14,True
-"{'confidence': -5.661552166666666e-07, 'final': True}",-0.00,129,League of Legends,4,14,True
-"{'confidence': -0.4974520043086667, 'final': False}",-0.50,125,Ancient Rome,0,7,False
-"{'confidence': -0.00020313947660000002, 'final': False}",-0.00,125,Boyz n the Hood,0,14,False
-"{'confidence': -0.1845098942441, 'final': False}",-0.18,125,John Singleton (director),0,21,False
-"{'confidence': -0.20290188331858, 'final': True}",-0.20,125,Boyz n the Hood,0,24,True
-"{'confidence': -0.0074095047519999995, 'final': True}",-0.01,125,Ice Cube,1,7,True
-"{'confidence': -0.017523177028300002, 'final': True}",-0.02,125,Ice Cube,1,13,True
-"{'confidence': -0.0172547434265, 'final': True}",-0.02,125,Ice Cube,1,18,True
-"{'confidence': -0.2458286140192, 'final': False}",-0.25,125,Ice Cube,1,23,False
-"{'confidence': -0.0029518587599875, 'final': True}",-0.00,125,Kendrick Lamar,1,29,True
-"{'confidence': -0.001757132825, 'final': True}",-0.00,125,Kendrick Lamar,1,34,True
-"{'confidence': -3.919285866e-05, 'final': True}",-0.00,125,Kendrick Lamar,2,6,True
-"{'confidence': -5.6397764124999995e-06, 'final': True}",-0.00,125,Kendrick Lamar,2,11,True
-"{'confidence': -1.56408165e-07, 'final': True}",-0.00,125,Kendrick Lamar,2,18,True
-"{'confidence': -3.6501459999999997e-07, 'final': True}",-0.00,125,Kendrick Lamar,2,21,True
-"{'confidence': -2.2720866e-07, 'final': True}",-0.00,125,Kendrick Lamar,3,7,True
-"{'confidence': -1.08005e-07, 'final': True}",-0.00,125,Kendrick Lamar,3,14,True
-"{'confidence': -1.378059125e-07, 'final': True}",-0.00,125,Kendrick Lamar,3,17,True
-"{'confidence': -7.82040825e-08, 'final': True}",-0.00,125,Kendrick Lamar,4,7,True
-"{'confidence': -3.46412325e-07, 'final': True}",-0.00,125,Kendrick Lamar,4,13,True
-"{'confidence': -4.84031625e-08, 'final': True}",-0.00,125,Kendrick Lamar,4,18,True
-"{'confidence': -1.378059125e-07, 'final': True}",-0.00,125,Kendrick Lamar,4,20,True
-"{'confidence': 0.0, 'final': True}",0.00,125,Kendrick Lamar,5,8,True
-"{'confidence': -1.08005e-07, 'final': True}",-0.00,125,Kendrick Lamar,5,11,True
-"{'confidence': -1.08005e-07, 'final': True}",-0.00,125,Kendrick Lamar,5,11,True
-"{'confidence': -0.006628982080666666, 'final': False}",-0.01,126,Missy Elliott,0,7,False
-"{'confidence': -0.0548877439431625, 'final': False}",-0.05,126,Gambit Weekly,0,13,False
-"{'confidence': -0.0041417063306625, 'final': False}",-0.00,126,Gambit Weekly,0,17,False
-"{'confidence': -0.246661723236, 'final': False}",-0.25,126,Missy Elliott discography,1,8,False
-"{'confidence': -0.39247097707455003, 'final': False}",-0.39,126,One Minute Man,1,12,False
-"{'confidence': -0.21632017249511667, 'final': True}",-0.22,126,7/11 (song),1,17,True
-"{'confidence': -0.43282470425, 'final': False}",-0.43,126,"""7 Rings""",1,22,False
-"{'confidence': -0.07886586316784777, 'final': True}",-0.08,126,Last Friday Night (T.G.I.F.),1,25,True
-"{'confidence': -0.0006205380562811111, 'final': True}",-0.00,126,Last Friday Night (T.G.I.F.),1,29,True
-"{'confidence': -0.012227880353863333, 'final': True}",-0.01,126,Last Friday Night (T.G.I.F.),2,7,True
-"{'confidence': -0.000678213924658889, 'final': True}",-0.00,126,Last Friday Night (T.G.I.F.),2,13,True
-"{'confidence': -0.05843736109713273, 'final': True}",-0.06,126,"""Last Friday Night (T.G.I.F.)""",2,18,True
-"{'confidence': -0.014127564552739998, 'final': True}",-0.01,126,Last Friday Night (T.G.I.F.),2,22,True
-"{'confidence': -2.152696318666667e-05, 'final': True}",-0.00,126,Last Friday Night (T.G.I.F.),3,8,True
-"{'confidence': -0.00013489810661444445, 'final': True}",-0.00,126,Last Friday Night (T.G.I.F.),3,13,True
-"{'confidence': -0.00171412633122, 'final': True}",-0.00,126,Last Friday Night (T.G.I.F.),3,16,True
-"{'confidence': -0.00171412633122, 'final': True}",-0.00,126,Last Friday Night (T.G.I.F.),3,16,True
-"{'confidence': -0.02236489781, 'final': False}",-0.02,127,Meme,0,8,False
-"{'confidence': -0.13703085999999998, 'final': False}",-0.14,127,Rickrolling,0,13,False
-"{'confidence': -0.007675669607883333, 'final': False}",-0.01,127,Chuck Norris facts,0,19,False
-"{'confidence': -0.0372855159128, 'final': True}",-0.04,127,Chuck Norris facts,0,25,True
-"{'confidence': -0.11035512120421666, 'final': True}",-0.11,127,Chuck Norris facts,0,28,True
-"{'confidence': -0.20530942, 'final': True}",-0.21,127,Chuck Norris facts,1,8,True
-"{'confidence': -0.06155507067333333, 'final': True}",-0.06,127,Chuck Norris facts,1,14,True
-"{'confidence': -0.09990241025876144, 'final': True}",-0.10,127,Søren Kierkegaard,1,20,True
-"{'confidence': -0.18853111, 'final': True}",-0.19,127,ReviewBrah,1,26,True
-"{'confidence': -0.12374351388365666, 'final': True}",-0.12,127,Uncle Roger,1,30,True
-"{'confidence': -0.16272039734000002, 'final': True}",-0.16,127,Reviewbrah,1,32,True
-"{'confidence': -0.0007609809265000001, 'final': True}",-0.00,127,Vin Diesel,2,7,True
-"{'confidence': -0.00255301875, 'final': True}",-0.00,127,John Cena,2,14,True
-"{'confidence': -0.005928735, 'final': True}",-0.01,127,John Cena,2,19,True
-"{'confidence': -5.4013695e-06, 'final': True}",-0.00,127,John Cena,2,22,True
-"{'confidence': -1.5772088e-05, 'final': True}",-0.00,127,John Cena,3,6,True
-"{'confidence': -2.2424722e-06, 'final': True}",-0.00,127,John Cena,3,11,True
-"{'confidence': -9.9083375e-07, 'final': True}",-0.00,127,John Cena,3,12,True
-"{'confidence': -9.9083375e-07, 'final': True}",-0.00,127,John Cena,3,12,True
+final,question,evidence,word,page,weight,sentence
+False,128,"{'confidence': -0.0121646961164125, 'final': False}",7,Elena Kagan,-0.01,0
+False,128,"{'confidence': -0.0500462621569125, 'final': False}",12,Stare decisis,-0.05,0
+False,128,"{'confidence': -0.0521333989381625, 'final': False}",18,Stare decisis,-0.05,0
+True,128,"{'confidence': -0.0037660433944125002, 'final': True}",23,Stare decisis,-0.00,0
+False,128,"{'confidence': -0.0106977219565825, 'final': False}",23,Stare decisis,-0.01,0
+True,128,"{'confidence': -0.00803782961732, 'final': True}",7,Stare decisis,-0.01,1
+False,128,"{'confidence': -0.14633072887100002, 'final': False}",12,Spider-Man,-0.15,1
+False,128,"{'confidence': -0.179641664166, 'final': False}",18,Spider-Man: No More,-0.18,1
+False,128,"{'confidence': -0.10819076133436362, 'final': False}",7,"Spider-Man: ""With great power comes great responsibility""",-0.11,2
+False,128,"{'confidence': -0.13145021732862502, 'final': False}",13,Spider-Man: Into the Spider-Verse,-0.13,2
+True,128,"{'confidence': -0.0007790651581250001, 'final': True}",19,Spider-Man: Into the Spider-Verse,-0.00,2
+False,128,"{'confidence': -0.07530810836855, 'final': False}",26,With great power comes great responsibility,-0.08,2
+False,128,"{'confidence': -0.0134506749028625, 'final': False}",32,Spider-Man: Into the Spider-Verse,-0.01,2
+False,128,"{'confidence': -0.14960660421343333, 'final': False}",38,With Great Power Comes Great Responsibility,-0.15,2
+True,128,"{'confidence': -0.008659219163, 'final': True}",40,With Great Power Comes Great Responsibility,-0.01,2
+False,128,"{'confidence': -0.03740379922727167, 'final': False}",7,With great power comes great responsibility,-0.04,3
+False,128,"{'confidence': -0.029497605047005004, 'final': False}",15,With great power comes great responsibility,-0.03,3
+False,128,"{'confidence': -0.025385017747596664, 'final': False}",22,With great power comes great responsibility,-0.03,3
+False,128,"{'confidence': -0.09223957735376669, 'final': False}",25,With great power comes great responsibility,-0.09,3
+False,128,"{'confidence': -0.09223957735376669, 'final': False}",25,With great power comes great responsibility,-0.09,3
+False,129,"{'confidence': -0.00017183277030624998, 'final': False}",8,2023 FIBA Basketball World Cup,-0.00,0
+False,129,"{'confidence': -4.54454645e-06, 'final': False}",13,Basketball,-0.00,0
+False,129,"{'confidence': -0.17709126240857143, 'final': False}",18,2023 World Championship in Esports,-0.18,0
+False,129,"{'confidence': -0.04660052099426667, 'final': False}",24,League of Legends,-0.05,0
+True,129,"{'confidence': -0.00095255213, 'final': True}",7,Chess,-0.00,1
+False,129,"{'confidence': -0.04729203910566667, 'final': False}",12,League of Legends,-0.05,1
+True,129,"{'confidence': -0.0004228281658666667, 'final': True}",18,League of Legends,-0.00,1
+True,129,"{'confidence': -7.703443416666668e-06, 'final': True}",24,League of Legends,-0.00,1
+True,129,"{'confidence': -4.08759905e-06, 'final': True}",29,League of Legends,-0.00,1
+True,129,"{'confidence': -1.1869765166666666e-06, 'final': True}",36,League of Legends,-0.00,1
+True,129,"{'confidence': -3.5313152100000003e-06, 'final': True}",39,League of Legends,-0.00,1
+True,129,"{'confidence': -9.485691499999999e-07, 'final': True}",7,League of Legends,-0.00,2
+True,129,"{'confidence': -6.3069276e-07, 'final': True}",13,League of Legends,-0.00,2
+True,129,"{'confidence': -7.896309333333333e-07, 'final': True}",18,League of Legends,-0.00,2
+True,129,"{'confidence': -4.4695154666666666e-07, 'final': True}",19,League of Legends,-0.00,2
+True,129,"{'confidence': -4.469515766666666e-07, 'final': True}",7,League of Legends,-0.00,3
+True,129,"{'confidence': -6.306927666666667e-07, 'final': True}",12,League of Legends,-0.00,3
+True,129,"{'confidence': -7.896309933333333e-07, 'final': True}",17,League of Legends,-0.00,3
+True,129,"{'confidence': -7.648279666666666e-07, 'final': True}",23,League of Legends,-0.00,3
+True,129,"{'confidence': -4.469515766666666e-07, 'final': True}",25,League of Legends,-0.00,3
+True,129,"{'confidence': -6.853588833333333e-07, 'final': True}",6,League of Legends,-0.00,4
+True,129,"{'confidence': -5.909582266666667e-07, 'final': True}",11,League of Legends,-0.00,4
+True,129,"{'confidence': -5.661552166666666e-07, 'final': True}",14,League of Legends,-0.00,4
+True,129,"{'confidence': -5.661552166666666e-07, 'final': True}",14,League of Legends,-0.00,4
+False,125,"{'confidence': -0.4974520043086667, 'final': False}",7,Ancient Rome,-0.50,0
+False,125,"{'confidence': -0.00020313947660000002, 'final': False}",14,Boyz n the Hood,-0.00,0
+False,125,"{'confidence': -0.1845098942441, 'final': False}",21,John Singleton (director),-0.18,0
+False,125,"{'confidence': -0.20290188331858, 'final': False}",24,Boyz n the Hood,-0.20,0
+True,125,"{'confidence': -0.0074095047519999995, 'final': True}",7,Ice Cube,-0.01,1
+False,125,"{'confidence': -0.017523177028300002, 'final': False}",13,Ice Cube,-0.02,1
+False,125,"{'confidence': -0.0172547434265, 'final': False}",18,Ice Cube,-0.02,1
+False,125,"{'confidence': -0.2458286140192, 'final': False}",23,Ice Cube,-0.25,1
+True,125,"{'confidence': -0.0029518587599875, 'final': True}",29,Kendrick Lamar,-0.00,1
+True,125,"{'confidence': -0.001757132825, 'final': True}",34,Kendrick Lamar,-0.00,1
+True,125,"{'confidence': -3.919285866e-05, 'final': True}",6,Kendrick Lamar,-0.00,2
+True,125,"{'confidence': -5.6397764124999995e-06, 'final': True}",11,Kendrick Lamar,-0.00,2
+True,125,"{'confidence': -1.56408165e-07, 'final': True}",18,Kendrick Lamar,-0.00,2
+True,125,"{'confidence': -3.6501459999999997e-07, 'final': True}",21,Kendrick Lamar,-0.00,2
+True,125,"{'confidence': -2.2720866e-07, 'final': True}",7,Kendrick Lamar,-0.00,3
+True,125,"{'confidence': -1.08005e-07, 'final': True}",14,Kendrick Lamar,-0.00,3
+True,125,"{'confidence': -1.378059125e-07, 'final': True}",17,Kendrick Lamar,-0.00,3
+True,125,"{'confidence': -7.82040825e-08, 'final': True}",7,Kendrick Lamar,-0.00,4
+True,125,"{'confidence': -3.46412325e-07, 'final': True}",13,Kendrick Lamar,-0.00,4
+True,125,"{'confidence': -4.84031625e-08, 'final': True}",18,Kendrick Lamar,-0.00,4
+True,125,"{'confidence': -1.378059125e-07, 'final': True}",20,Kendrick Lamar,-0.00,4
+True,125,"{'confidence': 0.0, 'final': True}",8,Kendrick Lamar,0.00,5
+True,125,"{'confidence': -1.08005e-07, 'final': True}",11,Kendrick Lamar,-0.00,5
+True,125,"{'confidence': -1.08005e-07, 'final': True}",11,Kendrick Lamar,-0.00,5
+False,126,"{'confidence': -0.006628982080666666, 'final': False}",7,Missy Elliott,-0.01,0
+False,126,"{'confidence': -0.0548877439431625, 'final': False}",13,Gambit Weekly,-0.05,0
+False,126,"{'confidence': -0.0041417063306625, 'final': False}",17,Gambit Weekly,-0.00,0
+False,126,"{'confidence': -0.246661723236, 'final': False}",8,Missy Elliott discography,-0.25,1
+False,126,"{'confidence': -0.39247097707455003, 'final': False}",12,One Minute Man,-0.39,1
+False,126,"{'confidence': -0.21632017249511667, 'final': False}",17,7/11 (song),-0.22,1
+False,126,"{'confidence': -0.43282470425, 'final': False}",22,"""7 Rings""",-0.43,1
+False,126,"{'confidence': -0.07886586316784777, 'final': False}",25,Last Friday Night (T.G.I.F),-0.08,1
+True,126,"{'confidence': -0.0006205380562811111, 'final': True}",29,Last Friday Night (T.G.I.F),-0.00,1
+False,126,"{'confidence': -0.012227880353863333, 'final': False}",7,Last Friday Night (T.G.I.F),-0.01,2
+True,126,"{'confidence': -0.000678213924658889, 'final': True}",13,Last Friday Night (T.G.I.F),-0.00,2
+False,126,"{'confidence': -0.05843736109713273, 'final': False}",18,"""Last Friday Night (T.G.I.F.)""",-0.06,2
+False,126,"{'confidence': -0.014127564552739998, 'final': False}",22,Last Friday Night (T.G.I.F),-0.01,2
+True,126,"{'confidence': -2.152696318666667e-05, 'final': True}",8,Last Friday Night (T.G.I.F),-0.00,3
+True,126,"{'confidence': -0.00013489810661444445, 'final': True}",13,Last Friday Night (T.G.I.F),-0.00,3
+True,126,"{'confidence': -0.00171412633122, 'final': True}",16,Last Friday Night (T.G.I.F),-0.00,3
+True,126,"{'confidence': -0.00171412633122, 'final': True}",16,Last Friday Night (T.G.I.F),-0.00,3
+False,127,"{'confidence': -0.02236489781, 'final': False}",8,Meme,-0.02,0
+False,127,"{'confidence': -0.13703085999999998, 'final': False}",13,Rickrolling,-0.14,0
+False,127,"{'confidence': -0.007675669607883333, 'final': False}",19,Chuck Norris facts,-0.01,0
+False,127,"{'confidence': -0.0372855159128, 'final': False}",25,Chuck Norris facts,-0.04,0
+False,127,"{'confidence': -0.11035512120421666, 'final': False}",28,Chuck Norris facts,-0.11,0
+False,127,"{'confidence': -0.20530942, 'final': False}",8,Chuck Norris facts,-0.21,1
+False,127,"{'confidence': -0.06155507067333333, 'final': False}",14,Chuck Norris facts,-0.06,1
+False,127,"{'confidence': -0.09990241025876144, 'final': False}",20,Søren Kierkegaard,-0.10,1
+False,127,"{'confidence': -0.18853111, 'final': False}",26,ReviewBrah,-0.19,1
+False,127,"{'confidence': -0.12374351388365666, 'final': False}",30,Uncle Roger,-0.12,1
+False,127,"{'confidence': -0.16272039734000002, 'final': False}",32,Reviewbrah,-0.16,1
+True,127,"{'confidence': -0.0007609809265000001, 'final': True}",7,Vin Diesel,-0.00,2
+True,127,"{'confidence': -0.00255301875, 'final': True}",14,John Cena,-0.00,2
+True,127,"{'confidence': -0.005928735, 'final': True}",19,John Cena,-0.01,2
+True,127,"{'confidence': -5.4013695e-06, 'final': True}",22,John Cena,-0.00,2
+True,127,"{'confidence': -1.5772088e-05, 'final': True}",6,John Cena,-0.00,3
+True,127,"{'confidence': -2.2424722e-06, 'final': True}",11,John Cena,-0.00,3
+True,127,"{'confidence': -9.9083375e-07, 'final': True}",12,John Cena,-0.00,3
+True,127,"{'confidence': -9.9083375e-07, 'final': True}",12,John Cena,-0.00,3

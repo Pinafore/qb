@@ -1,97 +1,97 @@
-word,question,final,evidence,sentence,weight,page
-9,105,False,"{'confidence': -0.024543823408165, 'final': False}",0,-0.02,Magic Johnson
-16,105,False,"{'confidence': -0.30384575, 'final': False}",0,-0.30,Magic Johnson
-22,105,False,"{'confidence': -0.28997493640816496, 'final': False}",0,-0.29,Larry Bird
-24,105,True,"{'confidence': -0.054531279806324995, 'final': True}",0,-0.05,Larry Bird
-10,105,True,"{'confidence': -0.042464709019200006, 'final': True}",1,-0.04,Larry Bird
-15,105,True,"{'confidence': -0.00518794171365, 'final': True}",1,-0.01,Magic Johnson
-22,105,False,"{'confidence': -0.2600894335825, 'final': False}",1,-0.26,Larry Bird
-25,105,True,"{'confidence': -1.92065975e-05, 'final': True}",1,-0.00,Larry Bird
-7,105,False,"{'confidence': -0.27675512561182497, 'final': False}",2,-0.28,Jerry Sloan
-14,105,True,"{'confidence': -2.123305975e-05, 'final': True}",2,-0.00,Larry Bird
-21,105,True,"{'confidence': -1.56408165e-07, 'final': True}",2,-0.00,Larry Bird
-25,105,True,"{'confidence': -9.6806325e-08, 'final': True}",2,-0.00,Larry Bird
-26,105,True,"{'confidence': -9.6806325e-08, 'final': True}",2,-0.00,Larry Bird
-7,105,True,"{'confidence': 0.0, 'final': True}",3,0.00,Larry Bird
-12,105,True,"{'confidence': -9.6806325e-08, 'final': True}",3,-0.00,Larry Bird
-19,105,True,"{'confidence': -9.6806325e-08, 'final': True}",3,-0.00,Larry Bird
-19,105,True,"{'confidence': -9.6806325e-08, 'final': True}",3,-0.00,Larry Bird
-6,106,False,"{'confidence': -0.3047115889345, 'final': False}",0,-0.30,Seattle Storm
-13,106,False,"{'confidence': -0.009440160843499999, 'final': False}",0,-0.01,Seattle Storm
-19,106,False,"{'confidence': -6.194111e-05, 'final': False}",0,-0.00,Seattle
-26,106,True,"{'confidence': -0.13403736469773334, 'final': True}",0,-0.13,Seattle Reign (basketball)
-27,106,False,"{'confidence': -0.30595933433333333, 'final': False}",0,-0.31,Seattle Reign FC
-5,106,True,"{'confidence': -0.06827489394333333, 'final': True}",1,-0.07,Chicago Stags
-10,106,True,"{'confidence': -0.06069530899456428, 'final': True}",1,-0.06,Baltimore Bullets (original)
-17,106,True,"{'confidence': -0.05392338127713571, 'final': True}",1,-0.05,Baltimore Bullets (original)
-20,106,True,"{'confidence': -0.00086306532055, 'final': True}",1,-0.00,Providence Steamrollers
-6,106,True,"{'confidence': -1.830516675e-05, 'final': True}",2,-0.00,Providence Steamrollers
-12,106,True,"{'confidence': -2.570282375e-06, 'final': True}",2,-0.00,Providence Steamrollers
-18,106,True,"{'confidence': -0.12803319089166668, 'final': True}",2,-0.13,Chicago Stags
-19,106,False,"{'confidence': -0.22363097403106666, 'final': False}",2,-0.22,Chicago Stags
-7,106,True,"{'confidence': -0.039206206582333335, 'final': True}",3,-0.04,Chicago Stags
-14,106,True,"{'confidence': -0.17045450459653333, 'final': True}",3,-0.17,Chicago Stags
-18,106,True,"{'confidence': -0.05100427305875, 'final': True}",3,-0.05,Baltimore Bullets (original)
-6,106,True,"{'confidence': -0.00917590366147857, 'final': True}",4,-0.01,Baltimore Bullets (original)
-10,106,True,"{'confidence': -0.006222774977857142, 'final': True}",4,-0.01,Baltimore Bullets (original)
-13,106,True,"{'confidence': -0.033481708273185716, 'final': True}",4,-0.03,Baltimore Bullets (original)
-13,106,True,"{'confidence': -0.033481708273185716, 'final': True}",4,-0.03,Baltimore Bullets (original)
-7,107,False,"{'confidence': -0.0007396835321466667, 'final': False}",0,-0.00,2004 American League Championship Series
-14,107,False,"{'confidence': -0.00020821993215833332, 'final': False}",0,-0.00,2004 American League Championship Series
-20,107,False,"{'confidence': -0.00207712819955, 'final': False}",0,-0.00,2004 American League Championship Series
-26,107,True,"{'confidence': -0.0057475156609383335, 'final': True}",0,-0.01,2004 American League Championship Series
-6,107,False,"{'confidence': -0.2877639254, 'final': False}",1,-0.29,2004 NBA Playoffs
-10,107,False,"{'confidence': -0.24062333051999998, 'final': False}",1,-0.24,2004 NBA Playoffs
-16,107,True,"{'confidence': -0.21808293110326601, 'final': True}",1,-0.22,2007 NBA Playoffs
-23,107,True,"{'confidence': -0.10094296489904998, 'final': True}",1,-0.10,2009–10 NBA season
-29,107,True,"{'confidence': -0.08874128101999999, 'final': True}",1,-0.09,2010 NBA Playoffs
-8,107,True,"{'confidence': -0.05759115718985, 'final': True}",2,-0.06,2020 NBA playoffs
-13,107,True,"{'confidence': -0.021224309466212503, 'final': True}",2,-0.02,2020 NBA playoffs
-20,107,True,"{'confidence': -0.0105477017495, 'final': True}",2,-0.01,2020 NBA playoffs
-22,107,True,"{'confidence': -0.01856143575, 'final': True}",2,-0.02,2020 NBA playoffs
-8,107,True,"{'confidence': -0.066654551825, 'final': True}",3,-0.07,2020 NBA playoffs
-14,107,True,"{'confidence': -0.0112712553, 'final': True}",3,-0.01,2020 NBA playoffs
-20,107,False,"{'confidence': -0.32869523875, 'final': False}",3,-0.33,2020 NBA Finals
-22,107,True,"{'confidence': -0.2024064035, 'final': True}",3,-0.20,2020 NBA playoffs
-22,107,True,"{'confidence': -0.2024064035, 'final': True}",3,-0.20,2020 NBA playoffs
-4,108,False,"{'confidence': -0.002639749, 'final': False}",0,-0.00,Nickname
-7,108,False,"{'confidence': -0.25829379262574, 'final': False}",1,-0.26,National Football League regular season
-12,108,False,"{'confidence': -0.0354687298155, 'final': False}",1,-0.04,American Idol
-19,108,True,"{'confidence': -0.05029287840979444, 'final': True}",1,-0.05,List of National Football League records (individual)
-21,108,True,"{'confidence': -0.037681393576000005, 'final': True}",1,-0.04,List of National Basketball Association career triple-double leaders
-6,108,True,"{'confidence': -0.10910832927966668, 'final': True}",2,-0.11,LeBron James and Russell Westbrook
-12,108,True,"{'confidence': -0.0560242264651, 'final': True}",2,-0.06,LeBron James
-19,108,True,"{'confidence': -0.10726843694477223, 'final': True}",2,-0.11,List of National Basketball Association career triple-double leaders
-25,108,True,"{'confidence': -0.03831041900576428, 'final': True}",2,-0.04,List of nicknames used in basketball
-26,108,True,"{'confidence': -0.027093733734275715, 'final': True}",2,-0.03,List of nicknames used in basketball
-7,108,True,"{'confidence': -0.08241191380818572, 'final': True}",3,-0.08,List of nicknames used in basketball
-8,108,True,"{'confidence': -0.06033062041558125, 'final': True}",3,-0.06,Luka Dončić and LeBron James
-8,108,True,"{'confidence': -0.09014640837157223, 'final': True}",4,-0.09,Luka Dončić and Trae Young
-11,108,True,"{'confidence': -0.00312305270722875, 'final': True}",4,-0.00,Magic Johnson and Luka Dončić
-7,108,True,"{'confidence': -0.00452558631720375, 'final': True}",5,-0.00,Magic Johnson and Luka Dončić
-13,108,True,"{'confidence': -0.004224874463325, 'final': True}",5,-0.00,Magic Johnson and Luka Dončić
-18,108,True,"{'confidence': -0.0158994185873725, 'final': True}",5,-0.02,Magic Johnson and Luka Dončić
-24,108,True,"{'confidence': -0.10726406158833125, 'final': True}",5,-0.11,Magic Johnson and Luka Dončić
-26,108,True,"{'confidence': -0.06016261071904125, 'final': True}",5,-0.06,Magic Johnson and Luka Dončić
-26,108,True,"{'confidence': -0.06016261071904125, 'final': True}",5,-0.06,Magic Johnson and Luka Dončić
-9,109,False,"{'confidence': -0.188923762278375, 'final': False}",0,-0.19,List of NBA players who have won championships
-14,109,False,"{'confidence': -0.39483521340600003, 'final': False}",0,-0.39,Bill Russell
-20,109,False,"{'confidence': -0.005255049679993334, 'final': False}",0,-0.01,LeBron James
-28,109,True,"{'confidence': -0.016999542747883335, 'final': True}",0,-0.02,LeBron James
-31,109,True,"{'confidence': -0.0041846907782999996, 'final': True}",0,-0.00,Kawhi Leonard
-7,109,True,"{'confidence': -0.0685633792056625, 'final': True}",1,-0.07,Kawhi Leonard
-12,109,True,"{'confidence': -0.11280034263066249, 'final': True}",1,-0.11,Kawhi Leonard
-18,109,False,"{'confidence': -0.43071411601, 'final': False}",1,-0.43,Toronto Raptors
-26,109,True,"{'confidence': -0.043137616499725, 'final': True}",1,-0.04,Kawhi Leonard
-31,109,True,"{'confidence': -0.06929712975637833, 'final': True}",1,-0.07,Danny Green (basketball)
-31,109,True,"{'confidence': -0.09882770350999501, 'final': True}",1,-0.10,Kawhi Leonard
-8,109,True,"{'confidence': -0.007748978607245, 'final': True}",2,-0.01,Kawhi Leonard
-15,109,True,"{'confidence': -0.001540594357245, 'final': True}",2,-0.00,Kawhi Leonard
-23,109,True,"{'confidence': -0.00570907679705, 'final': True}",2,-0.01,Danny Green (basketball)
-25,109,True,"{'confidence': -0.022488467022775002, 'final': True}",2,-0.02,Danny Green (basketball)
-7,109,True,"{'confidence': -0.00943908034, 'final': True}",3,-0.01,Patrick McCaw
-12,109,True,"{'confidence': -3.823451211e-05, 'final': True}",3,-0.00,Patrick McCaw
-19,109,True,"{'confidence': -8.288636788333334e-05, 'final': True}",3,-0.00,Patrick McCaw
-25,109,True,"{'confidence': -3.2774788333333336e-07, 'final': True}",3,-0.00,Patrick McCaw
-29,109,True,"{'confidence': -1.290751e-07, 'final': True}",3,-0.00,Patrick McCaw
-29,109,True,"{'confidence': -1.290751e-07, 'final': True}",3,-0.00,Patrick McCaw
+sentence,question,word,weight,page,final,evidence
+0,105,9,-0.02,Magic Johnson,False,"{'confidence': -0.024543823408165, 'final': False}"
+0,105,16,-0.30,Magic Johnson,False,"{'confidence': -0.30384575, 'final': False}"
+0,105,22,-0.29,Larry Bird,False,"{'confidence': -0.28997493640816496, 'final': False}"
+0,105,24,-0.05,Larry Bird,False,"{'confidence': -0.054531279806324995, 'final': False}"
+1,105,10,-0.04,Larry Bird,False,"{'confidence': -0.042464709019200006, 'final': False}"
+1,105,15,-0.01,Magic Johnson,True,"{'confidence': -0.00518794171365, 'final': True}"
+1,105,22,-0.26,Larry Bird,False,"{'confidence': -0.2600894335825, 'final': False}"
+1,105,25,-0.00,Larry Bird,True,"{'confidence': -1.92065975e-05, 'final': True}"
+2,105,7,-0.28,Jerry Sloan,False,"{'confidence': -0.27675512561182497, 'final': False}"
+2,105,14,-0.00,Larry Bird,True,"{'confidence': -2.123305975e-05, 'final': True}"
+2,105,21,-0.00,Larry Bird,True,"{'confidence': -1.56408165e-07, 'final': True}"
+2,105,25,-0.00,Larry Bird,True,"{'confidence': -9.6806325e-08, 'final': True}"
+2,105,26,-0.00,Larry Bird,True,"{'confidence': -9.6806325e-08, 'final': True}"
+3,105,7,0.00,Larry Bird,True,"{'confidence': 0.0, 'final': True}"
+3,105,12,-0.00,Larry Bird,True,"{'confidence': -9.6806325e-08, 'final': True}"
+3,105,19,-0.00,Larry Bird,True,"{'confidence': -9.6806325e-08, 'final': True}"
+3,105,19,-0.00,Larry Bird,True,"{'confidence': -9.6806325e-08, 'final': True}"
+0,106,6,-0.30,Seattle Storm,False,"{'confidence': -0.3047115889345, 'final': False}"
+0,106,13,-0.01,Seattle Storm,False,"{'confidence': -0.009440160843499999, 'final': False}"
+0,106,19,-0.00,Seattle,False,"{'confidence': -6.194111e-05, 'final': False}"
+0,106,26,-0.13,Seattle Reign (basketball),False,"{'confidence': -0.13403736469773334, 'final': False}"
+0,106,27,-0.31,Seattle Reign FC,False,"{'confidence': -0.30595933433333333, 'final': False}"
+1,106,5,-0.07,Chicago Stags,False,"{'confidence': -0.06827489394333333, 'final': False}"
+1,106,10,-0.06,Baltimore Bullets,False,"{'confidence': -0.06069530899456428, 'final': False}"
+1,106,17,-0.05,Baltimore Bullets,False,"{'confidence': -0.05392338127713571, 'final': False}"
+1,106,20,-0.00,Providence Steamrollers,True,"{'confidence': -0.00086306532055, 'final': True}"
+2,106,6,-0.00,Providence Steamrollers,True,"{'confidence': -1.830516675e-05, 'final': True}"
+2,106,12,-0.00,Providence Steamrollers,True,"{'confidence': -2.570282375e-06, 'final': True}"
+2,106,18,-0.13,Chicago Stags,False,"{'confidence': -0.12803319089166668, 'final': False}"
+2,106,19,-0.22,Chicago Stags,False,"{'confidence': -0.22363097403106666, 'final': False}"
+3,106,7,-0.04,Chicago Stags,False,"{'confidence': -0.039206206582333335, 'final': False}"
+3,106,14,-0.17,Chicago Stags,False,"{'confidence': -0.17045450459653333, 'final': False}"
+3,106,18,-0.05,Baltimore Bullets,False,"{'confidence': -0.05100427305875, 'final': False}"
+4,106,6,-0.01,Baltimore Bullets,True,"{'confidence': -0.00917590366147857, 'final': True}"
+4,106,10,-0.01,Baltimore Bullets,True,"{'confidence': -0.006222774977857142, 'final': True}"
+4,106,13,-0.03,Baltimore Bullets,False,"{'confidence': -0.033481708273185716, 'final': False}"
+4,106,13,-0.03,Baltimore Bullets,False,"{'confidence': -0.033481708273185716, 'final': False}"
+0,107,7,-0.00,2004 American League Championship Series,False,"{'confidence': -0.0007396835321466667, 'final': False}"
+0,107,14,-0.00,2004 American League Championship Series,False,"{'confidence': -0.00020821993215833332, 'final': False}"
+0,107,20,-0.00,2004 American League Championship Series,False,"{'confidence': -0.00207712819955, 'final': False}"
+0,107,26,-0.01,2004 American League Championship Series,True,"{'confidence': -0.0057475156609383335, 'final': True}"
+1,107,6,-0.29,2004 NBA Playoffs,False,"{'confidence': -0.2877639254, 'final': False}"
+1,107,10,-0.24,2004 NBA Playoffs,False,"{'confidence': -0.24062333051999998, 'final': False}"
+1,107,16,-0.22,2007 NBA Playoffs,False,"{'confidence': -0.21808293110326601, 'final': False}"
+1,107,23,-0.10,2009–10 NBA season,False,"{'confidence': -0.10094296489904998, 'final': False}"
+1,107,29,-0.09,2010 NBA Playoffs,False,"{'confidence': -0.08874128101999999, 'final': False}"
+2,107,8,-0.06,2020 NBA playoffs,False,"{'confidence': -0.05759115718985, 'final': False}"
+2,107,13,-0.02,2020 NBA playoffs,False,"{'confidence': -0.021224309466212503, 'final': False}"
+2,107,20,-0.01,2020 NBA playoffs,False,"{'confidence': -0.0105477017495, 'final': False}"
+2,107,22,-0.02,2020 NBA playoffs,False,"{'confidence': -0.01856143575, 'final': False}"
+3,107,8,-0.07,2020 NBA playoffs,False,"{'confidence': -0.066654551825, 'final': False}"
+3,107,14,-0.01,2020 NBA playoffs,False,"{'confidence': -0.0112712553, 'final': False}"
+3,107,20,-0.33,2020 NBA Finals,False,"{'confidence': -0.32869523875, 'final': False}"
+3,107,22,-0.20,2020 NBA playoffs,False,"{'confidence': -0.2024064035, 'final': False}"
+3,107,22,-0.20,2020 NBA playoffs,False,"{'confidence': -0.2024064035, 'final': False}"
+0,108,4,-0.00,Nickname,False,"{'confidence': -0.002639749, 'final': False}"
+1,108,7,-0.26,National Football League regular season,False,"{'confidence': -0.25829379262574, 'final': False}"
+1,108,12,-0.04,American Idol,False,"{'confidence': -0.0354687298155, 'final': False}"
+1,108,19,-0.05,List of National Football League records (individual),False,"{'confidence': -0.05029287840979444, 'final': False}"
+1,108,21,-0.04,List of National Basketball Association career triple-double leaders,False,"{'confidence': -0.037681393576000005, 'final': False}"
+2,108,6,-0.11,LeBron James and Russell Westbrook,False,"{'confidence': -0.10910832927966668, 'final': False}"
+2,108,12,-0.06,LeBron James,False,"{'confidence': -0.0560242264651, 'final': False}"
+2,108,19,-0.11,List of National Basketball Association career triple-double leaders,False,"{'confidence': -0.10726843694477223, 'final': False}"
+2,108,25,-0.04,List of nicknames used in basketball,False,"{'confidence': -0.03831041900576428, 'final': False}"
+2,108,26,-0.03,List of nicknames used in basketball,False,"{'confidence': -0.027093733734275715, 'final': False}"
+3,108,7,-0.08,List of nicknames used in basketball,False,"{'confidence': -0.08241191380818572, 'final': False}"
+3,108,8,-0.06,Luka Dončić and LeBron James,False,"{'confidence': -0.06033062041558125, 'final': False}"
+4,108,8,-0.09,Luka Dončić and Trae Young,False,"{'confidence': -0.09014640837157223, 'final': False}"
+4,108,11,-0.00,Magic,True,"{'confidence': -0.00312305270722875, 'final': True}"
+5,108,7,-0.00,Magic,True,"{'confidence': -0.00452558631720375, 'final': True}"
+5,108,13,-0.00,Magic,True,"{'confidence': -0.004224874463325, 'final': True}"
+5,108,18,-0.02,Magic,False,"{'confidence': -0.0158994185873725, 'final': False}"
+5,108,24,-0.11,Magic,False,"{'confidence': -0.10726406158833125, 'final': False}"
+5,108,26,-0.06,Magic,False,"{'confidence': -0.06016261071904125, 'final': False}"
+5,108,26,-0.06,Magic,False,"{'confidence': -0.06016261071904125, 'final': False}"
+0,109,9,-0.19,List of NBA players who have won championships,False,"{'confidence': -0.188923762278375, 'final': False}"
+0,109,14,-0.39,Bill Russell,False,"{'confidence': -0.39483521340600003, 'final': False}"
+0,109,20,-0.01,LeBron James,False,"{'confidence': -0.005255049679993334, 'final': False}"
+0,109,28,-0.02,LeBron James,False,"{'confidence': -0.016999542747883335, 'final': False}"
+0,109,31,-0.00,Kawhi Leonard,True,"{'confidence': -0.0041846907782999996, 'final': True}"
+1,109,7,-0.07,Kawhi Leonard,False,"{'confidence': -0.0685633792056625, 'final': False}"
+1,109,12,-0.11,Kawhi Leonard,False,"{'confidence': -0.11280034263066249, 'final': False}"
+1,109,18,-0.43,Toronto Raptors,False,"{'confidence': -0.43071411601, 'final': False}"
+1,109,26,-0.04,Kawhi Leonard,False,"{'confidence': -0.043137616499725, 'final': False}"
+1,109,31,-0.07,Danny Green (basketball),False,"{'confidence': -0.06929712975637833, 'final': False}"
+1,109,31,-0.10,Kawhi Leonard,False,"{'confidence': -0.09882770350999501, 'final': False}"
+2,109,8,-0.01,Kawhi Leonard,True,"{'confidence': -0.007748978607245, 'final': True}"
+2,109,15,-0.00,Kawhi Leonard,True,"{'confidence': -0.001540594357245, 'final': True}"
+2,109,23,-0.01,Danny Green (basketball),True,"{'confidence': -0.00570907679705, 'final': True}"
+2,109,25,-0.02,Danny Green (basketball),False,"{'confidence': -0.022488467022775002, 'final': False}"
+3,109,7,-0.01,Patrick McCaw,True,"{'confidence': -0.00943908034, 'final': True}"
+3,109,12,-0.00,Patrick McCaw,True,"{'confidence': -3.823451211e-05, 'final': True}"
+3,109,19,-0.00,Patrick McCaw,True,"{'confidence': -8.288636788333334e-05, 'final': True}"
+3,109,25,-0.00,Patrick McCaw,True,"{'confidence': -3.2774788333333336e-07, 'final': True}"
+3,109,29,-0.00,Patrick McCaw,True,"{'confidence': -1.290751e-07, 'final': True}"
+3,109,29,-0.00,Patrick McCaw,True,"{'confidence': -1.290751e-07, 'final': True}"
