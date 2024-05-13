@@ -1,0 +1,99 @@
+weight,word,evidence,question,sentence,final,page
+-0.10,8,"{'confidence': -0.10396523971005, 'final': False}",130,0,False,Paradise Lost
+-0.12,14,"{'confidence': -0.11629459227516666, 'final': False}",130,0,False,The Master and Margarita
+-0.11,17,"{'confidence': -0.11255040769028334, 'final': False}",130,0,False,The Master and Margarita
+-0.02,6,"{'confidence': -0.019110915611825003, 'final': True}",130,1,True,This Side of Paradise
+-0.01,14,"{'confidence': -0.010122628008375, 'final': True}",130,1,True,This Side of Paradise
+-0.20,17,"{'confidence': -0.2037615462974, 'final': True}",130,1,True,The Great Gatsby
+-0.27,7,"{'confidence': -0.270705270262325, 'final': False}",130,2,False,This Side of Paradise
+-0.49,13,"{'confidence': -0.48816022, 'final': False}",130,2,False,Don Marquis
+-0.01,15,"{'confidence': -0.008007491666666667, 'final': True}",130,2,True,Don Draper
+-0.01,5,"{'confidence': -0.0106757852040825, 'final': True}",130,3,True,This Side of Paradise
+-0.03,11,"{'confidence': -0.02847327138875, 'final': True}",130,3,True,Amory Blaine
+-0.00,19,"{'confidence': -0.0010834567409750001, 'final': True}",130,3,True,This Side of Paradise
+-0.04,26,"{'confidence': -0.0440275285515875, 'final': True}",130,3,True,This Side of Paradise
+-0.04,26,"{'confidence': -0.041674451648822504, 'final': True}",130,3,True,This Side of Paradise
+-0.02,8,"{'confidence': -0.017098182208660002, 'final': True}",130,4,True,Amory Blaine
+-0.00,13,"{'confidence': -3.5537126624999997e-06, 'final': True}",130,4,True,Amory Blaine
+-0.00,14,"{'confidence': -3.2557034575e-06, 'final': True}",130,4,True,Amory Blaine
+-0.00,14,"{'confidence': -3.2557034575e-06, 'final': True}",130,4,True,Amory Blaine
+-0.05,7,"{'confidence': -0.048403003666650006, 'final': False}",131,0,False,Charles Dickens
+-0.18,15,"{'confidence': -0.1761147149264625, 'final': False}",131,0,False,China Miéville
+-0.00,21,"{'confidence': -0.0001025815099875, 'final': False}",131,0,False,China Miéville
+-0.00,8,"{'confidence': -6.7312118999999996e-06, 'final': True}",131,1,True,China Miéville
+-0.01,10,"{'confidence': -0.011001343963825, 'final': True}",131,1,True,China Miéville
+-0.03,6,"{'confidence': -0.025908157222812502, 'final': True}",131,2,True,China Miéville
+-0.09,12,"{'confidence': -0.09301487661142499, 'final': True}",131,2,True,China Miéville
+-0.01,19,"{'confidence': -0.0073637304265, 'final': True}",131,2,True,China Miéville
+-0.05,20,"{'confidence': -0.054289557537475004, 'final': True}",131,2,True,China Miéville
+-0.00,7,"{'confidence': -0.0002181655099875, 'final': True}",131,3,True,China Miéville
+-0.00,13,"{'confidence': -0.0002404392080075, 'final': True}",131,3,True,Neil Gaiman
+-0.04,19,"{'confidence': -0.0428488882040825, 'final': True}",131,3,True,Neil Gaiman
+-0.19,24,"{'confidence': -0.19309827129088333, 'final': True}",131,3,True,Tom Rob Smith
+-0.01,29,"{'confidence': -0.005554185466666667, 'final': True}",131,3,True,Tom Rob Smith
+-0.26,32,"{'confidence': -0.26490513620908246, 'final': False}",131,3,False,Neil Gaiman
+-0.03,8,"{'confidence': -0.033527710350975, 'final': True}",131,4,True,James Clavell
+-0.00,13,"{'confidence': -9.6806325e-08, 'final': True}",131,4,True,James Clavell
+-0.00,15,"{'confidence': -4.84031625e-08, 'final': True}",131,4,True,James Clavell
+-0.00,15,"{'confidence': -4.84031625e-08, 'final': True}",131,4,True,James Clavell
+-0.01,7,"{'confidence': -0.0051551711775, 'final': False}",132,0,False,Crime and Punishment
+-0.01,14,"{'confidence': -0.013184708526040907, 'final': False}",132,0,False,Rosencrantz and Guildenstern Are Dead
+-0.20,20,"{'confidence': -0.20234936380233334, 'final': False}",132,0,False,Fanny Hill
+-0.33,26,"{'confidence': -0.33109430841666665, 'final': False}",132,0,False,Fanny Hill
+-0.10,33,"{'confidence': -0.10044730835193125, 'final': True}",132,0,True,The Awakening (Chopin novel)
+-0.13,7,"{'confidence': -0.1289057090292, 'final': True}",132,1,True,The Romance of the Rose
+-0.15,12,"{'confidence': -0.15184871882867856, 'final': True}",132,1,True,The Plum in the Golden Vase
+-0.00,17,"{'confidence': -0.0017363684339500001, 'final': True}",132,1,True,Dream of the Red Chamber
+-0.00,22,"{'confidence': -2.372078396e-06, 'final': True}",132,1,True,Dream of the Red Chamber
+-0.00,26,"{'confidence': -5.333695946e-05, 'final': True}",132,1,True,Dream of the Red Chamber
+-0.00,7,"{'confidence': -1.600215862e-06, 'final': True}",132,2,True,Dream of the Red Chamber
+-0.00,14,"{'confidence': -9.89315796e-07, 'final': True}",132,2,True,Dream of the Red Chamber
+-0.00,19,"{'confidence': -6.67829209e-06, 'final': True}",132,2,True,Dream of the Red Chamber
+-0.00,6,"{'confidence': -6.877976806e-06, 'final': True}",132,3,True,Dream of the Red Chamber
+-0.00,12,"{'confidence': -1.42740794e-06, 'final': True}",132,3,True,Dream of the Red Chamber
+-0.00,13,"{'confidence': -6.55545536e-07, 'final': True}",132,3,True,Dream of the Red Chamber
+-0.00,13,"{'confidence': -6.55545536e-07, 'final': True}",132,3,True,Dream of the Red Chamber
+-0.07,6,"{'confidence': -0.069096384124, 'final': False}",133,0,False,Pregnancy in literature
+-0.08,14,"{'confidence': -0.08095279703022167, 'final': False}",133,0,False,Beloved (novel)
+-0.34,19,"{'confidence': -0.3377971828274, 'final': False}",133,0,False,The Color Purple
+-0.22,25,"{'confidence': -0.21811592775343333, 'final': True}",133,0,True,The Color Purple
+-0.09,29,"{'confidence': -0.09192220689346, 'final': True}",133,0,True,Dream of the Red Chamber
+-0.08,5,"{'confidence': -0.07906715334637833, 'final': True}",133,1,True,Beloved (novel)
+-0.22,11,"{'confidence': -0.2230435004357, 'final': True}",133,1,True,Native Son
+-0.01,17,"{'confidence': -0.01482672666770625, 'final': True}",133,1,True,Nineteen Eighty-Four
+-0.01,24,"{'confidence': -0.005561520182038751, 'final': True}",133,1,True,Nineteen Eighty-Four
+-0.00,31,"{'confidence': -0.00025905821382375, 'final': True}",133,1,True,Nineteen Eighty-Four
+-0.00,36,"{'confidence': -4.2670371575e-06, 'final': True}",133,1,True,Nineteen Eighty-Four
+-0.00,39,"{'confidence': -4.293136185e-06, 'final': True}",133,1,True,Nineteen Eighty-Four
+-0.00,6,"{'confidence': -9.2437902475e-06, 'final': True}",133,2,True,Nineteen Eighty-Four
+-0.00,11,"{'confidence': -2.00776665375e-06, 'final': True}",133,2,True,Nineteen Eighty-Four
+-0.00,18,"{'confidence': -4.2091461875000003e-07, 'final': True}",133,2,True,Nineteen Eighty-Four
+-0.00,24,"{'confidence': -3.017109625e-07, 'final': True}",133,2,True,Nineteen Eighty-Four
+-0.00,29,"{'confidence': -1.106335675e-06, 'final': True}",133,2,True,Nineteen Eighty-Four
+-0.00,30,"{'confidence': -3.017109375e-07, 'final': True}",133,2,True,Nineteen Eighty-Four
+-0.00,7,"{'confidence': -6.1832238125e-07, 'final': True}",133,3,True,Nineteen Eighty-Four
+-0.00,12,"{'confidence': -7.431253625e-07, 'final': True}",133,3,True,Nineteen Eighty-Four
+-0.00,18,"{'confidence': -4.9911868125e-07, 'final': True}",133,3,True,Nineteen Eighty-Four
+-0.00,18,"{'confidence': -4.9911868125e-07, 'final': True}",133,3,True,Nineteen Eighty-Four
+-0.03,6,"{'confidence': -0.0298981974722, 'final': False}",134,0,False,William Blake
+-0.08,13,"{'confidence': -0.07622447554873286, 'final': False}",134,0,False,A Visit From The Goon Squad
+-0.05,17,"{'confidence': -0.05249505485849222, 'final': False}",134,0,False,A Portrait of the Artist as a Young Man
+-0.12,22,"{'confidence': -0.1181592989030543, 'final': True}",134,0,True,A Visit From The Goon Squad
+-0.04,22,"{'confidence': -0.04392202951200714, 'final': True}",134,0,True,A Visit From The Goon Squad
+-0.04,7,"{'confidence': -0.040210838089565715, 'final': True}",134,1,True,A Visit From The Goon Squad
+-0.08,13,"{'confidence': -0.07727373907103, 'final': True}",134,1,True,Wide Sargasso Sea
+-0.06,17,"{'confidence': -0.055891973711616666, 'final': True}",134,1,True,Beloved (novel)
+-0.01,7,"{'confidence': -0.005466245195916666, 'final': True}",134,2,True,Beloved (novel)
+-0.25,13,"{'confidence': -0.2527021064373, 'final': False}",134,2,False,Wide Sargasso Sea
+-0.01,18,"{'confidence': -0.007208352422640001, 'final': True}",134,2,True,Wide Sargasso Sea
+-0.00,25,"{'confidence': -6.902945821e-05, 'final': True}",134,2,True,Wide Sargasso Sea
+-0.00,25,"{'confidence': -0.00093463873752, 'final': True}",134,2,True,Wide Sargasso Sea
+-0.00,4,"{'confidence': -1.613713906e-05, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,9,"{'confidence': -1.41252604e-06, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,13,"{'confidence': -4.3145021466e-05, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,20,"{'confidence': -4.3505603e-07, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,26,"{'confidence': -3.39693126e-07, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,32,"{'confidence': -1.3408546e-07, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,37,"{'confidence': -2.2944840000000003e-07, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,39,"{'confidence': -1.7280798999999998e-07, 'final': True}",134,3,True,Wide Sargasso Sea
+-0.00,39,"{'confidence': -1.7280798999999998e-07, 'final': True}",134,3,True,Wide Sargasso Sea

@@ -1,0 +1,99 @@
+evidence,page,word,sentence,question,final,weight
+"{'confidence': -0.20863748885533331, 'final': False}",Regions of Africa,6,0,145,False,-0.21
+"{'confidence': -0.45853281925, 'final': False}",South Africa,13,0,145,False,-0.46
+"{'confidence': -0.027354341806325, 'final': False}",Senegal,18,0,145,False,-0.03
+"{'confidence': -0.09759967826786001, 'final': True}","Saint Louis, Senegal",6,1,145,True,-0.10
+"{'confidence': -0.10007533934291998, 'final': True}","Saint Louis, Senegal",12,1,145,True,-0.10
+"{'confidence': -0.330999815886, 'final': False}",Kenya,17,1,145,False,-0.33
+"{'confidence': -8.65511605e-05, 'final': True}",Kenya,23,1,145,True,-0.00
+"{'confidence': -0.001135295311825, 'final': True}",Kenya,25,1,145,True,-0.00
+"{'confidence': -0.041728101806324996, 'final': True}",Madagascar,8,2,145,True,-0.04
+"{'confidence': -0.2904112, 'final': False}",Madagascar,14,2,145,False,-0.29
+"{'confidence': -0.727076456408165, 'final': False}",Madagascar,20,2,145,False,-0.73
+"{'confidence': -0.17573764453755, 'final': True}",Liberia,26,2,145,True,-0.18
+"{'confidence': -0.11214959120421668, 'final': True}",Liberia,27,2,145,True,-0.11
+"{'confidence': -0.048757651204216663, 'final': True}",Liberia,7,3,145,True,-0.05
+"{'confidence': -9.684365e-07, 'final': True}",Senegal,15,3,145,True,-0.00
+"{'confidence': -7.524265e-07, 'final': True}",Senegal,19,3,145,True,-0.00
+"{'confidence': -2.75611825e-07, 'final': True}",Senegal,23,3,145,True,-0.00
+"{'confidence': -5.73621e-07, 'final': True}",Senegal,26,3,145,True,-0.00
+"{'confidence': -5.73621e-07, 'final': True}",Senegal,26,3,145,True,-0.00
+"{'confidence': -0.028053160611825, 'final': False}",Athens,8,0,146,False,-0.03
+"{'confidence': -0.0018111962, 'final': False}",Mecca Metro,13,0,146,False,-0.00
+"{'confidence': -0.0582148971865, 'final': False}",Shanghai,18,0,146,False,-0.06
+"{'confidence': -0.048620988678, 'final': True}",Mecca Metro,25,0,146,True,-0.05
+"{'confidence': -0.067006002154, 'final': True}",Mecca Metro,28,0,146,True,-0.07
+"{'confidence': -0.0025593527115466666, 'final': True}",Mecca Metro,6,1,146,True,-0.00
+"{'confidence': -0.000760146408165, 'final': True}",Mecca,12,1,146,True,-0.00
+"{'confidence': -9.9959743165e-05, 'final': True}",Mecca,17,1,146,True,-0.00
+"{'confidence': -0.001089681606325, 'final': True}",Mecca,25,1,146,True,-0.00
+"{'confidence': -2.3319123165e-05, 'final': True}",Mecca,32,1,146,True,-0.00
+"{'confidence': -2.2305893165000002e-05, 'final': True}",Mecca,34,1,146,True,-0.00
+"{'confidence': -0.00030169453930000003, 'final': True}",Mecca,6,2,146,True,-0.00
+"{'confidence': -4.3061391e-06, 'final': True}",Mecca,12,2,146,True,-0.00
+"{'confidence': -8.71667465e-06, 'final': True}",Mecca,12,2,146,True,-0.00
+"{'confidence': -4.7829535e-06, 'final': True}",Mecca,8,3,146,True,-0.00
+"{'confidence': -9.08834675e-07, 'final': True}",Mecca,15,3,146,True,-0.00
+"{'confidence': -7.300291500000001e-07, 'final': True}",Mecca,19,3,146,True,-0.00
+"{'confidence': -3.77427665e-05, 'final': True}",Mecca,20,3,146,True,-0.00
+"{'confidence': -4.78295385e-06, 'final': True}",Mecca,8,4,146,True,-0.00
+"{'confidence': -1.3306016e-05, 'final': True}",Mecca,14,4,146,True,-0.00
+"{'confidence': -7.76304545e-06, 'final': True}",Mecca,20,4,146,True,-0.00
+"{'confidence': -7.94185075e-06, 'final': True}",Mecca,23,4,146,True,-0.00
+"{'confidence': -5.25976825e-06, 'final': True}",Mecca,29,4,146,True,-0.00
+"{'confidence': -5.25976825e-06, 'final': True}",Mecca,29,4,146,True,-0.00
+"{'confidence': -0.05957858035833333, 'final': False}",Cahors,7,0,147,False,-0.06
+"{'confidence': -0.1495148568091, 'final': False}",Girona,12,0,147,False,-0.15
+"{'confidence': -0.139736166806325, 'final': False}",Barcelona,9,1,147,False,-0.14
+"{'confidence': -0.10449706961154666, 'final': True}",São Paulo,15,1,147,True,-0.10
+"{'confidence': -0.006633885698333334, 'final': True}",São Paulo,20,1,147,True,-0.01
+"{'confidence': -0.01884592443896667, 'final': True}",São Paulo,25,1,147,True,-0.02
+"{'confidence': -0.016311563505666666, 'final': True}",São Paulo,29,1,147,True,-0.02
+"{'confidence': -0.09460374667946668, 'final': True}",São Paulo,6,2,147,True,-0.09
+"{'confidence': -0.06538214074733334, 'final': True}",São Paulo,12,2,147,True,-0.07
+"{'confidence': -0.23048908140816501, 'final': False}",Madrid,17,2,147,False,-0.23
+"{'confidence': -0.1165636367224, 'final': True}",Buenos Aires,18,2,147,True,-0.12
+"{'confidence': -0.0435550620283, 'final': True}",Madrid,7,3,147,True,-0.04
+"{'confidence': -0.00065997962285, 'final': True}",Madrid,13,3,147,True,-0.00
+"{'confidence': -0.008203210352149999, 'final': True}",Madrid,7,4,147,True,-0.01
+"{'confidence': -2.5321449e-07, 'final': True}",Madrid,8,4,147,True,-0.00
+"{'confidence': -2.5321449e-07, 'final': True}",Madrid,8,4,147,True,-0.00
+"{'confidence': -0.261847374443475, 'final': False}",List of swamps,6,0,148,False,-0.26
+"{'confidence': -0.011663350400000001, 'final': False}",Belgium,13,0,148,False,-0.01
+"{'confidence': -0.03097662985, 'final': False}",Belgium,19,0,148,False,-0.03
+"{'confidence': -0.07181977075, 'final': True}",Belgium,21,0,148,True,-0.07
+"{'confidence': -6.0093452e-05, 'final': True}",South Sudan,6,1,148,True,-0.00
+"{'confidence': -7.052010695e-05, 'final': True}",South Sudan,13,1,148,True,-0.00
+"{'confidence': -2.7372048000000003e-05, 'final': True}",South Sudan,19,1,148,True,-0.00
+"{'confidence': -6.438111714999999e-05, 'final': True}",South Sudan,22,1,148,True,-0.00
+"{'confidence': -9.253091e-06, 'final': True}",South Sudan,8,2,148,True,-0.00
+"{'confidence': -1.02067205e-05, 'final': True}",South Sudan,15,2,148,True,-0.00
+"{'confidence': -1.5644548e-06, 'final': True}",South Sudan,22,2,148,True,-0.00
+"{'confidence': -1.504853e-06, 'final': True}",South Sudan,26,2,148,True,-0.00
+"{'confidence': -1.32604745e-06, 'final': True}",South Sudan,26,2,148,True,-0.00
+"{'confidence': -1.504852965e-06, 'final': True}",South Sudan,7,3,148,True,-0.00
+"{'confidence': -7.896309699999999e-07, 'final': True}",South Sudan,14,3,148,True,-0.00
+"{'confidence': -3.1281632500000003e-07, 'final': True}",South Sudan,17,3,148,True,-0.00
+"{'confidence': -3.1281632500000003e-07, 'final': True}",South Sudan,17,3,148,True,-0.00
+"{'confidence': -0.18133550021365, 'final': False}",Alaska,7,0,149,False,-0.18
+"{'confidence': -0.009347558471500001, 'final': False}",Alaska,14,0,149,False,-0.01
+"{'confidence': -0.09835483086867501, 'final': False}",Woodford Folk Festival,21,0,149,False,-0.10
+"{'confidence': -0.10347663314166666, 'final': True}",New South Wales,27,0,149,True,-0.10
+"{'confidence': -0.30310062908066665, 'final': False}",Tasmania,34,0,149,False,-0.30
+"{'confidence': -0.0625540347919125, 'final': True}",Woodford Folk Festival,35,0,149,True,-0.06
+"{'confidence': -0.0008944099928666666, 'final': True}",Tasmania,5,1,149,True,-0.00
+"{'confidence': -0.00021898308611000003, 'final': True}",Tasmania,12,1,149,True,-0.00
+"{'confidence': -0.008978527543666666, 'final': True}",Queensland,19,1,149,True,-0.01
+"{'confidence': -0.02376387093877667, 'final': True}",Queensland,21,1,149,True,-0.02
+"{'confidence': -0.0183008284995, 'final': True}",Tasmania,7,2,149,True,-0.02
+"{'confidence': -6.327731999999999e-05, 'final': True}",Queensland,12,2,149,True,-0.00
+"{'confidence': -0.008219523333333334, 'final': True}",Queensland,18,2,149,True,-0.01
+"{'confidence': -0.07141973, 'final': True}",Queensland,24,2,149,True,-0.07
+"{'confidence': -1.1621735166666667e-06, 'final': True}",Queensland,30,2,149,True,-0.00
+"{'confidence': -1.1621735433333334e-06, 'final': True}",Queensland,31,2,149,True,-0.00
+"{'confidence': -1.2813772166666665e-06, 'final': True}",Queensland,7,3,149,True,-0.00
+"{'confidence': -5.016176666666666e-07, 'final': True}",Queensland,12,3,149,True,-0.00
+"{'confidence': -1.4400666666666668e-07, 'final': True}",Queensland,16,3,149,True,-0.00
+"{'confidence': -4.221485666666667e-07, 'final': True}",Queensland,22,3,149,True,-0.00
+"{'confidence': -2.3691416666666667e-06, 'final': True}",Queensland,26,3,149,True,-0.00
+"{'confidence': -2.3691416666666667e-06, 'final': True}",Queensland,26,3,149,True,-0.00

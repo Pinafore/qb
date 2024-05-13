@@ -1,0 +1,13 @@
+weight,page,final,word,question,sentence,evidence
+-0.00,Ming dynasty,False,1,165,0,"{'confidence': -8.440362133333333e-05, 'final': False}"
+-0.00,Ming dynasty,False,1,165,1,"{'confidence': -7.435078e-05, 'final': False}"
+-0.00,Ming dynasty,False,3,165,2,"{'confidence': -1.8168562e-05, 'final': False}"
+-0.00,Ming dynasty,False,1,165,3,"{'confidence': -9.625633666666666e-06, 'final': False}"
+-0.00,Ming dynasty,True,2,165,4,"{'confidence': -5.135629166666666e-06, 'final': True}"
+-0.00,Ming dynasty,True,2,165,4,"{'confidence': -5.135629166666666e-06, 'final': True}"
+-0.23,Chinese language,False,1,166,0,"{'confidence': -0.22808373199999998, 'final': False}"
+-0.34,Don Giovanni,False,1,166,1,"{'confidence': -0.340654905, 'final': False}"
+-0.44,La Traviata,False,1,166,2,"{'confidence': -0.435702051607245, 'final': False}"
+-0.35,La Traviata,False,1,166,3,"{'confidence': -0.3456645356118325, 'final': False}"
+-0.03,The Red Detachment of Women (opera),True,1,166,4,"{'confidence': -0.026448496878889997, 'final': True}"
+-0.00,Nixon in China,True,2,166,5,"{'confidence': -1.80665725e-06, 'final': True}"
