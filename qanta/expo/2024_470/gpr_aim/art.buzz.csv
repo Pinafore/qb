@@ -1,0 +1,91 @@
+evidence,sentence,weight,question,final,word,page
+"{'confidence': -0.01282029845, 'final': False}",0,-0.01,160,False,8,Album cover
+"{'confidence': -0.0011047811721155555, 'final': False}",0,-0.00,160,False,12,Ode on a Grecian Urn
+"{'confidence': -0.3373110042004417, 'final': False}",0,-0.34,160,False,19,United States Billboard 200 number-one albums of 2008
+"{'confidence': -0.10944957537310616, 'final': True}",0,-0.11,160,True,21,The Physical Impossibility of Death in the Mind of Someone Living
+"{'confidence': -0.30179877281233247, 'final': False}",1,-0.30,160,False,8,The Persistence of Memory
+"{'confidence': -0.023954652011875, 'final': True}",1,-0.02,160,True,13,The Last Supper (Leonardo)
+"{'confidence': -0.016992141794916666, 'final': True}",1,-0.02,160,True,20,Théodore Géricault
+"{'confidence': -0.13289170310476667, 'final': True}",1,-0.13,160,True,23,Théodore Géricault
+"{'confidence': -0.18483497431230003, 'final': True}",2,-0.18,160,True,9,The Raft of the Medusa
+"{'confidence': -6.997180529999999e-06, 'final': True}",2,-0.00,160,True,16,The Death of Marat
+"{'confidence': -1.823512526e-05, 'final': True}",3,-0.00,160,True,8,The Death of Marat
+"{'confidence': -1.53742368e-05, 'final': True}",3,-0.00,160,True,14,The Death of Marat
+"{'confidence': -4.097918253e-05, 'final': True}",3,-0.00,160,True,18,The Death of Marat
+"{'confidence': -8.03129093e-06, 'final': True}",4,-0.00,160,True,7,The Death of Marat
+"{'confidence': -5.54259706e-07, 'final': True}",4,-0.00,160,True,12,The Death of Marat
+"{'confidence': -2.9201165799999996e-07, 'final': True}",4,-0.00,160,True,17,The Death of Marat
+"{'confidence': -3.8737458599999997e-07, 'final': True}",4,-0.00,160,True,19,The Death of Marat
+"{'confidence': -3.8737458599999997e-07, 'final': True}",4,-0.00,160,True,19,The Death of Marat
+"{'confidence': -0.004341154145666667, 'final': False}",0,-0.00,161,False,7,Jeff Koons
+"{'confidence': -0.034372142283816666, 'final': False}",0,-0.03,161,False,13,Robert Irwin (artist)
+"{'confidence': -0.41366066850333333, 'final': False}",0,-0.41,161,False,19,Richard Serra
+"{'confidence': -0.20730098301886668, 'final': True}",0,-0.21,161,True,25,Frank Gehry
+"{'confidence': -0.17446478781279998, 'final': True}",0,-0.17,161,True,29,Richard Serra
+"{'confidence': -0.2543155976794667, 'final': False}",0,-0.25,161,False,29,Richard Serra
+"{'confidence': -0.36063751294488, 'final': False}",1,-0.36,161,False,7,Frank Gehry
+"{'confidence': -0.09411544957455, 'final': True}",1,-0.09,161,True,12,Richard Serra
+"{'confidence': -0.006532389733333334, 'final': True}",1,-0.01,161,True,18,Richard Serra
+"{'confidence': -2.5926174999999995e-06, 'final': True}",1,-0.00,161,True,26,Richard Serra
+"{'confidence': -2.1928413883333334e-05, 'final': True}",1,-0.00,161,True,26,Richard Serra
+"{'confidence': -4.7780179e-06, 'final': True}",2,-0.00,161,True,6,Richard Serra
+"{'confidence': -1.1041146e-05, 'final': True}",2,-0.00,161,True,13,Richard Serra
+"{'confidence': -2.4187477666666667e-06, 'final': True}",2,-0.00,161,True,20,Richard Serra
+"{'confidence': -4.842555766666667e-06, 'final': True}",2,-0.00,161,True,25,Richard Serra
+"{'confidence': -1.4651184166666669e-06, 'final': True}",2,-0.00,161,True,26,Richard Serra
+"{'confidence': -7.896309833333333e-07, 'final': True}",3,-0.00,161,True,7,Richard Serra
+"{'confidence': -9.6350075e-07, 'final': True}",3,-0.00,161,True,11,Richard Serra
+"{'confidence': -1.0032353e-06, 'final': True}",3,-0.00,161,True,18,Richard Serra
+"{'confidence': -2.5379514333333337e-06, 'final': True}",3,-0.00,161,True,20,Richard Serra
+"{'confidence': -4.717545666666666e-07, 'final': True}",3,-0.00,161,True,20,Richard Serra
+"{'confidence': -0.006649349924941667, 'final': False}",0,-0.01,162,False,7,Pierre-Auguste Renoir
+"{'confidence': -0.32120207595, 'final': False}",0,-0.32,162,False,12,Tom Thomson
+"{'confidence': -0.0008014514309999999, 'final': False}",0,-0.00,162,False,19,Tom Thomson
+"{'confidence': -0.00552567099875, 'final': True}",0,-0.01,162,True,25,Tom Thomson
+"{'confidence': -2.21270861e-05, 'final': True}",0,-0.00,162,True,33,Tom Thomson
+"{'confidence': -0.26817312764, 'final': False}",1,-0.27,162,False,6,Tom Thomson
+"{'confidence': -0.0016369983208583334, 'final': True}",1,-0.00,162,True,11,Georgia O'Keeffe
+"{'confidence': -0.0023432485275333335, 'final': True}",1,-0.00,162,True,17,Georgia O'Keeffe
+"{'confidence': -6.255662221666667e-06, 'final': True}",1,-0.00,162,True,18,Georgia O'Keeffe
+"{'confidence': -1.666321275e-06, 'final': True}",2,-0.00,162,True,5,Georgia O'Keeffe
+"{'confidence': -4.427872783333333e-06, 'final': True}",2,-0.00,162,True,12,Georgia O'Keeffe
+"{'confidence': -8.500664608333333e-06, 'final': True}",2,-0.00,162,True,19,Georgia O'Keeffe
+"{'confidence': -3.1961014416666664e-06, 'final': True}",2,-0.00,162,True,24,Georgia O'Keeffe
+"{'confidence': -3.1961014416666664e-06, 'final': True}",2,-0.00,162,True,24,Georgia O'Keeffe
+"{'confidence': -0.028947461, 'final': False}",0,-0.03,163,False,7,Advertising
+"{'confidence': -0.1553410677839, 'final': False}",0,-0.16,163,False,14,F. William Free & Co.
+"{'confidence': -0.523135805, 'final': False}",0,-0.52,163,False,20,Advertising campaign
+"{'confidence': -0.0073043964819, 'final': True}",0,-0.01,163,True,28,Andy Warhol
+"{'confidence': -0.02589785374121667, 'final': True}",0,-0.03,163,True,32,Andy Warhol
+"{'confidence': -0.033570192422320004, 'final': True}",0,-0.03,163,True,35,Peter Paul Rubens
+"{'confidence': -5.3329976999999996e-05, 'final': True}",1,-0.00,163,True,6,Andy Warhol
+"{'confidence': -4.276400333333333e-06, 'final': True}",1,-0.00,163,True,11,Andy Warhol
+"{'confidence': -6.605558333333333e-07, 'final': True}",1,-0.00,163,True,18,Andy Warhol
+"{'confidence': -6.453755e-08, 'final': True}",1,-0.00,163,True,24,Andy Warhol
+"{'confidence': -5.016176666666666e-07, 'final': True}",1,-0.00,163,True,27,Andy Warhol
+"{'confidence': -1.4155123333333335e-06, 'final': True}",2,-0.00,163,True,7,Andy Warhol
+"{'confidence': -7.6482798e-07, 'final': True}",2,-0.00,163,True,14,Andy Warhol
+"{'confidence': -6.114061216666667e-06, 'final': True}",2,-0.00,163,True,21,Andy Warhol
+"{'confidence': -3.2929079e-06, 'final': True}",2,-0.00,163,True,25,Andy Warhol
+"{'confidence': -8.442971000000001e-07, 'final': True}",3,-0.00,163,True,6,Andy Warhol
+"{'confidence': -8.691001166666668e-07, 'final': True}",3,-0.00,163,True,12,Andy Warhol
+"{'confidence': -1.6880966e-07, 'final': True}",3,-0.00,163,True,16,Andy Warhol
+"{'confidence': -1.6880966e-07, 'final': True}",3,-0.00,163,True,16,Andy Warhol
+"{'confidence': -0.1443674209334125, 'final': False}",0,-0.14,164,False,8,List of paintings by Vincent van Gogh
+"{'confidence': -0.23560827125, 'final': False}",0,-0.24,164,False,15,Paintings
+"{'confidence': -8.244298333333334e-07, 'final': False}",0,-0.00,164,False,21,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -1.0169018816666667e-06, 'final': True}",1,-0.00,164,True,8,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -1.8994197e-07, 'final': True}",1,-0.00,164,True,15,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -6.206969166666667e-08, 'final': True}",1,-0.00,164,True,21,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -1.6700541083333332e-06, 'final': True}",1,-0.00,164,True,26,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -6.047055745e-06, 'final': True}",1,-0.00,164,True,31,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -0.0437288109955625, 'final': True}",2,-0.04,164,True,5,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -5.386437894166667e-06, 'final': True}",2,-0.00,164,True,10,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -7.4867074175e-05, 'final': True}",2,-0.00,164,True,17,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -0.0001300336953625, 'final': True}",2,-0.00,164,True,23,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -0.0001005996993175, 'final': True}",2,-0.00,164,True,26,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -4.0590631675e-06, 'final': True}",3,-0.00,164,True,7,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -1.5855870316666666e-06, 'final': True}",3,-0.00,164,True,11,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -1.0355040758333334e-06, 'final': True}",3,-0.00,164,True,17,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -6.952925275000001e-07, 'final': True}",3,-0.00,164,True,19,A Sunday Afternoon on the Island of La Grande Jatte
+"{'confidence': -6.952925275000001e-07, 'final': True}",3,-0.00,164,True,19,A Sunday Afternoon on the Island of La Grande Jatte
