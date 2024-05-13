@@ -539,7 +539,6 @@ class Questions:
             for orig, replace in normalized:
                 self.equivalents[replace] = self.equivalents[orig]
 
-        print("Equivalents: %s" % str(self.equivalents))
                 
     def load_power(self, power_file):
         self._power = PowerPositions(power_file)

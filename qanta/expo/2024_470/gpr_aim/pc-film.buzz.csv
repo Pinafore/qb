@@ -1,119 +1,119 @@
-evidence,page,weight,word,sentence,final,question
-"{'confidence': -0.02159735078773, 'final': False}",Ralph Waldo Emerson,-0.02,7,0,False,120
-"{'confidence': -0.09943535922355, 'final': False}",Cousin Eddie,-0.10,14,0,False,120
-"{'confidence': -0.4083083412042166, 'final': False}",John Belushi,-0.41,20,0,False,120
-"{'confidence': -0.32098538, 'final': False}",John Goodman,-0.32,27,0,False,120
-"{'confidence': -0.00399478371865, 'final': True}",Randy Quaid,-0.00,33,0,True,120
-"{'confidence': -0.00030729779142499997, 'final': True}",Randy Quaid,-0.00,40,0,True,120
-"{'confidence': -0.0002366851984125, 'final': True}",Randy Quaid,-0.00,40,0,True,120
-"{'confidence': -0.00011644463, 'final': True}",Randy Quaid,-0.00,7,1,True,120
-"{'confidence': -5.181564075e-06, 'final': True}",Randy Quaid,-0.00,15,1,True,120
-"{'confidence': -5.3369709099999994e-05, 'final': True}",Lloyd Bridges,-0.00,24,1,True,120
-"{'confidence': -0.0721235504127425, 'final': True}",Randy Quaid,-0.07,30,1,True,120
-"{'confidence': -0.000354730725, 'final': True}",Randy Quaid,-0.00,37,1,True,120
-"{'confidence': -1.2922399e-05, 'final': True}",Randy Quaid,-0.00,44,1,True,120
-"{'confidence': -2.1594465e-05, 'final': True}",Randy Quaid,-0.00,44,1,True,120
-"{'confidence': -0.0008308954781625, 'final': True}",Randy Quaid,-0.00,7,2,True,120
-"{'confidence': -1.5640816250000001e-07, 'final': True}",Randy Quaid,-0.00,12,2,True,120
-"{'confidence': -2.69772316625e-05, 'final': True}",Randy Quaid,-0.00,16,2,True,120
-"{'confidence': -0.0001987137, 'final': True}",Randy Quaid,-0.00,8,3,True,120
-"{'confidence': -0.009625457166874999, 'final': True}",Randy Quaid,-0.01,14,3,True,120
-"{'confidence': -6.0755686325e-05, 'final': True}",Randy Quaid,-0.00,18,3,True,120
-"{'confidence': -8.15791930825e-05, 'final': True}",Randy Quaid,-0.00,8,4,True,120
-"{'confidence': -7.82040825e-08, 'final': True}",Randy Quaid,-0.00,13,4,True,120
-"{'confidence': -1.08005e-07, 'final': True}",Randy Quaid,-0.00,17,4,True,120
-"{'confidence': -1.9740775e-07, 'final': True}",Randy Quaid,-0.00,23,4,True,120
-"{'confidence': -1.08005e-07, 'final': True}",Randy Quaid,-0.00,28,4,True,120
-"{'confidence': -1.378059125e-07, 'final': True}",Randy Quaid,-0.00,30,4,True,120
-"{'confidence': -1.378059125e-07, 'final': True}",Randy Quaid,-0.00,30,4,True,120
-"{'confidence': -0.0005567947629, 'final': False}",Land Rover Defender,-0.00,6,0,False,121
-"{'confidence': -0.0006501936947666667, 'final': False}",Land Rover Defender,-0.00,12,0,False,121
-"{'confidence': -0.005009897654333333, 'final': False}",Land Rover Defender,-0.01,20,0,False,121
-"{'confidence': -0.13895147979398334, 'final': True}",Star Fox (video game),-0.14,25,0,True,121
-"{'confidence': -0.050122053281, 'final': True}",Star Fox (video game),-0.05,25,0,True,121
-"{'confidence': -0.1214470626, 'final': True}",Starship Enterprise,-0.12,7,1,True,121
-"{'confidence': -0.07734557937633334, 'final': True}",Star Wars: X-wing (video game),-0.08,13,1,True,121
-"{'confidence': -0.20169902081233335, 'final': True}",Star Wars: X-wing (video game),-0.20,18,1,True,121
-"{'confidence': -0.08337367946666667, 'final': True}",Star Destroyer,-0.08,24,1,True,121
-"{'confidence': -0.3310412765, 'final': False}",Starship,-0.33,29,1,False,121
-"{'confidence': -0.16040166373333334, 'final': True}",Star Wars: TIE Fighter,-0.16,35,1,True,121
-"{'confidence': -0.14012788572666665, 'final': True}",Star Wars: TIE Fighter,-0.14,36,1,True,121
-"{'confidence': -0.34242959150023333, 'final': False}",TIE fighter,-0.34,4,2,False,121
-"{'confidence': -0.31211127850000003, 'final': False}",Star Wars: TIE fighter,-0.31,11,2,False,121
-"{'confidence': -0.27961168126526664, 'final': False}",TIE fighter,-0.28,17,2,False,121
-"{'confidence': -0.19913035766666667, 'final': True}",Star Wars: TIE Fighter,-0.20,22,2,True,121
-"{'confidence': -0.16574817409833334, 'final': True}",TIE fighter,-0.17,28,2,True,121
-"{'confidence': -0.04653641129653333, 'final': True}",TIE fighter,-0.05,34,2,True,121
-"{'confidence': -0.082324600025, 'final': True}",TIE fighter,-0.08,8,3,True,121
-"{'confidence': -0.010572819679466666, 'final': True}",TIE fighter,-0.01,14,3,True,121
-"{'confidence': -0.19056367724613332, 'final': True}",TIE fighter,-0.19,20,3,True,121
-"{'confidence': -0.0039162423591, 'final': True}",TIE fighter,-0.00,25,3,True,121
-"{'confidence': -0.004174428757883333, 'final': True}",TIE fighter,-0.00,27,3,True,121
-"{'confidence': -0.012307388836666667, 'final': True}",TIE fighter,-0.01,5,4,True,121
-"{'confidence': -0.00888925527855, 'final': True}",TIE fighter,-0.01,12,4,True,121
-"{'confidence': -0.004438375611776667, 'final': True}",TIE fighter,-0.00,17,4,True,121
-"{'confidence': -0.016200763221443332, 'final': True}",TIE fighter,-0.02,22,4,True,121
-"{'confidence': -0.01326747816135, 'final': True}",TIE fighter,-0.01,26,4,True,121
-"{'confidence': -0.01326747816135, 'final': True}",TIE fighter,-0.01,26,4,True,121
-"{'confidence': -0.13571939827211, 'final': False}",Intertitle,-0.14,7,0,False,122
-"{'confidence': -0.12029040791114999, 'final': False}",(500) Days of Summer,-0.12,13,0,False,122
-"{'confidence': -0.21654731779372996, 'final': False}",(500) Days of Summer,-0.22,17,0,False,122
-"{'confidence': -0.027226862426024998, 'final': True}",(500) Days of Summer,-0.03,21,0,True,122
-"{'confidence': -0.07928712430958, 'final': True}",(500) Days of Summer,-0.08,8,1,True,122
-"{'confidence': -0.031275637843367496, 'final': True}",500 Days of Summer,-0.03,15,1,True,122
-"{'confidence': -0.0435560806224225, 'final': True}",Eternal Sunshine of the Spotless Mind,-0.04,21,1,True,122
-"{'confidence': -0.0053422133986575, 'final': True}",Eternal Sunshine of the Spotless Mind,-0.01,28,1,True,122
-"{'confidence': -0.0002482560919933334, 'final': True}",Up in the Air (2009 film),-0.00,7,2,True,122
-"{'confidence': -1.514705027e-05, 'final': True}",Up in the Air (2009 film),-0.00,12,2,True,122
-"{'confidence': -8.566985833333334e-07, 'final': True}",La La Land (film),-0.00,17,2,True,122
-"{'confidence': -1.263305835e-05, 'final': True}",La La Land (film),-0.00,23,2,True,122
-"{'confidence': -2.254873733333333e-06, 'final': True}",La La Land (film),-0.00,7,3,True,122
-"{'confidence': -6.456243350000001e-07, 'final': True}",La La Land (film),-0.00,11,3,True,122
-"{'confidence': -5.3388644e-07, 'final': True}",La La Land (film),-0.00,19,3,True,122
-"{'confidence': -5.140191416666667e-07, 'final': True}",La La Land (film),-0.00,22,3,True,122
-"{'confidence': -8.641643916666667e-07, 'final': True}",La La Land (film),-0.00,7,4,True,122
-"{'confidence': -4.345500566666667e-07, 'final': True}",La La Land (film),-0.00,13,4,True,122
-"{'confidence': -6.729573833333332e-07, 'final': True}",La La Land (film),-0.00,21,4,True,122
-"{'confidence': -5.537537066666667e-07, 'final': True}",La La Land (film),-0.00,25,4,True,122
-"{'confidence': -5.537537066666667e-07, 'final': True}",La La Land (film),-0.00,25,4,True,122
-"{'confidence': -0.16664203098465, 'final': False}",Phonetic similarity,-0.17,8,0,False,123
-"{'confidence': -0.002476227456306, 'final': False}",Tupac Shakur,-0.00,13,0,False,123
-"{'confidence': -0.1452095271338143, 'final': False}",The Notorious B.I.G.,-0.15,18,0,False,123
-"{'confidence': -0.47157850119999994, 'final': False}",Donut (film),-0.47,24,0,False,123
-"{'confidence': -0.150910888204226, 'final': True}",Tupac Shakur,-0.15,8,1,True,123
-"{'confidence': -0.019202992170399998, 'final': True}",Tupac Shakur,-0.02,13,1,True,123
-"{'confidence': -0.08664316168875, 'final': True}",The Goonies,-0.09,18,1,True,123
-"{'confidence': -0.043028411835, 'final': True}",The Goonies,-0.04,23,1,True,123
-"{'confidence': -0.24231248023333338, 'final': False}",Donut Lord,-0.24,29,1,False,123
-"{'confidence': -0.460584663, 'final': False}",The Matrix,-0.46,32,1,False,123
-"{'confidence': -0.21652994, 'final': True}",The Matrix,-0.22,7,2,True,123
-"{'confidence': -0.38964097, 'final': False}",The Matrix,-0.39,13,2,False,123
-"{'confidence': -0.011931238142993334, 'final': True}",Better Luck Tomorrow,-0.01,17,2,True,123
-"{'confidence': -0.18551397787088333, 'final': True}",Better Luck Tomorrow,-0.19,20,2,True,123
-"{'confidence': -0.0048348540750999995, 'final': True}",Better Luck Tomorrow,-0.00,7,3,True,123
-"{'confidence': -0.0006916019344125, 'final': True}",Swiss Army Man,-0.00,13,3,True,123
-"{'confidence': -0.0141244092090825, 'final': True}",Swiss Army Man,-0.01,18,3,True,123
-"{'confidence': -0.00230879135688, 'final': True}",Everything Everywhere All at Once,-0.00,25,3,True,123
-"{'confidence': -0.0047592468523900006, 'final': True}",Everything Everywhere All at Once,-0.00,29,3,True,123
-"{'confidence': -0.0047592468523900006, 'final': True}",Everything Everywhere All at Once,-0.00,29,3,True,123
-"{'confidence': -0.0019040118624757143, 'final': False}",Jesse Dart Spaceketeers,-0.00,6,0,False,124
-"{'confidence': -0.061352853392235715, 'final': False}",Link (The Legend of Zelda),-0.06,15,0,False,124
-"{'confidence': -0.08953917972166285, 'final': False}",Mulan (1998 film),-0.09,21,0,False,124
-"{'confidence': -0.002736805397285714, 'final': True}",Mulan (1998 film),-0.00,29,0,True,124
-"{'confidence': -0.1038134404304143, 'final': True}",Mulan (1998 film),-0.10,35,0,True,124
-"{'confidence': -0.2614401197337333, 'final': False}",List of Disney theatrical animated features,-0.26,8,1,False,124
-"{'confidence': -0.014523876926364285, 'final': True}",Mulan (1998 film),-0.01,14,1,True,124
-"{'confidence': -0.020885426751114287, 'final': True}",Mulan (1998 film),-0.02,16,1,True,124
-"{'confidence': -0.026853805054882503, 'final': True}",Spirited Away,-0.03,9,2,True,124
-"{'confidence': -0.03070442492651, 'final': True}",Spirited Away,-0.03,14,2,True,124
-"{'confidence': -0.0139016771164125, 'final': True}",Spirited Away,-0.01,20,2,True,124
-"{'confidence': -0.001303378084075, 'final': True}",Spirited Away,-0.00,26,2,True,124
-"{'confidence': -2.7144839412500002e-05, 'final': True}",Spirited Away,-0.00,33,2,True,124
-"{'confidence': -0.00014690418498749998, 'final': True}",Spirited Away,-0.00,36,2,True,124
-"{'confidence': -7.761658698750001e-05, 'final': True}",Spirited Away,-0.00,7,3,True,124
-"{'confidence': -1.3670469875e-06, 'final': True}",Spirited Away,-0.00,14,3,True,124
-"{'confidence': -2.570096e-07, 'final': True}",Spirited Away,-0.00,21,3,True,124
-"{'confidence': -6.630237125e-07, 'final': True}",Spirited Away,-0.00,7,4,True,124
-"{'confidence': -1.862090825e-07, 'final': True}",Spirited Away,-0.00,12,4,True,124
-"{'confidence': -1.26607245e-07, 'final': True}",Spirited Away,-0.00,20,4,True,124
-"{'confidence': -1.26607245e-07, 'final': True}",Spirited Away,-0.00,20,4,True,124
+sentence,final,question,word,page,evidence,weight
+0,False,120,7,Ralph Waldo Emerson,"{'confidence': -0.02159735078773, 'final': False}",-0.02
+0,False,120,14,Cousin Eddie,"{'confidence': -0.09943535922355, 'final': False}",-0.10
+0,False,120,20,John Belushi,"{'confidence': -0.4083083412042166, 'final': False}",-0.41
+0,False,120,27,John Goodman,"{'confidence': -0.32098538, 'final': False}",-0.32
+0,True,120,33,Randy Quaid,"{'confidence': -0.00399478371865, 'final': True}",-0.00
+0,True,120,40,Randy Quaid,"{'confidence': -0.00030729779142499997, 'final': True}",-0.00
+0,True,120,40,Randy Quaid,"{'confidence': -0.0002366851984125, 'final': True}",-0.00
+1,True,120,7,Randy Quaid,"{'confidence': -0.00011644463, 'final': True}",-0.00
+1,True,120,15,Randy Quaid,"{'confidence': -5.181564075e-06, 'final': True}",-0.00
+1,True,120,24,Lloyd Bridges,"{'confidence': -5.3369709099999994e-05, 'final': True}",-0.00
+1,False,120,30,Randy Quaid,"{'confidence': -0.0721235504127425, 'final': False}",-0.07
+1,True,120,37,Randy Quaid,"{'confidence': -0.000354730725, 'final': True}",-0.00
+1,True,120,44,Randy Quaid,"{'confidence': -1.2922399e-05, 'final': True}",-0.00
+1,True,120,44,Randy Quaid,"{'confidence': -2.1594465e-05, 'final': True}",-0.00
+2,True,120,7,Randy Quaid,"{'confidence': -0.0008308954781625, 'final': True}",-0.00
+2,True,120,12,Randy Quaid,"{'confidence': -1.5640816250000001e-07, 'final': True}",-0.00
+2,True,120,16,Randy Quaid,"{'confidence': -2.69772316625e-05, 'final': True}",-0.00
+3,True,120,8,Randy Quaid,"{'confidence': -0.0001987137, 'final': True}",-0.00
+3,True,120,14,Randy Quaid,"{'confidence': -0.009625457166874999, 'final': True}",-0.01
+3,True,120,18,Randy Quaid,"{'confidence': -6.0755686325e-05, 'final': True}",-0.00
+4,True,120,8,Randy Quaid,"{'confidence': -8.15791930825e-05, 'final': True}",-0.00
+4,True,120,13,Randy Quaid,"{'confidence': -7.82040825e-08, 'final': True}",-0.00
+4,True,120,17,Randy Quaid,"{'confidence': -1.08005e-07, 'final': True}",-0.00
+4,True,120,23,Randy Quaid,"{'confidence': -1.9740775e-07, 'final': True}",-0.00
+4,True,120,28,Randy Quaid,"{'confidence': -1.08005e-07, 'final': True}",-0.00
+4,True,120,30,Randy Quaid,"{'confidence': -1.378059125e-07, 'final': True}",-0.00
+4,True,120,30,Randy Quaid,"{'confidence': -1.378059125e-07, 'final': True}",-0.00
+0,False,121,6,Land Rover Defender,"{'confidence': -0.0005567947629, 'final': False}",-0.00
+0,False,121,12,Land Rover Defender,"{'confidence': -0.0006501936947666667, 'final': False}",-0.00
+0,False,121,20,Land Rover Defender,"{'confidence': -0.005009897654333333, 'final': False}",-0.01
+0,False,121,25,Star Fox (video game),"{'confidence': -0.13895147979398334, 'final': False}",-0.14
+0,False,121,25,Star Fox (video game),"{'confidence': -0.050122053281, 'final': False}",-0.05
+1,False,121,7,Starship Enterprise,"{'confidence': -0.1214470626, 'final': False}",-0.12
+1,False,121,13,Star Wars: X-wing (video game),"{'confidence': -0.07734557937633334, 'final': False}",-0.08
+1,False,121,18,Star Wars: X-wing (video game),"{'confidence': -0.20169902081233335, 'final': False}",-0.20
+1,False,121,24,Star Destroyer,"{'confidence': -0.08337367946666667, 'final': False}",-0.08
+1,False,121,29,Starship,"{'confidence': -0.3310412765, 'final': False}",-0.33
+1,False,121,35,TIE fighter,"{'confidence': -0.16040166373333334, 'final': False}",-0.16
+1,False,121,36,TIE fighter,"{'confidence': -0.14012788572666665, 'final': False}",-0.14
+2,False,121,4,TIE fighter,"{'confidence': -0.34242959150023333, 'final': False}",-0.34
+2,False,121,11,Star Wars: TIE fighter,"{'confidence': -0.31211127850000003, 'final': False}",-0.31
+2,False,121,17,TIE fighter,"{'confidence': -0.27961168126526664, 'final': False}",-0.28
+2,False,121,22,TIE fighter,"{'confidence': -0.19913035766666667, 'final': False}",-0.20
+2,False,121,28,TIE fighter,"{'confidence': -0.16574817409833334, 'final': False}",-0.17
+2,False,121,34,TIE fighter,"{'confidence': -0.04653641129653333, 'final': False}",-0.05
+3,False,121,8,TIE fighter,"{'confidence': -0.082324600025, 'final': False}",-0.08
+3,False,121,14,TIE fighter,"{'confidence': -0.010572819679466666, 'final': False}",-0.01
+3,False,121,20,TIE fighter,"{'confidence': -0.19056367724613332, 'final': False}",-0.19
+3,True,121,25,TIE fighter,"{'confidence': -0.0039162423591, 'final': True}",-0.00
+3,True,121,27,TIE fighter,"{'confidence': -0.004174428757883333, 'final': True}",-0.00
+4,False,121,5,TIE fighter,"{'confidence': -0.012307388836666667, 'final': False}",-0.01
+4,True,121,12,TIE fighter,"{'confidence': -0.00888925527855, 'final': True}",-0.01
+4,True,121,17,TIE fighter,"{'confidence': -0.004438375611776667, 'final': True}",-0.00
+4,False,121,22,TIE fighter,"{'confidence': -0.016200763221443332, 'final': False}",-0.02
+4,False,121,26,TIE fighter,"{'confidence': -0.01326747816135, 'final': False}",-0.01
+4,False,121,26,TIE fighter,"{'confidence': -0.01326747816135, 'final': False}",-0.01
+0,False,122,7,Intertitle,"{'confidence': -0.13571939827211, 'final': False}",-0.14
+0,False,122,13,(500) Days of Summer,"{'confidence': -0.12029040791114999, 'final': False}",-0.12
+0,False,122,17,(500) Days of Summer,"{'confidence': -0.21654731779372996, 'final': False}",-0.22
+0,False,122,21,(500) Days of Summer,"{'confidence': -0.027226862426024998, 'final': False}",-0.03
+1,False,122,8,(500) Days of Summer,"{'confidence': -0.07928712430958, 'final': False}",-0.08
+1,False,122,15,500 Days of Summer,"{'confidence': -0.031275637843367496, 'final': False}",-0.03
+1,False,122,21,Eternal Sunshine of the Spotless Mind,"{'confidence': -0.0435560806224225, 'final': False}",-0.04
+1,True,122,28,Eternal Sunshine of the Spotless Mind,"{'confidence': -0.0053422133986575, 'final': True}",-0.01
+2,True,122,7,Up in the Air (2009 film),"{'confidence': -0.0002482560919933334, 'final': True}",-0.00
+2,True,122,12,Up in the Air (2009 film),"{'confidence': -1.514705027e-05, 'final': True}",-0.00
+2,True,122,17,La La Land,"{'confidence': -8.566985833333334e-07, 'final': True}",-0.00
+2,True,122,23,La La Land,"{'confidence': -1.263305835e-05, 'final': True}",-0.00
+3,True,122,7,La La Land,"{'confidence': -2.254873733333333e-06, 'final': True}",-0.00
+3,True,122,11,La La Land,"{'confidence': -6.456243350000001e-07, 'final': True}",-0.00
+3,True,122,19,La La Land,"{'confidence': -5.3388644e-07, 'final': True}",-0.00
+3,True,122,22,La La Land,"{'confidence': -5.140191416666667e-07, 'final': True}",-0.00
+4,True,122,7,La La Land,"{'confidence': -8.641643916666667e-07, 'final': True}",-0.00
+4,True,122,13,La La Land,"{'confidence': -4.345500566666667e-07, 'final': True}",-0.00
+4,True,122,21,La La Land,"{'confidence': -6.729573833333332e-07, 'final': True}",-0.00
+4,True,122,25,La La Land,"{'confidence': -5.537537066666667e-07, 'final': True}",-0.00
+4,True,122,25,La La Land,"{'confidence': -5.537537066666667e-07, 'final': True}",-0.00
+0,False,123,8,Phonetic similarity,"{'confidence': -0.16664203098465, 'final': False}",-0.17
+0,False,123,13,Tupac Shakur,"{'confidence': -0.002476227456306, 'final': False}",-0.00
+0,False,123,18,The Notorious B.I.G.,"{'confidence': -0.1452095271338143, 'final': False}",-0.15
+0,False,123,24,Donut (film),"{'confidence': -0.47157850119999994, 'final': False}",-0.47
+1,False,123,8,Tupac Shakur,"{'confidence': -0.150910888204226, 'final': False}",-0.15
+1,False,123,13,Tupac Shakur,"{'confidence': -0.019202992170399998, 'final': False}",-0.02
+1,False,123,18,The Goonies,"{'confidence': -0.08664316168875, 'final': False}",-0.09
+1,False,123,23,The Goonies,"{'confidence': -0.043028411835, 'final': False}",-0.04
+1,False,123,29,Donut Lord,"{'confidence': -0.24231248023333338, 'final': False}",-0.24
+1,False,123,32,The Matrix,"{'confidence': -0.460584663, 'final': False}",-0.46
+2,False,123,7,The Matrix,"{'confidence': -0.21652994, 'final': False}",-0.22
+2,False,123,13,The Matrix,"{'confidence': -0.38964097, 'final': False}",-0.39
+2,False,123,17,Better Luck Tomorrow,"{'confidence': -0.011931238142993334, 'final': False}",-0.01
+2,False,123,20,Better Luck Tomorrow,"{'confidence': -0.18551397787088333, 'final': False}",-0.19
+3,True,123,7,Better Luck Tomorrow,"{'confidence': -0.0048348540750999995, 'final': True}",-0.00
+3,True,123,13,Swiss Army Man,"{'confidence': -0.0006916019344125, 'final': True}",-0.00
+3,False,123,18,Swiss Army Man,"{'confidence': -0.0141244092090825, 'final': False}",-0.01
+3,True,123,25,Everything Everywhere All at Once,"{'confidence': -0.00230879135688, 'final': True}",-0.00
+3,True,123,29,Everything Everywhere All at Once,"{'confidence': -0.0047592468523900006, 'final': True}",-0.00
+3,True,123,29,Everything Everywhere All at Once,"{'confidence': -0.0047592468523900006, 'final': True}",-0.00
+0,False,124,6,Jesse Dart Spaceketeers,"{'confidence': -0.0019040118624757143, 'final': False}",-0.00
+0,False,124,15,Link (The Legend of Zelda),"{'confidence': -0.061352853392235715, 'final': False}",-0.06
+0,False,124,21,Mulan (1998 film),"{'confidence': -0.08953917972166285, 'final': False}",-0.09
+0,True,124,29,Mulan (1998 film),"{'confidence': -0.002736805397285714, 'final': True}",-0.00
+0,False,124,35,Mulan (1998 film),"{'confidence': -0.1038134404304143, 'final': False}",-0.10
+1,False,124,8,List of Disney theatrical animated features,"{'confidence': -0.2614401197337333, 'final': False}",-0.26
+1,False,124,14,Mulan (1998 film),"{'confidence': -0.014523876926364285, 'final': False}",-0.01
+1,False,124,16,Mulan (1998 film),"{'confidence': -0.020885426751114287, 'final': False}",-0.02
+2,False,124,9,Spirited Away,"{'confidence': -0.026853805054882503, 'final': False}",-0.03
+2,False,124,14,Spirited Away,"{'confidence': -0.03070442492651, 'final': False}",-0.03
+2,False,124,20,Spirited Away,"{'confidence': -0.0139016771164125, 'final': False}",-0.01
+2,True,124,26,Spirited Away,"{'confidence': -0.001303378084075, 'final': True}",-0.00
+2,True,124,33,Spirited Away,"{'confidence': -2.7144839412500002e-05, 'final': True}",-0.00
+2,True,124,36,Spirited Away,"{'confidence': -0.00014690418498749998, 'final': True}",-0.00
+3,True,124,7,Spirited Away,"{'confidence': -7.761658698750001e-05, 'final': True}",-0.00
+3,True,124,14,Spirited Away,"{'confidence': -1.3670469875e-06, 'final': True}",-0.00
+3,True,124,21,Spirited Away,"{'confidence': -2.570096e-07, 'final': True}",-0.00
+4,True,124,7,Spirited Away,"{'confidence': -6.630237125e-07, 'final': True}",-0.00
+4,True,124,12,Spirited Away,"{'confidence': -1.862090825e-07, 'final': True}",-0.00
+4,True,124,20,Spirited Away,"{'confidence': -1.26607245e-07, 'final': True}",-0.00
+4,True,124,20,Spirited Away,"{'confidence': -1.26607245e-07, 'final': True}",-0.00
