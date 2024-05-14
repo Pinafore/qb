@@ -1,108 +1,108 @@
-word,question,evidence,sentence,final,weight,page
-7,140,"{'confidence': -2.935296915e-06, 'final': False}",0,False,-0.00,Sydney
-13,140,"{'confidence': -3.1901789099999995e-05, 'final': False}",0,False,-0.00,Rio de Janeiro
-21,140,"{'confidence': -0.0027656237313325, 'final': False}",0,False,-0.00,Bogotá
-28,140,"{'confidence': -0.0179709256015, 'final': False}",0,False,-0.02,Bogotá
-34,140,"{'confidence': -0.084420443114825, 'final': False}",0,False,-0.08,Bogotá
-5,140,"{'confidence': -0.056259182681060005, 'final': False}",1,False,-0.06,Bogotá
-10,140,"{'confidence': -0.0010301978, 'final': True}",1,True,-0.00,Baltimore
-18,140,"{'confidence': -0.000895396885, 'final': True}",1,True,-0.00,Baltimore
-20,140,"{'confidence': -0.00066911235, 'final': True}",1,True,-0.00,Baltimore
-8,140,"{'confidence': -0.39046964755033337, 'final': False}",2,False,-0.39,Cape Town
-13,140,"{'confidence': -0.080928315788, 'final': False}",2,False,-0.08,"Wellington, New Zealand"
-18,140,"{'confidence': -0.0018343694560460002, 'final': True}",2,True,-0.00,"Wellington, New Zealand"
-18,140,"{'confidence': -0.000425363667386, 'final': True}",2,True,-0.00,"Wellington, New Zealand"
-8,140,"{'confidence': -0.013759423092780002, 'final': False}",3,False,-0.01,"Wellington, New Zealand"
-13,140,"{'confidence': -0.008062434855919998, 'final': True}",3,True,-0.01,"Wellington, New Zealand"
-18,140,"{'confidence': -3.71012065e-06, 'final': True}",3,True,-0.00,"Wellington, New Zealand"
-6,140,"{'confidence': -4.4253425e-06, 'final': True}",4,True,-0.00,"Wellington, New Zealand"
-12,140,"{'confidence': -3.650519e-06, 'final': True}",4,True,-0.00,"Wellington, New Zealand"
-19,140,"{'confidence': -0.0051257524630800005, 'final': True}",4,True,-0.01,"Wellington, New Zealand"
-22,140,"{'confidence': -1.2664457e-06, 'final': True}",4,True,-0.00,"Wellington, New Zealand"
-7,140,"{'confidence': -0.0008168625904000001, 'final': True}",5,True,-0.00,"Wellington, New Zealand"
-9,140,"{'confidence': -0.08551372531913001, 'final': False}",5,False,-0.09,"Wellington, New Zealand"
-9,140,"{'confidence': -3.173704175e-06, 'final': True}",5,True,-0.00,"Wellington, New Zealand"
-7,141,"{'confidence': -0.00032283671, 'final': False}",0,False,-0.00,Shanghai
-12,141,"{'confidence': -0.0151127603103, 'final': False}",0,False,-0.02,Shanghai
-18,141,"{'confidence': -0.00107286965, 'final': False}",0,False,-0.00,Shanghai
-24,141,"{'confidence': -7.7193671825e-05, 'final': True}",0,True,-0.00,Shanghai
-24,141,"{'confidence': -2.284230732e-05, 'final': True}",0,True,-0.00,Shanghai
-7,141,"{'confidence': -6.6306104e-06, 'final': True}",1,True,-0.00,Shanghai
-14,141,"{'confidence': -5.3193701e-06, 'final': True}",1,True,-0.00,Shanghai
-20,141,"{'confidence': -3.5909169499999997e-06, 'final': True}",1,True,-0.00,Shanghai
-25,141,"{'confidence': -7.882249000000001e-06, 'final': True}",1,True,-0.00,Shanghai
-31,141,"{'confidence': -2.2484698499999998e-05, 'final': True}",1,True,-0.00,Shanghai
-32,141,"{'confidence': -5.7961848e-06, 'final': True}",1,True,-0.00,Shanghai
-6,141,"{'confidence': -1.24715898e-05, 'final': True}",2,True,-0.00,Shanghai
-15,141,"{'confidence': -7.6438415e-06, 'final': True}",2,True,-0.00,Shanghai
-21,141,"{'confidence': -9.49149875e-06, 'final': True}",2,True,-0.00,Shanghai
-26,141,"{'confidence': -4.1140071649999995e-05, 'final': True}",2,True,-0.00,Shanghai
-28,141,"{'confidence': -4.0067238000000006e-05, 'final': True}",2,True,-0.00,Shanghai
-7,141,"{'confidence': -6.704273649999999e-07, 'final': True}",3,True,-0.00,Shanghai
-15,141,"{'confidence': -5.51223645e-07, 'final': True}",3,True,-0.00,Shanghai
-21,141,"{'confidence': -7.89631e-07, 'final': True}",3,True,-0.00,Shanghai
-27,141,"{'confidence': -1.147242e-06, 'final': True}",3,True,-0.00,Shanghai
-27,141,"{'confidence': -9.0883464e-07, 'final': True}",3,True,-0.00,Shanghai
-7,141,"{'confidence': -4.32019975e-07, 'final': True}",4,True,-0.00,Shanghai
-12,141,"{'confidence': 0.0, 'final': True}",4,True,0.00,Shanghai
-12,141,"{'confidence': 0.0, 'final': True}",4,True,0.00,Shanghai
-6,142,"{'confidence': -1.4452511375e-06, 'final': False}",0,False,-0.00,Charles O'Rear
-11,142,"{'confidence': -0.0009071759, 'final': False}",0,False,-0.00,California
-15,142,"{'confidence': -0.0057299254, 'final': False}",0,False,-0.01,California
-7,142,"{'confidence': -0.0019397038, 'final': True}",1,True,-0.00,California
-14,142,"{'confidence': -8.89548e-06, 'final': True}",1,True,-0.00,California
-19,142,"{'confidence': -1.3902034e-05, 'final': True}",1,True,-0.00,California
-26,142,"{'confidence': -1.735894e-05, 'final': True}",1,True,-0.00,California
-31,142,"{'confidence': -0.08315593, 'final': False}",1,False,-0.08,California
-8,142,"{'confidence': -1.504853e-06, 'final': True}",2,True,-0.00,California
-15,142,"{'confidence': -4.3202e-07, 'final': True}",2,True,-0.00,California
-6,142,"{'confidence': -1.60477e-05, 'final': True}",3,True,-0.00,California
-15,142,"{'confidence': -7.89631e-07, 'final': True}",3,True,-0.00,California
-20,142,"{'confidence': -3.5313153e-06, 'final': True}",3,True,-0.00,California
-23,142,"{'confidence': -4.4849444e-06, 'final': True}",3,True,-0.00,California
-26,142,"{'confidence': -1.147242e-06, 'final': True}",3,True,-0.00,California
-26,142,"{'confidence': -1.147242e-06, 'final': True}",3,True,-0.00,California
-8,143,"{'confidence': -0.03728282677202, 'final': False}",0,False,-0.04,List of U.S. states by population density
-15,143,"{'confidence': -0.07670636, 'final': False}",0,False,-0.08,Arizona
-21,143,"{'confidence': -0.392770873621, 'final': False}",0,False,-0.39,Montana
-8,143,"{'confidence': -1.98166765e-06, 'final': True}",1,True,-0.00,Utah
-16,143,"{'confidence': -3.78619725e-05, 'final': True}",1,True,-0.00,Utah
-17,143,"{'confidence': -5.080962850000001e-06, 'final': True}",1,True,-0.00,Utah
-8,143,"{'confidence': -2.6968896e-06, 'final': True}",2,True,-0.00,Utah
-15,143,"{'confidence': -3.91732107e-05, 'final': True}",2,True,-0.00,Utah
-22,143,"{'confidence': -0.038475435, 'final': False}",2,False,-0.04,Utah
-26,143,"{'confidence': -0.051651592971499995, 'final': False}",2,False,-0.05,Utah
-7,143,"{'confidence': -0.05181985725035, 'final': False}",3,False,-0.05,Utah
-14,143,"{'confidence': -0.00020875968, 'final': True}",3,True,-0.00,Montana
-15,143,"{'confidence': -9.5734975e-06, 'final': True}",3,True,-0.00,Montana
-15,143,"{'confidence': -9.5734975e-06, 'final': True}",3,True,-0.00,Montana
-8,144,"{'confidence': -0.15831678105816252, 'final': False}",0,False,-0.16,Hippocampus
-13,144,"{'confidence': -0.0022624442225, 'final': False}",0,False,-0.00,Everglades
-19,144,"{'confidence': -0.14267439521643335, 'final': False}",0,False,-0.14,Everglades
-19,144,"{'confidence': -0.014641392815233334, 'final': False}",0,False,-0.01,Everglades
-7,144,"{'confidence': -0.06831024760544334, 'final': False}",1,False,-0.07,Amazon rainforest
-13,144,"{'confidence': -0.000150930887, 'final': True}",1,True,-0.00,Everglades
-18,144,"{'confidence': -6.764745833333333e-06, 'final': True}",1,True,-0.00,Everglades
-7,144,"{'confidence': -8.8706773e-06, 'final': True}",2,True,-0.00,Everglades
-13,144,"{'confidence': -8.950145883333333e-06, 'final': True}",2,True,-0.00,Everglades
-18,144,"{'confidence': -3.5065123333333333e-06, 'final': True}",2,True,-0.00,Everglades
-23,144,"{'confidence': -1.1637164883333334e-05, 'final': True}",2,True,-0.00,Everglades
-5,144,"{'confidence': -8.314393433333333e-06, 'final': True}",3,True,-0.00,Everglades
-10,144,"{'confidence': -8.72667e-06, 'final': True}",3,True,-0.00,Everglades
-16,144,"{'confidence': -1.7979264433333334e-06, 'final': True}",3,True,-0.00,Everglades
-24,144,"{'confidence': -9.069350233333333e-06, 'final': True}",3,True,-0.00,Everglades
-25,144,"{'confidence': -7.009673755e-05, 'final': True}",3,True,-0.00,Everglades
-6,144,"{'confidence': -7.021593666666666e-05, 'final': True}",4,True,-0.00,Everglades
-12,144,"{'confidence': -0.00010910506, 'final': True}",4,True,-0.00,Everglades
-18,144,"{'confidence': -6.248196550000001e-06, 'final': True}",4,True,-0.00,Everglades
-23,144,"{'confidence': -2.7267775e-05, 'final': True}",4,True,-0.00,Everglades
-6,144,"{'confidence': -1.0951805333333334e-05, 'final': True}",5,True,-0.00,Everglades
-13,144,"{'confidence': -7.00315311e-06, 'final': True}",5,True,-0.00,Everglades
-17,144,"{'confidence': -3.8433185443333333e-05, 'final': True}",5,True,-0.00,Everglades
-24,144,"{'confidence': -8.47333155e-06, 'final': True}",5,True,-0.00,Everglades
-28,144,"{'confidence': -1.8049358883333336e-05, 'final': True}",5,True,-0.00,Everglades
-7,144,"{'confidence': -9.2526889796e-05, 'final': True}",6,True,-0.00,Everglades
-14,144,"{'confidence': -0.000165862455796, 'final': True}",6,True,-0.00,Everglades
-20,144,"{'confidence': -0.06773328434517, 'final': False}",6,False,-0.07,Everglades
-22,144,"{'confidence': -0.07846682256326601, 'final': False}",6,False,-0.08,Everglades
-22,144,"{'confidence': -0.07846682256326601, 'final': False}",6,False,-0.08,Everglades
+evidence,final,page,question,sentence,weight,word
+"{'confidence': -2.935296915e-06, 'final': False}",False,Sydney,140,0,-0.00,7
+"{'confidence': -3.1901789099999995e-05, 'final': True}",True,Rio de Janeiro,140,0,-0.00,13
+"{'confidence': -0.0027656237313325, 'final': True}",True,Bogotá,140,0,-0.00,21
+"{'confidence': -0.0179709256015, 'final': False}",False,Bogotá,140,0,-0.02,28
+"{'confidence': -0.084420443114825, 'final': False}",False,Bogotá,140,0,-0.08,34
+"{'confidence': -0.056259182681060005, 'final': False}",False,Bogotá,140,1,-0.06,5
+"{'confidence': -0.0010301978, 'final': True}",True,Baltimore,140,1,-0.00,10
+"{'confidence': -0.000895396885, 'final': True}",True,Baltimore,140,1,-0.00,18
+"{'confidence': -0.00066911235, 'final': True}",True,Baltimore,140,1,-0.00,20
+"{'confidence': -0.39046964755033337, 'final': False}",False,Cape Town,140,2,-0.39,8
+"{'confidence': -0.080928315788, 'final': False}",False,"Wellington, New Zealand",140,2,-0.08,13
+"{'confidence': -0.0018343694560460002, 'final': True}",True,"Wellington, New Zealand",140,2,-0.00,18
+"{'confidence': -0.000425363667386, 'final': True}",True,"Wellington, New Zealand",140,2,-0.00,18
+"{'confidence': -0.013759423092780002, 'final': False}",False,"Wellington, New Zealand",140,3,-0.01,8
+"{'confidence': -0.008062434855919998, 'final': False}",False,"Wellington, New Zealand",140,3,-0.01,13
+"{'confidence': -3.71012065e-06, 'final': True}",True,"Wellington, New Zealand",140,3,-0.00,18
+"{'confidence': -4.4253425e-06, 'final': True}",True,"Wellington, New Zealand",140,4,-0.00,6
+"{'confidence': -3.650519e-06, 'final': True}",True,"Wellington, New Zealand",140,4,-0.00,12
+"{'confidence': -0.0051257524630800005, 'final': False}",False,"Wellington, New Zealand",140,4,-0.01,19
+"{'confidence': -1.2664457e-06, 'final': True}",True,"Wellington, New Zealand",140,4,-0.00,22
+"{'confidence': -0.0008168625904000001, 'final': True}",True,"Wellington, New Zealand",140,5,-0.00,7
+"{'confidence': -0.08551372531913001, 'final': False}",False,"Wellington, New Zealand",140,5,-0.09,9
+"{'confidence': -3.173704175e-06, 'final': True}",True,"Wellington, New Zealand",140,5,-0.00,9
+"{'confidence': -0.00032283671, 'final': False}",False,Shanghai,141,0,-0.00,7
+"{'confidence': -0.0151127603103, 'final': False}",False,Shanghai,141,0,-0.02,12
+"{'confidence': -0.00107286965, 'final': True}",True,Shanghai,141,0,-0.00,18
+"{'confidence': -7.7193671825e-05, 'final': True}",True,Shanghai,141,0,-0.00,24
+"{'confidence': -2.284230732e-05, 'final': True}",True,Shanghai,141,0,-0.00,24
+"{'confidence': -6.6306104e-06, 'final': True}",True,Shanghai,141,1,-0.00,7
+"{'confidence': -5.3193701e-06, 'final': True}",True,Shanghai,141,1,-0.00,14
+"{'confidence': -3.5909169499999997e-06, 'final': True}",True,Shanghai,141,1,-0.00,20
+"{'confidence': -7.882249000000001e-06, 'final': True}",True,Shanghai,141,1,-0.00,25
+"{'confidence': -2.2484698499999998e-05, 'final': True}",True,Shanghai,141,1,-0.00,31
+"{'confidence': -5.7961848e-06, 'final': True}",True,Shanghai,141,1,-0.00,32
+"{'confidence': -1.24715898e-05, 'final': True}",True,Shanghai,141,2,-0.00,6
+"{'confidence': -7.6438415e-06, 'final': True}",True,Shanghai,141,2,-0.00,15
+"{'confidence': -9.49149875e-06, 'final': True}",True,Shanghai,141,2,-0.00,21
+"{'confidence': -4.1140071649999995e-05, 'final': True}",True,Shanghai,141,2,-0.00,26
+"{'confidence': -4.0067238000000006e-05, 'final': True}",True,Shanghai,141,2,-0.00,28
+"{'confidence': -6.704273649999999e-07, 'final': True}",True,Shanghai,141,3,-0.00,7
+"{'confidence': -5.51223645e-07, 'final': True}",True,Shanghai,141,3,-0.00,15
+"{'confidence': -7.89631e-07, 'final': True}",True,Shanghai,141,3,-0.00,21
+"{'confidence': -1.147242e-06, 'final': True}",True,Shanghai,141,3,-0.00,27
+"{'confidence': -9.0883464e-07, 'final': True}",True,Shanghai,141,3,-0.00,27
+"{'confidence': -4.32019975e-07, 'final': True}",True,Shanghai,141,4,-0.00,7
+"{'confidence': 0.0, 'final': True}",True,Shanghai,141,4,0.00,12
+"{'confidence': 0.0, 'final': True}",True,Shanghai,141,4,0.00,12
+"{'confidence': -1.4452511375e-06, 'final': False}",False,Charles O'Rear,142,0,-0.00,6
+"{'confidence': -0.0009071759, 'final': True}",True,California,142,0,-0.00,11
+"{'confidence': -0.0057299254, 'final': False}",False,California,142,0,-0.01,15
+"{'confidence': -0.0019397038, 'final': True}",True,California,142,1,-0.00,7
+"{'confidence': -8.89548e-06, 'final': True}",True,California,142,1,-0.00,14
+"{'confidence': -1.3902034e-05, 'final': True}",True,California,142,1,-0.00,19
+"{'confidence': -1.735894e-05, 'final': True}",True,California,142,1,-0.00,26
+"{'confidence': -0.08315593, 'final': False}",False,California,142,1,-0.08,31
+"{'confidence': -1.504853e-06, 'final': True}",True,California,142,2,-0.00,8
+"{'confidence': -4.3202e-07, 'final': True}",True,California,142,2,-0.00,15
+"{'confidence': -1.60477e-05, 'final': True}",True,California,142,3,-0.00,6
+"{'confidence': -7.89631e-07, 'final': True}",True,California,142,3,-0.00,15
+"{'confidence': -3.5313153e-06, 'final': True}",True,California,142,3,-0.00,20
+"{'confidence': -4.4849444e-06, 'final': True}",True,California,142,3,-0.00,23
+"{'confidence': -1.147242e-06, 'final': True}",True,California,142,3,-0.00,26
+"{'confidence': -1.147242e-06, 'final': True}",True,California,142,3,-0.00,26
+"{'confidence': -0.03728282677202, 'final': False}",False,List of U.S. states by population density,143,0,-0.04,8
+"{'confidence': -0.07670636, 'final': False}",False,Arizona,143,0,-0.08,15
+"{'confidence': -0.392770873621, 'final': False}",False,Montana,143,0,-0.39,21
+"{'confidence': -1.98166765e-06, 'final': True}",True,Utah,143,1,-0.00,8
+"{'confidence': -3.78619725e-05, 'final': True}",True,Utah,143,1,-0.00,16
+"{'confidence': -5.080962850000001e-06, 'final': True}",True,Utah,143,1,-0.00,17
+"{'confidence': -2.6968896e-06, 'final': True}",True,Utah,143,2,-0.00,8
+"{'confidence': -3.91732107e-05, 'final': True}",True,Utah,143,2,-0.00,15
+"{'confidence': -0.038475435, 'final': False}",False,Utah,143,2,-0.04,22
+"{'confidence': -0.051651592971499995, 'final': False}",False,Utah,143,2,-0.05,26
+"{'confidence': -0.05181985725035, 'final': False}",False,Utah,143,3,-0.05,7
+"{'confidence': -0.00020875968, 'final': True}",True,Montana,143,3,-0.00,14
+"{'confidence': -9.5734975e-06, 'final': True}",True,Montana,143,3,-0.00,15
+"{'confidence': -9.5734975e-06, 'final': True}",True,Montana,143,3,-0.00,15
+"{'confidence': -0.15831678105816252, 'final': False}",False,Hippocampus,144,0,-0.16,8
+"{'confidence': -0.0022624442225, 'final': True}",True,Everglades,144,0,-0.00,13
+"{'confidence': -0.14267439521643335, 'final': False}",False,Everglades,144,0,-0.14,19
+"{'confidence': -0.014641392815233334, 'final': False}",False,Everglades,144,0,-0.01,19
+"{'confidence': -0.06831024760544334, 'final': False}",False,Amazon rainforest,144,1,-0.07,7
+"{'confidence': -0.000150930887, 'final': True}",True,Everglades,144,1,-0.00,13
+"{'confidence': -6.764745833333333e-06, 'final': True}",True,Everglades,144,1,-0.00,18
+"{'confidence': -8.8706773e-06, 'final': True}",True,Everglades,144,2,-0.00,7
+"{'confidence': -8.950145883333333e-06, 'final': True}",True,Everglades,144,2,-0.00,13
+"{'confidence': -3.5065123333333333e-06, 'final': True}",True,Everglades,144,2,-0.00,18
+"{'confidence': -1.1637164883333334e-05, 'final': True}",True,Everglades,144,2,-0.00,23
+"{'confidence': -8.314393433333333e-06, 'final': True}",True,Everglades,144,3,-0.00,5
+"{'confidence': -8.72667e-06, 'final': True}",True,Everglades,144,3,-0.00,10
+"{'confidence': -1.7979264433333334e-06, 'final': True}",True,Everglades,144,3,-0.00,16
+"{'confidence': -9.069350233333333e-06, 'final': True}",True,Everglades,144,3,-0.00,24
+"{'confidence': -7.009673755e-05, 'final': True}",True,Everglades,144,3,-0.00,25
+"{'confidence': -7.021593666666666e-05, 'final': True}",True,Everglades,144,4,-0.00,6
+"{'confidence': -0.00010910506, 'final': True}",True,Everglades,144,4,-0.00,12
+"{'confidence': -6.248196550000001e-06, 'final': True}",True,Everglades,144,4,-0.00,18
+"{'confidence': -2.7267775e-05, 'final': True}",True,Everglades,144,4,-0.00,23
+"{'confidence': -1.0951805333333334e-05, 'final': True}",True,Everglades,144,5,-0.00,6
+"{'confidence': -7.00315311e-06, 'final': True}",True,Everglades,144,5,-0.00,13
+"{'confidence': -3.8433185443333333e-05, 'final': True}",True,Everglades,144,5,-0.00,17
+"{'confidence': -8.47333155e-06, 'final': True}",True,Everglades,144,5,-0.00,24
+"{'confidence': -1.8049358883333336e-05, 'final': True}",True,Everglades,144,5,-0.00,28
+"{'confidence': -9.2526889796e-05, 'final': True}",True,Everglades,144,6,-0.00,7
+"{'confidence': -0.000165862455796, 'final': True}",True,Everglades,144,6,-0.00,14
+"{'confidence': -0.06773328434517, 'final': False}",False,Everglades,144,6,-0.07,20
+"{'confidence': -0.07846682256326601, 'final': False}",False,Everglades,144,6,-0.08,22
+"{'confidence': -0.07846682256326601, 'final': False}",False,Everglades,144,6,-0.08,22

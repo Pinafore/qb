@@ -1,141 +1,141 @@
-evidence,final,weight,page,sentence,word,question
-"{'confidence': -1.4301908666666668e-05, 'final': False}",False,-0.00,Selmer Bringsjord,0,4,170
-"{'confidence': -0.0017582664800000001, 'final': False}",False,-0.00,Turing test,0,10,170
-"{'confidence': -0.0008082330013333334, 'final': False}",False,-0.00,Turing test,0,15,170
-"{'confidence': -0.00030888859466666666, 'final': True}",True,-0.00,Turing test,0,18,170
-"{'confidence': -0.004977865832833333, 'final': True}",True,-0.00,Turing test,1,5,170
-"{'confidence': -2.8102202000000002e-05, 'final': True}",True,-0.00,Turing test,1,9,170
-"{'confidence': -0.00013667106553333334, 'final': True}",True,-0.00,Turing test,1,13,170
-"{'confidence': -8.870677433333333e-06, 'final': True}",True,-0.00,Turing test,1,15,170
-"{'confidence': -2.672086566666666e-06, 'final': True}",True,-0.00,Turing test,2,6,170
-"{'confidence': -1.6787227333333334e-06, 'final': True}",True,-0.00,Turing test,2,10,170
-"{'confidence': -4.5793451e-06, 'final': True}",True,-0.00,Turing test,3,6,170
-"{'confidence': -1.8773955333333333e-06, 'final': True}",True,-0.00,Turing test,3,13,170
-"{'confidence': -2.7912904333333335e-06, 'final': True}",True,-0.00,Turing test,3,15,170
-"{'confidence': -6.645541899999999e-06, 'final': True}",True,-0.00,Turing test,4,5,170
-"{'confidence': -6.0097893333333335e-06, 'final': True}",True,-0.00,Turing test,4,11,170
-"{'confidence': -8.354127766666667e-06, 'final': True}",True,-0.00,Turing test,4,18,170
-"{'confidence': -4.857487133333333e-06, 'final': True}",True,-0.00,Turing test,4,23,170
-"{'confidence': -9.0693502e-06, 'final': True}",True,-0.00,Turing test,4,28,170
-"{'confidence': -2.129266155e-05, 'final': True}",True,-0.00,Turing test,4,34,170
-"{'confidence': -7.896310433333333e-07, 'final': True}",True,-0.00,Turing test,4,41,170
-"{'confidence': -9.8830375e-07, 'final': True}",True,-0.00,Turing test,4,43,170
-"{'confidence': -4.866861e-07, 'final': True}",True,-0.00,Turing test,4,43,170
-"{'confidence': -9.034312786e-05, 'final': False}",False,-0.00,Three Laws Lethal,0,7,171
-"{'confidence': -0.021178277333333332, 'final': False}",False,-0.02,Artificial intelligence,0,12,171
-"{'confidence': -0.1625716145, 'final': False}",False,-0.16,Self-driving car,0,17,171
-"{'confidence': -0.27347648760544335, 'final': False}",False,-0.27,Self-driving car,0,18,171
-"{'confidence': -0.26346356901333334, 'final': False}",False,-0.26,Self-driving car,1,7,171
-"{'confidence': -0.2632657032103333, 'final': False}",False,-0.26,Self-driving car,1,13,171
-"{'confidence': -0.3878007556604333, 'final': False}",False,-0.39,Self-driving car,1,19,171
-"{'confidence': -0.10759593400666667, 'final': False}",False,-0.11,Self-driving car,1,25,171
-"{'confidence': -0.26597116374121665, 'final': False}",False,-0.27,Self-driving car,1,31,171
-"{'confidence': -0.22733817020421665, 'final': False}",False,-0.23,Self-driving car,1,31,171
-"{'confidence': -0.2156770337412167, 'final': False}",False,-0.22,Self-driving car,2,8,171
-"{'confidence': -0.4983978333888333, 'final': False}",False,-0.50,Self-driving car,2,14,171
-"{'confidence': -0.203963411874, 'final': False}",False,-0.20,Artificial intelligence in fiction,2,20,171
-"{'confidence': -0.5140203, 'final': False}",False,-0.51,Robot,2,26,171
-"{'confidence': -0.18104418441732, 'final': False}",False,-0.18,Robots,2,33,171
-"{'confidence': -0.23141523, 'final': False}",False,-0.23,Robot,2,40,171
-"{'confidence': -0.2578207, 'final': False}",False,-0.26,Robot,2,45,171
-"{'confidence': -0.11961892, 'final': False}",False,-0.12,Robot,2,45,171
-"{'confidence': -0.143976516408165, 'final': False}",False,-0.14,Robots,3,8,171
-"{'confidence': -0.11473994180632499, 'final': False}",False,-0.11,Robots,3,15,171
-"{'confidence': -0.149785746806325, 'final': False}",False,-0.15,Robots,3,21,171
-"{'confidence': -0.08075604, 'final': False}",False,-0.08,Robot,3,28,171
-"{'confidence': -0.7240508, 'final': False}",False,-0.72,Robot,3,34,171
-"{'confidence': -0.025728492, 'final': False}",False,-0.03,Robot,3,34,171
-"{'confidence': -0.25131465441732, 'final': False}",False,-0.25,Robots,4,5,171
-"{'confidence': -0.07518843453754999, 'final': False}",False,-0.08,Self-driving car,4,10,171
-"{'confidence': -0.11619919333333333, 'final': False}",False,-0.12,Self-driving car,4,16,171
-"{'confidence': -0.08573290666666666, 'final': False}",False,-0.09,Self-driving car,4,16,171
-"{'confidence': -0.1497053678775, 'final': False}",False,-0.15,Automobile,5,6,171
-"{'confidence': -0.31942350521365, 'final': False}",False,-0.32,Automobile,5,12,171
-"{'confidence': -0.10722781255099999, 'final': False}",False,-0.11,Self-driving car,5,17,171
-"{'confidence': -0.13855976920266666, 'final': False}",False,-0.14,Self-driving car,5,23,171
-"{'confidence': -0.02697905520421667, 'final': False}",False,-0.03,Self-driving car,5,24,171
-"{'confidence': -0.04425367363596666, 'final': False}",False,-0.04,Self-driving car,5,24,171
-"{'confidence': -0.36955945, 'final': False}",False,-0.37,Homonym,0,5,172
-"{'confidence': -0.18305673698310834, 'final': False}",False,-0.18,List of films considered the best,1,8,172
-"{'confidence': -4.6180856825e-05, 'final': False}",False,-0.00,Kazuo Ishiguro,1,15,172
-"{'confidence': -0.11687934371098334, 'final': False}",False,-0.12,Orson Welles filmography,1,22,172
-"{'confidence': -0.1669796244478883, 'final': False}",False,-0.17,Orson Welles filmography,1,28,172
-"{'confidence': -0.21744989545527502, 'final': False}",False,-0.22,Orson Welles filmography,1,33,172
-"{'confidence': -0.11545438672620001, 'final': False}",False,-0.12,Transformer,2,2,172
-"{'confidence': -0.119010812404, 'final': False}",False,-0.12,Transformer,3,6,172
-"{'confidence': -0.11145593774787667, 'final': False}",False,-0.11,Unicron,3,11,172
-"{'confidence': -0.27738110650000003, 'final': False}",False,-0.28,Galactus,3,20,172
-"{'confidence': -0.18472480258274998, 'final': False}",False,-0.18,Transformer,3,25,172
-"{'confidence': -0.2664616054165, 'final': False}",False,-0.27,Transformer,3,28,172
-"{'confidence': -0.019633558085500002, 'final': False}",False,-0.02,Transformer,4,6,172
-"{'confidence': -0.006255564132916666, 'final': True}",True,-0.01,Transformer,4,11,172
-"{'confidence': -0.01696759382155, 'final': False}",False,-0.02,Transformer,4,18,172
-"{'confidence': -0.004806970184725001, 'final': True}",True,-0.00,Transformer,4,24,172
-"{'confidence': -0.00025672878410666665, 'final': True}",True,-0.00,Transformer,4,29,172
-"{'confidence': -0.0005334483876633334, 'final': True}",True,-0.00,Transformer,4,36,172
-"{'confidence': -3.799981777333333e-05, 'final': True}",True,-0.00,Transformer,4,39,172
-"{'confidence': -0.009570025, 'final': True}",True,-0.01,Transformer,5,6,172
-"{'confidence': -0.0010710388, 'final': True}",True,-0.00,Transformer,5,13,172
-"{'confidence': -0.0017895402, 'final': True}",True,-0.00,Transformer,5,17,172
-"{'confidence': -0.00052741496, 'final': True}",True,-0.00,Transformer,5,23,172
-"{'confidence': -0.0017516994, 'final': True}",True,-0.00,Transformer,5,23,172
-"{'confidence': -5.0497558e-05, 'final': True}",True,-0.00,Transformer,6,7,172
-"{'confidence': -0.33983797, 'final': False}",False,-0.34,Transformers,6,14,172
-"{'confidence': -0.00068467576, 'final': True}",True,-0.00,Transformer,6,21,172
-"{'confidence': -0.00011486754, 'final': True}",True,-0.00,Transformer,6,26,172
-"{'confidence': -0.0001786305, 'final': True}",True,-0.00,Transformer,6,32,172
-"{'confidence': -1.1398757e-05, 'final': True}",True,-0.00,Transformer,6,36,172
-"{'confidence': -1.1398757e-05, 'final': True}",True,-0.00,Transformer,6,36,172
-"{'confidence': -0.0032355827, 'final': False}",False,-0.00,None,0,3,173
-"{'confidence': -0.0038517368136500004, 'final': False}",False,-0.00,2018,1,7,173
-"{'confidence': -0.00034223020421666664, 'final': False}",False,-0.00,ArXiv,1,14,173
-"{'confidence': -0.19963211674720002, 'final': False}",False,-0.20,ArXiv,1,20,173
-"{'confidence': -0.080102596340328, 'final': False}",False,-0.08,Bert and Ernie,1,25,173
-"{'confidence': -0.017375777184677272, 'final': False}",False,-0.02,"BERT (language model), Transformer (machine learning model)",1,34,173
-"{'confidence': -0.09611344242433285, 'final': False}",False,-0.10,"BERT (language model), Knowledge Graph",1,39,173
-"{'confidence': -0.12745923904177778, 'final': False}",False,-0.13,"BERT (language model), Knowledge Graph Embeddings",1,43,173
-"{'confidence': -0.16261644164040556, 'final': False}",False,-0.16,"BERT (language model), Knowledge Graph Embedding",1,43,173
-"{'confidence': -0.2029177296722222, 'final': False}",False,-0.20,"BERT (language model), Knowledge Graph Embedding",2,7,173
-"{'confidence': -0.038194552787680004, 'final': False}",False,-0.04,Bert and Ernie,2,14,173
-"{'confidence': -0.139667733826928, 'final': False}",False,-0.14,Bert and Ernie,2,20,173
-"{'confidence': -0.03980330712546, 'final': False}",False,-0.04,Bert and Ernie,2,25,173
-"{'confidence': -0.05058118868546, 'final': False}",False,-0.05,Bert and Ernie,2,33,173
-"{'confidence': -0.10757979560121445, 'final': False}",False,-0.11,George Bailey (It's a Wonderful Life),2,36,173
-"{'confidence': -0.4099953058108, 'final': False}",False,-0.41,List of artificial intelligence projects,3,7,173
-"{'confidence': -0.5125638423914, 'final': False}",False,-0.51,List of sketch comedy groups,3,13,173
-"{'confidence': -0.028097918691266, 'final': False}",False,-0.03,Bert and Ernie,3,20,173
-"{'confidence': -0.007688592427259999, 'final': True}",True,-0.01,Bert and Ernie,3,25,173
-"{'confidence': -0.0055697997262, 'final': True}",True,-0.01,Bert and Ernie,3,31,173
-"{'confidence': -3.99838956e-05, 'final': True}",True,-0.00,Bert and Ernie,4,7,173
-"{'confidence': -0.0016322348542659997, 'final': True}",True,-0.00,Bert and Ernie,4,13,173
-"{'confidence': -0.001064463544266, 'final': True}",True,-0.00,Bert and Ernie,4,18,173
-"{'confidence': -0.0011902731854600002, 'final': True}",True,-0.00,Bert and Ernie,4,23,173
-"{'confidence': -0.00337396476546, 'final': True}",True,-0.00,Bert and Ernie,4,30,173
-"{'confidence': -0.00103636724546, 'final': True}",True,-0.00,Bert and Ernie,4,33,173
-"{'confidence': -0.00103636724546, 'final': True}",True,-0.00,Bert and Ernie,4,33,173
-"{'confidence': -0.373656396975, 'final': False}",False,-0.37,Functional programming,0,5,174
-"{'confidence': -0.01972681466925, 'final': False}",False,-0.02,Java (programming language),0,10,174
-"{'confidence': -0.19645340674728165, 'final': False}",False,-0.20,Janus (programming language),0,15,174
-"{'confidence': -0.458168009333, 'final': False}",False,-0.46,Scripting,0,16,174
-"{'confidence': -0.21658951747960004, 'final': False}",False,-0.22,Omar Khattab,1,6,174
-"{'confidence': -0.4467323636333333, 'final': False}",False,-0.45,Natural language processing,1,11,174
-"{'confidence': -0.27221805201, 'final': False}",False,-0.27,Natural language processing,1,18,174
-"{'confidence': -0.18077422864, 'final': False}",False,-0.18,Natural language processing,1,19,174
-"{'confidence': -0.021400760999999997, 'final': False}",False,-0.02,Data Science,2,6,174
-"{'confidence': -0.089792975, 'final': False}",False,-0.09,Data Science,2,13,174
-"{'confidence': -0.518833915, 'final': False}",False,-0.52,Data annotation,2,18,174
-"{'confidence': -0.2722169192, 'final': False}",False,-0.27,Machine learning,2,21,174
-"{'confidence': -0.1008359174, 'final': False}",False,-0.10,Machine learning,2,27,174
-"{'confidence': -0.375926953, 'final': False}",False,-0.38,Machine learning,2,35,174
-"{'confidence': -0.24628482000000002, 'final': False}",False,-0.25,Data annotation,2,37,174
-"{'confidence': -0.194660400325, 'final': False}",False,-0.19,Critical thinking,3,6,174
-"{'confidence': -0.4306165875, 'final': False}",False,-0.43,Machine learning,3,7,174
-"{'confidence': -0.10214475249999999, 'final': False}",False,-0.10,Machine learning,3,11,174
-"{'confidence': -0.14405146000000002, 'final': False}",False,-0.14,Machine learning,3,11,174
-"{'confidence': -0.134008825, 'final': False}",False,-0.13,Machine learning,4,7,174
-"{'confidence': -0.1926991725, 'final': False}",False,-0.19,Machine learning,4,15,174
-"{'confidence': -0.4477581306666667, 'final': False}",False,-0.45,Natural language processing,4,19,174
-"{'confidence': -0.07931252951500001, 'final': False}",False,-0.08,Prompt engineering,4,23,174
-"{'confidence': -0.32242425776, 'final': False}",False,-0.32,Prompt engineering,4,27,174
-"{'confidence': -0.08351543595000001, 'final': False}",False,-0.08,Prompt engineering,4,28,174
-"{'confidence': -0.24521569345000002, 'final': False}",False,-0.25,Prompt engineering,4,28,174
+final,page,weight,question,word,evidence,sentence
+False,Selmer Bringsjord,-0.00,170,4,"{'confidence': -1.4301908666666668e-05, 'final': False}",0
+True,Turing Test,-0.00,170,10,"{'confidence': -0.0017582664800000001, 'final': True}",0
+True,Turing Test,-0.00,170,15,"{'confidence': -0.0008082330013333334, 'final': True}",0
+True,Turing Test,-0.00,170,18,"{'confidence': -0.00030888859466666666, 'final': True}",0
+False,Turing Test,-0.00,170,5,"{'confidence': -0.004977865832833333, 'final': False}",1
+True,Turing Test,-0.00,170,9,"{'confidence': -2.8102202000000002e-05, 'final': True}",1
+True,Turing Test,-0.00,170,13,"{'confidence': -0.00013667106553333334, 'final': True}",1
+True,Turing Test,-0.00,170,15,"{'confidence': -8.870677433333333e-06, 'final': True}",1
+True,Turing Test,-0.00,170,6,"{'confidence': -2.672086566666666e-06, 'final': True}",2
+True,Turing Test,-0.00,170,10,"{'confidence': -1.6787227333333334e-06, 'final': True}",2
+True,Turing Test,-0.00,170,6,"{'confidence': -4.5793451e-06, 'final': True}",3
+True,Turing Test,-0.00,170,13,"{'confidence': -1.8773955333333333e-06, 'final': True}",3
+True,Turing Test,-0.00,170,15,"{'confidence': -2.7912904333333335e-06, 'final': True}",3
+True,Turing Test,-0.00,170,5,"{'confidence': -6.645541899999999e-06, 'final': True}",4
+True,Turing Test,-0.00,170,11,"{'confidence': -6.0097893333333335e-06, 'final': True}",4
+True,Turing Test,-0.00,170,18,"{'confidence': -8.354127766666667e-06, 'final': True}",4
+True,Turing Test,-0.00,170,23,"{'confidence': -4.857487133333333e-06, 'final': True}",4
+True,Turing Test,-0.00,170,28,"{'confidence': -9.0693502e-06, 'final': True}",4
+True,Turing Test,-0.00,170,34,"{'confidence': -2.129266155e-05, 'final': True}",4
+True,Turing Test,-0.00,170,41,"{'confidence': -7.896310433333333e-07, 'final': True}",4
+True,Turing Test,-0.00,170,43,"{'confidence': -9.8830375e-07, 'final': True}",4
+True,Turing Test,-0.00,170,43,"{'confidence': -4.866861e-07, 'final': True}",4
+False,Three Laws Lethal,-0.00,171,7,"{'confidence': -9.034312786e-05, 'final': False}",0
+False,Artificial intelligence,-0.02,171,12,"{'confidence': -0.021178277333333332, 'final': False}",0
+False,Self-driving car,-0.16,171,17,"{'confidence': -0.1625716145, 'final': False}",0
+False,Self-driving car,-0.27,171,18,"{'confidence': -0.27347648760544335, 'final': False}",0
+False,Self-driving car,-0.26,171,7,"{'confidence': -0.26346356901333334, 'final': False}",1
+False,Self-driving car,-0.26,171,13,"{'confidence': -0.2632657032103333, 'final': False}",1
+False,Self-driving car,-0.39,171,19,"{'confidence': -0.3878007556604333, 'final': False}",1
+False,Self-driving car,-0.11,171,25,"{'confidence': -0.10759593400666667, 'final': False}",1
+False,Self-driving car,-0.27,171,31,"{'confidence': -0.26597116374121665, 'final': False}",1
+False,Self-driving car,-0.23,171,31,"{'confidence': -0.22733817020421665, 'final': False}",1
+False,Self-driving car,-0.22,171,8,"{'confidence': -0.2156770337412167, 'final': False}",2
+False,Self-driving car,-0.50,171,14,"{'confidence': -0.4983978333888333, 'final': False}",2
+False,Artificial intelligence in fiction,-0.20,171,20,"{'confidence': -0.203963411874, 'final': False}",2
+False,Robot,-0.51,171,26,"{'confidence': -0.5140203, 'final': False}",2
+False,Robots,-0.18,171,33,"{'confidence': -0.18104418441732, 'final': False}",2
+False,Robot,-0.23,171,40,"{'confidence': -0.23141523, 'final': False}",2
+False,Robot,-0.26,171,45,"{'confidence': -0.2578207, 'final': False}",2
+False,Robot,-0.12,171,45,"{'confidence': -0.11961892, 'final': False}",2
+False,Robots,-0.14,171,8,"{'confidence': -0.143976516408165, 'final': False}",3
+False,Robots,-0.11,171,15,"{'confidence': -0.11473994180632499, 'final': False}",3
+False,Robots,-0.15,171,21,"{'confidence': -0.149785746806325, 'final': False}",3
+False,Robot,-0.08,171,28,"{'confidence': -0.08075604, 'final': False}",3
+False,Robot,-0.72,171,34,"{'confidence': -0.7240508, 'final': False}",3
+False,Robot,-0.03,171,34,"{'confidence': -0.025728492, 'final': False}",3
+False,Robots,-0.25,171,5,"{'confidence': -0.25131465441732, 'final': False}",4
+False,Self-driving car,-0.08,171,10,"{'confidence': -0.07518843453754999, 'final': False}",4
+False,Self-driving car,-0.12,171,16,"{'confidence': -0.11619919333333333, 'final': False}",4
+False,Self-driving car,-0.09,171,16,"{'confidence': -0.08573290666666666, 'final': False}",4
+False,Automobile,-0.15,171,6,"{'confidence': -0.1497053678775, 'final': False}",5
+False,Automobile,-0.32,171,12,"{'confidence': -0.31942350521365, 'final': False}",5
+False,Self-driving car,-0.11,171,17,"{'confidence': -0.10722781255099999, 'final': False}",5
+False,Self-driving car,-0.14,171,23,"{'confidence': -0.13855976920266666, 'final': False}",5
+False,Self-driving car,-0.03,171,24,"{'confidence': -0.02697905520421667, 'final': False}",5
+False,Self-driving car,-0.04,171,24,"{'confidence': -0.04425367363596666, 'final': False}",5
+False,Homonym,-0.37,172,5,"{'confidence': -0.36955945, 'final': False}",0
+False,List of films considered the best,-0.18,172,8,"{'confidence': -0.18305673698310834, 'final': False}",1
+True,Kazuo Ishiguro,-0.00,172,15,"{'confidence': -4.6180856825e-05, 'final': True}",1
+False,Orson Welles filmography,-0.12,172,22,"{'confidence': -0.11687934371098334, 'final': False}",1
+False,Orson Welles filmography,-0.17,172,28,"{'confidence': -0.1669796244478883, 'final': False}",1
+False,Orson Welles filmography,-0.22,172,33,"{'confidence': -0.21744989545527502, 'final': False}",1
+False,Transformer,-0.12,172,2,"{'confidence': -0.11545438672620001, 'final': False}",2
+False,Transformer,-0.12,172,6,"{'confidence': -0.119010812404, 'final': False}",3
+False,Unicron,-0.11,172,11,"{'confidence': -0.11145593774787667, 'final': False}",3
+False,Galactus,-0.28,172,20,"{'confidence': -0.27738110650000003, 'final': False}",3
+False,Transformer,-0.18,172,25,"{'confidence': -0.18472480258274998, 'final': False}",3
+False,Transformer,-0.27,172,28,"{'confidence': -0.2664616054165, 'final': False}",3
+False,Transformer,-0.02,172,6,"{'confidence': -0.019633558085500002, 'final': False}",4
+False,Transformer,-0.01,172,11,"{'confidence': -0.006255564132916666, 'final': False}",4
+False,Transformer,-0.02,172,18,"{'confidence': -0.01696759382155, 'final': False}",4
+False,Transformer,-0.00,172,24,"{'confidence': -0.004806970184725001, 'final': False}",4
+True,Transformer,-0.00,172,29,"{'confidence': -0.00025672878410666665, 'final': True}",4
+True,Transformer,-0.00,172,36,"{'confidence': -0.0005334483876633334, 'final': True}",4
+True,Transformer,-0.00,172,39,"{'confidence': -3.799981777333333e-05, 'final': True}",4
+False,Transformer,-0.01,172,6,"{'confidence': -0.009570025, 'final': False}",5
+True,Transformer,-0.00,172,13,"{'confidence': -0.0010710388, 'final': True}",5
+True,Transformer,-0.00,172,17,"{'confidence': -0.0017895402, 'final': True}",5
+True,Transformer,-0.00,172,23,"{'confidence': -0.00052741496, 'final': True}",5
+True,Transformer,-0.00,172,23,"{'confidence': -0.0017516994, 'final': True}",5
+True,Transformer,-0.00,172,7,"{'confidence': -5.0497558e-05, 'final': True}",6
+False,Transformers,-0.34,172,14,"{'confidence': -0.33983797, 'final': False}",6
+True,Transformer,-0.00,172,21,"{'confidence': -0.00068467576, 'final': True}",6
+True,Transformer,-0.00,172,26,"{'confidence': -0.00011486754, 'final': True}",6
+True,Transformer,-0.00,172,32,"{'confidence': -0.0001786305, 'final': True}",6
+True,Transformer,-0.00,172,36,"{'confidence': -1.1398757e-05, 'final': True}",6
+True,Transformer,-0.00,172,36,"{'confidence': -1.1398757e-05, 'final': True}",6
+False,None,-0.00,173,3,"{'confidence': -0.0032355827, 'final': False}",0
+False,2018,-0.00,173,7,"{'confidence': -0.0038517368136500004, 'final': False}",1
+True,ArXiv,-0.00,173,14,"{'confidence': -0.00034223020421666664, 'final': True}",1
+False,ArXiv,-0.20,173,20,"{'confidence': -0.19963211674720002, 'final': False}",1
+False,Bert and Ernie,-0.08,173,25,"{'confidence': -0.080102596340328, 'final': False}",1
+False,"BERT (language model), Transformer (machine learning model)",-0.02,173,34,"{'confidence': -0.017375777184677272, 'final': False}",1
+False,"BERT (language model), Knowledge Graph",-0.10,173,39,"{'confidence': -0.09611344242433285, 'final': False}",1
+False,"BERT (language model), Knowledge Graph Embeddings",-0.13,173,43,"{'confidence': -0.12745923904177778, 'final': False}",1
+False,"BERT (language model), Knowledge Graph Embedding",-0.16,173,43,"{'confidence': -0.16261644164040556, 'final': False}",1
+False,"BERT (language model), Knowledge Graph Embedding",-0.20,173,7,"{'confidence': -0.2029177296722222, 'final': False}",2
+False,Bert and Ernie,-0.04,173,14,"{'confidence': -0.038194552787680004, 'final': False}",2
+False,Bert and Ernie,-0.14,173,20,"{'confidence': -0.139667733826928, 'final': False}",2
+False,Bert and Ernie,-0.04,173,25,"{'confidence': -0.03980330712546, 'final': False}",2
+False,Bert and Ernie,-0.05,173,33,"{'confidence': -0.05058118868546, 'final': False}",2
+False,George Bailey (It's a Wonderful Life),-0.11,173,36,"{'confidence': -0.10757979560121445, 'final': False}",2
+False,List of artificial intelligence projects,-0.41,173,7,"{'confidence': -0.4099953058108, 'final': False}",3
+False,List of sketch comedy groups,-0.51,173,13,"{'confidence': -0.5125638423914, 'final': False}",3
+False,Bert and Ernie,-0.03,173,20,"{'confidence': -0.028097918691266, 'final': False}",3
+False,Bert and Ernie,-0.01,173,25,"{'confidence': -0.007688592427259999, 'final': False}",3
+False,Bert and Ernie,-0.01,173,31,"{'confidence': -0.0055697997262, 'final': False}",3
+True,Bert and Ernie,-0.00,173,7,"{'confidence': -3.99838956e-05, 'final': True}",4
+True,Bert and Ernie,-0.00,173,13,"{'confidence': -0.0016322348542659997, 'final': True}",4
+True,Bert and Ernie,-0.00,173,18,"{'confidence': -0.001064463544266, 'final': True}",4
+True,Bert and Ernie,-0.00,173,23,"{'confidence': -0.0011902731854600002, 'final': True}",4
+False,Bert and Ernie,-0.00,173,30,"{'confidence': -0.00337396476546, 'final': False}",4
+True,Bert and Ernie,-0.00,173,33,"{'confidence': -0.00103636724546, 'final': True}",4
+True,Bert and Ernie,-0.00,173,33,"{'confidence': -0.00103636724546, 'final': True}",4
+False,Functional programming,-0.37,174,5,"{'confidence': -0.373656396975, 'final': False}",0
+False,Java (programming language),-0.02,174,10,"{'confidence': -0.01972681466925, 'final': False}",0
+False,Janus (programming language),-0.20,174,15,"{'confidence': -0.19645340674728165, 'final': False}",0
+False,Scripting,-0.46,174,16,"{'confidence': -0.458168009333, 'final': False}",0
+False,Omar Khattab,-0.22,174,6,"{'confidence': -0.21658951747960004, 'final': False}",1
+False,Natural language processing,-0.45,174,11,"{'confidence': -0.4467323636333333, 'final': False}",1
+False,Natural language processing,-0.27,174,18,"{'confidence': -0.27221805201, 'final': False}",1
+False,Natural language processing,-0.18,174,19,"{'confidence': -0.18077422864, 'final': False}",1
+False,Data Science,-0.02,174,6,"{'confidence': -0.021400760999999997, 'final': False}",2
+False,Data Science,-0.09,174,13,"{'confidence': -0.089792975, 'final': False}",2
+False,Data annotation,-0.52,174,18,"{'confidence': -0.518833915, 'final': False}",2
+False,Machine learning,-0.27,174,21,"{'confidence': -0.2722169192, 'final': False}",2
+False,Machine learning,-0.10,174,27,"{'confidence': -0.1008359174, 'final': False}",2
+False,Machine learning,-0.38,174,35,"{'confidence': -0.375926953, 'final': False}",2
+False,Data annotation,-0.25,174,37,"{'confidence': -0.24628482000000002, 'final': False}",2
+False,Critical thinking,-0.19,174,6,"{'confidence': -0.194660400325, 'final': False}",3
+False,Machine learning,-0.43,174,7,"{'confidence': -0.4306165875, 'final': False}",3
+False,Machine learning,-0.10,174,11,"{'confidence': -0.10214475249999999, 'final': False}",3
+False,Machine learning,-0.14,174,11,"{'confidence': -0.14405146000000002, 'final': False}",3
+False,Machine learning,-0.13,174,7,"{'confidence': -0.134008825, 'final': False}",4
+False,Machine learning,-0.19,174,15,"{'confidence': -0.1926991725, 'final': False}",4
+False,Natural language processing,-0.45,174,19,"{'confidence': -0.4477581306666667, 'final': False}",4
+False,Prompt engineering,-0.08,174,23,"{'confidence': -0.07931252951500001, 'final': False}",4
+False,Prompt engineering,-0.32,174,27,"{'confidence': -0.32242425776, 'final': False}",4
+False,Prompt engineering,-0.08,174,28,"{'confidence': -0.08351543595000001, 'final': False}",4
+False,Prompt engineering,-0.25,174,28,"{'confidence': -0.24521569345000002, 'final': False}",4

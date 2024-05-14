@@ -1,101 +1,101 @@
-evidence,weight,sentence,word,question,final,page
-"{'confidence': -0.219384354, 'final': False}",-0.22,0,7,110,False,Bacteria
-"{'confidence': -0.30040251980000005, 'final': False}",-0.30,0,12,110,False,Bird migration
-"{'confidence': -0.012121724200000001, 'final': False}",-0.01,0,18,110,False,Octopus
-"{'confidence': -0.5608650616916666, 'final': False}",-0.56,1,8,110,False,Animal locomotion
-"{'confidence': -0.269825565, 'final': False}",-0.27,1,14,110,False,Tardigrade
-"{'confidence': -0.178353272805, 'final': False}",-0.18,1,20,110,False,Amphibian
-"{'confidence': -0.213896960533, 'final': False}",-0.21,1,24,110,False,Amphibian
-"{'confidence': -0.015755522306927998, 'final': False}",-0.02,2,7,110,False,Cephalopod
-"{'confidence': -0.0228887158, 'final': False}",-0.02,2,10,110,False,Cephalopod
-"{'confidence': -6.263314285e-05, 'final': True}",-0.00,2,17,110,True,Echinodermata
-"{'confidence': -1.43602456625e-05, 'final': True}",-0.00,2,24,110,True,Echinodermata
-"{'confidence': -3.24014995e-07, 'final': True}",-0.00,3,7,110,True,Echinodermata
-"{'confidence': -1.862090825e-07, 'final': True}",-0.00,4,6,110,True,Echinodermata
-"{'confidence': -8.120283125e-07, 'final': True}",-0.00,4,11,110,True,Echinodermata
-"{'confidence': -5.32621395e-07, 'final': True}",-0.00,4,14,110,True,Echinodermata
-"{'confidence': -5.32621395e-07, 'final': True}",-0.00,4,14,110,True,Echinodermata
-"{'confidence': -0.00035743050832500004, 'final': False}",-0.00,0,7,111,False,Niels Henrik Abel
-"{'confidence': -0.0526445425, 'final': False}",-0.05,0,9,111,False,Niels Henrik Abel
-"{'confidence': -0.017644645148475, 'final': False}",-0.02,1,6,111,False,Sophie Germain
-"{'confidence': -0.1352767534635875, 'final': False}",-0.14,1,13,111,False,Sophie Germain
-"{'confidence': -0.07769818084472999, 'final': False}",-0.08,1,19,111,False,Pierre de Fermat
-"{'confidence': -0.0011967511466, 'final': True}",-0.00,1,20,111,True,Pierre de Fermat
-"{'confidence': -0.0032859033626800004, 'final': True}",-0.00,2,5,111,True,Pierre de Fermat
-"{'confidence': -0.05066653550094, 'final': False}",-0.05,2,9,111,False,Pierre de Fermat
-"{'confidence': -0.13376963590316251, 'final': False}",-0.13,2,15,111,False,Sophie Germain
-"{'confidence': -0.0005668737281625, 'final': True}",-0.00,2,22,111,True,Sophie Germain
-"{'confidence': -0.0481054334031625, 'final': False}",-0.05,2,29,111,False,Sophie Germain
-"{'confidence': -0.019463862805912502, 'final': False}",-0.02,2,36,111,False,Sophie Germain
-"{'confidence': -0.01782770990775, 'final': False}",-0.02,3,6,111,False,Sophie Germain
-"{'confidence': -0.0359541103059125, 'final': False}",-0.04,3,12,111,False,Sophie Germain
-"{'confidence': -0.0040591703105, 'final': True}",-0.00,3,16,111,True,Sophie Germain
-"{'confidence': -5.32621395e-07, 'final': True}",-0.00,3,21,111,True,Sophie Germain
-"{'confidence': -4.5441735e-07, 'final': True}",-0.00,3,27,111,True,Sophie Germain
-"{'confidence': -5.140191625e-07, 'final': True}",-0.00,3,33,111,True,Sophie Germain
-"{'confidence': -4.1341774500000003e-07, 'final': True}",-0.00,3,38,111,True,Sophie Germain
-"{'confidence': -3.836168125e-07, 'final': True}",-0.00,3,39,111,True,Sophie Germain
-"{'confidence': -1.5640816250000001e-07, 'final': True}",-0.00,4,7,111,True,Sophie Germain
-"{'confidence': -1.6923124745e-05, 'final': True}",-0.00,4,12,111,True,Sophie Germain
-"{'confidence': -1.08005e-07, 'final': True}",-0.00,4,17,111,True,Sophie Germain
-"{'confidence': -1.08005e-07, 'final': True}",-0.00,4,17,111,True,Sophie Germain
-"{'confidence': -0.28327071266666665, 'final': False}",-0.28,0,8,112,False,Psychological projection
-"{'confidence': -0.055340974412108335, 'final': False}",-0.06,0,13,112,False,Dissociative identity disorder
-"{'confidence': -0.125863836497, 'final': False}",-0.13,0,17,112,False,Boston naming test
-"{'confidence': -0.13979017040788333, 'final': False}",-0.14,1,6,112,False,Boston Naming Test
-"{'confidence': -0.015992405270883334, 'final': False}",-0.02,1,12,112,False,Boston Naming Test
-"{'confidence': -0.05674756727211, 'final': False}",-0.06,1,12,112,False,Boston Naming Test
-"{'confidence': -0.04746523388368332, 'final': False}",-0.05,2,6,112,False,Aphasia
-"{'confidence': -0.004927520951, 'final': True}",-0.00,2,11,112,True,Aphasia
-"{'confidence': -0.00023224585754999996, 'final': True}",-0.00,2,17,112,True,Aphasia
-"{'confidence': -0.00018000069121666665, 'final': True}",-0.00,2,21,112,True,Aphasia
-"{'confidence': -0.012439490228443333, 'final': False}",-0.01,2,26,112,False,Aphasia
-"{'confidence': -0.007371789870110001, 'final': True}",-0.01,2,28,112,True,Aphasia
-"{'confidence': -0.00945441844455, 'final': True}",-0.01,3,5,112,True,Aphasia
-"{'confidence': -4.004737066666667e-05, 'final': True}",-0.00,3,11,112,True,Aphasia
-"{'confidence': -9.860265600000001e-05, 'final': True}",-0.00,3,16,112,True,Aphasia
-"{'confidence': -4.664086133333333e-05, 'final': True}",-0.00,3,16,112,True,Aphasia
-"{'confidence': -7.347417033333333e-05, 'final': True}",-0.00,4,7,112,True,Aphasia
-"{'confidence': -9.253091316666667e-06, 'final': True}",-0.00,4,13,112,True,Aphasia
-"{'confidence': -1.5292743276666667e-05, 'final': True}",-0.00,4,18,112,True,Aphasia
-"{'confidence': -1.7432602666666668e-06, 'final': True}",-0.00,4,24,112,True,Aphasia
-"{'confidence': -4.320199866666667e-07, 'final': True}",-0.00,4,29,112,True,Aphasia
-"{'confidence': -7.896309766666667e-07, 'final': True}",-0.00,4,30,112,True,Aphasia
-"{'confidence': -7.896309766666667e-07, 'final': True}",-0.00,4,30,112,True,Aphasia
-"{'confidence': -1.3019204875e-05, 'final': False}",-0.00,0,6,113,False,Rik Mayall
-"{'confidence': -0.02351880074966667, 'final': False}",-0.02,0,12,113,False,Nicholas U. Mayall
-"{'confidence': -0.0005363741433825, 'final': False}",-0.00,0,18,113,False,Crab Nebula
-"{'confidence': -3.5923077475e-05, 'final': True}",-0.00,0,20,113,True,Crab Nebula
-"{'confidence': -0.00030368803675, 'final': True}",-0.00,1,6,113,True,Crab Nebula
-"{'confidence': -0.01102885684341, 'final': False}",-0.01,1,11,113,False,Crab Nebula
-"{'confidence': -0.08434052722737499, 'final': False}",-0.08,1,17,113,False,Crab Nebula
-"{'confidence': -0.0009736620191574999, 'final': True}",-0.00,1,18,113,True,Crab Nebula
-"{'confidence': -0.019888819397925, 'final': False}",-0.02,2,7,113,False,Crab Nebula
-"{'confidence': -0.0836702356346625, 'final': False}",-0.08,2,11,113,False,Crab Nebula
-"{'confidence': -0.0002535667179875, 'final': True}",-0.00,2,16,113,True,Crab Nebula
-"{'confidence': -0.0004772052725825, 'final': True}",-0.00,2,21,113,True,Crab Nebula
-"{'confidence': -0.00551961060566, 'final': True}",-0.01,2,28,113,True,Crab Nebula
-"{'confidence': -7.82040825e-08, 'final': True}",-0.00,2,35,113,True,Crab Nebula
-"{'confidence': -1.08005e-07, 'final': True}",-0.00,2,38,113,True,Crab Nebula
-"{'confidence': -2.868105e-07, 'final': True}",-0.00,3,7,113,True,Crab Nebula
-"{'confidence': -3.3521366e-07, 'final': True}",-0.00,3,13,113,True,Crab Nebula
-"{'confidence': -1.378059125e-07, 'final': True}",-0.00,3,19,113,True,Crab Nebula
-"{'confidence': 0.0, 'final': True}",0.00,3,21,113,True,Crab Nebula
-"{'confidence': 0.0, 'final': True}",0.00,3,21,113,True,Crab Nebula
-"{'confidence': -0.304733615464075, 'final': False}",-0.30,0,7,114,False,Dave Chappelle
-"{'confidence': -0.3976480946566667, 'final': False}",-0.40,0,12,114,False,Columbia University
-"{'confidence': -5.264206766666667e-07, 'final': False}",-0.00,0,17,114,False,Ray Bradbury
-"{'confidence': -3.006412666666667e-05, 'final': True}",-0.00,1,8,114,True,Ray Bradbury
-"{'confidence': -0.0231642915685, 'final': False}",-0.02,1,15,114,False,Fields Medal
-"{'confidence': -0.28792264960421665, 'final': False}",-0.29,1,20,114,False,Paul Dirac
-"{'confidence': -0.21140726408333332, 'final': False}",-0.21,1,27,114,False,Terence Tao
-"{'confidence': -0.11935722880965999, 'final': False}",-0.12,1,31,114,False,Ian Agol
-"{'confidence': -0.05629890693863, 'final': False}",-0.06,1,31,114,False,Grigori Perelman
-"{'confidence': -0.00336473060037, 'final': True}",-0.00,2,5,114,True,Grigori Perelman
-"{'confidence': -0.141306147884, 'final': False}",-0.14,2,9,114,False,Grigori Perelman
-"{'confidence': -0.00046150748872999994, 'final': True}",-0.00,2,14,114,True,Grigori Perelman
-"{'confidence': -2.4615183e-06, 'final': True}",-0.00,2,21,114,True,Grigori Perelman
-"{'confidence': -8.8802998e-07, 'final': True}",-0.00,2,23,114,True,Grigori Perelman
-"{'confidence': -3.5105106e-06, 'final': True}",-0.00,3,7,114,True,Grigori Perelman
-"{'confidence': -5.69141546e-07, 'final': True}",-0.00,3,10,114,True,Grigori Perelman
-"{'confidence': -5.69141546e-07, 'final': True}",-0.00,3,10,114,True,Grigori Perelman
+question,final,evidence,weight,word,page,sentence
+110,False,"{'confidence': -0.219384354, 'final': False}",-0.22,7,Bacteria,0
+110,False,"{'confidence': -0.30040251980000005, 'final': False}",-0.30,12,Bird migration,0
+110,False,"{'confidence': -0.012121724200000001, 'final': False}",-0.01,18,Octopus,0
+110,False,"{'confidence': -0.5608650616916666, 'final': False}",-0.56,8,Animal locomotion,1
+110,False,"{'confidence': -0.269825565, 'final': False}",-0.27,14,Tardigrade,1
+110,False,"{'confidence': -0.178353272805, 'final': False}",-0.18,20,Amphibian,1
+110,False,"{'confidence': -0.213896960533, 'final': False}",-0.21,24,Amphibian,1
+110,False,"{'confidence': -0.015755522306927998, 'final': False}",-0.02,7,Cephalopod,2
+110,False,"{'confidence': -0.0228887158, 'final': False}",-0.02,10,Cephalopod,2
+110,True,"{'confidence': -6.263314285e-05, 'final': True}",-0.00,17,Echinodermata,2
+110,True,"{'confidence': -1.43602456625e-05, 'final': True}",-0.00,24,Echinodermata,2
+110,True,"{'confidence': -3.24014995e-07, 'final': True}",-0.00,7,Echinodermata,3
+110,True,"{'confidence': -1.862090825e-07, 'final': True}",-0.00,6,Echinodermata,4
+110,True,"{'confidence': -8.120283125e-07, 'final': True}",-0.00,11,Echinodermata,4
+110,True,"{'confidence': -5.32621395e-07, 'final': True}",-0.00,14,Echinodermata,4
+110,True,"{'confidence': -5.32621395e-07, 'final': True}",-0.00,14,Echinodermata,4
+111,False,"{'confidence': -0.00035743050832500004, 'final': False}",-0.00,7,Niels Henrik Abel,0
+111,False,"{'confidence': -0.0526445425, 'final': False}",-0.05,9,Niels Henrik Abel,0
+111,False,"{'confidence': -0.017644645148475, 'final': False}",-0.02,6,Sophie Germain,1
+111,False,"{'confidence': -0.1352767534635875, 'final': False}",-0.14,13,Sophie Germain,1
+111,False,"{'confidence': -0.07769818084472999, 'final': False}",-0.08,19,Pierre de Fermat,1
+111,True,"{'confidence': -0.0011967511466, 'final': True}",-0.00,20,Pierre de Fermat,1
+111,False,"{'confidence': -0.0032859033626800004, 'final': False}",-0.00,5,Pierre de Fermat,2
+111,False,"{'confidence': -0.05066653550094, 'final': False}",-0.05,9,Pierre de Fermat,2
+111,False,"{'confidence': -0.13376963590316251, 'final': False}",-0.13,15,Sophie Germain,2
+111,True,"{'confidence': -0.0005668737281625, 'final': True}",-0.00,22,Sophie Germain,2
+111,False,"{'confidence': -0.0481054334031625, 'final': False}",-0.05,29,Sophie Germain,2
+111,False,"{'confidence': -0.019463862805912502, 'final': False}",-0.02,36,Sophie Germain,2
+111,False,"{'confidence': -0.01782770990775, 'final': False}",-0.02,6,Sophie Germain,3
+111,False,"{'confidence': -0.0359541103059125, 'final': False}",-0.04,12,Sophie Germain,3
+111,False,"{'confidence': -0.0040591703105, 'final': False}",-0.00,16,Sophie Germain,3
+111,True,"{'confidence': -5.32621395e-07, 'final': True}",-0.00,21,Sophie Germain,3
+111,True,"{'confidence': -4.5441735e-07, 'final': True}",-0.00,27,Sophie Germain,3
+111,True,"{'confidence': -5.140191625e-07, 'final': True}",-0.00,33,Sophie Germain,3
+111,True,"{'confidence': -4.1341774500000003e-07, 'final': True}",-0.00,38,Sophie Germain,3
+111,True,"{'confidence': -3.836168125e-07, 'final': True}",-0.00,39,Sophie Germain,3
+111,True,"{'confidence': -1.5640816250000001e-07, 'final': True}",-0.00,7,Sophie Germain,4
+111,True,"{'confidence': -1.6923124745e-05, 'final': True}",-0.00,12,Sophie Germain,4
+111,True,"{'confidence': -1.08005e-07, 'final': True}",-0.00,17,Sophie Germain,4
+111,True,"{'confidence': -1.08005e-07, 'final': True}",-0.00,17,Sophie Germain,4
+112,False,"{'confidence': -0.28327071266666665, 'final': False}",-0.28,8,Psychological projection,0
+112,False,"{'confidence': -0.055340974412108335, 'final': False}",-0.06,13,Dissociative identity disorder,0
+112,False,"{'confidence': -0.125863836497, 'final': False}",-0.13,17,Boston naming test,0
+112,False,"{'confidence': -0.13979017040788333, 'final': False}",-0.14,6,Boston Naming Test,1
+112,False,"{'confidence': -0.015992405270883334, 'final': False}",-0.02,12,Boston Naming Test,1
+112,False,"{'confidence': -0.05674756727211, 'final': False}",-0.06,12,Boston Naming Test,1
+112,False,"{'confidence': -0.04746523388368332, 'final': False}",-0.05,6,Aphasia,2
+112,False,"{'confidence': -0.004927520951, 'final': False}",-0.00,11,Aphasia,2
+112,True,"{'confidence': -0.00023224585754999996, 'final': True}",-0.00,17,Aphasia,2
+112,True,"{'confidence': -0.00018000069121666665, 'final': True}",-0.00,21,Aphasia,2
+112,False,"{'confidence': -0.012439490228443333, 'final': False}",-0.01,26,Aphasia,2
+112,False,"{'confidence': -0.007371789870110001, 'final': False}",-0.01,28,Aphasia,2
+112,False,"{'confidence': -0.00945441844455, 'final': False}",-0.01,5,Aphasia,3
+112,True,"{'confidence': -4.004737066666667e-05, 'final': True}",-0.00,11,Aphasia,3
+112,True,"{'confidence': -9.860265600000001e-05, 'final': True}",-0.00,16,Aphasia,3
+112,True,"{'confidence': -4.664086133333333e-05, 'final': True}",-0.00,16,Aphasia,3
+112,True,"{'confidence': -7.347417033333333e-05, 'final': True}",-0.00,7,Aphasia,4
+112,True,"{'confidence': -9.253091316666667e-06, 'final': True}",-0.00,13,Aphasia,4
+112,True,"{'confidence': -1.5292743276666667e-05, 'final': True}",-0.00,18,Aphasia,4
+112,True,"{'confidence': -1.7432602666666668e-06, 'final': True}",-0.00,24,Aphasia,4
+112,True,"{'confidence': -4.320199866666667e-07, 'final': True}",-0.00,29,Aphasia,4
+112,True,"{'confidence': -7.896309766666667e-07, 'final': True}",-0.00,30,Aphasia,4
+112,True,"{'confidence': -7.896309766666667e-07, 'final': True}",-0.00,30,Aphasia,4
+113,False,"{'confidence': -1.3019204875e-05, 'final': False}",-0.00,6,Rik Mayall,0
+113,False,"{'confidence': -0.02351880074966667, 'final': False}",-0.02,12,Nicholas U. Mayall,0
+113,True,"{'confidence': -0.0005363741433825, 'final': True}",-0.00,18,Crab Nebula,0
+113,True,"{'confidence': -3.5923077475e-05, 'final': True}",-0.00,20,Crab Nebula,0
+113,True,"{'confidence': -0.00030368803675, 'final': True}",-0.00,6,Crab Nebula,1
+113,False,"{'confidence': -0.01102885684341, 'final': False}",-0.01,11,Crab Nebula,1
+113,False,"{'confidence': -0.08434052722737499, 'final': False}",-0.08,17,Crab Nebula,1
+113,True,"{'confidence': -0.0009736620191574999, 'final': True}",-0.00,18,Crab Nebula,1
+113,False,"{'confidence': -0.019888819397925, 'final': False}",-0.02,7,Crab Nebula,2
+113,False,"{'confidence': -0.0836702356346625, 'final': False}",-0.08,11,Crab Nebula,2
+113,True,"{'confidence': -0.0002535667179875, 'final': True}",-0.00,16,Crab Nebula,2
+113,True,"{'confidence': -0.0004772052725825, 'final': True}",-0.00,21,Crab Nebula,2
+113,False,"{'confidence': -0.00551961060566, 'final': False}",-0.01,28,Crab Nebula,2
+113,True,"{'confidence': -7.82040825e-08, 'final': True}",-0.00,35,Crab Nebula,2
+113,True,"{'confidence': -1.08005e-07, 'final': True}",-0.00,38,Crab Nebula,2
+113,True,"{'confidence': -2.868105e-07, 'final': True}",-0.00,7,Crab Nebula,3
+113,True,"{'confidence': -3.3521366e-07, 'final': True}",-0.00,13,Crab Nebula,3
+113,True,"{'confidence': -1.378059125e-07, 'final': True}",-0.00,19,Crab Nebula,3
+113,True,"{'confidence': 0.0, 'final': True}",0.00,21,Crab Nebula,3
+113,True,"{'confidence': 0.0, 'final': True}",0.00,21,Crab Nebula,3
+114,False,"{'confidence': -0.304733615464075, 'final': False}",-0.30,7,Dave Chappelle,0
+114,False,"{'confidence': -0.3976480946566667, 'final': False}",-0.40,12,Columbia University,0
+114,True,"{'confidence': -5.264206766666667e-07, 'final': True}",-0.00,17,Ray Bradbury,0
+114,True,"{'confidence': -3.006412666666667e-05, 'final': True}",-0.00,8,Ray Bradbury,1
+114,False,"{'confidence': -0.0231642915685, 'final': False}",-0.02,15,Fields Medal,1
+114,False,"{'confidence': -0.28792264960421665, 'final': False}",-0.29,20,Paul Dirac,1
+114,False,"{'confidence': -0.21140726408333332, 'final': False}",-0.21,27,Terence Tao,1
+114,False,"{'confidence': -0.11935722880965999, 'final': False}",-0.12,31,Ian Agol,1
+114,False,"{'confidence': -0.05629890693863, 'final': False}",-0.06,31,Grigori Perelman,1
+114,False,"{'confidence': -0.00336473060037, 'final': False}",-0.00,5,Grigori Perelman,2
+114,False,"{'confidence': -0.141306147884, 'final': False}",-0.14,9,Grigori Perelman,2
+114,True,"{'confidence': -0.00046150748872999994, 'final': True}",-0.00,14,Grigori Perelman,2
+114,True,"{'confidence': -2.4615183e-06, 'final': True}",-0.00,21,Grigori Perelman,2
+114,True,"{'confidence': -8.8802998e-07, 'final': True}",-0.00,23,Grigori Perelman,2
+114,True,"{'confidence': -3.5105106e-06, 'final': True}",-0.00,7,Grigori Perelman,3
+114,True,"{'confidence': -5.69141546e-07, 'final': True}",-0.00,10,Grigori Perelman,3
+114,True,"{'confidence': -5.69141546e-07, 'final': True}",-0.00,10,Grigori Perelman,3

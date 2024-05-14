@@ -1,103 +1,103 @@
-sentence,evidence,word,question,weight,final,page
-0,"{'confidence': -0.0069455315479, 'final': False}",7,150,-0.01,False,Gobi
-0,"{'confidence': -0.4815728850418666, 'final': False}",13,150,-0.48,False,Uganda
-0,"{'confidence': -0.01011663101, 'final': False}",19,150,-0.01,False,Andorra
-0,"{'confidence': -0.05228549975035, 'final': False}",24,150,-0.05,False,Andorra
-1,"{'confidence': -0.1290439245, 'final': False}",8,150,-0.13,False,Andorra
-1,"{'confidence': -0.023163184197110002, 'final': False}",14,150,-0.02,False,Kyrgyzstan
-1,"{'confidence': -0.01803880109488, 'final': False}",19,150,-0.02,False,Kyrgyzstan
-1,"{'confidence': -0.16753184825755, 'final': False}",24,150,-0.17,False,Bhutan
-1,"{'confidence': -0.002224694103666667, 'final': True}",26,150,-0.00,True,Kyrgyzstan
-2,"{'confidence': -0.0014998098433333332, 'final': True}",8,150,-0.00,True,Kyrgyzstan
-2,"{'confidence': -0.004300377742, 'final': True}",15,150,-0.00,True,Kyrgyzstan
-2,"{'confidence': -1.8208298e-05, 'final': True}",21,150,-0.00,True,Kyrgyzstan
-2,"{'confidence': -6.948487099999999e-06, 'final': True}",24,150,-0.00,True,Kyrgyzstan
-2,"{'confidence': -9.983244883333334e-06, 'final': True}",29,150,-0.00,True,Kyrgyzstan
-3,"{'confidence': -2.4187476666666667e-06, 'final': True}",7,150,-0.00,True,Kyrgyzstan
-3,"{'confidence': -1.6240565833333335e-06, 'final': True}",14,150,-0.00,True,Kyrgyzstan
-3,"{'confidence': -4.047864433333333e-06, 'final': True}",20,150,-0.00,True,Kyrgyzstan
-3,"{'confidence': -0.00019543515756666665, 'final': True}",26,150,-0.00,True,Kyrgyzstan
-3,"{'confidence': -1.398150266e-05, 'final': True}",27,150,-0.00,True,Kyrgyzstan
-3,"{'confidence': -1.398150266e-05, 'final': True}",27,150,-0.00,True,Kyrgyzstan
-0,"{'confidence': -0.20383147236000002, 'final': False}",7,151,-0.20,False,Polity
-0,"{'confidence': -6.572593544333333e-05, 'final': False}",13,151,-0.00,False,Anguilla
-1,"{'confidence': -7.994967746666666e-05, 'final': False}",8,151,-0.00,False,Anguilla
-1,"{'confidence': -5.058951733333334e-05, 'final': True}",13,151,-0.00,True,Anguilla
-1,"{'confidence': -0.03976193367933333, 'final': False}",19,151,-0.04,False,Anguilla
-1,"{'confidence': -0.030869344050883332, 'final': False}",24,151,-0.03,False,Anguilla
-1,"{'confidence': -0.04323352717044333, 'final': False}",27,151,-0.04,False,Anguilla
-2,"{'confidence': -0.10674367248333333, 'final': False}",7,151,-0.11,False,Anguilla
-2,"{'confidence': -3.4022403333333336e-06, 'final': True}",10,151,-0.00,True,Anguilla
-3,"{'confidence': -1.2938533333333333e-05, 'final': True}",4,151,-0.00,True,Anguilla
-4,"{'confidence': -7.638905666666667e-06, 'final': True}",6,151,-0.00,True,Anguilla
-4,"{'confidence': -5.587640666666666e-06, 'final': True}",12,151,-0.00,True,Anguilla
-4,"{'confidence': -3.5214436666666667e-06, 'final': True}",19,151,-0.00,True,Anguilla
-4,"{'confidence': -7.057819e-06, 'final': True}",26,151,-0.00,True,Anguilla
-4,"{'confidence': -4.276400333333333e-06, 'final': True}",31,151,-0.00,True,Anguilla
-4,"{'confidence': -2.3945003333333337e-05, 'final': True}",34,151,-0.00,True,Anguilla
-4,"{'confidence': -2.3945003333333337e-05, 'final': True}",34,151,-0.00,True,Anguilla
-0,"{'confidence': -0.30024881798743336, 'final': False}",7,152,-0.30,False,Sahara
-0,"{'confidence': -0.011505753595833333, 'final': False}",13,152,-0.01,False,Gobi
-0,"{'confidence': -0.0007777211774333332, 'final': False}",20,152,-0.00,False,Gobi
-0,"{'confidence': -7.232309100000001e-05, 'final': True}",27,152,-0.00,True,Gobi
-0,"{'confidence': -0.00022483657633333334, 'final': True}",30,152,-0.00,True,Gobi
-1,"{'confidence': -0.00016074165421666668, 'final': True}",8,152,-0.00,True,Gobi
-1,"{'confidence': -1.912219211e-05, 'final': True}",15,152,-0.00,True,Gobi
-1,"{'confidence': -1.4592453333333334e-05, 'final': True}",23,152,-0.00,True,Gobi
-1,"{'confidence': -0.007712643537549999, 'final': True}",28,152,-0.01,True,Gobi
-1,"{'confidence': -0.001542296, 'final': True}",33,152,-0.00,True,Gobi
-1,"{'confidence': -8.460989e-05, 'final': True}",40,152,-0.00,True,Gobi
-1,"{'confidence': -2.0051018666666667e-05, 'final': True}",45,152,-0.00,True,Gobi
-1,"{'confidence': -2.7163504666666666e-05, 'final': True}",47,152,-0.00,True,Gobi
-2,"{'confidence': -1.7150396666666666e-05, 'final': True}",7,152,-0.00,True,Gobi
-2,"{'confidence': -5.661552166666666e-07, 'final': True}",11,152,-0.00,True,Gobi
-2,"{'confidence': -3.2774788333333336e-07, 'final': True}",15,152,-0.00,True,Gobi
-2,"{'confidence': -5.810867666666667e-07, 'final': True}",21,152,-0.00,True,Gobi
-3,"{'confidence': -1.1771051e-06, 'final': True}",7,152,-0.00,True,Gobi
-3,"{'confidence': -4.866861166666667e-07, 'final': True}",13,152,-0.00,True,Gobi
-3,"{'confidence': -4.0721698999999995e-07, 'final': True}",16,152,-0.00,True,Gobi
-3,"{'confidence': -4.0721698999999995e-07, 'final': True}",16,152,-0.00,True,Gobi
-0,"{'confidence': -0.0040450147868500005, 'final': False}",8,153,-0.00,False,New Jersey
-0,"{'confidence': -0.20432824042710002, 'final': False}",15,153,-0.20,False,List of counties in the United States
-0,"{'confidence': -0.03306282880538, 'final': False}",21,153,-0.03,False,New York (state)
-0,"{'confidence': -0.1345931143654, 'final': False}",29,153,-0.13,False,New York (state)
-0,"{'confidence': -0.08302266155172, 'final': False}",30,153,-0.08,False,New York (state)
-1,"{'confidence': -0.176346385, 'final': False}",8,153,-0.18,False,New Jersey
-1,"{'confidence': -0.5518747388, 'final': False}",14,153,-0.55,False,Hawaii
-1,"{'confidence': -0.29489240171142, 'final': False}",21,153,-0.29,False,New York (state)
-1,"{'confidence': -0.06787832190569715, 'final': False}",24,153,-0.07,False,Georgia (U.S. state)
-2,"{'confidence': -0.009894273549714285, 'final': True}",8,153,-0.01,True,Georgia (U.S. state)
-2,"{'confidence': -0.023543693745914286, 'final': False}",15,153,-0.02,False,Georgia (U.S. state)
-2,"{'confidence': -0.14535932298652, 'final': False}",18,153,-0.15,False,Georgia (U.S. state)
-3,"{'confidence': -0.04870259601, 'final': False}",8,153,-0.05,False,Maine
-3,"{'confidence': -0.054071314806324995, 'final': False}",13,153,-0.05,False,Maine
-3,"{'confidence': -0.00012879969769999999, 'final': True}",20,153,-0.00,True,Missouri
-3,"{'confidence': -5.2001665e-06, 'final': True}",26,153,-0.00,True,Missouri
-3,"{'confidence': -5.2001663e-06, 'final': True}",29,153,-0.00,True,Missouri
-4,"{'confidence': -1.92206585e-06, 'final': True}",6,153,-0.00,True,Missouri
-4,"{'confidence': -8.4923285e-07, 'final': True}",11,153,-0.00,True,Missouri
-4,"{'confidence': -5.080962665e-06, 'final': True}",16,153,-0.00,True,Missouri
-4,"{'confidence': -5.080962665e-06, 'final': True}",16,153,-0.00,True,Missouri
-0,"{'confidence': -0.09551957, 'final': False}",8,154,-0.10,False,Inspiration
-0,"{'confidence': -0.186521134065, 'final': False}",12,154,-0.19,False,New Zealand
-0,"{'confidence': -0.4368140824, 'final': False}",19,154,-0.44,False,Austria
-0,"{'confidence': -0.042699083404568, 'final': False}",26,154,-0.04,False,Black Panther (film)
-0,"{'confidence': -0.030147259852150003, 'final': False}",27,154,-0.03,False,Hong Kong
-1,"{'confidence': -0.35792027247420005, 'final': False}",5,154,-0.36,False,Wakanda
-1,"{'confidence': -0.04266593001946666, 'final': False}",11,154,-0.04,False,Liberia
-1,"{'confidence': -0.012663456111716667, 'final': False}",17,154,-0.01,False,Liberia
-1,"{'confidence': -0.10736073120421667, 'final': False}",23,154,-0.11,False,Lesotho
-1,"{'confidence': -0.0231491680192, 'final': False}",24,154,-0.02,False,Botswana
-2,"{'confidence': -2.8310247766666668e-06, 'final': True}",8,154,-0.00,True,Liberia
-2,"{'confidence': -3.4181589216666665e-05, 'final': True}",14,154,-0.00,True,Liberia
-2,"{'confidence': -0.004483072370883333, 'final': True}",19,154,-0.00,True,Liberia
-2,"{'confidence': -0.274835561806325, 'final': False}",25,154,-0.27,False,Botswana
-2,"{'confidence': -0.021179855, 'final': False}",31,154,-0.02,False,Lesotho
-2,"{'confidence': -0.016665126543666666, 'final': False}",32,154,-0.02,False,Lesotho
-3,"{'confidence': -0.10797510666666667, 'final': False}",6,154,-0.11,False,Lesotho
-3,"{'confidence': -0.062483177605443335, 'final': False}",14,154,-0.06,False,Lesotho
-3,"{'confidence': -3.0294488e-07, 'final': True}",21,154,-0.00,True,Lesotho
-4,"{'confidence': -1.6936543333333333e-06, 'final': True}",7,154,-0.00,True,Lesotho
-4,"{'confidence': -6.208213e-07, 'final': True}",14,154,-0.00,True,Lesotho
-4,"{'confidence': -2.6321033333333333e-07, 'final': True}",17,154,-0.00,True,Lesotho
-4,"{'confidence': -2.6321033333333333e-07, 'final': True}",17,154,-0.00,True,Lesotho
+page,final,word,sentence,evidence,weight,question
+Gobi Desert,False,7,0,"{'confidence': -0.0069455315479, 'final': False}",-0.01,150
+Uganda,False,13,0,"{'confidence': -0.4815728850418666, 'final': False}",-0.48,150
+Andorra,False,19,0,"{'confidence': -0.01011663101, 'final': False}",-0.01,150
+Andorra,False,24,0,"{'confidence': -0.05228549975035, 'final': False}",-0.05,150
+Andorra,False,8,1,"{'confidence': -0.1290439245, 'final': False}",-0.13,150
+Kyrgyzstan,False,14,1,"{'confidence': -0.023163184197110002, 'final': False}",-0.02,150
+Kyrgyzstan,False,19,1,"{'confidence': -0.01803880109488, 'final': False}",-0.02,150
+Bhutan,False,24,1,"{'confidence': -0.16753184825755, 'final': False}",-0.17,150
+Kyrgyzstan,True,26,1,"{'confidence': -0.002224694103666667, 'final': True}",-0.00,150
+Kyrgyzstan,True,8,2,"{'confidence': -0.0014998098433333332, 'final': True}",-0.00,150
+Kyrgyzstan,False,15,2,"{'confidence': -0.004300377742, 'final': False}",-0.00,150
+Kyrgyzstan,True,21,2,"{'confidence': -1.8208298e-05, 'final': True}",-0.00,150
+Kyrgyzstan,True,24,2,"{'confidence': -6.948487099999999e-06, 'final': True}",-0.00,150
+Kyrgyzstan,True,29,2,"{'confidence': -9.983244883333334e-06, 'final': True}",-0.00,150
+Kyrgyzstan,True,7,3,"{'confidence': -2.4187476666666667e-06, 'final': True}",-0.00,150
+Kyrgyzstan,True,14,3,"{'confidence': -1.6240565833333335e-06, 'final': True}",-0.00,150
+Kyrgyzstan,True,20,3,"{'confidence': -4.047864433333333e-06, 'final': True}",-0.00,150
+Kyrgyzstan,True,26,3,"{'confidence': -0.00019543515756666665, 'final': True}",-0.00,150
+Kyrgyzstan,True,27,3,"{'confidence': -1.398150266e-05, 'final': True}",-0.00,150
+Kyrgyzstan,True,27,3,"{'confidence': -1.398150266e-05, 'final': True}",-0.00,150
+Polity,False,7,0,"{'confidence': -0.20383147236000002, 'final': False}",-0.20,151
+Anguilla,True,13,0,"{'confidence': -6.572593544333333e-05, 'final': True}",-0.00,151
+Anguilla,True,8,1,"{'confidence': -7.994967746666666e-05, 'final': True}",-0.00,151
+Anguilla,True,13,1,"{'confidence': -5.058951733333334e-05, 'final': True}",-0.00,151
+Anguilla,False,19,1,"{'confidence': -0.03976193367933333, 'final': False}",-0.04,151
+Anguilla,False,24,1,"{'confidence': -0.030869344050883332, 'final': False}",-0.03,151
+Anguilla,False,27,1,"{'confidence': -0.04323352717044333, 'final': False}",-0.04,151
+Anguilla,False,7,2,"{'confidence': -0.10674367248333333, 'final': False}",-0.11,151
+Anguilla,True,10,2,"{'confidence': -3.4022403333333336e-06, 'final': True}",-0.00,151
+Anguilla,True,4,3,"{'confidence': -1.2938533333333333e-05, 'final': True}",-0.00,151
+Anguilla,True,6,4,"{'confidence': -7.638905666666667e-06, 'final': True}",-0.00,151
+Anguilla,True,12,4,"{'confidence': -5.587640666666666e-06, 'final': True}",-0.00,151
+Anguilla,True,19,4,"{'confidence': -3.5214436666666667e-06, 'final': True}",-0.00,151
+Anguilla,True,26,4,"{'confidence': -7.057819e-06, 'final': True}",-0.00,151
+Anguilla,True,31,4,"{'confidence': -4.276400333333333e-06, 'final': True}",-0.00,151
+Anguilla,True,34,4,"{'confidence': -2.3945003333333337e-05, 'final': True}",-0.00,151
+Anguilla,True,34,4,"{'confidence': -2.3945003333333337e-05, 'final': True}",-0.00,151
+Sahara,False,7,0,"{'confidence': -0.30024881798743336, 'final': False}",-0.30,152
+Gobi Desert,False,13,0,"{'confidence': -0.011505753595833333, 'final': False}",-0.01,152
+Gobi Desert,True,20,0,"{'confidence': -0.0007777211774333332, 'final': True}",-0.00,152
+Gobi Desert,True,27,0,"{'confidence': -7.232309100000001e-05, 'final': True}",-0.00,152
+Gobi Desert,True,30,0,"{'confidence': -0.00022483657633333334, 'final': True}",-0.00,152
+Gobi Desert,True,8,1,"{'confidence': -0.00016074165421666668, 'final': True}",-0.00,152
+Gobi Desert,True,15,1,"{'confidence': -1.912219211e-05, 'final': True}",-0.00,152
+Gobi Desert,True,23,1,"{'confidence': -1.4592453333333334e-05, 'final': True}",-0.00,152
+Gobi Desert,False,28,1,"{'confidence': -0.007712643537549999, 'final': False}",-0.01,152
+Gobi Desert,True,33,1,"{'confidence': -0.001542296, 'final': True}",-0.00,152
+Gobi Desert,True,40,1,"{'confidence': -8.460989e-05, 'final': True}",-0.00,152
+Gobi Desert,True,45,1,"{'confidence': -2.0051018666666667e-05, 'final': True}",-0.00,152
+Gobi Desert,True,47,1,"{'confidence': -2.7163504666666666e-05, 'final': True}",-0.00,152
+Gobi Desert,True,7,2,"{'confidence': -1.7150396666666666e-05, 'final': True}",-0.00,152
+Gobi Desert,True,11,2,"{'confidence': -5.661552166666666e-07, 'final': True}",-0.00,152
+Gobi Desert,True,15,2,"{'confidence': -3.2774788333333336e-07, 'final': True}",-0.00,152
+Gobi Desert,True,21,2,"{'confidence': -5.810867666666667e-07, 'final': True}",-0.00,152
+Gobi Desert,True,7,3,"{'confidence': -1.1771051e-06, 'final': True}",-0.00,152
+Gobi Desert,True,13,3,"{'confidence': -4.866861166666667e-07, 'final': True}",-0.00,152
+Gobi Desert,True,16,3,"{'confidence': -4.0721698999999995e-07, 'final': True}",-0.00,152
+Gobi Desert,True,16,3,"{'confidence': -4.0721698999999995e-07, 'final': True}",-0.00,152
+New Jersey,False,8,0,"{'confidence': -0.0040450147868500005, 'final': False}",-0.00,153
+List of counties in the United States,False,15,0,"{'confidence': -0.20432824042710002, 'final': False}",-0.20,153
+New York (state),False,21,0,"{'confidence': -0.03306282880538, 'final': False}",-0.03,153
+New York (state),False,29,0,"{'confidence': -0.1345931143654, 'final': False}",-0.13,153
+New York (state),False,30,0,"{'confidence': -0.08302266155172, 'final': False}",-0.08,153
+New Jersey,False,8,1,"{'confidence': -0.176346385, 'final': False}",-0.18,153
+Hawaii,False,14,1,"{'confidence': -0.5518747388, 'final': False}",-0.55,153
+New York (state),False,21,1,"{'confidence': -0.29489240171142, 'final': False}",-0.29,153
+Georgia (U.S. state),False,24,1,"{'confidence': -0.06787832190569715, 'final': False}",-0.07,153
+Georgia (U.S. state),False,8,2,"{'confidence': -0.009894273549714285, 'final': False}",-0.01,153
+Georgia (U.S. state),False,15,2,"{'confidence': -0.023543693745914286, 'final': False}",-0.02,153
+Georgia (U.S. state),False,18,2,"{'confidence': -0.14535932298652, 'final': False}",-0.15,153
+Maine,False,8,3,"{'confidence': -0.04870259601, 'final': False}",-0.05,153
+Maine,False,13,3,"{'confidence': -0.054071314806324995, 'final': False}",-0.05,153
+Missouri,True,20,3,"{'confidence': -0.00012879969769999999, 'final': True}",-0.00,153
+Missouri,True,26,3,"{'confidence': -5.2001665e-06, 'final': True}",-0.00,153
+Missouri,True,29,3,"{'confidence': -5.2001663e-06, 'final': True}",-0.00,153
+Missouri,True,6,4,"{'confidence': -1.92206585e-06, 'final': True}",-0.00,153
+Missouri,True,11,4,"{'confidence': -8.4923285e-07, 'final': True}",-0.00,153
+Missouri,True,16,4,"{'confidence': -5.080962665e-06, 'final': True}",-0.00,153
+Missouri,True,16,4,"{'confidence': -5.080962665e-06, 'final': True}",-0.00,153
+Inspiration,False,8,0,"{'confidence': -0.09551957, 'final': False}",-0.10,154
+New Zealand,False,12,0,"{'confidence': -0.186521134065, 'final': False}",-0.19,154
+Austria,False,19,0,"{'confidence': -0.4368140824, 'final': False}",-0.44,154
+Black Panther (film),False,26,0,"{'confidence': -0.042699083404568, 'final': False}",-0.04,154
+Hong Kong,False,27,0,"{'confidence': -0.030147259852150003, 'final': False}",-0.03,154
+Wakanda,False,5,1,"{'confidence': -0.35792027247420005, 'final': False}",-0.36,154
+Liberia,False,11,1,"{'confidence': -0.04266593001946666, 'final': False}",-0.04,154
+Liberia,False,17,1,"{'confidence': -0.012663456111716667, 'final': False}",-0.01,154
+Lesotho,False,23,1,"{'confidence': -0.10736073120421667, 'final': False}",-0.11,154
+Botswana,False,24,1,"{'confidence': -0.0231491680192, 'final': False}",-0.02,154
+Liberia,True,8,2,"{'confidence': -2.8310247766666668e-06, 'final': True}",-0.00,154
+Liberia,True,14,2,"{'confidence': -3.4181589216666665e-05, 'final': True}",-0.00,154
+Liberia,False,19,2,"{'confidence': -0.004483072370883333, 'final': False}",-0.00,154
+Botswana,False,25,2,"{'confidence': -0.274835561806325, 'final': False}",-0.27,154
+Lesotho,False,31,2,"{'confidence': -0.021179855, 'final': False}",-0.02,154
+Lesotho,False,32,2,"{'confidence': -0.016665126543666666, 'final': False}",-0.02,154
+Lesotho,False,6,3,"{'confidence': -0.10797510666666667, 'final': False}",-0.11,154
+Lesotho,False,14,3,"{'confidence': -0.062483177605443335, 'final': False}",-0.06,154
+Lesotho,True,21,3,"{'confidence': -3.0294488e-07, 'final': True}",-0.00,154
+Lesotho,True,7,4,"{'confidence': -1.6936543333333333e-06, 'final': True}",-0.00,154
+Lesotho,True,14,4,"{'confidence': -6.208213e-07, 'final': True}",-0.00,154
+Lesotho,True,17,4,"{'confidence': -2.6321033333333333e-07, 'final': True}",-0.00,154
+Lesotho,True,17,4,"{'confidence': -2.6321033333333333e-07, 'final': True}",-0.00,154

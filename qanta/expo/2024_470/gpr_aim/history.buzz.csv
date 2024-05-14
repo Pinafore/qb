@@ -1,116 +1,116 @@
-page,word,sentence,final,evidence,question,weight
-J. B. S. Haldane,7,0,False,"{'confidence': -0.012387527485355555, 'final': False}",135,-0.01
-Albert Einstein,13,0,False,"{'confidence': -0.0016356448879999998, 'final': False}",135,-0.00
-Albert Einstein,18,0,False,"{'confidence': -0.004500147265000001, 'final': False}",135,-0.00
-Robert Koch,24,0,False,"{'confidence': -0.221659055129, 'final': False}",135,-0.22
-Michel Foucault,27,0,True,"{'confidence': -9.39021242e-06, 'final': True}",135,-0.00
-Michel Foucault,8,1,False,"{'confidence': -0.012076767182236001, 'final': False}",135,-0.01
-Sigmund Freud,15,1,True,"{'confidence': -0.0032866264081625003, 'final': True}",135,-0.00
-Sigmund Freud,21,1,True,"{'confidence': -0.0026967885609075, 'final': True}",135,-0.00
-Sigmund Freud,27,1,True,"{'confidence': -0.0019598375191374998, 'final': True}",135,-0.00
-Nikola Tesla,28,1,False,"{'confidence': -0.1053697796846, 'final': False}",135,-0.11
-Nikola Tesla,8,2,False,"{'confidence': -0.19237513620866, 'final': False}",135,-0.19
-Magnus Hirschfeld,12,2,False,"{'confidence': -0.19091590098056002, 'final': False}",135,-0.19
-Magnus Hirschfeld,17,2,False,"{'confidence': -0.07489357206908, 'final': False}",135,-0.07
-Magnus Hirschfeld,25,2,False,"{'confidence': -0.048480367596668, 'final': False}",135,-0.05
-Magnus Hirschfeld,30,2,True,"{'confidence': -0.001162584705, 'final': True}",135,-0.00
-Magnus Hirschfeld,5,3,False,"{'confidence': -0.07170249014247002, 'final': False}",135,-0.07
-Magnus Hirschfeld,11,3,True,"{'confidence': -1.471261959e-05, 'final': True}",135,-0.00
-Magnus Hirschfeld,16,3,True,"{'confidence': -1.561493348e-06, 'final': True}",135,-0.00
-Magnus Hirschfeld,20,3,True,"{'confidence': -4.7377861e-07, 'final': True}",135,-0.00
-Magnus Hirschfeld,22,3,True,"{'confidence': -8.224306699999999e-07, 'final': True}",135,-0.00
-Magnus Hirschfeld,8,4,True,"{'confidence': -5.88562473e-06, 'final': True}",135,-0.00
-Magnus Hirschfeld,12,4,True,"{'confidence': -1.0033912530000001e-05, 'final': True}",135,-0.00
-Magnus Hirschfeld,8,5,True,"{'confidence': -1.8386232160000002e-06, 'final': True}",135,-0.00
-Magnus Hirschfeld,11,5,True,"{'confidence': -2.46744126e-06, 'final': True}",135,-0.00
-Magnus Hirschfeld,17,5,True,"{'confidence': -5.1250113e-07, 'final': True}",135,-0.00
-Magnus Hirschfeld,24,5,True,"{'confidence': -5.12501136e-07, 'final': True}",135,-0.00
-Magnus Hirschfeld,29,5,True,"{'confidence': -1.6384906e-07, 'final': True}",135,-0.00
-Magnus Hirschfeld,29,5,True,"{'confidence': -1.6384906e-07, 'final': True}",135,-0.00
-Göbekli Tepe,6,0,False,"{'confidence': -0.1689687078274, 'final': False}",136,-0.17
-Archaeology,11,0,False,"{'confidence': -0.49767547693633335, 'final': False}",136,-0.50
-Cave,17,0,False,"{'confidence': -0.11628396032, 'final': False}",136,-0.12
-Oven,18,0,False,"{'confidence': -0.15236247, 'final': False}",136,-0.15
-Battle of Cynoscephalae,6,1,False,"{'confidence': -0.0275577950248, 'final': False}",136,-0.03
-Corbeddu Cave,14,1,False,"{'confidence': -0.196106386746425, 'final': False}",136,-0.20
-Karst,19,1,False,"{'confidence': -0.108794435, 'final': False}",136,-0.11
-Phalanx,23,1,True,"{'confidence': -0.0010332288943333335, 'final': True}",136,-0.00
-Phalanx,28,1,False,"{'confidence': -0.08880363424575, 'final': False}",136,-0.09
-Phalanx,33,1,True,"{'confidence': -0.0043304177968, 'final': True}",136,-0.00
-Phalanx,8,2,False,"{'confidence': -0.1242404358109075, 'final': False}",136,-0.12
-Phalanx,14,2,False,"{'confidence': -0.14794363597141, 'final': False}",136,-0.15
-Phalanx,21,2,True,"{'confidence': -1.2416426333333334e-06, 'final': True}",136,-0.00
-Phalanx,22,2,True,"{'confidence': -7.250933833333333e-07, 'final': True}",136,-0.00
-Phalanx,7,3,True,"{'confidence': -1.9320615666666664e-06, 'final': True}",136,-0.00
-Phalanx,13,3,True,"{'confidence': -2.9627046666666668e-05, 'final': True}",136,-0.00
-Phalanx,15,3,True,"{'confidence': -1.9320615666666664e-06, 'final': True}",136,-0.00
-Phalanx,7,4,False,"{'confidence': -0.05046486712375, 'final': False}",136,-0.05
-Phalanx,11,4,True,"{'confidence': -1.4949814666666668e-06, 'final': True}",136,-0.00
-Phalanx,17,4,True,"{'confidence': -3.426794666666666e-07, 'final': True}",136,-0.00
-Phalanx,22,4,True,"{'confidence': -1.4400666666666668e-07, 'final': True}",136,-0.00
-Phalanx,22,4,True,"{'confidence': -1.4400666666666668e-07, 'final': True}",136,-0.00
-Gang Zhou,8,0,False,"{'confidence': -0.004062532434866667, 'final': False}",137,-0.00
-Gang Zhou,12,0,False,"{'confidence': -0.0003671153786666667, 'final': False}",137,-0.00
-Gang Zhou,18,0,False,"{'confidence': -0.0005092844313333333, 'final': False}",137,-0.00
-Xiaoshuo,24,0,False,"{'confidence': -0.0120196448589125, 'final': False}",137,-0.01
-Xiaoshuo,24,0,False,"{'confidence': -0.046315457263825, 'final': False}",137,-0.05
-Gang Zhou,7,1,False,"{'confidence': -0.05330295834900001, 'final': False}",137,-0.05
-Gang Zhou,12,1,True,"{'confidence': -0.001476421121, 'final': True}",137,-0.00
-Gang Zhou,20,1,False,"{'confidence': -0.3166467020866667, 'final': False}",137,-0.32
-Marco Polo,23,1,False,"{'confidence': -0.17207165499875002, 'final': False}",137,-0.17
-Marco Polo,23,1,False,"{'confidence': -0.20963054331449998, 'final': False}",137,-0.21
-Marco Polo,6,2,True,"{'confidence': -0.00231859975, 'final': True}",137,-0.00
-Marco Polo,12,2,True,"{'confidence': -2.75611825e-07, 'final': True}",137,-0.00
-Marco Polo,18,2,True,"{'confidence': -6.3322285e-07, 'final': True}",137,-0.00
-Marco Polo,20,2,True,"{'confidence': 0.0, 'final': True}",137,0.00
-Marco Polo,7,3,True,"{'confidence': -9.6806325e-08, 'final': True}",137,-0.00
-Marco Polo,12,3,True,"{'confidence': -2.1601e-07, 'final': True}",137,-0.00
-Marco Polo,17,3,True,"{'confidence': -1.56408165e-07, 'final': True}",137,-0.00
-Marco Polo,18,3,True,"{'confidence': -1.56408165e-07, 'final': True}",137,-0.00
-Marco Polo,7,4,True,"{'confidence': -3.1281632500000003e-07, 'final': True}",137,-0.00
-Marco Polo,12,4,True,"{'confidence': -8.120283e-07, 'final': True}",137,-0.00
-Marco Polo,19,4,True,"{'confidence': -2.5321449e-07, 'final': True}",137,-0.00
-Marco Polo,23,4,True,"{'confidence': -8.120283e-07, 'final': True}",137,-0.00
-Marco Polo,23,4,True,"{'confidence': -8.120283e-07, 'final': True}",137,-0.00
-Cecil Rhodes,6,0,False,"{'confidence': -0.000148622359975, 'final': False}",138,-0.00
-Mahatma Gandhi,13,0,False,"{'confidence': -0.008739772533337499, 'final': False}",138,-0.01
-Mahatma Gandhi,19,0,False,"{'confidence': -0.009855583403162501, 'final': False}",138,-0.01
-Mahatma Gandhi,25,0,True,"{'confidence': -0.007813416167160001, 'final': True}",138,-0.01
-Mahatma Gandhi,30,0,True,"{'confidence': -0.0032442336214225, 'final': True}",138,-0.00
-Mahatma Gandhi,31,0,True,"{'confidence': -5.5577773199999994e-06, 'final': True}",138,-0.00
-Mahatma Gandhi,8,1,True,"{'confidence': -3.0620348475e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,14,1,True,"{'confidence': -2.13522640125e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,19,1,True,"{'confidence': -1.2143779975e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,19,1,True,"{'confidence': -2.6418417925e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,7,2,True,"{'confidence': -7.5795786575e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,14,2,True,"{'confidence': -3.78899363325e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,17,2,True,"{'confidence': -5.0078510575e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,7,3,True,"{'confidence': -2.52077800825e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,15,3,True,"{'confidence': -1.65059120825e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,20,3,True,"{'confidence': -4.3881381625e-06, 'final': True}",138,-0.00
-Mahatma Gandhi,25,3,True,"{'confidence': -7.71028725e-07, 'final': True}",138,-0.00
-Mahatma Gandhi,27,3,True,"{'confidence': -4.90215715e-06, 'final': True}",138,-0.00
-Mahatma Gandhi,7,4,True,"{'confidence': -2.9278933325e-06, 'final': True}",138,-0.00
-Mahatma Gandhi,11,4,True,"{'confidence': -2.20190815e-05, 'final': True}",138,-0.00
-Mahatma Gandhi,11,4,True,"{'confidence': -2.20190815e-05, 'final': True}",138,-0.00
-Ball (dance party),9,0,False,"{'confidence': -0.0077117645802400004, 'final': False}",139,-0.01
-Meriwether Lewis,15,0,False,"{'confidence': -8.341748849999999e-05, 'final': False}",139,-0.00
-Meriwether Lewis,22,0,False,"{'confidence': -0.00020917481921, 'final': False}",139,-0.00
-Aaron Burr,28,0,False,"{'confidence': -0.032842475, 'final': False}",139,-0.03
-Aaron Burr,32,0,True,"{'confidence': -2.6679223e-05, 'final': True}",139,-0.00
-Aaron Burr,7,1,True,"{'confidence': -5.1033605e-06, 'final': True}",139,-0.00
-Aaron Burr,12,1,True,"{'confidence': -9.169748e-05, 'final': True}",139,-0.00
-Aaron Burr,17,1,True,"{'confidence': -3.434509e-06, 'final': True}",139,-0.00
-Aaron Burr,24,1,True,"{'confidence': -2.2566697e-05, 'final': True}",139,-0.00
-Aaron Burr,30,1,True,"{'confidence': -0.0001256632, 'final': True}",139,-0.00
-Aaron Burr,31,1,True,"{'confidence': -1.0109914e-05, 'final': True}",139,-0.00
-Aaron Burr,5,2,True,"{'confidence': -3.948155e-07, 'final': True}",139,-0.00
-Aaron Burr,11,2,True,"{'confidence': -3.3521365e-07, 'final': True}",139,-0.00
-Aaron Burr,15,2,True,"{'confidence': -2.1601e-07, 'final': True}",139,-0.00
-Aaron Burr,21,2,True,"{'confidence': -2.75611825e-07, 'final': True}",139,-0.00
-Aaron Burr,23,2,True,"{'confidence': -3.948155e-07, 'final': True}",139,-0.00
-Aaron Burr,6,3,True,"{'confidence': -8.7163015e-07, 'final': True}",139,-0.00
-Aaron Burr,11,3,True,"{'confidence': -6.3322285e-07, 'final': True}",139,-0.00
-Aaron Burr,17,3,True,"{'confidence': -9.6806325e-08, 'final': True}",139,-0.00
-Aaron Burr,20,3,True,"{'confidence': -5.140192e-07, 'final': True}",139,-0.00
-Aaron Burr,20,3,True,"{'confidence': -5.140192e-07, 'final': True}",139,-0.00
+page,evidence,final,question,weight,sentence,word
+J. B. S. Haldane,"{'confidence': -0.012387527485355555, 'final': False}",False,135,-0.01,0,7
+Albert Einstein,"{'confidence': -0.0016356448879999998, 'final': True}",True,135,-0.00,0,13
+Albert Einstein,"{'confidence': -0.004500147265000001, 'final': False}",False,135,-0.00,0,18
+Robert Koch,"{'confidence': -0.221659055129, 'final': False}",False,135,-0.22,0,24
+Michel Foucault,"{'confidence': -9.39021242e-06, 'final': True}",True,135,-0.00,0,27
+Michel Foucault,"{'confidence': -0.012076767182236001, 'final': False}",False,135,-0.01,1,8
+Sigmund Freud,"{'confidence': -0.0032866264081625003, 'final': False}",False,135,-0.00,1,15
+Sigmund Freud,"{'confidence': -0.0026967885609075, 'final': True}",True,135,-0.00,1,21
+Sigmund Freud,"{'confidence': -0.0019598375191374998, 'final': True}",True,135,-0.00,1,27
+Nikola Tesla,"{'confidence': -0.1053697796846, 'final': False}",False,135,-0.11,1,28
+Nikola Tesla,"{'confidence': -0.19237513620866, 'final': False}",False,135,-0.19,2,8
+Magnus Hirschfeld,"{'confidence': -0.19091590098056002, 'final': False}",False,135,-0.19,2,12
+Magnus Hirschfeld,"{'confidence': -0.07489357206908, 'final': False}",False,135,-0.07,2,17
+Magnus Hirschfeld,"{'confidence': -0.048480367596668, 'final': False}",False,135,-0.05,2,25
+Magnus Hirschfeld,"{'confidence': -0.001162584705, 'final': True}",True,135,-0.00,2,30
+Magnus Hirschfeld,"{'confidence': -0.07170249014247002, 'final': False}",False,135,-0.07,3,5
+Magnus Hirschfeld,"{'confidence': -1.471261959e-05, 'final': True}",True,135,-0.00,3,11
+Magnus Hirschfeld,"{'confidence': -1.561493348e-06, 'final': True}",True,135,-0.00,3,16
+Magnus Hirschfeld,"{'confidence': -4.7377861e-07, 'final': True}",True,135,-0.00,3,20
+Magnus Hirschfeld,"{'confidence': -8.224306699999999e-07, 'final': True}",True,135,-0.00,3,22
+Magnus Hirschfeld,"{'confidence': -5.88562473e-06, 'final': True}",True,135,-0.00,4,8
+Magnus Hirschfeld,"{'confidence': -1.0033912530000001e-05, 'final': True}",True,135,-0.00,4,12
+Magnus Hirschfeld,"{'confidence': -1.8386232160000002e-06, 'final': True}",True,135,-0.00,5,8
+Magnus Hirschfeld,"{'confidence': -2.46744126e-06, 'final': True}",True,135,-0.00,5,11
+Magnus Hirschfeld,"{'confidence': -5.1250113e-07, 'final': True}",True,135,-0.00,5,17
+Magnus Hirschfeld,"{'confidence': -5.12501136e-07, 'final': True}",True,135,-0.00,5,24
+Magnus Hirschfeld,"{'confidence': -1.6384906e-07, 'final': True}",True,135,-0.00,5,29
+Magnus Hirschfeld,"{'confidence': -1.6384906e-07, 'final': True}",True,135,-0.00,5,29
+Göbekli Tepe,"{'confidence': -0.1689687078274, 'final': False}",False,136,-0.17,0,6
+Archaeology,"{'confidence': -0.49767547693633335, 'final': False}",False,136,-0.50,0,11
+Cave,"{'confidence': -0.11628396032, 'final': False}",False,136,-0.12,0,17
+Oven,"{'confidence': -0.15236247, 'final': False}",False,136,-0.15,0,18
+Battle of Cynoscephalae,"{'confidence': -0.0275577950248, 'final': False}",False,136,-0.03,1,6
+Corbeddu Cave,"{'confidence': -0.196106386746425, 'final': False}",False,136,-0.20,1,14
+Karst,"{'confidence': -0.108794435, 'final': False}",False,136,-0.11,1,19
+Phalanx,"{'confidence': -0.0010332288943333335, 'final': True}",True,136,-0.00,1,23
+Phalanx,"{'confidence': -0.08880363424575, 'final': False}",False,136,-0.09,1,28
+Phalanx,"{'confidence': -0.0043304177968, 'final': False}",False,136,-0.00,1,33
+Phalanx,"{'confidence': -0.1242404358109075, 'final': False}",False,136,-0.12,2,8
+Phalanx,"{'confidence': -0.14794363597141, 'final': False}",False,136,-0.15,2,14
+Phalanx,"{'confidence': -1.2416426333333334e-06, 'final': True}",True,136,-0.00,2,21
+Phalanx,"{'confidence': -7.250933833333333e-07, 'final': True}",True,136,-0.00,2,22
+Phalanx,"{'confidence': -1.9320615666666664e-06, 'final': True}",True,136,-0.00,3,7
+Phalanx,"{'confidence': -2.9627046666666668e-05, 'final': True}",True,136,-0.00,3,13
+Phalanx,"{'confidence': -1.9320615666666664e-06, 'final': True}",True,136,-0.00,3,15
+Phalanx,"{'confidence': -0.05046486712375, 'final': False}",False,136,-0.05,4,7
+Phalanx,"{'confidence': -1.4949814666666668e-06, 'final': True}",True,136,-0.00,4,11
+Phalanx,"{'confidence': -3.426794666666666e-07, 'final': True}",True,136,-0.00,4,17
+Phalanx,"{'confidence': -1.4400666666666668e-07, 'final': True}",True,136,-0.00,4,22
+Phalanx,"{'confidence': -1.4400666666666668e-07, 'final': True}",True,136,-0.00,4,22
+Gang Zhou,"{'confidence': -0.004062532434866667, 'final': False}",False,137,-0.00,0,8
+Gang Zhou,"{'confidence': -0.0003671153786666667, 'final': True}",True,137,-0.00,0,12
+Gang Zhou,"{'confidence': -0.0005092844313333333, 'final': True}",True,137,-0.00,0,18
+Xiaoshuo,"{'confidence': -0.0120196448589125, 'final': False}",False,137,-0.01,0,24
+Xiaoshuo,"{'confidence': -0.046315457263825, 'final': False}",False,137,-0.05,0,24
+Gang Zhou,"{'confidence': -0.05330295834900001, 'final': False}",False,137,-0.05,1,7
+Gang Zhou,"{'confidence': -0.001476421121, 'final': True}",True,137,-0.00,1,12
+Gang Zhou,"{'confidence': -0.3166467020866667, 'final': False}",False,137,-0.32,1,20
+Marco Polo,"{'confidence': -0.17207165499875002, 'final': False}",False,137,-0.17,1,23
+Marco Polo,"{'confidence': -0.20963054331449998, 'final': False}",False,137,-0.21,1,23
+Marco Polo,"{'confidence': -0.00231859975, 'final': True}",True,137,-0.00,2,6
+Marco Polo,"{'confidence': -2.75611825e-07, 'final': True}",True,137,-0.00,2,12
+Marco Polo,"{'confidence': -6.3322285e-07, 'final': True}",True,137,-0.00,2,18
+Marco Polo,"{'confidence': 0.0, 'final': True}",True,137,0.00,2,20
+Marco Polo,"{'confidence': -9.6806325e-08, 'final': True}",True,137,-0.00,3,7
+Marco Polo,"{'confidence': -2.1601e-07, 'final': True}",True,137,-0.00,3,12
+Marco Polo,"{'confidence': -1.56408165e-07, 'final': True}",True,137,-0.00,3,17
+Marco Polo,"{'confidence': -1.56408165e-07, 'final': True}",True,137,-0.00,3,18
+Marco Polo,"{'confidence': -3.1281632500000003e-07, 'final': True}",True,137,-0.00,4,7
+Marco Polo,"{'confidence': -8.120283e-07, 'final': True}",True,137,-0.00,4,12
+Marco Polo,"{'confidence': -2.5321449e-07, 'final': True}",True,137,-0.00,4,19
+Marco Polo,"{'confidence': -8.120283e-07, 'final': True}",True,137,-0.00,4,23
+Marco Polo,"{'confidence': -8.120283e-07, 'final': True}",True,137,-0.00,4,23
+Cecil Rhodes,"{'confidence': -0.000148622359975, 'final': False}",False,138,-0.00,0,6
+Mahatma Gandhi,"{'confidence': -0.008739772533337499, 'final': False}",False,138,-0.01,0,13
+Mahatma Gandhi,"{'confidence': -0.009855583403162501, 'final': False}",False,138,-0.01,0,19
+Mahatma Gandhi,"{'confidence': -0.007813416167160001, 'final': False}",False,138,-0.01,0,25
+Mahatma Gandhi,"{'confidence': -0.0032442336214225, 'final': False}",False,138,-0.00,0,30
+Mahatma Gandhi,"{'confidence': -5.5577773199999994e-06, 'final': True}",True,138,-0.00,0,31
+Mahatma Gandhi,"{'confidence': -3.0620348475e-05, 'final': True}",True,138,-0.00,1,8
+Mahatma Gandhi,"{'confidence': -2.13522640125e-05, 'final': True}",True,138,-0.00,1,14
+Mahatma Gandhi,"{'confidence': -1.2143779975e-05, 'final': True}",True,138,-0.00,1,19
+Mahatma Gandhi,"{'confidence': -2.6418417925e-05, 'final': True}",True,138,-0.00,1,19
+Mahatma Gandhi,"{'confidence': -7.5795786575e-05, 'final': True}",True,138,-0.00,2,7
+Mahatma Gandhi,"{'confidence': -3.78899363325e-05, 'final': True}",True,138,-0.00,2,14
+Mahatma Gandhi,"{'confidence': -5.0078510575e-05, 'final': True}",True,138,-0.00,2,17
+Mahatma Gandhi,"{'confidence': -2.52077800825e-05, 'final': True}",True,138,-0.00,3,7
+Mahatma Gandhi,"{'confidence': -1.65059120825e-05, 'final': True}",True,138,-0.00,3,15
+Mahatma Gandhi,"{'confidence': -4.3881381625e-06, 'final': True}",True,138,-0.00,3,20
+Mahatma Gandhi,"{'confidence': -7.71028725e-07, 'final': True}",True,138,-0.00,3,25
+Mahatma Gandhi,"{'confidence': -4.90215715e-06, 'final': True}",True,138,-0.00,3,27
+Mahatma Gandhi,"{'confidence': -2.9278933325e-06, 'final': True}",True,138,-0.00,4,7
+Mahatma Gandhi,"{'confidence': -2.20190815e-05, 'final': True}",True,138,-0.00,4,11
+Mahatma Gandhi,"{'confidence': -2.20190815e-05, 'final': True}",True,138,-0.00,4,11
+Ball (dance party),"{'confidence': -0.0077117645802400004, 'final': False}",False,139,-0.01,0,9
+Meriwether Lewis,"{'confidence': -8.341748849999999e-05, 'final': True}",True,139,-0.00,0,15
+Meriwether Lewis,"{'confidence': -0.00020917481921, 'final': True}",True,139,-0.00,0,22
+Aaron Burr,"{'confidence': -0.032842475, 'final': False}",False,139,-0.03,0,28
+Aaron Burr,"{'confidence': -2.6679223e-05, 'final': True}",True,139,-0.00,0,32
+Aaron Burr,"{'confidence': -5.1033605e-06, 'final': True}",True,139,-0.00,1,7
+Aaron Burr,"{'confidence': -9.169748e-05, 'final': True}",True,139,-0.00,1,12
+Aaron Burr,"{'confidence': -3.434509e-06, 'final': True}",True,139,-0.00,1,17
+Aaron Burr,"{'confidence': -2.2566697e-05, 'final': True}",True,139,-0.00,1,24
+Aaron Burr,"{'confidence': -0.0001256632, 'final': True}",True,139,-0.00,1,30
+Aaron Burr,"{'confidence': -1.0109914e-05, 'final': True}",True,139,-0.00,1,31
+Aaron Burr,"{'confidence': -3.948155e-07, 'final': True}",True,139,-0.00,2,5
+Aaron Burr,"{'confidence': -3.3521365e-07, 'final': True}",True,139,-0.00,2,11
+Aaron Burr,"{'confidence': -2.1601e-07, 'final': True}",True,139,-0.00,2,15
+Aaron Burr,"{'confidence': -2.75611825e-07, 'final': True}",True,139,-0.00,2,21
+Aaron Burr,"{'confidence': -3.948155e-07, 'final': True}",True,139,-0.00,2,23
+Aaron Burr,"{'confidence': -8.7163015e-07, 'final': True}",True,139,-0.00,3,6
+Aaron Burr,"{'confidence': -6.3322285e-07, 'final': True}",True,139,-0.00,3,11
+Aaron Burr,"{'confidence': -9.6806325e-08, 'final': True}",True,139,-0.00,3,17
+Aaron Burr,"{'confidence': -5.140192e-07, 'final': True}",True,139,-0.00,3,20
+Aaron Burr,"{'confidence': -5.140192e-07, 'final': True}",True,139,-0.00,3,20

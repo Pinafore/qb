@@ -1,41 +1,41 @@
-final,page,evidence,sentence,question,weight,word
-False,Ming dynasty,"{'confidence': -0.00019038364, 'final': False}",0,165,-0.00,1
-False,Ming dynasty,"{'confidence': -0.00038168664000000005, 'final': False}",1,165,-0.00,1
-False,Ming dynasty,"{'confidence': -1.39567e-05, 'final': False}",2,165,-0.00,3
-False,Ming dynasty,"{'confidence': -2.0353963666666664e-05, 'final': False}",3,165,-0.00,1
-True,Ming dynasty,"{'confidence': -2.5528829333333337e-06, 'final': True}",4,165,-0.00,2
-True,Ming dynasty,"{'confidence': -2.5528829333333337e-06, 'final': True}",4,165,-0.00,2
-False,Chinese language,"{'confidence': -0.5030055865, 'final': False}",0,166,-0.50,1
-False,Don Giovanni,"{'confidence': -0.36123626000000003, 'final': False}",1,166,-0.36,1
-False,Don Giovanni,"{'confidence': -0.38580165, 'final': False}",2,166,-0.39,1
-False,Don Giovanni,"{'confidence': -0.49617764, 'final': False}",3,166,-0.50,1
-False,The Red Detachment of Women (opera),"{'confidence': -0.050803135963924995, 'final': False}",4,166,-0.05,1
-True,Nixon in China,"{'confidence': -1.449046175e-06, 'final': True}",5,166,-0.00,2
-True,Nixon in China,"{'confidence': -6.742224e-07, 'final': True}",6,166,-0.00,3
-True,Nixon in China,"{'confidence': -6.270859887e-05, 'final': True}",6,166,-0.00,4
-True,Nixon in China,"{'confidence': -6.270859887e-05, 'final': True}",6,166,-0.00,4
-False,Chinese language,"{'confidence': -0.5030055865, 'final': False}",0,167,-0.50,1
-False,Dune (novel),"{'confidence': -0.1916124285288, 'final': False}",1,167,-0.19,1
-False,The Three-Body Problem (novel),"{'confidence': -0.06505955045344444, 'final': False}",2,167,-0.07,1
-False,Three-Body Problem (novel),"{'confidence': -0.1096655213640625, 'final': False}",3,167,-0.11,1
-False,The Three-Body Problem (novel),"{'confidence': -0.026841543540555554, 'final': False}",4,167,-0.03,1
-False,The Three-Body Problem (novel),"{'confidence': -0.06197221703359222, 'final': False}",4,167,-0.06,2
-False,Three-Body Problem (novel),"{'confidence': -0.11004337285217501, 'final': False}",5,167,-0.11,1
-True,The Three-Body Problem (novel),"{'confidence': -0.0042927937432166675, 'final': True}",6,167,-0.00,1
-True,The Three-Body Problem (novel),"{'confidence': -0.0013695377592055557, 'final': True}",7,167,-0.00,1
-True,The Three-Body Problem (novel),"{'confidence': -0.00082898894155, 'final': True}",8,167,-0.00,3
-True,The Three-Body Problem (novel),"{'confidence': -0.00082898894155, 'final': True}",8,167,-0.00,3
-False,Seventeenth century,"{'confidence': -0.33005606991965003, 'final': False}",0,168,-0.33,3
-False,17世纪,"{'confidence': -0.29447877, 'final': False}",1,168,-0.29,1
-False,Sancho Panza,"{'confidence': -0.3433928043145, 'final': False}",2,168,-0.34,2
-False,Water Margin,"{'confidence': -0.58808137163015, 'final': False}",3,168,-0.59,5
-True,Mulan,"{'confidence': -0.008291595806325, 'final': True}",4,168,-0.01,1
-False,Hua Mulan,"{'confidence': -0.053895562916875, 'final': False}",5,168,-0.05,2
-False,Hua Mulan,"{'confidence': -0.053895562916875, 'final': False}",5,168,-0.05,2
-False,Chinese language,"{'confidence': -0.5030055865, 'final': False}",0,169,-0.50,1
-False,Lost in Translation (film),"{'confidence': -0.14690902124098335, 'final': False}",1,169,-0.15,2
-False,"Crazy, Stupid, Love","{'confidence': -0.06742661529302858, 'final': False}",2,169,-0.07,4
-True,Crazy Rich Asians (film),"{'confidence': -2.256301704285714e-06, 'final': True}",2,169,-0.00,9
-True,Crazy Rich Asians (film),"{'confidence': -9.961487542857143e-07, 'final': True}",3,169,-0.00,3
-True,Crazy Rich Asians (film),"{'confidence': -1.1494105714285716e-06, 'final': True}",4,169,-0.00,7
-True,Crazy Rich Asians (film),"{'confidence': -1.1494105714285716e-06, 'final': True}",4,169,-0.00,7
+evidence,word,sentence,question,weight,final,page
+"{'confidence': -0.00019038364, 'final': False}",1,0,165,-0.00,False,Ming Dynasty
+"{'confidence': -0.00038168664000000005, 'final': False}",1,1,165,-0.00,False,Ming Dynasty
+"{'confidence': -1.39567e-05, 'final': True}",3,2,165,-0.00,True,Ming Dynasty
+"{'confidence': -2.0353963666666664e-05, 'final': True}",1,3,165,-0.00,True,Ming Dynasty
+"{'confidence': -2.5528829333333337e-06, 'final': True}",2,4,165,-0.00,True,Ming Dynasty
+"{'confidence': -2.5528829333333337e-06, 'final': True}",2,4,165,-0.00,True,Ming Dynasty
+"{'confidence': -0.5030055865, 'final': False}",1,0,166,-0.50,False,Chinese language
+"{'confidence': -0.36123626000000003, 'final': False}",1,1,166,-0.36,False,Don Giovanni
+"{'confidence': -0.38580165, 'final': False}",1,2,166,-0.39,False,Don Giovanni
+"{'confidence': -0.49617764, 'final': False}",1,3,166,-0.50,False,Don Giovanni
+"{'confidence': -0.050803135963924995, 'final': False}",1,4,166,-0.05,False,The Red Detachment of Women (opera)
+"{'confidence': -1.449046175e-06, 'final': True}",2,5,166,-0.00,True,Nixon in China
+"{'confidence': -6.742224e-07, 'final': True}",3,6,166,-0.00,True,Nixon in China
+"{'confidence': -6.270859887e-05, 'final': True}",4,6,166,-0.00,True,Nixon in China
+"{'confidence': -6.270859887e-05, 'final': True}",4,6,166,-0.00,True,Nixon in China
+"{'confidence': -0.5030055865, 'final': False}",1,0,167,-0.50,False,Chinese language
+"{'confidence': -0.1916124285288, 'final': False}",1,1,167,-0.19,False,Dune (novel)
+"{'confidence': -0.06505955045344444, 'final': False}",1,2,167,-0.07,False,Three Body Problem
+"{'confidence': -0.1096655213640625, 'final': False}",1,3,167,-0.11,False,Crazy Rich Asians
+"{'confidence': -0.026841543540555554, 'final': False}",1,4,167,-0.03,False,Three Body Problem
+"{'confidence': -0.06197221703359222, 'final': False}",2,4,167,-0.06,False,Three Body Problem
+"{'confidence': -0.11004337285217501, 'final': False}",1,5,167,-0.11,False,Crazy Rich Asians
+"{'confidence': -0.0042927937432166675, 'final': False}",1,6,167,-0.00,False,Three Body Problem
+"{'confidence': -0.0013695377592055557, 'final': True}",1,7,167,-0.00,True,Three Body Problem
+"{'confidence': -0.00082898894155, 'final': True}",3,8,167,-0.00,True,Three Body Problem
+"{'confidence': -0.00082898894155, 'final': True}",3,8,167,-0.00,True,Three Body Problem
+"{'confidence': -0.33005606991965003, 'final': False}",3,0,168,-0.33,False,Seventeenth century
+"{'confidence': -0.29447877, 'final': False}",1,1,168,-0.29,False,17世纪
+"{'confidence': -0.3433928043145, 'final': False}",2,2,168,-0.34,False,Sancho Panza
+"{'confidence': -0.58808137163015, 'final': False}",5,3,168,-0.59,False,Water Margin
+"{'confidence': -0.008291595806325, 'final': False}",1,4,168,-0.01,False,Mulan
+"{'confidence': -0.053895562916875, 'final': False}",2,5,168,-0.05,False,Mulan
+"{'confidence': -0.053895562916875, 'final': False}",2,5,168,-0.05,False,Mulan
+"{'confidence': -0.5030055865, 'final': False}",1,0,169,-0.50,False,Chinese language
+"{'confidence': -0.14690902124098335, 'final': False}",2,1,169,-0.15,False,Lost in Translation (film)
+"{'confidence': -0.06742661529302858, 'final': False}",4,2,169,-0.07,False,"Crazy, Stupid, Love"
+"{'confidence': -2.256301704285714e-06, 'final': True}",9,2,169,-0.00,True,Crazy Rich Asians
+"{'confidence': -9.961487542857143e-07, 'final': True}",3,3,169,-0.00,True,Crazy Rich Asians
+"{'confidence': -1.1494105714285716e-06, 'final': True}",7,4,169,-0.00,True,Crazy Rich Asians
+"{'confidence': -1.1494105714285716e-06, 'final': True}",7,4,169,-0.00,True,Crazy Rich Asians
