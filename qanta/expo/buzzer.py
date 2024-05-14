@@ -594,7 +594,7 @@ def format_display(
         current_guesses, key=lambda x: current_guesses[x].weight, reverse=True
     )[:guess_limit]:
         guess = current_guesses[gg]
-        if answer == guess.page:
+        if answer.strip() == guess.page.strip():
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
