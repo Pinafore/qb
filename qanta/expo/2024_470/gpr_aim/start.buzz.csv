@@ -1,0 +1,121 @@
+sentence,question,page,evidence,word,final,weight
+0,175,List of U.S. states and territories by population,"{'confidence': -0.032499891674953, 'final': False}",6,False,-0.03
+0,175,Maine,"{'confidence': -0.01279317951, 'final': False}",14,False,-0.01
+0,175,Maine,"{'confidence': -0.00324012321365, 'final': False}",18,False,-0.00
+0,175,Maine,"{'confidence': -0.0110063945, 'final': False}",23,False,-0.01
+0,175,Maine,"{'confidence': -5.8864215e-05, 'final': True}",28,True,-0.00
+0,175,Maine,"{'confidence': -9.088347e-07, 'final': True}",35,True,-0.00
+0,175,Maine,"{'confidence': -7.89631e-07, 'final': True}",41,True,-0.00
+0,175,Maine,"{'confidence': -3.3332231325e-05, 'final': True}",44,True,-0.00
+0,175,Maine,"{'confidence': -2.0182625e-05, 'final': True}",48,True,-0.00
+0,175,Maine,"{'confidence': -1.266445665e-06, 'final': True}",52,True,-0.00
+0,175,Maine,"{'confidence': -3.5313154e-06, 'final': True}",60,True,-0.00
+0,175,Maine,"{'confidence': -3.7241815e-07, 'final': True}",63,True,-0.00
+1,175,Maine,"{'confidence': -9.0883465e-07, 'final': True}",7,True,-0.00
+1,175,Maine,"{'confidence': -3.1281632500000003e-07, 'final': True}",13,True,-0.00
+1,175,Maine,"{'confidence': -3.1281632500000003e-07, 'final': True}",18,True,-0.00
+1,175,Maine,"{'confidence': -6.10825485e-07, 'final': True}",20,True,-0.00
+2,175,Maine,"{'confidence': -3.1281632500000003e-07, 'final': True}",7,True,-0.00
+2,175,Maine,"{'confidence': -5.51223645e-07, 'final': True}",12,True,-0.00
+2,175,Maine,"{'confidence': -7.300291500000001e-07, 'final': True}",18,True,-0.00
+2,175,Maine,"{'confidence': -4.3202e-07, 'final': True}",21,True,-0.00
+3,175,Maine,"{'confidence': -2.1601e-07, 'final': True}",7,True,-0.00
+3,175,Maine,"{'confidence': -3.7241815e-07, 'final': True}",14,True,-0.00
+3,175,Maine,"{'confidence': -7.524265e-07, 'final': True}",20,True,-0.00
+3,175,Maine,"{'confidence': -1.20684382e-06, 'final': True}",24,True,-0.00
+3,175,Maine,"{'confidence': -1.20684382e-06, 'final': True}",24,True,-0.00
+0,176,Frankenstein,"{'confidence': -0.03689324782465, 'final': False}",7,False,-0.04
+0,176,Frankenstein,"{'confidence': -1.147242025e-06, 'final': True}",12,True,-0.00
+0,176,Frankenstein,"{'confidence': -1.0280383e-06, 'final': True}",17,True,-0.00
+0,176,Frankenstein,"{'confidence': -8.120283e-07, 'final': True}",23,True,-0.00
+0,176,Frankenstein,"{'confidence': -2.57768605e-06, 'final': True}",27,True,-0.00
+1,176,Frankenstein,"{'confidence': -1.1398756665e-05, 'final': True}",7,True,-0.00
+1,176,Frankenstein,"{'confidence': -5.58017475e-06, 'final': True}",13,True,-0.00
+1,176,Frankenstein,"{'confidence': -7.524265e-07, 'final': True}",18,True,-0.00
+1,176,Frankenstein,"{'confidence': -9.08834625e-07, 'final': True}",24,True,-0.00
+1,176,Frankenstein,"{'confidence': 0.0, 'final': True}",32,True,0.00
+2,176,Frankenstein,"{'confidence': -5.73658282e-06, 'final': True}",6,True,-0.00
+2,176,Frankenstein,"{'confidence': -1.326047465e-06, 'final': True}",12,True,-0.00
+2,176,Frankenstein,"{'confidence': -2.04126955e-06, 'final': True}",18,True,-0.00
+2,176,Frankenstein,"{'confidence': -1.743260315e-06, 'final': True}",24,True,-0.00
+2,176,Frankenstein,"{'confidence': -3.72418165e-07, 'final': True}",30,True,-0.00
+2,176,Frankenstein,"{'confidence': -6.7042732e-07, 'final': True}",35,True,-0.00
+2,176,Frankenstein,"{'confidence': -1.9361265e-07, 'final': True}",39,True,-0.00
+3,176,Frankenstein,"{'confidence': -2.1601e-07, 'final': True}",6,True,-0.00
+3,176,Frankenstein,"{'confidence': -4.48494465e-06, 'final': True}",13,True,-0.00
+3,176,Frankenstein,"{'confidence': -1.087640125e-06, 'final': True}",17,True,-0.00
+3,176,Frankenstein,"{'confidence': -6.8094159e-06, 'final': True}",23,True,-0.00
+3,176,Frankenstein,"{'confidence': -1.99814207e-05, 'final': True}",29,True,-0.00
+3,176,Frankenstein,"{'confidence': -2.34979292e-05, 'final': True}",34,True,-0.00
+3,176,Frankenstein,"{'confidence': -2.34979292e-05, 'final': True}",34,True,-0.00
+0,177,Abundance of elements in Earth's crust,"{'confidence': -0.0919557461781125, 'final': False}",7,False,-0.09
+0,177,Chloride,"{'confidence': -0.19498647924613333, 'final': False}",10,False,-0.19
+0,177,Lactic acid,"{'confidence': -0.0026636808239, 'final': True}",16,True,-0.00
+0,177,Lactic acid,"{'confidence': -0.0034011531579999994, 'final': False}",21,False,-0.00
+0,177,Lactic acid,"{'confidence': -0.00608727538, 'final': False}",25,False,-0.01
+0,177,Lactic acid,"{'confidence': -0.00152804053, 'final': True}",31,True,-0.00
+0,177,Lactic acid,"{'confidence': -1.6286107216666666e-05, 'final': True}",35,True,-0.00
+0,177,Lactic acid,"{'confidence': -1.0677728833333333e-06, 'final': True}",42,True,-0.00
+0,177,Lactic acid,"{'confidence': -0.0001364177258, 'final': True}",47,True,-0.00
+0,177,Lactic acid,"{'confidence': -6.749905463333334e-05, 'final': True}",54,True,-0.00
+1,177,Lactic acid,"{'confidence': -2.5776860000000004e-06, 'final': True}",7,True,-0.00
+1,177,Lactic acid,"{'confidence': -2.4187476966666666e-06, 'final': True}",14,True,-0.00
+1,177,Lactic acid,"{'confidence': -1.1621734833333332e-06, 'final': True}",18,True,-0.00
+1,177,Lactic acid,"{'confidence': -7.648280166666668e-07, 'final': True}",24,True,-0.00
+1,177,Lactic acid,"{'confidence': -7.584239883333334e-06, 'final': True}",30,True,-0.00
+1,177,Lactic acid,"{'confidence': -1.6787226666666668e-06, 'final': True}",37,True,-0.00
+1,177,Lactic acid,"{'confidence': -3.13396965e-06, 'final': True}",42,True,-0.00
+1,177,Lactic acid,"{'confidence': -9.485691666666668e-07, 'final': True}",48,True,-0.00
+2,177,Lactic acid,"{'confidence': -2.8160932166666666e-06, 'final': True}",7,True,-0.00
+2,177,Lactic acid,"{'confidence': -2.2200750166666667e-06, 'final': True}",12,True,-0.00
+2,177,Lactic acid,"{'confidence': -3.2531732166666665e-06, 'final': True}",14,True,-0.00
+2,177,Lactic acid,"{'confidence': -3.2531732166666665e-06, 'final': True}",14,True,-0.00
+0,178,Moctezuma I,"{'confidence': -0.00053926635394, 'final': False}",6,False,-0.00
+0,178,Oliver Cromwell,"{'confidence': -4.84031625e-08, 'final': True}",11,True,-0.00
+0,178,Oliver Cromwell,"{'confidence': -1.0988388375e-06, 'final': True}",17,True,-0.00
+0,178,Oliver Cromwell,"{'confidence': -3.24014995e-07, 'final': True}",19,True,-0.00
+1,178,Oliver Cromwell,"{'confidence': -0.000625909686575, 'final': True}",6,True,-0.00
+1,178,Oliver Cromwell,"{'confidence': -1.26607245e-07, 'final': True}",13,True,-0.00
+1,178,Oliver Cromwell,"{'confidence': -2.4581091250000003e-07, 'final': True}",18,True,-0.00
+1,178,Oliver Cromwell,"{'confidence': -2.94214075e-07, 'final': True}",22,True,-0.00
+1,178,Oliver Cromwell,"{'confidence': -1.15844057e-06, 'final': True}",26,True,-0.00
+1,178,Oliver Cromwell,"{'confidence': -9.610328750000001e-07, 'final': True}",30,True,-0.00
+1,178,Oliver Cromwell,"{'confidence': -5.922232375e-07, 'final': True}",35,True,-0.00
+2,178,Oliver Cromwell,"{'confidence': -6.816260075e-07, 'final': True}",6,True,-0.00
+2,178,Oliver Cromwell,"{'confidence': -7.71028725e-07, 'final': True}",12,True,-0.00
+2,178,Oliver Cromwell,"{'confidence': -6.406264125e-07, 'final': True}",18,True,-0.00
+3,178,Oliver Cromwell,"{'confidence': -1.4750520875e-06, 'final': True}",6,True,-0.00
+3,178,Oliver Cromwell,"{'confidence': -6.518250699999999e-07, 'final': True}",12,True,-0.00
+3,178,Oliver Cromwell,"{'confidence': -4.4067405500000004e-06, 'final': True}",17,True,-0.00
+3,178,Oliver Cromwell,"{'confidence': -9.796351625e-07, 'final': True}",20,True,-0.00
+4,178,Oliver Cromwell,"{'confidence': -9.7963516e-07, 'final': True}",7,True,-0.00
+4,178,Oliver Cromwell,"{'confidence': -1.396847925e-06, 'final': True}",13,True,-0.00
+5,178,Oliver Cromwell,"{'confidence': -2.9762965125e-06, 'final': True}",7,True,-0.00
+5,178,Oliver Cromwell,"{'confidence': -1.247843425e-06, 'final': True}",10,True,-0.00
+5,178,Oliver Cromwell,"{'confidence': -1.247843425e-06, 'final': True}",10,True,-0.00
+0,179,Titanium,"{'confidence': -0.04022817521365, 'final': False}",3,False,-0.04
+0,179,Titanium,"{'confidence': -0.010823075277700002, 'final': False}",11,False,-0.01
+0,179,Titanium,"{'confidence': -0.02108314782465, 'final': False}",17,False,-0.02
+0,179,Titanium,"{'confidence': -8.3332665e-05, 'final': True}",25,True,-0.00
+0,179,Titanium,"{'confidence': -8.835878825e-06, 'final': True}",26,True,-0.00
+1,179,Titanium,"{'confidence': -1.83125683e-05, 'final': True}",6,True,-0.00
+1,179,Titanium,"{'confidence': -1.265039575e-05, 'final': True}",11,True,-0.00
+1,179,Titanium,"{'confidence': -1.3484821099999999e-05, 'final': True}",18,True,-0.00
+1,179,Titanium,"{'confidence': -1.8624639e-06, 'final': True}",19,True,-0.00
+2,179,Titanium,"{'confidence': -5.2941234e-05, 'final': True}",7,True,-0.00
+2,179,Titanium,"{'confidence': -2.6358816649999998e-05, 'final': True}",14,True,-0.00
+2,179,Titanium,"{'confidence': -0.00024224491949999998, 'final': True}",19,True,-0.00
+2,179,Titanium,"{'confidence': -5.0378358164999996e-05, 'final': True}",21,True,-0.00
+3,179,Titanium,"{'confidence': -1.5644548e-06, 'final': True}",4,True,-0.00
+3,179,Titanium,"{'confidence': -4.06773165e-06, 'final': True}",10,True,-0.00
+3,179,Titanium,"{'confidence': -6.809415849999999e-06, 'final': True}",17,True,-0.00
+3,179,Titanium,"{'confidence': -4.127333549999999e-06, 'final': True}",23,True,-0.00
+3,179,Titanium,"{'confidence': -5.02136105e-06, 'final': True}",29,True,-0.00
+3,179,Titanium,"{'confidence': -2.5180841e-06, 'final': True}",36,True,-0.00
+3,179,Titanium,"{'confidence': -1.4080466e-06, 'final': True}",38,True,-0.00
+3,179,Titanium,"{'confidence': -9.08834625e-07, 'final': True}",44,True,-0.00
+3,179,Titanium,"{'confidence': -7.300291999999999e-07, 'final': True}",49,True,-0.00
+3,179,Titanium,"{'confidence': -1.147241915e-06, 'final': True}",54,True,-0.00
+3,179,Titanium,"{'confidence': -2.93529685e-06, 'final': True}",60,True,-0.00
+3,179,Titanium,"{'confidence': -1.2068437750000001e-06, 'final': True}",61,True,-0.00
+3,179,Titanium,"{'confidence': -1.2068437750000001e-06, 'final': True}",61,True,-0.00
