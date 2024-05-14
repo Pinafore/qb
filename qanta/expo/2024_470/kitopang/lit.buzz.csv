@@ -1,42 +1,42 @@
 final,evidence,question,word,page,weight,sentence
-True,"{'confidence': 0.6420608339867123, 'final': True}",130,17," The Devil is a character in the play, and he is described as having a vision of the Devil. This vision causes the character to flee from the chorus girl's apartment and out onto the street.",0.64,0
-True,"{'confidence': 0.5974934617125236, 'final': True}",130,17," The Devil is driven from a chorus girl's apartment and out onto the street because he is unable to pay her rent. His next love interest, Rosalind, is a wealthy socialite who demands expensive gifts and attention from men.",0.60,1
-True,"{'confidence': 0.46591976610092584, 'final': True}",130,15, The Devil is the name of the character in the show 30 Rock.,0.47,2
-True,"{'confidence': 0.3873660683182213, 'final': True}",130,18, his love for the girl he left behind.,0.39,3
-True,"{'confidence': 0.666576578163209, 'final': True}",130,26," The Devil, Rosalind, Jack Donaghy, and the Princeton student are all Liz Lemon's love interests.",0.67,3
-True,"{'confidence': 0.7028546932755574, 'final': True}",130,14, 10 points: Amory Blaine,0.70,4
-True,"{'confidence': 0.7028546932755574, 'final': True}",130,14, 10 points: Amory Blaine,0.70,4
-True,"{'confidence': 0.5988109287471995, 'final': True}",131,21, King Rat is a 1962 novel by British author James Clavell. It is set in a fictional World War II POW camp in Singapore.,0.60,0
-True,"{'confidence': 0.7094887386355962, 'final': True}",131,10," I'm sorry, but I need more information to answer your question. Who is Saul Garamond?",0.71,1
-True,"{'confidence': 0.33491261772672354, 'final': True}",131,17, the fictional town of Woking.,0.33,2
-True,"{'confidence': 0.6873416575010521, 'final': True}",131,20," The author is Richard Adams, and the novels are Watership Down, Shardik, The Plague Dogs, Maia, The Girl in a Swing, and Traveller.",0.69,2
-True,"{'confidence': 0.4957056818981888, 'final': True}",131,17, the 50th anniversary of its publication.,0.50,3
-True,"{'confidence': 0.625529127025229, 'final': True}",131,32," The author is William Golding, and the novel is Lord of the Flies.",0.63,3
-True,"{'confidence': 0.625922969399447, 'final': True}",131,15, James Clavell,0.63,4
-True,"{'confidence': 0.625922969399447, 'final': True}",131,15, James Clavell,0.63,4
-True,"{'confidence': 0.8201888303243138, 'final': True}",132,20," I'm sorry, but I cannot find the answer based on the context provided. Can you please provide more information or context about the novel in question?",0.82,0
-True,"{'confidence': 0.7966017091645345, 'final': True}",132,33," I'm sorry, but I need more information in order to answer your question. Can you please provide the title of the novel you are referring to?",0.80,0
-True,"{'confidence': 0.4374607354733979, 'final': True}",132,16, the fiction is true.' What does this mean?,0.44,1
-True,"{'confidence': 0.7211203122983644, 'final': True}",132,26," I'm sorry, but I need more information in order to provide a full and complete answer. Can you please provide the title of the novel and any additional context about the scene you mentioned?",0.72,1
-True,"{'confidence': 0.7360773033679618, 'final': True}",132,19," I'm sorry, but I need more information in order to provide a full and complete answer. Can you please provide the title of the novel and any other relevant information you have?",0.74,2
-True,"{'confidence': 0.7513804128613351, 'final': True}",132,13," For 10 points, the novel is called Dream of the Red Chamber.",0.75,3
-True,"{'confidence': 0.7513804128613351, 'final': True}",132,13," For 10 points, the novel is called Dream of the Red Chamber.",0.75,3
-True,"{'confidence': 0.6853145905529188, 'final': True}",133,18," I'm sorry, but I need more context to answer your question. Can you please provide more information about the novel you're referring to?",0.69,0
-True,"{'confidence': 0.7715692716830058, 'final': True}",133,29," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the title of the novel you are referring to?",0.77,0
-True,"{'confidence': 0.292449878533702, 'final': True}",133,16, he can write and be left alone.,0.29,1
-True,"{'confidence': 0.28747406081081994, 'final': True}",133,35, the society.,0.29,1
-True,"{'confidence': 0.7206715719338169, 'final': True}",133,39," I'm sorry, but I need more information in order to answer your question. Can you please provide the title of the novel you are referring to?",0.72,1
-True,"{'confidence': 0.49361181840579477, 'final': True}",133,17, of the Thought Police.,0.49,2
-True,"{'confidence': 0.7352546909305481, 'final': True}",133,30," I'm sorry, but I need more information in order to provide a full and complete answer. Please provide additional context or details about the novel or the characters involved.",0.74,2
-True,"{'confidence': 0.581074480951805, 'final': True}",133,17, 1984,0.58,3
-True,"{'confidence': 0.7370339454315995, 'final': True}",133,18, 1984,0.74,3
-True,"{'confidence': 0.7370339454315995, 'final': True}",133,18, 1984,0.74,3
-True,"{'confidence': 0.39843931603024635, 'final': True}",134,17, is not transformed by his experiences. Do you agree?,0.40,0
-True,"{'confidence': 0.8697712638540265, 'final': True}",134,22," Jennifer Gilchrist argues that the first part of this work is an anti-Bildungsroman, as the main character has abolition destabilize her childhood.",0.87,0
-True,"{'confidence': 0.6799528861108105, 'final': True}",134,17," I'm sorry, but I need more information in order to answer your question. Please provide the name of the work you are referring to.",0.68,1
-True,"{'confidence': 0.656429368370314, 'final': True}",134,17," The narrator of the first part of the novel begins a romance with the nameless narrator of the second section. The third part of the book locates the action within another novel, a relationship described by Gilbert as ""a kind of double entendre.""",0.66,2
-True,"{'confidence': 0.96821994630423, 'final': True}",134,25," Jennifer Gilchrist argues that the first part of this work is an anti-Bildungsroman, as the main character has abolition destabilize her childhood. The narrator of the first part begins a romance with the nameless narrator of the second section. The third part of this book locates the action within another novel, a relationship described by Gilbert and Gubar as ""The Madwoman in the Attic"".",0.97,2
-True,"{'confidence': 0.5697267791718832, 'final': True}",134,13," The Madwoman in the Attic, the third part of this novel is an anti-Bildungsroman.",0.57,3
-True,"{'confidence': 0.5427442765354656, 'final': True}",134,30, is a quote from Charlotte Brontë's novel.,0.54,3
-True,"{'confidence': 0.5338617473930719, 'final': True}",134,39, 10 points. Wide Sargasso Sea.,0.53,3
-True,"{'confidence': 0.5338617473930719, 'final': True}",134,39, 10 points. Wide Sargasso Sea.,0.53,3
+TRUE,"{'confidence': 0.6420608339867123, 'final': True}",130,17," The Devil is a character in the play, and he is described as having a vision of the Devil. This vision causes the character to flee from the chorus girl's apartment and out onto the street.",0.64,0
+TRUE,"{'confidence': 0.5974934617125236, 'final': True}",130,17," The Devil is driven from a chorus girl's apartment and out onto the street because he is unable to pay her rent. His next love interest, Rosalind, is a wealthy socialite who demands expensive gifts and attention from men.",0.60,1
+TRUE,"{'confidence': 0.46591976610092584, 'final': True}",130,15,The Devil is the name of the character in the show 30 Rock.,0.47,2
+TRUE,"{'confidence': 0.3873660683182213, 'final': True}",130,18, his love for the girl he left behind.,0.39,3
+TRUE,"{'confidence': 0.666576578163209, 'final': True}",130,26," The Devil, Rosalind, Jack Donaghy, and the Princeton student are all Liz Lemon's love interests.",0.67,3
+TRUE,"{'confidence': 0.7028546932755574, 'final': True}",130,14,Amory Blaine,0.70,4
+TRUE,"{'confidence': 0.7028546932755574, 'final': True}",130,14,Amory Blaine,0.70,4
+TRUE,"{'confidence': 0.5988109287471995, 'final': True}",131,21,King Rat is a 1962 novel by British author James Clavell. It is set in a fictional World War II POW camp in Singapore.,0.60,0
+TRUE,"{'confidence': 0.7094887386355962, 'final': True}",131,10," I'm sorry, but I need more information to answer your question. Who is Saul Garamond?",0.71,1
+TRUE,"{'confidence': 0.33491261772672354, 'final': True}",131,17, the fictional town of Woking.,0.33,2
+TRUE,"{'confidence': 0.6873416575010521, 'final': True}",131,20," The author is Richard Adams, and the novels are Watership Down, Shardik, The Plague Dogs, Maia, The Girl in a Swing, and Traveller.",0.69,2
+TRUE,"{'confidence': 0.4957056818981888, 'final': True}",131,17,the 50th anniversary of its publication.,0.50,3
+TRUE,"{'confidence': 0.625529127025229, 'final': True}",131,32," The author is William Golding, and the novel is Lord of the Flies.",0.63,3
+TRUE,"{'confidence': 0.625922969399447, 'final': True}",131,15, James Clavell,0.63,4
+TRUE,"{'confidence': 0.625922969399447, 'final': True}",131,15, James Clavell,0.63,4
+TRUE,"{'confidence': 0.8201888303243138, 'final': True}",132,20," I'm sorry, but I cannot find the answer based on the context provided. Can you please provide more information or context about the novel in question?",0.82,0
+TRUE,"{'confidence': 0.7966017091645345, 'final': True}",132,33," I'm sorry, but I need more information in order to answer your question. Can you please provide the title of the novel you are referring to?",0.80,0
+TRUE,"{'confidence': 0.4374607354733979, 'final': True}",132,16, the fiction is true.' What does this mean?,0.44,1
+TRUE,"{'confidence': 0.7211203122983644, 'final': True}",132,26," I'm sorry, but I need more information in order to provide a full and complete answer. Can you please provide the title of the novel and any additional context about the scene you mentioned?",0.72,1
+TRUE,"{'confidence': 0.7360773033679618, 'final': True}",132,19," I'm sorry, but I need more information in order to provide a full and complete answer. Can you please provide the title of the novel and any other relevant information you have?",0.74,2
+TRUE,"{'confidence': 0.7513804128613351, 'final': True}",132,13,The Dream of the Red Chamber,0.75,3
+TRUE,"{'confidence': 0.7513804128613351, 'final': True}",132,13,The Dream of the Red Chamber,0.75,3
+TRUE,"{'confidence': 0.6853145905529188, 'final': True}",133,18," I'm sorry, but I need more context to answer your question. Can you please provide more information about the novel you're referring to?",0.69,0
+TRUE,"{'confidence': 0.7715692716830058, 'final': True}",133,29," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the title of the novel you are referring to?",0.77,0
+TRUE,"{'confidence': 0.292449878533702, 'final': True}",133,16, he can write and be left alone.,0.29,1
+TRUE,"{'confidence': 0.28747406081081994, 'final': True}",133,35, the society.,0.29,1
+TRUE,"{'confidence': 0.7206715719338169, 'final': True}",133,39," I'm sorry, but I need more information in order to answer your question. Can you please provide the title of the novel you are referring to?",0.72,1
+TRUE,"{'confidence': 0.49361181840579477, 'final': True}",133,17, of the Thought Police.,0.49,2
+TRUE,"{'confidence': 0.7352546909305481, 'final': True}",133,30," I'm sorry, but I need more information in order to provide a full and complete answer. Please provide additional context or details about the novel or the characters involved.",0.74,2
+TRUE,"{'confidence': 0.581074480951805, 'final': True}",133,17,1984,0.58,3
+TRUE,"{'confidence': 0.7370339454315995, 'final': True}",133,18,1984,0.74,3
+TRUE,"{'confidence': 0.7370339454315995, 'final': True}",133,18,1984,0.74,3
+TRUE,"{'confidence': 0.39843931603024635, 'final': True}",134,17, is not transformed by his experiences. Do you agree?,0.40,0
+TRUE,"{'confidence': 0.8697712638540265, 'final': True}",134,22," Jennifer Gilchrist argues that the first part of this work is an anti-Bildungsroman, as the main character has abolition destabilize her childhood.",0.87,0
+TRUE,"{'confidence': 0.6799528861108105, 'final': True}",134,17," I'm sorry, but I need more information in order to answer your question. Please provide the name of the work you are referring to.",0.68,1
+TRUE,"{'confidence': 0.656429368370314, 'final': True}",134,17," The narrator of the first part of the novel begins a romance with the nameless narrator of the second section. The third part of the book locates the action within another novel, a relationship described by Gilbert as ""a kind of double entendre.""",0.66,2
+TRUE,"{'confidence': 0.96821994630423, 'final': True}",134,25," Jennifer Gilchrist argues that the first part of this work is an anti-Bildungsroman, as the main character has abolition destabilize her childhood. The narrator of the first part begins a romance with the nameless narrator of the second section. The third part of this book locates the action within another novel, a relationship described by Gilbert and Gubar as ""The Madwoman in the Attic"".",0.97,2
+TRUE,"{'confidence': 0.5697267791718832, 'final': True}",134,13," The Madwoman in the Attic, the third part of this novel is an anti-Bildungsroman.",0.57,3
+TRUE,"{'confidence': 0.5427442765354656, 'final': True}",134,30, is a quote from Charlotte Brontë's novel.,0.54,3
+TRUE,"{'confidence': 0.5338617473930719, 'final': True}",134,39,Wide Sargasso Sea,0.53,3
+TRUE,"{'confidence': 0.5338617473930719, 'final': True}",134,39,Wide Sargasso Sea,0.53,3

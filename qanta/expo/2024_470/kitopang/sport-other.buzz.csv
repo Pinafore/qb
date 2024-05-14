@@ -1,36 +1,36 @@
 question,sentence,evidence,final,page,word,weight
-104,0,"{'confidence': 0.4115830597549344, 'final': True}",True, was knocked out of the game with a concussion.,20,0.41
-104,0,"{'confidence': 0.47302260796461865, 'final': True}",True, Tom Brady,33,0.47
-104,1,"{'confidence': 0.32428891963714196, 'final': True}",True, Andrew Luck,16,0.32
-104,1,"{'confidence': 0.3215092972358133, 'final': True}",True, Andrew Luck,18,0.32
-104,2,"{'confidence': 0.4025592281551631, 'final': True}",True, Brett Favre,13,0.40
-104,3,"{'confidence': 0.41312534987285504, 'final': True}",True, Tom Brady,16,0.41
-104,3,"{'confidence': 0.33410850740892506, 'final': True}",True, Tom Brady,18,0.33
-104,4,"{'confidence': 0.33072145729165614, 'final': True}",True, Tom Brady,15,0.33
-104,5,"{'confidence': 0.7087042054549146, 'final': True}",True, Tony Romo,15,0.71
-104,5,"{'confidence': 0.7087042054549146, 'final': True}",True, Tony Romo,15,0.71
-100,0,"{'confidence': 0.5111640483135291, 'final': True}",True," In 2018, the United States won the FIFA World Cup in Russia.",5,0.51
-100,1,"{'confidence': 0.4590403239530084, 'final': True}",True, Russia.,20,0.46
-100,1,"{'confidence': 0.74823436090407, 'final': True}",True," United States, 1980, Ice Hockey",22,0.75
-100,2,"{'confidence': 0.8800109815442536, 'final': True}",True," United States, 1980, Ice Hockey",17,0.88
-100,3,"{'confidence': 0.5187663627887094, 'final': True}",True," Soviet Union"" to lose 4-3.    The game was played in the 1980 Winter Olympics in Lake Placid, New York.",19,0.52
-100,3,"{'confidence': 0.8483194169296795, 'final': True}",True," United States, 1980, Ice Hockey",26,0.85
-100,4,"{'confidence': 0.6830819605466011, 'final': True}",True," Team Canada, 1980, Hockey",19,0.68
-100,4,"{'confidence': 0.5117690952882545, 'final': True}",True, Team Finland,23,0.51
-100,4,"{'confidence': 0.5117690952882545, 'final': True}",True, Team Finland,23,0.51
-101,0,"{'confidence': 0.802334061967693, 'final': True}",True, Baltimore Orioles,13,0.80
-101,1,"{'confidence': 0.40600696612619647, 'final': True}",True, Major Leagues.  He is a 27 year old right-handed hitter and thrower.  His name is Ryan Mountcastle.,19,0.41
-101,1,"{'confidence': 0.5491138851854087, 'final': True}",True, Baltimore Orioles,35,0.55
-101,1,"{'confidence': 0.5985114737110161, 'final': True}",True, Baltimore Orioles,43,0.60
-101,2,"{'confidence': 0.48888106510788304, 'final': True}",True, The player's name is Anthony Santander.,18,0.49
-101,3,"{'confidence': 0.6636669624057407, 'final': True}",True, The player's name is Adley Rutschman.,15,0.66
-101,3,"{'confidence': 0.6636669624057407, 'final': True}",True, The player's name is Adley Rutschman.,15,0.66
-103,0,"{'confidence': 0.5332490500393454, 'final': True}",True," Tiger"" was asked about his thoughts on the recent events in his home country of South Africa. He responded by saying that he was ""disappointed"" and ""frustrated"" with the situation, but that he still had hope for the future. He also mentioned that he was proud of the people of South Africa for their resilience and determination in the face of adversity.",20,0.53
-103,0,"{'confidence': 0.59890029136002, 'final': True}",True, Michael Jordan,31,0.60
-103,1,"{'confidence': 0.465273923784051, 'final': True}",True, The athlete is Novak Djokovic.,18,0.47
-103,1,"{'confidence': 0.40274314837060177, 'final': True}",True, Michael Jordan,19,0.40
-103,2,"{'confidence': 0.6580355295863761, 'final': True}",True, 24th Grand Slam title.  Who is this athlete?,20,0.66
-103,2,"{'confidence': 0.5098153751504533, 'final': True}",True, 1. Novak Djokovic,23,0.51
-103,3,"{'confidence': 0.7553481472406596, 'final': True}",True," the ""Big Three"" of men's tennis.",17,0.76
-103,3,"{'confidence': 0.8907359224685022, 'final': True}",True, Novak Djokovic,27,0.89
-103,3,"{'confidence': 0.8907359224685022, 'final': True}",True, Novak Djokovic,27,0.89
+104,0,"{'confidence': 0.4115830597549344, 'final': True}",TRUE, was knocked out of the game with a concussion.,20,0.41
+104,0,"{'confidence': 0.47302260796461865, 'final': True}",TRUE, Tom Brady,33,0.47
+104,1,"{'confidence': 0.32428891963714196, 'final': True}",TRUE, Andrew Luck,16,0.32
+104,1,"{'confidence': 0.3215092972358133, 'final': True}",TRUE, Andrew Luck,18,0.32
+104,2,"{'confidence': 0.4025592281551631, 'final': True}",TRUE, Brett Favre,13,0.40
+104,3,"{'confidence': 0.41312534987285504, 'final': True}",TRUE, Tom Brady,16,0.41
+104,3,"{'confidence': 0.33410850740892506, 'final': True}",TRUE, Tom Brady,18,0.33
+104,4,"{'confidence': 0.33072145729165614, 'final': True}",TRUE, Tom Brady,15,0.33
+104,5,"{'confidence': 0.7087042054549146, 'final': True}",TRUE, Tony Romo,15,0.71
+104,5,"{'confidence': 0.7087042054549146, 'final': True}",TRUE, Tony Romo,15,0.71
+100,0,"{'confidence': 0.5111640483135291, 'final': True}",TRUE,"In 2018, the United States won the FIFA World Cup in Russia.",5,0.51
+100,1,"{'confidence': 0.4590403239530084, 'final': True}",TRUE, Russia.,20,0.46
+100,1,"{'confidence': 0.74823436090407, 'final': True}",TRUE,"United States, 1980, Ice Hockey",22,0.75
+100,2,"{'confidence': 0.8800109815442536, 'final': True}",TRUE,"United States, 1980, Ice Hockey",17,0.88
+100,3,"{'confidence': 0.5187663627887094, 'final': True}",TRUE,"Soviet Union"" to lose 4-3.    The game was played in the 1980 Winter Olympics in Lake Placid, New York.",19,0.52
+100,3,"{'confidence': 0.8483194169296795, 'final': True}",TRUE,"United States, 1980, Ice Hockey",26,0.85
+100,4,"{'confidence': 0.6830819605466011, 'final': True}",TRUE,"Team Canada, 1980, Hockey",19,0.68
+100,4,"{'confidence': 0.5117690952882545, 'final': True}",TRUE,Finland,23,0.51
+100,4,"{'confidence': 0.5117690952882545, 'final': True}",TRUE,Finland,23,0.51
+101,0,"{'confidence': 0.802334061967693, 'final': True}",TRUE, Baltimore Orioles,13,0.80
+101,1,"{'confidence': 0.40600696612619647, 'final': True}",TRUE,Major Leagues.  He is a 27 year old right-handed hitter and thrower.  His name is Ryan Mountcastle.,19,0.41
+101,1,"{'confidence': 0.5491138851854087, 'final': True}",TRUE, Baltimore Orioles,35,0.55
+101,1,"{'confidence': 0.5985114737110161, 'final': True}",TRUE, Baltimore Orioles,43,0.60
+101,2,"{'confidence': 0.48888106510788304, 'final': True}",TRUE, The player's name is Anthony Santander.,18,0.49
+101,3,"{'confidence': 0.6636669624057407, 'final': True}",TRUE, The player's name is Adley Rutschman.,15,0.66
+101,3,"{'confidence': 0.6636669624057407, 'final': True}",TRUE, The player's name is Adley Rutschman.,15,0.66
+103,0,"{'confidence': 0.5332490500393454, 'final': True}",TRUE," Tiger"" was asked about his thoughts on the recent events in his home country of South Africa. He responded by saying that he was ""disappointed"" and ""frustrated"" with the situation, but that he still had hope for the future. He also mentioned that he was proud of the people of South Africa for their resilience and determination in the face of adversity.",20,0.53
+103,0,"{'confidence': 0.59890029136002, 'final': True}",TRUE, Michael Jordan,31,0.60
+103,1,"{'confidence': 0.465273923784051, 'final': True}",TRUE,Novak Djokovic,18,0.47
+103,1,"{'confidence': 0.40274314837060177, 'final': True}",TRUE, Michael Jordan,19,0.40
+103,2,"{'confidence': 0.6580355295863761, 'final': True}",TRUE,24th Grand Slam title.  Who is this athlete?,20,0.66
+103,2,"{'confidence': 0.5098153751504533, 'final': True}",TRUE,Novak Djokovic,23,0.51
+103,3,"{'confidence': 0.7553481472406596, 'final': True}",TRUE," the ""Big Three"" of men's tennis.",17,0.76
+103,3,"{'confidence': 0.8907359224685022, 'final': True}",TRUE, Novak Djokovic,27,0.89
+103,3,"{'confidence': 0.8907359224685022, 'final': True}",TRUE, Novak Djokovic,27,0.89

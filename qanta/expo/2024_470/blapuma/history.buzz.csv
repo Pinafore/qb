@@ -1,53 +1,53 @@
 page,final,weight,evidence,sentence,word,question
-"you going to study, a stone?” - Albert",False,0.00,"{'confidence': 0.0, 'final': False}",0,17,135
-Louis Pasteur,True,0.59,"{'confidence': 0.5930509110452407, 'final': True}",0,27,135
-Louis Pasteur,False,0.14,"{'confidence': 0.13588369667737826, 'final': False}",1,21,135
-Sigmund Freud,False,0.00,"{'confidence': 0.0, 'final': False}",1,28,135
-Alexander von Humboldt,False,0.00,"{'confidence': 0.0, 'final': False}",2,16,135
-Sigmund Freud,False,0.00,"{'confidence': 0.0, 'final': False}",2,30,135
-Sigmund Freud,False,0.00,"{'confidence': 0.0, 'final': False}",3,15,135
-Magnus Hirschfeld,False,0.03,"{'confidence': 0.028335106784917297, 'final': False}",3,22,135
-Magnus Hirschfeld,True,0.92,"{'confidence': 0.9156317337952188, 'final': True}",4,12,135
-Magnus Hirschfeld,True,1.00,"{'confidence': 1.0, 'final': True}",5,16,135
-Magnus Hirschfeld,True,1.00,"{'confidence': 1.0, 'final': True}",5,29,135
-Magnus Hirschfeld,True,1.00,"{'confidence': 1.0, 'final': True}",5,29,135
-Nuraghe Arrubiu ruin,False,0.00,"{'confidence': 0.0, 'final': False}",0,16,136
-Nuraghe,False,0.03,"{'confidence': 0.0331847386253139, 'final': False}",0,18,136
-Pyrrhic War formation,False,0.00,"{'confidence': 0.0, 'final': False}",1,18,136
-Arch of Constantine,False,0.00,"{'confidence': 0.0, 'final': False}",1,31,136
-Arch of Constantine,True,0.27,"{'confidence': 0.26864309509365636, 'final': True}",1,33,136
-"Archaeologists discovered a 18,",False,0.00,"{'confidence': 0.0, 'final': False}",2,19,136
-Phalanx,False,0.03,"{'confidence': 0.027763643043172456, 'final': False}",2,22,136
-- Hopl,False,0.00,"{'confidence': 0.0, 'final': False}",3,15,136
-Phalanx,False,0.25,"{'confidence': 0.24682179847982721, 'final': False}",4,17,136
-Phalanx,True,0.71,"{'confidence': 0.71100231058798, 'final': True}",4,22,136
-Phalanx,True,0.71,"{'confidence': 0.71100231058798, 'final': True}",4,22,136
-Gang Zhou argues that a book he wrote,False,0.00,"{'confidence': 0.0, 'final': False}",0,17,137
-Gang Zhou's book draws from x,False,0.00,"{'confidence': 0.0, 'final': False}",0,24,137
-Carol P. James argues that Italo Cal,False,0.00,"{'confidence': 0.0, 'final': False}",1,19,137
-Gang Zhou claims book's content draws,False,0.00,"{'confidence': 0.0, 'final': False}",1,23,137
-Gang Zhou's book draws from x,False,0.00,"{'confidence': 0.0, 'final': False}",2,17,137
-Gang Zhou claims book inspiration from xia,False,0.00,"{'confidence': 0.0, 'final': False}",2,20,137
-"Gang Zhou, Carol P. James, Frances",False,0.00,"{'confidence': 0.0, 'final': False}",3,17,137
-Gang Zhou's book draws from x,False,0.00,"{'confidence': 0.0, 'final': False}",3,18,137
-Giovanni,False,0.00,"{'confidence': 0.0, 'final': False}",4,18,137
-Giorg,False,0.00,"{'confidence': 0.0, 'final': False}",4,23,137
-Giorg,False,0.00,"{'confidence': 0.0, 'final': False}",4,23,137
-A passenger saw Mandela in a first-class,False,0.00,"{'confidence': 0.0, 'final': False}",0,19,138
-He was removed from the train but volunteered in,False,0.00,"{'confidence': 0.0, 'final': False}",0,31,138
-"He was interviewed by Stuart Gelder, who",False,0.00,"{'confidence': 0.0, 'final': False}",1,18,138
-Note,False,0.00,"{'confidence': 0.0, 'final': False}",1,19,138
-"Mahatma Gandhi, when in Pieterm",False,0.00,"{'confidence': 0.0, 'final': False}",2,17,138
-Moh,False,0.00,"{'confidence': 0.0, 'final': False}",3,20,138
-Mohandas,False,0.00,"{'confidence': 0.0, 'final': False}",3,27,138
-Mahatma Gandhi,True,1.00,"{'confidence': 1.0, 'final': True}",4,11,138
-Mahatma Gandhi,True,1.00,"{'confidence': 1.0, 'final': True}",4,11,138
-Andrew Jackson held a ball when he arrived in Tennessee,False,0.00,"{'confidence': 0.0, 'final': False}",0,20,139
-Andrew Jackson held a ball upon his arrival in Tennessee,False,0.00,"{'confidence': 0.0, 'final': False}",0,32,139
-Andrew Jackson held a ball in Tennessee in 1,False,0.00,"{'confidence': 0.0, 'final': False}",1,17,139
-Gordon Wood's criticism,False,0.00,"{'confidence': 0.0, 'final': False}",1,31,139
-Aaron Burr arrived in Tennessee in 1,False,0.03,"{'confidence': 0.02758390648495919, 'final': False}",2,15,139
-Aaron Burr arrived in Tennessee in 1,False,0.11,"{'confidence': 0.1144499341151443, 'final': False}",2,23,139
-The Democratic,False,0.00,"{'confidence': 0.0, 'final': False}",3,15,139
-Aaron Burr,True,1.00,"{'confidence': 1.0, 'final': True}",3,20,139
-Aaron Burr,True,1.00,"{'confidence': 1.0, 'final': True}",3,20,139
+"you going to study, a stone?” - Albert",FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,17,135
+Louis Pasteur,TRUE,0.59,"{'confidence': 0.5930509110452407, 'final': True}",0,27,135
+Louis Pasteur,FALSE,0.14,"{'confidence': 0.13588369667737826, 'final': False}",1,21,135
+Sigmund Freud,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,28,135
+Alexander von Humboldt,FALSE,0.00,"{'confidence': 0.0, 'final': False}",2,16,135
+Sigmund Freud,FALSE,0.00,"{'confidence': 0.0, 'final': False}",2,30,135
+Sigmund Freud,FALSE,0.00,"{'confidence': 0.0, 'final': False}",3,15,135
+Magnus Hirschfeld,FALSE,0.03,"{'confidence': 0.028335106784917297, 'final': False}",3,22,135
+Magnus Hirschfeld,TRUE,0.92,"{'confidence': 0.9156317337952188, 'final': True}",4,12,135
+Magnus Hirschfeld,TRUE,1.00,"{'confidence': 1.0, 'final': True}",5,16,135
+Magnus Hirschfeld,TRUE,1.00,"{'confidence': 1.0, 'final': True}",5,29,135
+Magnus Hirschfeld,TRUE,1.00,"{'confidence': 1.0, 'final': True}",5,29,135
+Nuraghe Arrubiu ruin,FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,16,136
+Nuraghe,FALSE,0.03,"{'confidence': 0.0331847386253139, 'final': False}",0,18,136
+Pyrrhic War formation,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,18,136
+Arch of Constantine,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,31,136
+Arch of Constantine,TRUE,0.27,"{'confidence': 0.26864309509365636, 'final': True}",1,33,136
+"Archaeologists discovered a 18,",FALSE,0.00,"{'confidence': 0.0, 'final': False}",2,19,136
+Phalanx,FALSE,0.03,"{'confidence': 0.027763643043172456, 'final': False}",2,22,136
+- Hopl,FALSE,0.00,"{'confidence': 0.0, 'final': False}",3,15,136
+Phalanx,FALSE,0.25,"{'confidence': 0.24682179847982721, 'final': False}",4,17,136
+Phalanx,TRUE,0.71,"{'confidence': 0.71100231058798, 'final': True}",4,22,136
+Phalanx,TRUE,0.71,"{'confidence': 0.71100231058798, 'final': True}",4,22,136
+Gang Zhou argues that a book he wrote,FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,17,137
+Gang Zhou's book draws from x,FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,24,137
+Carol P. James argues that Italo Cal,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,19,137
+Gang Zhou claims book's content draws,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,23,137
+Gang Zhou's book draws from x,FALSE,0.00,"{'confidence': 0.0, 'final': False}",2,17,137
+Gang Zhou claims book inspiration from xia,FALSE,0.00,"{'confidence': 0.0, 'final': False}",2,20,137
+"Gang Zhou, Carol P. James, Frances",FALSE,0.00,"{'confidence': 0.0, 'final': False}",3,17,137
+Gang Zhou's book draws from x,FALSE,0.00,"{'confidence': 0.0, 'final': False}",3,18,137
+Giovanni,FALSE,0.00,"{'confidence': 0.0, 'final': False}",4,18,137
+Giorg,FALSE,0.00,"{'confidence': 0.0, 'final': False}",4,23,137
+Giorg,FALSE,0.00,"{'confidence': 0.0, 'final': False}",4,23,137
+A passenger saw Mandela in a first-class,FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,19,138
+He was removed from the train but volunteered in,FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,31,138
+"He was interviewed by Stuart Gelder, who",FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,18,138
+Note,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,19,138
+Mahatma Gandhi,FALSE,0.00,"{'confidence': 0.0, 'final': False}",2,17,138
+Moh,FALSE,0.00,"{'confidence': 0.0, 'final': False}",3,20,138
+Mohandas,FALSE,0.00,"{'confidence': 0.0, 'final': False}",3,27,138
+Mahatma Gandhi,TRUE,1.00,"{'confidence': 1.0, 'final': True}",4,11,138
+Mahatma Gandhi,TRUE,1.00,"{'confidence': 1.0, 'final': True}",4,11,138
+Andrew Jackson held a ball when he arrived in Tennessee,FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,20,139
+Andrew Jackson held a ball upon his arrival in Tennessee,FALSE,0.00,"{'confidence': 0.0, 'final': False}",0,32,139
+Andrew Jackson held a ball in Tennessee in 1,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,17,139
+Gordon Wood's criticism,FALSE,0.00,"{'confidence': 0.0, 'final': False}",1,31,139
+Aaron Burr arrived in Tennessee in 1,FALSE,0.03,"{'confidence': 0.02758390648495919, 'final': False}",2,15,139
+Aaron Burr arrived in Tennessee in 1,FALSE,0.11,"{'confidence': 0.1144499341151443, 'final': False}",2,23,139
+The Democratic,FALSE,0.00,"{'confidence': 0.0, 'final': False}",3,15,139
+Aaron Burr,TRUE,1.00,"{'confidence': 1.0, 'final': True}",3,20,139
+Aaron Burr,TRUE,1.00,"{'confidence': 1.0, 'final': True}",3,20,139

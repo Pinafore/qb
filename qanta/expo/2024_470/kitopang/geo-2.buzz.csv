@@ -1,50 +1,50 @@
 final,sentence,word,question,weight,evidence,page
-True,0,19,140,0.57,"{'confidence': 0.5676696040501388, 'final': True}"," a French king to the north, and by a river to the west. What city am I describing?"
-True,0,34,140,0.73,"{'confidence': 0.728544064641451, 'final': True}"," I'm sorry, but I need more information in order to answer this question. There are several cities that were founded in 1900, so I need to know which one you're referring to."
-True,1,17,140,0.34,"{'confidence': 0.3412094864281555, 'final': True}", the city's harbour forms with the ocean.
-True,1,20,140,0.80,"{'confidence': 0.7986685668751506, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or details about the city you are referring to? Without more information, I cannot determine which city you are referring to or what street was named after the Suba people of Kenya."
-True,2,18,140,0.59,"{'confidence': 0.5927237866246995, 'final': True}"," The city in question is Nairobi, Kenya."
-True,2,18,140,0.59,"{'confidence': 0.5939978245584436, 'final': True}"," The city in question is Nairobi, Kenya."
-True,3,18,140,0.59,"{'confidence': 0.5865552232329454, 'final': True}"," The city is Wellington, New Zealand."
-True,4,18,140,0.61,"{'confidence': 0.6088587061155634, 'final': True}"," Wellington, New Zealand"
-True,4,22,140,0.74,"{'confidence': 0.7416319415373899, 'final': True}", Wellington is the capital city of New Zealand.
-True,5,9,140,0.84,"{'confidence': 0.8422124993659593, 'final': True}", Wellington is the capital of New Zealand.
-True,5,9,140,0.64,"{'confidence': 0.6406189097414109, 'final': True}", Wellington
-True,0,17,141,0.42,"{'confidence': 0.41928731268902036, 'final': True}", live there.
-True,0,24,141,0.61,"{'confidence': 0.6126797764113574, 'final': True}", The two Russian Orthodox churches in Shanghai were St. Nicholas Cathedral and St. Mary's Church.
-True,1,19,141,0.45,"{'confidence': 0.4490298617484188, 'final': True}"," Mumbai, India."
-True,1,32,141,0.82,"{'confidence': 0.8197964587971379, 'final': True}"," The two Russian Orthodox churches in Shanghai were built to serve the Russian emigres who moved to Avenue Joffre. The waterfront area of Shanghai takes its English name from a Hindi term meaning embankment and not from the German name for ""union"", although the local term literally means ""outer beach""."
-True,2,20,141,0.41,"{'confidence': 0.40825739132530237, 'final': True}"," Paris, Shanghai"
-True,2,28,141,0.92,"{'confidence': 0.9246323660397124, 'final': True}"," The French concession in Shanghai was home to two Russian Orthodox churches built to serve the Russian emigres who moved to Avenue Joffre in the city. The waterfront area in the city takes its English name from a Hindi term meaning embankment and not from the German name for ""union"", although the local term literally means ""outer beach"". One of the most distinctive elements of the city's skyline is a tower with a vertical string of large and small spheres meant to represent pearls from the orient."
-True,3,21,141,0.49,"{'confidence': 0.4901123584220887, 'final': True}"," of Suzhou Creek and the Huangpu River.    This city is home to the largest number of skyscrapers in the world, and it is also home to the world's busiest container port.    The city is known for its many shopping districts, including the French Concession, the former International Settlement, and the New Bund. Shanghai"
-True,3,27,141,0.89,"{'confidence': 0.8858102330596654, 'final': True}", Shanghai
-True,4,12,141,0.81,"{'confidence': 0.8080657880080642, 'final': True}", Shanghai
-True,4,12,141,0.81,"{'confidence': 0.8080657880080642, 'final': True}", Shanghai
-True,0,15,142,0.57,"{'confidence': 0.5670472221458568, 'final': True}", The photograph was taken in the state of Washington.
-True,1,18,142,0.43,"{'confidence': 0.42820123621926665, 'final': True}", Arkansas
-True,1,31,142,0.72,"{'confidence': 0.7249366327174441, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or clarify what you are asking?"
-True,2,15,142,0.58,"{'confidence': 0.5846687376249856, 'final': True}", The state is California.
-True,3,19,142,0.63,"{'confidence': 0.6262480907744722, 'final': True}", California.
-True,3,26,142,0.78,"{'confidence': 0.7770012000080229, 'final': True}", California.
-True,3,26,142,0.78,"{'confidence': 0.7770012000080229, 'final': True}", California.
-True,0,21,143,0.54,"{'confidence': 0.5427691680310083, 'final': True}", Colorado
-True,1,17,143,0.63,"{'confidence': 0.6349060049169628, 'final': True}", Colorado
-True,2,21,143,0.86,"{'confidence': 0.8637279633505035, 'final': True}"," The state of Colorado is the 48th densest area in the United States and is well known for its alpine hiking trails.  It is home to two large national parks, Rocky Mountain National Park and Great Sand Dunes National Park.  It shares a name with the last name of a character in an American sitcom about a girl living a double life."
-True,2,26,143,0.88,"{'confidence': 0.8754578367615405, 'final': True}"," The state of Colorado is the 48th densest area in the United States and is well known for its alpine hiking trails.  It is home to two large national parks, Rocky Mountain National Park and Great Sand Dunes National Park.  It shares a name with the last name of a character in an American sitcom about a girl living a double life as a pop star."
-True,3,15,143,0.86,"{'confidence': 0.8635681724671138, 'final': True}"," The state of Montana is the 48th densest area in the United States and is well known for its alpine hiking trails.  It is home to two large national parks, Glacier and Yellowstone, the latter of which has a color in its name.  Montana shares a name with the last name of a character in an American sitcom about a girl living a double life as a pop star.  For 10 points, name this northern US state whose capital is also a female name."
-True,3,15,143,0.86,"{'confidence': 0.8635681724671138, 'final': True}"," The state of Montana is the 48th densest area in the United States and is well known for its alpine hiking trails.  It is home to two large national parks, Glacier and Yellowstone, the latter of which has a color in its name.  Montana shares a name with the last name of a character in an American sitcom about a girl living a double life as a pop star.  For 10 points, name this northern US state whose capital is also a female name."
-True,0,19,144,0.70,"{'confidence': 0.7034574123764499, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the title or a summary of the article by Duever et al. that you are referring to?"
-True,0,19,144,0.70,"{'confidence': 0.702573525047871, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the title or a summary of the article by Duever et al. that you are referring to?"
-True,1,18,144,0.72,"{'confidence': 0.7228710891287167, 'final': True}"," I'm sorry, but I need more information in order to provide a complete answer. Can you please provide the title of the book by Sandra Neil Wallace that you mentioned?"
-True,1,18,144,0.68,"{'confidence': 0.679093495761406, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Please provide the name of the book and the name of the high school."
-True,2,17,144,0.66,"{'confidence': 0.6638390012172315, 'final': True}", the species in the United States.    The Everglades are a Ramsar Wetland of International Importance.    The Everglades are a World Heritage Site.    The Everglades are a National Park.    The Everglades are a National Historic Landmark.    The Everglades are a National Natural Landmark.    The Everglades are a National Preserve.    The Everglades are a National Wildlife Refuge.    The Everglades are a Wetland of International Importance.    The Everglades are a Biosphere Reserve.    The Everglades are a UNESCO World Heritage Site.    The Ever
-True,2,23,144,0.58,"{'confidence': 0.5755763291718821, 'final': True}", The Everglades
-True,3,15,144,0.66,"{'confidence': 0.6580735137793385, 'final': True}", The Everglades.
-True,3,25,144,0.68,"{'confidence': 0.6790271386091247, 'final': True}", The Everglades.
-True,4,17,144,0.60,"{'confidence': 0.60082872925456, 'final': True}", The Everglades
-True,4,23,144,0.59,"{'confidence': 0.5874710450878645, 'final': True}", The Everglades
-True,5,17,144,0.70,"{'confidence': 0.6997865109730091, 'final': True}", The Everglades
-True,5,28,144,0.66,"{'confidence': 0.6604532363326613, 'final': True}", The Everglades
-True,6,19,144,0.52,"{'confidence': 0.5234281616634805, 'final': True}", Florida Everglades National Park
-True,6,22,144,0.60,"{'confidence': 0.5954528035262443, 'final': True}", Biscayne National Park
-True,6,22,144,0.60,"{'confidence': 0.5954528035262443, 'final': True}", Biscayne National Park
+TRUE,0,19,140,0.57,"{'confidence': 0.5676696040501388, 'final': True}"," a French king to the north, and by a river to the west. What city am I describing?"
+TRUE,0,34,140,0.73,"{'confidence': 0.728544064641451, 'final': True}","I'm sorry, but I need more information in order to answer this question. There are several cities that were founded in 1900, so I need to know which one you're referring to."
+TRUE,1,17,140,0.34,"{'confidence': 0.3412094864281555, 'final': True}", the city's harbour forms with the ocean.
+TRUE,1,20,140,0.80,"{'confidence': 0.7986685668751506, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or details about the city you are referring to? Without more information, I cannot determine which city you are referring to or what street was named after the Suba people of Kenya."
+TRUE,2,18,140,0.59,"{'confidence': 0.5927237866246995, 'final': True}"," The city in question is Nairobi, Kenya."
+TRUE,2,18,140,0.59,"{'confidence': 0.5939978245584436, 'final': True}"," The city in question is Nairobi, Kenya."
+TRUE,3,18,140,0.59,"{'confidence': 0.5865552232329454, 'final': True}","Wellington, New Zealand"
+TRUE,4,18,140,0.61,"{'confidence': 0.6088587061155634, 'final': True}"," Wellington, New Zealand"
+TRUE,4,22,140,0.74,"{'confidence': 0.7416319415373899, 'final': True}"," Wellington, New Zealand"
+TRUE,5,9,140,0.84,"{'confidence': 0.8422124993659593, 'final': True}","Wellington, New Zealand"
+TRUE,5,9,140,0.64,"{'confidence': 0.6406189097414109, 'final': True}","Wellington, New Zealand"
+TRUE,0,17,141,0.42,"{'confidence': 0.41928731268902036, 'final': True}", live there.
+TRUE,0,24,141,0.61,"{'confidence': 0.6126797764113574, 'final': True}", The two Russian Orthodox churches in Shanghai were St. Nicholas Cathedral and St. Mary's Church.
+TRUE,1,19,141,0.45,"{'confidence': 0.4490298617484188, 'final': True}"," Mumbai, India."
+TRUE,1,32,141,0.82,"{'confidence': 0.8197964587971379, 'final': True}"," The two Russian Orthodox churches in Shanghai were built to serve the Russian emigres who moved to Avenue Joffre. The waterfront area of Shanghai takes its English name from a Hindi term meaning embankment and not from the German name for ""union"", although the local term literally means ""outer beach""."
+TRUE,2,20,141,0.41,"{'confidence': 0.40825739132530237, 'final': True}"," Paris, Shanghai"
+TRUE,2,28,141,0.92,"{'confidence': 0.9246323660397124, 'final': True}"," The French concession in Shanghai was home to two Russian Orthodox churches built to serve the Russian emigres who moved to Avenue Joffre in the city. The waterfront area in the city takes its English name from a Hindi term meaning embankment and not from the German name for ""union"", although the local term literally means ""outer beach"". One of the most distinctive elements of the city's skyline is a tower with a vertical string of large and small spheres meant to represent pearls from the orient."
+TRUE,3,21,141,0.49,"{'confidence': 0.4901123584220887, 'final': True}"," of Suzhou Creek and the Huangpu River.    This city is home to the largest number of skyscrapers in the world, and it is also home to the world's busiest container port.    The city is known for its many shopping districts, including the French Concession, the former International Settlement, and the New Bund. Shanghai"
+TRUE,3,27,141,0.89,"{'confidence': 0.8858102330596654, 'final': True}", Shanghai
+TRUE,4,12,141,0.81,"{'confidence': 0.8080657880080642, 'final': True}", Shanghai
+TRUE,4,12,141,0.81,"{'confidence': 0.8080657880080642, 'final': True}", Shanghai
+TRUE,0,15,142,0.57,"{'confidence': 0.5670472221458568, 'final': True}", The photograph was taken in the state of Washington.
+TRUE,1,18,142,0.43,"{'confidence': 0.42820123621926665, 'final': True}", Arkansas
+TRUE,1,31,142,0.72,"{'confidence': 0.7249366327174441, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or clarify what you are asking?"
+TRUE,2,15,142,0.58,"{'confidence': 0.5846687376249856, 'final': True}",California
+TRUE,3,19,142,0.63,"{'confidence': 0.6262480907744722, 'final': True}",California
+TRUE,3,26,142,0.78,"{'confidence': 0.7770012000080229, 'final': True}",California
+TRUE,3,26,142,0.78,"{'confidence': 0.7770012000080229, 'final': True}",California
+TRUE,0,21,143,0.54,"{'confidence': 0.5427691680310083, 'final': True}", Colorado
+TRUE,1,17,143,0.63,"{'confidence': 0.6349060049169628, 'final': True}", Colorado
+TRUE,2,21,143,0.86,"{'confidence': 0.8637279633505035, 'final': True}","The state of Colorado is the 48th densest area in the United States and is well known for its alpine hiking trails.  It is home to two large national parks, Rocky Mountain National Park and Great Sand Dunes National Park.  It shares a name with the last name of a character in an American sitcom about a girl living a double life."
+TRUE,2,26,143,0.88,"{'confidence': 0.8754578367615405, 'final': True}","The state of Colorado is the 48th densest area in the United States and is well known for its alpine hiking trails.  It is home to two large national parks, Rocky Mountain National Park and Great Sand Dunes National Park.  It shares a name with the last name of a character in an American sitcom about a girl living a double life as a pop star."
+TRUE,3,15,143,0.86,"{'confidence': 0.8635681724671138, 'final': True}",Montana
+TRUE,3,15,143,0.86,"{'confidence': 0.8635681724671138, 'final': True}",Montana
+TRUE,0,19,144,0.70,"{'confidence': 0.7034574123764499, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the title or a summary of the article by Duever et al. that you are referring to?"
+TRUE,0,19,144,0.70,"{'confidence': 0.702573525047871, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the title or a summary of the article by Duever et al. that you are referring to?"
+TRUE,1,18,144,0.72,"{'confidence': 0.7228710891287167, 'final': True}"," I'm sorry, but I need more information in order to provide a complete answer. Can you please provide the title of the book by Sandra Neil Wallace that you mentioned?"
+TRUE,1,18,144,0.68,"{'confidence': 0.679093495761406, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Please provide the name of the book and the name of the high school."
+TRUE,2,17,144,0.66,"{'confidence': 0.6638390012172315, 'final': True}", the species in the United States.    The Everglades are a Ramsar Wetland of International Importance.    The Everglades are a World Heritage Site.    The Everglades are a National Park.    The Everglades are a National Historic Landmark.    The Everglades are a National Natural Landmark.    The Everglades are a National Preserve.    The Everglades are a National Wildlife Refuge.    The Everglades are a Wetland of International Importance.    The Everglades are a Biosphere Reserve.    The Everglades are a UNESCO World Heritage Site.    The Ever
+TRUE,2,23,144,0.58,"{'confidence': 0.5755763291718821, 'final': True}",Everglades
+TRUE,3,15,144,0.66,"{'confidence': 0.6580735137793385, 'final': True}",Everglades
+TRUE,3,25,144,0.68,"{'confidence': 0.6790271386091247, 'final': True}",Everglades
+TRUE,4,17,144,0.60,"{'confidence': 0.60082872925456, 'final': True}",Everglades
+TRUE,4,23,144,0.59,"{'confidence': 0.5874710450878645, 'final': True}",Everglades
+TRUE,5,17,144,0.70,"{'confidence': 0.6997865109730091, 'final': True}",Everglades
+TRUE,5,28,144,0.66,"{'confidence': 0.6604532363326613, 'final': True}",Everglades
+TRUE,6,19,144,0.52,"{'confidence': 0.5234281616634805, 'final': True}",Everglades
+TRUE,6,22,144,0.60,"{'confidence': 0.5954528035262443, 'final': True}", Biscayne National Park
+TRUE,6,22,144,0.60,"{'confidence': 0.5954528035262443, 'final': True}", Biscayne National Park
