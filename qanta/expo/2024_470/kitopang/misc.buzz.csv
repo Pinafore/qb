@@ -1,48 +1,48 @@
 final,sentence,evidence,word,page,weight,question
-True,0,"{'confidence': 0.31764103672179367, 'final': True}",17, the decision.,0.32,128
-True,0,"{'confidence': 0.6772716037987675, 'final': True}",23," I'm sorry, but I need more information in order to answer your question. Can you please provide the full context of the quote or specify where it was said? Without more information, I cannot provide a complete answer.",0.68,128
-True,1,"{'confidence': 0.493606678179377, 'final': True}",18, I don't know the answer.,0.49,128
-True,1,"{'confidence': 0.5068548525092129, 'final': True}",18, I don't know the answer.,0.51,128
-True,2,"{'confidence': 0.46652629881127894, 'final': True}",18," to use it in the film, it doesn't work.",0.47,128
-True,2,"{'confidence': 0.49812959231831133, 'final': True}",36," ""with great power comes great responsibility.""",0.50,128
-True,2,"{'confidence': 0.7320093314555922, 'final': True}",40," I'm sorry, but I need more information in order to answer your question. Please provide additional context or clarify your question, and I will do my best to help.",0.73,128
-True,3,"{'confidence': 0.6509908384636818, 'final': True}",22," ""With great power comes great responsibility.""",0.65,128
-True,3,"{'confidence': 0.5843375230677332, 'final': True}",25," ""With great power comes great responsibility.""",0.58,128
-True,3,"{'confidence': 0.5843375230677332, 'final': True}",25," ""With great power comes great responsibility.""",0.58,128
-True,0,"{'confidence': 0.44092539142930015, 'final': True}",17," team was shown playing a game of this game against a player from the eventual runner-up team. The player from the eventual champion team won the game, and the announcer said, ""The future is now.""",0.44,129
-True,0,"{'confidence': 0.7689873479048498, 'final': True}",24," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or details about the situation you are referring to? Without more information, I cannot provide a complete answer.",0.77,129
-True,1,"{'confidence': 0.42835271124735524, 'final': True}",17, name is a reference to a famous philosopher.  Which game am I referring to?,0.43,129
-True,1,"{'confidence': 0.5537802961563847, 'final': True}",33, at the cleanse!',0.55,129
-True,1,"{'confidence': 0.7847095160340245, 'final': True}",39," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or details about the game or the players involved? Without more information, I cannot accurately provide a full and complete answer.",0.78,129
-True,2,"{'confidence': 0.8029901105950045, 'final': True}",17, League of Legends: Wild Rift.,0.80,129
-True,2,"{'confidence': 0.6972952009570548, 'final': True}",19, The game is League of Legends.,0.70,129
-True,3,"{'confidence': 0.4534235656662316, 'final': True}",16," and Zilean are frequently played.  The game's lore is expansive, with champions such as Fiora, Master Yi, and Shen being tied to the Ionia region.  The game's most recent champion, K'Sante, is tied to the Demacia region.  The game's most recent patch nerfed the champions Fiora, Zilean, and Shen.  The game's most recent champion, K'Sante, is a Bruiser.  The game's most recent champion, K'Sante, is a Bruiser.  The game's most recent champion, K'Sante, is a Bruiser",0.45,129
-True,3,"{'confidence': 0.8198972608475863, 'final': True}",25, I believe you are referring to the popular video game League of Legends. Is there anything else I can help you with?,0.82,129
-True,4,"{'confidence': 0.8566880309113386, 'final': True}",14, League of Legends,0.86,129
-True,4,"{'confidence': 0.8566880309113386, 'final': True}",14, League of Legends,0.86,129
-True,0,"{'confidence': 0.39111213023783087, 'final': True}",20, like Compton. Who is he?,0.39,125
-True,0,"{'confidence': 0.7219139919242565, 'final': True}",24," I'm sorry, but I need more information in order to answer your question. Can you please provide the lyrics of the song you are referring to?",0.72,125
-True,1,"{'confidence': 0.4790566003930773, 'final': True}",18," use the word ""nigga"" 22 times in a single verse. Who is this rapper and what is the name of his second album?",0.48,125
-True,1,"{'confidence': 0.5787716832063392, 'final': True}",34," The rapper whose debut album was released in 2013 is Kendrick Lamar. The song in question is ""Mortal Man"" from his album ""To Pimp a Butterfly.""",0.58,125
-True,2,"{'confidence': 0.7321342751825993, 'final': True}",17, The artist's name is Tupac Shakur.,0.73,125
-True,2,"{'confidence': 0.6543679394603, 'final': True}",21, The artist's name is Eminem.,0.65,125
-True,3,"{'confidence': 0.7031651329711356, 'final': True}",17, The artist's name is Kendrick Lamar.,0.70,125
-True,4,"{'confidence': 0.6356453591990917, 'final': True}",16, 50 Cent.  Who is this artist?,0.64,125
-True,4,"{'confidence': 0.5945166454118299, 'final': True}",20, The artist is Kendrick Lamar.,0.59,125
-True,5,"{'confidence': 0.7097797051916692, 'final': True}",11, Kendrick Lamar,0.71,125
-True,5,"{'confidence': 0.7097797051916692, 'final': True}",11, Kendrick Lamar,0.71,125
-True,0,"{'confidence': 0.735196005806684, 'final': True}",17," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the name of the song and/or the artist?",0.74,126
-True,1,"{'confidence': 0.5354331340278755, 'final': True}",17, past.,0.54,126
-True,1,"{'confidence': 0.7228628167940905, 'final': True}",29," ""Girls Just Wanna Have Fun"" by Cyndi Lauper",0.72,126
-True,2,"{'confidence': 0.4521789294613107, 'final': True}",17," ""locations in all 50 states.""",0.45,126
-True,2,"{'confidence': 0.6519363099587759, 'final': True}",22, I'm a Slave 4 U,0.65,126
-True,3,"{'confidence': 0.8159198449527757, 'final': True}",16," The song is called ""Last Friday Night (T.G.I.F.)""",0.82,126
-True,3,"{'confidence': 0.8159198449527757, 'final': True}",16," The song is called ""Last Friday Night (T.G.I.F.)""",0.82,126
-True,0,"{'confidence': 0.7823150000005878, 'final': True}",18," I'm sorry, but I need more information in order to answer this question. Can you please provide more context or details about the joke you are referring to? Without more information, I cannot provide a complete answer.",0.78,127
-True,0,"{'confidence': 0.7853056708744545, 'final': True}",28," I'm sorry, but I cannot find the answer based on the information provided. Please provide more context or details about the joke or the 2005 superhero film franchise.",0.79,127
-True,1,"{'confidence': 0.7052236364466045, 'final': True}",19," I'm sorry, but I don't have any information about a specific person who is the subject of a popular internet joke involving being a certain quality, and also sharing that quality with Jessica Alba's character in a 2005 superhero film franchise.",0.71,127
-True,1,"{'confidence': 0.773194615463919, 'final': True}",32," I'm sorry, but I cannot find the answer based on the context provided. Please provide more information or clarify the question.",0.77,127
-True,2,"{'confidence': 0.4336657736799802, 'final': True}",19," the country ""the s**thole of the world.""",0.43,127
-True,2,"{'confidence': 0.5730592744298242, 'final': True}",22, I believe you are referring to Ludacris.,0.57,127
-True,3,"{'confidence': 0.50653816119208, 'final': True}",12, John Cena,0.51,127
-True,3,"{'confidence': 0.50653816119208, 'final': True}",12, John Cena,0.51,127
+TRUE,0,"{'confidence': 0.31764103672179367, 'final': True}",17, the decision.,0.32,128
+TRUE,0,"{'confidence': 0.6772716037987675, 'final': True}",23," I'm sorry, but I need more information in order to answer your question. Can you please provide the full context of the quote or specify where it was said? Without more information, I cannot provide a complete answer.",0.68,128
+TRUE,1,"{'confidence': 0.493606678179377, 'final': True}",18, I don't know the answer.,0.49,128
+TRUE,1,"{'confidence': 0.5068548525092129, 'final': True}",18, I don't know the answer.,0.51,128
+TRUE,2,"{'confidence': 0.46652629881127894, 'final': True}",18," to use it in the film, it doesn't work.",0.47,128
+TRUE,2,"{'confidence': 0.49812959231831133, 'final': True}",36,"With great power, comes great responsibility",0.50,128
+TRUE,2,"{'confidence': 0.7320093314555922, 'final': True}",40," I'm sorry, but I need more information in order to answer your question. Please provide additional context or clarify your question, and I will do my best to help.",0.73,128
+TRUE,3,"{'confidence': 0.6509908384636818, 'final': True}",22,"With great power, comes great responsibility",0.65,128
+TRUE,3,"{'confidence': 0.5843375230677332, 'final': True}",25,"With great power, comes great responsibility",0.58,128
+TRUE,3,"{'confidence': 0.5843375230677332, 'final': True}",25,"With great power, comes great responsibility",0.58,128
+TRUE,0,"{'confidence': 0.44092539142930015, 'final': True}",17," team was shown playing a game of this game against a player from the eventual runner-up team. The player from the eventual champion team won the game, and the announcer said, ""The future is now.""",0.44,129
+TRUE,0,"{'confidence': 0.7689873479048498, 'final': True}",24," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or details about the situation you are referring to? Without more information, I cannot provide a complete answer.",0.77,129
+TRUE,1,"{'confidence': 0.42835271124735524, 'final': True}",17, name is a reference to a famous philosopher.  Which game am I referring to?,0.43,129
+TRUE,1,"{'confidence': 0.5537802961563847, 'final': True}",33, at the cleanse!',0.55,129
+TRUE,1,"{'confidence': 0.7847095160340245, 'final': True}",39," I'm sorry, but I need more information in order to answer your question. Can you please provide more context or details about the game or the players involved? Without more information, I cannot accurately provide a full and complete answer.",0.78,129
+TRUE,2,"{'confidence': 0.8029901105950045, 'final': True}",17,League of Legends,0.80,129
+TRUE,2,"{'confidence': 0.6972952009570548, 'final': True}",19,League of Legends,0.70,129
+TRUE,3,"{'confidence': 0.4534235656662316, 'final': True}",16," and Zilean are frequently played.  The game's lore is expansive, with champions such as Fiora, Master Yi, and Shen being tied to the Ionia region.  The game's most recent champion, K'Sante, is tied to the Demacia region.  The game's most recent patch nerfed the champions Fiora, Zilean, and Shen.  The game's most recent champion, K'Sante, is a Bruiser.  The game's most recent champion, K'Sante, is a Bruiser.  The game's most recent champion, K'Sante, is a Bruiser",0.45,129
+TRUE,3,"{'confidence': 0.8198972608475863, 'final': True}",25, I believe you are referring to the popular video game League of Legends. Is there anything else I can help you with?,0.82,129
+TRUE,4,"{'confidence': 0.8566880309113386, 'final': True}",14, League of Legends,0.86,129
+TRUE,4,"{'confidence': 0.8566880309113386, 'final': True}",14, League of Legends,0.86,129
+TRUE,0,"{'confidence': 0.39111213023783087, 'final': True}",20, like Compton. Who is he?,0.39,125
+TRUE,0,"{'confidence': 0.7219139919242565, 'final': True}",24," I'm sorry, but I need more information in order to answer your question. Can you please provide the lyrics of the song you are referring to?",0.72,125
+TRUE,1,"{'confidence': 0.4790566003930773, 'final': True}",18,"use the word ""nigga"" 22 times in a single verse. Who is this rapper and what is the name of his second album?",0.48,125
+TRUE,1,"{'confidence': 0.5787716832063392, 'final': True}",34,"The rapper whose debut album was released in 2013 is Kendrick Lamar. The song in question is ""Mortal Man"" from his album ""To Pimp a Butterfly.""",0.58,125
+TRUE,2,"{'confidence': 0.7321342751825993, 'final': True}",17, The artist's name is Tupac Shakur.,0.73,125
+TRUE,2,"{'confidence': 0.6543679394603, 'final': True}",21, The artist's name is Eminem.,0.65,125
+TRUE,3,"{'confidence': 0.7031651329711356, 'final': True}",17,Kendrick Lamar,0.70,125
+TRUE,4,"{'confidence': 0.6356453591990917, 'final': True}",16,50 Cent.  Who is this artist?,0.64,125
+TRUE,4,"{'confidence': 0.5945166454118299, 'final': True}",20,Kendrick Lamar,0.59,125
+TRUE,5,"{'confidence': 0.7097797051916692, 'final': True}",11, Kendrick Lamar,0.71,125
+TRUE,5,"{'confidence': 0.7097797051916692, 'final': True}",11, Kendrick Lamar,0.71,125
+TRUE,0,"{'confidence': 0.735196005806684, 'final': True}",17," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the name of the song and/or the artist?",0.74,126
+TRUE,1,"{'confidence': 0.5354331340278755, 'final': True}",17, past.,0.54,126
+TRUE,1,"{'confidence': 0.7228628167940905, 'final': True}",29," ""Girls Just Wanna Have Fun"" by Cyndi Lauper",0.72,126
+TRUE,2,"{'confidence': 0.4521789294613107, 'final': True}",17,"""locations in all 50 states.""",0.45,126
+TRUE,2,"{'confidence': 0.6519363099587759, 'final': True}",22,I'm a Slave 4 U,0.65,126
+TRUE,3,"{'confidence': 0.8159198449527757, 'final': True}",16,Last Friday Night (T.G.I.F.),0.82,126
+TRUE,3,"{'confidence': 0.8159198449527757, 'final': True}",16,Last Friday Night (T.G.I.F.),0.82,126
+TRUE,0,"{'confidence': 0.7823150000005878, 'final': True}",18," I'm sorry, but I need more information in order to answer this question. Can you please provide more context or details about the joke you are referring to? Without more information, I cannot provide a complete answer.",0.78,127
+TRUE,0,"{'confidence': 0.7853056708744545, 'final': True}",28,"I'm sorry, but I cannot find the answer based on the information provided. Please provide more context or details about the joke or the 2005 superhero film franchise.",0.79,127
+TRUE,1,"{'confidence': 0.7052236364466045, 'final': True}",19,"I'm sorry, but I don't have any information about a specific person who is the subject of a popular internet joke involving being a certain quality, and also sharing that quality with Jessica Alba's character in a 2005 superhero film franchise.",0.71,127
+TRUE,1,"{'confidence': 0.773194615463919, 'final': True}",32," I'm sorry, but I cannot find the answer based on the context provided. Please provide more information or clarify the question.",0.77,127
+TRUE,2,"{'confidence': 0.4336657736799802, 'final': True}",19," the country ""the s**thole of the world.""",0.43,127
+TRUE,2,"{'confidence': 0.5730592744298242, 'final': True}",22, I believe you are referring to Ludacris.,0.57,127
+TRUE,3,"{'confidence': 0.50653816119208, 'final': True}",12,John Cena,0.51,127
+TRUE,3,"{'confidence': 0.50653816119208, 'final': True}",12,John Cena,0.51,127

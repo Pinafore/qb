@@ -1,46 +1,46 @@
 final,word,weight,page,evidence,question,sentence
-True,18,0.51, highest average elevation in the world.,"{'confidence': 0.5088655033968364, 'final': True}",150,0
-True,24,0.63, The country in question is Peru.,"{'confidence': 0.6253585075605325, 'final': True}",150,0
-True,18,0.59," The country is Bolivia, and the mountain is Aconcagua.","{'confidence': 0.5932114199468962, 'final': True}",150,1
-True,26,0.63," The country is Tajikistan, and the mountain is the Pamir Mountains.","{'confidence': 0.6346214286125244, 'final': True}",150,1
-True,19,0.76," The country in question is Tajikistan, and the mountain in question is the Pamir Mountains.","{'confidence': 0.7607543173025749, 'final': True}",150,2
-True,29,0.65, The country in question is Kyrgyzstan.,"{'confidence': 0.6470507470922489, 'final': True}",150,2
-True,20,0.75, The country that you are referring to is Tajikistan.,"{'confidence': 0.7491770470476743, 'final': True}",150,3
-True,27,0.81, The country you are referring to is Kyrgyzstan.,"{'confidence': 0.8053148385248781, 'final': True}",150,3
-True,27,0.81, The country you are referring to is Kyrgyzstan.,"{'confidence': 0.8053148385248781, 'final': True}",150,3
-True,13,0.94, The scientific name of the European eel is Anguilla anguilla.,"{'confidence': 0.9358954812171842, 'final': True}",151,0
-True,18,0.57, The United Kingdom,"{'confidence': 0.5719033687079588, 'final': True}",151,1
-True,27,0.83," The Isle of Dogs is the scientific name of the European eel. The Isle of Dogs was invaded in an operation referred to by media organizations as the ""Bay of Piglets Invasion"" and contributed to the defeat of Harold Wilson.","{'confidence': 0.8281707417891184, 'final': True}",151,1
-True,10,0.61, The name of the island is Anguilla.,"{'confidence': 0.6076695516733442, 'final': True}",151,2
-True,4,0.63, The name of the island is Anguilla.,"{'confidence': 0.63382123149026, 'final': True}",151,3
-True,19,0.67, The island you are referring to is Anguilla.,"{'confidence': 0.6708539078720358, 'final': True}",151,4
-True,34,0.59, Antigua,"{'confidence': 0.585446123827027, 'final': True}",151,4
-True,34,0.59, Antigua,"{'confidence': 0.585446123827027, 'final': True}",151,4
-True,18,0.36, is only found in this region.,"{'confidence': 0.3596727216329838, 'final': True}",152,0
-True,30,0.62, The Arabian or Syrian brown bear is the only species of bear known to live in a desert. They are found in the Arabian Desert in the Middle East.,"{'confidence': 0.6200442774204737, 'final': True}",152,0
-True,22,0.48," Desert, the only place in the world where the critically endangered desert black bear lives, is part of the Desert Program.","{'confidence': 0.4820348880292577, 'final': True}",152,1
-True,39,0.65, Desertification. Which desert am I referring to?,"{'confidence': 0.6522702296302233, 'final': True}",152,1
-True,47,0.34, Desert?,"{'confidence': 0.34318503941727074, 'final': True}",152,1
-True,15,0.51, Gorgosaurus were found in this desert. The desert is also home to the largest canyon in the world.  What desert am I describing?,"{'confidence': 0.5120465166794701, 'final': True}",152,2
-True,21,0.83, Gobi Desert,"{'confidence': 0.8287423020551045, 'final': True}",152,2
-True,16,0.92, Gobi Desert,"{'confidence': 0.9159848560395495, 'final': True}",152,3
-True,16,0.92, Gobi Desert,"{'confidence': 0.9159848560395495, 'final': True}",152,3
-True,21,0.57, the name of the state.,"{'confidence': 0.5735601974295896, 'final': True}",153,0
-True,30,0.76," I'm sorry, but I need more information to answer this question. Can you please provide more context or clarify what you mean by ""the largest city in another state""?","{'confidence': 0.7555419366794004, 'final': True}",153,0
-True,20,0.84," The state of Texas is home to the county that shares its name with the state home to the largest city that shares its name with the largest city in another state.  This state lies 1400 miles west of the smaller of the two largest cities of the same name, the capital of the United States.","{'confidence': 0.8379744424485179, 'final': True}",153,1
-True,24,0.62, I am not sure what you are asking. Could you please rephrase the question and provide more context?,"{'confidence': 0.6164938304166425, 'final': True}",153,1
-True,18,0.76," I believe you are referring to the state of Oregon. The county of Oregon shares its name with the state of Oregon, which is home to the largest city of Portland. The smaller of the two cities of Portland is located 1400 miles west of the larger city of Portland, which is the capital of Oregon. The larger city of Portland is located 2100 miles east of the city of Portland, Oregon, which is the seat of Multnomah County.","{'confidence': 0.7598474830745053, 'final': True}",153,2
-True,19,0.62," Oregon, Whitman Mission National Historic Site.","{'confidence': 0.617003600645506, 'final': True}",153,3
-True,29,0.63, Missouri,"{'confidence': 0.6290443922653898, 'final': True}",153,3
-True,16,0.76, Missouri,"{'confidence': 0.7603394869111195, 'final': True}",153,4
-True,16,0.76, Missouri,"{'confidence': 0.7603394869111195, 'final': True}",153,4
-True,18,0.39, The city of Gotham was inspired by New York City.,"{'confidence': 0.38789507170978815, 'final': True}",154,0
-True,27,0.51," The country is Switzerland, and the film is Black Panther.","{'confidence': 0.5081663002975911, 'final': True}",154,0
-True,17,0.53, Johnson left office.,"{'confidence': 0.5296674213655336, 'final': True}",154,1
-True,24,0.39, India,"{'confidence': 0.39437275400994126, 'final': True}",154,1
-True,18,0.51, Nigeria,"{'confidence': 0.5100608271599573, 'final': True}",154,2
-True,32,0.49, Nigeria,"{'confidence': 0.4909597302250374, 'final': True}",154,2
-True,20,0.46, Nigeria,"{'confidence': 0.4572423383667686, 'final': True}",154,3
-True,21,0.42, Nigeria,"{'confidence': 0.4182820842840237, 'final': True}",154,3
-True,17,0.76, The country is Lesotho.,"{'confidence': 0.7568598752567701, 'final': True}",154,4
-True,17,0.76, The country is Lesotho.,"{'confidence': 0.7568598752567701, 'final': True}",154,4
+TRUE,18,0.51, highest average elevation in the world.,"{'confidence': 0.5088655033968364, 'final': True}",150,0
+TRUE,24,0.63, The country in question is Peru.,"{'confidence': 0.6253585075605325, 'final': True}",150,0
+TRUE,18,0.59," The country is Bolivia, and the mountain is Aconcagua.","{'confidence': 0.5932114199468962, 'final': True}",150,1
+TRUE,26,0.63," The country is Tajikistan, and the mountain is the Pamir Mountains.","{'confidence': 0.6346214286125244, 'final': True}",150,1
+TRUE,19,0.76," The country in question is Tajikistan, and the mountain in question is the Pamir Mountains.","{'confidence': 0.7607543173025749, 'final': True}",150,2
+TRUE,29,0.65,Kyrgyzstan,"{'confidence': 0.6470507470922489, 'final': True}",150,2
+TRUE,20,0.75, The country that you are referring to is Tajikistan.,"{'confidence': 0.7491770470476743, 'final': True}",150,3
+TRUE,27,0.81,Kyrgyzstan,"{'confidence': 0.8053148385248781, 'final': True}",150,3
+TRUE,27,0.81,Kyrgyzstan,"{'confidence': 0.8053148385248781, 'final': True}",150,3
+TRUE,13,0.94,Anguilla,"{'confidence': 0.9358954812171842, 'final': True}",151,0
+TRUE,18,0.57, The United Kingdom,"{'confidence': 0.5719033687079588, 'final': True}",151,1
+TRUE,27,0.83," The Isle of Dogs is the scientific name of the European eel. The Isle of Dogs was invaded in an operation referred to by media organizations as the ""Bay of Piglets Invasion"" and contributed to the defeat of Harold Wilson.","{'confidence': 0.8281707417891184, 'final': True}",151,1
+TRUE,10,0.61,Anguilla,"{'confidence': 0.6076695516733442, 'final': True}",151,2
+TRUE,4,0.63,Anguilla,"{'confidence': 0.63382123149026, 'final': True}",151,3
+TRUE,19,0.67,Anguilla,"{'confidence': 0.6708539078720358, 'final': True}",151,4
+TRUE,34,0.59, Antigua,"{'confidence': 0.585446123827027, 'final': True}",151,4
+TRUE,34,0.59, Antigua,"{'confidence': 0.585446123827027, 'final': True}",151,4
+TRUE,18,0.36, is only found in this region.,"{'confidence': 0.3596727216329838, 'final': True}",152,0
+TRUE,30,0.62, The Arabian or Syrian brown bear is the only species of bear known to live in a desert. They are found in the Arabian Desert in the Middle East.,"{'confidence': 0.6200442774204737, 'final': True}",152,0
+TRUE,22,0.48," Desert, the only place in the world where the critically endangered desert black bear lives, is part of the Desert Program.","{'confidence': 0.4820348880292577, 'final': True}",152,1
+TRUE,39,0.65, Desertification. Which desert am I referring to?,"{'confidence': 0.6522702296302233, 'final': True}",152,1
+TRUE,47,0.34, Desert?,"{'confidence': 0.34318503941727074, 'final': True}",152,1
+TRUE,15,0.51, Gorgosaurus were found in this desert. The desert is also home to the largest canyon in the world.  What desert am I describing?,"{'confidence': 0.5120465166794701, 'final': True}",152,2
+TRUE,21,0.83, Gobi Desert,"{'confidence': 0.8287423020551045, 'final': True}",152,2
+TRUE,16,0.92, Gobi Desert,"{'confidence': 0.9159848560395495, 'final': True}",152,3
+TRUE,16,0.92, Gobi Desert,"{'confidence': 0.9159848560395495, 'final': True}",152,3
+TRUE,21,0.57, the name of the state.,"{'confidence': 0.5735601974295896, 'final': True}",153,0
+TRUE,30,0.76," I'm sorry, but I need more information to answer this question. Can you please provide more context or clarify what you mean by ""the largest city in another state""?","{'confidence': 0.7555419366794004, 'final': True}",153,0
+TRUE,20,0.84,"The state of Texas is home to the county that shares its name with the state home to the largest city that shares its name with the largest city in another state.  This state lies 1400 miles west of the smaller of the two largest cities of the same name, the capital of the United States.","{'confidence': 0.8379744424485179, 'final': True}",153,1
+TRUE,24,0.62, I am not sure what you are asking. Could you please rephrase the question and provide more context?,"{'confidence': 0.6164938304166425, 'final': True}",153,1
+TRUE,18,0.76,"I believe you are referring to the state of Oregon. The county of Oregon shares its name with the state of Oregon, which is home to the largest city of Portland. The smaller of the two cities of Portland is located 1400 miles west of the larger city of Portland, which is the capital of Oregon. The larger city of Portland is located 2100 miles east of the city of Portland, Oregon, which is the seat of Multnomah County.","{'confidence': 0.7598474830745053, 'final': True}",153,2
+TRUE,19,0.62," Oregon, Whitman Mission National Historic Site.","{'confidence': 0.617003600645506, 'final': True}",153,3
+TRUE,29,0.63, Missouri,"{'confidence': 0.6290443922653898, 'final': True}",153,3
+TRUE,16,0.76, Missouri,"{'confidence': 0.7603394869111195, 'final': True}",153,4
+TRUE,16,0.76, Missouri,"{'confidence': 0.7603394869111195, 'final': True}",153,4
+TRUE,18,0.39, The city of Gotham was inspired by New York City.,"{'confidence': 0.38789507170978815, 'final': True}",154,0
+TRUE,27,0.51," The country is Switzerland, and the film is Black Panther.","{'confidence': 0.5081663002975911, 'final': True}",154,0
+TRUE,17,0.53, Johnson left office.,"{'confidence': 0.5296674213655336, 'final': True}",154,1
+TRUE,24,0.39, India,"{'confidence': 0.39437275400994126, 'final': True}",154,1
+TRUE,18,0.51, Nigeria,"{'confidence': 0.5100608271599573, 'final': True}",154,2
+TRUE,32,0.49, Nigeria,"{'confidence': 0.4909597302250374, 'final': True}",154,2
+TRUE,20,0.46, Nigeria,"{'confidence': 0.4572423383667686, 'final': True}",154,3
+TRUE,21,0.42, Nigeria,"{'confidence': 0.4182820842840237, 'final': True}",154,3
+TRUE,17,0.76,Lesotho,"{'confidence': 0.7568598752567701, 'final': True}",154,4
+TRUE,17,0.76,Lesotho,"{'confidence': 0.7568598752567701, 'final': True}",154,4

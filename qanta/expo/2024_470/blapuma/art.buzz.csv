@@ -1,44 +1,44 @@
-evidence,weight,sentence,page,final,word,question
-"{'confidence': 0.0, 'final': False}",0.00,0,"The Knife, ""Silent Shout""",False,18,160
-"{'confidence': 0.0, 'final': False}",0.00,0,"""The Blackboard Jungle"" by The Kill",False,21,160
-"{'confidence': 0.0, 'final': False}",0.00,1,"The Tablecloth, the Bathtub,",False,20,160
-"{'confidence': 0.0, 'final': False}",0.00,1,"The painting used as album artwork for ""The",False,23,160
-"{'confidence': 0.0, 'final': False}",0.00,2,"The painting is ""The Temptation of St",False,16,160
-"{'confidence': 0.0, 'final': False}",0.00,3,"The painting is ""The Letter"" by American",False,18,160
-"{'confidence': 0.5442024128567653, 'final': True}",0.54,4,The Death of Marat,True,16,160
-"{'confidence': 0.6880357774198939, 'final': True}",0.69,4,The Death of Marat,True,19,160
-"{'confidence': 0.6880357774198939, 'final': True}",0.69,4,The Death of Marat,True,19,160
-"{'confidence': 0.0, 'final': False}",0.00,0,Frank Gehry,False,19,161
-"{'confidence': 0.0, 'final': False}",0.00,0,Peter Halley,False,29,161
-"{'confidence': 0.0, 'final': False}",0.00,1,Norman Stein,False,17,161
-"{'confidence': 1.0, 'final': True}",1.00,1,Norman Steinlauf,True,26,161
-"{'confidence': 0.0, 'final': False}",0.00,2,Norman Steinlauf,False,19,161
-"{'confidence': 0.0, 'final': False}",0.00,2,Norman Steinlauf,False,26,161
-"{'confidence': 0.0, 'final': False}",0.00,3,Robert Morris,False,17,161
-"{'confidence': 0.28907368293347474, 'final': True}",0.29,3,Richard Serra,True,20,161
-"{'confidence': 0.3165145709267398, 'final': True}",0.32,3,Richard Serra,True,20,161
-"{'confidence': 0.0, 'final': False}",0.00,0,The Alma Mater (1894,False,18,162
-"{'confidence': 0.0, 'final': False}",0.00,0,Albrecht Durer,False,33,162
-"{'confidence': 0.7193653122598677, 'final': True}",0.72,1,Vincent van Gogh,True,16,162
-"{'confidence': 0.0, 'final': False}",0.00,1,Georgia O'Keeffe,False,18,162
-"{'confidence': 1.0, 'final': True}",1.00,2,Georgia O'Keeffe,True,18,162
-"{'confidence': 1.0, 'final': True}",1.00,2,Georgia O'Keeffe,True,24,162
-"{'confidence': 1.0, 'final': True}",1.00,2,Georgia O'Keeffe,True,24,162
-"{'confidence': 0.13819767706716107, 'final': False}",0.14,0,F. William Free & Co. newspaper ads,False,20,163
-"{'confidence': 0.0, 'final': False}",0.00,0,Salvador Dalí placed a series of newspaper ads,False,35,163
-"{'confidence': 0.0, 'final': False}",0.00,0,Salvador Dalí,False,35,163
-"{'confidence': 0.0, 'final': False}",0.00,1,The ads,False,17,163
-"{'confidence': 0.0, 'final': False}",0.00,1,"Salvador Dalí's ""The Persistence of",False,27,163
-"{'confidence': 0.0, 'final': False}",0.00,2,The Persistence of,False,20,163
-"{'confidence': 0.0, 'final': False}",0.00,2,Campbell's,False,25,163
-"{'confidence': 1.0, 'final': True}",1.00,3,Andy Warhol,True,16,163
-"{'confidence': 1.0, 'final': True}",1.00,3,Andy Warhol,True,16,163
-"{'confidence': 0.8836820644071632, 'final': True}",0.88,0,"In this painting, a man in an orange sh",True,20,164
-"{'confidence': 0.8361775020591004, 'final': True}",0.84,0,A man in an orange shirt plays the tr,True,21,164
-"{'confidence': 0.0, 'final': False}",0.00,1,A woman holding a leash attached to a dog,False,20,164
-"{'confidence': 0.04256731936729158, 'final': False}",0.04,1,"Man in orange shirt playing trumpet,",False,31,164
-"{'confidence': 0.0, 'final': False}",0.00,2,"A street scene with musicians and military personnel,",False,16,164
-"{'confidence': 0.0, 'final': False}",0.00,2,"Saturday Evening Post, 1906",False,26,164
-"{'confidence': 1.0, 'final': True}",1.00,3,A Sunday Afternoon on the Island of La Grande,True,16,164
-"{'confidence': 1.0, 'final': True}",1.00,3,A Sunday Afternoon on the Island of La Grande,True,19,164
-"{'confidence': 1.0, 'final': True}",1.00,3,A Sunday Afternoon on the Island of La Grande,True,19,164
+page,sentence,word,weight,question,evidence,final
+ artists. Which two artists and which albums are you referring to?,0,18,0.60,160,"{'confidence': 0.5961186708119782, 'final': True}",TRUE
+" I'm sorry, but I need more information in order to answer your question. Can you please provide more context or details about the question?",0,21,0.75,160,"{'confidence': 0.7505988271715174, 'final': True}",TRUE
+" The painting you are referring to is ""The Banquet of Cleopatra"" by Lucas Cranach the Elder. This painting was used as the album artwork for the albums ""The Stage Names"" by the band Okkervil River and ""Consolers of the Lonely"" by the band The Raconteurs.",1,20,0.71,160,"{'confidence': 0.7058916204375492, 'final': True}",TRUE
+" The painting you are referring to is ""The Green Tablecloth"" by artist Mark Rothko. It was used as the album artwork for the albums ""The Green Tablecloth"" by The Green Tablecloth and ""The Green Tablecloth"" by The Green Tablecloth.",1,23,0.66,160,"{'confidence': 0.66389787330499, 'final': True}",TRUE
+" The painting is titled ""The Last Supper"" by American artist Mark Ryden.",2,16,0.55,160,"{'confidence': 0.5511463237842843, 'final': True}",TRUE
+" The painting you are referring to is ""The Death of Vincent van Gogh"" by David Revoy. It was used as the album artwork for the albums ""The Death of Vincent"" by The Dillinger Escape Plan and ""The Death of Us"" by The Bled.",3,18,0.59,160,"{'confidence': 0.5921517597200835, 'final': True}",TRUE
+ The Death of Marat,4,16,0.71,160,"{'confidence': 0.7108321237176649, 'final': True}",TRUE
+ The Death of Marat,4,19,0.68,160,"{'confidence': 0.6810592867613988, 'final': True}",TRUE
+ The Death of Marat,4,19,0.68,160,"{'confidence': 0.6810592867613988, 'final': True}",TRUE
+ The artist selected by Eli Broad and David Baltimore to install a zig-zag wall on the Pasadena campus was Mark Bradford.,0,19,0.73,161,"{'confidence': 0.7277977632148719, 'final': True}",TRUE
+ The artist is Mark Bradford.,0,29,0.43,161,"{'confidence': 0.4309345390754384, 'final': True}",TRUE
+ Norman Steinlauf,1,17,0.54,161,"{'confidence': 0.5363647072968641, 'final': True}",TRUE
+ Norman Steinlauf,1,26,0.61,161,"{'confidence': 0.6103364669303093, 'final': True}",TRUE
+ Robert Smithson,2,19,0.47,161,"{'confidence': 0.4655220533952087, 'final': True}",TRUE
+ Robert Smithson,2,26,0.44,161,"{'confidence': 0.44355860656911833, 'final': True}",TRUE
+ Robert Smithson,3,17,0.55,161,"{'confidence': 0.5518319106804562, 'final': True}",TRUE
+ Robert Smithson,3,20,0.54,161,"{'confidence': 0.5374389581908037, 'final': True}",TRUE
+ Robert Smithson,3,20,0.48,161,"{'confidence': 0.47897643509200855, 'final': True}",TRUE
+ green branches and needles.,0,18,0.40,162,"{'confidence': 0.39971292689500487, 'final': True}",TRUE
+ The artist's name is Vincent Van Gogh.,0,33,0.55,162,"{'confidence': 0.549494087704349, 'final': True}",TRUE
+ Edgar Degas,1,16,0.49,162,"{'confidence': 0.4893040570561917, 'final': True}",TRUE
+"Edward Hopper painted ""Black Pine Tree"" in 1929 while staying on the property of English novelist D.H. Lawrence. The painting depicts a lone blackjack pine tree with a brown trunk and dark green leaves in the foreground and a blue starry night sky in the background.",1,18,0.78,162,"{'confidence': 0.7767917762090585, 'final': True}",TRUE
+ name with a famous American actress.,2,18,0.33,162,"{'confidence': 0.32734016176459646, 'final': True}",TRUE
+Georgia O'Keeffe,2,24,0.65,162,"{'confidence': 0.6518020629906695, 'final': True}",TRUE
+Georgia O'Keeffe,2,24,0.65,162,"{'confidence': 0.6518020629906695, 'final': True}",TRUE
+" I'm sorry, but I need more information in order to answer your question. Please provide additional context or details so that I can provide a more accurate response.",0,20,0.71,163,"{'confidence': 0.7116810619114153, 'final': True}",TRUE
+" I'm sorry, but I need more information in order to answer your question. Can you please provide me with the text of one of the newspaper ads placed by F. William Free & Co.?",0,35,0.75,163,"{'confidence': 0.7476270803652543, 'final': True}",TRUE
+" I'm sorry, but I need more information in order to answer your question. Can you please provide me with more details or context about the situation?",0,35,0.69,163,"{'confidence': 0.6915384193481419, 'final': True}",TRUE
+ ads for Coca-Cola.,1,17,0.36,163,"{'confidence': 0.36352090634618733, 'final': True}",TRUE
+" The artist is Andy Warhol, and the commercial was for a Campbell's Soup ad.",1,27,0.58,163,"{'confidence': 0.5771785720043378, 'final': True}",TRUE
+ popular works by this artist.,2,20,0.42,163,"{'confidence': 0.4161811138349599, 'final': True}",TRUE
+ The artist whose work is described is Andy Warhol.,2,25,0.70,163,"{'confidence': 0.6995809598501359, 'final': True}",TRUE
+ Andy Warhol,3,16,0.86,163,"{'confidence': 0.8607811488136323, 'final': True}",TRUE
+ Andy Warhol,3,16,0.86,163,"{'confidence': 0.8607811488136323, 'final': True}",TRUE
+" a battlefield. The man in the orange shirt is depicted as being happy and carefree, while the soldiers are shown as being sad and defeated. This painting is a great example of how art can be used to convey a message or tell a story.",0,20,0.54,164,"{'confidence': 0.5408945837010195, 'final': True}",TRUE
+" I see. Based on the description, it seems like the painting depicts a scene with a man playing the trumpet, possibly as a form of entertainment for the soldiers who are walking by. The man in the orange shirt could be a civilian or a soldier himself, but his presence adds a sense of levity and contrast to the more serious mood of the soldiers. The composition creates a sense of movement and action, with the soldiers walking away from the viewer and the trumpet player facing them, suggesting a dynamic interaction between the different elements of the scene.",0,21,0.69,164,"{'confidence': 0.6928122359299045, 'final': True}",TRUE
+ is not visible.  What is the name of this painting?,1,20,0.50,164,"{'confidence': 0.5029399250694038, 'final': True}",TRUE
+" The painting depicts a man in an orange shirt playing the trumpet next to two soldiers walking away from the viewer. On the right-hand side of the painting, a woman is seen holding a collar connected to an animal which shares a species with the protagonist of Journey to the West.",1,31,0.87,164,"{'confidence': 0.8713661538030233, 'final': True}",TRUE
+ a stroll in the park.,2,16,0.42,164,"{'confidence': 0.4183245207891529, 'final': True}",TRUE
+" The painting depicts a man in an orange shirt playing the trumpet next to two soldiers walking away from the viewer. On the right hand side of the painting, one woman is seen holding a collar connected to an animal which shares a species with the protagonist of Journey to the West. The painting shows corseted women with their parasols and gentlemen with top hats and canes enjoying their leisure time at the titular time of the week.",2,26,0.90,164,"{'confidence': 0.8985979670286993, 'final': True}",TRUE
+A Sunday Afternoon on the Island of La Grande Jatte,3,16,0.74,164,"{'confidence': 0.7411845095446256, 'final': True}",TRUE
+A Sunday Afternoon on the Island of La Grande Jatte,3,19,0.82,164,"{'confidence': 0.8229553179004382, 'final': True}",TRUE
+A Sunday Afternoon on the Island of La Grande Jatte,3,19,0.82,164,"{'confidence': 0.8229553179004382, 'final': True}",TRUE

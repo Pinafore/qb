@@ -1,0 +1,55 @@
+final,word,sentence,weight,page,evidence,question
+FALSE,20,0,0.00,"John Wayne delivering a scene in ""The Search","{'confidence': 0.0, 'final': False}",120
+FALSE,39,0,0.00,"Tom Hanks in ""Planes, Trains","{'confidence': 0.0, 'final': False}",120
+FALSE,40,0,0.00,Chevy Chase,"{'confidence': 0.0, 'final': False}",120
+TRUE,23,1,0.72,Bill Murray,"{'confidence': 0.7181662103839279, 'final': True}",120
+TRUE,42,1,0.40,Bill Murray,"{'confidence': 0.4006781007844266, 'final': True}",120
+FALSE,44,1,0.00,Bill Murray,"{'confidence': 0.0, 'final': False}",120
+FALSE,16,2,0.00,A,"{'confidence': 0.0, 'final': False}",120
+FALSE,18,3,0.24,Bill Murray,"{'confidence': 0.23680022551729157, 'final': False}",120
+FALSE,17,4,0.00,Woody Harrelson,"{'confidence': 0.0, 'final': False}",120
+FALSE,30,4,0.00,Chevy Chase,"{'confidence': 0.0, 'final': False}",120
+FALSE,30,4,0.00,Chevy Chase,"{'confidence': 0.0, 'final': False}",120
+FALSE,18,0,0.00,"Admiral Nelson in the game ""Battlefield","{'confidence': 0.0, 'final': False}",121
+FALSE,25,0,0.00,Battleship (defender) was designed by,"{'confidence': 0.0, 'final': False}",121
+FALSE,18,1,0.00,Battlestar Galactica (Defender,"{'confidence': 0.0, 'final': False}",121
+FALSE,33,1,0.00,Battleship (defender variant) designed by,"{'confidence': 0.0, 'final': False}",121
+FALSE,36,1,0.00,Battlestar Galactica (Defender,"{'confidence': 0.0, 'final': False}",121
+FALSE,16,2,0.00,Battlestar Galactica (Defender,"{'confidence': 0.0, 'final': False}",121
+FALSE,33,2,0.00,Battlestar Galactica (Defender,"{'confidence': 0.0, 'final': False}",121
+FALSE,34,2,0.00,Battleship (defender variant) designed by,"{'confidence': 0.0, 'final': False}",121
+FALSE,19,3,0.00,Battlestar Galactica (Defender,"{'confidence': 0.0, 'final': False}",121
+FALSE,27,3,0.00,Battlestar Galactica Defender variant,"{'confidence': 0.0, 'final': False}",121
+FALSE,15,4,0.00,(Note,"{'confidence': 0.0, 'final': False}",121
+FALSE,26,4,0.04,TIE Fighter,"{'confidence': 0.03906921038476102, 'final': False}",121
+FALSE,26,4,0.04,TIE Fighter,"{'confidence': 0.03906921038476102, 'final': False}",121
+FALSE,16,0,0.00,- Spring represents new,"{'confidence': 0.0, 'final': False}",122
+FALSE,21,0,0.00,The Four Seasons,"{'confidence': 0.0003048521394358253, 'final': False}",122
+FALSE,20,1,0.00,The Four Seasons (1953),"{'confidence': 0.0, 'final': False}",122
+FALSE,28,1,0.00,Four Seasons Overlayed with White Font Symbol,"{'confidence': 0.0, 'final': False}",122
+FALSE,17,2,0.00,Jennifer L,"{'confidence': 0.0, 'final': False}",122
+FALSE,23,2,0.00,"The movie is ""A Star Is Born"" (","{'confidence': 0.0, 'final': False}",122
+FALSE,18,3,0.00,Jeremy Irons,"{'confidence': 0.0, 'final': False}",122
+FALSE,22,3,0.00,Jennifer L,"{'confidence': 0.0, 'final': False}",122
+TRUE,20,4,0.95,La La Land,"{'confidence': 0.9535695241825122, 'final': True}",122
+TRUE,25,4,1.00,La La Land,"{'confidence': 1.0, 'final': True}",122
+TRUE,25,4,1.00,La La Land,"{'confidence': 1.0, 'final': True}",122
+FALSE,18,0,0.00,Pitchblade (Pitch Black) is,"{'confidence': 0.0, 'final': False}",123
+FALSE,24,0,0.00,Don Vito Corleone (Mario Pu,"{'confidence': 0.0, 'final': False}",123
+FALSE,18,1,0.00,"Michael B. Jordan in ""The Hateful E","{'confidence': 0.0, 'final': False}",123
+FALSE,32,1,0.00,Scarface (1983) -,"{'confidence': 0.0, 'final': False}",123
+FALSE,17,2,0.00,"Scar from ""The Lion King"" inspired by","{'confidence': 0.0, 'final': False}",123
+FALSE,20,2,0.00,Scarface (1983) -,"{'confidence': 0.0, 'final': False}",123
+FALSE,17,3,0.00,- The L,"{'confidence': 0.0, 'final': False}",123
+FALSE,29,3,0.00,Crazy Rich Asians II,"{'confidence': 0.0, 'final': False}",123
+FALSE,29,3,0.00,Crazy Rich Asians II,"{'confidence': 0.0, 'final': False}",123
+FALSE,20,0,0.00,wearing a different outfit in the final scenes,"{'confidence': 0.0, 'final': False}",124
+FALSE,35,0,0.01,White shirt with a wide horizontal green stripe,"{'confidence': 0.010555471215702113, 'final': False}",124
+FALSE,16,1,0.04,"Main character: Ponytail, red tunic","{'confidence': 0.03868935492830422, 'final': False}",124
+FALSE,19,2,0.00,"rides a flying dragon, defeats the","{'confidence': 0.0, 'final': False}",124
+FALSE,36,2,0.00,Hue,"{'confidence': 0.0, 'final': False}",124
+FALSE,20,3,0.00,no answer,"{'confidence': 0.0, 'final': False}",124
+FALSE,21,3,0.00,"The movie is ""The Iron Giant.""","{'confidence': 0.0, 'final': False}",124
+TRUE,19,4,1.00,Spirited Away,"{'confidence': 1.0, 'final': True}",124
+TRUE,20,4,1.00,Spirited Away,"{'confidence': 1.0, 'final': True}",124
+TRUE,20,4,1.00,Spirited Away,"{'confidence': 1.0, 'final': True}",124

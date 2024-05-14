@@ -1,36 +1,36 @@
 weight,question,page,evidence,word,sentence,final
-1.00,104,Peyton Manning,"{'confidence': 1.0, 'final': True}",20,0,True
-1.00,104,Peyton Manning,"{'confidence': 1.0, 'final': True}",33,0,True
-1.00,104,Peyton Manning,"{'confidence': 1.0, 'final': True}",16,1,True
-1.00,104,Peyton Hillis,"{'confidence': 1.0, 'final': True}",18,1,True
-0.84,104,Peyton Hillis,"{'confidence': 0.8416668307815539, 'final': True}",13,2,True
-0.53,104,Peyton Manning,"{'confidence': 0.5250281154965172, 'final': True}",16,3,True
-0.26,104,Peyton Hillis,"{'confidence': 0.25604808091289477, 'final': True}",18,3,True
-0.60,104,Peyton Hillis,"{'confidence': 0.6020299357187943, 'final': True}",15,4,True
-0.78,104,Philip Rivers,"{'confidence': 0.7834476722419873, 'final': True}",15,5,True
-0.78,104,Philip Rivers,"{'confidence': 0.7834476722419873, 'final': True}",15,5,True
-0.02,100,"United States, 1992, Basketball","{'confidence': 0.019139055665753815, 'final': False}",5,0,False
-0.02,100,"Soviet Union, 1982, ice","{'confidence': 0.023205471344178122, 'final': False}",20,1,False
-0.00,100,"Soviet Union, 1982, ice","{'confidence': 0.0, 'final': False}",22,1,False
-0.32,100,"Soviet Union, 1987, Ice","{'confidence': 0.31657671638916973, 'final': True}",17,2,True
-0.04,100,"Soviet Union, 1987, ice","{'confidence': 0.035402707602359584, 'final': False}",19,3,False
-0.37,100,"Soviet Union, 1987, Ice","{'confidence': 0.3736182466608227, 'final': True}",26,3,True
-0.00,100,"Soviet Union, 1980, ice","{'confidence': 0.0, 'final': False}",19,4,False
-0.00,100,"Finnish national ice hockey team, 19","{'confidence': 0.0, 'final': False}",23,4,False
-0.00,100,"Finnish national ice hockey team, 19","{'confidence': 0.0, 'final': False}",23,4,False
-0.00,101,"Baltimore Orioles, Bowie Baysox (","{'confidence': 0.0, 'final': False}",13,0,False
-0.00,101,"Nick Merriman, currently playing for the Frederick","{'confidence': 0.0, 'final': False}",19,1,False
-0.00,101,"Nick Senzel, playing for the Louisville","{'confidence': 0.0, 'final': False}",35,1,False
-0.00,101,"Nick Senzel, playing for the Louisville","{'confidence': 0.0, 'final': False}",43,1,False
-0.00,101,"Nick Senzel, playing for the Louisville","{'confidence': 0.0, 'final': False}",18,2,False
-0.00,101,Bo Bichette,"{'confidence': 0.0, 'final': False}",15,3,False
-0.00,101,Bo Bichette,"{'confidence': 0.0, 'final': False}",15,3,False
-0.00,103,"The ""Black Mamba.""","{'confidence': 0.0, 'final': False}",20,0,False
-1.00,103,Kobe Bryant,"{'confidence': 1.0, 'final': True}",31,0,True
-0.00,103,Kobe Bryant,"{'confidence': 0.0, 'final': False}",18,1,False
-0.54,103,Kobe Bryant,"{'confidence': 0.5361419466426026, 'final': True}",19,1,True
-0.00,103,Stefanos Tsits,"{'confidence': 0.0, 'final': False}",20,2,False
-0.86,103,Rafael Nadal,"{'confidence': 0.8564181184556336, 'final': True}",23,2,True
-1.00,103,Novak Djokovic,"{'confidence': 1.0, 'final': True}",17,3,True
-1.00,103,Novak Djokovic,"{'confidence': 1.0, 'final': True}",27,3,True
-1.00,103,Novak Djokovic,"{'confidence': 1.0, 'final': True}",27,3,True
+1.00,104,Peyton Manning,"{'confidence': 1.0, 'final': True}",20,0,TRUE
+1.00,104,Peyton Manning,"{'confidence': 1.0, 'final': True}",33,0,TRUE
+1.00,104,Peyton Manning,"{'confidence': 1.0, 'final': True}",16,1,TRUE
+1.00,104,Peyton Hillis,"{'confidence': 1.0, 'final': True}",18,1,TRUE
+0.84,104,Peyton Hillis,"{'confidence': 0.8416668307815539, 'final': True}",13,2,TRUE
+0.53,104,Peyton Manning,"{'confidence': 0.5250281154965172, 'final': True}",16,3,TRUE
+0.26,104,Peyton Hillis,"{'confidence': 0.25604808091289477, 'final': True}",18,3,TRUE
+0.60,104,Peyton Hillis,"{'confidence': 0.6020299357187943, 'final': True}",15,4,TRUE
+0.78,104,Philip Rivers,"{'confidence': 0.7834476722419873, 'final': True}",15,5,TRUE
+0.78,104,Philip Rivers,"{'confidence': 0.7834476722419873, 'final': True}",15,5,TRUE
+0.02,100,"United States, 1992, Basketball","{'confidence': 0.019139055665753815, 'final': False}",5,0,FALSE
+0.02,100,"Soviet Union, 1982, ice","{'confidence': 0.023205471344178122, 'final': False}",20,1,FALSE
+0.00,100,"Soviet Union, 1982, ice","{'confidence': 0.0, 'final': False}",22,1,FALSE
+0.32,100,"Soviet Union, 1987, Ice","{'confidence': 0.31657671638916973, 'final': True}",17,2,TRUE
+0.04,100,"Soviet Union, 1987, ice","{'confidence': 0.035402707602359584, 'final': False}",19,3,FALSE
+0.37,100,"Soviet Union, 1987, Ice","{'confidence': 0.3736182466608227, 'final': True}",26,3,TRUE
+0.00,100,"Soviet Union, 1980, ice","{'confidence': 0.0, 'final': False}",19,4,FALSE
+0.00,100,Finland,"{'confidence': 0.0, 'final': False}",23,4,FALSE
+0.00,100,Finland,"{'confidence': 0.0, 'final': False}",23,4,FALSE
+0.00,101,"Baltimore Orioles, Bowie Baysox (","{'confidence': 0.0, 'final': False}",13,0,FALSE
+0.00,101,"Nick Merriman, currently playing for the Frederick","{'confidence': 0.0, 'final': False}",19,1,FALSE
+0.00,101,"Nick Senzel, playing for the Louisville","{'confidence': 0.0, 'final': False}",35,1,FALSE
+0.00,101,"Nick Senzel, playing for the Louisville","{'confidence': 0.0, 'final': False}",43,1,FALSE
+0.00,101,"Nick Senzel, playing for the Louisville","{'confidence': 0.0, 'final': False}",18,2,FALSE
+0.00,101,Bo Bichette,"{'confidence': 0.0, 'final': False}",15,3,FALSE
+0.00,101,Bo Bichette,"{'confidence': 0.0, 'final': False}",15,3,FALSE
+0.00,103,"The ""Black Mamba.""","{'confidence': 0.0, 'final': False}",20,0,FALSE
+1.00,103,Kobe Bryant,"{'confidence': 1.0, 'final': True}",31,0,TRUE
+0.00,103,Kobe Bryant,"{'confidence': 0.0, 'final': False}",18,1,FALSE
+0.54,103,Kobe Bryant,"{'confidence': 0.5361419466426026, 'final': True}",19,1,TRUE
+0.00,103,Stefanos Tsits,"{'confidence': 0.0, 'final': False}",20,2,FALSE
+0.86,103,Rafael Nadal,"{'confidence': 0.8564181184556336, 'final': True}",23,2,TRUE
+1.00,103,Novak Djokovic,"{'confidence': 1.0, 'final': True}",17,3,TRUE
+1.00,103,Novak Djokovic,"{'confidence': 1.0, 'final': True}",27,3,TRUE
+1.00,103,Novak Djokovic,"{'confidence': 1.0, 'final': True}",27,3,TRUE
