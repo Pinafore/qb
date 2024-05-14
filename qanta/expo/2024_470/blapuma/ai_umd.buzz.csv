@@ -1,0 +1,63 @@
+evidence,question,final,word,sentence,page,weight
+"{'confidence': 0.0, 'final': False}",170,False,13,0,Selmer Bringsjord suggested strategies for,0.00
+"{'confidence': 0.0, 'final': False}",170,False,18,0,Selmer Bringsjord proposed evaluating a,0.00
+"{'confidence': 0.0, 'final': False}",170,False,12,1,Resolution Semantics approach,0.00
+"{'confidence': 0.0, 'final': False}",170,False,15,1,Selmer Bringsjord suggests using short stories,0.00
+"{'confidence': 0.0, 'final': False}",170,False,10,2,Selmer Bringsjord suggested using short stories,0.00
+"{'confidence': 0.0, 'final': False}",170,False,15,3,Bringsjord's Strategy: Short,0.00
+"{'confidence': 1.0, 'final': True}",170,True,16,4,Turing Test,1.00
+"{'confidence': 0.0, 'final': False}",170,False,32,4,response,0.00
+"{'confidence': 1.0, 'final': True}",170,True,43,4,Turing Test,1.00
+"{'confidence': 1.0, 'final': True}",170,True,43,4,Turing Test,1.00
+"{'confidence': 0.0, 'final': False}",171,False,16,0,"In David Walton's novel ""Three La",0.00
+"{'confidence': 0.9635611394112347, 'final': True}",171,True,18,0,"In David Walton's novel ""Three La",0.96
+"{'confidence': 0.0, 'final': False}",171,False,18,1,"In David Walton's novel ""Three La",0.00
+"{'confidence': 0.18423743531938286, 'final': False}",171,False,31,1,In Sarah Gailey's story 'STET,0.18
+"{'confidence': 0.10133617796927376, 'final': False}",171,False,19,2,"In David Walton's novel ""Three La",0.10
+"{'confidence': 0.0, 'final': False}",171,False,37,2,In David Walton's novel Three Laws,0.00
+"{'confidence': 0.0, 'final': False}",171,False,45,2,In David Walton's novel Three Laws,0.00
+"{'confidence': 0.0, 'final': False}",171,False,21,3,"Anna's child, Raymond Gellhorn,",0.00
+"{'confidence': 0.0, 'final': False}",171,False,34,3,Naomi programs lethal devices in David Wal,0.00
+"{'confidence': 0.0, 'final': False}",171,False,16,4,Naomi programs lethal devices in David Wal,0.00
+"{'confidence': 0.0, 'final': False}",171,False,16,4,"Three Laws Lethal, Three Laws",0.00
+"{'confidence': 0.030320278296105743, 'final': False}",171,False,17,5,"Self-driving cars, autonomous vehicles",0.03
+"{'confidence': 1.0, 'final': True}",171,True,24,5,Self-driving car,1.00
+"{'confidence': 1.0, 'final': True}",171,True,24,5,Self-driving car,1.00
+"{'confidence': 0.0, 'final': False}",172,False,5,0,(Note: Since there,0.00
+"{'confidence': 0.09194953648469774, 'final': False}",172,False,21,1,The Hitchhiker's Guide to the,0.09
+"{'confidence': 0.0, 'final': False}",172,False,33,1,War of the Worlds: Parasite Planet,0.00
+"{'confidence': 0.0, 'final': False}",172,False,2,2,The Day the Earth Stood Still (19,0.00
+"{'confidence': 0.0, 'final': False}",172,False,18,3,A Clockwork Orange,0.00
+"{'confidence': 0.0, 'final': False}",172,False,28,3,"Omar Sharif in ""Barbarella",0.00
+"{'confidence': 0.0, 'final': False}",172,False,17,4,Destiny Child,0.00
+"{'confidence': 0.0, 'final': False}",172,False,34,4,Blade Runner 2049,0.00
+"{'confidence': 0.0, 'final': False}",172,False,39,4,no answer,0.00
+"{'confidence': 0.0, 'final': False}",172,False,16,5,War of the Worlds: Destroyer of,0.00
+"{'confidence': 0.0, 'final': False}",172,False,23,5,War of the Worlds: Destination: Earth,0.00
+"{'confidence': 0.0, 'final': False}",172,False,20,6,Satellite,0.00
+"{'confidence': 0.0, 'final': False}",172,False,36,6,"War of the Worlds, Satellite of Love",0.00
+"{'confidence': 0.0, 'final': False}",172,False,36,6,"War of the Worlds, Satellite of Love",0.00
+"{'confidence': 0.0, 'final': False}",173,False,3,0,"Google, Amazon",0.00
+"{'confidence': 0.0, 'final': False}",173,False,19,1,"Harnad, Stevan; Bialek",0.00
+"{'confidence': 0.0, 'final': False}",173,False,38,1,Z,0.00
+"{'confidence': 0.0, 'final': False}",173,False,43,1,KnowledgeGraphBERT,0.00
+"{'confidence': 0.0, 'final': False}",173,False,19,2,no answer,0.00
+"{'confidence': 0.0, 'final': False}",173,False,36,2,KG-BERT,0.00
+"{'confidence': 0.0, 'final': False}",173,False,36,2,KG-BERT,0.00
+"{'confidence': 0.0, 'final': False}",173,False,19,3,KnowledgeGraphBERT,0.00
+"{'confidence': 0.0, 'final': False}",173,False,31,3,KG-BERT,0.00
+"{'confidence': 0.0, 'final': False}",173,False,18,4,K,0.00
+"{'confidence': 0.0, 'final': False}",173,False,33,4,Bing and C,0.00
+"{'confidence': 0.0, 'final': False}",173,False,33,4,Bing and C,0.00
+"{'confidence': 0.03790962894345981, 'final': False}",174,False,15,0,machine learning,0.04
+"{'confidence': 0.0, 'final': False}",174,False,16,0,training,0.00
+"{'confidence': 0.0, 'final': False}",174,False,16,1,Data science,0.00
+"{'confidence': 0.0, 'final': False}",174,False,19,1,**,0.00
+"{'confidence': 0.0, 'final': False}",174,False,18,2,no answer,0.00
+"{'confidence': 0.0, 'final': False}",174,False,32,2,- Model interpretability,0.00
+"{'confidence': 0.0, 'final': False}",174,False,37,2,**Note:** The,0.00
+"{'confidence': 0.0, 'final': False}",174,False,11,3,**Note,0.00
+"{'confidence': 0.0, 'final': False}",174,False,11,3,no answer,0.00
+"{'confidence': 0.059278122646322776, 'final': False}",174,False,19,4,Adversarial machine learning,0.06
+"{'confidence': 0.0, 'final': False}",174,False,28,4,Instruct generation,0.00
+"{'confidence': 0.0, 'final': False}",174,False,28,4,Instruct generation,0.00

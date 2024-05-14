@@ -1,0 +1,50 @@
+weight,final,word,evidence,sentence,page,question
+0.00,False,18,"{'confidence': 0.0, 'final': False}",0,Slurps,155
+0.00,False,30,"{'confidence': 0.0, 'final': False}",0,Noodle Man,155
+0.00,False,18,"{'confidence': 0.0, 'final': False}",1,Spaghetti Westerns,155
+0.00,False,27,"{'confidence': 0.0, 'final': False}",1,Spaghetti Straps,155
+0.00,False,15,"{'confidence': 0.0, 'final': False}",2,Spaghetti Westerns,155
+0.00,False,22,"{'confidence': 0.0, 'final': False}",3,spaghetti,155
+0.00,False,23,"{'confidence': 0.0, 'final': False}",3,shoelace,155
+0.00,False,23,"{'confidence': 0.0, 'final': False}",3,shoelace,155
+0.00,False,17,"{'confidence': 0.0, 'final': False}",0,Nestle,156
+0.00,False,21,"{'confidence': 0.0, 'final': False}",0,Zara,156
+0.00,False,17,"{'confidence': 0.0, 'final': False}",1,Amazon,156
+0.00,False,21,"{'confidence': 0.0, 'final': False}",1,IBM (International Business Machines),156
+0.00,False,17,"{'confidence': 0.0, 'final': False}",2,"Amazon, Omega, Snowmobile, Deadpool",156
+0.00,False,33,"{'confidence': 0.0, 'final': False}",2,"Amazon, Omega, Snow White and the Seven",156
+0.10,False,14,"{'confidence': 0.09513522229273204, 'final': False}",3,Adidas,156
+0.00,False,17,"{'confidence': 0.0, 'final': False}",4,"""The Snowmobile"" by",156
+0.00,False,34,"{'confidence': 0.0, 'final': False}",4,"""The Adidas Snow""",156
+0.00,False,36,"{'confidence': 0.0, 'final': False}",4,"""Adidas between thigh",156
+1.00,True,19,"{'confidence': 1.0, 'final': True}",5,Lululemon,156
+1.00,True,30,"{'confidence': 1.0, 'final': True}",5,Lululemon,156
+1.00,True,30,"{'confidence': 1.0, 'final': True}",5,Lululemon,156
+0.00,False,14,"{'confidence': 0.0, 'final': False}",0,"The Economist claimed that its CEO, chairman",157
+0.00,False,27,"{'confidence': 0.0, 'final': False}",0,"The Economist claimed that its CEO, chairman",157
+0.00,False,15,"{'confidence': 0.0, 'final': False}",1,The Economist described Apple's leadership as a,157
+0.00,False,24,"{'confidence': 0.0, 'final': False}",1,"The Economist stated that the CEO, chairman",157
+0.00,False,16,"{'confidence': 0.0, 'final': False}",2,"The Economist stated that the CEO, chairman",157
+0.00,False,35,"{'confidence': 0.0, 'final': False}",2,"The Economist stated that the CEO, chairman",157
+0.00,False,35,"{'confidence': 0.0, 'final': False}",2,"The Economist stated that the CEO, chairman",157
+0.55,True,16,"{'confidence': 0.5478187270121185, 'final': True}",3,LVMH (Moët Henness,157
+0.80,True,32,"{'confidence': 0.8007020490750211, 'final': True}",3,LVMH (Louis Vuitton Moë,157
+1.00,True,37,"{'confidence': 0.996843699740779, 'final': True}",3,LVMH (Louis Vuitton Moë,157
+1.00,True,37,"{'confidence': 0.996843699740779, 'final': True}",3,LVMH (Louis Vuitton Moë,157
+0.00,False,19,"{'confidence': 0.001048049564836978, 'final': False}",0,John Jacob Astor traveled 65,158
+0.00,False,35,"{'confidence': 0.0, 'final': False}",0,Ford Motor Company,158
+0.00,False,14,"{'confidence': 0.0, 'final': False}",1,"Tesla, Nikola's wife tra",158
+1.00,True,17,"{'confidence': 1.0, 'final': True}",1,Tesla,158
+0.00,False,17,"{'confidence': 0.0, 'final': False}",2,Tesla Motors,158
+1.00,True,32,"{'confidence': 1.0, 'final': True}",2,Tesla,158
+0.00,False,17,"{'confidence': 0.0, 'final': False}",3,General Motors (founded by William C,158
+0.22,False,17,"{'confidence': 0.2244260700555239, 'final': False}",3,Tesla Motors,158
+1.00,True,15,"{'confidence': 1.0, 'final': True}",4,Benz (accept Daimler-Benz and Mercedes-Benz),158
+1.00,True,19,"{'confidence': 1.0, 'final': True}",4,Benz (accept Daimler-Benz and Mercedes-Benz),158
+1.00,True,19,"{'confidence': 1.0, 'final': True}",4,Benz (accept Daimler-Benz and Mercedes-Benz),158
+0.00,False,15,"{'confidence': 0.0, 'final': False}",0,In-N-Out Burger's founder,159
+0.00,False,25,"{'confidence': 0.0, 'final': False}",0,Carl's Jr. founder Carl Karcher,159
+0.04,False,11,"{'confidence': 0.03740132182494507, 'final': False}",1,"In-N-Out Burger, founded by",159
+0.00,False,12,"{'confidence': 0.0, 'final': False}",2,"In-N-Out Burger, Charles Nash",159
+1.00,True,14,"{'confidence': 1.0, 'final': True}",3,Taco Bell,159
+1.00,True,14,"{'confidence': 1.0, 'final': True}",3,Taco Bell,159

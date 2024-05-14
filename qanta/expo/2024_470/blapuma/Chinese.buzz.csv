@@ -1,0 +1,38 @@
+final,word,evidence,page,sentence,weight,question
+False,1,"{'confidence': 0.0, 'final': False}",The Wang dynasty was overthrown by reb,0,0.00,165
+True,1,"{'confidence': 0.30071659298345993, 'final': True}",This dynasty was overthrown by postal workers,1,0.30,165
+False,3,"{'confidence': 0.01576853271526446, 'final': False}",Qing Dynasty overthrown by postal,2,0.02,165
+False,1,"{'confidence': 0.0, 'final': False}",Qing Dynasty was overthrown by,3,0.00,165
+False,2,"{'confidence': 0.0, 'final': False}",Qing Dynasty overthrown by postal,4,0.00,165
+False,2,"{'confidence': 0.0, 'final': False}",Qing Dynasty overthrown by postal,4,0.00,165
+False,1,"{'confidence': 0.0, 'final': False}",这部电影是一部关于,0,0.00,166
+False,1,"{'confidence': 0.0, 'final': False}","This play's character asks: ""How many",1,0.00,166
+False,1,"{'confidence': 0.0, 'final': False}","The character in the play ""Waiting for God",2,0.00,166
+False,1,"{'confidence': 0.0, 'final': False}","The musical ""Waiting for Godot"" features",3,0.00,166
+False,1,"{'confidence': 0.0, 'final': False}","The opera ""The Peony Pavilion""",4,0.00,166
+False,2,"{'confidence': 0.0, 'final': False}","The musical ""The Peach Blossom F",5,0.00,166
+False,4,"{'confidence': 0.0, 'final': False}","Farewell My Concubine, composed by",6,0.00,166
+False,4,"{'confidence': 0.0, 'final': False}","Farewell My Concubine, composed by",6,0.00,166
+False,1,"{'confidence': 0.0, 'final': False}",这部电影是一部关于,0,0.00,167
+False,1,"{'confidence': 0.0, 'final': False}",The first volume of the novel starts with a story,1,0.00,167
+False,1,"{'confidence': 0.0, 'final': False}",Red Sorghum Part I sequel describes a,2,0.00,167
+False,1,"{'confidence': 0.0, 'final': False}",no answer,3,0.00,167
+False,2,"{'confidence': 0.0, 'final': False}",The first volume of the novel introduces a story,4,0.00,167
+False,1,"{'confidence': 0.0, 'final': False}",The Hunger Games trilogy's first,5,0.00,167
+False,1,"{'confidence': 0.0, 'final': False}",Dark Forest is the first installment in Liu,6,0.00,167
+False,1,"{'confidence': 0.0, 'final': False}",Dark Forest is the first volume of Liu C,7,0.00,167
+False,3,"{'confidence': 0.0, 'final': False}",Dark Forest is the first volume of Liu C,8,0.00,167
+False,3,"{'confidence': 0.0, 'final': False}",Dark Forest is the first volume of Liu C,8,0.00,167
+False,3,"{'confidence': 0.0, 'final': False}","In the 17th century story, this",0,0.00,168
+False,1,"{'confidence': 0.0, 'final': False}","In the 1700s story,",1,0.00,168
+False,2,"{'confidence': 0.0, 'final': False}","In 18th century story, this person",2,0.00,168
+False,5,"{'confidence': 0.0, 'final': False}","In the 17th-century story,",3,0.00,168
+False,1,"{'confidence': 0.0, 'final': False}","In the 18th century story, this",4,0.00,168
+False,2,"{'confidence': 0.0, 'final': False}",Zhao Yun in 17th,5,0.00,168
+False,2,"{'confidence': 0.0, 'final': False}",Zhao Yun in 17th,5,0.00,168
+False,1,"{'confidence': 0.0, 'final': False}",这部电影是一部关于,0,0.00,169
+False,2,"{'confidence': 0.0, 'final': False}",A scene in the movie where an actress improvis,1,0.00,169
+False,9,"{'confidence': 0.0, 'final': False}",The movie in which an actress improvises a,2,0.00,169
+False,3,"{'confidence': 0.0, 'final': False}","Jennifer Beals, Elijah Wood,",3,0.00,169
+False,7,"{'confidence': 0.0, 'final': False}","Love, Simon",4,0.00,169
+False,7,"{'confidence': 0.0, 'final': False}","Love, Simon",4,0.00,169
