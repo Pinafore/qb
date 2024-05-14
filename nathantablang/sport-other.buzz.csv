@@ -1,0 +1,36 @@
+final,question,page,sentence,word,evidence,weight
+False,104,The other operator,0,20,"{'confidence': 0.024616168811917305, 'final': False}",0.02
+False,104,The other operator,0,33,"{'confidence': 0.012542097829282284, 'final': False}",0.01
+False,104,The other operator,1,16,"{'confidence': 0.009914234280586243, 'final': False}",0.01
+False,104,The other operator,1,18,"{'confidence': 0.012585186399519444, 'final': False}",0.01
+False,104,"retransmitting ""How are you receiving me?""",2,13,"{'confidence': 0.01000944897532463, 'final': False}",0.01
+False,104,The other operator,3,16,"{'confidence': 0.00717990892007947, 'final': False}",0.01
+False,104,The other operator,3,18,"{'confidence': 0.008130542933940887, 'final': False}",0.01
+False,104,The other operator,4,15,"{'confidence': 0.006712550763040781, 'final': False}",0.01
+False,104,The other operator,5,15,"{'confidence': 0.0037835894618183374, 'final': False}",0.00
+False,104,The other operator,5,15,"{'confidence': 0.0037835894618183374, 'final': False}",0.00
+False,100,operator,0,5,"{'confidence': 0.011161455884575844, 'final': False}",0.01
+False,100,operator,1,20,"{'confidence': 0.025699369609355927, 'final': False}",0.03
+False,100,operator,1,22,"{'confidence': 0.020609818398952484, 'final': False}",0.02
+False,100,operator,2,17,"{'confidence': 0.009209031239151955, 'final': False}",0.01
+False,100,other operator,3,19,"{'confidence': 0.009659629315137863, 'final': False}",0.01
+False,100,The other operator,3,26,"{'confidence': 0.004799202550202608, 'final': False}",0.00
+False,100,The other operator,4,19,"{'confidence': 0.0011843639658764005, 'final': False}",0.00
+False,100,The other operator,4,23,"{'confidence': 0.0014160055434331298, 'final': False}",0.00
+False,100,The other operator,4,23,"{'confidence': 0.0014160055434331298, 'final': False}",0.00
+False,101,Stacey,0,13,"{'confidence': 0.12374679744243622, 'final': False}",0.12
+False,101,Stacey gives Sean's number to Jean,1,19,"{'confidence': 0.05631794407963753, 'final': False}",0.06
+False,101,Stacey gives Sean's number to Jean,1,35,"{'confidence': 0.0677323266863823, 'final': False}",0.07
+False,101,Stacey,1,43,"{'confidence': 0.07139916718006134, 'final': False}",0.07
+False,101,Stacey gives Sean's number to Jean,2,18,"{'confidence': 0.04862407594919205, 'final': False}",0.05
+False,101,Stacey gives Sean's number to Jean,3,15,"{'confidence': 0.037646323442459106, 'final': False}",0.04
+False,101,Stacey gives Sean's number to Jean,3,15,"{'confidence': 0.037646323442459106, 'final': False}",0.04
+False,103,Anna,0,20,"{'confidence': 0.07600079476833344, 'final': False}",0.08
+False,103,Anna,0,31,"{'confidence': 0.060145407915115356, 'final': False}",0.06
+False,103,Anna,1,18,"{'confidence': 0.05036133527755737, 'final': False}",0.05
+False,103,Anna,1,19,"{'confidence': 0.05096057802438736, 'final': False}",0.05
+False,103,Anna,2,20,"{'confidence': 0.04138080030679703, 'final': False}",0.04
+False,103,Anna,2,23,"{'confidence': 0.03232442960143089, 'final': False}",0.03
+False,103,Anna,3,17,"{'confidence': 0.026486007496714592, 'final': False}",0.03
+False,103,Anna,3,27,"{'confidence': 0.011401543393731117, 'final': False}",0.01
+False,103,Anna,3,27,"{'confidence': 0.011401543393731117, 'final': False}",0.01

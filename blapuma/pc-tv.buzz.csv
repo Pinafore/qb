@@ -1,0 +1,53 @@
+question,sentence,word,weight,evidence,page,final
+115,0,17,0.00,"{'confidence': 0.0, 'final': False}",Monoammonium phosphate (MAP,False
+115,0,32,0.00,"{'confidence': 0.0, 'final': False}",Monoposide ACE Inhibitor (,False
+115,0,33,0.00,"{'confidence': 0.0, 'final': False}",Monoposide ACE Inhibitor,False
+115,1,19,0.00,"{'confidence': 0.0, 'final': False}",Zydrate (from Zydrate in The,False
+115,1,21,0.00,"{'confidence': 0.002844172015399833, 'final': False}",Monster Energy Drink,False
+115,2,18,0.00,"{'confidence': 0.0, 'final': False}",response: Bryan C,False
+115,2,23,0.00,"{'confidence': 0.0, 'final': False}",- Answer: K2,False
+115,3,16,0.00,"{'confidence': 0.0, 'final': False}",Blue Heat,False
+115,3,21,0.00,"{'confidence': 0.0, 'final': False}","Crystal Methamphetamine """,False
+115,3,21,0.00,"{'confidence': 0.0, 'final': False}","Crystal Methamphetamine """,False
+116,0,19,0.00,"{'confidence': 0.0, 'final': False}",Barney Stinson played a cab driver who park,False
+116,0,23,1.00,"{'confidence': 1.0, 'final': True}",Neil Patrick Harris,True
+116,1,18,0.00,"{'confidence': 0.0, 'final': False}",Jason Segel played the roles of the cab driver,False
+116,1,20,0.21,"{'confidence': 0.20835391307142342, 'final': False}",Jason Segel,False
+116,2,17,0.00,"{'confidence': 0.0, 'final': False}",no answer,False
+116,2,24,0.14,"{'confidence': 0.14307707878747977, 'final': False}",Neil Patrick Harris,False
+116,3,17,0.57,"{'confidence': 0.5686417554034395, 'final': True}",Neil Patrick Harris,True
+116,3,20,1.00,"{'confidence': 1.0, 'final': True}",Neil Patrick Harris,True
+116,3,20,1.00,"{'confidence': 1.0, 'final': True}",Neil Patrick Harris,True
+117,0,8,0.00,"{'confidence': 0.0, 'final': False}",Thank you,False
+117,1,21,0.00,"{'confidence': 0.0, 'final': False}",Kowalska,False
+117,1,22,0.00,"{'confidence': 0.0, 'final': False}",Krennick,False
+117,2,18,0.00,"{'confidence': 0.0, 'final': False}",Krennic,False
+117,2,20,0.00,"{'confidence': 0.0, 'final': False}",Bender,False
+117,3,17,0.00,"{'confidence': 0.0, 'final': False}",Kowalski,False
+117,3,33,0.00,"{'confidence': 0.0, 'final': False}",Kowalski,False
+117,4,19,0.00,"{'confidence': 0.0, 'final': False}",Kowalski,False
+117,4,22,0.00,"{'confidence': 0.0, 'final': False}",Naudet,False
+117,5,19,0.00,"{'confidence': 0.0, 'final': False}",Arden,False
+117,5,36,0.00,"{'confidence': 0.0, 'final': False}","Gruber, Flanders, Grimes, Girl",False
+117,5,36,0.00,"{'confidence': 0.0, 'final': False}","Gruber, Flanders, Grimes, Girl",False
+118,0,17,0.00,"{'confidence': 0.0, 'final': False}",Maude,False
+118,0,25,0.00,"{'confidence': 0.0, 'final': False}",Walter White (Breaking Bad),False
+118,1,18,0.00,"{'confidence': 0.0, 'final': False}","Peggy Bundy from ""Married... with",False
+118,1,35,0.00,"{'confidence': 0.0, 'final': False}","Peggy Bundy from the TV show ""Mar",False
+118,1,37,0.00,"{'confidence': 0.0, 'final': False}",Peggy Bundy,False
+118,2,14,0.00,"{'confidence': 0.0, 'final': False}",Peggy Bundy,False
+118,3,17,0.00,"{'confidence': 0.0, 'final': False}",Lindsay Bluth Fünke,False
+118,3,22,0.00,"{'confidence': 0.0, 'final': False}",Lucille Fricker,False
+118,3,22,0.00,"{'confidence': 0.0, 'final': False}",Lucille Fricker,False
+119,0,15,0.62,"{'confidence': 0.6176499870169612, 'final': True}",Mr. Smith Goes to Washington,True
+119,1,18,0.18,"{'confidence': 0.18496522026568246, 'final': False}",Philadelphia,False
+119,1,19,0.00,"{'confidence': 0.0, 'final': False}",Citizen Kane (1941),False
+119,2,19,0.00,"{'confidence': 0.0, 'final': False}","Philadelphia, I Walked with a Zombie",False
+119,2,19,0.00,"{'confidence': 0.0, 'final': False}",The People vs. Larry Flynt,False
+119,3,18,0.00,"{'confidence': 0.0, 'final': False}",The Devil W,False
+119,3,18,0.00,"{'confidence': 0.0, 'final': False}",The Devil W,False
+119,4,18,0.00,"{'confidence': 0.0, 'final': False}",The Devil Wears Prada,False
+119,4,19,0.00,"{'confidence': 0.0, 'final': False}",Fahrenheit,False
+119,5,17,0.00,"{'confidence': 0.0, 'final': False}",Central Park West,False
+119,5,24,0.00,"{'confidence': 0.0, 'final': False}","- ""King of",False
+119,5,24,0.00,"{'confidence': 0.0, 'final': False}","- ""King of",False

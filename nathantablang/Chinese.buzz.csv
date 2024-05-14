@@ -1,0 +1,23 @@
+sentence,evidence,page,weight,question,final,word
+0,"{'confidence': 0.01918124035000801, 'final': False}",790,0.02,165,False,1
+1,"{'confidence': 0.005995542276650667, 'final': False}",lady-in-waiting,0.01,165,False,1
+2,"{'confidence': 0.0036313924938440323, 'final': False}",尚侍,0.00,165,False,3
+3,"{'confidence': 0.00906164851039648, 'final': False}",Myōshin's appointment as lady-in-waiting,0.01,165,False,1
+4,"{'confidence': 0.00496331974864006, 'final': False}",lady-in-waiting,0.00,165,False,2
+4,"{'confidence': 0.00496331974864006, 'final': False}",lady-in-waiting,0.00,165,False,2
+0,"{'confidence': 0.04681309685111046, 'final': False}",Beijing,0.05,166,False,1
+1,"{'confidence': 0.02625100687146187, 'final': False}",Beijing,0.03,166,False,1
+2,"{'confidence': 0.0526990182697773, 'final': False}",Beijing,0.05,166,False,1
+3,"{'confidence': 0.025508621707558632, 'final': False}",Beijing,0.03,166,False,1
+4,"{'confidence': 0.007158080581575632, 'final': False}",Beijing,0.01,166,False,1
+5,"{'confidence': 0.0009822092251852155, 'final': False}",Beijing,0.00,166,False,2
+6,"{'confidence': 0.00010946041584247723, 'final': False}",Beijing,0.00,166,False,4
+6,"{'confidence': 0.00010946041584247723, 'final': False}",Beijing,0.00,166,False,4
+0,"{'confidence': 0.02504500187933445, 'final': False}",Each response contains a 16-byte HMAC-MD5 hash,0.03,167,False,1
+1,"{'confidence': 0.004445342347025871, 'final': False}",Each response,0.00,167,False,1
+2,"{'confidence': 0.0062240115366876125, 'final': False}",Each response,0.01,167,False,1
+3,"{'confidence': 0.004477881360799074, 'final': False}",challenge,0.00,167,False,1
+4,"{'confidence': 1.0884061339311302e-05, 'final': False}",response,0.00,167,False,2
+5,"{'confidence': 3.63301160177798e-06, 'final': False}",response,0.00,167,False,1
+6,"{'confidence': 4.606356014846824e-06, 'final': False}",16-byte HMAC-MD5 hash of the server challenge,0.00,167,False,1
+7,"{'confidence': 1.5476232420041924e-06, 'final': False}",response,0.00,167,False,1

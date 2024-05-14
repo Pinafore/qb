@@ -1,0 +1,44 @@
+question,sentence,weight,evidence,page,final,word
+160,0,0.12,"{'confidence': 0.12220416963100433, 'final': True}","Dear Diary, I'm Dead",True,18
+160,0,0.13,"{'confidence': 0.12501133978366852, 'final': False}","Dear Diary, I'm Dead: Alex Smith discovers a diary",False,21
+160,1,0.05,"{'confidence': 0.05197286233305931, 'final': True}","Dear Diary, I'm Dead",True,20
+160,1,0.04,"{'confidence': 0.04341153800487518, 'final': True}","Dear Diary, I'm Dead: Alex Smith discovers a diary",True,23
+160,2,0.03,"{'confidence': 0.03148853778839111, 'final': True}","Dear Diary, I'm Dead: Alex Smith discovers a diary",True,16
+160,3,0.03,"{'confidence': 0.027290647849440575, 'final': True}","Dear Diary, I'm Dead",True,18
+160,4,0.11,"{'confidence': 0.11237300932407379, 'final': True}","Dear Diary, I'm Dead",True,16
+160,4,0.04,"{'confidence': 0.04026701673865318, 'final': True}","Dear Diary, I'm Dead",True,19
+160,4,0.04,"{'confidence': 0.04026701673865318, 'final': True}","Dear Diary, I'm Dead",True,19
+161,0,0.02,"{'confidence': 0.024087438359856606, 'final': True}",operator,True,19
+161,0,0.01,"{'confidence': 0.014943006448447704, 'final': True}",operator,True,29
+161,1,0.01,"{'confidence': 0.011985346674919128, 'final': True}",The other operator,True,17
+161,1,0.01,"{'confidence': 0.007507374044507742, 'final': True}",The other operator,True,26
+161,2,0.01,"{'confidence': 0.006877099629491568, 'final': True}",The other operator,True,19
+161,2,0.01,"{'confidence': 0.005312744993716478, 'final': True}",The other operator,True,26
+161,3,0.00,"{'confidence': 0.002400863915681839, 'final': True}",operator,True,17
+161,3,0.00,"{'confidence': 0.001697605475783348, 'final': True}",The other operator,True,20
+161,3,0.00,"{'confidence': 0.001697605475783348, 'final': True}",The other operator,True,20
+162,0,0.01,"{'confidence': 0.014281125739216805, 'final': True}",operator,True,18
+162,0,0.02,"{'confidence': 0.015402757562696934, 'final': True}",operator,True,33
+162,1,0.02,"{'confidence': 0.01704873889684677, 'final': True}",The other operator,True,16
+162,1,0.02,"{'confidence': 0.01761808805167675, 'final': True}",The other operator,True,18
+162,2,0.01,"{'confidence': 0.009218082763254642, 'final': True}",The other operator,True,18
+162,2,0.01,"{'confidence': 0.007762027904391289, 'final': True}","How are you receiving me?""",True,24
+162,2,0.01,"{'confidence': 0.007762027904391289, 'final': True}","How are you receiving me?""",True,24
+163,0,0.02,"{'confidence': 0.019032450392842293, 'final': True}",Winry reveals she has prepared a new automail,True,20
+163,0,0.02,"{'confidence': 0.017950303852558136, 'final': True}",Winry reveals she has prepared a new automail,True,35
+163,0,0.02,"{'confidence': 0.017950303852558136, 'final': True}",Winry reveals she has prepared a new automail,True,35
+163,1,0.01,"{'confidence': 0.0106861162930727, 'final': True}",Winry reveals she has prepared a new automail,True,17
+163,1,0.01,"{'confidence': 0.006560406181961298, 'final': True}",Winry reveals she has prepared a new automail,True,27
+163,2,0.00,"{'confidence': 0.003420259105041623, 'final': True}",Winry reveals she has prepared a new automail,True,20
+163,2,0.00,"{'confidence': 0.0033898549154400826, 'final': True}",Winry reveals she has prepared a new automail,True,25
+163,3,0.00,"{'confidence': 0.000863129214849323, 'final': True}",Winry reveals she has prepared a new automail,True,16
+163,3,0.00,"{'confidence': 0.000863129214849323, 'final': True}",Winry reveals she has prepared a new automail,True,16
+164,0,0.05,"{'confidence': 0.04513278603553772, 'final': True}",Amanda,True,20
+164,0,0.05,"{'confidence': 0.05471346154808998, 'final': True}",Amanda,True,21
+164,1,0.02,"{'confidence': 0.020568259060382843, 'final': True}",Amanda,True,20
+164,1,0.02,"{'confidence': 0.02441846951842308, 'final': True}",Amanda,True,31
+164,2,0.03,"{'confidence': 0.03321479260921478, 'final': True}",Amanda,True,16
+164,2,0.02,"{'confidence': 0.021051695570349693, 'final': True}",Amanda,True,26
+164,3,0.01,"{'confidence': 0.011760988272726536, 'final': True}",Amanda,True,16
+164,3,0.01,"{'confidence': 0.010003048926591873, 'final': True}",Amanda,True,19
+164,3,0.01,"{'confidence': 0.010003048926591873, 'final': True}",Amanda,True,19

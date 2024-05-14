@@ -1,0 +1,44 @@
+word,evidence,weight,sentence,final,question,page
+18,"{'confidence': 0.6185789608564032, 'final': True}",0.62,0,True,145, The capital of Chad is N'Djamena.
+17,"{'confidence': 0.26056851036293704, 'final': True}",0.26,1,True,145, corruptions.
+25,"{'confidence': 0.5637778271235986, 'final': True}",0.56,1,True,145," The country is Ghana, and its capital is Accra."
+20,"{'confidence': 0.42467927033180997, 'final': True}",0.42,2,True,145, country capital is Accra.
+27,"{'confidence': 0.6129825707146318, 'final': True}",0.61,2,True,145," The country is Ghana, and its capital is Accra."
+18,"{'confidence': 0.4474230646075828, 'final': True}",0.45,3,True,145, Gambia is its smallest country.
+26,"{'confidence': 0.6560305244046432, 'final': True}",0.66,3,True,145, The Gambia
+26,"{'confidence': 0.6560305244046432, 'final': True}",0.66,3,True,145, The Gambia
+17,"{'confidence': 0.7248298888743082, 'final': True}",0.72,0,True,146, The metro line in this city was built by China Railway Construction Corporation Limited and began service in 2012.
+28,"{'confidence': 0.7688503781804307, 'final': True}",0.77,0,True,146," I'm sorry, but I need more information in order to answer your question. Can you please provide me with the name of the city in question?"
+17,"{'confidence': 0.9044037697236046, 'final': True}",0.90,1,True,146," The metro line in this city was built by China Railway Construction Corporation Limited and began service in 2010, although it only runs for one week a year. The high-speed intercity rail line connects this city with another city starting with the same first letter."
+34,"{'confidence': 0.9330346598258015, 'final': True}",0.93,1,True,146," The metro line in this city was built by China Railway Construction Corporation Limited and began service in 2010, although it only runs for one week a year. A high-speed intercity rail line connects this city with another city starting with the same first letter in less than two hours; a notable 622 trip starting in this city and took several months."
+12,"{'confidence': 0.9452909252974276, 'final': True}",0.95,2,True,146," The metro line in this city was built by China Railway Construction Corporation Limited and began service in 2010, although it only runs for one week a year. A high-speed intercity rail line connects this city with another city starting with the same first letter in less than two hours; a notable 622 trip starting in this city and took several months. However, most visitors to this city today arrive in between in Jeddah."
+18,"{'confidence': 0.6114037506793552, 'final': True}",0.61,3,True,146, Mecca
+20,"{'confidence': 0.7729966062589387, 'final': True}",0.77,3,True,146, Mecca
+20,"{'confidence': 0.8736808013701566, 'final': True}",0.87,4,True,146, Mecca.
+29,"{'confidence': 0.9279358876099209, 'final': True}",0.93,4,True,146, Mecca
+29,"{'confidence': 0.9279358876099209, 'final': True}",0.93,4,True,146, Mecca
+12,"{'confidence': 0.6362424146137476, 'final': True}",0.64,0,True,147," The residents of the city of Catania, Italy are called ""cats"" in their native romance language of Sicilian."
+20,"{'confidence': 0.6341959378421351, 'final': True}",0.63,1,True,147," The city is Barcelona, and the street market is known as La Boqueria."
+29,"{'confidence': 0.5416697116977203, 'final': True}",0.54,1,True,147," The city is Barcelona, Spain."
+17,"{'confidence': 0.5415824297765102, 'final': True}",0.54,2,True,147," The city of Lausanne, Switzerland."
+18,"{'confidence': 0.5315847624143051, 'final': True}",0.53,2,True,147," The city is Barcelona, Spain."
+13,"{'confidence': 0.6830332434120022, 'final': True}",0.68,3,True,147," The city in question is Barcelona, Spain."
+8,"{'confidence': 0.6698042036590647, 'final': True}",0.67,4,True,147, Madrid
+8,"{'confidence': 0.6698042036590647, 'final': True}",0.67,4,True,147, Madrid
+18,"{'confidence': 0.6826945855108707, 'final': True}",0.68,0,True,148, the name of a U.S. state.
+21,"{'confidence': 0.6342381378017795, 'final': True}",0.63,0,True,148," The country is called the Netherlands, and the swamp is called the Rhine-Meuse-Scheldt delta."
+19,"{'confidence': 0.5736110436100796, 'final': True}",0.57,1,True,148," The country is the Netherlands. The swamp is called the Haarlemmermeer. The northern border was formed in 2011 when it broke away from its neighbor, Germany. The lake is called the IJsselmeer."
+22,"{'confidence': 0.740011008840698, 'final': True}",0.74,1,True,148," I'm sorry, but I cannot find the answer based on the information provided. Please provide more context or details about the country in question."
+21,"{'confidence': 0.3917296465285861, 'final': True}",0.39,2,True,148, South Sudan
+26,"{'confidence': 0.5483490130789512, 'final': True}",0.55,2,True,148," The country is South Sudan. The swamp is called Sudd, which means ""end"" in the local language. The lake is called Lake Sudd."
+17,"{'confidence': 0.7792256363100777, 'final': True}",0.78,3,True,148, South Sudan
+17,"{'confidence': 0.7792256363100777, 'final': True}",0.78,3,True,148, South Sudan
+19,"{'confidence': 0.3783264285941597, 'final': True}",0.38,0,True,149, The state is New York.
+35,"{'confidence': 0.4975444268555622, 'final': True}",0.50,0,True,149," The summer festival is held in the state of Victoria, Australia."
+17,"{'confidence': 0.4042905136436386, 'final': True}",0.40,1,True,149, The state is Washington.
+21,"{'confidence': 0.5763023894288077, 'final': True}",0.58,1,True,149, The state is Alaska.
+18,"{'confidence': 0.6196245068100269, 'final': True}",0.62,2,True,149, of a famous explorer.    The state's capital city is named for a Native American tribe.    The state's largest city is named for a French explorer.    The state's second largest city is named for a Spanish explorer.    The state's third largest city is named for a British explorer.    The state's fourth largest city is named for a Russian explorer.    The state's fifth largest city is named for a Portuguese explorer.    The state's sixth largest city is named for a German explorer.    The state's seventh largest city is named for a Dutch explorer.    The state's eighth largest city is named for a
+31,"{'confidence': 0.6675825845409052, 'final': True}",0.67,2,True,149," The state is Queensland, and the peninsula is Cape York."
+16,"{'confidence': 0.7970491692283789, 'final': True}",0.80,3,True,149, state.
+26,"{'confidence': 0.7132156892912415, 'final': True}",0.71,3,True,149, Victoria
+26,"{'confidence': 0.7132156892912415, 'final': True}",0.71,3,True,149, Victoria

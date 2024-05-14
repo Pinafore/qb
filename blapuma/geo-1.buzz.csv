@@ -1,0 +1,44 @@
+evidence,final,weight,sentence,question,word,page
+"{'confidence': 0.2163227854429336, 'final': False}",False,0.22,0,145,18,St. Louis (Senegal)
+"{'confidence': 0.0, 'final': False}",False,0.00,1,145,17,"St. Louis, Missouri, Democratic Republic of the"
+"{'confidence': 0.0, 'final': False}",False,0.00,1,145,25,St. Louis (Missouri) and Democratic Republic
+"{'confidence': 0.0, 'final': False}",False,0.00,2,145,20,Nigeria
+"{'confidence': 0.0, 'final': False}",False,0.00,2,145,27,St. Louis (Missouri) and Niger River
+"{'confidence': 1.0, 'final': True}",True,1.00,3,145,18,Senegal
+"{'confidence': 1.0, 'final': True}",True,1.00,3,145,26,Senegal
+"{'confidence': 1.0, 'final': True}",True,1.00,3,145,26,Senegal
+"{'confidence': 0.0, 'final': False}",False,0.00,0,146,17,Beijing Subway Line 10 was
+"{'confidence': 0.0, 'final': False}",False,0.00,0,146,28,Beijing Subway Line 11 was
+"{'confidence': 0.0, 'final': False}",False,0.00,1,146,17,Beijing - Tianjin high-speed
+"{'confidence': 0.0, 'final': False}",False,0.00,1,146,34,Shanghai - Shanghai Maglev Train - H
+"{'confidence': 0.0, 'final': False}",False,0.00,2,146,12,no answer
+"{'confidence': 0.0, 'final': False}",False,0.00,3,146,18,"Riyadh, Haramain High-"
+"{'confidence': 0.0, 'final': False}",False,0.00,3,146,20,===
+"{'confidence': 1.0, 'final': True}",True,1.00,4,146,20,Mecca
+"{'confidence': 1.0, 'final': True}",True,1.00,4,146,29,Mecca
+"{'confidence': 1.0, 'final': True}",True,1.00,4,146,29,Mecca
+"{'confidence': 0.22367860662077954, 'final': False}",False,0.22,0,147,12,"Residents of Paris are called ""chats"""
+"{'confidence': 0.0, 'final': False}",False,0.00,1,147,20,Bangkok
+"{'confidence': 0.0, 'final': False}",False,0.00,1,147,29,"Lyon is the city where residents are called ""g"
+"{'confidence': 0.0, 'final': False}",False,0.00,2,147,17,"Bangkok, Khlong San (ท"
+"{'confidence': 0.0, 'final': False}",False,0.00,2,147,18,Bangkok is the city where residents are called
+"{'confidence': 0.0, 'final': False}",False,0.00,3,147,13,"Bangkok, called ""phu tong"""
+"{'confidence': 1.0, 'final': True}",True,1.00,4,147,8,Barcelona
+"{'confidence': 1.0, 'final': True}",True,1.00,4,147,8,Barcelona
+"{'confidence': 0.0, 'final': False}",False,0.00,0,148,18,Belgium contains a swamp whose name contains a
+"{'confidence': 0.0, 'final': False}",False,0.00,0,148,21,Germany
+"{'confidence': 0.0, 'final': False}",False,0.00,1,148,19,Lake I
+"{'confidence': 0.0, 'final': False}",False,0.00,1,148,22,"Germany-Belgium Swamp, Lake Ne"
+"{'confidence': 0.16193727590697887, 'final': False}",False,0.16,2,148,21,South Sudan
+"{'confidence': 0.0, 'final': False}",False,0.00,2,148,26,South Sudan contains a swamp called the Sud
+"{'confidence': 1.0, 'final': True}",True,1.00,3,148,17,South Sudan
+"{'confidence': 1.0, 'final': True}",True,1.00,3,148,17,South Sudan
+"{'confidence': 0.0, 'final': False}",False,0.00,0,149,19,Wisconsin
+"{'confidence': 0.17491613061532668, 'final': False}",False,0.17,0,149,35,Hawaii
+"{'confidence': 0.13828042754854186, 'final': False}",False,0.14,1,149,17,Hawaii
+"{'confidence': 0.0, 'final': False}",False,0.00,1,149,21,Hawaii
+"{'confidence': 0.0, 'final': False}",False,0.00,2,149,18,"Queensland, Great Barrier Reef, Cape York"
+"{'confidence': 0.42490850605255126, 'final': True}",True,0.42,2,149,31,Queensland
+"{'confidence': 1.0, 'final': True}",True,1.00,3,149,16,Queensland
+"{'confidence': 1.0, 'final': True}",True,1.00,3,149,26,Queensland
+"{'confidence': 1.0, 'final': True}",True,1.00,3,149,26,Queensland

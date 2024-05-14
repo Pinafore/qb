@@ -1,0 +1,63 @@
+word,sentence,weight,final,evidence,question,page
+13,0,0.07,False,"{'confidence': 0.06668531894683838, 'final': False}",170,The other operator
+18,0,0.05,False,"{'confidence': 0.052126236259937286, 'final': False}",170,The other operator
+12,1,0.04,False,"{'confidence': 0.041161660104990005, 'final': False}",170,The other operator
+15,1,0.01,False,"{'confidence': 0.012409183196723461, 'final': False}",170,"retransmitting ""How are you receiving me?"""
+10,2,0.01,False,"{'confidence': 0.00697907293215394, 'final': False}",170,The other operator
+15,3,0.01,False,"{'confidence': 0.005574563518166542, 'final': False}",170,"retransmitting ""How are you receiving me?"""
+16,4,0.00,False,"{'confidence': 0.002343275584280491, 'final': False}",170,"retransmitting ""How are you receiving me?"""
+32,4,0.00,False,"{'confidence': 0.0012289572041481733, 'final': False}",170,"retransmitting ""How are you receiving me?"""
+43,4,0.00,False,"{'confidence': 0.00024153069534804672, 'final': False}",170,The other operator
+43,4,0.00,False,"{'confidence': 0.00024153069534804672, 'final': False}",170,The other operator
+16,0,0.01,False,"{'confidence': 0.012493764981627464, 'final': False}",171,vehicle only when the owner makes the second attempt
+18,0,0.01,False,"{'confidence': 0.009230004623532295, 'final': False}",171,vehicle only when the owner makes the second attempt
+18,1,0.01,False,"{'confidence': 0.008708486333489418, 'final': False}",171,forwarded to the vehicle only when the owner makes the second attempt
+31,1,0.01,False,"{'confidence': 0.008643999695777893, 'final': False}",171,The recorded first code is forwarded to the vehicle
+19,2,0.01,False,"{'confidence': 0.0067640808410942554, 'final': False}",171,The recorded first code is forwarded to the vehicle
+37,2,0.01,False,"{'confidence': 0.005084131378680468, 'final': False}",171,The recorded first code is forwarded to the vehicle
+45,2,0.00,False,"{'confidence': 0.0037397064734250307, 'final': False}",171,The recorded first code is forwarded to the vehicle
+21,3,0.00,False,"{'confidence': 0.0015802010893821716, 'final': False}",171,The recorded first code is forwarded to the vehicle
+34,3,0.00,False,"{'confidence': 0.0007700328133068979, 'final': False}",171,The recorded first code is forwarded to the vehicle
+16,4,0.00,False,"{'confidence': 0.00043334290967322886, 'final': False}",171,The recorded first code is forwarded to the vehicle
+16,4,0.00,False,"{'confidence': 0.00043334290967322886, 'final': False}",171,The recorded first code is forwarded to the vehicle
+17,5,0.00,False,"{'confidence': 5.125502502778545e-05, 'final': False}",171,The recorded first code is forwarded to the vehicle
+24,5,0.00,False,"{'confidence': 1.9015396901522763e-05, 'final': False}",171,The recorded first code is forwarded to the vehicle
+24,5,0.00,False,"{'confidence': 1.9015396901522763e-05, 'final': False}",171,The recorded first code is forwarded to the vehicle
+5,0,0.05,False,"{'confidence': 0.05033717676997185, 'final': False}",172,The other operator
+21,1,0.01,False,"{'confidence': 0.009355812333524227, 'final': False}",172,"""How are you receiving me?"""
+33,1,0.00,False,"{'confidence': 0.004106884356588125, 'final': False}",172,operator
+2,2,0.01,False,"{'confidence': 0.0051391334272921085, 'final': False}",172,operator
+18,3,0.00,False,"{'confidence': 0.002930360147729516, 'final': False}",172,operator
+28,3,0.00,False,"{'confidence': 0.001679818145930767, 'final': False}",172,"How are you receiving me?"""
+17,4,0.00,False,"{'confidence': 0.000511601276230067, 'final': False}",172,"retransmitting ""How are you receiving me?"""
+34,4,0.00,False,"{'confidence': 9.808978938963264e-05, 'final': False}",172,The other operator
+39,4,0.00,False,"{'confidence': 0.00010240912524750456, 'final': False}",172,"retransmitting ""How are you receiving me?"""
+16,5,0.00,False,"{'confidence': 1.2536097528936807e-05, 'final': False}",172,"retransmitting ""How are you receiving me?"""
+23,5,0.00,False,"{'confidence': 1.5219106899166945e-05, 'final': False}",172,"retransmitting ""How are you receiving me?"""
+20,6,0.00,False,"{'confidence': 2.194130047428189e-06, 'final': False}",172,"How are you receiving me?"""
+36,6,0.00,False,"{'confidence': 7.464410032298474e-07, 'final': False}",172,"How are you receiving me?"""
+36,6,0.00,False,"{'confidence': 7.464410032298474e-07, 'final': False}",172,"How are you receiving me?"""
+3,0,0.11,False,"{'confidence': 0.11007233709096909, 'final': False}",173,Winry reveals she has prepared a new automail
+19,1,0.05,False,"{'confidence': 0.05144566670060158, 'final': False}",173,Winry reveals she has prepared a new automail
+38,1,0.02,False,"{'confidence': 0.024941252544522285, 'final': False}",173,Winry reveals she has prepared a new automail
+43,1,0.03,False,"{'confidence': 0.027132565155625343, 'final': False}",173,automail
+19,2,0.03,False,"{'confidence': 0.026995860040187836, 'final': False}",173,Winry reveals she has prepared a new automail
+36,2,0.03,False,"{'confidence': 0.026574332267045975, 'final': False}",173,Winry reveals she has prepared a new automail
+36,2,0.03,False,"{'confidence': 0.026574332267045975, 'final': False}",173,Winry reveals she has prepared a new automail
+19,3,0.02,False,"{'confidence': 0.023044085130095482, 'final': False}",173,attaches them to him.
+31,3,0.01,False,"{'confidence': 0.01211503241211176, 'final': False}",173,attaches them to him.
+18,4,0.00,False,"{'confidence': 0.0037918139714747667, 'final': False}",173,attaches them to him.
+33,4,0.00,False,"{'confidence': 0.0006054481491446495, 'final': False}",173,attaches them to him.
+33,4,0.00,False,"{'confidence': 0.0006054481491446495, 'final': False}",173,attaches them to him.
+15,0,0.04,False,"{'confidence': 0.04078218713402748, 'final': False}",174,text
+16,0,0.02,False,"{'confidence': 0.02110077627003193, 'final': False}",174,text
+16,1,0.01,False,"{'confidence': 0.010055450722575188, 'final': False}",174,"name_button {  key = ""submit-name"";  }   : text"
+19,1,0.01,False,"{'confidence': 0.012661771848797798, 'final': False}",174,text
+18,2,0.01,False,"{'confidence': 0.006723445374518633, 'final': False}",174,text
+32,2,0.00,False,"{'confidence': 0.0033165402710437775, 'final': False}",174,text
+37,2,0.00,False,"{'confidence': 0.002480229130014777, 'final': False}",174,text
+11,3,0.00,False,"{'confidence': 0.0007476298487745225, 'final': False}",174,text
+11,3,0.00,False,"{'confidence': 0.0007476298487745225, 'final': False}",174,text
+19,4,0.00,False,"{'confidence': 0.0006524675991386175, 'final': False}",174,text
+28,4,0.00,False,"{'confidence': 0.000510086421854794, 'final': False}",174,text
+28,4,0.00,False,"{'confidence': 0.000510086421854794, 'final': False}",174,text

@@ -1,0 +1,42 @@
+word,page,weight,sentence,final,evidence,question
+17,A vision of the Devil drives him from a,0.13,0,False,"{'confidence': 0.12852078750592633, 'final': False}",130
+17,The Devil's vision pushes him out,0.00,1,False,"{'confidence': 0.0, 'final': False}",130
+15,R,0.00,2,False,"{'confidence': 0.0, 'final': False}",130
+18,Lisa,0.00,3,False,"{'confidence': 0.0, 'final': False}",130
+26,"Frank Sinatra, Rosalind Russell, Jack",0.00,3,False,"{'confidence': 0.0, 'final': False}",130
+14,Amory Blaine,1.00,4,True,"{'confidence': 1.0, 'final': True}",130
+14,Amory Blaine,1.00,4,True,"{'confidence': 1.0, 'final': True}",130
+21,"The Name is ""King Rat"" by James",0.00,0,False,"{'confidence': 0.0, 'final': False}",131
+10,King Rat by James Clavell is set in,0.00,1,False,"{'confidence': 0.0, 'final': False}",131
+17,(Note,0.00,2,False,"{'confidence': 0.0, 'final': False}",131
+20,"The novel is ""King Rat"" by James",0.00,2,False,"{'confidence': 0.0, 'final': False}",131
+17,"Patrick Hamilton, King Rat, 196",0.00,3,False,"{'confidence': 0.0, 'final': False}",131
+32,Ch,0.00,3,False,"{'confidence': 0.0, 'final': False}",131
+15,James Clavell,1.00,4,True,"{'confidence': 1.0, 'final': True}",131
+15,James Clavell,1.00,4,True,"{'confidence': 1.0, 'final': True}",131
+20,The Joy Luck Club,0.54,0,True,"{'confidence': 0.5428660330822258, 'final': True}",132
+33,The House of the Spirits,0.00,0,False,"{'confidence': 0.0, 'final': False}",132
+16,"""The Color",0.00,1,False,"{'confidence': 0.0, 'final': False}",132
+26,The Midnight's Children by Salman R,0.00,1,False,"{'confidence': 0.0, 'final': False}",132
+19,no answer,0.00,2,False,"{'confidence': 0.0, 'final': False}",132
+13,The Dream of the Red Chamber,1.00,3,True,"{'confidence': 1.0, 'final': True}",132
+13,The Dream of the Red Chamber,1.00,3,True,"{'confidence': 1.0, 'final': True}",132
+18,The Scarlet Letter by Nathaniel Haw,0.00,0,False,"{'confidence': 0.0, 'final': False}",133
+29,The Scarlet Letter by Nathaniel Haw,0.00,0,False,"{'confidence': 0.0021398371454307147, 'final': False}",133
+16,The central character's rebellion is developed,0.01,1,False,"{'confidence': 0.010626480010180551, 'final': False}",133
+35,"Jane Eyre, Bertha Mason, Th",0.00,1,False,"{'confidence': 0.0, 'final': False}",133
+39,Nineteen Eighty-Four by,0.10,1,False,"{'confidence': 0.09609747435694076, 'final': False}",133
+17,"Nineteen Eighty-Four,",0.22,2,False,"{'confidence': 0.22388025880268309, 'final': False}",133
+30,Nineteen Eighty-Four by,0.37,2,True,"{'confidence': 0.37424712245405756, 'final': True}",133
+17,Nineteen Eighty-Four by,0.14,3,False,"{'confidence': 0.1424148563619027, 'final': False}",133
+18,1984,1.00,3,True,"{'confidence': 1.0, 'final': True}",133
+18,1984,1.00,3,True,"{'confidence': 1.0, 'final': True}",133
+17,does not undergo personal growth or development,0.00,0,False,"{'confidence': 0.0, 'final': False}",134
+22,Jennifer Gilchrist argues that the first,0.00,0,False,"{'confidence': 0.0, 'final': False}",134
+17,The narrator of the first part starts a relationship,0.02,1,False,"{'confidence': 0.02119528785534698, 'final': False}",134
+17,Jennifer Gilchrist claims that the initial section,0.00,2,False,"{'confidence': 0.0, 'final': False}",134
+25,Jennifer Gilchrist claims that the initial section,0.00,2,False,"{'confidence': 0.0, 'final': False}",134
+13,Antoinette Cosway's relationship with characters,0.08,3,False,"{'confidence': 0.07998465981614387, 'final': False}",134
+30,Wide Sargasso Sea,0.85,3,True,"{'confidence': 0.8485940593893717, 'final': True}",134
+39,Wide Tales of the Water-Whe,0.00,3,False,"{'confidence': 0.0, 'final': False}",134
+39,Wide Tales of the Water-Whe,0.00,3,False,"{'confidence': 0.0, 'final': False}",134

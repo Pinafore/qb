@@ -1,0 +1,50 @@
+word,weight,question,final,page,evidence,sentence
+19,0.08,140,False,SMS,"{'confidence': 0.075184166431427, 'final': False}",0
+34,0.03,140,False,SMS,"{'confidence': 0.03494105115532875, 'final': False}",0
+17,0.04,140,False,SMS keyword to confirm their appointment,"{'confidence': 0.03790084272623062, 'final': False}",1
+20,0.03,140,False,SMS keyword to confirm their appointment,"{'confidence': 0.031451839953660965, 'final': False}",1
+18,0.02,140,False,SMS keyword to confirm their appointment,"{'confidence': 0.02410496398806572, 'final': False}",2
+18,0.02,140,False,SMS keyword to confirm their appointment,"{'confidence': 0.02410496398806572, 'final': False}",2
+18,0.02,140,False,SMS keyword to confirm their appointment,"{'confidence': 0.02252904139459133, 'final': False}",3
+18,0.03,140,False,SMS keyword to confirm their appointment,"{'confidence': 0.02599547989666462, 'final': False}",4
+22,0.03,140,False,SMS keyword to confirm their appointment,"{'confidence': 0.02693929709494114, 'final': False}",4
+9,0.02,140,False,SMS,"{'confidence': 0.022282222285866737, 'final': False}",5
+9,0.02,140,False,SMS,"{'confidence': 0.022282222285866737, 'final': False}",5
+17,0.01,141,False,Chinese,"{'confidence': 0.013801051303744316, 'final': False}",0
+24,0.01,141,False,Microsoft,"{'confidence': 0.013776170089840889, 'final': False}",0
+19,0.01,141,False,bì yìng,"{'confidence': 0.01069613080471754, 'final': False}",1
+32,0.01,141,False,Microsoft,"{'confidence': 0.006802015006542206, 'final': False}",1
+20,0.01,141,False,Microsoft,"{'confidence': 0.005441006738692522, 'final': False}",2
+28,0.01,141,False,Microsoft,"{'confidence': 0.005013244226574898, 'final': False}",2
+21,0.00,141,False,Microsoft,"{'confidence': 0.0026917248032987118, 'final': False}",3
+27,0.00,141,False,Bing's official Chinese name is bì yìng,"{'confidence': 0.003000258468091488, 'final': False}",3
+12,0.00,141,False,bì yìng,"{'confidence': 0.0012296712957322598, 'final': False}",4
+12,0.00,141,False,bì yìng,"{'confidence': 0.0012296712957322598, 'final': False}",4
+15,0.01,142,False,The other operator,"{'confidence': 0.008485919795930386, 'final': False}",0
+18,0.01,142,False,operator,"{'confidence': 0.009012056514620781, 'final': False}",1
+31,0.01,142,False,The other operator,"{'confidence': 0.006200623232871294, 'final': False}",1
+15,0.01,142,False,"retransmitting ""How are you receiving me?""","{'confidence': 0.006328163202852011, 'final': False}",2
+19,0.00,142,False,"retransmitting ""How are you receiving me?""","{'confidence': 0.004166287370026112, 'final': False}",3
+26,0.00,142,False,The other operator,"{'confidence': 0.002408270025625825, 'final': False}",3
+26,0.00,142,False,The other operator,"{'confidence': 0.002408270025625825, 'final': False}",3
+21,0.01,143,False,The other operator,"{'confidence': 0.010075639933347702, 'final': False}",0
+17,0.01,143,False,The other operator,"{'confidence': 0.0072686863131821156, 'final': False}",1
+21,0.01,143,False,"""How are you receiving me?""","{'confidence': 0.010050368495285511, 'final': False}",2
+26,0.01,143,False,"retransmitting ""How are you receiving me?""","{'confidence': 0.007487666793167591, 'final': False}",2
+15,0.01,143,False,The other operator,"{'confidence': 0.009266502223908901, 'final': False}",3
+15,0.01,143,False,The other operator,"{'confidence': 0.009266502223908901, 'final': False}",3
+19,0.02,144,False,voice mail was later changed to one in which Braff,"{'confidence': 0.02462780475616455, 'final': False}",0
+19,0.02,144,False,voice mail was later changed to one in which Braff,"{'confidence': 0.02462780475616455, 'final': False}",0
+18,0.02,144,False,The voice mail was later changed to one in which Braff,"{'confidence': 0.024184152483940125, 'final': False}",1
+18,0.02,144,False,The voice mail was later changed to one in which Braff,"{'confidence': 0.024184152483940125, 'final': False}",1
+17,0.03,144,False,Braff,"{'confidence': 0.0320463702082634, 'final': False}",2
+23,0.02,144,False,Braff,"{'confidence': 0.02101697027683258, 'final': False}",2
+15,0.01,144,False,The voice mail was later changed to one in which Braff,"{'confidence': 0.012736298143863678, 'final': False}",3
+25,0.01,144,False,The voice mail was later changed to one in which Braff,"{'confidence': 0.00833258219063282, 'final': False}",3
+17,0.00,144,False,The voice mail was later changed to one in which Braff,"{'confidence': 0.002125648083165288, 'final': False}",4
+23,0.00,144,False,Braff,"{'confidence': 0.002512238221243024, 'final': False}",4
+17,0.00,144,False,The voice mail was later changed to one in which Braff,"{'confidence': 0.00131999421864748, 'final': False}",5
+28,0.00,144,False,Braff,"{'confidence': 0.003339467104524374, 'final': False}",5
+19,0.00,144,False,Braff,"{'confidence': 0.0004089104477316141, 'final': False}",6
+22,0.00,144,False,Braff,"{'confidence': 0.0003836490213871002, 'final': False}",6
+22,0.00,144,False,Braff,"{'confidence': 0.0003836490213871002, 'final': False}",6

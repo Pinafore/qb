@@ -1,0 +1,52 @@
+word,evidence,page,sentence,question,weight,final
+18,"{'confidence': 0.6994317030392639, 'final': True}"," The organism you are referring to is the slime mold Physarum polycephalum. This organism exhibits directional memory through the use of a leading limb, which helps it to navigate its environment and find food.",0,110,0.70,True
+18,"{'confidence': 0.3812378399998352, 'final': True}", are not able to tolerate the high salt concentrations found in brackish water.,1,110,0.38,True
+24,"{'confidence': 0.805118883863212, 'final': True}"," I'm sorry, but I need more information in order to provide a complete answer. Can you please specify which group of organisms you are referring to? Without more context, I cannot provide a full and accurate response.",1,110,0.81,True
+17,"{'confidence': 0.5466067027128663, 'final': True}", The organism you are referring to is the Nematoda.,2,110,0.55,True
+24,"{'confidence': 0.599824927350825, 'final': True}", The organism you are referring to is the flatworm.,2,110,0.60,True
+7,"{'confidence': 0.6619565317685836, 'final': True}", The phylum I am referring to is the Echinodermata.,3,110,0.66,True
+14,"{'confidence': 0.9115449799026567, 'final': True}"," The phylum Echinodermata includes five pointed animals whose name literally means prickly skin.  Organisms in this phylum have a decentralized nervous system composed of a nerve ring and radial nerves, and some can be conditioned with light.  They use tubed feet to move.  One organism in this group is known to exhibit directional memory through the use of a leading limb.  No lineage of this group has ever entered the brackish realm as they are bad osmoregulators and they are considered to be 'leaky balloons'.",4,110,0.91,True
+14,"{'confidence': 0.9115449799026567, 'final': True}"," The phylum Echinodermata includes five pointed animals whose name literally means prickly skin.  Organisms in this phylum have a decentralized nervous system composed of a nerve ring and radial nerves, and some can be conditioned with light.  They use tubed feet to move.  One organism in this group is known to exhibit directional memory through the use of a leading limb.  No lineage of this group has ever entered the brackish realm as they are bad osmoregulators and they are considered to be 'leaky balloons'.",4,110,0.91,True
+9,"{'confidence': 0.674729759655784, 'final': True}", I am sorry. I cannot find the answer based on the context.,0,111,0.67,True
+18,"{'confidence': 0.2579572414669645, 'final': True}", rule.,1,111,0.26,True
+20,"{'confidence': 0.48752591898405445, 'final': True}", The thinker in question is believed to be Sophie Germain.,1,111,0.49,True
+14,"{'confidence': 0.4142233793015012, 'final': True}", the exponent is greater than two.,2,111,0.41,True
+36,"{'confidence': 0.4891771683592718, 'final': True}", Carl Friedrich Gauss,2,111,0.49,True
+36,"{'confidence': 0.4667220294285651, 'final': True}", Carl Friedrich Gauss,2,111,0.47,True
+15,"{'confidence': 0.6102352702801214, 'final': True}", Carl Friedrich Gauss,3,111,0.61,True
+31,"{'confidence': 0.42716418616325863, 'final': True}", Marie Curie Award in 1920.,3,111,0.43,True
+39,"{'confidence': 0.4856528370580617, 'final': True}", Caroline Herschel,3,111,0.49,True
+17,"{'confidence': 0.6256388694900844, 'final': True}", Sophie Germain,4,111,0.63,True
+17,"{'confidence': 0.6256388694900844, 'final': True}", Sophie Germain,4,111,0.63,True
+17,"{'confidence': 0.6029976099540977, 'final': True}", The Cookie Thief test is a diagnostic for the condition named for the capital of Massachusetts.,0,112,0.60,True
+17,"{'confidence': 0.7305284968929356, 'final': True}"," The Cookie Thief test is a subtest of the Boston Diagnostic Aphasia Examination (BDAE), a diagnostic tool used to assess language function in individuals who may have experienced a stroke or other neurological injury. The Cookie Thief test is designed to assess an individual's ability to understand and follow complex commands, as well as their ability to process and retain information.",0,112,0.73,True
+12,"{'confidence': 0.742193987857185, 'final': True}"," The Cookie Theft test is a diagnostic tool used to assess for the presence of apraxia, a condition that affects a person's ability to perform skilled tasks despite having the physical ability to do so. The test was developed by neurologist Norman Geschwind and was first published in 1965. In 1986, Gandour et al. adapted the Cookie Theft test into the Thai language to make it more accessible to speakers of Thai.",1,112,0.74,True
+16,"{'confidence': 0.4269263310311563, 'final': True}", have difficulty expressing themselves in writing and speech.,2,112,0.43,True
+28,"{'confidence': 0.8278811710797225, 'final': True}"," The Boston Cookie Theft test is used to diagnose aphasia, and it was adapted into the Thai language by Gandour et al. in 1986. Agrammatism is associated with the syndrome named after Broca, a French surgeon, and patients with this syndrome tend to delete grammatical formatives such as auxiliaries, pronouns, determiners, and prepositions.",2,112,0.83,True
+28,"{'confidence': 0.7580376195529216, 'final': True}"," The Boston Cookie Theft test is used to diagnose Wernicke's aphasia, a type of aphasia where a person has difficulty understanding language. The test was adapted into the Thai language in 1986 by Gandour et al. Agrammatism is a variant of Wernicke's aphasia, named after a French surgeon, where patients tend to delete grammatical formatives such as auxiliaries, pronouns, determiners, and prepositions.",2,112,0.76,True
+15,"{'confidence': 0.84178522507976, 'final': True}"," The Cookie Theft test is a diagnostic tool used to assess for aphasia, a condition that affects a person's ability to process and produce language. The test was adapted into the Thai language by Gandour et al. in 1986.
+
+Agrammatism is a variant of aphasia associated with the syndrome of Broca, named after the French surgeon Paul Broca. Patients with agrammatism tend to delete grammatical formatives such as auxiliaries, pronouns, determiners, and prepositions.
+
+In contrast, the syndrome of Wernicke, named after the Prussian physician Carl Wernicke,",3,112,0.84,True
+16,"{'confidence': 0.9291406698649923, 'final': True}"," The Cookie Theft test was adapted into the Thai language by Gandour et al. in 1986. Agrammatism is associated with a variant of this disorder named after a French surgeon, where patients tend to delete grammatical formatives such as auxiliaries, pronouns, determiners, and prepositions. In contrast, a Prussian physician's name is associated with a disorder where patients cannot comprehend language.",3,112,0.93,True
+17,"{'confidence': 0.42395886590510684, 'final': True}",  Aphasia,4,112,0.42,True
+30,"{'confidence': 0.514727906818303, 'final': True}", Aphasia,4,112,0.51,True
+30,"{'confidence': 0.514727906818303, 'final': True}", Aphasia,4,112,0.51,True
+17,"{'confidence': 0.5082444160130231, 'final': True}", the comet. Why do you think Messier wanted to give credit to Bevis?,0,113,0.51,True
+20,"{'confidence': 0.5809601861440856, 'final': True}"," Yes, that is correct.",0,113,0.58,True
+17,"{'confidence': 0.37886164660380944, 'final': True}", object.,1,113,0.38,True
+18,"{'confidence': 0.7472421966499712, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Can you please provide the title of the 1962 paper by Mayall that you are referring to?",1,113,0.75,True
+15,"{'confidence': 0.9341804813556929, 'final': True}"," In a 1962 paper, Mayall hypothesizes that Messier wanted to give credit to John Bevis for discovering this celestial object. Kellerman credits Grote Reber with the first radio observations of Cygnus A, Cassiopeia A, and this radio source. However, these were not its first observations, Duyvendak aligned the star Tiānguān with Zeta Tauri,",2,113,0.93,True
+32,"{'confidence': 0.8089391214236655, 'final': True}", Sorry. I cannot find the answer based on the context.,2,113,0.81,True
+38,"{'confidence': 0.7518571332267852, 'final': True}"," I'm sorry, but I need more information in order to answer your question. Please provide additional context or clarify your question, and I'll do my best to help.",2,113,0.75,True
+17,"{'confidence': 0.7108978799725615, 'final': True}", 10 points: Crab Nebula,3,113,0.71,True
+21,"{'confidence': 0.5937275075474255, 'final': True}"," 10 points! The Crab Nebula is a supernova remnant in the constellation Taurus. It is named after the constellation Cancer, which was depicted as a crab in the 19th century.",3,113,0.59,True
+21,"{'confidence': 0.5937275075474255, 'final': True}"," 10 points! The Crab Nebula is a supernova remnant in the constellation Taurus. It is named after the constellation Cancer, which was depicted as a crab in the 19th century.",3,113,0.59,True
+17,"{'confidence': 0.7606421150156834, 'final': True}"," He turned down a million dollars, saying that a Columbia professor deserved it more than he did.",0,114,0.76,True
+19,"{'confidence': 0.29598460156998796, 'final': True}", his name.,1,114,0.30,True
+31,"{'confidence': 0.6975466014921821, 'final': True}", He turned down a million dollars because he felt that a Columbia professor deserved it more than he did.,1,114,0.70,True
+14,"{'confidence': 0.7591089292062702, 'final': True}"," The Poincaré conjecture is a theorem in topology that states that a simply connected, closed 3-manifold is homeomorphic to the 3-sphere. It was first stated by Henri Poincaré in 1904 and was one of the most important unsolved problems in mathematics for much of the 20th century. The conjecture was finally proved in 2003 by the mathematician Grigori Perelman, who used a combination of Ricci flow and Hamilton's Ricci flow to show that any simply connected, closed 3-manifold is homeomorphic to the 3-sphere.",2,114,0.76,True
+23,"{'confidence': 0.7474839954096325, 'final': True}", He turned down a million dollars because he felt that a Columbia professor deserved it more than he did.,2,114,0.75,True
+10,"{'confidence': 0.784354048412402, 'final': True}", 10 points: Grigori Perelman,3,114,0.78,True
+10,"{'confidence': 0.784354048412402, 'final': True}", 10 points: Grigori Perelman,3,114,0.78,True

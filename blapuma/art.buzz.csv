@@ -1,0 +1,44 @@
+evidence,weight,sentence,page,final,word,question
+"{'confidence': 0.0, 'final': False}",0.00,0,"The Knife, ""Silent Shout""",False,18,160
+"{'confidence': 0.0, 'final': False}",0.00,0,"""The Blackboard Jungle"" by The Kill",False,21,160
+"{'confidence': 0.0, 'final': False}",0.00,1,"The Tablecloth, the Bathtub,",False,20,160
+"{'confidence': 0.0, 'final': False}",0.00,1,"The painting used as album artwork for ""The",False,23,160
+"{'confidence': 0.0, 'final': False}",0.00,2,"The painting is ""The Temptation of St",False,16,160
+"{'confidence': 0.0, 'final': False}",0.00,3,"The painting is ""The Letter"" by American",False,18,160
+"{'confidence': 0.5442024128567653, 'final': True}",0.54,4,The Death of Marat,True,16,160
+"{'confidence': 0.6880357774198939, 'final': True}",0.69,4,The Death of Marat,True,19,160
+"{'confidence': 0.6880357774198939, 'final': True}",0.69,4,The Death of Marat,True,19,160
+"{'confidence': 0.0, 'final': False}",0.00,0,Frank Gehry,False,19,161
+"{'confidence': 0.0, 'final': False}",0.00,0,Peter Halley,False,29,161
+"{'confidence': 0.0, 'final': False}",0.00,1,Norman Stein,False,17,161
+"{'confidence': 1.0, 'final': True}",1.00,1,Norman Steinlauf,True,26,161
+"{'confidence': 0.0, 'final': False}",0.00,2,Norman Steinlauf,False,19,161
+"{'confidence': 0.0, 'final': False}",0.00,2,Norman Steinlauf,False,26,161
+"{'confidence': 0.0, 'final': False}",0.00,3,Robert Morris,False,17,161
+"{'confidence': 0.28907368293347474, 'final': True}",0.29,3,Richard Serra,True,20,161
+"{'confidence': 0.3165145709267398, 'final': True}",0.32,3,Richard Serra,True,20,161
+"{'confidence': 0.0, 'final': False}",0.00,0,The Alma Mater (1894,False,18,162
+"{'confidence': 0.0, 'final': False}",0.00,0,Albrecht Durer,False,33,162
+"{'confidence': 0.7193653122598677, 'final': True}",0.72,1,Vincent van Gogh,True,16,162
+"{'confidence': 0.0, 'final': False}",0.00,1,Georgia O'Keeffe,False,18,162
+"{'confidence': 1.0, 'final': True}",1.00,2,Georgia O'Keeffe,True,18,162
+"{'confidence': 1.0, 'final': True}",1.00,2,Georgia O'Keeffe,True,24,162
+"{'confidence': 1.0, 'final': True}",1.00,2,Georgia O'Keeffe,True,24,162
+"{'confidence': 0.13819767706716107, 'final': False}",0.14,0,F. William Free & Co. newspaper ads,False,20,163
+"{'confidence': 0.0, 'final': False}",0.00,0,Salvador Dalí placed a series of newspaper ads,False,35,163
+"{'confidence': 0.0, 'final': False}",0.00,0,Salvador Dalí,False,35,163
+"{'confidence': 0.0, 'final': False}",0.00,1,The ads,False,17,163
+"{'confidence': 0.0, 'final': False}",0.00,1,"Salvador Dalí's ""The Persistence of",False,27,163
+"{'confidence': 0.0, 'final': False}",0.00,2,The Persistence of,False,20,163
+"{'confidence': 0.0, 'final': False}",0.00,2,Campbell's,False,25,163
+"{'confidence': 1.0, 'final': True}",1.00,3,Andy Warhol,True,16,163
+"{'confidence': 1.0, 'final': True}",1.00,3,Andy Warhol,True,16,163
+"{'confidence': 0.8836820644071632, 'final': True}",0.88,0,"In this painting, a man in an orange sh",True,20,164
+"{'confidence': 0.8361775020591004, 'final': True}",0.84,0,A man in an orange shirt plays the tr,True,21,164
+"{'confidence': 0.0, 'final': False}",0.00,1,A woman holding a leash attached to a dog,False,20,164
+"{'confidence': 0.04256731936729158, 'final': False}",0.04,1,"Man in orange shirt playing trumpet,",False,31,164
+"{'confidence': 0.0, 'final': False}",0.00,2,"A street scene with musicians and military personnel,",False,16,164
+"{'confidence': 0.0, 'final': False}",0.00,2,"Saturday Evening Post, 1906",False,26,164
+"{'confidence': 1.0, 'final': True}",1.00,3,A Sunday Afternoon on the Island of La Grande,True,16,164
+"{'confidence': 1.0, 'final': True}",1.00,3,A Sunday Afternoon on the Island of La Grande,True,19,164
+"{'confidence': 1.0, 'final': True}",1.00,3,A Sunday Afternoon on the Island of La Grande,True,19,164

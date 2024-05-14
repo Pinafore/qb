@@ -1,0 +1,50 @@
+final,sentence,evidence,page,question,weight,word
+False,0,"{'confidence': 0.0, 'final': False}",Potsdamer Straße to the north and west,140,0.00,19
+False,0,"{'confidence': 0.05739878140134627, 'final': False}",Johannesburg,140,0.06,34
+False,1,"{'confidence': 0.0, 'final': False}","Today, that ups",140,0.00,17
+False,1,"{'confidence': 0.0, 'final': False}",Naples,140,0.00,20
+False,2,"{'confidence': 0.0, 'final': False}","Wellington, New Zealand",140,0.00,18
+False,2,"{'confidence': 0.01164516247837992, 'final': False}","Wellington, New Zealand",140,0.01,18
+True,3,"{'confidence': 1.0, 'final': True}","Wellington, New Zealand",140,1.00,18
+False,4,"{'confidence': 0.0, 'final': False}",Law,140,0.00,18
+True,4,"{'confidence': 0.9723586929163328, 'final': True}","Wellington, New Zealand",140,0.97,22
+True,5,"{'confidence': 1.0, 'final': True}","Wellington, New Zealand",140,1.00,9
+True,5,"{'confidence': 1.0, 'final': True}","Wellington, New Zealand",140,1.00,9
+False,0,"{'confidence': 0.0, 'final': False}",settled in Shanghai. These churches are the Russian,141,0.00,17
+False,0,"{'confidence': 0.1589377278787854, 'final': False}",Shanghai French Concession had two Russian Orth,141,0.16,24
+False,1,"{'confidence': 0.0, 'final': False}",Shanghai's foreign concessions included two,141,0.00,19
+True,1,"{'confidence': 0.6615549439527126, 'final': True}",Shanghai French Concession had two Russian Orth,141,0.66,32
+True,2,"{'confidence': 0.5215895883920967, 'final': True}",Shanghai French Concession had two Russian Orth,141,0.52,20
+False,2,"{'confidence': 0.04595080283892253, 'final': False}",Shanghai French Concession had two Russian Orth,141,0.05,28
+False,3,"{'confidence': 0.0, 'final': False}","Shanghai French Concession, Russian Orthodox",141,0.00,21
+False,3,"{'confidence': 0.0, 'final': False}",Shanghai French Concession had two Russian Orth,141,0.00,27
+True,4,"{'confidence': 1.0, 'final': True}",Shanghai,141,1.00,12
+True,4,"{'confidence': 1.0, 'final': True}",Shanghai,141,1.00,12
+True,0,"{'confidence': 1.0, 'final': True}",Oregon,142,1.00,15
+False,1,"{'confidence': 0.0, 'final': False}",Oregon became a member of the Kennedy family through the,142,0.00,18
+True,1,"{'confidence': 0.27678842119084196, 'final': True}",Oregon,142,0.28,31
+True,2,"{'confidence': 0.27517813167339883, 'final': True}",Oregon,142,0.28,15
+False,3,"{'confidence': 0.06671120528628063, 'final': False}",Oregon,142,0.07,19
+True,3,"{'confidence': 1.0, 'final': True}",California,142,1.00,26
+True,3,"{'confidence': 1.0, 'final': True}",California,142,1.00,26
+True,0,"{'confidence': 1.0, 'final': True}",Colorado,143,1.00,21
+True,1,"{'confidence': 1.0, 'final': True}",Colorado,143,1.00,17
+True,2,"{'confidence': 1.0, 'final': True}",Colorado,143,1.00,21
+True,2,"{'confidence': 1.0, 'final': True}",Colorado,143,1.00,26
+True,3,"{'confidence': 0.5272027794743263, 'final': True}",Colorado,143,0.53,15
+True,3,"{'confidence': 0.5272027794743263, 'final': True}",Colorado,143,0.53,15
+True,0,"{'confidence': 1.0, 'final': True}",Duever et al. estimated that 70,144,1.00,19
+True,0,"{'confidence': 1.0, 'final': True}",Duever et al. estimated that 70,144,1.00,19
+True,1,"{'confidence': 0.47134238864717254, 'final': True}",Sandra Neil Wallace's book credits,144,0.47,18
+True,1,"{'confidence': 0.7349579017499553, 'final': True}",Sandra Neil Wallace's book credits,144,0.73,18
+False,2,"{'confidence': 0.0, 'final': False}",Sandra Neil Wal,144,0.00,17
+False,2,"{'confidence': 0.0, 'final': False}",no answer,144,0.00,23
+False,3,"{'confidence': 0.0, 'final': False}",Sandra Neil Wal,144,0.00,15
+False,3,"{'confidence': 0.0, 'final': False}","Florida Everglades, Marjory Ston",144,0.00,25
+False,4,"{'confidence': 0.0, 'final': False}",no answer,144,0.00,17
+False,4,"{'confidence': 0.0, 'final': False}",no answer,144,0.00,23
+False,5,"{'confidence': 0.0, 'final': False}",Sandra Neil Wal,144,0.00,17
+False,5,"{'confidence': 0.0, 'final': False}",Sandra,144,0.00,28
+True,6,"{'confidence': 0.4077524356879752, 'final': True}",Everglades,144,0.41,19
+True,6,"{'confidence': 0.708362708904921, 'final': True}",Everglades,144,0.71,22
+True,6,"{'confidence': 0.708362708904921, 'final': True}",Everglades,144,0.71,22
