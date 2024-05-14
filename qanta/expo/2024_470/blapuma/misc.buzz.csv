@@ -1,0 +1,48 @@
+weight,sentence,evidence,question,word,final,page
+0.00,0,"{'confidence': 0.0, 'final': False}",128,17,False,Stare decisis
+0.00,0,"{'confidence': 0.0, 'final': False}",128,23,False,"""Stare decisis compels adherence"
+0.00,1,"{'confidence': 0.0, 'final': False}",128,18,False,"""Justice waits for no one"""
+0.00,1,"{'confidence': 0.0, 'final': False}",128,18,False,"""Justice waits for no one"""
+0.00,2,"{'confidence': 0.0, 'final': False}",128,18,False,no answer
+0.00,2,"{'confidence': 0.0, 'final': False}",128,36,False,no answer
+0.00,2,"{'confidence': 0.0, 'final': False}",128,40,False,no answer
+0.00,3,"{'confidence': 0.0, 'final': False}",128,22,False,no answer
+0.00,3,"{'confidence': 0.0, 'final': False}",128,25,False,""""
+0.00,3,"{'confidence': 0.0, 'final': False}",128,25,False,""""
+0.00,0,"{'confidence': 0.0, 'final': False}",129,17,False,"team, Félix ""xQc"""
+0.00,0,"{'confidence': 0.0, 'final': False}",129,24,False,(Note
+0.00,1,"{'confidence': 0.0, 'final': False}",129,17,False,no answer
+0.00,1,"{'confidence': 0.0, 'final': False}",129,33,False,Master
+0.00,1,"{'confidence': 0.0, 'final': False}",129,39,False,'The Master of Sh
+0.00,2,"{'confidence': 0.0, 'final': False}",129,17,False,Armed with Shadow
+0.00,2,"{'confidence': 0.0, 'final': False}",129,19,False,no answer
+0.00,3,"{'confidence': 0.0, 'final': False}",129,16,False,"Ahmed ""Jackeywonky"" White,"
+0.00,3,"{'confidence': 0.0, 'final': False}",129,25,False,no answer
+1.00,4,"{'confidence': 1.0, 'final': True}",129,14,True,League of Legends
+1.00,4,"{'confidence': 1.0, 'final': True}",129,14,True,League of Legends
+0.00,0,"{'confidence': 0.0, 'final': False}",125,20,False,Will Smith
+0.00,0,"{'confidence': 0.0, 'final': False}",125,24,False,"Compton, Quincy Jones says that there"
+0.00,1,"{'confidence': 0.0, 'final': False}",125,18,False,"""Compton, there ain't no city"
+0.00,1,"{'confidence': 0.0, 'final': False}",125,34,False,"Compton, Tupac Shakur,"
+0.00,2,"{'confidence': 0.0, 'final': False}",125,17,False,Boyz n the
+0.00,2,"{'confidence': 0.0, 'final': False}",125,21,False,I Am Legend
+0.00,3,"{'confidence': 0.0, 'final': False}",125,17,False,"""Without a City"
+0.44,4,"{'confidence': 0.44349292493843356, 'final': True}",125,16,True,Common
+0.46,4,"{'confidence': 0.4602220509482879, 'final': True}",125,20,True,Common
+0.17,5,"{'confidence': 0.17187623664086182, 'final': False}",125,11,False,Common
+0.17,5,"{'confidence': 0.17187623664086182, 'final': False}",125,11,False,Common
+0.00,0,"{'confidence': 0.0, 'final': False}",126,17,False,"""The Evolution of Music"" by Kany"
+0.00,1,"{'confidence': 0.0, 'final': False}",126,17,False,"""The Way I Are"" (Remix)"
+0.00,1,"{'confidence': 0.0, 'final': False}",126,29,False,"""The Weeknd - Blinding Lights"""
+0.00,2,"{'confidence': 0.0, 'final': False}",126,17,False,KFC (Kentucky Fried Chicken)
+0.00,2,"{'confidence': 0.0, 'final': False}",126,22,False,Sugarhill Gang featuring Grandmaster Flash and the
+0.00,3,"{'confidence': 0.0, 'final': False}",126,16,False,Monday Night Cupids
+0.00,3,"{'confidence': 0.0, 'final': False}",126,16,False,Monday Night Cupids
+0.00,0,"{'confidence': 0.0, 'final': False}",127,18,False,(Note
+0.00,0,"{'confidence': 0.0, 'final': False}",127,28,False,The Incredible Hulk
+0.00,1,"{'confidence': 0.0, 'final': False}",127,19,False,Ste
+0.00,1,"{'confidence': 0.0, 'final': False}",127,32,False,Kevin Hart
+0.00,2,"{'confidence': 0.0, 'final': False}",127,19,False,Kevin Hart
+0.00,2,"{'confidence': 0.0, 'final': False}",127,22,False,Kevin Hart
+0.00,3,"{'confidence': 0.0, 'final': False}",127,12,False,PewDiePie
+0.00,3,"{'confidence': 0.0, 'final': False}",127,12,False,PewDiePie

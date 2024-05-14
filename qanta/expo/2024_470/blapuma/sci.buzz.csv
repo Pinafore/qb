@@ -1,0 +1,48 @@
+weight,sentence,final,page,word,evidence,question
+0.15,0,False,Octopus,18,"{'confidence': 0.14996109985583556, 'final': False}",110
+0.00,1,False,Decapods exhibit directional memory through the,18,"{'confidence': 0.0, 'final': False}",110
+0.00,1,False,Decapods are known to exhibit directional,24,"{'confidence': 0.0, 'final': False}",110
+0.00,2,False,Cnidarians,17,"{'confidence': 0.0, 'final': False}",110
+0.00,2,False,Cnidarians,24,"{'confidence': 0.0, 'final': False}",110
+0.00,3,False,Annelida (segmented worms),7,"{'confidence': 0.0, 'final': False}",110
+1.00,4,True,Echinodermata,14,"{'confidence': 1.0, 'final': True}",110
+1.00,4,True,Echinodermata,14,"{'confidence': 1.0, 'final': True}",110
+0.52,0,True,Adrien-Marie Legendre,9,"{'confidence': 0.5214731268214621, 'final': True}",111
+0.00,1,False,Euler's rule,18,"{'confidence': 0.0, 'final': False}",111
+0.00,1,False,Nicole Oresme wrote to Gauss under,20,"{'confidence': 0.0, 'final': False}",111
+0.88,2,True,Sophie Germain wrote to Gauss under the,14,"{'confidence': 0.8751123241301628, 'final': True}",111
+0.32,2,True,Sophie Germain,36,"{'confidence': 0.31727650002150287, 'final': True}",111
+0.57,2,True,Sophie Germain,36,"{'confidence': 0.5680433513699628, 'final': True}",111
+0.68,3,True,Sophie Germain,15,"{'confidence': 0.6763091665885854, 'final': True}",111
+0.00,3,False,- Sophie Germ,31,"{'confidence': 0.0, 'final': False}",111
+0.90,3,True,Sophie Germain,39,"{'confidence': 0.9046219787130272, 'final': True}",111
+0.75,4,True,Sophie Germain,17,"{'confidence': 0.752888930481709, 'final': True}",111
+0.75,4,True,Sophie Germain,17,"{'confidence': 0.752888930481709, 'final': True}",111
+0.00,0,False,IQ Theft Test in a Boston test battery,17,"{'confidence': 0.0, 'final': False}",112
+0.00,0,False,IQ Theft Test in a Boston test battery,17,"{'confidence': 0.0, 'final': False}",112
+0.00,1,False,Boston Test adapted by Gandour et al. into,12,"{'confidence': 0.0, 'final': False}",112
+0.00,2,False,Boston Cognitive Test for Alzheimer',16,"{'confidence': 0.0, 'final': False}",112
+0.00,2,False,"Boston Naming Test, Boston Naming Test,",28,"{'confidence': 0.0, 'final': False}",112
+0.00,2,False,"Boston Naming Test, Boston Naming Test,",28,"{'confidence': 0.0, 'final': False}",112
+0.02,3,False,Broca's aphasia,15,"{'confidence': 0.01688562252022764, 'final': False}",112
+0.00,3,False,"Boston Naming Test, Boston Diagnostic Language B",16,"{'confidence': 0.0, 'final': False}",112
+0.85,4,True,Broca's aphasia,17,"{'confidence': 0.8470668051453394, 'final': True}",112
+1.00,4,True,Broca's aphasia,30,"{'confidence': 1.0, 'final': True}",112
+1.00,4,True,Broca's aphasia,30,"{'confidence': 1.0, 'final': True}",112
+0.00,0,False,nebulae,17,"{'confidence': 0.0, 'final': False}",113
+0.19,0,False,Messier wanted to give credit to John Bevis,20,"{'confidence': 0.18526192758213123, 'final': False}",113
+0.04,1,False,Crab Nebula,17,"{'confidence': 0.03592850459627206, 'final': False}",113
+0.15,1,False,Cygnus X-1,18,"{'confidence': 0.15404937590292506, 'final': False}",113
+0.04,2,False,Cygnus X-1,15,"{'confidence': 0.0370881747371033, 'final': False}",113
+0.01,2,False,Cygnus X-1,32,"{'confidence': 0.011628890652321783, 'final': False}",113
+0.03,2,False,Cygnus X-1,38,"{'confidence': 0.03249884517523986, 'final': False}",113
+0.94,3,True,Crab Nebula,17,"{'confidence': 0.9364864515587918, 'final': True}",113
+0.83,3,True,Crab Nebula,21,"{'confidence': 0.8321029978087243, 'final': True}",113
+0.83,3,True,Crab Nebula,21,"{'confidence': 0.8321029978087243, 'final': True}",113
+0.07,0,False,"He declined a million-dollar offer,",17,"{'confidence': 0.06529610056656837, 'final': False}",114
+0.00,1,False,The Nobel Prize in Physics in 199,19,"{'confidence': 0.0, 'final': False}",114
+0.00,1,False,"Paul Seymour turned down a million dollars,",31,"{'confidence': 0.0, 'final': False}",114
+0.00,2,False,"He declined a million-dollar reward,",14,"{'confidence': 0.0, 'final': False}",114
+0.00,2,False,Grigori Perelman declined a million,23,"{'confidence': 0.0, 'final': False}",114
+0.00,3,False,support: Gr,10,"{'confidence': 0.0, 'final': False}",114
+0.00,3,False,support: Gr,10,"{'confidence': 0.0, 'final': False}",114

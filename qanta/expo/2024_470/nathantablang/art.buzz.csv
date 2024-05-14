@@ -1,0 +1,44 @@
+page,evidence,final,question,word,weight,sentence
+"Dear Diary, I'm Dead","{'confidence': 0.12220416963100433, 'final': False}",False,160,18,0.12,0
+"Dear Diary, I'm Dead: Alex Smith discovers a diary","{'confidence': 0.12501133978366852, 'final': False}",False,160,21,0.13,0
+"Dear Diary, I'm Dead","{'confidence': 0.05197286233305931, 'final': False}",False,160,20,0.05,1
+"Dear Diary, I'm Dead: Alex Smith discovers a diary","{'confidence': 0.04341153800487518, 'final': False}",False,160,23,0.04,1
+"Dear Diary, I'm Dead: Alex Smith discovers a diary","{'confidence': 0.03148853778839111, 'final': False}",False,160,16,0.03,2
+"Dear Diary, I'm Dead","{'confidence': 0.027290647849440575, 'final': False}",False,160,18,0.03,3
+"Dear Diary, I'm Dead","{'confidence': 0.11237300932407379, 'final': False}",False,160,16,0.11,4
+"Dear Diary, I'm Dead","{'confidence': 0.04026701673865318, 'final': False}",False,160,19,0.04,4
+"Dear Diary, I'm Dead","{'confidence': 0.04026701673865318, 'final': False}",False,160,19,0.04,4
+operator,"{'confidence': 0.024087438359856606, 'final': False}",False,161,19,0.02,0
+operator,"{'confidence': 0.014943006448447704, 'final': False}",False,161,29,0.01,0
+The other operator,"{'confidence': 0.011985346674919128, 'final': False}",False,161,17,0.01,1
+The other operator,"{'confidence': 0.007507374044507742, 'final': False}",False,161,26,0.01,1
+The other operator,"{'confidence': 0.006877099629491568, 'final': False}",False,161,19,0.01,2
+The other operator,"{'confidence': 0.005312744993716478, 'final': False}",False,161,26,0.01,2
+operator,"{'confidence': 0.002400863915681839, 'final': False}",False,161,17,0.00,3
+The other operator,"{'confidence': 0.001697605475783348, 'final': False}",False,161,20,0.00,3
+The other operator,"{'confidence': 0.001697605475783348, 'final': False}",False,161,20,0.00,3
+operator,"{'confidence': 0.014281125739216805, 'final': False}",False,162,18,0.01,0
+operator,"{'confidence': 0.015402757562696934, 'final': False}",False,162,33,0.02,0
+The other operator,"{'confidence': 0.01704873889684677, 'final': False}",False,162,16,0.02,1
+The other operator,"{'confidence': 0.01761808805167675, 'final': False}",False,162,18,0.02,1
+The other operator,"{'confidence': 0.009218082763254642, 'final': False}",False,162,18,0.01,2
+"How are you receiving me?""","{'confidence': 0.007762027904391289, 'final': False}",False,162,24,0.01,2
+"How are you receiving me?""","{'confidence': 0.007762027904391289, 'final': False}",False,162,24,0.01,2
+Winry reveals she has prepared a new automail,"{'confidence': 0.019032450392842293, 'final': False}",False,163,20,0.02,0
+Winry reveals she has prepared a new automail,"{'confidence': 0.017950303852558136, 'final': False}",False,163,35,0.02,0
+Winry reveals she has prepared a new automail,"{'confidence': 0.017950303852558136, 'final': False}",False,163,35,0.02,0
+Winry reveals she has prepared a new automail,"{'confidence': 0.0106861162930727, 'final': False}",False,163,17,0.01,1
+Winry reveals she has prepared a new automail,"{'confidence': 0.006560406181961298, 'final': False}",False,163,27,0.01,1
+Winry reveals she has prepared a new automail,"{'confidence': 0.003420259105041623, 'final': False}",False,163,20,0.00,2
+Winry reveals she has prepared a new automail,"{'confidence': 0.0033898549154400826, 'final': False}",False,163,25,0.00,2
+Winry reveals she has prepared a new automail,"{'confidence': 0.000863129214849323, 'final': False}",False,163,16,0.00,3
+Winry reveals she has prepared a new automail,"{'confidence': 0.000863129214849323, 'final': False}",False,163,16,0.00,3
+Amanda,"{'confidence': 0.04513278603553772, 'final': False}",False,164,20,0.05,0
+Amanda,"{'confidence': 0.05471346154808998, 'final': False}",False,164,21,0.05,0
+Amanda,"{'confidence': 0.020568259060382843, 'final': False}",False,164,20,0.02,1
+Amanda,"{'confidence': 0.02441846951842308, 'final': False}",False,164,31,0.02,1
+Amanda,"{'confidence': 0.03321479260921478, 'final': False}",False,164,16,0.03,2
+Amanda,"{'confidence': 0.021051695570349693, 'final': False}",False,164,26,0.02,2
+Amanda,"{'confidence': 0.011760988272726536, 'final': False}",False,164,16,0.01,3
+Amanda,"{'confidence': 0.010003048926591873, 'final': False}",False,164,19,0.01,3
+Amanda,"{'confidence': 0.010003048926591873, 'final': False}",False,164,19,0.01,3
