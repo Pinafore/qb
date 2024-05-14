@@ -1,111 +1,111 @@
-word,weight,final,sentence,evidence,question,page
-8,-0.08,False,0,"{'confidence': -0.0813486843075, 'final': False}",155,List of music videos
-15,-0.29,False,0,"{'confidence': -0.2944071112428572, 'final': False}",155,List of songs with five-letter titles
-18,-0.26,False,0,"{'confidence': -0.2646393896285714, 'final': False}",155,List of songs with five-letter titles
-26,-0.16,False,0,"{'confidence': -0.15876129850999998, 'final': False}",155,List of songs with five-letter titles
-30,-0.61,False,0,"{'confidence': -0.612409713, 'final': False}",155,Laces
-7,-0.22,False,1,"{'confidence': -0.22154983641399997, 'final': False}",155,Rubber Band
-13,-0.11,False,1,"{'confidence': -0.10883544097121667, 'final': False}",155,"""D.A.N.C.E."""
-18,-0.04,False,1,"{'confidence': -0.04191977547244, 'final': False}",155,"""D.A.N.C.E."""
-25,-0.08,False,1,"{'confidence': -0.08497673133333333, 'final': False}",155,"""Laces"""
-27,-0.08,False,1,"{'confidence': -0.07537113993333333, 'final': False}",155,"""Laces"""
-7,-0.47,False,2,"{'confidence': -0.46744336766666666, 'final': False}",155,"""Laces"""
-14,-0.14,False,2,"{'confidence': -0.1354504228, 'final': False}",155,Laces (song)
-15,-0.15,False,2,"{'confidence': -0.14826889881000002, 'final': False}",155,"""Laces"""
-8,-0.21,False,3,"{'confidence': -0.21233805535666664, 'final': False}",155,"""Laces"""
-15,-0.03,False,3,"{'confidence': -0.026876095641220767, 'final': False}",155,S.I.M.P. (Squirrels In My Pants)
-23,-0.00,True,3,"{'confidence': -8.5112996466e-05, 'final': True}",155,Aglet
-23,-0.00,True,3,"{'confidence': -8.5112996466e-05, 'final': True}",155,Aglet
-7,-0.01,False,0,"{'confidence': -0.01275571553508, 'final': False}",156,Campbell's Soup Company
-11,-0.07,False,0,"{'confidence': -0.07066771937, 'final': False}",156,Swatch
-17,-0.27,False,0,"{'confidence': -0.26792686022121665, 'final': False}",156,Delta Air Lines
-21,-0.00,True,0,"{'confidence': -5.58017475e-06, 'final': True}",156,Omega SA
-7,-0.00,True,1,"{'confidence': -0.00051134305, 'final': True}",156,Omega SA
-12,-0.00,True,1,"{'confidence': -7.6858465e-05, 'final': True}",156,Omega SA
-18,-0.00,True,1,"{'confidence': -0.004248049056325, 'final': True}",156,Omega SA
-21,-0.00,True,1,"{'confidence': -0.0026323944081649998, 'final': True}",156,Omega SA
-6,-0.23,False,2,"{'confidence': -0.2309793, 'final': False}",156,Omega SA
-11,-0.05,False,2,"{'confidence': -0.04697788, 'final': False}",156,Omega SA
-18,-0.01,True,2,"{'confidence': -0.005075392, 'final': True}",156,Omega SA
-25,-0.03,False,2,"{'confidence': -0.033258248, 'final': False}",156,Omega SA
-33,-0.26,False,2,"{'confidence': -0.25760424924110004, 'final': False}",156,Swatch
-33,-0.01,False,2,"{'confidence': -0.014456052408164999, 'final': False}",156,Omega SA
-6,-0.00,True,3,"{'confidence': -0.003017937456325, 'final': True}",156,Omega SA
-13,-0.00,True,3,"{'confidence': -0.00078617635, 'final': True}",156,Omega SA
-14,-0.00,True,3,"{'confidence': -0.00021956635, 'final': True}",156,Omega SA
-6,-0.00,True,4,"{'confidence': -0.00093855635, 'final': True}",156,Omega SA
-12,-0.00,True,4,"{'confidence': -0.000869718, 'final': True}",156,Omega SA
-18,-0.04,False,4,"{'confidence': -0.04125714104007143, 'final': False}",156,Lululemon
-23,-0.25,False,4,"{'confidence': -0.248178041408165, 'final': False}",156,Omega SA
-29,-0.00,True,4,"{'confidence': -1.0042828735714286e-05, 'final': True}",156,Lululemon
-36,-0.00,True,4,"{'confidence': -3.2035319142857142e-06, 'final': True}",156,Lululemon
-8,-0.00,True,5,"{'confidence': -2.8459208499999998e-06, 'final': True}",156,Lululemon
-14,-0.00,True,5,"{'confidence': -2.3967651185714287e-06, 'final': True}",156,Lululemon
-20,-0.00,True,5,"{'confidence': -2.80123275e-06, 'final': True}",156,Lululemon
-27,-0.00,True,5,"{'confidence': -2.0178944285714286e-06, 'final': True}",156,Lululemon
-30,-0.00,True,5,"{'confidence': -3.4419391357142857e-06, 'final': True}",156,Lululemon
-30,-0.00,True,5,"{'confidence': -3.4419391357142857e-06, 'final': True}",156,Lululemon
-6,-0.00,False,0,"{'confidence': -0.00053883285395, 'final': False}",157,The Economist
-10,-0.01,False,0,"{'confidence': -0.0050139505283, 'final': False}",157,The Economist
-15,-0.12,False,0,"{'confidence': -0.1168719771655, 'final': False}",157,The Economist
-21,-0.13,False,0,"{'confidence': -0.130383603, 'final': False}",157,News Corporation
-27,-0.06,False,0,"{'confidence': -0.058140049463000006, 'final': False}",157,The Economist
-27,-0.33,False,0,"{'confidence': -0.330477646683, 'final': False}",157,The Economist
-5,-0.03,False,1,"{'confidence': -0.034662574736796, 'final': False}",157,Bloomberg L.P.
-10,-0.06,False,1,"{'confidence': -0.06360011308066667, 'final': False}",157,LVMH Moët Hennessy Louis Vuitton
-16,-0.00,True,1,"{'confidence': -0.0014041551429933333, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-22,-0.00,True,1,"{'confidence': -0.0005410573333333333, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-24,-0.00,True,1,"{'confidence': -0.0031692570188666665, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-7,-0.00,True,2,"{'confidence': -0.0009286850103333333, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-11,-0.00,True,2,"{'confidence': -0.0007810888456666666, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-16,-0.00,True,2,"{'confidence': -0.0010662364335666666, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-23,-0.00,True,2,"{'confidence': -0.00014799175406666665, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-31,-0.00,True,2,"{'confidence': -0.00038946665133333334, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-35,-0.00,True,2,"{'confidence': -0.00048228965600000004, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-4,-0.00,True,3,"{'confidence': -7.648279833333334e-07, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-10,-0.00,True,3,"{'confidence': -3.9863629466666665e-05, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-16,-0.00,True,3,"{'confidence': -3.1757781546666666e-05, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-21,-0.00,True,3,"{'confidence': -8.115720333333334e-06, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-27,-0.00,True,3,"{'confidence': -0.00019362231154666668, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-33,-0.00,True,3,"{'confidence': -2.0433432216666668e-05, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-37,-0.00,True,3,"{'confidence': -4.443066176666667e-05, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-37,-0.00,True,3,"{'confidence': -4.443066176666667e-05, 'final': True}",157,LVMH Moët Hennessy Louis Vuitton
-6,-0.10,False,0,"{'confidence': -0.10288824331240001, 'final': False}",158,Women in the Victorian era
-13,-0.11,False,0,"{'confidence': -0.10609103923976, 'final': False}",158,List of companies established in the 19th century
-20,-0.12,False,0,"{'confidence': -0.121691626155326, 'final': False}",158,Procter & Gamble
-26,-0.18,False,0,"{'confidence': -0.17936770094398333, 'final': False}",158,John Deere (company)
-32,-0.00,True,0,"{'confidence': -0.00348520614, 'final': True}",158,Singer Corporation
-35,-0.01,False,0,"{'confidence': -0.012024279765599999, 'final': False}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-6,-0.01,False,1,"{'confidence': -0.013943424185133333, 'final': False}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-10,-0.12,False,1,"{'confidence': -0.1210972217656, 'final': False}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-15,-0.00,True,1,"{'confidence': -0.00455003984025, 'final': True}",158,"Tesla, Inc."
-17,-0.00,True,1,"{'confidence': -0.0003881082731625, 'final': True}",158,"Tesla, Inc."
-6,-0.00,True,2,"{'confidence': -0.0019152811133266669, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-12,-0.00,True,2,"{'confidence': -0.0005819265799933333, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-18,-0.00,True,2,"{'confidence': -0.00260940587755, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-26,-0.00,True,2,"{'confidence': -0.0009954062387766665, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-31,-0.00,True,2,"{'confidence': -0.00047589727088333337, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-32,-0.00,True,2,"{'confidence': -0.0006034410066666667, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-7,-0.00,True,3,"{'confidence': -0.0014466052781625, 'final': True}",158,Daimler AG
-13,-0.08,False,3,"{'confidence': -0.08392704840316251, 'final': False}",158,Daimler AG
-17,-0.01,False,3,"{'confidence': -0.0129977389540825, 'final': False}",158,Daimler AG
-17,-0.01,False,3,"{'confidence': -0.010624114459074999, 'final': False}",158,Daimler AG
-7,-0.02,False,4,"{'confidence': -0.024166984272110004, 'final': False}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-12,-0.02,False,4,"{'confidence': -0.016364729753433335, 'final': False}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-16,-0.01,False,4,"{'confidence': -0.011108901278213332, 'final': False}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-19,-0.00,True,4,"{'confidence': -0.0014040954826666666, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-19,-0.00,True,4,"{'confidence': -0.0014040954826666666, 'final': True}",158,Benz (accept Daimler-Benz and Mercedes-Benz)
-6,-0.00,False,0,"{'confidence': -7.147159766666667e-06, 'final': False}",159,McDonald's
-10,-0.00,False,0,"{'confidence': -9.790236821333333e-05, 'final': False}",159,McDonald's
-16,-0.00,False,0,"{'confidence': -4.07217e-07, 'final': False}",159,McDonald's
-21,-0.00,True,0,"{'confidence': -4.07217e-07, 'final': True}",159,McDonald's
-25,-0.00,True,0,"{'confidence': -2.0854421666666669e-07, 'final': True}",159,McDonald's
-6,-0.00,True,1,"{'confidence': -0.0038406527539833336, 'final': True}",159,McDonald's
-11,-0.10,False,1,"{'confidence': -0.09745976731945, 'final': False}",159,Jack in the Box
-6,-0.33,False,2,"{'confidence': -0.33382285561182495, 'final': False}",159,Del Taco
-10,-0.21,False,2,"{'confidence': -0.20793315686466665, 'final': False}",159,Taco Bell
-12,-0.05,False,2,"{'confidence': -0.04519061820176667, 'final': False}",159,Taco Bell
-7,-0.33,False,3,"{'confidence': -0.325078006408165, 'final': False}",159,Del Taco
-11,-0.01,True,3,"{'confidence': -0.0073927466794666665, 'final': True}",159,Taco Bell
-14,-0.00,True,3,"{'confidence': -2.4645293800000003e-05, 'final': True}",159,Taco Bell
-14,-0.00,True,3,"{'confidence': -2.4645293800000003e-05, 'final': True}",159,Taco Bell
+sentence,page,evidence,question,final,weight,word
+0,List of music videos,"{'confidence': -0.0813486843075, 'final': False}",155,False,-0.08,8
+0,List of songs with five-letter titles,"{'confidence': -0.2944071112428572, 'final': False}",155,False,-0.29,15
+0,List of songs with five-letter titles,"{'confidence': -0.2646393896285714, 'final': False}",155,False,-0.26,18
+0,List of songs with five-letter titles,"{'confidence': -0.15876129850999998, 'final': False}",155,False,-0.16,26
+0,Laces,"{'confidence': -0.612409713, 'final': False}",155,False,-0.61,30
+1,Rubber Band,"{'confidence': -0.22154983641399997, 'final': False}",155,False,-0.22,7
+1,"""D.A.N.C.E.""","{'confidence': -0.10883544097121667, 'final': False}",155,False,-0.11,13
+1,"""D.A.N.C.E.""","{'confidence': -0.04191977547244, 'final': False}",155,False,-0.04,18
+1,"""Laces""","{'confidence': -0.08497673133333333, 'final': False}",155,False,-0.08,25
+1,"""Laces""","{'confidence': -0.07537113993333333, 'final': False}",155,False,-0.08,27
+2,"""Laces""","{'confidence': -0.46744336766666666, 'final': False}",155,False,-0.47,7
+2,Laces (song),"{'confidence': -0.1354504228, 'final': False}",155,False,-0.14,14
+2,"""Laces""","{'confidence': -0.14826889881000002, 'final': False}",155,False,-0.15,15
+3,"""Laces""","{'confidence': -0.21233805535666664, 'final': False}",155,False,-0.21,8
+3,S.I.M.P. (Squirrels In My Pants),"{'confidence': -0.026876095641220767, 'final': False}",155,False,-0.03,15
+3,Aglet,"{'confidence': -8.5112996466e-05, 'final': True}",155,True,-0.00,23
+3,Aglet,"{'confidence': -8.5112996466e-05, 'final': True}",155,True,-0.00,23
+0,Campbell's Soup Company,"{'confidence': -0.01275571553508, 'final': False}",156,False,-0.01,7
+0,Swatch,"{'confidence': -0.07066771937, 'final': False}",156,False,-0.07,11
+0,Delta Air Lines,"{'confidence': -0.26792686022121665, 'final': False}",156,False,-0.27,17
+0,Omega SA,"{'confidence': -5.58017475e-06, 'final': True}",156,True,-0.00,21
+1,Omega SA,"{'confidence': -0.00051134305, 'final': True}",156,True,-0.00,7
+1,Omega SA,"{'confidence': -7.6858465e-05, 'final': True}",156,True,-0.00,12
+1,Omega SA,"{'confidence': -0.004248049056325, 'final': False}",156,False,-0.00,18
+1,Omega SA,"{'confidence': -0.0026323944081649998, 'final': True}",156,True,-0.00,21
+2,Omega SA,"{'confidence': -0.2309793, 'final': False}",156,False,-0.23,6
+2,Omega SA,"{'confidence': -0.04697788, 'final': False}",156,False,-0.05,11
+2,Omega SA,"{'confidence': -0.005075392, 'final': False}",156,False,-0.01,18
+2,Omega SA,"{'confidence': -0.033258248, 'final': False}",156,False,-0.03,25
+2,Swatch,"{'confidence': -0.25760424924110004, 'final': False}",156,False,-0.26,33
+2,Omega SA,"{'confidence': -0.014456052408164999, 'final': False}",156,False,-0.01,33
+3,Omega SA,"{'confidence': -0.003017937456325, 'final': False}",156,False,-0.00,6
+3,Omega SA,"{'confidence': -0.00078617635, 'final': True}",156,True,-0.00,13
+3,Omega SA,"{'confidence': -0.00021956635, 'final': True}",156,True,-0.00,14
+4,Omega SA,"{'confidence': -0.00093855635, 'final': True}",156,True,-0.00,6
+4,Omega SA,"{'confidence': -0.000869718, 'final': True}",156,True,-0.00,12
+4,Lululemon,"{'confidence': -0.04125714104007143, 'final': False}",156,False,-0.04,18
+4,Omega SA,"{'confidence': -0.248178041408165, 'final': False}",156,False,-0.25,23
+4,Lululemon,"{'confidence': -1.0042828735714286e-05, 'final': True}",156,True,-0.00,29
+4,Lululemon,"{'confidence': -3.2035319142857142e-06, 'final': True}",156,True,-0.00,36
+5,Lululemon,"{'confidence': -2.8459208499999998e-06, 'final': True}",156,True,-0.00,8
+5,Lululemon,"{'confidence': -2.3967651185714287e-06, 'final': True}",156,True,-0.00,14
+5,Lululemon,"{'confidence': -2.80123275e-06, 'final': True}",156,True,-0.00,20
+5,Lululemon,"{'confidence': -2.0178944285714286e-06, 'final': True}",156,True,-0.00,27
+5,Lululemon,"{'confidence': -3.4419391357142857e-06, 'final': True}",156,True,-0.00,30
+5,Lululemon,"{'confidence': -3.4419391357142857e-06, 'final': True}",156,True,-0.00,30
+0,The Economist,"{'confidence': -0.00053883285395, 'final': False}",157,False,-0.00,6
+0,The Economist,"{'confidence': -0.0050139505283, 'final': False}",157,False,-0.01,10
+0,The Economist,"{'confidence': -0.1168719771655, 'final': False}",157,False,-0.12,15
+0,News Corporation,"{'confidence': -0.130383603, 'final': False}",157,False,-0.13,21
+0,The Economist,"{'confidence': -0.058140049463000006, 'final': False}",157,False,-0.06,27
+0,The Economist,"{'confidence': -0.330477646683, 'final': False}",157,False,-0.33,27
+1,Bloomberg L.P.,"{'confidence': -0.034662574736796, 'final': False}",157,False,-0.03,5
+1,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.06360011308066667, 'final': False}",157,False,-0.06,10
+1,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.0014041551429933333, 'final': True}",157,True,-0.00,16
+1,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.0005410573333333333, 'final': True}",157,True,-0.00,22
+1,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.0031692570188666665, 'final': False}",157,False,-0.00,24
+2,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.0009286850103333333, 'final': True}",157,True,-0.00,7
+2,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.0007810888456666666, 'final': True}",157,True,-0.00,11
+2,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.0010662364335666666, 'final': True}",157,True,-0.00,16
+2,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.00014799175406666665, 'final': True}",157,True,-0.00,23
+2,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.00038946665133333334, 'final': True}",157,True,-0.00,31
+2,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.00048228965600000004, 'final': True}",157,True,-0.00,35
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -7.648279833333334e-07, 'final': True}",157,True,-0.00,4
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -3.9863629466666665e-05, 'final': True}",157,True,-0.00,10
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -3.1757781546666666e-05, 'final': True}",157,True,-0.00,16
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -8.115720333333334e-06, 'final': True}",157,True,-0.00,21
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -0.00019362231154666668, 'final': True}",157,True,-0.00,27
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -2.0433432216666668e-05, 'final': True}",157,True,-0.00,33
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -4.443066176666667e-05, 'final': True}",157,True,-0.00,37
+3,LVMH Moët Hennessy Louis Vuitton,"{'confidence': -4.443066176666667e-05, 'final': True}",157,True,-0.00,37
+0,Women in the Victorian era,"{'confidence': -0.10288824331240001, 'final': False}",158,False,-0.10,6
+0,List of companies established in the 19th century,"{'confidence': -0.10609103923976, 'final': False}",158,False,-0.11,13
+0,Procter & Gamble,"{'confidence': -0.121691626155326, 'final': False}",158,False,-0.12,20
+0,John Deere (company),"{'confidence': -0.17936770094398333, 'final': False}",158,False,-0.18,26
+0,Singer Corporation,"{'confidence': -0.00348520614, 'final': False}",158,False,-0.00,32
+0,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.012024279765599999, 'final': False}",158,False,-0.01,35
+1,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.013943424185133333, 'final': False}",158,False,-0.01,6
+1,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.1210972217656, 'final': False}",158,False,-0.12,10
+1,"Tesla, Inc.","{'confidence': -0.00455003984025, 'final': False}",158,False,-0.00,15
+1,"Tesla, Inc.","{'confidence': -0.0003881082731625, 'final': True}",158,True,-0.00,17
+2,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.0019152811133266669, 'final': True}",158,True,-0.00,6
+2,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.0005819265799933333, 'final': True}",158,True,-0.00,12
+2,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.00260940587755, 'final': True}",158,True,-0.00,18
+2,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.0009954062387766665, 'final': True}",158,True,-0.00,26
+2,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.00047589727088333337, 'final': True}",158,True,-0.00,31
+2,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.0006034410066666667, 'final': True}",158,True,-0.00,32
+3,Daimler AG,"{'confidence': -0.0014466052781625, 'final': True}",158,True,-0.00,7
+3,Daimler AG,"{'confidence': -0.08392704840316251, 'final': False}",158,False,-0.08,13
+3,Daimler AG,"{'confidence': -0.0129977389540825, 'final': False}",158,False,-0.01,17
+3,Daimler AG,"{'confidence': -0.010624114459074999, 'final': False}",158,False,-0.01,17
+4,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.024166984272110004, 'final': False}",158,False,-0.02,7
+4,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.016364729753433335, 'final': False}",158,False,-0.02,12
+4,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.011108901278213332, 'final': False}",158,False,-0.01,16
+4,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.0014040954826666666, 'final': True}",158,True,-0.00,19
+4,Benz (accept Daimler-Benz and Mercedes-Benz),"{'confidence': -0.0014040954826666666, 'final': True}",158,True,-0.00,19
+0,McDonald's,"{'confidence': -7.147159766666667e-06, 'final': False}",159,False,-0.00,6
+0,McDonald's,"{'confidence': -9.790236821333333e-05, 'final': True}",159,True,-0.00,10
+0,McDonald's,"{'confidence': -4.07217e-07, 'final': True}",159,True,-0.00,16
+0,McDonald's,"{'confidence': -4.07217e-07, 'final': True}",159,True,-0.00,21
+0,McDonald's,"{'confidence': -2.0854421666666669e-07, 'final': True}",159,True,-0.00,25
+1,McDonald's,"{'confidence': -0.0038406527539833336, 'final': False}",159,False,-0.00,6
+1,Jack in the Box,"{'confidence': -0.09745976731945, 'final': False}",159,False,-0.10,11
+2,Del Taco,"{'confidence': -0.33382285561182495, 'final': False}",159,False,-0.33,6
+2,Taco Bell,"{'confidence': -0.20793315686466665, 'final': False}",159,False,-0.21,10
+2,Taco Bell,"{'confidence': -0.04519061820176667, 'final': False}",159,False,-0.05,12
+3,Del Taco,"{'confidence': -0.325078006408165, 'final': False}",159,False,-0.33,7
+3,Taco Bell,"{'confidence': -0.0073927466794666665, 'final': False}",159,False,-0.01,11
+3,Taco Bell,"{'confidence': -2.4645293800000003e-05, 'final': True}",159,True,-0.00,14
+3,Taco Bell,"{'confidence': -2.4645293800000003e-05, 'final': True}",159,True,-0.00,14

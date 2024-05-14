@@ -1,108 +1,108 @@
-final,sentence,page,word,weight,evidence,question
-False,0,Creator (song),7,-0.60,"{'confidence': -0.5990263176575, 'final': False}",115
-False,0,List of inventors,12,-0.40,"{'confidence': -0.40491722417000003, 'final': False}",115
-False,0,Dr Pepper,17,-0.61,"{'confidence': -0.608063862, 'final': False}",115
-False,0,Coca-Cola formula,23,-0.24,"{'confidence': -0.2370904487435, 'final': False}",115
-False,0,Coca-Cola formula,28,-0.05,"{'confidence': -0.054568859755, 'final': False}",115
-False,0,Coca-Cola formula,33,-0.17,"{'confidence': -0.17210495208749998, 'final': False}",115
-False,0,Vegemite,33,-0.39,"{'confidence': -0.3932042379646, 'final': False}",115
-False,1,Heinz Tomato Ketchup,7,-0.17,"{'confidence': -0.166517637766928, 'final': False}",115
-False,1,Coca-Cola formula,13,-0.12,"{'confidence': -0.12499553366749999, 'final': False}",115
-False,1,Coca-Cola formula,20,-0.15,"{'confidence': -0.151660273995, 'final': False}",115
-False,1,Duct tape,21,-0.08,"{'confidence': -0.084772317379, 'final': False}",115
-False,2,Blue Sky,6,-0.01,"{'confidence': -0.01128191729045, 'final': False}",115
-False,2,Blue Sky,12,-0.04,"{'confidence': -0.04167911152433334, 'final': False}",115
-False,2,Blue Sky,18,-0.09,"{'confidence': -0.09133094450921665, 'final': False}",115
-False,2,Blue Sky,23,-0.04,"{'confidence': -0.03864049987244, 'final': False}",115
-False,3,Methamphetamine in popular culture,8,-0.07,"{'confidence': -0.07034421536777166, 'final': False}",115
-True,3,Blue Sky,13,-0.00,"{'confidence': -0.0003100585021666667, 'final': True}",115
-True,3,Blue Sky,16,-0.01,"{'confidence': -0.009603516824766666, 'final': True}",115
-True,3,Blue Sky,21,-0.00,"{'confidence': -0.0022545578003883332, 'final': True}",115
-True,3,Blue Sky,21,-0.00,"{'confidence': -0.0022545578003883332, 'final': True}",115
-False,0,List of How I Met Your Mother characters,8,-0.00,"{'confidence': -0.0049079153617875, 'final': False}",116
-False,0,List of How I Met Your Mother characters,15,-0.05,"{'confidence': -0.04502042955402875, 'final': False}",116
-False,0,List of How I Met Your Mother characters,21,-0.04,"{'confidence': -0.04242696432816875, 'final': False}",116
-False,0,List of How I Met Your Mother characters,23,-0.07,"{'confidence': -0.07279116077060875, 'final': False}",116
-False,1,Jason Segel,6,-0.02,"{'confidence': -0.02012204895133333, 'final': False}",116
-False,1,Jason Segel,13,-0.23,"{'confidence': -0.22674026548666668, 'final': False}",116
-True,1,Marshall Manesh,19,-0.01,"{'confidence': -0.005437929188575, 'final': True}",116
-False,1,Marshall Manesh,20,-0.02,"{'confidence': -0.024177449424325, 'final': False}",116
-False,2,Neil Patrick Harris,6,-0.17,"{'confidence': -0.16502596427211, 'final': False}",116
-True,2,Neil Patrick Harris,11,-0.00,"{'confidence': -0.0005874536042166668, 'final': True}",116
-False,2,Neil Patrick Harris,18,-0.22,"{'confidence': -0.22178514666666668, 'final': False}",116
-False,2,Will Forte,24,-0.08,"{'confidence': -0.07554458969769999, 'final': False}",116
-False,2,Neil Patrick Harris,24,-0.08,"{'confidence': -0.08213401333333332, 'final': False}",116
-False,3,Will Forte,8,-0.05,"{'confidence': -0.04949229238916667, 'final': False}",116
-True,3,Neil Patrick Harris,13,0.00,"{'confidence': 0.0, 'final': True}",116
-True,3,Neil Patrick Harris,18,0.00,"{'confidence': 0.0, 'final': True}",116
-True,3,Neil Patrick Harris,20,0.00,"{'confidence': 0.0, 'final': True}",116
-True,3,Neil Patrick Harris,20,0.00,"{'confidence': 0.0, 'final': True}",116
-False,0,Surname,8,-0.36,"{'confidence': -0.36467245, 'final': False}",117
-False,0,Sheikh Ahmed,8,-0.14,"{'confidence': -0.13799880913616666, 'final': False}",117
-False,1,Maiden name,8,-0.12,"{'confidence': -0.1208597429127625, 'final': False}",117
-False,1,Kate Chopin,15,-0.03,"{'confidence': -0.027969455358883333, 'final': False}",117
-False,1,Star Trek: The Original Series,22,-0.10,"{'confidence': -0.09521228591210834, 'final': False}",117
-False,2,Star Trek,8,-0.46,"{'confidence': -0.45565575784999995, 'final': False}",117
-False,2,List of Star Trek characters (A–F),14,-0.10,"{'confidence': -0.10442752085525, 'final': False}",117
-False,2,Karl Marx,19,-0.10,"{'confidence': -0.09864314611433334, 'final': False}",117
-False,2,List of Star Trek characters (A–F),20,-0.11,"{'confidence': -0.10959019914620001, 'final': False}",117
-False,3,List of fictional characters by name,5,-0.19,"{'confidence': -0.19380329707900001, 'final': False}",117
-False,3,List of fictional characters by surname,12,-0.25,"{'confidence': -0.24620042618133334, 'final': False}",117
-False,3,List of fictional characters by name,19,-0.28,"{'confidence': -0.27906293651499997, 'final': False}",117
-False,3,List of fictional characters by name,25,-0.25,"{'confidence': -0.25108275622233334, 'final': False}",117
-False,3,Grimes,31,-0.07,"{'confidence': -0.07329106884016666, 'final': False}",117
-False,3,Grimes,33,-0.01,"{'confidence': -0.01412861764733333, 'final': False}",117
-False,4,Grimes,7,-0.10,"{'confidence': -0.10055052213133332, 'final': False}",117
-True,4,Grimes,14,-0.00,"{'confidence': -0.00275357317465, 'final': True}",117
-False,4,Grimes,19,-0.06,"{'confidence': -0.061970249556639996, 'final': False}",117
-True,4,Grimes,22,-0.00,"{'confidence': -0.0032558519164416666, 'final': True}",117
-False,5,Grimes,7,-0.02,"{'confidence': -0.0186164475094, 'final': False}",117
-True,5,Grimes,14,-0.00,"{'confidence': -0.0007271188155, 'final': True}",117
-False,5,Grimes,19,-0.03,"{'confidence': -0.02686834005086, 'final': False}",117
-True,5,Grimes,26,-0.00,"{'confidence': -0.00057584472298, 'final': True}",117
-False,5,Grimes,32,-0.08,"{'confidence': -0.08490965971483333, 'final': False}",117
-True,5,Grimes,36,-0.00,"{'confidence': -0.0033680166756216664, 'final': True}",117
-True,5,Grimes,36,-0.00,"{'confidence': -0.0033680166756216664, 'final': True}",117
-False,0,List of fictional secret agents,7,-0.06,"{'confidence': -0.061303781636400004, 'final': False}",118
-False,0,List of fictional secret agents,13,-0.45,"{'confidence': -0.44500650958665994, 'final': False}",118
-False,0,Breaking Bad,19,-0.17,"{'confidence': -0.1739858476484, 'final': False}",118
-False,0,Orphan Black,24,-0.36,"{'confidence': -0.3559096621735667, 'final': False}",118
-False,0,Alias (TV series),25,-0.16,"{'confidence': -0.15929683923946, 'final': False}",118
-False,1,Arrested Development (TV series),8,-0.08,"{'confidence': -0.08343935477700375, 'final': False}",118
-False,1,List of Arrested Development characters,12,-0.31,"{'confidence': -0.30781352908438836, 'final': False}",118
-False,1,Arrested Development (TV series),20,-0.11,"{'confidence': -0.10771882634095001, 'final': False}",118
-False,1,Arrested Development (TV series),24,-0.02,"{'confidence': -0.0159049168099875, 'final': False}",118
-False,1,Arrested Development (TV series),30,-0.04,"{'confidence': -0.03963779970416125, 'final': False}",118
-False,1,Arrested Development (TV series),36,-0.02,"{'confidence': -0.0196715965971225, 'final': False}",118
-True,1,Arrested Development (TV series),37,-0.00,"{'confidence': -0.0025508465021625, 'final': True}",118
-True,2,Maeby Fünke,6,-0.00,"{'confidence': -0.0007847979854999999, 'final': True}",118
-True,2,Maeby Fünke,13,-0.00,"{'confidence': -0.00036608397827166665, 'final': True}",118
-True,2,Maeby Fünke,14,-0.00,"{'confidence': -0.0005016143650583333, 'final': True}",118
-True,3,Maeby Fünke,7,-0.00,"{'confidence': -0.001124107484275, 'final': True}",118
-True,3,Maeby Fünke,13,-0.00,"{'confidence': -0.00017494383810833335, 'final': True}",118
-True,3,Maeby Fünke,19,-0.00,"{'confidence': -2.3095398883333332e-06, 'final': True}",118
-True,3,Maeby Fünke,22,-0.00,"{'confidence': -1.0050312775e-05, 'final': True}",118
-True,3,Maeby Fünke,22,-0.00,"{'confidence': -1.0050312775e-05, 'final': True}",118
-False,0,List of American films of 1939,9,-0.08,"{'confidence': -0.08275442041873751, 'final': False}",119
-False,0,"Knute Rockne, All American",14,-0.12,"{'confidence': -0.11675647326604287, 'final': False}",119
-False,0,Boys Town (film),15,-0.01,"{'confidence': -0.00973360624325, 'final': False}",119
-False,1,Boys Town (film),7,-0.01,"{'confidence': -0.014662220951116666, 'final': False}",119
-False,1,Brooklyn,13,-0.55,"{'confidence': -0.552307607342, 'final': False}",119
-False,1,Chinatown,18,-0.06,"{'confidence': -0.058120623271333334, 'final': False}",119
-False,1,Chinatown,19,-0.11,"{'confidence': -0.10924513170854999, 'final': False}",119
-False,2,Chinatown,7,-0.06,"{'confidence': -0.05801126854976666, 'final': False}",119
-False,2,Hell's Kitchen,15,-0.01,"{'confidence': -0.013768512211260001, 'final': False}",119
-False,2,Mulholland Drive,19,-0.01,"{'confidence': -0.014271295570075, 'final': False}",119
-True,3,Hell's Kitchen,7,-0.00,"{'confidence': -0.0005382521723333334, 'final': True}",119
-True,3,Hell's Kitchen,12,-0.00,"{'confidence': -0.0032306683147333335, 'final': True}",119
-False,3,Hell's Kitchen,18,-0.06,"{'confidence': -0.06322133990385001, 'final': False}",119
-False,3,Hell's Kitchen,18,-0.08,"{'confidence': -0.08101092470846, 'final': False}",119
-True,4,Hell's Kitchen,6,-0.00,"{'confidence': -3.7742767776666665e-05, 'final': True}",119
-True,4,Hell's Kitchen,13,-0.00,"{'confidence': -3.142497255e-05, 'final': True}",119
-True,4,Hell's Kitchen,19,-0.00,"{'confidence': -0.00017247957998333332, 'final': True}",119
-True,4,Hell's Kitchen,19,-0.00,"{'confidence': -0.00016227636543333335, 'final': True}",119
-False,5,Hell's Kitchen,7,-0.10,"{'confidence': -0.09755983082297201, 'final': False}",119
-True,5,Hell's Kitchen,11,-0.00,"{'confidence': -2.903351073e-05, 'final': True}",119
-False,5,Hell's Kitchen,18,-0.01,"{'confidence': -0.010427654381466, 'final': False}",119
-True,5,Hell's Kitchen,24,-0.00,"{'confidence': -0.0024956131892660003, 'final': True}",119
-True,5,Hell's Kitchen,24,-0.00,"{'confidence': -0.0024956131892660003, 'final': True}",119
+evidence,page,sentence,weight,question,final,word
+"{'confidence': -0.5990263176575, 'final': False}",Creator (song),0,-0.60,115,False,7
+"{'confidence': -0.40491722417000003, 'final': False}",List of inventors,0,-0.40,115,False,12
+"{'confidence': -0.608063862, 'final': False}",Dr Pepper,0,-0.61,115,False,17
+"{'confidence': -0.2370904487435, 'final': False}",Coca-Cola formula,0,-0.24,115,False,23
+"{'confidence': -0.054568859755, 'final': False}",Coca-Cola formula,0,-0.05,115,False,28
+"{'confidence': -0.17210495208749998, 'final': False}",Coca-Cola formula,0,-0.17,115,False,33
+"{'confidence': -0.3932042379646, 'final': False}",Vegemite,0,-0.39,115,False,33
+"{'confidence': -0.166517637766928, 'final': False}",Heinz Tomato Ketchup,1,-0.17,115,False,7
+"{'confidence': -0.12499553366749999, 'final': False}",Coca-Cola formula,1,-0.12,115,False,13
+"{'confidence': -0.151660273995, 'final': False}",Coca-Cola formula,1,-0.15,115,False,20
+"{'confidence': -0.084772317379, 'final': False}",Duct tape,1,-0.08,115,False,21
+"{'confidence': -0.01128191729045, 'final': False}",Blue Sky,2,-0.01,115,False,6
+"{'confidence': -0.04167911152433334, 'final': False}",Blue Sky,2,-0.04,115,False,12
+"{'confidence': -0.09133094450921665, 'final': False}",Blue Sky,2,-0.09,115,False,18
+"{'confidence': -0.03864049987244, 'final': False}",Blue Sky,2,-0.04,115,False,23
+"{'confidence': -0.07034421536777166, 'final': False}",Methamphetamine in popular culture,3,-0.07,115,False,8
+"{'confidence': -0.0003100585021666667, 'final': True}",Blue Sky,3,-0.00,115,True,13
+"{'confidence': -0.009603516824766666, 'final': False}",Blue Sky,3,-0.01,115,False,16
+"{'confidence': -0.0022545578003883332, 'final': True}",Blue Sky,3,-0.00,115,True,21
+"{'confidence': -0.0022545578003883332, 'final': True}",Blue Sky,3,-0.00,115,True,21
+"{'confidence': -0.0049079153617875, 'final': False}",List of How I Met Your Mother characters,0,-0.00,116,False,8
+"{'confidence': -0.04502042955402875, 'final': False}",List of How I Met Your Mother characters,0,-0.05,116,False,15
+"{'confidence': -0.04242696432816875, 'final': False}",List of How I Met Your Mother characters,0,-0.04,116,False,21
+"{'confidence': -0.07279116077060875, 'final': False}",List of How I Met Your Mother characters,0,-0.07,116,False,23
+"{'confidence': -0.02012204895133333, 'final': False}",Jason Segel,1,-0.02,116,False,6
+"{'confidence': -0.22674026548666668, 'final': False}",Jason Segel,1,-0.23,116,False,13
+"{'confidence': -0.005437929188575, 'final': False}",Marshall Manesh,1,-0.01,116,False,19
+"{'confidence': -0.024177449424325, 'final': False}",Marshall Manesh,1,-0.02,116,False,20
+"{'confidence': -0.16502596427211, 'final': False}",Neil Patrick Harris,2,-0.17,116,False,6
+"{'confidence': -0.0005874536042166668, 'final': True}",Neil Patrick Harris,2,-0.00,116,True,11
+"{'confidence': -0.22178514666666668, 'final': False}",Neil Patrick Harris,2,-0.22,116,False,18
+"{'confidence': -0.07554458969769999, 'final': False}",Will Forte,2,-0.08,116,False,24
+"{'confidence': -0.08213401333333332, 'final': False}",Neil Patrick Harris,2,-0.08,116,False,24
+"{'confidence': -0.04949229238916667, 'final': False}",Will Forte,3,-0.05,116,False,8
+"{'confidence': 0.0, 'final': True}",Neil Patrick Harris,3,0.00,116,True,13
+"{'confidence': 0.0, 'final': True}",Neil Patrick Harris,3,0.00,116,True,18
+"{'confidence': 0.0, 'final': True}",Neil Patrick Harris,3,0.00,116,True,20
+"{'confidence': 0.0, 'final': True}",Neil Patrick Harris,3,0.00,116,True,20
+"{'confidence': -0.36467245, 'final': False}",Surname,0,-0.36,117,False,8
+"{'confidence': -0.13799880913616666, 'final': False}",Sheikh Ahmed,0,-0.14,117,False,8
+"{'confidence': -0.1208597429127625, 'final': False}",Maiden name,1,-0.12,117,False,8
+"{'confidence': -0.027969455358883333, 'final': False}",Kate Chopin,1,-0.03,117,False,15
+"{'confidence': -0.09521228591210834, 'final': False}",Star Trek: The Original Series,1,-0.10,117,False,22
+"{'confidence': -0.45565575784999995, 'final': False}",Star Trek,2,-0.46,117,False,8
+"{'confidence': -0.10442752085525, 'final': False}",List of Star Trek characters (A–F),2,-0.10,117,False,14
+"{'confidence': -0.09864314611433334, 'final': False}",Karl Marx,2,-0.10,117,False,19
+"{'confidence': -0.10959019914620001, 'final': False}",List of Star Trek characters (A–F),2,-0.11,117,False,20
+"{'confidence': -0.19380329707900001, 'final': False}",List of fictional characters by name,3,-0.19,117,False,5
+"{'confidence': -0.24620042618133334, 'final': False}",List of fictional characters by surname,3,-0.25,117,False,12
+"{'confidence': -0.27906293651499997, 'final': False}",List of fictional characters by name,3,-0.28,117,False,19
+"{'confidence': -0.25108275622233334, 'final': False}",List of fictional characters by name,3,-0.25,117,False,25
+"{'confidence': -0.07329106884016666, 'final': False}",Grimes,3,-0.07,117,False,31
+"{'confidence': -0.01412861764733333, 'final': False}",Grimes,3,-0.01,117,False,33
+"{'confidence': -0.10055052213133332, 'final': False}",Grimes,4,-0.10,117,False,7
+"{'confidence': -0.00275357317465, 'final': True}",Grimes,4,-0.00,117,True,14
+"{'confidence': -0.061970249556639996, 'final': False}",Grimes,4,-0.06,117,False,19
+"{'confidence': -0.0032558519164416666, 'final': False}",Grimes,4,-0.00,117,False,22
+"{'confidence': -0.0186164475094, 'final': False}",Grimes,5,-0.02,117,False,7
+"{'confidence': -0.0007271188155, 'final': True}",Grimes,5,-0.00,117,True,14
+"{'confidence': -0.02686834005086, 'final': False}",Grimes,5,-0.03,117,False,19
+"{'confidence': -0.00057584472298, 'final': True}",Grimes,5,-0.00,117,True,26
+"{'confidence': -0.08490965971483333, 'final': False}",Grimes,5,-0.08,117,False,32
+"{'confidence': -0.0033680166756216664, 'final': False}",Grimes,5,-0.00,117,False,36
+"{'confidence': -0.0033680166756216664, 'final': False}",Grimes,5,-0.00,117,False,36
+"{'confidence': -0.061303781636400004, 'final': False}",List of fictional secret agents,0,-0.06,118,False,7
+"{'confidence': -0.44500650958665994, 'final': False}",List of fictional secret agents,0,-0.45,118,False,13
+"{'confidence': -0.1739858476484, 'final': False}",Breaking Bad,0,-0.17,118,False,19
+"{'confidence': -0.3559096621735667, 'final': False}",Orphan Black,0,-0.36,118,False,24
+"{'confidence': -0.15929683923946, 'final': False}",Alias (TV series),0,-0.16,118,False,25
+"{'confidence': -0.08343935477700375, 'final': False}",Arrested Development (TV series),1,-0.08,118,False,8
+"{'confidence': -0.30781352908438836, 'final': False}",List of Arrested Development characters,1,-0.31,118,False,12
+"{'confidence': -0.10771882634095001, 'final': False}",Arrested Development (TV series),1,-0.11,118,False,20
+"{'confidence': -0.0159049168099875, 'final': False}",Arrested Development (TV series),1,-0.02,118,False,24
+"{'confidence': -0.03963779970416125, 'final': False}",Arrested Development (TV series),1,-0.04,118,False,30
+"{'confidence': -0.0196715965971225, 'final': False}",Arrested Development (TV series),1,-0.02,118,False,36
+"{'confidence': -0.0025508465021625, 'final': True}",Arrested Development (TV series),1,-0.00,118,True,37
+"{'confidence': -0.0007847979854999999, 'final': True}",Maeby Fünke,2,-0.00,118,True,6
+"{'confidence': -0.00036608397827166665, 'final': True}",Maeby Fünke,2,-0.00,118,True,13
+"{'confidence': -0.0005016143650583333, 'final': True}",Maeby Fünke,2,-0.00,118,True,14
+"{'confidence': -0.001124107484275, 'final': True}",Maeby Fünke,3,-0.00,118,True,7
+"{'confidence': -0.00017494383810833335, 'final': True}",Maeby Fünke,3,-0.00,118,True,13
+"{'confidence': -2.3095398883333332e-06, 'final': True}",Maeby Fünke,3,-0.00,118,True,19
+"{'confidence': -1.0050312775e-05, 'final': True}",Maeby Fünke,3,-0.00,118,True,22
+"{'confidence': -1.0050312775e-05, 'final': True}",Maeby Fünke,3,-0.00,118,True,22
+"{'confidence': -0.08275442041873751, 'final': False}",List of American films of 1939,0,-0.08,119,False,9
+"{'confidence': -0.11675647326604287, 'final': False}","Knute Rockne, All American",0,-0.12,119,False,14
+"{'confidence': -0.00973360624325, 'final': False}",Boys Town (film),0,-0.01,119,False,15
+"{'confidence': -0.014662220951116666, 'final': False}",Boys Town (film),1,-0.01,119,False,7
+"{'confidence': -0.552307607342, 'final': False}",Brooklyn,1,-0.55,119,False,13
+"{'confidence': -0.058120623271333334, 'final': False}",Chinatown,1,-0.06,119,False,18
+"{'confidence': -0.10924513170854999, 'final': False}",Chinatown,1,-0.11,119,False,19
+"{'confidence': -0.05801126854976666, 'final': False}",Chinatown,2,-0.06,119,False,7
+"{'confidence': -0.013768512211260001, 'final': False}",Hell's Kitchen,2,-0.01,119,False,15
+"{'confidence': -0.014271295570075, 'final': False}",Mulholland Drive,2,-0.01,119,False,19
+"{'confidence': -0.0005382521723333334, 'final': True}",Hell's Kitchen,3,-0.00,119,True,7
+"{'confidence': -0.0032306683147333335, 'final': False}",Hell's Kitchen,3,-0.00,119,False,12
+"{'confidence': -0.06322133990385001, 'final': False}",Hell's Kitchen,3,-0.06,119,False,18
+"{'confidence': -0.08101092470846, 'final': False}",Hell's Kitchen,3,-0.08,119,False,18
+"{'confidence': -3.7742767776666665e-05, 'final': True}",Hell's Kitchen,4,-0.00,119,True,6
+"{'confidence': -3.142497255e-05, 'final': True}",Hell's Kitchen,4,-0.00,119,True,13
+"{'confidence': -0.00017247957998333332, 'final': True}",Hell's Kitchen,4,-0.00,119,True,19
+"{'confidence': -0.00016227636543333335, 'final': True}",Hell's Kitchen,4,-0.00,119,True,19
+"{'confidence': -0.09755983082297201, 'final': False}",Hell's Kitchen,5,-0.10,119,False,7
+"{'confidence': -2.903351073e-05, 'final': True}",Hell's Kitchen,5,-0.00,119,True,11
+"{'confidence': -0.010427654381466, 'final': False}",Hell's Kitchen,5,-0.01,119,False,18
+"{'confidence': -0.0024956131892660003, 'final': True}",Hell's Kitchen,5,-0.00,119,True,24
+"{'confidence': -0.0024956131892660003, 'final': True}",Hell's Kitchen,5,-0.00,119,True,24

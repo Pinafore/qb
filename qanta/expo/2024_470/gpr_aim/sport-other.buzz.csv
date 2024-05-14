@@ -1,76 +1,76 @@
-weight,evidence,page,sentence,final,question,word
--0.01,"{'confidence': -0.00878123076825, 'final': False}",National Football League playoffs,0,False,104,8
--0.15,"{'confidence': -0.14509829996605497, 'final': False}",2006–07 NFL playoffs,0,False,104,16
--0.00,"{'confidence': -5.2841677499999994e-05, 'final': False}",Peyton Manning,0,False,104,20
--0.00,"{'confidence': -5.707995666666667e-05, 'final': True}",Tony Romo,0,True,104,26
--0.00,"{'confidence': -3.426794666666666e-07, 'final': True}",Tony Romo,0,True,104,33
--0.00,"{'confidence': -1.0427211e-07, 'final': True}",Tony Romo,1,True,104,6
-0.00,"{'confidence': 0.0, 'final': True}",Tony Romo,1,True,104,12
-0.00,"{'confidence': 0.0, 'final': True}",Tony Romo,1,True,104,17
-0.00,"{'confidence': 0.0, 'final': True}",Tony Romo,1,True,104,18
-0.00,"{'confidence': 0.0, 'final': True}",Tony Romo,2,True,104,8
-0.00,"{'confidence': 0.0, 'final': True}",Tony Romo,2,True,104,13
-0.00,"{'confidence': 0.0, 'final': True}",Tony Romo,3,True,104,7
--0.00,"{'confidence': -2.8801331666666666e-07, 'final': True}",Tony Romo,3,True,104,12
--0.00,"{'confidence': -2.6321033333333333e-07, 'final': True}",Tony Romo,3,True,104,17
--0.00,"{'confidence': -2.6321033333333333e-07, 'final': True}",Tony Romo,3,True,104,18
--0.00,"{'confidence': -1.8374121666666667e-07, 'final': True}",Tony Romo,4,True,104,6
--0.00,"{'confidence': -3.8241400000000005e-07, 'final': True}",Tony Romo,4,True,104,13
--0.00,"{'confidence': -2.6321033333333333e-07, 'final': True}",Tony Romo,4,True,104,15
--0.00,"{'confidence': -4.221485666666667e-07, 'final': True}",Tony Romo,5,True,104,7
--0.00,"{'confidence': -2.6321033333333333e-07, 'final': True}",Tony Romo,5,True,104,13
--0.00,"{'confidence': -6.453755e-08, 'final': True}",Tony Romo,5,True,104,15
--0.00,"{'confidence': -6.453755e-08, 'final': True}",Tony Romo,5,True,104,15
--0.06,"{'confidence': -0.055487680275000006, 'final': False}",Cricket in Sri Lanka,0,False,100,5
--0.12,"{'confidence': -0.12108100101791429, 'final': False}",Canada men's national ice hockey team,1,False,100,8
--0.00,"{'confidence': -0.004221938375575, 'final': False}",Miracle on Ice,1,False,100,14
--0.12,"{'confidence': -0.12181915395771624, 'final': False}",1980 Winter Olympics men's ice hockey,1,False,100,21
--0.03,"{'confidence': -0.0349820812736125, 'final': False}",Miracle on Ice,1,False,100,22
--0.12,"{'confidence': -0.117331918964763, 'final': False}",1980 United States men's Olympic ice hockey team,2,False,100,8
--0.05,"{'confidence': -0.04623004885533462, 'final': False}",Ice hockey at the 1980 Winter Olympics – Men's tournament,2,False,100,14
--0.02,"{'confidence': -0.0207736469360875, 'final': False}",Miracle on Ice,2,False,100,17
--0.04,"{'confidence': -0.04086576235338076, 'final': False}",Ice hockey at the 1980 Winter Olympics – Men's tournament,3,False,100,8
--0.03,"{'confidence': -0.0341118433206, 'final': False}",Ice Hockey at the 1980 Winter Olympics – Men's team rosters,3,False,100,13
--0.06,"{'confidence': -0.05866594124273334, 'final': False}",Ice hockey at the 1980 Winter Olympics – Men's team rosters,3,False,100,20
--0.05,"{'confidence': -0.05322251513164444, 'final': False}",Ice hockey at the 1980 Winter Olympics,3,False,100,26
--0.06,"{'confidence': -0.062133234673065384, 'final': False}",Ice hockey at the 1980 Winter Olympics – Men's tournament,3,False,100,26
--0.02,"{'confidence': -0.024752793193058332, 'final': False}",Finland,4,False,100,7
--0.07,"{'confidence': -0.0695296724310375, 'final': False}",Finland men's national ice hockey team,4,False,100,14
--0.01,"{'confidence': -0.00541162513220625, 'final': True}",Finland men's national ice hockey team,4,True,100,20
--0.00,"{'confidence': -0.00434287808766, 'final': True}",Finland men's national ice hockey team,4,True,100,23
--0.00,"{'confidence': -0.00434287808766, 'final': True}",Finland men's national ice hockey team,4,True,100,23
--0.01,"{'confidence': -0.005192953675533333, 'final': False}",Minor League Baseball,0,False,101,6
--0.07,"{'confidence': -0.07117343018433332, 'final': False}",Baltimore Orioles minor league players,0,False,101,12
--0.04,"{'confidence': -0.0364967378065, 'final': False}",Baltimore Orioles minor league players,0,False,101,13
--0.01,"{'confidence': -0.010585491351066666, 'final': False}",Baltimore Orioles minor league players,1,False,101,6
--0.01,"{'confidence': -0.008632570632705, 'final': True}",Baltimore Orioles minor league players,1,True,101,12
--0.05,"{'confidence': -0.054103027248899996, 'final': False}",List of Baltimore Orioles minor league affiliates,1,False,101,20
--0.06,"{'confidence': -0.05741003961399999, 'final': False}",List of Baltimore Orioles minor league affiliates,1,False,101,26
--0.05,"{'confidence': -0.04531986231714286, 'final': False}",List of Baltimore Orioles minor league affiliates,1,False,101,32
--0.04,"{'confidence': -0.03985303274245715, 'final': False}",List of Baltimore Orioles minor league affiliates,1,False,101,38
--0.08,"{'confidence': -0.08382429349528572, 'final': False}",List of Baltimore Orioles minor league affiliates,1,False,101,43
--0.15,"{'confidence': -0.15256598612083336, 'final': False}",List of Minor League Baseball players,2,False,101,6
--0.06,"{'confidence': -0.06162620554614285, 'final': False}",List of Baltimore Orioles minor league affiliates,2,False,101,13
--0.10,"{'confidence': -0.10356874538485715, 'final': False}",List of Baltimore Orioles minor league affiliates,2,False,101,18
--0.32,"{'confidence': -0.32197518574733336, 'final': False}",Ryan Mountcastle,3,False,101,7
--0.05,"{'confidence': -0.04954520252766667, 'final': False}",Ryan Mountcastle,3,False,101,14
--0.25,"{'confidence': -0.249265112514, 'final': False}",Ryan Mountcastle,3,False,101,15
--0.25,"{'confidence': -0.249265112514, 'final': False}",Ryan Mountcastle,3,False,101,15
--0.80,"{'confidence': -0.79613554, 'final': False}",Interview,0,False,103,8
--0.13,"{'confidence': -0.13147877955213, 'final': False}",Sport in the United States,0,False,103,15
--0.13,"{'confidence': -0.13369719375755001, 'final': False}",Kobe Bryant,0,False,103,20
--0.00,"{'confidence': -0.00014275018953333334, 'final': True}",Kobe Bryant,0,True,103,26
--0.00,"{'confidence': -0.0001785760993333333, 'final': True}",Kobe Bryant,0,True,103,31
--0.00,"{'confidence': -0.00013313076416666668, 'final': True}",Kobe Bryant,1,True,103,7
--0.16,"{'confidence': -0.16282683333333334, 'final': False}",Roger Federer,1,False,103,15
--0.00,"{'confidence': -0.0017086034974479996, 'final': True}",Novak Djokovic,1,True,103,18
--0.00,"{'confidence': -0.00024632921273, 'final': True}",Novak Djokovic,1,True,103,19
--0.00,"{'confidence': -0.0033868140604000002, 'final': True}",Novak Djokovic,2,True,103,8
--0.00,"{'confidence': -0.000632515254528, 'final': True}",Novak Djokovic,2,True,103,14
--0.00,"{'confidence': -0.0008463191612, 'final': True}",Novak Djokovic,2,True,103,21
--0.00,"{'confidence': -0.000109555256396, 'final': True}",Novak Djokovic,2,True,103,23
--0.00,"{'confidence': -1.498382594e-05, 'final': True}",Novak Djokovic,3,True,103,7
--0.00,"{'confidence': -2.372078266e-06, 'final': True}",Novak Djokovic,3,True,103,13
--0.00,"{'confidence': -9.990488785600001e-05, 'final': True}",Novak Djokovic,3,True,103,18
--0.00,"{'confidence': -1.3410337260000001e-05, 'final': True}",Novak Djokovic,3,True,103,27
--0.00,"{'confidence': -1.3410337260000001e-05, 'final': True}",Novak Djokovic,3,True,103,27
+evidence,weight,word,page,sentence,question,final
+"{'confidence': -0.00878123076825, 'final': False}",-0.01,8,National Football League playoffs,0,104,False
+"{'confidence': -0.14509829996605497, 'final': False}",-0.15,16,2006–07 NFL playoffs,0,104,False
+"{'confidence': -5.2841677499999994e-05, 'final': True}",-0.00,20,Peyton Manning,0,104,True
+"{'confidence': -5.707995666666667e-05, 'final': True}",-0.00,26,Tony Romo,0,104,True
+"{'confidence': -3.426794666666666e-07, 'final': True}",-0.00,33,Tony Romo,0,104,True
+"{'confidence': -1.0427211e-07, 'final': True}",-0.00,6,Tony Romo,1,104,True
+"{'confidence': 0.0, 'final': True}",0.00,12,Tony Romo,1,104,True
+"{'confidence': 0.0, 'final': True}",0.00,17,Tony Romo,1,104,True
+"{'confidence': 0.0, 'final': True}",0.00,18,Tony Romo,1,104,True
+"{'confidence': 0.0, 'final': True}",0.00,8,Tony Romo,2,104,True
+"{'confidence': 0.0, 'final': True}",0.00,13,Tony Romo,2,104,True
+"{'confidence': 0.0, 'final': True}",0.00,7,Tony Romo,3,104,True
+"{'confidence': -2.8801331666666666e-07, 'final': True}",-0.00,12,Tony Romo,3,104,True
+"{'confidence': -2.6321033333333333e-07, 'final': True}",-0.00,17,Tony Romo,3,104,True
+"{'confidence': -2.6321033333333333e-07, 'final': True}",-0.00,18,Tony Romo,3,104,True
+"{'confidence': -1.8374121666666667e-07, 'final': True}",-0.00,6,Tony Romo,4,104,True
+"{'confidence': -3.8241400000000005e-07, 'final': True}",-0.00,13,Tony Romo,4,104,True
+"{'confidence': -2.6321033333333333e-07, 'final': True}",-0.00,15,Tony Romo,4,104,True
+"{'confidence': -4.221485666666667e-07, 'final': True}",-0.00,7,Tony Romo,5,104,True
+"{'confidence': -2.6321033333333333e-07, 'final': True}",-0.00,13,Tony Romo,5,104,True
+"{'confidence': -6.453755e-08, 'final': True}",-0.00,15,Tony Romo,5,104,True
+"{'confidence': -6.453755e-08, 'final': True}",-0.00,15,Tony Romo,5,104,True
+"{'confidence': -0.055487680275000006, 'final': False}",-0.06,5,Cricket in Sri Lanka,0,100,False
+"{'confidence': -0.12108100101791429, 'final': False}",-0.12,8,Canada men's national ice hockey team,1,100,False
+"{'confidence': -0.004221938375575, 'final': False}",-0.00,14,Miracle on Ice,1,100,False
+"{'confidence': -0.12181915395771624, 'final': False}",-0.12,21,1980 Winter Olympics men's ice hockey,1,100,False
+"{'confidence': -0.0349820812736125, 'final': False}",-0.03,22,Miracle on Ice,1,100,False
+"{'confidence': -0.117331918964763, 'final': False}",-0.12,8,1980 United States men's Olympic ice hockey team,2,100,False
+"{'confidence': -0.04623004885533462, 'final': False}",-0.05,14,Ice hockey at the 1980 Winter Olympics – Men's tournament,2,100,False
+"{'confidence': -0.0207736469360875, 'final': False}",-0.02,17,Miracle on Ice,2,100,False
+"{'confidence': -0.04086576235338076, 'final': False}",-0.04,8,Ice hockey at the 1980 Winter Olympics – Men's tournament,3,100,False
+"{'confidence': -0.0341118433206, 'final': False}",-0.03,13,Ice Hockey at the 1980 Winter Olympics – Men's team rosters,3,100,False
+"{'confidence': -0.05866594124273334, 'final': False}",-0.06,20,Ice hockey at the 1980 Winter Olympics – Men's team rosters,3,100,False
+"{'confidence': -0.05322251513164444, 'final': False}",-0.05,26,Ice hockey at the 1980 Winter Olympics,3,100,False
+"{'confidence': -0.062133234673065384, 'final': False}",-0.06,26,Ice hockey at the 1980 Winter Olympics – Men's tournament,3,100,False
+"{'confidence': -0.024752793193058332, 'final': False}",-0.02,7,Finland,4,100,False
+"{'confidence': -0.0695296724310375, 'final': False}",-0.07,14,Finland men's national ice hockey team,4,100,False
+"{'confidence': -0.00541162513220625, 'final': False}",-0.01,20,Finland men's national ice hockey team,4,100,False
+"{'confidence': -0.00434287808766, 'final': False}",-0.00,23,Finland men's national ice hockey team,4,100,False
+"{'confidence': -0.00434287808766, 'final': False}",-0.00,23,Finland men's national ice hockey team,4,100,False
+"{'confidence': -0.005192953675533333, 'final': False}",-0.01,6,Minor League Baseball,0,101,False
+"{'confidence': -0.07117343018433332, 'final': False}",-0.07,12,Baltimore Orioles minor league players,0,101,False
+"{'confidence': -0.0364967378065, 'final': False}",-0.04,13,Baltimore Orioles minor league players,0,101,False
+"{'confidence': -0.010585491351066666, 'final': False}",-0.01,6,Baltimore Orioles minor league players,1,101,False
+"{'confidence': -0.008632570632705, 'final': False}",-0.01,12,Baltimore Orioles minor league players,1,101,False
+"{'confidence': -0.054103027248899996, 'final': False}",-0.05,20,List of Baltimore Orioles minor league affiliates,1,101,False
+"{'confidence': -0.05741003961399999, 'final': False}",-0.06,26,List of Baltimore Orioles minor league affiliates,1,101,False
+"{'confidence': -0.04531986231714286, 'final': False}",-0.05,32,List of Baltimore Orioles minor league affiliates,1,101,False
+"{'confidence': -0.03985303274245715, 'final': False}",-0.04,38,List of Baltimore Orioles minor league affiliates,1,101,False
+"{'confidence': -0.08382429349528572, 'final': False}",-0.08,43,List of Baltimore Orioles minor league affiliates,1,101,False
+"{'confidence': -0.15256598612083336, 'final': False}",-0.15,6,List of Minor League Baseball players,2,101,False
+"{'confidence': -0.06162620554614285, 'final': False}",-0.06,13,List of Baltimore Orioles minor league affiliates,2,101,False
+"{'confidence': -0.10356874538485715, 'final': False}",-0.10,18,List of Baltimore Orioles minor league affiliates,2,101,False
+"{'confidence': -0.32197518574733336, 'final': False}",-0.32,7,Ryan Mountcastle,3,101,False
+"{'confidence': -0.04954520252766667, 'final': False}",-0.05,14,Ryan Mountcastle,3,101,False
+"{'confidence': -0.249265112514, 'final': False}",-0.25,15,Ryan Mountcastle,3,101,False
+"{'confidence': -0.249265112514, 'final': False}",-0.25,15,Ryan Mountcastle,3,101,False
+"{'confidence': -0.79613554, 'final': False}",-0.80,8,Interview,0,103,False
+"{'confidence': -0.13147877955213, 'final': False}",-0.13,15,Sport in the United States,0,103,False
+"{'confidence': -0.13369719375755001, 'final': False}",-0.13,20,Kobe Bryant,0,103,False
+"{'confidence': -0.00014275018953333334, 'final': True}",-0.00,26,Kobe Bryant,0,103,True
+"{'confidence': -0.0001785760993333333, 'final': True}",-0.00,31,Kobe Bryant,0,103,True
+"{'confidence': -0.00013313076416666668, 'final': True}",-0.00,7,Kobe Bryant,1,103,True
+"{'confidence': -0.16282683333333334, 'final': False}",-0.16,15,Roger Federer,1,103,False
+"{'confidence': -0.0017086034974479996, 'final': True}",-0.00,18,Novak Djokovic,1,103,True
+"{'confidence': -0.00024632921273, 'final': True}",-0.00,19,Novak Djokovic,1,103,True
+"{'confidence': -0.0033868140604000002, 'final': False}",-0.00,8,Novak Djokovic,2,103,False
+"{'confidence': -0.000632515254528, 'final': True}",-0.00,14,Novak Djokovic,2,103,True
+"{'confidence': -0.0008463191612, 'final': True}",-0.00,21,Novak Djokovic,2,103,True
+"{'confidence': -0.000109555256396, 'final': True}",-0.00,23,Novak Djokovic,2,103,True
+"{'confidence': -1.498382594e-05, 'final': True}",-0.00,7,Novak Djokovic,3,103,True
+"{'confidence': -2.372078266e-06, 'final': True}",-0.00,13,Novak Djokovic,3,103,True
+"{'confidence': -9.990488785600001e-05, 'final': True}",-0.00,18,Novak Djokovic,3,103,True
+"{'confidence': -1.3410337260000001e-05, 'final': True}",-0.00,27,Novak Djokovic,3,103,True
+"{'confidence': -1.3410337260000001e-05, 'final': True}",-0.00,27,Novak Djokovic,3,103,True
