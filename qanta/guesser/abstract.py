@@ -489,7 +489,7 @@ class AbstractGuesser(metaclass=ABCMeta):
 
         guesser_lookup = {}
         for name, g in conf["guessers"].items():
-            g_qualified_name = g["class"]
+            g_qualified_name = name
             parts = g_qualified_name.split(".")
             g_module = ".".join(parts[:-1])
             g_classname = parts[-1]
