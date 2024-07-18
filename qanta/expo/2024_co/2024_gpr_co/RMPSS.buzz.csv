@@ -1,0 +1,143 @@
+final,question,evidence,page,word,sentence,weight
+False,72,"{'confidence': -0.002867650012608, 'final': False}",Francis of Assisi,7,0,-0.00
+False,72,"{'confidence': -0.03637672945395, 'final': False}",Prayer,12,0,-0.04
+False,72,"{'confidence': -0.185703049190388, 'final': False}",Manasseh (son of Hezekiah),17,0,-0.19
+False,72,"{'confidence': -0.6014349, 'final': False}",David,22,0,-0.60
+False,72,"{'confidence': -0.015242279000000001, 'final': False}",Saint Patrick,7,1,-0.02
+False,72,"{'confidence': -0.102664869, 'final': False}",Saint Eligius,12,1,-0.10
+False,72,"{'confidence': -0.0261810585, 'final': False}",Saint Patrick,7,2,-0.03
+False,72,"{'confidence': -0.07037273086483332, 'final': False}",Zarathustra,14,2,-0.07
+False,72,"{'confidence': -0.003752577938946667, 'final': False}",Zarathustra,19,2,-0.00
+True,72,"{'confidence': -0.0019403334946099997, 'final': True}",Zarathustra,23,2,-0.00
+True,72,"{'confidence': -0.00205781507455, 'final': True}",Zarathustra,24,2,-0.00
+False,72,"{'confidence': -0.014022381173516667, 'final': False}",Zarathustra,8,3,-0.01
+False,72,"{'confidence': -0.0058046278958833325, 'final': False}",Zarathustra,13,3,-0.01
+False,72,"{'confidence': -0.010147671549766667, 'final': False}",Zarathustra,16,3,-0.01
+True,72,"{'confidence': -0.0015871693436666666, 'final': True}",Zarathustra,6,4,-0.00
+True,72,"{'confidence': -0.0020036256078833333, 'final': True}",Zarathustra,12,4,-0.00
+True,72,"{'confidence': -0.0013818900424333333, 'final': True}",Zarathustra,14,4,-0.00
+True,72,"{'confidence': -6.767781666666667e-05, 'final': True}",Zarathustra,7,5,-0.00
+True,72,"{'confidence': -0.000343977277, 'final': True}",Zarathustra,13,5,-0.00
+False,72,"{'confidence': -0.011486305518466668, 'final': False}",Zarathustra,15,5,-0.01
+False,72,"{'confidence': -0.011486305518466668, 'final': False}",Zarathustra,15,5,-0.01
+False,73,"{'confidence': -1.8811781e-05, 'final': False}",Suda,6,0,-0.00
+False,73,"{'confidence': -0.0065504075, 'final': False}",Suda,11,0,-0.01
+False,73,"{'confidence': -0.12464123794488001, 'final': False}",Broteas,17,0,-0.12
+True,73,"{'confidence': -0.0014937044461333334, 'final': True}",Daedalus,23,0,-0.00
+False,73,"{'confidence': -0.22771031214856666, 'final': False}",Daedalus,24,0,-0.23
+False,73,"{'confidence': -0.14071569009576143, 'final': False}",Talus (mythology),6,1,-0.14
+True,73,"{'confidence': -0.00174316085175, 'final': True}",Ganymede,12,1,-0.00
+False,73,"{'confidence': -0.04235640204088334, 'final': False}",Ganymede (mythology),18,1,-0.04
+False,73,"{'confidence': -0.0030782190867699993, 'final': False}",Ganymede (mythology),6,2,-0.00
+True,73,"{'confidence': -0.0022641818851388885, 'final': True}",Ganymede (mythology),12,2,-0.00
+False,73,"{'confidence': -0.01062388264211111, 'final': False}",Ganymede (mythology),13,2,-0.01
+False,73,"{'confidence': -0.0052937447245, 'final': False}",Ganymede (mythology),6,3,-0.01
+True,73,"{'confidence': -0.0016392031689600002, 'final': True}",Ganymede (mythology),14,3,-0.00
+True,73,"{'confidence': -0.000778337467188889, 'final': True}",Ganymede (mythology),21,3,-0.00
+True,73,"{'confidence': -0.0003821693679111111, 'final': True}",Ganymede (mythology),22,3,-0.00
+True,73,"{'confidence': -2.044216408333333e-05, 'final': True}",Ganymede (mythology),7,4,-0.00
+True,73,"{'confidence': -0.0001908376364111111, 'final': True}",Ganymede (mythology),13,4,-0.00
+True,73,"{'confidence': -0.0016000230560033336, 'final': True}",Ganymede (mythology),16,4,-0.00
+True,73,"{'confidence': -3.8927495783333335e-05, 'final': True}",Ganymede (mythology),7,5,-0.00
+True,73,"{'confidence': -3.956588588888889e-07, 'final': True}",Ganymede (mythology),14,5,-0.00
+True,73,"{'confidence': -3.7743681111111113e-07, 'final': True}",Ganymede (mythology),17,5,-0.00
+True,73,"{'confidence': -3.7743681111111113e-07, 'final': True}",Ganymede (mythology),17,5,-0.00
+False,74,"{'confidence': -0.37476005400943335, 'final': False}",Commentary on the Sentences,7,0,-0.37
+False,74,"{'confidence': -0.006049638321873333, 'final': False}",Riemann zeta function,12,0,-0.01
+False,74,"{'confidence': -0.35560330935333334, 'final': False}",Arithmetic function,17,0,-0.36
+False,74,"{'confidence': -0.1957790023546667, 'final': False}",Arithmetic function,18,0,-0.20
+False,74,"{'confidence': -0.23997722149, 'final': False}",Arithmetic progression,5,1,-0.24
+False,74,"{'confidence': -0.14498477529999998, 'final': False}",Social commentary,12,1,-0.14
+False,74,"{'confidence': -0.31149517665000004, 'final': False}",Social commentary,18,1,-0.31
+False,74,"{'confidence': -0.09558933214732497, 'final': False}",Ludwig Wittgenstein,22,1,-0.10
+True,74,"{'confidence': -0.0002302470893125, 'final': True}",Philosophical Investigations,7,2,-0.00
+True,74,"{'confidence': -1.0162074729999998e-05, 'final': True}",Nicomachean Ethics,14,2,-0.00
+False,74,"{'confidence': -0.050013780458600006, 'final': False}",Philosophical Investigations,20,2,-0.05
+True,74,"{'confidence': -6.108254924999999e-07, 'final': True}",Philosophical Investigations,25,2,-0.00
+True,74,"{'confidence': -5.8102456e-07, 'final': True}",Philosophical Investigations,30,2,-0.00
+True,74,"{'confidence': -4.618209075e-07, 'final': True}",Philosophical Investigations,32,2,-0.00
+True,74,"{'confidence': -6.704273150000001e-07, 'final': True}",Philosophical Investigations,4,3,-0.00
+True,74,"{'confidence': -1.18824155e-06, 'final': True}",Philosophical Investigations,8,3,-0.00
+True,74,"{'confidence': -9.386355875e-07, 'final': True}",Philosophical Investigations,11,3,-0.00
+True,74,"{'confidence': -1.903463475e-06, 'final': True}",Philosophical Investigations,6,4,-0.00
+True,74,"{'confidence': -2.756118325e-07, 'final': True}",Philosophical Investigations,11,4,-0.00
+True,74,"{'confidence': -2.756118325e-07, 'final': True}",Philosophical Investigations,11,4,-0.00
+False,75,"{'confidence': -0.0437117182655, 'final': False}",Kabyle people,6,0,-0.04
+True,75,"{'confidence': -0.0021592127866666665, 'final': True}",Positivism,12,0,-0.00
+False,75,"{'confidence': -0.20030680861076666, 'final': False}",Sociologists,17,0,-0.20
+False,75,"{'confidence': -0.2579500956133333, 'final': False}",Sociologists,21,0,-0.26
+False,75,"{'confidence': -0.16107168000000002, 'final': False}",Mafia,9,1,-0.16
+False,75,"{'confidence': -0.0037574236935000002, 'final': False}",Elites,14,1,-0.00
+True,75,"{'confidence': -0.0006692179065, 'final': True}",Elites,20,1,-0.00
+True,75,"{'confidence': -1.54144765e-05, 'final': True}",Elites,25,1,-0.00
+True,75,"{'confidence': -0.000155495813, 'final': True}",Elites,26,1,-0.00
+False,75,"{'confidence': -0.00701190994, 'final': False}",Elites,6,2,-0.01
+True,75,"{'confidence': -0.0012151572600000002, 'final': True}",Elites,12,2,-0.00
+True,75,"{'confidence': -0.0025639154815, 'final': True}",Elites,14,2,-0.00
+True,75,"{'confidence': -0.0017013049722, 'final': True}",Elites,8,3,-0.00
+True,75,"{'confidence': -0.000113427918165, 'final': True}",Elites,13,3,-0.00
+True,75,"{'confidence': -0.00121259986365, 'final': True}",Elites,17,3,-0.00
+False,75,"{'confidence': -0.0110538025, 'final': False}",Elites,7,4,-0.01
+True,75,"{'confidence': -0.000707833458165, 'final': True}",Elites,15,4,-0.00
+False,75,"{'confidence': -0.024040626675, 'final': False}",The Power Elite,21,4,-0.02
+False,75,"{'confidence': -0.024040626675, 'final': False}",The Power Elite,21,4,-0.02
+False,76,"{'confidence': -4.37949091e-05, 'final': False}",Psychodrama,7,0,-0.00
+True,76,"{'confidence': -1.10958128e-05, 'final': True}",Psychodrama,12,0,-0.00
+True,76,"{'confidence': -0.0007327562473333333, 'final': True}",Psychodrama,18,0,-0.00
+True,76,"{'confidence': -0.0012381387298666666, 'final': True}",Psychodrama,19,0,-0.00
+False,76,"{'confidence': -0.012017236574166666, 'final': False}",Psychodrama,7,1,-0.01
+True,76,"{'confidence': -0.0025319440575, 'final': True}",Transactional analysis,12,1,-0.00
+False,76,"{'confidence': -0.008209504049333334, 'final': False}",Psychotherapy,17,1,-0.01
+True,76,"{'confidence': -0.0001723753291, 'final': True}",Psychotherapy,18,1,-0.00
+True,76,"{'confidence': -4.102530466666666e-06, 'final': True}",Psychotherapy,7,2,-0.00
+True,76,"{'confidence': -1.2813771999999998e-06, 'final': True}",Psychotherapy,14,2,-0.00
+True,76,"{'confidence': -8.045625333333334e-07, 'final': True}",Psychotherapy,21,2,-0.00
+True,76,"{'confidence': -4.0627961e-06, 'final': True}",Psychotherapy,24,2,-0.00
+True,76,"{'confidence': -1.4400666666666668e-07, 'final': True}",Psychotherapy,5,3,-0.00
+True,76,"{'confidence': -4.97669055e-06, 'final': True}",Psychotherapy,10,3,-0.00
+True,76,"{'confidence': -1.917130133333333e-06, 'final': True}",Psychotherapy,17,3,-0.00
+True,76,"{'confidence': -2.8801333333333337e-07, 'final': True}",Psychotherapy,19,3,-0.00
+True,76,"{'confidence': -1.3211117166666665e-06, 'final': True}",Psychotherapy,7,4,-0.00
+True,76,"{'confidence': -2.273803588333333e-05, 'final': True}",Psychotherapy,13,4,-0.00
+True,76,"{'confidence': -6.645541883333333e-06, 'final': True}",Psychotherapy,16,4,-0.00
+True,76,"{'confidence': -6.645541883333333e-06, 'final': True}",Psychotherapy,16,4,-0.00
+False,77,"{'confidence': -0.10914108695713333, 'final': False}",The Thinker,7,0,-0.11
+False,77,"{'confidence': -0.289584964, 'final': False}",Jane Jacobs,12,0,-0.29
+False,77,"{'confidence': -0.17240803610150002, 'final': False}",Jane Jacobs,19,0,-0.17
+False,77,"{'confidence': -0.5123060858953333, 'final': False}",Jacob Riis,6,1,-0.51
+False,77,"{'confidence': -0.39419858043843337, 'final': False}",Jacob Riis,11,1,-0.39
+False,77,"{'confidence': -0.593784785691, 'final': False}",Alfred Marshall,17,1,-0.59
+True,77,"{'confidence': -0.0007883212676422222, 'final': True}",W. E. B. Du Bois,23,1,-0.00
+True,77,"{'confidence': -9.907994553333332e-05, 'final': True}",W. E. B. Du Bois,28,1,-0.00
+True,77,"{'confidence': -0.00066342516392, 'final': True}",W. E. B. Du Bois,5,2,-0.00
+True,77,"{'confidence': -0.00014485742281111113, 'final': True}",W. E. B. Du Bois,10,2,-0.00
+True,77,"{'confidence': -8.527697381111111e-05, 'final': True}",W. E. B. Du Bois,15,2,-0.00
+True,77,"{'confidence': -0.00010181878270888889, 'final': True}",W. E. B. Du Bois,20,2,-0.00
+True,77,"{'confidence': -3.914270551111111e-05, 'final': True}",W. E. B. Du Bois,22,2,-0.00
+True,77,"{'confidence': -1.0976608475555553e-05, 'final': True}",W. E. B. Du Bois,7,3,-0.00
+True,77,"{'confidence': -6.738255851111112e-06, 'final': True}",W. E. B. Du Bois,11,3,-0.00
+True,77,"{'confidence': -1.541610926222222e-05, 'final': True}",W. E. B. Du Bois,6,4,-0.00
+True,77,"{'confidence': -3.0479195533333335e-06, 'final': True}",W. E. B. Du Bois,7,4,-0.00
+True,77,"{'confidence': -2.870759288888889e-06, 'final': True}",W. E. B. Du Bois,6,5,-0.00
+True,77,"{'confidence': -2.2035395866666666e-06, 'final': True}",W. E. B. Du Bois,13,5,-0.00
+True,77,"{'confidence': -2.2035395866666666e-06, 'final': True}",W. E. B. Du Bois,13,5,-0.00
+False,78,"{'confidence': -1.0367682600000001e-05, 'final': False}",Blue field entoptic phenomenon,8,0,-0.00
+False,78,"{'confidence': -0.039841985842126004, 'final': False}",Cognitive dissonance,12,0,-0.04
+True,78,"{'confidence': -3.4071294055999995e-05, 'final': True}",Cognitive dissonance,18,0,-0.00
+False,78,"{'confidence': -0.265648573, 'final': False}",Gift registry,22,0,-0.27
+False,78,"{'confidence': -0.18173028941333336, 'final': False}",Endowment effect,6,1,-0.18
+True,78,"{'confidence': -3.78415676e-07, 'final': True}",Cognitive dissonance,12,1,-0.00
+True,78,"{'confidence': -7.1218593e-07, 'final': True}",Cognitive dissonance,17,1,-0.00
+True,78,"{'confidence': -1.09363765e-06, 'final': True}",Cognitive dissonance,5,2,-0.00
+True,78,"{'confidence': -0.00021083342150000003, 'final': True}",Cognitive dissonance,13,2,-0.00
+True,78,"{'confidence': -0.0005091228513300001, 'final': True}",Cognitive dissonance,18,2,-0.00
+True,78,"{'confidence': -6.65760654e-05, 'final': True}",Cognitive dissonance,26,2,-0.00
+True,78,"{'confidence': -4.2609712799999994e-07, 'final': True}",Cognitive dissonance,34,2,-0.00
+True,78,"{'confidence': -6.0786406e-07, 'final': True}",Cognitive dissonance,6,3,-0.00
+True,78,"{'confidence': -6.4066374e-07, 'final': True}",Cognitive dissonance,12,3,-0.00
+True,78,"{'confidence': -0.0001985754116, 'final': True}",Cognitive dissonance,18,3,-0.00
+True,78,"{'confidence': -0.0007007177577199999, 'final': True}",Cognitive dissonance,19,3,-0.00
+True,78,"{'confidence': -0.00011545962940000001, 'final': True}",Cognitive dissonance,6,4,-0.00
+True,78,"{'confidence': -1.9316917059999997e-05, 'final': True}",Cognitive dissonance,13,4,-0.00
+True,78,"{'confidence': -0.00011546481978, 'final': True}",Cognitive dissonance,16,4,-0.00
+True,78,"{'confidence': -0.00011546481978, 'final': True}",Cognitive dissonance,16,4,-0.00

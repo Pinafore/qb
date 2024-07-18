@@ -1,0 +1,312 @@
+question,evidence,final,sentence,word,weight,page
+64,"{'confidence': -0.30459797196251254, 'final': False}",False,0,6,-0.30,Pour Pâques
+64,"{'confidence': -0.012943728574926, 'final': False}",False,0,10,-0.01,Antonio Vivaldi
+64,"{'confidence': -0.03181604, 'final': False}",False,0,15,-0.03,Trumpet
+64,"{'confidence': -0.33665704884566666, 'final': False}",False,1,6,-0.34,Oboe
+64,"{'confidence': -0.0706163048155, 'final': False}",False,1,13,-0.07,Trumpet
+64,"{'confidence': -0.2767157080466, 'final': False}",False,1,20,-0.28,Clarinet
+64,"{'confidence': -0.107125806408165, 'final': False}",False,2,6,-0.11,Clarinet
+64,"{'confidence': -0.36227616334333335, 'final': False}",False,2,11,-0.36,Bassoon
+64,"{'confidence': -0.347825055611825, 'final': False}",False,2,18,-0.35,Clarinet
+64,"{'confidence': -0.0005765168563250001, 'final': True}",True,2,23,-0.00,Trumpet
+64,"{'confidence': -2.6060806825e-05, 'final': True}",True,2,29,-0.00,Trumpet
+64,"{'confidence': -6.704273250000001e-07, 'final': True}",True,2,35,-0.00,Trumpet
+64,"{'confidence': -0.0004230993, 'final': True}",True,3,6,-0.00,Trumpet
+64,"{'confidence': -3.0136129e-05, 'final': True}",True,3,12,-0.00,Trumpet
+64,"{'confidence': -4.916218250000001e-07, 'final': True}",True,3,19,-0.00,Trumpet
+64,"{'confidence': -2.75611825e-07, 'final': True}",True,3,20,-0.00,Trumpet
+64,"{'confidence': -9.08834625e-07, 'final': True}",True,4,6,-0.00,Trumpet
+64,"{'confidence': -3.7241815e-07, 'final': True}",True,4,8,-0.00,Trumpet
+64,"{'confidence': -3.7241815e-07, 'final': True}",True,4,8,-0.00,Trumpet
+65,"{'confidence': -0.027582208218682503, 'final': False}",False,0,7,-0.03,Franz Liszt
+65,"{'confidence': -0.2007042204142, 'final': False}",False,0,12,-0.20,Maurice Ravel
+65,"{'confidence': -0.1158570853035, 'final': False}",False,0,18,-0.12,Clara Holst
+65,"{'confidence': -0.11429548904892801, 'final': False}",False,0,22,-0.11,Friedrich Wieck
+65,"{'confidence': -0.12323320831366667, 'final': False}",False,1,7,-0.12,Chopin
+65,"{'confidence': -0.006405265578030001, 'final': False}",False,1,15,-0.01,Johannes Brahms
+65,"{'confidence': -0.13777816421019998, 'final': False}",False,1,22,-0.14,Robert Schumann
+65,"{'confidence': -0.25555055, 'final': False}",False,1,23,-0.26,Schumann
+65,"{'confidence': -3.939615738333333e-05, 'final': True}",True,2,7,-0.00,Bedřich Smetana
+65,"{'confidence': -0.09209883851846667, 'final': False}",False,2,12,-0.09,Robert Schumann
+65,"{'confidence': -0.0015444145088875, 'final': True}",True,2,17,-0.00,Clara Schumann
+65,"{'confidence': -0.26004865, 'final': False}",False,3,6,-0.26,Schumann
+65,"{'confidence': -0.237019075, 'final': False}",False,3,11,-0.24,Schumann
+65,"{'confidence': -0.023973200173000003, 'final': False}",False,3,19,-0.02,Robert Schumann
+65,"{'confidence': -0.1639609742896667, 'final': False}",False,3,21,-0.16,Robert Schumann
+65,"{'confidence': -0.1140556, 'final': False}",False,4,7,-0.11,Schumann
+65,"{'confidence': -0.005698901814333333, 'final': False}",False,4,14,-0.01,Robert Schumann
+65,"{'confidence': -0.03394531364121667, 'final': False}",False,4,17,-0.03,Robert Schumann
+65,"{'confidence': -0.03394531364121667, 'final': False}",False,4,17,-0.03,Robert Schumann
+66,"{'confidence': -0.07053222903360001, 'final': False}",False,0,7,-0.07,List of composers by name
+66,"{'confidence': -0.27259933385655, 'final': False}",False,0,12,-0.27,Edvard Grieg
+66,"{'confidence': -0.0088489006722, 'final': False}",False,0,19,-0.01,Alexander Zemlinsky
+66,"{'confidence': -0.133862994465, 'final': False}",False,0,25,-0.13,Alexander Zemlinsky
+66,"{'confidence': -0.0090583863226, 'final': False}",False,0,30,-0.01,Alexander Zemlinsky
+66,"{'confidence': -0.0448670262456, 'final': False}",False,1,7,-0.04,Alexander Zemlinsky
+66,"{'confidence': -0.008614417302, 'final': False}",False,1,13,-0.01,Alexander Zemlinsky
+66,"{'confidence': -0.00027206415, 'final': True}",True,1,18,-0.00,Alexander
+66,"{'confidence': -0.00031472807, 'final': True}",True,2,6,-0.00,Alexander
+66,"{'confidence': -0.10106077852872601, 'final': False}",False,2,14,-0.10,Gustav Holst
+66,"{'confidence': -0.045399179664, 'final': False}",False,2,19,-0.05,Gustav Holst
+66,"{'confidence': -0.014507581, 'final': False}",False,3,6,-0.01,Alexander
+66,"{'confidence': -0.0424892872516, 'final': False}",False,3,13,-0.04,Alexander Glazunov
+66,"{'confidence': -0.0033992577616799996, 'final': False}",False,3,14,-0.00,Alexander Glazunov
+66,"{'confidence': -0.00109458007675, 'final': True}",True,4,8,-0.00,Alexander Borodin
+66,"{'confidence': -0.186501466136, 'final': False}",False,4,15,-0.19,Alexander Borodin
+66,"{'confidence': -0.10272325555452, 'final': False}",False,4,21,-0.10,Alexander Glazunov
+66,"{'confidence': -0.06186722590258251, 'final': False}",False,4,23,-0.06,Alexander Borodin
+66,"{'confidence': -0.06186722590258251, 'final': False}",False,4,23,-0.06,Alexander Borodin
+67,"{'confidence': -0.05478725350633334, 'final': False}",False,0,8,-0.05,Sonata form
+67,"{'confidence': -0.038823428895, 'final': False}",False,0,14,-0.04,Johann Sebastian Bach
+67,"{'confidence': -0.3599114255, 'final': False}",False,0,21,-0.36,John Jay
+67,"{'confidence': -1.1696393e-06, 'final': True}",True,0,26,-0.00,Steve Reich
+67,"{'confidence': -4.5441732e-07, 'final': True}",True,0,28,-0.00,Steve Reich
+67,"{'confidence': -7.524265e-07, 'final': True}",True,1,5,-0.00,Steve Reich
+67,"{'confidence': -2.75611825e-07, 'final': True}",True,1,12,-0.00,Steve Reich
+67,"{'confidence': -3.3521365e-07, 'final': True}",True,1,17,-0.00,Steve Reich
+67,"{'confidence': -2.75611825e-07, 'final': True}",True,1,20,-0.00,Steve Reich
+67,"{'confidence': -2.1601e-07, 'final': True}",True,2,9,-0.00,Steve Reich
+67,"{'confidence': -1.445251125e-06, 'final': True}",True,2,14,-0.00,Steve Reich
+67,"{'confidence': -6.642998e-05, 'final': True}",True,2,21,-0.00,Steve Reich
+67,"{'confidence': -1.64645395e-06, 'final': True}",True,3,7,-0.00,Steve Reich
+67,"{'confidence': -9.6806325e-08, 'final': True}",True,3,10,-0.00,Steve Reich
+67,"{'confidence': -3.3521365e-07, 'final': True}",True,3,16,-0.00,Steve Reich
+67,"{'confidence': -2.1601e-07, 'final': True}",True,3,20,-0.00,Steve Reich
+67,"{'confidence': -1.56408165e-07, 'final': True}",True,4,7,-0.00,Steve Reich
+67,"{'confidence': -1.56408165e-07, 'final': True}",True,4,13,-0.00,Steve Reich
+67,"{'confidence': -1.04079235e-05, 'final': True}",True,4,16,-0.00,Steve Reich
+67,"{'confidence': -1.04079235e-05, 'final': True}",True,4,16,-0.00,Steve Reich
+68,"{'confidence': -0.019546999453059995, 'final': False}",False,0,8,-0.02,Cupid and Psyche
+68,"{'confidence': -0.010422685550333335, 'final': False}",False,0,14,-0.01,Caravaggio
+68,"{'confidence': -0.16226137072253, 'final': False}",False,0,22,-0.16,Johannes Vermeer
+68,"{'confidence': -0.00731145812253, 'final': False}",False,0,26,-0.01,Johannes Vermeer
+68,"{'confidence': -0.093035606893456, 'final': False}",False,1,6,-0.09,Johannes Vermeer
+68,"{'confidence': -0.1796243987342, 'final': False}",False,1,12,-0.18,Johannes Vermeer
+68,"{'confidence': -0.16825103616759002, 'final': False}",False,1,20,-0.17,Johannes Vermeer
+68,"{'confidence': -0.09947514544506, 'final': False}",False,1,27,-0.10,Johannes Vermeer
+68,"{'confidence': -0.07074001936432857, 'final': False}",False,1,28,-0.07,Jean-Honoré Fragonard
+68,"{'confidence': -0.0007417704596, 'final': True}",True,2,6,-0.00,Peter Paul Rubens
+68,"{'confidence': -0.0208356547599875, 'final': False}",False,2,13,-0.02,Peter Paul Rubens
+68,"{'confidence': -5.9396042999999996e-05, 'final': True}",True,2,19,-0.00,Peter Paul Rubens
+68,"{'confidence': -0.0072155486531625, 'final': False}",False,2,25,-0.01,Peter Paul Rubens
+68,"{'confidence': -0.0245327309262, 'final': False}",False,3,7,-0.02,Johannes Vermeer
+68,"{'confidence': -1.10259659e-06, 'final': True}",True,3,14,-0.00,Johannes Vermeer
+68,"{'confidence': -4.32109553e-06, 'final': True}",True,3,20,-0.00,Johannes Vermeer
+68,"{'confidence': -4.645906596e-06, 'final': True}",True,3,22,-0.00,Johannes Vermeer
+68,"{'confidence': -3.3347948532e-05, 'final': True}",True,4,7,-0.00,Johannes Vermeer
+68,"{'confidence': -1.01285796e-07, 'final': True}",True,4,14,-0.00,Johannes Vermeer
+68,"{'confidence': -3.872253e-08, 'final': True}",True,4,18,-0.00,Johannes Vermeer
+68,"{'confidence': -3.872253e-08, 'final': True}",True,4,18,-0.00,Johannes Vermeer
+69,"{'confidence': -5.3347374325e-05, 'final': False}",False,0,7,-0.00,John Coltrane
+69,"{'confidence': -0.2617729891775, 'final': False}",False,0,12,-0.26,Parker (surname)
+69,"{'confidence': -0.7245265249999999, 'final': False}",False,0,16,-0.72,Robert Craft
+69,"{'confidence': -0.054522093323925, 'final': False}",False,0,23,-0.05,Duke Ellington
+69,"{'confidence': -0.22138192450250002, 'final': False}",False,0,26,-0.22,Ferde Grofé
+69,"{'confidence': -0.5641556, 'final': False}",False,1,7,-0.56,Pass
+69,"{'confidence': -0.0613440542864125, 'final': False}",False,1,12,-0.06,Lloyd Webber
+69,"{'confidence': -0.24559140799187998, 'final': False}",False,1,18,-0.25,Coltrane
+69,"{'confidence': -0.125125985815075, 'final': False}",False,1,19,-0.13,John Coltrane
+69,"{'confidence': -0.017076619306324998, 'final': False}",False,2,8,-0.02,Alice Coltrane
+69,"{'confidence': -0.09294264340316251, 'final': False}",False,2,13,-0.09,John Coltrane
+69,"{'confidence': -0.09326359340316251, 'final': False}",False,2,15,-0.09,John Coltrane
+69,"{'confidence': -0.001696308, 'final': True}",True,3,8,-0.00,John Coltrane
+69,"{'confidence': -6.27309956625e-05, 'final': True}",True,3,11,-0.00,John Coltrane
+69,"{'confidence': -0.0018264780049999998, 'final': True}",True,3,15,-0.00,John Coltrane
+69,"{'confidence': -2.372874625e-06, 'final': True}",True,3,22,-0.00,John Coltrane
+69,"{'confidence': -6.187392e-06, 'final': True}",True,3,26,-0.00,John Coltrane
+69,"{'confidence': -0.0280213259031625, 'final': False}",False,3,32,-0.03,John Coltrane
+69,"{'confidence': -0.00391743163425, 'final': False}",False,3,38,-0.00,John Coltrane
+69,"{'confidence': -0.07542508, 'final': False}",False,3,43,-0.08,John Coltrane
+69,"{'confidence': -0.07542508, 'final': False}",False,3,43,-0.08,John Coltrane
+70,"{'confidence': -0.20259559, 'final': False}",False,0,7,-0.20,Aria
+70,"{'confidence': -0.0093989704515, 'final': False}",False,0,13,-0.01,Aria
+70,"{'confidence': -0.2520321278, 'final': False}",False,0,19,-0.25,German language
+70,"{'confidence': -0.0631963495, 'final': False}",False,0,20,-0.06,German language
+70,"{'confidence': -0.1170799992, 'final': False}",False,1,7,-0.12,German language
+70,"{'confidence': -0.005666256299999999, 'final': False}",False,1,14,-0.01,Italian language
+70,"{'confidence': -0.5341389923485, 'final': False}",False,1,20,-0.53,Italian language
+70,"{'confidence': -0.5462741545235, 'final': False}",False,1,24,-0.55,Russian language
+70,"{'confidence': -0.156871825, 'final': False}",False,2,7,-0.16,Russian language
+70,"{'confidence': -0.23428581415, 'final': False}",False,2,15,-0.23,Russian language
+70,"{'confidence': -0.2625380115, 'final': False}",False,2,22,-0.26,Russian language
+70,"{'confidence': -0.008455820254666667, 'final': False}",False,2,24,-0.01,Czech language
+70,"{'confidence': -0.0005712303225, 'final': True}",True,3,6,-0.00,Czech language
+70,"{'confidence': -0.00021997610333333333, 'final': True}",True,3,14,-0.00,Czech language
+70,"{'confidence': -7.041705666666667e-05, 'final': True}",True,3,20,-0.00,Czech language
+70,"{'confidence': -0.00036102584433333335, 'final': True}",True,3,21,-0.00,Czech language
+70,"{'confidence': -5.453505666666667e-06, 'final': True}",True,4,7,-0.00,Czech language
+70,"{'confidence': -2.2200750166666667e-06, 'final': True}",True,4,14,-0.00,Czech language
+70,"{'confidence': -1.5843220966666665e-06, 'final': True}",True,4,17,-0.00,Czech language
+70,"{'confidence': -1.5843220966666665e-06, 'final': True}",True,4,17,-0.00,Czech language
+71,"{'confidence': -0.01695730075, 'final': False}",False,0,8,-0.02,Aria
+71,"{'confidence': -4.38067255e-06, 'final': True}",True,0,15,-0.00,Pagliacci
+71,"{'confidence': -2.4827876666666667e-07, 'final': True}",True,0,17,-0.00,Pagliacci
+71,"{'confidence': -4.717545433333334e-07, 'final': True}",True,1,7,-0.00,Pagliacci
+71,"{'confidence': -8.293655266666666e-07, 'final': True}",True,1,14,-0.00,Pagliacci
+71,"{'confidence': -2.4827876666666667e-07, 'final': True}",True,1,20,-0.00,Pagliacci
+71,"{'confidence': -3.277478766666667e-07, 'final': True}",True,1,21,-0.00,Pagliacci
+71,"{'confidence': -2.1952720166666667e-06, 'final': True}",True,2,7,-0.00,Pagliacci
+71,"{'confidence': -0.0010848144940666666, 'final': True}",True,2,11,-0.00,Pagliacci
+71,"{'confidence': -0.008918751026666666, 'final': False}",False,3,6,-0.01,Pagliacci
+71,"{'confidence': -0.0093328991, 'final': False}",False,4,7,-0.01,Pagliacci
+71,"{'confidence': -0.00013282904666666665, 'final': True}",True,4,12,-0.00,Pagliacci
+71,"{'confidence': -3.823451216666667e-05, 'final': True}",True,4,18,-0.00,Pagliacci
+71,"{'confidence': -5.264206766666667e-07, 'final': True}",True,5,7,-0.00,Pagliacci
+71,"{'confidence': -7.498964266666667e-07, 'final': True}",True,5,13,-0.00,Pagliacci
+71,"{'confidence': -6.306927833333333e-07, 'final': True}",True,5,17,-0.00,Pagliacci
+71,"{'confidence': -2.170469e-06, 'final': True}",True,6,7,-0.00,Pagliacci
+71,"{'confidence': -4.539610666666667e-06, 'final': True}",True,6,12,-0.00,Pagliacci
+71,"{'confidence': -5.661552333333333e-07, 'final': True}",True,6,14,-0.00,Pagliacci
+71,"{'confidence': -5.661552333333333e-07, 'final': True}",True,6,14,-0.00,Pagliacci
+56,"{'confidence': -0.12195630604776, 'final': False}",False,0,7,-0.12,Johannes Brahms
+56,"{'confidence': -0.02738479384969286, 'final': False}",False,0,13,-0.03,Sergei Rachmaninoff
+56,"{'confidence': -0.009147953753338, 'final': False}",False,0,19,-0.01,Johannes Brahms
+56,"{'confidence': -0.01139447638081, 'final': False}",False,0,28,-0.01,Johannes Brahms
+56,"{'confidence': -0.12785735723473285, 'final': False}",False,0,34,-0.13,Sergei Rachmaninoff
+56,"{'confidence': -0.01599119473147143, 'final': False}",False,0,38,-0.02,Sergei Rachmaninoff
+56,"{'confidence': -0.04134246812075715, 'final': False}",False,0,42,-0.04,Sergei Prokofiev
+56,"{'confidence': -0.0015585102968114287, 'final': True}",True,1,8,-0.00,Sergei Rachmaninoff
+56,"{'confidence': -0.14033732343518998, 'final': False}",False,1,13,-0.14,Sergei Prokofiev
+56,"{'confidence': -0.20769842658976428, 'final': False}",False,1,17,-0.21,Sergei Rachmaninoff
+56,"{'confidence': -0.00031925446, 'final': True}",True,1,24,-0.00,Maurice Ravel
+56,"{'confidence': -1.01285796e-07, 'final': True}",True,1,28,-0.00,Maurice Ravel
+56,"{'confidence': -1.20691848e-06, 'final': True}",True,2,6,-0.00,Maurice Ravel
+56,"{'confidence': -1.01285796e-07, 'final': True}",True,2,10,-0.00,Maurice Ravel
+56,"{'confidence': -4.2017428e-07, 'final': True}",True,2,16,-0.00,Maurice Ravel
+56,"{'confidence': -3.4865206e-07, 'final': True}",True,3,7,-0.00,Maurice Ravel
+56,"{'confidence': -1.2512653000000002e-07, 'final': True}",True,3,14,-0.00,Maurice Ravel
+56,"{'confidence': -2.5328914e-07, 'final': True}",True,3,15,-0.00,Maurice Ravel
+56,"{'confidence': -2.5328914e-07, 'final': True}",True,3,15,-0.00,Maurice Ravel
+57,"{'confidence': -0.0038579537147630004, 'final': False}",False,0,6,-0.00,Symphony No. 9 (Beethoven)
+57,"{'confidence': -0.0001830590164333333, 'final': True}",True,0,13,-0.00,The Planets
+57,"{'confidence': -0.1340714195058625, 'final': False}",False,0,19,-0.13,Trumpet concerto (Haydn)
+57,"{'confidence': -0.18190823111135002, 'final': False}",False,0,21,-0.18,Trumpet concerto (Haydn)
+57,"{'confidence': -0.29595675448000003, 'final': False}",False,1,7,-0.30,Norway
+57,"{'confidence': -0.0485836355, 'final': False}",False,1,14,-0.05,United States
+57,"{'confidence': -0.0341296109785, 'final': False}",False,1,19,-0.03,United States
+57,"{'confidence': -0.007126628361825, 'final': False}",False,1,23,-0.01,Finland
+57,"{'confidence': -0.00795716021365, 'final': False}",False,2,7,-0.01,Finland
+57,"{'confidence': -0.044715005611825, 'final': False}",False,2,16,-0.04,Finland
+57,"{'confidence': -0.062166036806325, 'final': False}",False,2,22,-0.06,Finland
+57,"{'confidence': -0.16606266320000002, 'final': False}",False,2,27,-0.17,United States
+57,"{'confidence': -0.1117086398155, 'final': False}",False,3,8,-0.11,Finland
+57,"{'confidence': -0.07655807, 'final': False}",False,3,13,-0.08,Russia
+57,"{'confidence': -0.10198500645121666, 'final': False}",False,3,18,-0.10,Armenia
+57,"{'confidence': -0.16562988, 'final': False}",False,4,7,-0.17,Russia
+57,"{'confidence': -0.005417734752, 'final': False}",False,4,14,-0.01,Armenia
+57,"{'confidence': -4.221485666666667e-07, 'final': True}",True,4,16,-0.00,Armenia
+57,"{'confidence': -4.221485666666667e-07, 'final': True}",True,4,16,-0.00,Armenia
+58,"{'confidence': -2.099253709857143e-05, 'final': False}",False,0,6,-0.00,Dmitri Shostakovich
+58,"{'confidence': -0.00047565422105500004, 'final': True}",True,0,12,-0.00,Niccolò Paganini
+58,"{'confidence': -0.004213442512933333, 'final': False}",False,0,17,-0.00,Niccolò Paganini
+58,"{'confidence': -0.0016559236757083332, 'final': True}",True,0,20,-0.00,Niccolò Paganini
+58,"{'confidence': -0.002773144307691667, 'final': True}",True,1,7,-0.00,Niccolò Paganini
+58,"{'confidence': -0.014655691342916664, 'final': False}",False,1,15,-0.01,Niccolò Paganini
+58,"{'confidence': -5.866222e-05, 'final': True}",True,1,21,-0.00,Franz Liszt
+58,"{'confidence': -1.378059125e-07, 'final': True}",True,2,6,-0.00,Franz Liszt
+58,"{'confidence': -2.4581091250000003e-07, 'final': True}",True,2,10,-0.00,Franz Liszt
+58,"{'confidence': -1.2773395e-05, 'final': True}",True,2,17,-0.00,Franz Liszt
+58,"{'confidence': -0.00016339745838333335, 'final': True}",True,2,23,-0.00,Niccolò Paganini
+58,"{'confidence': -0.0007600319382583333, 'final': True}",True,2,24,-0.00,Niccolò Paganini
+58,"{'confidence': -0.0007715774241666669, 'final': True}",True,3,8,-0.00,Niccolò Paganini
+58,"{'confidence': -7.250934083333333e-07, 'final': True}",True,3,13,-0.00,Niccolò Paganini
+58,"{'confidence': -9.6350074e-07, 'final': True}",True,4,7,-0.00,Niccolò Paganini
+58,"{'confidence': -7.846952566666666e-07, 'final': True}",True,4,11,-0.00,Niccolò Paganini
+58,"{'confidence': -2.9547911666666667e-07, 'final': True}",True,4,17,-0.00,Niccolò Paganini
+58,"{'confidence': -2.9547911666666667e-07, 'final': True}",True,4,17,-0.00,Niccolò Paganini
+59,"{'confidence': -0.5064834663333334, 'final': False}",False,0,6,-0.51,Double fugue
+59,"{'confidence': -0.00246478895, 'final': True}",True,0,12,-0.00,Motets
+59,"{'confidence': -0.008821972233500001, 'final': False}",False,0,18,-0.01,Motets
+59,"{'confidence': -0.001226079103, 'final': True}",True,0,19,-0.00,Motets
+59,"{'confidence': -0.203089335045, 'final': False}",False,1,7,-0.20,Motet
+59,"{'confidence': -0.023702777908165, 'final': False}",False,1,14,-0.02,Motets
+59,"{'confidence': -0.304274023621, 'final': False}",False,1,19,-0.30,Motets
+59,"{'confidence': -0.046007635080000005, 'final': False}",False,1,21,-0.05,Motet
+59,"{'confidence': -0.10666061924110001, 'final': False}",False,2,6,-0.11,Motets
+59,"{'confidence': -0.1116107161475, 'final': False}",False,2,10,-0.11,Motets
+59,"{'confidence': -0.068980670058, 'final': False}",False,2,16,-0.07,Motets
+59,"{'confidence': -0.00070301122285, 'final': True}",True,2,22,-0.00,Motets
+59,"{'confidence': -0.04905135101, 'final': False}",False,2,23,-0.05,Motets
+59,"{'confidence': -0.121547976806325, 'final': False}",False,3,5,-0.12,Motets
+59,"{'confidence': -0.070052661408165, 'final': False}",False,3,12,-0.07,Motets
+59,"{'confidence': -0.21781399140816501, 'final': False}",False,3,16,-0.22,Motet
+59,"{'confidence': -0.03065108822285, 'final': False}",False,4,7,-0.03,Motets
+59,"{'confidence': -0.112987796408165, 'final': False}",False,4,11,-0.11,Motet
+59,"{'confidence': -0.30599205441731997, 'final': False}",False,4,15,-0.31,Motet
+59,"{'confidence': -0.30599205441731997, 'final': False}",False,4,15,-0.31,Motet
+60,"{'confidence': -0.3919273175, 'final': False}",False,0,7,-0.39,Symphony
+60,"{'confidence': -0.021286853117883333, 'final': False}",False,0,14,-0.02,Swan Lake
+60,"{'confidence': -0.231917245923, 'final': False}",False,0,19,-0.23,Concerto for 24 Violins
+60,"{'confidence': -0.051339460536825005, 'final': False}",False,0,23,-0.05,Ricercar
+60,"{'confidence': -0.29428282301066666, 'final': False}",False,1,7,-0.29,Cantatas
+60,"{'confidence': -0.1962925293461333, 'final': False}",False,1,14,-0.20,Oratorios
+60,"{'confidence': -0.13297820000000002, 'final': False}",False,1,15,-0.13,Oratorios
+60,"{'confidence': -0.08547034453755002, 'final': False}",False,2,8,-0.09,Oratorios
+60,"{'confidence': -0.059327483333333327, 'final': False}",False,2,13,-0.06,Oratorios
+60,"{'confidence': -0.03809872403755, 'final': False}",False,2,19,-0.04,Oratorios
+60,"{'confidence': -0.2660409966666667, 'final': False}",False,3,7,-0.27,Oratorios
+60,"{'confidence': -0.07933666453754999, 'final': False}",False,3,13,-0.08,Oratorios
+60,"{'confidence': -0.12735450787088334, 'final': False}",False,3,20,-0.13,Oratorios
+60,"{'confidence': -0.12686938120421667, 'final': False}",False,3,21,-0.13,Oratorios
+60,"{'confidence': -0.07918503787088334, 'final': False}",False,4,5,-0.08,Oratorios
+60,"{'confidence': -0.12074530948825998, 'final': False}",False,4,13,-0.12,Passions (music)
+60,"{'confidence': -0.0664431158472, 'final': False}",False,4,19,-0.07,Passions (music)
+60,"{'confidence': -0.1007654015, 'final': False}",False,5,8,-0.10,Oratorio
+60,"{'confidence': -0.12866317498372, 'final': False}",False,6,6,-0.13,Passions (music)
+60,"{'confidence': -0.12866317498372, 'final': False}",False,6,6,-0.13,Passions (music)
+61,"{'confidence': -1.1224389833333334e-06, 'final': False}",False,0,6,-0.00,The Planets
+61,"{'confidence': -0.070189066653025, 'final': False}",False,0,14,-0.07,Goldberg Variations
+61,"{'confidence': -1.1696393e-06, 'final': True}",True,0,20,-0.00,Water Music
+61,"{'confidence': -3.948155e-07, 'final': True}",True,1,6,-0.00,Water Music
+61,"{'confidence': -0.00039897708, 'final': True}",True,1,10,-0.00,Water Music
+61,"{'confidence': -0.21366833344559163, 'final': False}",False,1,16,-0.21,The Art of Fugue
+61,"{'confidence': -0.15751285138837873, 'final': False}",False,1,22,-0.16,The Four Seasons (Vivaldi)
+61,"{'confidence': -0.15795958, 'final': False}",False,2,6,-0.16,Water Music
+61,"{'confidence': -0.003410945306325, 'final': False}",False,2,11,-0.00,Water Music
+61,"{'confidence': -0.017182857775938334, 'final': False}",False,3,6,-0.02,Water Music (Handel)
+61,"{'confidence': -0.0015892866382633333, 'final': True}",True,3,12,-0.00,Water Music (Handel)
+61,"{'confidence': -5.378972e-06, 'final': True}",True,3,16,-0.00,Water Music
+61,"{'confidence': -9.3123195e-07, 'final': True}",True,4,5,-0.00,Water Music
+61,"{'confidence': -1.0876401500000001e-06, 'final': True}",True,4,11,-0.00,Water Music
+61,"{'confidence': -0.08164397790270499, 'final': False}",False,4,14,-0.08,Water Music (Handel)
+61,"{'confidence': -0.00216886162631, 'final': True}",True,5,7,-0.00,Water Music (Handel)
+61,"{'confidence': -0.029242934265783335, 'final': False}",False,5,13,-0.03,Water Music (Handel)
+61,"{'confidence': -0.0004886361781216666, 'final': True}",True,5,17,-0.00,Water Music (Handel)
+61,"{'confidence': -0.0004886361781216666, 'final': True}",True,5,17,-0.00,Water Music (Handel)
+62,"{'confidence': -0.00025789482966, 'final': False}",False,0,6,-0.00,Charles Ives
+62,"{'confidence': -0.28785999778091254, 'final': False}",False,0,13,-0.29,Twelve-tone technique
+62,"{'confidence': -0.022293326692199997, 'final': False}",False,0,17,-0.02,Charles Ives
+62,"{'confidence': -0.13265039474106666, 'final': False}",False,1,8,-0.13,Charles Ives
+62,"{'confidence': -0.07576941500056002, 'final': False}",False,1,14,-0.08,Johann Sebastian Bach
+62,"{'confidence': -0.133144852136788, 'final': False}",False,1,20,-0.13,Johann Sebastian Bach
+62,"{'confidence': -1.3814186785714286e-06, 'final': True}",True,1,22,-0.00,György Ligeti
+62,"{'confidence': -4.171595285714286e-07, 'final': True}",True,2,5,-0.00,György Ligeti
+62,"{'confidence': -1.3133022928571425e-06, 'final': True}",True,2,12,-0.00,György Ligeti
+62,"{'confidence': -6.321385142857143e-07, 'final': True}",True,2,17,-0.00,György Ligeti
+62,"{'confidence': -3.305706392857142e-06, 'final': True}",True,3,7,-0.00,György Ligeti
+62,"{'confidence': -1.1664396471428569e-06, 'final': True}",True,3,13,-0.00,György Ligeti
+62,"{'confidence': -5.363631857142857e-07, 'final': True}",True,3,19,-0.00,György Ligeti
+62,"{'confidence': -0.00018809354012142856, 'final': True}",True,4,6,-0.00,György Ligeti
+62,"{'confidence': -3.754862235714286e-06, 'final': True}",True,4,12,-0.00,György Ligeti
+62,"{'confidence': -1.8029155142857143e-06, 'final': True}",True,5,7,-0.00,György Ligeti
+62,"{'confidence': -4.5121770714285717e-07, 'final': True}",True,5,12,-0.00,György Ligeti
+62,"{'confidence': -4.5121770714285717e-07, 'final': True}",True,5,12,-0.00,György Ligeti
+63,"{'confidence': -0.004650639009003999, 'final': False}",False,0,7,-0.00,Symphony No. 5 (Beethoven)
+63,"{'confidence': -0.004531028609453, 'final': False}",False,0,13,-0.00,Symphony No. 5 (Beethoven)
+63,"{'confidence': -4.49937857e-07, 'final': True}",True,0,21,-0.00,Symphony No. 5 (Beethoven)
+63,"{'confidence': -0.07804166950808, 'final': False}",False,0,27,-0.08,Symphony No. 5 (Beethoven)
+63,"{'confidence': -0.10099680526651, 'final': False}",False,0,33,-0.10,Symphony No. 7 (Beethoven)
+63,"{'confidence': -0.085208761224328, 'final': False}",False,0,35,-0.09,Symphony No. 9 (Beethoven)
+63,"{'confidence': -0.13073618222029298, 'final': False}",False,1,6,-0.13,Symphony No. 9 (Beethoven)
+63,"{'confidence': -0.10382470659496298, 'final': False}",False,1,12,-0.10,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.07483984534765, 'final': False}",False,1,18,-0.07,Symphony No. 9 (Beethoven)
+63,"{'confidence': -0.001072469383733, 'final': True}",True,1,23,-0.00,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.0064727884538280005, 'final': False}",False,2,7,-0.01,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.009506367244219998, 'final': False}",False,2,12,-0.01,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.006733505272450001, 'final': False}",False,2,16,-0.01,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.0008740014628630001, 'final': True}",True,2,17,-0.00,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.04527472277313, 'final': False}",False,3,7,-0.05,Eroica symphony
+63,"{'confidence': -0.04985067452726, 'final': False}",False,3,11,-0.05,Eroica symphony
+63,"{'confidence': -6.6535120369e-05, 'final': True}",True,4,7,-0.00,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.00033488674082999994, 'final': True}",True,4,11,-0.00,Symphony No. 3 (Beethoven)
+63,"{'confidence': -0.00033488674082999994, 'final': True}",True,4,11,-0.00,Symphony No. 3 (Beethoven)
