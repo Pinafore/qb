@@ -1,0 +1,128 @@
+id,answer,sent,text
+79,telomeres,0,Loops within these structures are created by TRF2 to prevent them from undergoing non-homologous end joining.
+79,telomeres,1,Flow cytometry is followed by FISH to quantify the length of these G-quadruplex-rich structures.
+79,telomeres,2,Breakdown of these structures is often prevented in cancer cells via overexpression of TERT.
+79,telomeres,3,"The number of times a cell can replicate without these structures becoming degraded is referred to as the Hayflick limit, which relies on the inverse relationship between the length of these structures and a cell’s senescence."
+79,telomeres,4,"For 10 points, name these sequences of DNA that prevent degradation at the ends of chromosomes."
+80,DNA,0,Exposed portions of this material are broken down enzymatically in vitro to reveal binding affinities of proteins in footprinting assays.
+80,DNA,1,This material is broken up with sonication before being bound to a protein of interest in ChIP.
+80,DNA,2,Ethidium bromide is a fluorescent carcinogen that can intercalate this material in order to image it with UV light.
+80,DNA,3,"“Ladders” of this material, whose size is generally reported in kilobases, can be used to determine whether PCR has amplified it correctly when visualizing with gel electrophoresis."
+80,DNA,4,"For 10 points, name this material made of adenine, thyine, cytosine, and guanine that makes up a cell’s genetic material."
+81,population density,0,Autoinducer concentration acts as a proxy for this quantity for a microbial population to determine when to initiate quorum sensing pathways.
+81,population density,1,The Janzen–Connell hypothesis and Allee effects are well studied examples of the negative and positive dependence of ecological phenomena on this quantity.
+81,population density,2,Light availability often acts as a limiting factor for a forest’s value of this quantity.
+81,population density,3,Cities are generally designed to increase this value for human populations relative to rural regions.
+81,population density,4,"For 10 points, name this measure of the total population size divided by the area that population takes up."
+82,ribosomes,0,A tunnel that allows a substrate to exit these structures was found to feed into the translocon.
+82,ribosomes,1,This structure generally binds either to the anticodon of a “charged” nucleic acid or terminate after binding to a release factor.
+82,ribosomes,2,The 16S and 18S sequences encode a portion of this structure.
+82,ribosomes,3,These structures are composed of 40 and 60 Svedberg subunits in Eukaryotes and 30 and 50 Svedberg subunits in bacteria.
+82,ribosomes,4,These structures are generally either free floating in the cytoplasm or attached to the rough endoplasmic reticulum.
+82,ribosomes,5,"For 10 points, name these complexes which carry out translation in the cell."
+83,myelin,0,Flu vaccine uptake has occasionally been linked to a very small chance of developing an autoimmune disease that causes this substance’s production to decrease.
+83,myelin,1,"Intermittent abdominal pain, fever, and jaundice are symptoms of a disease characterized by loss of this substance that are collectively referred to as Charcot’s triad."
+83,myelin,2,"Leukodystrophies are studied using shiverer mice, which are naturally deficient in this substance."
+83,myelin,3,Oligodendrocytes and Schwann cells are primarily responsible for producing this substance.
+83,myelin,4,"For 10 points, name this insulating substance which coats the exterior of axons."
+84,large intestine,0,Protein loss in this organ alongside low albumin levels can be caused by mutations of SMAD4.
+84,large intestine,1,"Mutation of APC can cause this organ to take on a bumpy interior appearance due to familial adenomatous polyposis, or FAP."
+84,large intestine,2,Ingestion of polyethylene glycol precedes sigmoidoscope imaging of this organ.
+84,large intestine,3,Mutations in the mismatch repair pathway lead to microsatellite instability within this organ in Lynch syndrome.
+84,large intestine,4,This organ’s cecum is connected to the ileum of another organ in the digestive system.
+84,large intestine,5,"For 10 points, name this organ responsible for reabsorption of water from fecal matter, which follows a “small” counterpart in the GI tract."
+85,myasthenia gravis,0,The onset of this disease follows an unexpected dichotomy between men acquiring this disease in their 60s and women acquiring it in their 30s.
+85,myasthenia gravis,1,Application of ice to an affected site can be used to distinguish this disease from Lambert-Eaton syndrome.
+85,myasthenia gravis,2,This disease is characterized by double vision and drooping of the eyelids and can be treated with pyridostigmine and neostigmine.
+85,myasthenia gravis,3,Surgical removal of the thymus can treat this disease by indirectly preventing B cells from producing autoantibodies.
+85,myasthenia gravis,4,"For 10 points, name this autoimmune condition in which skeletal muscle is weakened by antibodies blocking nicotinic acetylcholine receptors in synapses."
+86,lysosome,0,The filipin test is used to stain for lipoproteins within this organelle.
+86,lysosome,1,The ubiquitin-like protein Atg8 marks structures for fusion with this organelle.
+86,lysosome,2,Tissue paper macrophages can present due to inability of this organelle to process sphingolipids in Gaucher’s disease.
+86,lysosome,3,Hydroxychloroquine’s mechanism of action for treating lupus in antigen presenting cells involves raising a quantity maintained by V-type ATPases at the membrane of this organelle.
+86,lysosome,4,"Mannose-6-phosphate is used to mark proteins for transport into this organelle, which is defective in Tay-Sachs disease."
+86,lysosome,5,"For 10 points, name this organelle whose low pH allows it to digest intracellular waste."
+87,antibodies,0,Cells that produce one type of these proteins can be selected for by growing them with aminopterin such that only  HGPRT-positive cells will grow in HAT media.
+87,antibodies,1,"Following a formaldehyde cross-linking step, these proteins can be used to pull down specific DNA sequences by binding to Protein A."
+87,antibodies,2,Lab grade milk powder or bovine serum albumin can be used as blocking agents that improve the specificity of these proteins.
+87,antibodies,3,Hybridomas are cells modified to produce large amounts of the “monoclonal” variety of these proteins.
+87,antibodies,4,"For 10 points, name these proteins produced by B cells that bind tightly to antigens."
+88,neutral,0,This word describes the impact on niche differences between different species in the same trophic level according to a theory devised by Stephen Hubbell.
+88,neutral,1,"Determining evolutionary divergence by analyzing accumulation of mutations as a molecular clock relies on the mutations having this property, as espoused by Motoo Kimura."
+88,neutral,2,"Mutations that do not have this property reach fixation as a result of natural selection, but the vast majority of mutations have this overall impact and become fixed as a mechanism of genetic drift."
+88,neutral,3,"For 10 points, name this adjective that indicates a mutation has neither a positive nor a negative impact on an organism’s fitness."
+89,crystals,0,A uniform version of these materials can be produced by melting and then cooling silicon in a thin region in a process known as zone melting.
+89,crystals,1,The merger of multiple similar versions of these materials can result in their “twinning.” The most dense versions of these materials are described as being either “hexagonal” or “body-centered” if they are close packed.
+89,crystals,2,"These materials, whose properties are commonly studied with X-ray diffraction, are contrasted with amorphous solids."
+89,crystals,3,"For 10 points, name these solids whose highly ordered molecular structures are exemplified by quartz and diamonds."
+90,esters,0,Homologations of these groups have largely phased out diazomethane in favor of the safer reagent dibromomethane.
+90,esters,1,A reaction that forms these groups from carboxylic acids uses DCC as a coupling reagent and DMAP as a catalyst.
+90,esters,2,Reactions in which a ketone is formed at the beta position relative to one of these groups include the Dieckman and Claisen condensations.
+90,esters,3,A reaction that forms these groups by refluxing an alcohol and a carboxylic acid is named for Emil Fischer.
+90,esters,4,"For 10 points, name these groups with the general formula ‘R-C-O-O-R’ that are characterized by their fruity smell."
+91,hydrogen,0,Decalin is used as a donor of this element during coal liquefaction.
+91,hydrogen,1,Reactions that add this element can be made asymmetric via the addition of diphosphine ligands such as DIPAMP and BINAP.
+91,hydrogen,2,Reactions that add this element are deemed “transfers” if this element originates from somewhere other than its diatomic form.
+91,hydrogen,3,Palladium on carbon and Lindlar’s catalysts are used to add this element to molecules.
+91,hydrogen,4,Conversion of alkyne to an alkene or from an alkene to an alkane usually proceeds via the addition of this element.
+91,hydrogen,5,"For 10 points, name this lightest element on the periodic table."
+92,chromatography,0,"An equation used in this technique relates the resolving power of one component to the mass-transfer, diffusion, and Eddy-diffusion effects that may result in the broadening of peaks."
+92,chromatography,1,The low-specificity of one component of this technique is referred to as that component’s “general problem.” A simple variant of this technique involves dipping a piece of paper in iodine and visualizing the paper with UV light.
+92,chromatography,2,The time a compound spends attached to a column in this technique is referred to as the retention time.
+92,chromatography,3,"For 10 points, name this technique in which an analyte in a mobile phase is separated based on its ability to interact with a stationary phase."
+93,diffusion,0,"For electrodes, this process is the dominant force in transporting materials through a Nernst boundary layer."
+93,diffusion,1,Alan Turing observed how solutions with different coefficients describing this process could naturally form patterns named for him.
+93,diffusion,2,"A constant associated with this process equals the product of a mobility term, temperature, and Bolzmann’s constant according to a relation derived by Einstein."
+93,diffusion,3,The flux of this process equals its namesake coefficient times the concentration gradient according to Fick’s laws.
+93,diffusion,4,"For 10 points, name this process in which a substance moves from a region of high concentration to one of low concentration."
+94,alkenes,0,These functional groups are reacted with iodine and silver acetate in the Woodward cis-hydroxylation.
+94,alkenes,1,Bulky reagents like 9-BBN can react with these groups via a pseudo-pericyclic 2+2 intermediate to selectively functionalize these groups.
+94,alkenes,2,An anti-addition onto this functional group is facilitated by a metal acetate that is later removed by sodium borohydride.
+94,alkenes,3,Hydroxyls can be added to these groups while following or violating Markovnikov’s rule by performing either oxymercuration or hydroboration.
+94,alkenes,4,"For 10 points, name this functional group that consists of a double bond between 2 carbon atoms."
+95,oxidation state,0,An ion with multiple values of this quantity consists of two ruthenium atoms that are each bound to five ammonia ligands and a pyrazine bridging ligand.
+95,oxidation state,1,That ion is the Creutz–Taube complex.
+95,oxidation state,2,A mixture of elements with different values of this quantity can react to form a molecule with a value for this quantity between those of the reactants in a comproportionation reaction.
+95,oxidation state,3,One reactant increases their value for this quantity while another decreases it in redox reactions.
+95,oxidation state,4,"For 10 points, name this quantity that defines how many electrons have been added or removed from an atom in a larger compound."
+96,titanium,0,This element’s dioxide can form nanoparticles that can catalyze water splitting after being exposed to light in the Honda-Fujishima effect.
+96,titanium,1,This is the heaviest element in a series of catalysts that allow for polymerization of alkenes and that are responsible for industrial synthesis of polyethylene.
+96,titanium,2,A common reaction that isolates this element involves reacting its tetrachloride with two equivalents of magnesium at high heat.
+96,titanium,3,That industrial process for isolating this element is the Kroll process.
+96,titanium,4,"For 10 points, name this corrosion resistant metal often used in aircraft with atomic number 22."
+97,ionic,0,"A “super” form of this adjective can be used to describe “hot, black” ice that can be formed by firing at normal ice with a laser."
+97,ionic,1,"A compound abbreviated EMIM acts as the base of many liquids described by this adjective, which themselves can be used as an alternative to traditional deep eutectic solvents."
+97,ionic,2,"The van’t Hoff factor is generally greater than one if bonds described by this word are present in a molecule, as in most electrolytes."
+97,ionic,3,"For 10 points, name this adjective that describes bonds that form between two oppositely charged atoms and that are contrasted with covalent bonds."
+98,infrared spectroscopy,0,A mobile version of this spectroscopic technique is used to detect the presence of ethanol in contrast to traditional electrochemical breathalyzers.
+98,infrared spectroscopy,1,The Morse potential is used to model molecular motions that are most commonly measured by this technique.
+98,infrared spectroscopy,2,Potassium bromide can be used alongside an oil to form a mulling agent in this technique.
+98,infrared spectroscopy,3,A distinctive region in the spectrum of this technique is often compared to a fingerprint and occurs roughly at 1500 inverse centimeters.
+98,infrared spectroscopy,4,"For 10 points, name this technique in which compounds are identified based on their ability to absorb light that is slightly longer than visible light."
+99,removing water,0,Note to players: description acceptable.
+99,removing water,1,This process can be tracked by watching a blue color arise from sodium-benzophenone ketyl formation.
+99,removing water,2,"This process must be performed on solutions prior to adding Grignard reagents, after which it can be reversed during work up."
+99,removing water,3,Making 100% pure ethanol generally involves performing this process by adding molecular sieves or magnesium sulfate.
+99,removing water,4,This process can be performed during a distillation by implementing a Dean-Stark apparatus.
+99,removing water,5,This process is primarily performed by adding hygroscopic materials into a solution.
+99,removing water,6,"For 10 points, name or describe this process in which the universal solvent is removed from a solution."
+100,buoyancy,0,This force is divided by viscous forces in a dimensionless number analogous to the Reynolds number used in cases of natural convection.
+100,buoyancy,1,"In an approximation used in flows driven by this force, inertial forces are assumed to be negligible in comparison to gravity."
+100,buoyancy,2,This force can be calculated from the surface integral of the Cauchy stress tensor in a fluid.
+100,buoyancy,3,The neutral type of this force exactly balances gravity.
+100,buoyancy,4,"Because of the low density of air, this force is typically negligible in the atmosphere."
+100,buoyancy,5,"For 10 points, name this force which is responsible for ships being able to float."
+101,C,0,A 2015 contest involving this language featured interfering with two Peoples Glorious Democratic Republics.
+101,C,1,An implementation of this language in Coq was verified in a 2005 release from Xavier Leroy.
+101,C,2,A Lucasfilm employee used this language's peculiarities to optimize a program by interspersing case declarations both inside and outside a loop.
+101,C,3,"Dynamically sized arrays are allowed in this language, but implicit integer declarations are not as of a 1999 ISO standard."
+101,C,4,"For 10 points, Dennis Ritchie created what systems programming language which spawned a variant named this language ""plus-plus?"""
+102,convexity,0,"For functions that lack differentiability but have this property, one can define a generalization of the derivative called the subgradient."
+102,convexity,1,"If f is a function with this property, ‘f of the expectation of x’ is at most ‘the expectation of f of x’, which generalizes the fact that functions with this property lie below their secant lines."
+102,convexity,2,"A sufficient condition for a function to have this property is a positive semi-definite Hessian, or in the one-dimensional case, a non-negative second derivative."
+102,convexity,3,"For 10 points, name this property, which for polygons is equivalent to having interior angles all less than 180 degrees."
+103,Andrey Markov,0,A construct named for this mathematician is explosive if the sum of its holding times is finite.
+103,Andrey Markov,1,Applying an inequality named for this mathematician to the moment generating function gives the Chernoff bound.
+103,Andrey Markov,2,"If a construct named for this mathematician is aperiodic, irreducible, and positive recurrent, then it converges to its unique invariant distribution."
+103,Andrey Markov,3,Examples of constructs named for this mathematician include birth-and-death processes and random walks.
+103,Andrey Markov,4,"For 10 points, stochastic processes whose transition probability depends only on the current state are which mathematician’s namesake ‘chains’?"
