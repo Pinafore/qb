@@ -13,7 +13,7 @@ from random import shuffle
 import sys
 import os
 import json
-
+import pdb
 kSHOW_RIGHT = False
 kPAUSE = 0.25
 
@@ -238,7 +238,7 @@ class kCOLORS:
         start = getattr(kCOLORS, color)
         print(start + text + kCOLORS.ENDC, end=end)
 
-        
+
 def parse_final(final_string):
     """
     We have a string to show if we're at the end of the question, this code makes it more robust.
@@ -249,7 +249,7 @@ def parse_final(final_string):
         return 1
     else:
         return int(final_string)
-        
+
 
 def write_readable(filename, ids, questions):
     question_num = 0
@@ -274,8 +274,8 @@ def write_readable(filename, ids, questions):
 
 
 def clear_screen():
-    print("Clearing")
-    os.system("cls" if os.name == "nt" else "clear")
+    # print("Clearing")
+    os.system("cls" if os.name == "nt" else "clear") # TEMP
 
 
 class PowerPositions:
@@ -439,8 +439,9 @@ class Buzzes:
     def add_system(self, file_path):
         buzzfile = DictReader(open("%s.buzz.csv" % file_path, "r"))
         system = file_path.replace("CMSC723_", "").split("/")[-1]
-        system = system.split(".")[0]
-        system = system.split("_")[0]
+        #system = system.split(".")[0]
+        #system = system.split("_")[0]
+        system = system.replace("_"," ")
 
         for ii in buzzfile:
             question, sent, word = (
@@ -473,6 +474,7 @@ class Buzzes:
                 for x in self._buzzes[question]
                 if x[0] < sent or (x[0] == sent and x[1] <= max(0, word))
             )
+
         except ValueError:
             return {}
 
@@ -497,9 +499,9 @@ class Questions:
         """
         Check an answer for correctness
         """
-        
+
         return guess==reference or guess in self._equivalents.get(reference, [])
-        
+
     def debug(self):
         self._questions[0] = {
             0: "His aliases include: Pastor Hansford of Free Will Baptist in Coushatta, Louisianna; Viktor with a K St. Claire, a South African who just inherited money from his uncle; Charlie Hustle, a mailboy in the HHM mailroom; and Gene Takavic, a Cinnabon manager in Omaha.",
@@ -538,8 +540,8 @@ class Questions:
 
             for orig, replace in normalized:
                 self.equivalents[replace] = self.equivalents[orig]
+            print(self.equivalents)
 
-                
     def load_power(self, power_file):
         self._power = PowerPositions(power_file)
 
@@ -594,7 +596,8 @@ def format_display(
         current_guesses, key=lambda x: current_guesses[x].weight, reverse=True
     )[:guess_limit]:
         guess = current_guesses[gg]
-        if answer.strip() == guess.page.strip():
+        #print("answer:", answer.casefold().strip(), "guess", guess.page.casefold().strip())
+        if answer.casefold().strip() == guess.page.casefold().strip():
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
@@ -640,7 +643,7 @@ def answer(ans, system):
     os.system("afplay /System/Library/Sounds/Glass.aiff")
     os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
     sleep(kPAUSE)
-    print(ans)
+    #print(ans)
 
 
 def present_question_hc(
@@ -660,7 +663,7 @@ def present_question_hc(
     human_delta = 0
     computer_delta = 0
     question_value = 15
-    for ss in sorted(question_text):
+    for ss in question_text:
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
             # if we've reached the end of the question
@@ -671,7 +674,7 @@ def present_question_hc(
                     system = random.choice(list(final.keys()))
                     answer(final[system].split("(")[0], system)
                     final = final[system]
-                    if correct == final:
+                    if correct.casefold().strip() == final.casefold().strip():
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
@@ -683,6 +686,8 @@ def present_question_hc(
             press = interpret_keypress()
             current_guesses = buzzes.current_guesses(question_id, ss, ii - 1)
             buzz_now = [x for x in current_guesses.values() if x.final]
+
+            #print(buzz_now)
             # Removing this assertion now that we can have multiple systems playing
             # assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
             if isinstance(press, int):
@@ -720,13 +725,14 @@ def present_question_hc(
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
-                if correct == buzz_now[0].page:
+                if correct.casefold().strip() == buzz_now[0].page.casefold().strip():
+                    #pdb.set_trace()
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
-                    sleep(1)
+                    sleep(5)
                     return Score(human=human_delta, computer=question_value)
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
-                    sleep(1)
+                    sleep(5)
                     computer_delta = -5
                     show_score(
                         score.human + human_delta,
@@ -812,7 +818,7 @@ def load_data(flags):
         questions.debug()
 
     buzzes = Buzzes(flags.model_directory, questions)
-        
+
     if flags.model_directory != "":
         for ii in glob("%s/*" % flags.model_directory):
             if ii.endswith(".buzz.csv"):
@@ -867,9 +873,10 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
         computer=flags.computer_start,
     )
     question_num = 0
-    question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
-    #print(question_ids)
-    #print(list(buzzes))
+    #question_ids = sorted(questions._questions.keys(), key=lambda x: x % 10)
+    question_ids = questions._questions.keys()
+    # print(question_ids)
+    # print(list(buzzes))
     question_ids = [x for x in question_ids if x in buzzes]
     #print(question_ids)
 
