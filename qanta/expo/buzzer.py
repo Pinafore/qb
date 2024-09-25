@@ -4,7 +4,7 @@ from collections import defaultdict
 from glob import glob
 import argparse
 import random
-from csv import DictReader
+from csv import DictReader, DictWriter
 from time import sleep
 import datetime
 
@@ -653,6 +653,7 @@ def present_question_hc(
     buzzes,
     final,
     correct,
+    out_writer,
     score=Score(),
     power="10"
 ):
@@ -678,6 +679,18 @@ def present_question_hc(
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
+
+                    if out_writer:
+                        out_writer.writerow({
+                            "qid": question_id,
+                            "run_id": ss,
+                            "sentence": question_text[ss],
+                            "model_buzz": (ii, ww),
+                            "model_guess": final,
+                            "model_correctness": correct.casefold().strip() == final.casefold().strip(),
+                            "human_buzz": "",
+                            "human_correctness": ""
+                        })
                 else:
                     words += [" ", " ", " ", " ", " "]
 
@@ -696,8 +709,30 @@ def present_question_hc(
                 while response is None:
                     response = input("Player %i, provide an answer:\t" % press)
                     if "+" in response:
+                        if out_writer:
+                            out_writer.writerow({
+                                "qid": question_id,
+                                "run_id": ss,
+                                "sentence": question_text[ss],
+                                "model_buzz": "",
+                                "model_guess": "",
+                                "model_correctness": "",
+                                "human_buzz": (ii, ww),
+                                "human_correctness": True
+                            })
                         return Score(human=question_value, computer=computer_delta)
                     elif "-" in response:
+                        if out_writer:
+                            out_writer.writerow({
+                                "qid": question_id,
+                                "run_id": ss,
+                                "sentence": question_text[ss],
+                                "model_buzz": "",
+                                "model_guess": "",
+                                "model_correctness": "",
+                                "human_buzz": (ii, ww),
+                                "human_correctness": False
+                            })
                         if computer_delta == -5:
                             # If computer already got it wrong, question is over
                             return Score(computer=computer_delta)
@@ -725,6 +760,17 @@ def present_question_hc(
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
+                if out_writer:
+                    out_writer.writerow({
+                        "qid": question_id,
+                        "run_id": ss,
+                        "sentence": question_text[ss],
+                        "model_buzz": (ii, ww),
+                        "model_guess": buzz_now[0].page,
+                        "model_correctness": correct.casefold().strip() == buzz_now[0].page.casefold().strip(),
+                        "human_buzz": "",
+                        "human_correctness": ""
+                    })
                 if correct.casefold().strip() == buzz_now[0].page.casefold().strip():
                     #pdb.set_trace()
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
@@ -866,6 +912,11 @@ def check_hc_tie(score):
 
 
 def question_loop(flags, questions, buzzes, present_question, check_tie):
+    out_writer = None
+    if flags.output.endswith(".csv"):
+        out_writer = DictWriter(open(flags.output, 'w'), {"qid", "run_id", "sentence", "model_buzz", "model_guess", "model_correctness", "human_buzz", "human_correctness"})
+        out_writer.writeheader()
+
     score = Score(
         odd=flags.odd_start,
         even=flags.even_start,
@@ -901,6 +952,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
             buzzes,
             buzzes._finals[ii],
             questions.answer(ii),
+            out_writer=out_writer,
             score=score,
             power=questions._power(ii)
         )
