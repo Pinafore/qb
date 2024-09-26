@@ -646,6 +646,55 @@ def answer(ans, system):
     #print(ans)
 
 
+def setup_gameplay_writer(out_file):
+    if out_file.endswith(".csv"):
+        out_writer = DictWriter(open(out_file, 'w'), {"qid", "run_id", "sentence", "model_buzz", "model_guess", "model_correctness", "human_buzz", "human_correctness"})
+        out_writer.writeheader()
+
+        model_out_file = out_file.replace(".csv", " (model).csv")
+        model_out_writer = DictWriter(open(model_out_file, 'w'), {"qid", "run_id", "sentence", "model_buzz", "model_guess", "model_correctness"})
+        model_out_writer.writeheader()
+
+        human_out_file = out_file.replace(".csv", " (human).csv")
+        human_out_writer = DictWriter(open(human_out_file, 'w'), {"qid", "run_id", "sentence", "human_buzz", "human_correctness"})
+        human_out_writer.writeheader()
+
+        return {"out_writer": out_writer, "model_out_writer": model_out_writer, "human_out_writer": human_out_writer}
+    else:
+        return {"out_writer": None, "model_out_writer": None, "human_out_writer": None}
+
+
+def write_gameplay_log(out_writer_dict, qid, run_id, run_text, model_buzz, model_guess, model_correctness, human_buzz, human_correctness):
+    if out_writer_dict['out_writer']:
+        out_writer_dict['out_writer'].writerow({
+            "qid": qid,
+            "run_id": run_id,
+            "sentence": run_text,
+            "model_buzz": model_buzz,
+            "model_guess": model_guess,
+            "model_correctness": model_correctness,
+            "human_buzz": human_buzz,
+            "human_correctness": human_correctness
+        })
+        if human_buzz == 'N/A':
+            out_writer_dict['model_out_writer'].writerow({
+                "qid": qid,
+                "run_id": run_id,
+                "sentence": run_text,
+                "model_buzz": model_buzz,
+                "model_guess": model_guess,
+                "model_correctness": model_correctness
+            })
+        elif model_buzz == 'N/A':
+            out_writer_dict['human_out_writer'].writerow({
+                "qid": qid,
+                "run_id": run_id,
+                "sentence": run_text,
+                "human_buzz": human_buzz,
+                "human_correctness": human_correctness
+            })
+
+
 def present_question_hc(
     display_num,
     question_id,
@@ -653,7 +702,7 @@ def present_question_hc(
     buzzes,
     final,
     correct,
-    out_writer,
+    out_writer_dict,
     score=Score(),
     power="10"
 ):
@@ -675,22 +724,11 @@ def present_question_hc(
                     system = random.choice(list(final.keys()))
                     answer(final[system].split("(")[0], system)
                     final = final[system]
+                    write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, correct.casefold().strip() == final.casefold().strip(), 'N/A', 'N/A')
                     if correct.casefold().strip() == final.casefold().strip():
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
-
-                    if out_writer:
-                        out_writer.writerow({
-                            "qid": question_id,
-                            "run_id": ss,
-                            "sentence": question_text[ss],
-                            "model_buzz": (ii, ww),
-                            "model_guess": final,
-                            "model_correctness": correct.casefold().strip() == final.casefold().strip(),
-                            "human_buzz": "",
-                            "human_correctness": ""
-                        })
                 else:
                     words += [" ", " ", " ", " ", " "]
 
@@ -709,30 +747,10 @@ def present_question_hc(
                 while response is None:
                     response = input("Player %i, provide an answer:\t" % press)
                     if "+" in response:
-                        if out_writer:
-                            out_writer.writerow({
-                                "qid": question_id,
-                                "run_id": ss,
-                                "sentence": question_text[ss],
-                                "model_buzz": "",
-                                "model_guess": "",
-                                "model_correctness": "",
-                                "human_buzz": (ii, ww),
-                                "human_correctness": True
-                            })
+                        write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], 'N/A', 'N/A', 'N/A', ' '.join(words[:ii+1]), True)
                         return Score(human=question_value, computer=computer_delta)
                     elif "-" in response:
-                        if out_writer:
-                            out_writer.writerow({
-                                "qid": question_id,
-                                "run_id": ss,
-                                "sentence": question_text[ss],
-                                "model_buzz": "",
-                                "model_guess": "",
-                                "model_correctness": "",
-                                "human_buzz": (ii, ww),
-                                "human_correctness": False
-                            })
+                        write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], 'N/A', 'N/A', 'N/A', ' '.join(words[:ii+1]), False)
                         if computer_delta == -5:
                             # If computer already got it wrong, question is over
                             return Score(computer=computer_delta)
@@ -760,17 +778,7 @@ def present_question_hc(
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
-                if out_writer:
-                    out_writer.writerow({
-                        "qid": question_id,
-                        "run_id": ss,
-                        "sentence": question_text[ss],
-                        "model_buzz": (ii, ww),
-                        "model_guess": buzz_now[0].page,
-                        "model_correctness": correct.casefold().strip() == buzz_now[0].page.casefold().strip(),
-                        "human_buzz": "",
-                        "human_correctness": ""
-                    })
+                write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, correct.casefold().strip() == buzz_now[0].page.casefold().strip(), 'N/A', 'N/A')
                 if correct.casefold().strip() == buzz_now[0].page.casefold().strip():
                     #pdb.set_trace()
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
@@ -912,10 +920,7 @@ def check_hc_tie(score):
 
 
 def question_loop(flags, questions, buzzes, present_question, check_tie):
-    out_writer = None
-    if flags.output.endswith(".csv"):
-        out_writer = DictWriter(open(flags.output, 'w'), {"qid", "run_id", "sentence", "model_buzz", "model_guess", "model_correctness", "human_buzz", "human_correctness"})
-        out_writer.writeheader()
+    out_writer_dict = setup_gameplay_writer(flags.output)
 
     score = Score(
         odd=flags.odd_start,
@@ -952,7 +957,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
             buzzes,
             buzzes._finals[ii],
             questions.answer(ii),
-            out_writer=out_writer,
+            out_writer_dict=out_writer_dict,
             score=score,
             power=questions._power(ii)
         )
