@@ -851,9 +851,10 @@ def present_question_hc(
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
-                #write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, correct.casefold().strip() == buzz_now[0].page.casefold().strip(), 'N/A', 'N/A')
                 question_text_join = ' '.join(question_text.values())
-                if questions.answer_check(correct, buzz_now[0].page, question_text_join):
+                answer_check = questions.answer_check(correct, buzz_now[0].page, question_text_join)
+                write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
+                if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(5)
                     return Score(human=human_delta, computer=question_value)
