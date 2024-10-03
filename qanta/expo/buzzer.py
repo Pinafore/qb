@@ -14,6 +14,19 @@ import sys
 import os
 import json
 import pdb
+import csv
+import pandas as pd
+import inflect
+import ast
+
+from qa_metrics.pedant import PEDANT
+from qa_metrics.transformerMatcher import TransformerMatcher
+from qa_metrics.em import em_match
+from qa_metrics.transformerMatcher import TransformerMatcher
+tm = TransformerMatcher("zli12321/answer_equivalence_tiny_bert")
+pedant = PEDANT()
+p = inflect.engine()
+
 kSHOW_RIGHT = False
 kPAUSE = 0.25
 
@@ -495,12 +508,71 @@ class Questions:
 
         print("Initializing questions")
 
-    def answer_check(self, reference, guess):
-        """
-        Check an answer for correctness
-        """
+    def answer_check(self, reference, guess, question):
+        def metric_em_match(reference_answer, candidate_answer):
+            match_result = em_match(reference_answer, candidate_answer)
+            return match_result
 
-        return guess==reference or guess in self._equivalents.get(reference, [])
+        def metric_pedant(reference_answer, candidate_answer, question):
+            match_result = pedant.evaluate(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_pedant_scores(reference_answer, candidate_answer, question):
+            match_result = pedant.get_scores(reference_answer, candidate_answer, question)
+            return match_result
+
+
+
+        def metric_neural(reference_answer, candidate_answer):
+            # Supported models: zli12321/answer_equivalence_roberta-large, zli12321/answer_equivalence_tiny_bert, zli12321/answer_equivalence_roberta, zli12321/answer_equivalence_bert, zli12321/answer_equivalence_distilbert, zli12321/answer_equivalence_distilroberta
+            #scores = tm.transformer_match(reference_answer, candidate_answer, question)
+            match_result = tm.transformer_match(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_neural(reference_answer, candidate_answer, question):
+            # Supported models: zli12321/answer_equivalence_roberta-large, zli12321/answer_equivalence_tiny_bert, zli12321/answer_equivalence_roberta, zli12321/answer_equivalence_bert, zli12321/answer_equivalence_distilbert, zli12321/answer_equivalence_distilroberta
+            #scores = tm.transformer_match(reference_answer, candidate_answer, question)
+            
+            match_result = tm.transformer_match(reference_answer, candidate_answer, question)
+            return match_result
+
+        # def answer_equali(packet1, gold1, question):
+        #     packet1['reference_answer'] = packet1.apply(lambda row: gold1.iloc[row['question_index']-1]['reference'],axis=1)
+        #     packet1['em_match'] = packet1.apply(lambda row: metric_em_match(row['reference_answer'], row['prediction']),axis=1)
+        #     packet1['pendant_evaluate'] = packet1.apply(lambda row: metric_pedant(row['reference_answer'], row['prediction'], row['question']),axis=1)
+        #     packet1['pedant_neural'] = packet1.apply(lambda row: metric_neural(row['reference_answer'], row['prediction'], row['question']),axis=1)
+        #     return packet1
+
+        def normalize_apostrophe(text):
+            return text.replace("’", "'")
+
+        def preprocess(text):
+            text = normalize_apostrophe(text.strip()).lower()
+            return text
+
+        def doublecheck_plural(reference_answers, answer1):
+            answer_equal_list = []
+            for ref in reference_answers:
+                answer2 = ref
+                if p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
+                    answer_equal_list.append(True)
+                else:
+                    answer_equal_list.append(False)
+            return any(answer_equal_list)
+        
+        ref_p = [preprocess(item) for item in reference]
+        if guess!=None:
+            guess_p = preprocess(guess)
+        else:
+            guess_p = None
+        qanta_pedant_neural = metric_neural(ref_p, guess_p, question)
+        qanta_double_check = doublecheck_plural(ref_p, guess_p)
+        if (qanta_pedant_neural==False) and (qanta_double_check==True):
+            result =  True
+        else:
+            result = qanta_pedant_neural
+
+        return result
 
     def debug(self):
         self._questions[0] = {
@@ -596,8 +668,9 @@ def format_display(
         current_guesses, key=lambda x: current_guesses[x].weight, reverse=True
     )[:guess_limit]:
         guess = current_guesses[gg]
-        #print("answer:", answer.casefold().strip(), "guess", guess.page.casefold().strip())
-        if answer.casefold().strip() == guess.page.casefold().strip():
+        question_text_join = ' '.join(question_text.values())
+        
+        if questions.answer_check(answer, guess.page, question_text_join):
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
@@ -778,9 +851,9 @@ def present_question_hc(
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
-                write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, correct.casefold().strip() == buzz_now[0].page.casefold().strip(), 'N/A', 'N/A')
-                if correct.casefold().strip() == buzz_now[0].page.casefold().strip():
-                    #pdb.set_trace()
+                #write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, correct.casefold().strip() == buzz_now[0].page.casefold().strip(), 'N/A', 'N/A')
+                question_text_join = ' '.join(question_text.values())
+                if questions.answer_check(correct, buzz_now[0].page, question_text_join):
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(5)
                     return Score(human=human_delta, computer=question_value)
@@ -935,6 +1008,8 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
     # print(list(buzzes))
     question_ids = [x for x in question_ids if x in buzzes]
     #print(question_ids)
+    question_equivalents = questions.equivalents
+    
 
     if flags.readable != "":
         write_readable(flags.readable, question_ids, questions)
@@ -950,13 +1025,14 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
                 "Looking for power for %i, got %s %s"
                 % (ii, power_mark, str(ii in power._power_marks.keys()))
             )
+        
         score_delta = present_question(
             question_num,
             ii,
             questions[ii],
             buzzes,
             buzzes._finals[ii],
-            questions.answer(ii),
+            [questions.answer(ii)] + question_equivalents[questions.answer(ii)],
             out_writer_dict=out_writer_dict,
             score=score,
             power=questions._power(ii)
