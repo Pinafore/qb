@@ -4,7 +4,7 @@ from collections import defaultdict
 from glob import glob
 import argparse
 import random
-from csv import DictReader
+from csv import DictReader, DictWriter
 from time import sleep
 import datetime
 
@@ -14,6 +14,23 @@ import sys
 import os
 import json
 import pdb
+import csv
+import pandas as pd
+import inflect
+import ast
+
+#pip install torch==2.4.1
+#pip install qa-metrics==0.2.17
+#pip install inflect
+
+from qa_metrics.pedant import PEDANT
+from qa_metrics.transformerMatcher import TransformerMatcher
+from qa_metrics.em import em_match
+from qa_metrics.transformerMatcher import TransformerMatcher
+tm = TransformerMatcher("zli12321/answer_equivalence_tiny_bert")
+pedant = PEDANT()
+p = inflect.engine()
+
 kSHOW_RIGHT = False
 kPAUSE = 0.25
 
@@ -251,13 +268,15 @@ def parse_final(final_string):
         return int(final_string)
 
 
-def write_readable(filename, ids, questions):
+def write_readable(filename, ids, questions, buzzes):
     question_num = 0
     o = open(filename, "w")
+    # For each question
     for ii in ids:
         question_num += 1
         o.write("%i) " % question_num)
         power_found = False
+        # For each sentence in the question
         for jj in questions[ii]:
             if (
                 questions._power(ii)
@@ -269,7 +288,22 @@ def write_readable(filename, ids, questions):
                     "%s  " % questions[ii][jj].replace(power(ii), "(*) %s" % power(ii))
                 )
             else:
-                o.write("%s  " % questions[ii][jj])
+                question_id = ii
+                ss = jj
+                words = questions[ii][ss].split()
+                new_words = []
+                for wii, ww in enumerate(words):
+                    current_guesses = buzzes.current_guesses(question_id, ss, wii - 1)
+                    buzz_now = [x for x in current_guesses.values() if x.final]
+                    if len(buzz_now) > 0:
+                        # Add the model buzz annotations
+                        new_words.append(f'(# {buzz_now[0].page})')
+                    if wii > 0:
+                        new_words.append(words[wii - 1])
+                # Add the last word
+                new_words.append(ww)
+                question_w_ann = ' '.join(new_words)
+                o.write("%s  " % question_w_ann)
         o.write("\nANSWER: %s\n\n" % questions.answer(ii))
 
 
@@ -495,12 +529,69 @@ class Questions:
 
         print("Initializing questions")
 
-    def answer_check(self, reference, guess):
-        """
-        Check an answer for correctness
-        """
+    def answer_check(self, reference, guess, question):
+        def metric_em_match(reference_answer, candidate_answer):
+            match_result = em_match(reference_answer, candidate_answer)
+            return match_result
 
-        return guess==reference or guess in self._equivalents.get(reference, [])
+        def metric_pedant(reference_answer, candidate_answer, question):
+            match_result = pedant.evaluate(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_pedant_scores(reference_answer, candidate_answer, question):
+            match_result = pedant.get_scores(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_neural(reference_answer, candidate_answer):
+            # Supported models: zli12321/answer_equivalence_roberta-large, zli12321/answer_equivalence_tiny_bert, zli12321/answer_equivalence_roberta, zli12321/answer_equivalence_bert, zli12321/answer_equivalence_distilbert, zli12321/answer_equivalence_distilroberta
+            #scores = tm.transformer_match(reference_answer, candidate_answer, question)
+            match_result = tm.transformer_match(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_neural(reference_answer, candidate_answer, question):
+            # Supported models: zli12321/answer_equivalence_roberta-large, zli12321/answer_equivalence_tiny_bert, zli12321/answer_equivalence_roberta, zli12321/answer_equivalence_bert, zli12321/answer_equivalence_distilbert, zli12321/answer_equivalence_distilroberta
+            #scores = tm.transformer_match(reference_answer, candidate_answer, question)
+
+            match_result = tm.transformer_match(reference_answer, candidate_answer, question)
+            return match_result
+
+        # def answer_equali(packet1, gold1, question):
+        #     packet1['reference_answer'] = packet1.apply(lambda row: gold1.iloc[row['question_index']-1]['reference'],axis=1)
+        #     packet1['em_match'] = packet1.apply(lambda row: metric_em_match(row['reference_answer'], row['prediction']),axis=1)
+        #     packet1['pendant_evaluate'] = packet1.apply(lambda row: metric_pedant(row['reference_answer'], row['prediction'], row['question']),axis=1)
+        #     packet1['pedant_neural'] = packet1.apply(lambda row: metric_neural(row['reference_answer'], row['prediction'], row['question']),axis=1)
+        #     return packet1
+
+        def normalize_apostrophe(text):
+            return text.replace("’", "'")
+
+        def preprocess(text):
+            text = normalize_apostrophe(text.strip()).lower()
+            return text
+
+        def doublecheck_plural(reference_answers, answer1):
+            answer_equal_list = []
+            for ref in reference_answers:
+                answer2 = ref
+                if p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
+                    answer_equal_list.append(True)
+                else:
+                    answer_equal_list.append(False)
+            return any(answer_equal_list)
+
+        ref_p = [preprocess(item) for item in reference]
+        if guess != None:
+            guess_p = preprocess(guess)
+        else:
+            guess_p = None
+        qanta_pedant_neural = metric_neural(ref_p, guess_p, question)
+        qanta_double_check = doublecheck_plural(ref_p, guess_p)
+        if (qanta_pedant_neural==False) and (qanta_double_check==True):
+            result =  True
+        else:
+            result = qanta_pedant_neural
+
+        return result
 
     def debug(self):
         self._questions[0] = {
@@ -596,8 +687,9 @@ def format_display(
         current_guesses, key=lambda x: current_guesses[x].weight, reverse=True
     )[:guess_limit]:
         guess = current_guesses[gg]
-        #print("answer:", answer.casefold().strip(), "guess", guess.page.casefold().strip())
-        if answer.casefold().strip() == guess.page.casefold().strip():
+        question_text_join = ' '.join(question_text.values())
+
+        if questions.answer_check(answer, guess.page, question_text_join):
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
@@ -646,6 +738,55 @@ def answer(ans, system):
     #print(ans)
 
 
+def setup_gameplay_writer(out_file):
+    if out_file.endswith(".csv"):
+        out_writer = DictWriter(open(out_file, 'w'), {"qid", "run_id", "sentence", "model_buzz", "model_guess", "model_correctness", "human_buzz", "human_correctness"})
+        out_writer.writeheader()
+
+        model_out_file = out_file.replace(".csv", " (model).csv")
+        model_out_writer = DictWriter(open(model_out_file, 'w'), {"qid", "run_id", "sentence", "model_buzz", "model_guess", "model_correctness"})
+        model_out_writer.writeheader()
+
+        human_out_file = out_file.replace(".csv", " (human).csv")
+        human_out_writer = DictWriter(open(human_out_file, 'w'), {"qid", "run_id", "sentence", "human_buzz", "human_correctness"})
+        human_out_writer.writeheader()
+
+        return {"out_writer": out_writer, "model_out_writer": model_out_writer, "human_out_writer": human_out_writer}
+    else:
+        return {"out_writer": None, "model_out_writer": None, "human_out_writer": None}
+
+
+def write_gameplay_log(out_writer_dict, qid, run_id, run_text, model_buzz, model_guess, model_correctness, human_buzz, human_correctness):
+    if out_writer_dict['out_writer']:
+        out_writer_dict['out_writer'].writerow({
+            "qid": qid,
+            "run_id": run_id,
+            "sentence": run_text,
+            "model_buzz": model_buzz,
+            "model_guess": model_guess,
+            "model_correctness": model_correctness,
+            "human_buzz": human_buzz,
+            "human_correctness": human_correctness
+        })
+        if human_buzz == 'N/A':
+            out_writer_dict['model_out_writer'].writerow({
+                "qid": qid,
+                "run_id": run_id,
+                "sentence": run_text,
+                "model_buzz": model_buzz,
+                "model_guess": model_guess,
+                "model_correctness": model_correctness
+            })
+        elif model_buzz == 'N/A':
+            out_writer_dict['human_out_writer'].writerow({
+                "qid": qid,
+                "run_id": run_id,
+                "sentence": run_text,
+                "human_buzz": human_buzz,
+                "human_correctness": human_correctness
+            })
+
+
 def present_question_hc(
     display_num,
     question_id,
@@ -653,6 +794,7 @@ def present_question_hc(
     buzzes,
     final,
     correct,
+    out_writer_dict,
     score=Score(),
     power="10"
 ):
@@ -674,7 +816,10 @@ def present_question_hc(
                     system = random.choice(list(final.keys()))
                     answer(final[system].split("(")[0], system)
                     final = final[system]
-                    if correct.casefold().strip() == final.casefold().strip():
+                    question_text_join = ' '.join(question_text.values())
+                    answer_check = questions.answer_check(correct, final, question_text_join)
+                    write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
+                    if answer_check:
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
@@ -696,8 +841,10 @@ def present_question_hc(
                 while response is None:
                     response = input("Player %i, provide an answer:\t" % press)
                     if "+" in response:
+                        write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], 'N/A', 'N/A', 'N/A', ' '.join(words[:ii+1]), True)
                         return Score(human=question_value, computer=computer_delta)
                     elif "-" in response:
+                        write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], 'N/A', 'N/A', 'N/A', ' '.join(words[:ii+1]), False)
                         if computer_delta == -5:
                             # If computer already got it wrong, question is over
                             return Score(computer=computer_delta)
@@ -725,8 +872,10 @@ def present_question_hc(
                     )
                 )
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
-                if correct.casefold().strip() == buzz_now[0].page.casefold().strip():
-                    #pdb.set_trace()
+                question_text_join = ' '.join(question_text.values())
+                answer_check = questions.answer_check(correct, buzz_now[0].page, question_text_join)
+                write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
+                if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(5)
                     return Score(human=human_delta, computer=question_value)
@@ -793,6 +942,8 @@ def create_parser():
         type=str,
         default="GAMEPLAY %s.csv"
         % datetime.datetime.now().strftime("%I:%M%p on %B %d %Y"),
+        help="This parameter will only work if the output str ends with `.csv`.\
+              Default is GAMEPLAY <time>.csv and three files will be generated (model, human, and combined behaviors).",
     )
     parser.add_argument("--players", type=int, default=1)
     parser.add_argument("--human_start", type=int, default=0)
@@ -803,7 +954,8 @@ def create_parser():
     parser.add_argument("--power", type=str, default="")
     parser.add_argument("--max_questions", type=int, default=40)
     parser.add_argument("--answer_equivalents", type=str, default="")
-    parser.add_argument("--readable", type=str, default="readable.txt")
+    parser.add_argument("--readable", type=str, default="readable.txt",
+                        help="The human-readable file of the questions with all pre-defined model buzzes.")
     return parser.parse_args()
 
 
@@ -866,6 +1018,8 @@ def check_hc_tie(score):
 
 
 def question_loop(flags, questions, buzzes, present_question, check_tie):
+    out_writer_dict = setup_gameplay_writer(flags.output)
+
     score = Score(
         odd=flags.odd_start,
         even=flags.even_start,
@@ -879,9 +1033,11 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
     # print(list(buzzes))
     question_ids = [x for x in question_ids if x in buzzes]
     #print(question_ids)
+    question_equivalents = questions.equivalents
+
 
     if flags.readable != "":
-        write_readable(flags.readable, question_ids, questions)
+        write_readable(flags.readable, question_ids, questions, buzzes)
 
     for ii in question_ids:
         question_num += 1
@@ -894,13 +1050,15 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
                 "Looking for power for %i, got %s %s"
                 % (ii, power_mark, str(ii in power._power_marks.keys()))
             )
+
         score_delta = present_question(
             question_num,
             ii,
             questions[ii],
             buzzes,
             buzzes._finals[ii],
-            questions.answer(ii),
+            [questions.answer(ii)] + question_equivalents[questions.answer(ii)],
+            out_writer_dict=out_writer_dict,
             score=score,
             power=questions._power(ii)
         )
