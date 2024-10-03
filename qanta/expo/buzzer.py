@@ -268,13 +268,15 @@ def parse_final(final_string):
         return int(final_string)
 
 
-def write_readable(filename, ids, questions):
+def write_readable(filename, ids, questions, buzzes):
     question_num = 0
     o = open(filename, "w")
+    # For each question
     for ii in ids:
         question_num += 1
         o.write("%i) " % question_num)
         power_found = False
+        # For each sentence in the question
         for jj in questions[ii]:
             if (
                 questions._power(ii)
@@ -286,7 +288,22 @@ def write_readable(filename, ids, questions):
                     "%s  " % questions[ii][jj].replace(power(ii), "(*) %s" % power(ii))
                 )
             else:
-                o.write("%s  " % questions[ii][jj])
+                question_id = ii
+                ss = jj
+                words = questions[ii][ss].split()
+                new_words = []
+                for wii, ww in enumerate(words):
+                    current_guesses = buzzes.current_guesses(question_id, ss, wii - 1)
+                    buzz_now = [x for x in current_guesses.values() if x.final]
+                    if len(buzz_now) > 0:
+                        # Add the model buzz annotations
+                        new_words.append(f'(# {buzz_now[0].page})')
+                    if wii > 0:
+                        new_words.append(words[wii - 1])
+                # Add the last word
+                new_words.append(ww)
+                question_w_ann = ' '.join(new_words)
+                o.write("%s  " % question_w_ann)
         o.write("\nANSWER: %s\n\n" % questions.answer(ii))
 
 
@@ -525,8 +542,6 @@ class Questions:
             match_result = pedant.get_scores(reference_answer, candidate_answer, question)
             return match_result
 
-
-
         def metric_neural(reference_answer, candidate_answer):
             # Supported models: zli12321/answer_equivalence_roberta-large, zli12321/answer_equivalence_tiny_bert, zli12321/answer_equivalence_roberta, zli12321/answer_equivalence_bert, zli12321/answer_equivalence_distilbert, zli12321/answer_equivalence_distilroberta
             #scores = tm.transformer_match(reference_answer, candidate_answer, question)
@@ -565,7 +580,7 @@ class Questions:
             return any(answer_equal_list)
         
         ref_p = [preprocess(item) for item in reference]
-        if guess!=None:
+        if guess != None:
             guess_p = preprocess(guess)
         else:
             guess_p = None
@@ -927,6 +942,8 @@ def create_parser():
         type=str,
         default="GAMEPLAY %s.csv"
         % datetime.datetime.now().strftime("%I:%M%p on %B %d %Y"),
+        help="This parameter will only work if the output str ends with `.csv`.\
+              Default is GAMEPLAY <time>.csv and three files will be generated (model, human, and combined behaviors).",
     )
     parser.add_argument("--players", type=int, default=1)
     parser.add_argument("--human_start", type=int, default=0)
@@ -937,7 +954,8 @@ def create_parser():
     parser.add_argument("--power", type=str, default="")
     parser.add_argument("--max_questions", type=int, default=40)
     parser.add_argument("--answer_equivalents", type=str, default="")
-    parser.add_argument("--readable", type=str, default="readable.txt")
+    parser.add_argument("--readable", type=str, default="readable.txt",
+                        help="The human-readable file of the questions with all pre-defined model buzzes.")
     return parser.parse_args()
 
 
@@ -1019,7 +1037,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
     
 
     if flags.readable != "":
-        write_readable(flags.readable, question_ids, questions)
+        write_readable(flags.readable, question_ids, questions, buzzes)
 
     for ii in question_ids:
         question_num += 1
