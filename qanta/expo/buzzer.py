@@ -19,6 +19,10 @@ import pandas as pd
 import inflect
 import ast
 
+#pip install torch==2.4.1
+#pip install qa-metrics==0.2.17
+#pip install inflect
+
 from qa_metrics.pedant import PEDANT
 from qa_metrics.transformerMatcher import TransformerMatcher
 from qa_metrics.em import em_match
@@ -797,8 +801,10 @@ def present_question_hc(
                     system = random.choice(list(final.keys()))
                     answer(final[system].split("(")[0], system)
                     final = final[system]
-                    write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, correct.casefold().strip() == final.casefold().strip(), 'N/A', 'N/A')
-                    if correct.casefold().strip() == final.casefold().strip():
+                    question_text_join = ' '.join(question_text.values())
+                    answer_check = questions.answer_check(correct, final, question_text_join)
+                    write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
+                    if answer_check:
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
