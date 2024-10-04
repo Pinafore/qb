@@ -268,15 +268,18 @@ def parse_final(final_string):
         return int(final_string)
 
 
-def write_readable(filename, ids, questions, buzzes):
+def write_readable(filename, ids, questions, buzzes, question_equivalents):
     question_num = 0
     o = open(filename, "w")
     # For each question
     for ii in ids:
+        correct = [questions.answer(ii)] + question_equivalents[questions.answer(ii)]
+        full_question_text = ' '.join(questions[ii].values())
         question_num += 1
         o.write("%i) " % question_num)
         power_found = False
         # For each sentence in the question
+        model_buzz_bool = False
         for jj in questions[ii]:
             if (
                 questions._power(ii)
@@ -296,15 +299,21 @@ def write_readable(filename, ids, questions, buzzes):
                     current_guesses = buzzes.current_guesses(question_id, ss, wii - 1)
                     buzz_now = [x for x in current_guesses.values() if x.final]
                     if len(buzz_now) > 0:
-                        # Add the model buzz annotations
-                        new_words.append(f'(# {buzz_now[0].page})')
+                        model_guess = buzz_now[0].page
+                        if not model_buzz_bool:
+                            # Add the model buzz annotations
+                            correctness = "+" if questions.answer_check(correct, model_guess, full_question_text) else "-"
+                            new_words.append(f'({correctness})')
+                            model_buzz_bool = True
                     if wii > 0:
                         new_words.append(words[wii - 1])
                 # Add the last word
                 new_words.append(ww)
                 question_w_ann = ' '.join(new_words)
                 o.write("%s  " % question_w_ann)
-        o.write("\nANSWER: %s\n\n" % questions.answer(ii))
+        model_final_correctness = '+' if questions.answer_check(correct, model_guess, full_question_text) else '-'
+        o.write("\nMODEL FINAL GUESS: %s (%s)" % (model_guess, model_final_correctness))
+        o.write("\nANSWER: %s\n\n" % correct)
 
 
 def clear_screen():
@@ -1037,7 +1046,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
 
 
     if flags.readable != "":
-        write_readable(flags.readable, question_ids, questions, buzzes)
+        write_readable(flags.readable, question_ids, questions, buzzes, question_equivalents)
 
     for ii in question_ids:
         question_num += 1
