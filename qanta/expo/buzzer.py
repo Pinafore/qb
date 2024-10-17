@@ -636,7 +636,7 @@ class Questions:
 
     def load_equivalents(self, equivalent_file):
         if equivalent_file:
-            with open(equivalent_file, 'r') as infile:
+            with open(equivalent_file, 'r', encoding='utf-8') as infile:
                 self.equivalents = json.loads(infile.read())
 
             normalized = []
@@ -729,6 +729,7 @@ def interpret_keypress(other_allowable=""):
     press.
     """
     press = getch()
+    press = press.decode('utf-8')
     if press == "\x1b":
         getch()
         getch()
