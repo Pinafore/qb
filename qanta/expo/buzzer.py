@@ -579,11 +579,15 @@ class Questions:
             return text
 
         def doublecheck_plural(reference_answers, answer1):
+            
             answer_equal_list = []
             for ref in reference_answers:
-                answer2 = ref
-                if p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
-                    answer_equal_list.append(True)
+                if ref != "":
+                    answer2 = ref
+                    if p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
+                        answer_equal_list.append(True)
+                    else:
+                        answer_equal_list.append(False)
                 else:
                     answer_equal_list.append(False)
             return any(answer_equal_list)
@@ -594,7 +598,10 @@ class Questions:
         else:
             guess_p = None
         qanta_pedant_neural = metric_neural(ref_p, guess_p, question)
-        qanta_double_check = doublecheck_plural(ref_p, guess_p)
+        if guess_p != "":
+            qanta_double_check = doublecheck_plural(ref_p, guess_p)
+        else: 
+            qanta_double_check = False
         if (qanta_pedant_neural==False) and (qanta_double_check==True):
             result =  True
         else:
