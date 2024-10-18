@@ -276,7 +276,9 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
     # For each question
     for ii in tqdm(ids, "Writing Readable Questions"):
         ans = questions.answer(ii)
-        correct = [questions.answer(ii)] + question_equivalents.get(ans, [])
+        equivalents = question_equivalents.get(ans, {"accept": [], "reject": []})
+        correct = [questions.answer(ii)] + equivalents["accept"]
+        incorrect = equivalents.get("reject", [])
         full_question_text = ' '.join(questions[ii].values())
         question_num += 1
         o.write("%i) " % question_num)
@@ -305,7 +307,7 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
                         model_guess = buzz_now[0].page
                         if not model_buzz_bool:
                             # Add the model buzz annotations
-                            correctness = "+" if questions.answer_check(correct, model_guess, full_question_text) else "-"
+                            correctness = "+" if questions.answer_check(correct, incorrect, model_guess, full_question_text, question_id) else "-"
                             new_words.append(f'({correctness})')
                             model_buzz_bool = True
                     if wii > 0:
@@ -314,7 +316,7 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
                 new_words.append(ww)
                 question_w_ann = ' '.join(new_words)
                 o.write("%s  " % question_w_ann)
-        model_final_correctness = '+' if questions.answer_check(correct, model_guess, full_question_text) else '-'
+        model_final_correctness = '+' if questions.answer_check(correct, incorrect, model_guess, full_question_text, question_id) else '-'
         o.write("\nMODEL FINAL GUESS: %s (%s)" % (model_guess, model_final_correctness))
         o.write("\nANSWER: %s\n\n" % correct)
 
@@ -549,9 +551,9 @@ class Questions:
 
         print("Initializing questions")
 
-    def answer_check(self, reference, guess, question):
-        if guess in self._answer_check_cache[question]:
-            return self._answer_check_cache[question][guess]
+    def answer_check(self, reference_correct, reference_incorrect, guess, question_text, question_id):
+        if guess in self._answer_check_cache[question_id]:
+            return self._answer_check_cache[question_id][guess]
             
         def metric_em_match(reference_answer, candidate_answer):
             match_result = em_match(reference_answer, candidate_answer)
@@ -606,22 +608,25 @@ class Questions:
                     answer_equal_list.append(False)
             return any(answer_equal_list)
 
-        ref_p = [preprocess(item) for item in reference]
-        if guess != None:
-            guess_p = preprocess(guess)
+        if guess in reference_incorrect:
+            result = False
         else:
-            guess_p = None
-        qanta_pedant_neural = metric_neural(ref_p, guess_p, question)
-        if guess_p != "":
-            qanta_double_check = doublecheck_plural(ref_p, guess_p)
-        else: 
-            qanta_double_check = False
-        if (qanta_pedant_neural==False) and (qanta_double_check==True):
-            result =  True
-        else:
-            result = qanta_pedant_neural
+            ref_p = [preprocess(item) for item in reference_correct]
+            if guess != None:
+                guess_p = preprocess(guess)
+            else:
+                guess_p = None
+            qanta_pedant_neural = metric_neural(ref_p, guess_p, question_text)
+            if guess_p != "":
+                qanta_double_check = doublecheck_plural(ref_p, guess_p)
+            else: 
+                qanta_double_check = False
+            if (qanta_pedant_neural==False) and (qanta_double_check==True):
+                result =  True
+            else:
+                result = qanta_pedant_neural
 
-        self._answer_check_cache[question][guess] = result
+        self._answer_check_cache[question_id][guess] = result
         return result
 
     def debug(self):
@@ -688,19 +693,21 @@ class Questions:
 
 
 def clean_evidence(evidence):
-    if "{'confidence': np.float64(" in evidence:
+    if any(x in evidence for x in ["{'confidence':", "{'confidence': np.float64("]):
         evidence = ""
     else:
         evidence = evidence[:60]
     return evidence
     
 def format_display(
+    question_id,
     display_num,
     question_text,
     sent,
     word,
     current_guesses,
-    answer=None,
+    accept=None,
+    reject=[],
     guess_limit=5,
     points=10
 ):
@@ -708,7 +715,7 @@ def format_display(
 
     current_text = ""
     for ss in range(sent):
-        current_text += "%s " % question_text[ss]
+        current_text += "%s " % question_text.get(ss, "")
     current_text += " ".join(question_text[sent].split()[:word])
     current_text = "\n".join(textwrap.wrap(current_text, 80))
 
@@ -726,7 +733,7 @@ def format_display(
         guess = current_guesses[gg]
         question_text_join = ' '.join(question_text.values())
 
-        if questions.answer_check(answer, guess.page, question_text_join):
+        if questions.answer_check(accept, reject, guess.page, question_text_join, question_id):
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
@@ -832,7 +839,8 @@ def present_question_hc(
     question_text,
     buzzes,
     final,
-    correct,
+    accept,
+    reject,
     out_writer_dict,
     score=Score(),
     power="10"
@@ -856,7 +864,7 @@ def present_question_hc(
                     answer(final[system].split("(")[0], system)
                     final = final[system]
                     question_text_join = ' '.join(question_text.values())
-                    answer_check = questions.answer_check(correct, final, question_text_join)
+                    answer_check = questions.answer_check(accept, reject, final, question_text_join, question_id)
                     write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
                     if answer_check:
                         return Score(human=human_delta, computer=10)
@@ -901,19 +909,21 @@ def present_question_hc(
                     flush=False
                 )
                 # Need to fix format_display
-                display += format_display(display_num,
+                display += format_display(question_id,
+                                          display_num,
                                           question_text,
                                           ss,
                                           ii + 1,
                                           current_guesses,
-                                          answer=correct,
+                                          accept=accept,
+                                          reject=reject,
                                           points=question_value
                                           )
                 clear_screen(display)
 
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
                 question_text_join = ' '.join(question_text.values())
-                answer_check = questions.answer_check(correct, buzz_now[0].page, question_text_join)
+                answer_check = questions.answer_check(accept, reject, buzz_now[0].page, question_text_join, question_id)
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
                 if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
@@ -930,12 +940,14 @@ def present_question_hc(
                         "COMPUTER",
                         flush=False
                     )
-                    display += format_display(display_num,
+                    display += format_display(question_id,
+                                              display_num,
                                               question_text,
                                               max(question_text),
                                               0,
                                               current_guesses,
-                                              answer=correct,
+                                              accept=accept,
+                                              reject=reject,
                                               points=question_value)
                     clear_screen(display)
             else:
@@ -946,13 +958,14 @@ def present_question_hc(
                     "COMPUTER",
                     flush = False
                 )
-                display += format_display(
+                display += format_display(question_id,
                         display_num,
                         question_text,
                         ss,
                         ii + 1,
                         current_guesses,
-                        answer=correct,
+                        accept=accept,
+                        reject=reject,
                         points=question_value)
                 clear_screen(display)
 
@@ -1090,13 +1103,15 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
                 % (ii, power_mark, str(ii in power._power_marks.keys()))
             )
 
+        equivalents = question_equivalents.get(questions.answer(ii), {"accept": [], "reject": []})
         score_delta = present_question(
             question_num,
             ii,
             questions[ii],
             buzzes,
             buzzes._finals[ii],
-            [questions.answer(ii)] + question_equivalents[questions.answer(ii)],
+            accept = [questions.answer(ii)] + equivalents["accept"],
+            reject = equivalents.get("reject", []),
             out_writer_dict=out_writer_dict,
             score=score,
             power=questions._power(ii)
@@ -1114,6 +1129,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
     if check_tie(score):
         print("Tiebreaker!")
         for ii in question_ids[question_num:]:
+            equivalents = question_equivalents.get(questions.answer(ii), {"accept": [], "reject": []})
             question_num += 1
             score_delta = present_question(
                 question_num,
@@ -1121,7 +1137,8 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
                 questions[ii],
                 buzzes,
                 buzzes._finals[ii],
-                questions.answer(ii),
+                accept = [question.answer(ii)] + equivalents["accept"],
+                reject = equivalents.get("reject", []),
                 score=score,
                 power=questions._power(ii),
             )
