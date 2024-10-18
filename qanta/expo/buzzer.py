@@ -887,14 +887,14 @@ def present_question_hc(
                     flush=False
                 )
                 # Need to fix format_display
-                diplay += format_display(display_num,
-                                         question_text,
-                                         ss,
-                                         ii + 1,
-                                         current_guesses,
-                                         answer=correct,
-                                         points=question_value
-                                         )
+                display += format_display(display_num,
+                                          question_text,
+                                          ss,
+                                          ii + 1,
+                                          current_guesses,
+                                          answer=correct,
+                                          points=question_value
+                                          )
                 clear_screen(display)
 
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
@@ -916,13 +916,13 @@ def present_question_hc(
                         "COMPUTER",
                         flush=False
                     )
-                    diplay += format_display(display_num,
-                                             question_text,
-                                             max(question_text),
-                                             0,
-                                             current_guesses,
-                                             answer=correct,
-                                             points=question_value)
+                    display += format_display(display_num,
+                                              question_text,
+                                              max(question_text),
+                                              0,
+                                              current_guesses,
+                                              answer=correct,
+                                              points=question_value)
                     clear_screen(display)
             else:
                 display = show_score(
