@@ -253,7 +253,7 @@ class kCOLORS:
     @staticmethod
     def print(text, color="RED", end="\n"):
         start = getattr(kCOLORS, color)
-        print(start + text + kCOLORS.ENDC, end=end)
+        return start + text + kCOLORS.ENDC + end
 
 
 def parse_final(final_string):
@@ -273,7 +273,8 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
     o = open(filename, "w")
     # For each question
     for ii in ids:
-        correct = [questions.answer(ii)] + question_equivalents[questions.answer(ii)]
+        ans = questions.answer(ii)
+        correct = [questions.answer(ii)] + question_equivalents.get(ans, [])
         full_question_text = ' '.join(questions[ii].values())
         question_num += 1
         o.write("%i) " % question_num)
@@ -307,7 +308,7 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
                             model_buzz_bool = True
                     if wii > 0:
                         new_words.append(words[wii - 1])
-                # Add the last word
+                # Add the last word 
                 new_words.append(ww)
                 question_w_ann = ' '.join(new_words)
                 o.write("%s  " % question_w_ann)
@@ -316,9 +317,11 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
         o.write("\nANSWER: %s\n\n" % correct)
 
 
-def clear_screen():
+def clear_screen(message=""):
     # print("Clearing")
     os.system("cls" if os.name == "nt" else "clear") # TEMP
+    if message:
+        print(message)
 
 
 class PowerPositions:
@@ -401,13 +404,13 @@ def show_score(
     right_color="BLUE",
     flush=True,
 ):
-    if flush:
-        clear_screen()
+
     # Print the header
-    print("%-15s" % "", end="")
-    kCOLORS.print("%-15s" % left_header, left_color, end="")
-    print("%-30s" % "", end="")
-    kCOLORS.print("%-15s\n" % right_header, right_color)
+    buffer = ""
+    buffer += "%-15s" % ""
+    buffer += kCOLORS.print("%-15s" % left_header, left_color, end="")
+    buffer += "%-30s" % ""
+    buffer += kCOLORS.print("%-15s\n" % right_header, right_color)
 
     for line in range(1, 15):
         for num, color in [(left_score, left_color), (right_score, right_color)]:
@@ -417,12 +420,17 @@ def show_score(
                 else:
                     val = (abs(num) % (place * 10)) // place
 
-                kCOLORS.print(
+                buffer += kCOLORS.print(
                     "%-15s" % kBIGNUMBERS[val].split("\n")[line], color=color, end=" "
                 )
-            print("|", end=" ")
-        print(" ")
+            buffer += "|" + " "
+        buffer += " \n"
 
+    if flush:
+        clear_screen()                
+        print(buffer)
+    return buffer
+        
 
 class Guess:
     def __init__(self, system, page, evidence, final, weight):
@@ -729,7 +737,7 @@ def interpret_keypress(other_allowable=""):
     press.
     """
     press = getch()
-    press = press.decode('utf-8')
+    # press = press.decode('utf-8')
     if press == "\x1b":
         getch()
         getch()
@@ -871,68 +879,68 @@ def present_question_hc(
                         response = None
             # Don't buzz if anyone else has gotten it wrong
             elif buzz_now and human_delta == 0 and computer_delta == 0:
-                show_score(
+                display = show_score(
                     score.human + human_delta,
                     score.computer + computer_delta,
                     "HUMAN",
                     "COMPUTER",
+                    flush=False
                 )
-                print(
-                    format_display(
-                        display_num,
-                        question_text,
-                        ss,
-                        ii + 1,
-                        current_guesses,
-                        answer=correct,
-                        points=question_value
-                    )
-                )
+                # Need to fix format_display
+                diplay += format_display(display_num,
+                                         question_text,
+                                         ss,
+                                         ii + 1,
+                                         current_guesses,
+                                         answer=correct,
+                                         points=question_value
+                                         )
+                clear_screen(display)
+
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
                 question_text_join = ' '.join(question_text.values())
                 answer_check = questions.answer_check(correct, buzz_now[0].page, question_text_join)
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
                 if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
-                    sleep(5)
+                    sleep(2)
                     return Score(human=human_delta, computer=question_value)
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
-                    sleep(5)
+                    sleep(2)
                     computer_delta = -5
-                    show_score(
+                    display = show_score(
                         score.human + human_delta,
                         score.computer + computer_delta,
                         "HUMAN",
                         "COMPUTER",
+                        flush=False
                     )
-                    format_display(
-                        display_num,
-                        question_text,
-                        max(question_text),
-                        0,
-                        current_guesses,
-                        answer=correct,
-                        points=question_value
-                    )
+                    diplay += format_display(display_num,
+                                             question_text,
+                                             max(question_text),
+                                             0,
+                                             current_guesses,
+                                             answer=correct,
+                                             points=question_value)
+                    clear_screen(display)
             else:
-                show_score(
+                display = show_score(
                     score.human + human_delta,
                     score.computer + computer_delta,
                     "HUMAN",
                     "COMPUTER",
+                    flush = False
                 )
-                print(
-                    format_display(
+                display += format_display(
                         display_num,
                         question_text,
                         ss,
                         ii + 1,
                         current_guesses,
                         answer=correct,
-                        points=question_value,
-                    )
-                )
+                        points=question_value)
+                clear_screen(display)
 
     if human_delta == 0:
         response = None
