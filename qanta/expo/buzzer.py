@@ -7,6 +7,8 @@ import random
 from csv import DictReader, DictWriter
 from time import sleep
 import datetime
+from tqdm import tqdm
+from functools import cache
 
 # from str import lower
 from random import shuffle
@@ -272,7 +274,7 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
     question_num = 0
     o = open(filename, "w")
     # For each question
-    for ii in ids:
+    for ii in tqdm(ids, "Writing Readable Questions"):
         ans = questions.answer(ii)
         correct = [questions.answer(ii)] + question_equivalents.get(ans, [])
         full_question_text = ' '.join(questions[ii].values())
@@ -542,11 +544,15 @@ class Questions:
         self._questions = defaultdict(dict)
         self._answers = defaultdict(str)
         self._power = PowerPositions("")
+        self._answer_check_cache = defaultdict(dict)
         self._equivalents = {}
 
         print("Initializing questions")
 
     def answer_check(self, reference, guess, question):
+        if guess in self._answer_check_cache[question]:
+            return self._answer_check_cache[question][guess]
+            
         def metric_em_match(reference_answer, candidate_answer):
             match_result = em_match(reference_answer, candidate_answer)
             return match_result
@@ -615,6 +621,7 @@ class Questions:
         else:
             result = qanta_pedant_neural
 
+        self._answer_check_cache[question][guess] = result
         return result
 
     def debug(self):
@@ -655,7 +662,6 @@ class Questions:
 
             for orig, replace in normalized:
                 self.equivalents[replace] = self.equivalents[orig]
-            print(self.equivalents)
 
     def load_power(self, power_file):
         self._power = PowerPositions(power_file)
@@ -681,6 +687,13 @@ class Questions:
         return self._answers[val]
 
 
+def clean_evidence(evidence):
+    if "{'confidence': np.float64(" in evidence:
+        evidence = ""
+    else:
+        evidence = evidence[:60]
+    return evidence
+    
 def format_display(
     display_num,
     question_text,
@@ -718,14 +731,14 @@ def format_display(
                 guess.system,
                 "***CORRECT***",
                 guess.weight,
-                guess.evidence[:60],
+                clean_evidence(guess.evidence),
             )
         else:
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 guess.page,
                 guess.weight,
-                guess.evidence[:60],
+                clean_evidence(guess.evidence),
             )
     return report
 
@@ -758,7 +771,8 @@ def answer(ans, system):
     if system:
         print("%s says:" % system)
     os.system("afplay /System/Library/Sounds/Glass.aiff")
-    os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
+    if ans:
+        os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
     sleep(kPAUSE)
     #print(ans)
 

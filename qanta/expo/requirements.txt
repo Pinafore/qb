@@ -1,3 +1,4 @@
+tqdm
 inflect
 pandas
 qa_metrics
