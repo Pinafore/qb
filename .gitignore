@@ -1,5 +1,7 @@
 *do_not_upload
 qanta/expo/questions_do_not_upload
+data/questions_do_not_upload
+qanta/expo/Oct
 *.swp
 *.pyc
 .idea
