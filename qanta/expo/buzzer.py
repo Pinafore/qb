@@ -875,10 +875,11 @@ def present_question_hc(
                     write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
                     if answer_check:
                         print("Model's answer: %s (Correct)" % final)
+                        sleep(2)
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Model's answer: %s (Incorrect)" % final)
-                    sleep(3)
+                        sleep(2)                        
                 else:
                     words += [" ", " ", " ", " ", " "]
 
