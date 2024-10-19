@@ -871,13 +871,14 @@ def present_question_hc(
                 if computer_delta == 0:
                     question_text_join = ' '.join(question_text.values())
                     answer_check = questions.answer_check(accept, reject, final, question_text_join, question_id)
+                    os.system("afplay /System/Library/Sounds/Glass.aiff")
                     write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
                     if answer_check:
-                        print("Correct answer: %s" % final)
+                        print("Model's answer: %s (Correct)" % final)
                         return Score(human=human_delta, computer=10)
                     else:
-                        print("Incorrect answer: %s" % final)
-                    sleep(2)
+                        print("Model's answer: %s (Incorrect)" % final)
+                    sleep(3)
                 else:
                     words += [" ", " ", " ", " ", " "]
 
