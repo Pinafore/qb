@@ -316,6 +316,7 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
                 new_words.append(ww)
                 question_w_ann = ' '.join(new_words)
                 o.write("%s  " % question_w_ann)
+        model_guess = buzzes.get_final(question_id)
         model_final_correctness = '+' if questions.answer_check(correct, incorrect, model_guess, full_question_text, question_id) else '-'
         o.write("\nMODEL FINAL GUESS: %s (%s)" % (model_guess, model_final_correctness))
         o.write("\nANSWER: %s\n\n" % correct)
@@ -490,7 +491,7 @@ class Buzzes:
         self._buzzes[question][(sent, word)][guess] = Guess(
             system, guess, evidence, final, weight
         )
-
+        
     def add_system(self, file_path):
         buzzfile = DictReader(open("%s.buzz.csv" % file_path, "r"))
         system = file_path.replace("CMSC723_", "").split("/")[-1]
@@ -522,6 +523,15 @@ class Buzzes:
         for ii in ff:
             self._finals[int(ii["question"])][system] = ii["answer"].replace("_", " ")
 
+    def get_final(self, question, system=None):
+        if system:
+            return self._finals[question]
+        else:
+            assert len(self._finals[question]) == 1
+            system = max(self._finals[question])
+            return self._finals[question][system]
+
+            
     def current_guesses(self, question, sent, word):
         try:
             ss, ww = max(
@@ -859,17 +869,15 @@ def present_question_hc(
             if ss == max(question_text) and ii == len(question_text[ss].split()) - 1:
                 # If computer hasn't buzzed, let the computer buzz
                 if computer_delta == 0:
-                    print(final)
-                    system = random.choice(list(final.keys()))
-                    answer(final[system].split("(")[0], system)
-                    final = final[system]
                     question_text_join = ' '.join(question_text.values())
                     answer_check = questions.answer_check(accept, reject, final, question_text_join, question_id)
                     write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
                     if answer_check:
+                        print("Correct answer: %s" % final)
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Incorrect answer: %s" % final)
+                    sleep(2)
                 else:
                     words += [" ", " ", " ", " ", " "]
 
@@ -1109,7 +1117,7 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
             ii,
             questions[ii],
             buzzes,
-            buzzes._finals[ii],
+            buzzes.get_final(ii),
             accept = [questions.answer(ii)] + equivalents["accept"],
             reject = equivalents.get("reject", []),
             out_writer_dict=out_writer_dict,
