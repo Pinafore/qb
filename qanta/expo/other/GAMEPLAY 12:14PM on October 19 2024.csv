@@ -1,0 +1,2 @@
+model_correctness,human_buzz,run_id,human_correctness,model_buzz,sentence,qid,model_guess
+True,N/A,1,N/A,Application of ice to an affected site can be,Application of ice to an affected site can be used to distinguish this disease from a common alternative diagnosis that is often comorbid with lung cancer.,175,Complex regional pain syndrome

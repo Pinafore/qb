@@ -1,0 +1,13 @@
+model_correctness,sentence,qid,model_guess,model_buzz,run_id,human_buzz,human_correctness
+True,Statues of just this figure's head are often considered offensive.,114,Vishnu,Statues,2,N/A,N/A
+True,"Organizations like Atomwaffen Division and Terrorgram are switching away from using this company's product, instead favoring SimpleX. Propaganda videos of Hamas's October 7th attacks were first posted on this company's platform.",227,Telegram (software),Organizations like Atomwaffen Division and Terrorgram are switching away from using,1,N/A,N/A
+True,This character's face and a pair of crutches were painted on a plane used in the Doolittle Raids.,226,Donald Duck,This character's face and a pair of crutches were,1,N/A,N/A
+True,Application of ice to an affected site can be used to distinguish this disease from a common alternative diagnosis that is often comorbid with lung cancer.,175,Complex regional pain syndrome,Application of ice to an affected site can be,1,N/A,N/A
+True,A trio of scholars from this city created automatic controls and studied valves and automated fountains.,90,Baghdad,A trio of scholars from this city created automatic controls,1,N/A,N/A
+False,"A Visit to Grandpa's"" was included in a collection titled for one of these objects by Dylan Thomas.",14,Welcome to the Monkey House,A,1,N/A,N/A
+True,"Harthacnut was the son of a queen named for this region, as was Edward the Confessor, and that woman married the victor at Assandun, Cnut the Great.",61,Emma of Normandy,Harthacnut was the son of a queen named for this,1,N/A,N/A
+True,"Reactions that add this element are deemed ""transfers"" if this element originates from somewhere other than its diatomic form.",183,Hydrogen,"Reactions that add this element are deemed ""transfers"" if this element originates from",1,N/A,N/A
+True,"This text modifies Anselm's ontological argument in claiming that since substances must exist and God is a substance, God must exist.",156,Ethics (Spinoza),This,2,N/A,N/A
+True,"For 10 points, name this animal that titles a Mark Twain story set in Calaveras County.",6,Frog,"For 10 points, name this animal that titles a Mark Twain story set in Calaveras County.",4,N/A,N/A
+False,"A deacon led a revolt on this island, where a namesake of Lake Eyre was in charge of putting it down.",73,Tasmania,"A deacon led a revolt on this island, where a namesake of Lake Eyre was in charge",1,N/A,N/A
+True,The logarithm of the decay constant is related to the energy of these particles in the Geiger–Nuttall law.,203,Neutron,The logarithm of the decay constant is related,1,N/A,N/A

@@ -1,0 +1,2 @@
+model_guess,model_correctness,model_buzz,human_correctness,human_buzz,sentence,run_id,qid
+Pablo Picasso,True,One painting shows this man painting a woman,N/A,N/A,One painting shows this man painting a woman from behind while both of them are shown in a mirror.,1,113

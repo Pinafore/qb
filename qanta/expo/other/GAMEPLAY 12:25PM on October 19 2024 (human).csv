@@ -1,0 +1,3 @@
+qid,run_id,sentence,human_correctness,human_buzz
+8,1,A character in this play tells a man that he is an accomplice just for hearing the plans for a burglary that occurs between this play's two acts.,True,A character in this play tells a man that he is an accomplice just for hearing the plans for a burglary
+67,3,A leader of this ethnic group who fought at Bender defected in the Great Northern War.,False,A leader of this

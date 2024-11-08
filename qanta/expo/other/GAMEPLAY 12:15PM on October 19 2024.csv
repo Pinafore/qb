@@ -1,0 +1,8 @@
+human_correctness,model_correctness,run_id,qid,model_guess,model_buzz,sentence,human_buzz
+N/A,True,1,107,Alexander Zemlinsky,A,A composer with this first name arranged Chopin pieces into a suite used in a Michel Fokine ballet.,N/A
+N/A,True,1,210,Moser spindle,The Moser spindle is typically used to lower-bound,The Moser spindle is typically used to lower-bound this value for some constructs.,N/A
+N/A,True,2,137,Sleep,A dog guards a group of people doing this action,A dog guards a group of people doing this action at a site in Jordan that now houses seven coffins.,N/A
+N/A,True,1,125,Guggenheim Museum Bilbao,This building's architect bragged that it would,"This building's architect bragged that it would make a nearby one ""look like a Protestant barn.""",N/A
+N/A,True,3,35,Miguel de Cervantes,This,"This author created a man who thinks a basin worn by a barber is a Muslim king's helmet and, after reading too many romances, becomes a knight-errant.",N/A
+N/A,True,2,53,New York,A governor of this state dealt with the unrest of tenant farmers against landholders of,A governor of this state dealt with the unrest of tenant farmers against landholders of a family originally from Gelderland.,N/A
+N/A,True,1,164,Place of articulation,A merger between a voiced stop at this place of,"A merger between a voiced stop at this place of articulation and a voiced fricative that is coarticulated further back takes place in Western Romance languages, sometimes exemplified by the similar pronunciations of the Spanish words ""to live"" and ""to drink.""",N/A

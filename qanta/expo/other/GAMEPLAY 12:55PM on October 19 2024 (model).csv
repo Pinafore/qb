@@ -1,0 +1,6 @@
+qid,model_correctness,sentence,model_guess,model_buzz,run_id
+33,False,"Nugget's mother is forced to portray this character in a play that adds ""-tron"" to this character's name.",Macbeth (character),"Nugget's mother is forced to portray this character in a play that adds ""-tron"" to",1
+119,False,"A woman who depicted a mushroom-like Tree of Knowledge, painted with ""the Five,"" and tried to contact ""the High Masters"" is said to have presaged this movement 50 years early.",Hilma af Klint,"A woman who depicted a mushroom-like Tree of Knowledge, painted with ""the Five,"" and tried to contact ""the High Masters""",1
+185,True,"A constant associated with this process equals the product of a mobility term, temperature, and Boltzmann's constant according to a relation derived by Einstein.",Diffusion,A,2
+64,True,"This kingdom had a professional standing army called the Black Army under Matthias Corvinus, who was the son of this kingdom's general Janos Hunyadi.",Kingdom of Hungary,"This kingdom had a professional standing army called the Black Army under Matthias Corvinus,",3
+45,False,A pair of Sorbonne-educated sisters ran a literary salon attended by Surrealists and members of this movement.,Surrealism,A pair of Sorbonne-educated sisters ran a literary salon attended by Surrealists and members,1

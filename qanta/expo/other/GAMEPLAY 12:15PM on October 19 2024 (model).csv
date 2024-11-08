@@ -1,0 +1,8 @@
+sentence,model_correctness,model_buzz,run_id,qid,model_guess
+A composer with this first name arranged Chopin pieces into a suite used in a Michel Fokine ballet.,True,A,1,107,Alexander Zemlinsky
+The Moser spindle is typically used to lower-bound this value for some constructs.,True,The Moser spindle is typically used to lower-bound,1,210,Moser spindle
+A dog guards a group of people doing this action at a site in Jordan that now houses seven coffins.,True,A dog guards a group of people doing this action,2,137,Sleep
+"This building's architect bragged that it would make a nearby one ""look like a Protestant barn.""",True,This building's architect bragged that it would,1,125,Guggenheim Museum Bilbao
+"This author created a man who thinks a basin worn by a barber is a Muslim king's helmet and, after reading too many romances, becomes a knight-errant.",True,This,3,35,Miguel de Cervantes
+A governor of this state dealt with the unrest of tenant farmers against landholders of a family originally from Gelderland.,True,A governor of this state dealt with the unrest of tenant farmers against landholders of,2,53,New York
+"A merger between a voiced stop at this place of articulation and a voiced fricative that is coarticulated further back takes place in Western Romance languages, sometimes exemplified by the similar pronunciations of the Spanish words ""to live"" and ""to drink.""",True,A merger between a voiced stop at this place of,1,164,Place of articulation

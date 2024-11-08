@@ -1,0 +1,3 @@
+qid,human_correctness,human_buzz,model_guess,model_correctness,sentence,model_buzz,run_id
+197,N/A,N/A,Graphs (mathematics),True,Planar examples of these constructs can be analyzed using mesh analysis.,Planar examples of these constructs can be,1
+163,False,A paper,N/A,N/A,"A paper partly titled for ""individualistic ethics"" and ""interpersonal comparison"" introduces an aggregation theorem  using a weighted sum of these functions.",N/A,0

@@ -1,0 +1,3 @@
+model_guess,model_correctness,model_buzz,human_buzz,run_id,sentence,human_correctness,qid
+N/A,N/A,N/A,That work in,1,"That work in this genre, which includes an atonal Stabat Mater, is by Krzysztof Penderecki.",True,101
+Convergence (mathematics),False,Functions with the 'square' form of this property,N/A,1,Functions with the 'square' form of this property form the only L⋅p space that is a Hilbert space.,N/A,209

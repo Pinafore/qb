@@ -25,12 +25,12 @@ import ast
 #pip install qa-metrics==0.2.17
 #pip install inflect
 
-# from qa_metrics.pedant import PEDANT
-# from qa_metrics.transformerMatcher import TransformerMatcher
+from qa_metrics.pedant import PEDANT
+from qa_metrics.transformerMatcher import TransformerMatcher
 from qa_metrics.em import em_match
-# from qa_metrics.transformerMatcher import TransformerMatcher
-# tm = TransformerMatcher("zli12321/answer_equivalence_tiny_bert")
-# pedant = PEDANT()
+from qa_metrics.transformerMatcher import TransformerMatcher
+tm = TransformerMatcher("zli12321/answer_equivalence_tiny_bert")
+pedant = PEDANT()
 p = inflect.engine()
 
 kSHOW_RIGHT = False
@@ -560,30 +560,50 @@ class Questions:
         self._equivalents = {}
 
         print("Initializing questions")
-        
-    def remove_accents(text):
-        normalized_text = unicodedata.normalize('NFD', text)
-        unaccented_text = ''.join(char for char in normalized_text if unicodedata.category(char) != 'Mn')
-        return unaccented_text
 
     def answer_check(self, reference_correct, reference_incorrect, guess, question_text, question_id):
+        if guess in self._answer_check_cache[question_id]:
+            return self._answer_check_cache[question_id][guess]
+            
+        def metric_em_match(reference_answer, candidate_answer):
+            match_result = em_match(reference_answer, candidate_answer)
+            return match_result
+
+        def metric_pedant(reference_answer, candidate_answer, question):
+            match_result = pedant.evaluate(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_pedant_scores(reference_answer, candidate_answer, question):
+            match_result = pedant.get_scores(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_neural(reference_answer, candidate_answer):
+            # Supported models: zli12321/answer_equivalence_roberta-large, zli12321/answer_equivalence_tiny_bert, zli12321/answer_equivalence_roberta, zli12321/answer_equivalence_bert, zli12321/answer_equivalence_distilbert, zli12321/answer_equivalence_distilroberta
+            #scores = tm.transformer_match(reference_answer, candidate_answer, question)
+            match_result = tm.transformer_match(reference_answer, candidate_answer, question)
+            return match_result
+
+        def metric_neural(reference_answer, candidate_answer, question):
+            # Supported models: zli12321/answer_equivalence_roberta-large, zli12321/answer_equivalence_tiny_bert, zli12321/answer_equivalence_roberta, zli12321/answer_equivalence_bert, zli12321/answer_equivalence_distilbert, zli12321/answer_equivalence_distilroberta
+            #scores = tm.transformer_match(reference_answer, candidate_answer, question)
+
+            match_result = tm.transformer_match(reference_answer, candidate_answer, question)
+            return match_result
 
         def normalize_apostrophe(text):
             return text.replace("’", "'")
 
         def preprocess(text):
             text = normalize_apostrophe(text.strip()).lower()
-            
             return text
 
         def doublecheck_plural(reference_answers, answer1):
+            
             answer_equal_list = []
             for ref in reference_answers:
                 if ref != "":
                     answer2 = ref
-                    if answer1==answer2:
-                        answer_equal_list.append(True)
-                    elif p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
+                    if p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
                         answer_equal_list.append(True)
                     else:
                         answer_equal_list.append(False)
@@ -597,17 +617,19 @@ class Questions:
             ref_p = [preprocess(item) for item in reference_correct]
             if guess != None:
                 guess_p = preprocess(guess)
-                result = doublecheck_plural(ref_p, guess_p)
             else:
                 guess_p = None
-                result=False
+            qanta_pedant_neural = metric_neural(ref_p, guess_p, question_text)
             if guess_p != "":
-                guess_p = preprocess(guess)
-                result = doublecheck_plural(ref_p, guess_p)
+                qanta_plural_check = doublecheck_plural(ref_p, guess_p)
+            else: 
+                qanta_plural_check = False
+            if (qanta_pedant_neural==False) and (qanta_plural_check==True):
+                result =  True
             else:
-                guess_p = None
-                result=False
+                result = qanta_pedant_neural
 
+        self._answer_check_cache[question_id][guess] = result
         return result
 
     def debug(self):
