@@ -581,6 +581,16 @@ class Questions:
             for ref in reference_answers:
                 if ref != "":
                     answer2 = ref
+                    # Remove double spaces
+                    answer1 = ' '.join(answer1.split())
+                    answer2 = ' '.join(answer2.split())
+
+                    # Remove final " )"
+                    if answer1[-2:] == " )":
+                        answer1 = answer1[:-2]
+                    if answer2[-2:] == " )":
+                        answer2 = answer2[:-2]
+
                     if answer1==answer2:
                         answer_equal_list.append(True)
                     elif p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
