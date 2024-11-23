@@ -308,7 +308,10 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
                         if not model_buzz_bool:
                             # Add the model buzz annotations
                             correctness = "+" if questions.answer_check(correct, incorrect, model_guess, full_question_text, question_id) else "-"
-                            new_words.append(f'({correctness})')
+                            if correctness == "-":
+                                new_words.append(f'(-, {model_guess})')
+                            else:
+                                new_words.append(f'({correctness})')
                             model_buzz_bool = True
                     if wii > 0:
                         new_words.append(words[wii - 1])
