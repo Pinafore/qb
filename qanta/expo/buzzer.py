@@ -35,6 +35,7 @@ p = inflect.engine()
 
 kSHOW_RIGHT = False
 kPAUSE = 0.25
+kLONGPAUSE = 2
 
 kBIGNUMBERS = {
     -1: """
@@ -593,6 +594,12 @@ class Questions:
 
                     if answer1==answer2:
                         answer_equal_list.append(True)
+                    elif "(" in answer1:
+                        if answer1.split("(")[0].strip() == answer2:
+                            answer_equal_list.append(True)
+                    elif "The answer is: " in answer1:
+                        if answer1.split("The answer is: ")[1].strip() == answer2:
+                            answer_equal_list.append(True)
                     elif p.singular_noun(answer1) == answer2 or p.singular_noun(answer2) == answer1:
                         answer_equal_list.append(True)
                     else:
@@ -856,11 +863,11 @@ def present_question_hc(
                     write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
                     if answer_check:
                         print("Model's answer: %s (Correct)" % final)
-                        sleep(2)
+                        sleep(kLONGPAUSE)
                         return Score(human=human_delta, computer=10)
                     else:
                         print("Model's answer: %s (Incorrect)" % final)
-                        sleep(2)                        
+                        sleep(kLONGPAUSE)
                 else:
                     words += [" ", " ", " ", " ", " "]
 
@@ -918,11 +925,11 @@ def present_question_hc(
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
                 if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
-                    sleep(2)
+                    sleep(kLONGPAUSE)
                     return Score(human=human_delta, computer=question_value)
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
-                    sleep(2)
+                    sleep(kLONGPAUSE)
                     computer_delta = -5
                     display = show_score(
                         score.human + human_delta,
@@ -1048,7 +1055,7 @@ def buzzer_check(players):
             current_players.add(press)
 
     if players > 0:
-        sleep(1.5)
+        sleep(kPAUSE)
         answer("I'm ready too", "QANTA")
 
 
