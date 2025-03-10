@@ -12,8 +12,8 @@ os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])``
 - From inside `qanta/expo`, run the buzzer system:
 `python3 buzzer.py --questions [QUESTION FILE] --model_directory [MODEL FOLDER] --model [MODEL] --answer_equivalents [EQUIVALENTS FILE]`
 
-Example:
-`python3 buzzer.py --questions questions_do_not_upload/packet_1.csv --model_directory questions_do_not_upload/2024_gpr_co --model packet_1 --answer_equivalents questions_do_not_upload/2024_gpr_co/equivalents_new.json --skip 1 --human 10 --computer 20`
+Example for fact checking:
+`python3 buzzer.py --questions create_buzz/um...actually.csv --model_directory create_buzz/`
 
 - Buzzer check:
 When "Player 1, please buzz in" appears, press `1` on the keyboard.
