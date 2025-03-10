@@ -1,0 +1,1 @@
+python3 filter.py input_file "create_buzz/gpt_answers.csv" output_file "create_buzz/gpt_answers_filter.csv"
