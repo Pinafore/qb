@@ -271,15 +271,16 @@ def parse_final(final_string):
         return int(final_string)
 
 
-def write_readable(filename, ids, questions, buzzes, question_equivalents):
+def write_readable(filename, ids, questions, buzzes):
     question_num = 0
     o = open(filename, "w")
     # For each question
     for ii in tqdm(ids, "Writing Readable Questions"):
         ans = questions.answer(ii)
-        equivalents = question_equivalents.get(ans, {"accept": [], "reject": []})
-        correct = [questions.answer(ii)] + equivalents["accept"]
-        incorrect = equivalents.get("reject", [])
+        #equivalents = question_equivalents.get(ans, {"accept": [], "reject": []})
+        correct = [questions.answer(ii)] 
+        #incorrect = equivalents.get("reject", [])
+        incorrect =  []
         full_question_text = ' '.join(questions[ii].values())
         question_num += 1
         o.write("%i) " % question_num)
@@ -324,6 +325,7 @@ def write_readable(filename, ids, questions, buzzes, question_equivalents):
         model_final_correctness = '+' if questions.answer_check(correct, incorrect, model_guess, full_question_text, question_id) else '-'
         o.write("\nMODEL FINAL GUESS: %s (%s)" % (model_guess, model_final_correctness))
         o.write("\nANSWER: %s\n\n" % correct)
+        print("done writable function")
 
 
 def clear_screen(message=""):
@@ -497,6 +499,7 @@ class Buzzes:
         )
         
     def add_system(self, file_path):
+        print("file path: ",file_path)
         buzzfile = DictReader(open("%s.buzz.csv" % file_path, "r"))
         system = file_path.replace("CMSC723_", "").split("/")[-1]
         #system = system.split(".")[0]
@@ -778,9 +781,9 @@ def interpret_keypress(other_allowable=""):
 def answer(ans, system):
     if system:
         print("%s says:" % system)
-    os.system("afplay /System/Library/Sounds/Glass.aiff")
+    """os.system("afplay /System/Library/Sounds/Glass.aiff")
     if ans:
-        os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])
+        os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])"""
     sleep(kPAUSE)
     #print(ans)
 
@@ -1086,11 +1089,11 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
     # print(list(buzzes))
     question_ids = [x for x in question_ids if x in buzzes]
     #print(question_ids)
-    question_equivalents = questions.equivalents
+    #question_equivalents = questions.equivalents
 
 
     if flags.readable != "":
-        write_readable(flags.readable, question_ids, questions, buzzes, question_equivalents)
+        write_readable(flags.readable, question_ids, questions, buzzes)
 
     for ii in question_ids:
         question_num += 1
@@ -1104,15 +1107,15 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
                 % (ii, power_mark, str(ii in power._power_marks.keys()))
             )
 
-        equivalents = question_equivalents.get(questions.answer(ii), {"accept": [], "reject": []})
+        #equivalents = question_equivalents.get(questions.answer(ii), {"accept": [], "reject": []})
         score_delta = present_question(
             question_num,
             ii,
             questions[ii],
             buzzes,
             buzzes.get_final(ii),
-            accept = [questions.answer(ii)] + equivalents["accept"],
-            reject = equivalents.get("reject", []),
+            accept = [questions.answer(ii)] ,
+            reject=[],
             out_writer_dict=out_writer_dict,
             score=score,
             power=questions._power(ii)
@@ -1158,7 +1161,7 @@ if __name__ == "__main__":
     flags = create_parser()
     questions, buzzes = load_data(flags)
     print("Done loading data")
-
+    print(questions)
     clear_screen()
     buzzer_check(flags.players)
 
