@@ -321,11 +321,11 @@ def write_readable(filename, ids, questions, buzzes):
                 new_words.append(ww)
                 question_w_ann = ' '.join(new_words)
                 o.write("%s  " % question_w_ann)
-        model_guess = buzzes.get_final(question_id)
-        model_final_correctness = '+' if questions.answer_check(correct, incorrect, model_guess, full_question_text, question_id) else '-'
+        model_guess,model_correctness = buzzes.get_final(question_id)
+        model_final_correctness = '+' if model_correctness else '-'
         o.write("\nMODEL FINAL GUESS: %s (%s)" % (model_guess, model_final_correctness))
         o.write("\nANSWER: %s\n\n" % correct)
-        print("done writable function")
+        #print("done writable function")
 
 
 def clear_screen(message=""):
@@ -499,7 +499,7 @@ class Buzzes:
         )
         
     def add_system(self, file_path):
-        print("file path: ",file_path)
+        #print("file path: ",file_path)
         buzzfile = DictReader(open("%s.buzz.csv" % file_path, "r"))
         system = file_path.replace("CMSC723_", "").split("/")[-1]
         #system = system.split(".")[0]
@@ -528,16 +528,22 @@ class Buzzes:
     def load_finals(self, system, final_file):
         ff = DictReader(open(final_file))
         for ii in ff:
-            self._finals[int(ii["question"])][system] = ii["answer"].replace("_", " ")
+            question_id = int(ii["question"])
+            answer = ii["answer"].replace("_", " ")
+            correctness = ii["Correct"].strip().lower() == "correct"  # Read correctness from CSV
+            #print(correctness)
+            self._finals[question_id][system] = (answer, correctness)  # Store as tuple
+
 
     def get_final(self, question, system=None):
         if system:
             return self._finals[question]
         else:
+            #print(len(self._finals[question]),question)
             assert len(self._finals[question]) == 1
             system = max(self._finals[question])
+            #print(self._finals[question][system])
             return self._finals[question][system]
-
             
     def current_guesses(self, question, sent, word):
         try:
@@ -736,7 +742,7 @@ def format_display(
     )[:guess_limit]:
         guess = current_guesses[gg]
         question_text_join = ' '.join(question_text.values())
-
+        #print("Is the answer correct?")
         if questions.answer_check(accept, reject, guess.page, question_text_join, question_id):
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
@@ -856,6 +862,8 @@ def present_question_hc(
     human_delta = 0
     computer_delta = 0
     question_value = 15
+    # Extract model's final guess and correctness from loaded data
+    model_guess, model_correctness = final  # Now a tuple (answer, correctness)
     for ss in question_text:
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
@@ -864,15 +872,24 @@ def present_question_hc(
                 # If computer hasn't buzzed, let the computer buzz
                 if computer_delta == 0:
                     question_text_join = ' '.join(question_text.values())
-                    answer_check = questions.answer_check(accept, reject, final, question_text_join, question_id)
+                    #answer_check = questions.answer_check(accept, reject, final, question_text_join, question_id)
+                    answer_check = model_correctness
                     os.system("afplay /System/Library/Sounds/Glass.aiff")
                     write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
+                    
+                
+                    """if is_correct:
+                        print(f"Computer guesses: {buzz_now[0].page} (correct)")
+                        return Score(human=human_delta, computer=question_value)
+                    else:
+                        print(f"Computer guesses: {buzz_now[0].page} (wrong)")
+                        computer_delta = -5"""
                     if answer_check:
-                        print("Model's answer: %s (Correct)" % final)
+                        print("Model's answer: %s (Correct)" % model_guess)
                         sleep(kLONGPAUSE)
                         return Score(human=human_delta, computer=10)
                     else:
-                        print("Model's answer: %s (Incorrect)" % final)
+                        print("Model's answer: %s (Incorrect)" % model_guess)
                         sleep(kLONGPAUSE)
                 else:
                     words += [" ", " ", " ", " ", " "]
@@ -1161,10 +1178,10 @@ if __name__ == "__main__":
     flags = create_parser()
     questions, buzzes = load_data(flags)
     print("Done loading data")
-    print(questions)
+    #print(questions)
     clear_screen()
     buzzer_check(flags.players)
 
     score = question_loop(flags, questions, buzzes, present_question_hc, check_hc_tie)
 
-    show_score(score.human, score.computer, "HUMAN", "COMPUTER")
+    #show_score(score.human, score.computer, "HUMAN", "COMPUTER")
