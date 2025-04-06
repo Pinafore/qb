@@ -531,7 +531,7 @@ class Buzzes:
             question_id = int(ii["question"])
             answer = ii["answer"].replace("_", " ")
             correctness = ii["Correct"].strip().lower() == "correct"  # Read correctness from CSV
-            #print(correctness)
+            print(correctness)
             self._finals[question_id][system] = (answer, correctness)  # Store as tuple
 
 
@@ -898,9 +898,10 @@ def present_question_hc(
                 question_value = 10
             press = interpret_keypress()
             current_guesses = buzzes.current_guesses(question_id, ss, ii - 1)
+            #print("currect guesses: ",current_guesses)
             buzz_now = [x for x in current_guesses.values() if x.final]
 
-            #print(buzz_now)
+            #print("buzz_now",buzz_now)
             # Removing this assertion now that we can have multiple systems playing
             # assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
             if isinstance(press, int):
@@ -944,7 +945,8 @@ def present_question_hc(
 
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
                 question_text_join = ' '.join(question_text.values())
-                answer_check = questions.answer_check(accept, reject, buzz_now[0].page, question_text_join, question_id)
+                #answer_check = questions.answer_check(accept, reject, buzz_now[0].page, question_text_join, question_id)
+                answer_check=model_correctness
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
                 if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
