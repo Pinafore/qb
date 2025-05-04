@@ -134,7 +134,7 @@ def process_statements_from_csv(input_csv):
                 ])
 
                 if answered == "Yes":
-                    print(f"✅ Confident answer for ID {statement_id}. Moving on.")
+                    print(f"Confident answer for ID {statement_id}. Moving on.")
                     answered_flag = True
                     break
 
