@@ -4,6 +4,9 @@ import csv
 import re
 import uuid
 import textwrap
+import nltk
+nltk.download('punkt')
+from nltk.tokenize import sent_tokenize
 import pandas as pd
 from input_paraphaser import paraphaser
 from query_generator import query_generator
@@ -12,167 +15,131 @@ from answer_generator import AnswerGenerator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Set up OpenAI API key (replace 'your-api-key' with your actual key)
-api_key = 'sk-onjTqMUfU5ZHzLdC440UYydenU74ZfRiLU985ROpw0BNQoEN'
+api_key = 'API key'
 
 paraphaser = paraphaser()
 query_generator = query_generator()
 answer_generator = AnswerGenerator()
 fact_checker = FactChecker()
 
-def split_statement(statement, max_chunk_size=30):
-    """Splits a statement into sentences and further chunks long sentences."""
-    sentences = re.split(r'(?<=[,.])\s+', statement)
+def split_statement(statement, max_chunk_size=100):
+    raw_chunks = statement.split(",")
     chunks = []
-
-    for i, sentence in enumerate(sentences):
-        words = sentence.split()
-
+    for part in raw_chunks:
+        part = part.strip()
+        if not part:
+            continue
+        words = part.split()
         if len(words) > max_chunk_size:
-            sub_chunks = textwrap.wrap(sentence, width=max_chunk_size, break_long_words=False)
-            for sub_chunk in sub_chunks:
-                chunks.append((i + 1, sub_chunk.strip()))  # Assign same sentence number
+            sub_chunks = textwrap.wrap(part, width=max_chunk_size, break_long_words=False)
+            chunks.extend(sub.strip() for sub in sub_chunks)
         else:
-            chunks.append((i + 1, sentence.strip()))
-
+            chunks.append(part)
     return chunks
 
 def check_fact(query, sentence, client):
-    # 构造 prompt
-    prompt = "statement:\n" + sentence + "\n\nquestion:\n" + query
-
-
-    fact_checker_response = fact_checker.create_chat(prompt, client)
-
-    return fact_checker_response
-
+    prompt = f"statement:\n{sentence}\n\nquestion:\n{query}"
+    return fact_checker.create_chat(prompt, client)
 
 def fact_checking_system(context, sentence, client):
-    '''
-    This function is used to generate answer using our system
-    :param context: the preceding context
-    :param sentence: the sentence which we want it to be fact checked
-    :param client: the OpenAI client
-    :return: answer , confidence
-    '''
-    paraphaser_response = paraphaser.create_chat(context, sentence, client)  # a sentence
-    query_generator_response = query_generator.create_chat(paraphaser_response,client)
-    query = query_generator_response.split('\n')
-    query_list = [s for s in query if s.strip()]
+    paraphrased = paraphaser.create_chat(context, sentence, client)
+    queries = query_generator.create_chat(paraphrased, client).split('\n')
+    query_list = [q for q in queries if q.strip()]
 
     with ThreadPoolExecutor() as executor:
-        answer_list = list(executor.map(lambda query: check_fact(query, sentence, client), query_list))
+        answers = list(executor.map(lambda q: check_fact(q, sentence, client), query_list))
 
-    final_prompt = 'statement:\n' + paraphaser_response + '\n\nkey points:\n'
+    final_prompt = f'statement:\n{paraphrased}\n\nkey points:\n'
+    for q, a in zip(query_list, answers):
+        final_prompt += f"{q}\n{a}\n\n"
 
-    for i in range(len(answer_list)):
-        final_prompt += query_list[i] + '\n' + answer_list[i] + '\n\n'
+    final_answer, confidence = answer_generator.create_chat(final_prompt, client)
+    return final_answer, confidence
 
-    final_response, confidence = answer_generator.create_chat(final_prompt, client)
-
-    return final_response, confidence
-
-error_count = 0
 def ask_gpt_2(paragraph):
-    global error_count
-    client = OpenAI(base_url='https://api.openai-proxy.org/v1',api_key=api_key)
-
-    #split paragraph into context and sentence
-    sentences = re.split(r'(?<=[.!?])\s+', paragraph.strip())
+    client = OpenAI(base_url='https://api.openai.com/v1', api_key=api_key)
+    sentences = re.split(r'(?<=[,])\s+', paragraph.strip())
     if len(sentences) < 2:
-        sentence = paragraph
-        context = ""
+        sentence, context = paragraph, ""
     else:
         sentence = sentences[-1]
         context = ' '.join(sentences[:-1])
-    #answer, confidence = fact_checking_system(context, sentence, client)
 
     try:
-        answer, confidence = fact_checking_system(context, sentence, client)
+        return fact_checking_system(context, sentence, client)
     except Exception as e:
         print(f"Error with fact_checking_system: {e}")
-        answer, confidence = "Error", -100
-        error_count += 1
-    return answer, confidence
+        return "Error", -100
 
-def ask_gpt(context):
-    """Sends an incrementally growing context to GPT-4o and retrieves a response with confidence score."""
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=[{"role": "system", "content": "You are a fact-checking assistant."},
-                      {"role": "user", "content": context}],
-            temperature=0,
-            max_tokens=200,
-            top_p=0.95,
-            logprobs=True  # Request log probabilities
-        )
-
-        answer = response['choices'][0]['message']['content']
-
-        # Extract log probabilities if available
-        log_probs = response['choices'][0].get('logprobs', {}).get('token_logprobs', [])
-        # confidence1 = sum(log_probs) / len(log_probs)
-        print("confidence", sum(log_probs), " and len ", len(log_probs))
-        confidence = sum(log_probs) / len(log_probs) if log_probs else -100  # Default low confidence
-
-        return answer, confidence
-
-    except Exception as e:
-        print(f"Error with OpenAI API: {e}")
-        return "Error", -100  # Assign a very low confidence in case of errors
-
-
-def write_to_csv(data, filename="gpt_answers_2024.csv"):
-    """Writes the results to a CSV file."""
-    with open(filename, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(["ID", "Statement Number", "Word Count", "Sentence Number", "Chunk ID", "Chunk", "Answer",
-                         "Confidence Score", "Answered?"])
-
-        for row in data:
-            writer.writerow(row)
-
+def write_to_csv(data, filename="gpt_answers_final.csv"):
+    with open(filename, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(["ID", "Statement Number", "Word Count", "Sentence Number", "Chunk ID", "Chunk", "Answer", "Confidence Score", "Answered?"])
+        writer.writerows(data)
 
 def process_statements_from_csv(input_csv):
-    """Reads 'Um, actually...' statements with IDs from a CSV file, processes them, and writes results to a new CSV."""
     df = pd.read_csv(input_csv)
 
-    # Check if required columns exist
-    if "id" not in df.columns or "text" not in df.columns:
-        print("Error: CSV file must contain 'id' and 'text' columns.")
+    if not {'id', 'text', 'sent'}.issubset(df.columns):
+        print("CSV must contain 'id', 'text', and 'sent' columns.")
         return
 
-    statements = df.dropna(subset=["text"])  # Remove rows where 'text' is NaN
     results = []
+    grouped = df.dropna(subset=["text"]).groupby("id")
 
-    for _, row in statements.iterrows():
-        statement_id = row["id"]
-        statement = row["text"]
-        chunks = split_statement(statement)
-        context = ""  # Accumulating context for the current statement
+    for statement_id, group in grouped:
+        context_chunks = []
+        answered_flag = False
+        sent_word_count_map = {}  # Track cumulative word count for each sentence number
 
-        for sentence_number, chunk in chunks:
-            context += " " + chunk  # Merge previous chunks with the current one
-            answer, confidence = ask_gpt_2(context.strip())
-            print("Answer: ", answer)
-            print("Confidence: ", confidence)
-            word_count = len(context.split())
-            chunk_uid = str(uuid.uuid4())[:8]  # Unique ID for each chunk
-            if confidence > -0.5 and answer.lower()[0:7]!='correct':
-                answered = "Yes"
-            else:
-                answered = "No"
-            results.append(
-                [statement_id, _, word_count, sentence_number, context, chunk_uid, answer, confidence, answered])
+        for idx, row in group.iterrows():
+            if answered_flag:
+                break
 
-            # **Stop sending further chunks for this statement if GPT has confidently answered**
-            if answered == "Yes":
-                print(f"GPT answered confidently for statement ID {statement_id}. Moving to the next statement.")
-                break  # Stop processing this statement and move to the next one
+            sentence_number = row["sent"]
+            current_text = row["text"]
+            chunks = split_statement(current_text)
+
+            for chunk in chunks:
+                if answered_flag:
+                    break
+
+                context_chunks.append(chunk)
+                cumulative_context = ", ".join(context_chunks)
+                chunk_word_count = len(chunk.split())
+
+                # Update cumulative word count for this `sent`
+                if sentence_number not in sent_word_count_map:
+                    sent_word_count_map[sentence_number] = 0
+                sent_word_count_map[sentence_number] += chunk_word_count
+                total_word_count_for_sent = sent_word_count_map[sentence_number]
+
+                print(f"\n[ID {statement_id}] Sending to GPT:", cumulative_context)
+                answer, confidence = ask_gpt_2(cumulative_context)
+                print("Answer:", answer)
+
+                chunk_uid = str(uuid.uuid4())[:8]
+                answered = "Yes" if confidence > -0.6 and not answer.lower().startswith("correct") else "No"
+
+                results.append([
+                    statement_id,
+                    idx,
+                    total_word_count_for_sent,
+                    sentence_number,
+                    chunk_uid,
+                    cumulative_context,
+                    answer,
+                    confidence,
+                    answered
+                ])
+
+                if answered == "Yes":
+                    print(f"✅ Confident answer for ID {statement_id}. Moving on.")
+                    answered_flag = True
+                    break
 
     write_to_csv(results)
-    print(f"Results written to 'gpt_answers.csv'.")
-    print(error_count)
+    print("All results saved to 'gpt_answers_final.csv'.")
 
-# Example Usage: Read from a CSV file
-process_statements_from_csv("um...actually_2024.csv")
+# Example Usage:
+process_statements_from_csv("um...actually.csv")
