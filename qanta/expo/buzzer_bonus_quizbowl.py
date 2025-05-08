@@ -1111,7 +1111,7 @@ def check_hc_tie(score):
     For the computer-human and human-human programs, this needs to be
     different.  This is why it's a silly function.
     """
-    return score.human == score.computer
+    return score.human == score.computer and score.human != 0 and score.computer != 0
 
 
 def question_loop(flags, questions, buzzes, present_question, check_tie):
