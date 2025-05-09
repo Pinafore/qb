@@ -1,0 +1,3 @@
+human_buzz,model_correctness,sentence,model_guess,qid,human_correctness,model_buzz,run_id
+A passage by this author is about a herald who cannot leave an extremely large palace after being entrusted with,N/A,A passage by this author is about a herald who cannot leave an extremely large palace after being entrusted with an emperor's dying message,N/A,1,True,N/A,1
+""" This organization uses a policy of ""disproportionate force""",N/A,""" This organization uses a policy of ""disproportionate force"" against infrastructure according to the Dahiya doctrine",N/A,2,True,N/A,1
