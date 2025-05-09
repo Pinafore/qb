@@ -1,0 +1,2 @@
+run_id,model_guess,sentence,qid,model_buzz,model_correctness
+2,Israel Defense Forces (IDF),"Until 2016, this organization had a policy of preventing kidnappings ""by all means"" possible, including death, known as the Hannibal Directive.",2,Until,True

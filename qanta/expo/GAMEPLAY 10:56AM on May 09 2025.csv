@@ -1,0 +1,3 @@
+model_buzz,run_id,human_buzz,qid,model_correctness,sentence,human_correctness,model_guess
+A,4,N/A,1,True,"A novel by this author, which contains the parable ""Before the Law,"" begins when two unnamed government agents arrest the bank worker Josef K",N/A,Franz Kafka
+Until,2,N/A,2,True,"Until 2016, this organization had a policy of preventing kidnappings ""by all means"" possible, including death, known as the Hannibal Directive",N/A,Israel Defense Forces (IDF)

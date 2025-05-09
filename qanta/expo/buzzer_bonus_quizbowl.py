@@ -582,7 +582,7 @@ class Questions:
     def answer_check(self, reference_correct, reference_incorrect, guess, question_text, question_id):
 
         def normalize_apostrophe(text):
-            return text.replace("’", "'")
+            return text.replace("'","")
 
         def preprocess(text):
             text = normalize_apostrophe(text.strip()).lower()
@@ -737,26 +737,7 @@ def format_display(
         sep,
     )
 
-    for gg in sorted(
-        current_guesses, key=lambda x: current_guesses[x].weight, reverse=True
-    )[:guess_limit]:
-        guess = current_guesses[gg]
-        question_text_join = ' '.join(question_text.values())
-        #print("Is the answer correct?")
-        if questions.answer_check(accept, reject, guess.page, question_text_join, question_id):
-            report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
-                guess.system,
-                "***CORRECT***",
-                guess.weight,
-                clean_evidence(guess.evidence),
-            )
-        else:
-            report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
-                guess.system,
-                guess.page,
-                guess.weight,
-                clean_evidence(guess.evidence),
-            )
+    # Don't show any guesses in the display
     return report
 
 
@@ -872,24 +853,17 @@ def present_question_hc(
                 # If computer hasn't buzzed, let the computer buzz
                 if computer_delta == 0:
                     question_text_join = ' '.join(question_text.values())
-                    #answer_check = questions.answer_check(accept, reject, final, question_text_join, question_id)
                     answer_check = model_correctness
                     os.system("afplay /System/Library/Sounds/Glass.aiff")
                     write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), final, answer_check, 'N/A', 'N/A')
                     
-                
-                    """if is_correct:
-                        print(f"Computer guesses: {buzz_now[0].page} (correct)")
+                    if answer_check:
+                        #print("Model's answer: %s (Correct)" % model_guess)
+                        sleep(kLONGPAUSE)
                         return Score(human=human_delta, computer=question_value)
                     else:
-                        print(f"Computer guesses: {buzz_now[0].page} (wrong)")
-                        computer_delta = -5"""
-                    if answer_check:
-                        print("Model's answer: %s (Correct)" % model_guess)
-                        sleep(kLONGPAUSE)
-                        return Score(human=human_delta, computer=10)
-                    else:
-                        print("Model's answer: %s (Incorrect)" % model_guess)
+                        
+                        #rint("Model's answer: %s (Incorrect)" % model_guess)
                         sleep(kLONGPAUSE)
                 else:
                     words += [" ", " ", " ", " ", " "]
@@ -898,12 +872,8 @@ def present_question_hc(
                 question_value = 10
             press = interpret_keypress()
             current_guesses = buzzes.current_guesses(question_id, ss, ii - 1)
-            #print("currect guesses: ",current_guesses)
             buzz_now = [x for x in current_guesses.values() if x.final]
 
-            #print("buzz_now",buzz_now)
-            # Removing this assertion now that we can have multiple systems playing
-            # assert len(buzz_now) < 2, "Cannot buzz on more than one thing"
             if isinstance(press, int):
                 os.system("afplay /System/Library/Sounds/Glass.aiff")
                 response = None
@@ -930,7 +900,6 @@ def present_question_hc(
                     "COMPUTER",
                     flush=False
                 )
-                # Need to fix format_display
                 display += format_display(question_id,
                                           display_num,
                                           question_text,
@@ -943,14 +912,14 @@ def present_question_hc(
                                           )
                 clear_screen(display)
 
-                answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
+                #answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
                 question_text_join = ' '.join(question_text.values())
-                #answer_check = questions.answer_check(accept, reject, buzz_now[0].page, question_text_join, question_id)
-                answer_check=model_correctness
+                answer_check = model_correctness
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
                 if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(kLONGPAUSE)
+                    #score = add_bonus_points(score)
                     return Score(human=human_delta, computer=question_value)
                 else:
                     print("Computer guesses: %s (wrong)" % buzz_now[0].page)
@@ -1007,20 +976,31 @@ def present_question_hc(
     return Score(human=human_delta, computer=computer_delta)
 
 
-def add_bonus_points(score):
+def add_bonus_points(score, question_num=None, correct_answer=None):
     """
-    Add bonus points to teams based on input.
+    Add bonus points to teams based on user input.
     """
-    try:
-        more_comp = input("Assign bonus points to the computer? (y/n): ").strip().lower()
-        if more_comp == 'y':
-            pts = int(input("How many points? "))
-            score.computer += pts
-    except ValueError:
-        print("Invalid input. Skipping bonus points for computer.")
-
+    # Prompt for computer bonus points first
+    while True:
+        try:
+            more_comp = input("Assign bonus points to the computer? (y/n): ").strip().lower()
+            sleep(kPAUSE)
+            if more_comp == 'y':
+                pts = int(input("How many points? "))
+                score.computer += pts
+                break
+            elif more_comp == 'n':
+                break
+            else:
+                print("Please enter 'y' or 'n'.")
+        except ValueError:
+            print("Invalid input. Skipping bonus points for computer.")
+            break
+    sleep(kPAUSE)
+    # Now prompt for human bonus points
     try:
         more_human = input("Assign bonus points to the human? (y/n): ").strip().lower()
+        sleep(kPAUSE)
         if more_human == 'y':
             pts = int(input("How many points? "))
             score.human += pts
@@ -1111,7 +1091,7 @@ def check_hc_tie(score):
     For the computer-human and human-human programs, this needs to be
     different.  This is why it's a silly function.
     """
-    return score.human == score.computer and score.human != 0 and score.computer != 0
+    return score.human == score.computer
 
 
 def question_loop(flags, questions, buzzes, present_question, check_tie):
@@ -1156,12 +1136,9 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
         )
         score = score.add(score_delta)
         
-        # Add bonus points after each question
+        # Show correct answer and get bonus points
+        print(f"\nCorrect answer: {questions.answer(ii)}\n")
         score = add_bonus_points(score)
-
-        print(
-            "Correct answer of Question %i: %s" % (question_num, questions.answer(ii))
-        )
         sleep(kPAUSE)
 
         if question_num > flags.max_questions - 1:
@@ -1185,12 +1162,9 @@ def question_loop(flags, questions, buzzes, present_question, check_tie):
             )
             score = score.add(score_delta)
             
+            # Show correct answer and get bonus points for tiebreaker
+            print(f"\nCorrect answer: {questions.answer(ii)}\n")
             score = add_bonus_points(score)
-
-            print(
-                "Correct answer of Question %i: %s"
-                % (question_num, questions.answer(ii))
-            )
             sleep(kPAUSE)
 
     return score
