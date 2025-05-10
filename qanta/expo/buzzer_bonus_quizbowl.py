@@ -745,9 +745,9 @@ def interpret_keypress(other_allowable=""):
 def answer(ans, system):
     if system:
         print("%s says:" % system)
-    """os.system("afplay /System/Library/Sounds/Glass.aiff")
+    os.system("afplay /System/Library/Sounds/Glass.aiff")
     if ans:
-        os.system("say -v Tom %s" % ans.replace("'", "").split("(")[0])"""
+        os.system("say -v Daniel %s" % ans.replace("'", "").split("(")[0])
     sleep(kPAUSE)
     #print(ans)
 
@@ -889,7 +889,7 @@ def present_question_hc(
                                           )
                 clear_screen(display)
 
-                #answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
+                answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
                 question_text_join = ' '.join(question_text.values())
                 answer_check = model_correctness
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
@@ -958,31 +958,13 @@ def add_bonus_points(score, question_num=None, correct_answer=None):
     Add bonus points to teams based on user input.
     """
     # Prompt for computer bonus points first
-    while True:
+    bonus_points = -1
+    while bonus_points < 0:
         try:
-            more_comp = input("Assign bonus points to the computer? (y/n): ").strip().lower()
-            sleep(kPAUSE)
-            if more_comp == 'y':
-                pts = int(input("How many points? "))
-                score.computer += pts
-                break
-            elif more_comp == 'n':
-                break
-            else:
-                print("Please enter 'y' or 'n'.")
+            bonus_points = int(input("How many points? ").strip())
         except ValueError:
-            print("Invalid input. Skipping bonus points for computer.")
-            break
-    sleep(kPAUSE)
-    # Now prompt for human bonus points
-    try:
-        more_human = input("Assign bonus points to the human? (y/n): ").strip().lower()
-        sleep(kPAUSE)
-        if more_human == 'y':
-            pts = int(input("How many points? "))
-            score.human += pts
-    except ValueError:
-        print("Invalid input. Skipping bonus points for human.")
+            bonus_points = -1
+    score.human += bonus_points
     return score
 
 
