@@ -1,3 +1,0 @@
-human_correctness,run_id,human_buzz,qid,model_guess,model_correctness,model_buzz,sentence
-True,0,A metaphor by this author compares a river that rises up in a flood and,1,N/A,N/A,N/A,A metaphor by this author compares a river that rises up in a flood and then recedes to a stream to the extent that people should contemplate the nature of leadership.
-N/A,2,N/A,2,Israel Defense Forces (IDF),True,Until,"Until 2016, this organization had a policy of preventing kidnappings ""by all means"" possible, including death, known as the Hannibal Directive."

@@ -1,4 +1,0 @@
-human_buzz,run_id,human_correctness,model_guess,model_buzz,qid,sentence,model_correctness
-N/A,4,N/A,Franz Kafka,A,1,"A novel by this author, which contains the parable ""Before the Law,"" begins when two unnamed government agents arrest the bank worker Josef K",True
-N/A,2,N/A,Israel Defense Forces (IDF),Until,2,"Until 2016, this organization had a policy of preventing kidnappings ""by all means"" possible, including death, known as the Hannibal Directive",True
-The god Ullr carved spells into one of these objects to allow him to sail on,0,True,N/A,N/A,3,The god Ullr carved spells into one of these objects to allow him to sail on it like a boat,N/A

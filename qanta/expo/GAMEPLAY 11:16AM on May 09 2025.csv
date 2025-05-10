@@ -1,2 +1,0 @@
-model_guess,human_correctness,model_buzz,qid,run_id,model_correctness,sentence,human_buzz
-Franz Kafka,N/A,A,1,4,True,"A novel by this author, which contains the parable ""Before the Law,"" begins when two unnamed government agents arrest the bank worker Josef K.",N/A

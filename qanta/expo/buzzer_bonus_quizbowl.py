@@ -444,74 +444,51 @@ def show_score(
         
 
 class Guess:
-    def __init__(self, system, page, evidence, final, weight):
+    def __init__(self, system, page, evidence, final, weight, correctness=None):
         self.system = system
         self.page = page.replace("_", " ")
         self.evidence = evidence
         self.final = final
         self.weight = weight
+        self.correctness = correctness
 
 
 class Buzzes:
     def __init__(self, file_path, questions):
         self._buzzes = defaultdict(dict)
         self._finals = defaultdict(dict)
-
         self._questions = questions
         print("Initializing buzz files")
 
-    def debug(self):
-        self.add_guess(0, 0, 5, "A", "Heisenberg", "", 0, 0.2)
-        self.add_guess(0, 0, 5, "C", "Narcos", "", 0, 0.2)
-        self.add_guess(0, 2, 3, "A", "Better_Call_Saul", "", 1, 0.7)
-        self.add_guess(0, 2, 3, "B", "Breaking Bad", "", 1, 0.6)
-        self.add_guess(0, 2, 3, "C", "Breaking Bad", "", 1, 0.5)
-        self._finals[0]["A"] = "Breaking Bad"
-        self._finals[0]["B"] = "Breaking Bad"
-        self._finals[0]["C"] = "Breaking Bad"
-
-        self.add_guess(1, 0, 5, "A", "SimCity", "", 0, 0.2)
-        self.add_guess(1, 0, 5, "C", "Skyrim", "", 0, 0.2)
-        self.add_guess(1, 2, 3, "A", "Skyrim", "", 0, 0.7)
-        self.add_guess(1, 3, 3, "B", "Jedi Knight", "", 0, 0.6)
-        self.add_guess(1, 3, 3, "C", "Jedi Knight", "", 0, 0.5)
-        self._finals[1]["A"] = "Fallout 76"
-        self._finals[1]["B"] = "Fallout 76"
-        self._finals[1]["C"] = "Fallout (series)"
-
-        self.add_guess(2, 0, 5, "A", "Apple", "", 0, 0.2)
-        self.add_guess(2, 0, 5, "C", "Onion", "", 0, 0.2)
-        self.add_guess(2, 0, 5, "C", "Apple", "", 0, 0.2)
-        self.add_guess(2, 2, 3, "A", "Apple", "", 1, 0.7)
-        self.add_guess(2, 3, 3, "B", "Onion", "", 0, 0.6)
-        self.add_guess(2, 3, 3, "C", "Jedi Knight", "", 0, 0.5)
-        self._finals[2]["A"] = "Potato"
-        self._finals[2]["B"] = "Potato"
-        self._finals[2]["C"] = "Potato"
-
-    def add_guess(self, question, sent, word, system, guess, evidence, final, weight):
+    def add_guess(self, question, sent, word, system, guess, evidence, final, weight, correctness=None):
         if not (sent, word) in self._buzzes[question]:
             self._buzzes[question][(sent, word)] = {}
         if final != 0 and sent == 0 and word < 25:
             final = 0
         self._buzzes[question][(sent, word)][guess] = Guess(
-            system, guess, evidence, final, weight
+            system, guess, evidence, final, weight, correctness
         )
-        
-    def add_system(self, file_path):
-        #print("file path: ",file_path)
-        buzzfile = DictReader(open("%s.buzz.csv" % file_path, "r"))
-        system = file_path.replace("CMSC723_", "").split("/")[-1]
-        #system = system.split(".")[0]
-        #system = system.split("_")[0]
-        system = system.replace("_"," ")
 
+    def add_system(self, file_path):
+        buzzfile = DictReader(open(f"{file_path}.buzz.csv", "r"))
+        system = file_path.replace("CMSC723_", "").split("/")[-1]
+        system = system.replace("_", " ")
+        has_correctness = False
+        with open(f"{file_path}.buzz.csv", "r") as f:
+            header = f.readline()
+            if 'correctness' in header:
+                has_correctness = True
         for ii in buzzfile:
             question, sent, word = (
                 int(ii["question"]),
                 int(ii["sentence"]),
                 int(ii["word"]),
             )
+            correctness = None
+            if has_correctness:
+                correctness = ii.get("correctness", None)
+                if correctness is not None:
+                    correctness = correctness.lower() == "true"
             self.add_guess(
                 question,
                 sent,
@@ -521,9 +498,9 @@ class Buzzes:
                 ii["evidence"],
                 parse_final(ii["final"]),
                 float(ii["weight"]),
+                correctness
             )
-
-        self.load_finals(system, "%s.final.csv" % file_path)
+        self.load_finals(system, f"{file_path}.final.csv")
 
     def load_finals(self, system, final_file):
         ff = DictReader(open(final_file))
@@ -916,13 +893,13 @@ def present_question_hc(
                 question_text_join = ' '.join(question_text.values())
                 answer_check = model_correctness
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
-                if answer_check:
-                    print("Computer guesses: %s (correct)" % buzz_now[0].page)
+                correctness = buzz_now[0].correctness
+                if correctness:
+                    print(f"Computer guesses: {buzz_now[0].page} (correct), ({buzz_now[0].weight})")
                     sleep(kLONGPAUSE)
-                    #score = add_bonus_points(score)
                     return Score(human=human_delta, computer=question_value)
                 else:
-                    print("Computer guesses: %s (wrong)" % buzz_now[0].page)
+                    print(f"Computer guesses: {buzz_now[0].page} (wrong), ({buzz_now[0].weight})")
                     sleep(kLONGPAUSE)
                     computer_delta = -5
                     display = show_score(
@@ -961,6 +938,7 @@ def present_question_hc(
                         points=question_value)
                 clear_screen(display)
 
+    # Prompt the human at the end if they never buzzed, regardless of computer_delta
     if human_delta == 0:
         response = None
         while response is None:
@@ -969,10 +947,9 @@ def present_question_hc(
             if "+" in response:
                 return Score(human=10, computer=computer_delta)
             elif "-" in response:
-                return Score(computer=computer_delta)
+                return Score(human=-5, computer=computer_delta)
             else:
                 response = None
-
     return Score(human=human_delta, computer=computer_delta)
 
 

@@ -1,4 +1,0 @@
-qid,model_guess,run_id,model_buzz,model_correctness,sentence
-1,Franz Kafka,4,A,True,"A novel by this author, which contains the parable ""Before the Law,"" begins when two unnamed government agents arrest the bank worker Josef K."
-2,Israel Defense Forces (IDF),2,Until,True,"Until 2016, this organization had a policy of preventing kidnappings ""by all means"" possible, including death, known as the Hannibal Directive."
-3,skis,2,"After his death, these objects of Ymir formed the",True,"After his death, these objects of Ymir formed the mountains of the Earth."
