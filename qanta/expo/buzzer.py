@@ -309,7 +309,7 @@ def write_readable(filename, ids, questions, buzzes):
                         model_guess = buzz_now[0].page
                         if not model_buzz_bool:
                             # Add the model buzz annotations
-                            correctness = "+" if questions.answer_check(correct, incorrect, model_guess, full_question_text, question_id) else "-"
+                            correctness = "+" if buzz_now[0].correct else "-"
                             if correctness == "-":
                                 new_words.append(f'(-, {model_guess})')
                             else:
@@ -444,7 +444,8 @@ def show_score(
         
 
 class Guess:
-    def __init__(self, system, page, evidence, final, weight):
+    def __init__(self, correct, system, page, evidence, final, weight):
+        self.correct = correct.lower() in ["true", "correct"]
         self.system = system
         self.page = page.replace("_", " ")
         self.evidence = evidence
@@ -461,41 +462,41 @@ class Buzzes:
         print("Initializing buzz files")
 
     def debug(self):
-        self.add_guess(0, 0, 5, "A", "Heisenberg", "", 0, 0.2)
-        self.add_guess(0, 0, 5, "C", "Narcos", "", 0, 0.2)
-        self.add_guess(0, 2, 3, "A", "Better_Call_Saul", "", 1, 0.7)
-        self.add_guess(0, 2, 3, "B", "Breaking Bad", "", 1, 0.6)
-        self.add_guess(0, 2, 3, "C", "Breaking Bad", "", 1, 0.5)
+        self.add_guess(False, 0, 0, 5, "A", "Heisenberg", "", 0, 0.2)
+        self.add_guess(False, 0, 0, 5, "C", "Narcos", "", 0, 0.2)
+        self.add_guess(False, 0, 2, 3, "A", "Better_Call_Saul", "", 1, 0.7)
+        self.add_guess(True, 0, 2, 3, "B", "Breaking Bad", "", 1, 0.6)
+        self.add_guess(True, 0, 2, 3, "C", "Breaking Bad", "", 1, 0.5)
         self._finals[0]["A"] = "Breaking Bad"
         self._finals[0]["B"] = "Breaking Bad"
         self._finals[0]["C"] = "Breaking Bad"
 
-        self.add_guess(1, 0, 5, "A", "SimCity", "", 0, 0.2)
-        self.add_guess(1, 0, 5, "C", "Skyrim", "", 0, 0.2)
-        self.add_guess(1, 2, 3, "A", "Skyrim", "", 0, 0.7)
-        self.add_guess(1, 3, 3, "B", "Jedi Knight", "", 0, 0.6)
-        self.add_guess(1, 3, 3, "C", "Jedi Knight", "", 0, 0.5)
+        self.add_guess(False, 1, 0, 5, "A", "SimCity", "", 0, 0.2)
+        self.add_guess(False, 1, 0, 5, "C", "Skyrim", "", 0, 0.2)
+        self.add_guess(False, 1, 2, 3, "A", "Skyrim", "", 0, 0.7)
+        self.add_guess(True, 1, 3, 3, "B", "Jedi Knight", "", 0, 0.6)
+        self.add_guess(True, 1, 3, 3, "C", "Jedi Knight", "", 0, 0.5)
         self._finals[1]["A"] = "Fallout 76"
         self._finals[1]["B"] = "Fallout 76"
         self._finals[1]["C"] = "Fallout (series)"
 
-        self.add_guess(2, 0, 5, "A", "Apple", "", 0, 0.2)
-        self.add_guess(2, 0, 5, "C", "Onion", "", 0, 0.2)
-        self.add_guess(2, 0, 5, "C", "Apple", "", 0, 0.2)
-        self.add_guess(2, 2, 3, "A", "Apple", "", 1, 0.7)
-        self.add_guess(2, 3, 3, "B", "Onion", "", 0, 0.6)
-        self.add_guess(2, 3, 3, "C", "Jedi Knight", "", 0, 0.5)
+        self.add_guess(False, 2, 0, 5, "A", "Apple", "", 0, 0.2)
+        self.add_guess(False, 2, 0, 5, "C", "Onion", "", 0, 0.2)
+        self.add_guess(False, 2, 0, 5, "C", "Apple", "", 0, 0.2)
+        self.add_guess(False, 2, 2, 3, "A", "Apple", "", 1, 0.7)
+        self.add_guess(False, 2, 3, 3, "B", "Onion", "", 0, 0.6)
+        self.add_guess(False, 2, 3, 3, "C", "Jedi Knight", "", 0, 0.5)
         self._finals[2]["A"] = "Potato"
         self._finals[2]["B"] = "Potato"
         self._finals[2]["C"] = "Potato"
 
-    def add_guess(self, question, sent, word, system, guess, evidence, final, weight):
+    def add_guess(self, correct, question, sent, word, system, guess, evidence, final, weight):
         if not (sent, word) in self._buzzes[question]:
             self._buzzes[question][(sent, word)] = {}
         if final != 0 and sent == 0 and word < 25:
             final = 0
         self._buzzes[question][(sent, word)][guess] = Guess(
-            system, guess, evidence, final, weight
+            correct, system, guess, evidence, final, weight
         )
         
     def add_system(self, file_path):
@@ -513,6 +514,7 @@ class Buzzes:
                 int(ii["word"]),
             )
             self.add_guess(
+                ii["correct"],
                 question,
                 sent,
                 word,
@@ -530,7 +532,7 @@ class Buzzes:
         for ii in ff:
             question_id = int(ii["question"])
             answer = ii["answer"].replace("_", " ")
-            correctness = ii["Correct"].strip().lower() == "correct"  # Read correctness from CSV
+            correctness = ii["correct"].strip().lower() == "true"  # Read correctness from CSV
             print(correctness)
             self._finals[question_id][system] = (answer, correctness)  # Store as tuple
 
@@ -743,7 +745,7 @@ def format_display(
         guess = current_guesses[gg]
         question_text_join = ' '.join(question_text.values())
         #print("Is the answer correct?")
-        if questions.answer_check(accept, reject, guess.page, question_text_join, question_id):
+        if guess.correct:
             report += "%-18s\t%-50s\t%0.2f\t%s\n" % (
                 guess.system,
                 "***CORRECT***",
@@ -863,7 +865,7 @@ def present_question_hc(
     computer_delta = 0
     question_value = 15
     # Extract model's final guess and correctness from loaded data
-    model_guess, model_correctness = final  # Now a tuple (answer, correctness)
+
     for ss in question_text:
         words = question_text[ss].split()
         for ii, ww in enumerate(words):
@@ -871,6 +873,7 @@ def present_question_hc(
             if ss == max(question_text) and ii == len(question_text[ss].split()) - 1:
                 # If computer hasn't buzzed, let the computer buzz
                 if computer_delta == 0:
+                    model_guess, model_correctness = final  # Now a tuple (answer, correctness)
                     question_text_join = ' '.join(question_text.values())
                     #answer_check = questions.answer_check(accept, reject, final, question_text_join, question_id)
                     answer_check = model_correctness
@@ -941,13 +944,15 @@ def present_question_hc(
                                           reject=reject,
                                           points=question_value
                                           )
-                clear_screen(display)
 
                 answer(buzz_now[0].page.split("(")[0], buzz_now[0].system)
                 question_text_join = ' '.join(question_text.values())
                 #answer_check = questions.answer_check(accept, reject, buzz_now[0].page, question_text_join, question_id)
-                answer_check=model_correctness
+                answer_check=buzz_now[0].correct
                 write_gameplay_log(out_writer_dict, question_id, ss, question_text[ss], ' '.join(words[:ii+1]), buzz_now[0].page, answer_check, 'N/A', 'N/A')
+                
+                clear_screen(display)
+
                 if answer_check:
                     print("Computer guesses: %s (correct)" % buzz_now[0].page)
                     sleep(kLONGPAUSE)

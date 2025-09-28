@@ -1,0 +1,321 @@
+id,answer,sent,text
+0,San_Francisco,0,This city's police chief Thomas Cahill was fired by Mayor John Shelley after a raid of a New Year's Eve 1965 party where many members of the Daughters of Bilitis were force-photographed.
+0,San_Francisco,1,A professor in this city named Sally Miller Gearhart campaigned against the Briggs Initiative.
+0,San_Francisco,2,Protesters smashed the windows of police cars during the Compton's Cafeteria riot in this city.
+0,San_Francisco,3,A civil rights leader in this city was assassinated by a man who also killed Mayor George Moscone.
+0,San_Francisco,4,The National Register of Historic Places includes many sites in this city's Mission District and Castro with ties to LGBTQ+ history.
+0,San_Francisco,5,"Harvey Milk was elected to the Board of Supervisors in, for 10 points, what Northern California city?"
+1,Cholera,0,"The virulence of this disease is partly increased by the release of both TcpP and TcpH proteins, which activate the expression of ToxT."
+1,Cholera,1,The bacteria that causes this disease requires a phage to code for its causative enterotoxin; that toxin was the first discovered AB5 toxin and contains a subunit that catalyzes the ADP-ribosylation of G proteins.
+1,Cholera,2,"Heterozygous carriers of the mutation behind cystic fibrosis have increased resistance to this disease, which induces the secretion of chloride ions into the small intestine."
+1,Cholera,3,An epidemiological study by John Snow traced an outbreak of this disease to a contaminated London water pump.
+1,Cholera,4,"Organisms in the genus Vibrio cause, for 10 points, what disease, whose symptoms include watery diarrhea?"
+2,New_Delhi,0,"The '12 Pillars' road in this metro area leads to its expensive Connaught Place business district, many of whose buildings were designed by Robert Tor Russell."
+2,New_Delhi,1,Much of Raisina ('rye-SEE-nuh') Hill in this metro area was developed between durbars held in 1903 and 1912.
+2,New_Delhi,2,"In the late 20th century, this metro area's population spread to suburbs like Ghaziabad that lie across the Yamuna River."
+2,New_Delhi,3,This metro area is home to the flower-shaped Bahá'í Lotus Temple.
+2,New_Delhi,4,"This metro area is home to the Jama Masjid, its country's largest mosque."
+2,New_Delhi,5,A massive redevelopment plan in this metro area will update Lutyens-era structures like the Rashtrapati Bhawan despite a pandemic.
+2,New_Delhi,6,"The Koh-i-Noor diamond once resided in this metro area's Red Fort, the home of many Mughal emperors."
+2,New_Delhi,7,"For 10 points, name this metro area that includes India's capital."
+3,Sigmund_Freud,0,Luce Irigaray was expelled from a Paris school named for this man for her thesis Speculum of the Other Woman.
+3,Sigmund_Freud,1,J. M. Masson argued that this thinker suppressed theories about child abuse in the controversial book The Assault on Truth.
+3,Sigmund_Freud,2,"This man's views that one group of people were 'a strange, inferior, less-than-human species' are attacked in a 1963 book by Betty Friedan."
+3,Sigmund_Freud,3,(*) Karen Horney broke from a theory proposed by this man by arguing that men were drawn to creative endeavors as a compensation for not being able to procreate.
+3,Sigmund_Freud,4,This man described how one concept led to girls disparaging their mothers for appearing to be castrated.
+3,Sigmund_Freud,5,"For 10 points, name this man who proposed the theory of penis envy and founded psychoanalysis."
+4,Invertible_matrix,0,A square matrix has this property if and only if its characteristic polynomial has a nonzero constant term.
+4,Invertible_matrix,1,An n-by-n matrix also has this property if it has n pivot points.
+4,Invertible_matrix,2,"Alternatively, a square matrix over the complex numbers has this property if all of its eigenvalues are non-zero."
+4,Invertible_matrix,3,"Square matrices are called non-singular if they have this property, which is true if and only if they have a non-zero (*) determinant."
+4,Invertible_matrix,4,A function f-of-x has this property if there is another function g-of-x such that f-of-g-of-x and g-of-f-of-x both equal x.
+4,Invertible_matrix,5,"Therefore, functions that are not bijective and therefore fail to be injective or surjective, such as the parabola x-squared, do not have this property."
+4,Invertible_matrix,6,"For 10 points, name this property that intuitively allows you to 'undo' a function."
+5,Caving,0,"Tourists and other people engaged in this activity in Waitomo, New Zealand, often take selfies in front of blue glowworms."
+5,Caving,1,Several people have died partaking in this activity in France in a location named for Joseph Berger following heavy rainfall.
+5,Caving,2,"Howard and Deb Limbert helped popularize this activity in places like Hang Sơn Đoòng, nicknamed the 'Great Wall of Vietnam.'"
+5,Caving,3,"In 2018, a soccer team that engaged in this activity was (*) stranded in Tham Luang Nang Non, Thailand."
+5,Caving,4,This activity is the recreational equivalent of speleology.
+5,Caving,5,The largest venue for people engaged in this activity in the US is in a 'Mammoth' system in Kentucky.
+5,Caving,6,"For 10 points, name this activity where one might explore regions filled with stalactites."
+6,Home,0,"Some sources argue that the ashrama named after these places, the second of four ashramas, is praiseworthy because it performs sacrifices and sustains other ashramas."
+6,Home,1,"In Tamil Nadu, these places are often demarcated from surrounding space by a rice flour drawing called a kolam."
+6,Home,2,Hindus often perform the griha pravesh ritual to inaugurate entering into one of these places for the first time.
+6,Home,3,"In Buddhism, laypeople are often referred to as (*) 'holders' of these places in contrast to monastics who renounce worldly possessions."
+6,Home,4,Hindus who have Western-built examples of these places might create dedicated altars from closet spaces.
+6,Home,5,"For 10 points, name these buildings where daily pujas might be performed in a special room away from the bedroom."
+7,Mass,0,This quantity for a given object is measured in units of power by a device that uses its moving mode to self-calibrate.
+7,Mass,1,The known values of the cesium standard and speed of light allow this quantity's unit to be defined by fixing the value of Planck's constant.
+7,Mass,2,Changes in this quantity due to a magnetic field were related to a material's susceptibility by Louis Gouy ('lwee gwee').
+7,Mass,3,Bryan (*) Kibble designed a device for precisely measuring this quantity.
+7,Mass,4,"One attempt to define this quantity's unit involved the creation of a perfect silicon ball, which also allows the determination of Avogadro's number."
+7,Mass,5,"In 2019, this quantity was unpinned from the physical platinum-iridium cylinder previously used to define its unit."
+7,Mass,6,"For 10 points, name this quantity found with a balance and measured in kilograms."
+8,Baghdad,0,The founder of this city built a palace whose 120-foot green dome had a horseman whose lance was supposedly able to rotate in the direction of his enemies.
+8,Baghdad,1,A pair of brothers working in this city in the 9th century dreamed up a primitive version of a gas mask in their The Book of Ingenious Devices.
+8,Baghdad,2,Construction on this 'Round City' was supervised by the Barmakid family.
+8,Baghdad,3,The end of a Golden Age is usually dated to the 1258 (*) sack of this 'Dome of Peace' by Hulagu Khan.
+8,Baghdad,4,A ruler of this city once sent a water clock to Charlemagne and may have founded the House of Wisdom.
+8,Baghdad,5,"This city was built as a more secure capital for Al-Mansur, the leader of the Abbasid Caliphate."
+8,Baghdad,6,"For 10 points, name this city on the Tigris River, the capital of Iraq."
+9,King_Lear,0,This character repeats the word 'kill' six times after calling life a 'great stage of fools.'
+9,King_Lear,1,"This character says his heart 'shall break into a hundred thousand flaws' and that 'man's life's as cheap as beast's' in a speech that begins 'O, reason not the need.'"
+9,King_Lear,2,"This character tells 'cataracts and hurricanoes' to 'rumble thy bellyful' in a speech in which he cries out, (*) 'blow, winds, and crack your cheeks!'"
+9,King_Lear,3,This character calls himself 'more sinn'd against than sinning' during a storm that Kent rescues him from.
+9,King_Lear,4,"While holding the corpse of his daughter, this man exclaims 'never, never, never, never, never' before dying."
+9,King_Lear,5,"Regan, Goneril, and Cordelia are the daughters of, for 10 points, what Shakespearean king?"
+10,Philippines,0,"The New York Times gave front-page coverage to 'General Fagen,' a Black soldier who defected in this modern-day country."
+10,Philippines,1,Hundreds of workers died building the Kennon Road to this country’s new 'summer capital' designed by Daniel Burnham.
+10,Philippines,2,Simeón Ola refused to accept a peace treaty that ended a rebellion in this country.
+10,Philippines,3,General Jacob H. Smith committed war crimes in this country.
+10,Philippines,4,"In the 1930s, this country’s path towards independence was defined in the Tydings–McDuffie Act."
+10,Philippines,5,Actions in this country by 'Fighting' Fred Funston were criticized by (*) Mark Twain.
+10,Philippines,6,An 1899 to 1902 guerilla war in this country was suppressed by Arthur MacArthur.
+10,Philippines,7,"For 10 points, Emilio Aguinaldo fought against US colonizers in what country with its capital at Manila?"
+11,Giuseppe_Verdi,0,An Act IV aria by this composer that directly leads into an 'Ave Maria' features a soprano repeating the word 'salce' while reminiscing about a mournful folk ballad.
+11,Giuseppe_Verdi,1,"The title character sings about 'the Muslim's pride' in the aria 'Esultate' in the stormy opening of that Shakespeare-inspired opera by this composer, who also wrote an opera based on Alexandre Dumas's novel The Lady with the (*) Camellias."
+11,Giuseppe_Verdi,2,The title character of an opera by this composer sings the aria 'Sempre libera' while a man sings about love in the distance.
+11,Giuseppe_Verdi,3,"In that opera by this composer, Alfredo throws his casino winnings at the feet of Violetta Valéry, who later dies of tuberculosis."
+11,Giuseppe_Verdi,4,"For 10 points, name this Italian composer of Otello and La traviata."
+12,Japanese_language,0,A poetic reformer who wrote in this language adopted a word for 'cuckoo' as his pen name when he began coughing up blood because of tuberculosis.
+12,Japanese_language,1,"The instruction to climb a mountain, 'but slowly, slowly!,' is given to a snail in a poem in this language by Issa."
+12,Japanese_language,2,Critical insight follows each of thirty pairs of poems in this language in an anthology titled for a game in which children compare two seashells.
+12,Japanese_language,3,"The first stanza of a (*) collaborative form in this language became its own poetic form, in which two images are juxtaposed and separated by a 'cutting word.'"
+12,Japanese_language,4,A poem in that genre from this language evokes springtime through the splash made by a frog jumping into a pond.
+12,Japanese_language,5,"For 10 points, name this language in which Shiki and Basho wrote haiku."
+13,Refugee,0,Edward Corsi oversaw a 1953 relief law named for this general class of people that granted exceptions to the McCarran–Walter Act.
+13,Refugee,1,"In 1930, one organization founded an office named for polar explorer Fridtjof Nansen that focused on these people."
+13,Refugee,2,The 1996 case of Chahal v. UK reinforced the non-refoulement rights of these people.
+13,Refugee,3,"Today, many of this general class of people live in Bidibidi in Uganda."
+13,Refugee,4,"It's not a specific ethnic group, but Jimmy Carter signed a 1980 law named for these people that benefited so-called (*) 'boat people.'"
+13,Refugee,5,"The UNHCR supports these people, whom the UN defines as having 'a well-founded fear of being persecuted for reasons of race or religion.'"
+13,Refugee,6,"For 10 points, name these people forced to cross national borders."
+14,Aluminium,0,Factories producing this metal account for 90 percent of emissions of the greenhouse gas tetrafluoromethane.
+14,Aluminium,1,"For nearly two hundred years, Greenland supplied the world with this metal's fluoride, which was used to dissolve its other ores."
+14,Aluminium,2,The FAA states that only government employees can carry barometers on planes due to mercury's rapid amalgamation with this metal.
+14,Aluminium,3,The American Chemical Society differs from IUPAC on how to (*) refer to this metal.
+14,Aluminium,4,An electrolytic method of smelting this metal was patented in the US and France nearly simultaneously.
+14,Aluminium,5,"This Group 13 metal makes up one-twelfth of the Earth's crust by weight, but must be refined from bauxite via the Hall–Héroult process."
+14,Aluminium,6,"For 10 points, name this lightweight silvery metal used in soda cans."
+15,Recession,0,These events are represented by an equilibrium point more to the left than an LRAS curve on an AD–AS diagram.
+15,Recession,1,"In the US, these events are officially demarcated by the NBER and have historically been preceded by an inverted yield curve for US Treasury bonds."
+15,Recession,2,RBC theory holds that these events are largely caused by adverse productivity shocks.
+15,Recession,3,These events can begin particularly long-lasting periods that are said to be (*) L-shaped.
+15,Recession,4,A 'double-dip' example of one of these events was caused by Paul Volcker raising interest rates in the 1980s.
+15,Recession,5,"In classic business cycle theory, these events are contrasted with expansions."
+15,Recession,6,"For 10 points, name these periods of declining aggregate economic activity."
+16,Plough,0,A sharp-pointed one of these devices called a kuan was in wide use by the time of China's Qin dynasty.
+16,Plough,1,Historian Lynn White argued that the replacement of Roman 'scratch' varieties of these devices with heavy moldboard variants led to increased population densities in Northern Europe in the Middle Ages.
+16,Plough,2,"In the 19th century, homesteaders wrongly believed a theory that rain 'followed' from using these devices."
+16,Plough,3,"Over-use of these devices can result in (*) hardpan, which prevents proper drainage."
+16,Plough,4,An all-steel version of this technology that slid well through the thick terrain of the Great Plains was developed by John Deere.
+16,Plough,5,"For 10 points, name this farming device typically attached to a tractor to break up and churn soil."
+17,John_McCain,0,"During a 1986 senate run, this politician was criticized for his ties to 'Duke' Tully, a reporter who had pretended to be a veteran."
+17,John_McCain,1,David Foster Wallace's reporting on this politician for Rolling Stone was published into a book titled for this man's campaign bus.
+17,John_McCain,2,Voters were asked if they would vote for this man if he 'had fathered an illegitimate Black child' in robocalls engineered by (*) Karl Rove.
+17,John_McCain,3,"In his most successful presidential run, this politician made repeated appearances with a business owner nicknamed 'Joe the Plumber.'"
+17,John_McCain,4,This man and Russ Feingold created a 2002 act that reformed campaign financing.
+17,John_McCain,5,"For 10 points, name this Arizona Senator defeated by Barack Obama in the 2008 election."
+18,Physician,0,Leslie Jamison described being an actor to help people training in this profession in the title essay of her collection The Empathy Exams.
+18,Physician,1,"A writer who trained in this profession wrote Awakenings, which became the basis for Harold Pinter’s play A Kind of Alaska."
+18,Physician,2,"An author who trained in this profession won a Pulitzer Prize for a 2010 'biography' that profiled innovators like Émil Grubbé, William Halsted, and Sidney Farber."
+18,Physician,3,The book The Man Who (*) Mistook His Wife for a Hat was written by a man who trained in this profession named Oliver Sacks and consists of anonymous case studies like a man with prosopagnosia.
+18,Physician,4,"For 10 points, name this primary profession of Siddhartha Mukherjee, author of The Emperor of All Maladies: A Biography of Cancer."
+19,Fossil,0,"A man named Bolor Minjin has led the effort to repatriate these items, many of which come from an area called the Flaming Cliffs."
+19,Fossil,1,The Ruth Hall Museum exhibits two collections of these items from Georgia O'Keeffe's Ghost Ranch.
+19,Fossil,2,A Gilded Age 'war' over these items was partially fought by Othniel Charles Marsh.
+19,Fossil,3,The luxury market for these items was kicked off by the 1997 auction of one nicknamed (*) 'Sue.'
+19,Fossil,4,UNESCO recognizes the Gobi Desert in Mongolia as the world's largest 'reservoir' of these items.
+19,Fossil,5,"Some of these things are called coprolites, and many are collected in a 'hall' named for David H. Kock at the National Museum of Natural History."
+19,Fossil,6,"For 10 points, name these items sought by paleontologists, which might include the skull of a T-rex."
+20,Oscar_Wilde,0,"One story by this author ends with the title character declaring, 'For the future let those who come to play with me have no hearts' after a 'funny little Dwarf' dies."
+20,Oscar_Wilde,1,The title statue of another story by this author asks a swallow to give away his gemstones to poor townspeople before both of them die.
+20,Oscar_Wilde,2,"In a novel by this author of 'The Birthday of the Infanta,' the protagonist is known only by the name Prince Charming to an (*) actress who commits suicide after giving a stilted performance."
+20,Oscar_Wilde,3,This author of 'The Happy Prince' wrote a novel that opens with Basil Hallward trying to prevent Lord Henry Wotton from meeting the protagonist while painting the title object.
+20,Oscar_Wilde,4,"For 10 points, name this author of The Picture of Dorian Gray."
+21,Temperature,0,The technique of acoustic tomography can measure this variable over a wide area by placing probes within the SOFAR channel.
+21,Temperature,1,The surface component of the Southern Oscillation is defined by localized increases in this variable due to reduced transport by the trade winds.
+21,Temperature,2,This physical variable remains constant with depth in the mixed layer but plummets sharply at a namesake (*) cline.
+21,Temperature,3,This variable increases off the coast of Peru during El Niño because of a reduction of upwelling.
+21,Temperature,4,Changes in density due to this variable and salinity drive a namesake macroscale oceanic circulation system.
+21,Temperature,5,"Although it is high at the sea surface, for 10 points, what variable averages 2 degrees Celsius in the rest of the ocean?"
+22,Epic_of_Gilgamesh,0,"Michael Schmidt's book on the 'Life' of this text celebrates Philip Terry's unorthodox 2018 translation in Globish, published as Dictator."
+22,Epic_of_Gilgamesh,1,The protagonist of this text diverts a river and builds himself a stone tomb in the exposed riverbed so that his body will never be found.
+22,Epic_of_Gilgamesh,2,"In the fifth section of this text, the heroes are assisted by 13 winds to defeat a monster with 7 (*) auras who guards the Cedar Forest."
+22,Epic_of_Gilgamesh,3,A prostitute named Shamhat 'tames' a character in this text.
+22,Epic_of_Gilgamesh,4,"This text's title character, who is two-thirds divine, seeks the secret of immortality from Utnapishtim and rejects the advances of Ishtar."
+22,Epic_of_Gilgamesh,5,"For 10 points, name this oldest extant epic poem, titled for a king of Uruk."
+23,Coin,0,'Bald' examples of these objects were produced at Taghaza and widely distributed throughout North Africa.
+23,Coin,1,The state of Chu produced some of these objects described as 'ant-nose' during the Warring States Period.
+23,Coin,2,Isaac Newton developed a method to prevent clipping these objects.
+23,Coin,3,Archers and battle axes were often featured on objects of this kind made during the Gupta Dynasty.
+23,Coin,4,The presence of poorly-written Arabic on some of these objects in Mercia suggests (*) trade with Spain.
+23,Coin,5,"The Lydians pioneered the use of electrum in these objects, although King Croesus opted to make them from pure gold."
+23,Coin,6,"For 10 points, the Greek drachma is an example of what type of object used for currency in the early world?"
+24,Saxophone,0,"After putting out an overdubbed version of Louis Armstrong's 'What a Wonderful World,' a player of this instrument was criticized for being 'wimped out' practicing 'musical necrophilia' by Pat Metheny."
+24,Saxophone,1,"It's not guitar, but this instrument was played on a 1959 album influenced by Thelonious Monk, which is Reflections by Steve Lacy."
+24,Saxophone,2,"A player of this instrument recorded the album Breathless, which includes the track 'Forever in Love.'"
+24,Saxophone,3,A (*) plastic version of this instrument was played on The Shape of Jazz to Come by Ornette Coleman.
+24,Saxophone,4,McCoy Tyner and a player of this instrument each gave extended improvised solos in a 1961 modal rendition of Rodgers and Hammerstein's song 'My Favorite Things.'
+24,Saxophone,5,"For 10 points, name this instrument played by Kenny G and John Coltrane."
+25,Athens,0,The anonymous 'Old Oligarch' wrote an analysis of this city's government.
+25,Athens,1,"Corcyra asked to form an alliance with this city in order to gain control of Epidamnus, thereby weakening the earlier Thirty Years' Peace that this city had signed."
+25,Athens,2,"After seizing the hill fort of Phyle, a general from this city named Thrasybulus killed Critias and took power."
+25,Athens,3,A leader from this city's Alcmaeonid family was killed after a pathogen entered via its port of (*) Piraeus.
+25,Athens,4,"That leader of this city stated that 'What you leave behind is not what is engraved on stone monuments, but what is woven into the lives of others' in a noted Funeral Oration."
+25,Athens,5,"Pericles was a ruler of, for 10 points, what Greek city-state that opposed Sparta during the Peloponnesian War?"
+26,Prelude_(music),0,Hans von Bülow nicknamed an E minor piece in this genre 'Suffocation.'
+26,Prelude_(music),1,"Another piece in this genre opens with the descending melody F, short D-flat, A-flat over repeated notes that are enharmonically rewritten as G-sharp instead of A-flat after the key changes from D-flat major."
+26,Prelude_(music),2,A vacation with George Sand in (*) Majorca inspired the fifteenth piece in an Opus 28 cycle of pieces in this genre that is organized in order of the circle of fifths.
+26,Prelude_(music),3,"That collection of pieces in this genre was inspired by Johann Sebastian Bach's The Well-Tempered Clavier, which pairs these pieces with fugues."
+26,Prelude_(music),4,"Frédéric Chopin was inspired by raindrops to write a piece in, for 10 points, what genre whose name suggests that it is introducing another piece?"
+27,Antibody,0,A technique for producing these molecules developed by Kohler and Milstein uses HAT medium as a selection agent.
+27,Antibody,1,Greg Winter pioneered the humanization of these molecules to prevent rejection by chimerizing them with human equivalents.
+27,Antibody,2,Generic medications with suffix -mab are examples of these molecules produced by hybridomas.
+27,Antibody,3,One of these molecules named for its role in (*) rheumatoid arthritis targets others by binding to their Fc region.
+27,Antibody,4,Class switching can convert between isotypes of these molecules like the dimeric A and pentameric M. The monoclonal type of these molecules are engineered to bind specific epitopes and are created from cloned B cells.
+27,Antibody,5,"For 10 points, name these molecules involved in the immune response, which bind to antigens."
+28,Amazon_rainforest,0,Archaeologist Betty Meggers's book on this region argued that it was never densely populated.
+28,Amazon_rainforest,1,"Since the 1980s, the 364 highway has increased population density in this region despite empate protests by the 'Gandhi' of this region, who was assassinated in 1988."
+28,Amazon_rainforest,2,"A president serving in the 1950s sought to exploit the cassiterite deposits of this 'unproductive and empty' region; more recently, one government has lifted the ban on correntão, a practice where two (*) tractors are chained together to 'improve' land in this region."
+28,Amazon_rainforest,3,This region was subject to the 'March to the West' in the 1930s by dictator Getúlio Vargas and has more recently been clear cut for soy fields under presidents like Michel Temer and Jair Bolsonaro.
+28,Amazon_rainforest,4,"For 10 points, name this Brazilian rainforest."
+29,India,0,An author born in this country explored climate change in his nonfiction book The Great Derangement and included sections in Chinese Pidgin English in Sea of Poppies from his Ibis trilogy.
+29,India,1,"In a novel by another author from this country, a character compares his sister to a stick insect when she jokes about his 'Elvis puff.'"
+29,India,2,An intersex resident of a graveyard in this country features in The (*) Ministry of Utmost Happiness.
+29,India,3,"During a showing of The Sound of Music, the Orangedrink Lemondrink Man molests a young boy in a novel from this country."
+29,India,4,"In that novel, Sophie Mol comes to this country to visit the twins Rahel and Estha."
+29,India,5,"For 10 points, name this country home to Amitav Ghosh and Arundhati Roy."
+30,Whaling,0,The Dutch Noordsche Compagnie established the colony of Smeerenburg to process byproducts of this industry.
+30,Whaling,1,"In the 1860s, Svend Foyn invented an explosive device that revolutionized this industry."
+30,Whaling,2,Workers in this industry typically signed a 'lay' for a share of profits.
+30,Whaling,3,"This industry declined in the late 19th century after discoveries at Titusville, Pennsylvania, drove down the price of kerosene."
+30,Whaling,4,"Between 1710 and 1740, this industry grew by almost 2,000 percent in (*) Nantucket."
+30,Whaling,5,"An 1871 freeze in the Arctic contributed to the end of American dominance of this industry, as did the replacement of spermaceti in making candles."
+30,Whaling,6,"For 10 points, name this industry that produced blubber and oil from large sea mammals."
+31,DNA,0,"This molecule's tendency to form 6,4 compounds during endospore germination gives those photoproducts the nickname 'spore.'"
+31,DNA,1,This molecule forms planar tetrads stabilized by potassium via Hoogsteen bonding.
+31,DNA,2,Cyclobutanes are formed from adjacent double bonds in this molecule by photodimerization in the presence of UV.
+31,DNA,3,This molecule naturally exists as a supercoil that must be (*) unwound.
+31,DNA,4,"Circular dichroism is used to distinguish the Z conformation of this molecule from the B, which is right-handed and has a larger major groove."
+31,DNA,5,The 3D structure of this molecule was discovered using X-ray crystallography data collected by Rosalind Franklin.
+31,DNA,6,"For 10 points, name this biological polymer that encodes genetic information in a double-helix."
+32,Voting,0,Jason Brennan’s book on the 'ethics' of this practice divided people into types such as 'vulcans' and argued that it should be limited based on intelligence.
+32,Voting,1,Donald Green and Alan Gerber's textbook on increasing this practice includes an examination of direct mail.
+32,Voting,2,Social desirability bias has been used to explain the Bradley effect in people partaking in this practice.
+32,Voting,3,"A group of people engaging in this practice when there is an (*) independence of irrelevant alternatives cannot have three metrics of fairness satisfied, according to Arrow’s impossibility theorem."
+32,Voting,4,People who have just partaken in this practice are surveyed in an exit poll.
+32,Voting,5,"For 10 points, name this practice that chooses representatives."
+33,Balcony,0,Elma boasts of having memorized a passage spoken in this location in William Inge's play Bus Stop.
+33,Balcony,1,"Lyman subsequently breaks down after reciting the line 'My name, dear saint, is… is hateful to myself' from that scene in this place."
+33,Balcony,2,"While at this specific location, one character declares, 'My ears have not yet drunk a hundred words of that tongue's utterance.'"
+33,Balcony,3,"That same character in this place wonders how another (*) 'camest thou hither' since 'the orchard walls are high and hard to climb' and delivers a soliloquy where she states, 'That which we call a rose / by any other name would smell as sweet.'"
+33,Balcony,4,"For 10 points, Juliet asks 'O Romeo, Romeo!"
+33,Balcony,5,Wherefore art thou Romeo?'
+33,Balcony,6,while standing at what platform off the side of her room?
+34,Circus,0,"The first American woman to own one of these businesses, Agnes Thatcher Lake, married 'Wild' Bill Hickok in 1876."
+34,Circus,1,"The first British example of one of these businesses, Astley's Amphitheatre, employed future explorer of Egypt Giovanni Battista Belzoni and began life as a riding school."
+34,Circus,2,A 'new' business of this type put on the Zarkana show and an adaptation of the Beatles album Love.
+34,Circus,3,One of these businesses was co-named for the man who popularized the phrase 'there's a (*) sucker born every minute' and closed in 2017.
+34,Circus,4,"Special trains were used by 'traveling' businesses of this type to pack up big top tents, often with the help of elephants."
+34,Circus,5,"For 10 points, name this type of business once operated by the Ringling Brothers."
+35,Leonardo_da_Vinci,0,Six copies of a work by this artist were created by Yves Chaudron according to Karl Decker.
+35,Leonardo_da_Vinci,1,Bernardo Bembo may have commissioned a portrait by this artist whose obverse contains the phrase 'virtutem forma decorat.'
+35,Leonardo_da_Vinci,2,Two portraits by this artist are titled for a type of headband called a ferronnière.
+35,Leonardo_da_Vinci,3,"A portrait by this man, the only one on permanent display in the Americas, puts its subject in front of a juniper bush, a pun on the sitter's name (*) Ginevra."
+35,Leonardo_da_Vinci,4,Another portrait by him depicts Cecilia Gallerani and is usually called Lady with an Ermine.
+35,Leonardo_da_Vinci,5,"In his best-known portrait, this artist blended the paints around the mouth and eyes of a member of the Gherardini family using the sfumato technique."
+35,Leonardo_da_Vinci,6,"For 10 points, name this artist of the Mona Lisa."
+36,Parallel_computing,0,The HDFS file system was developed for this technique and adopted by Apache Spark.
+36,Parallel_computing,1,The MapReduce model describes algorithms using this technique and remains the idiomatic way to refer to components of Hadoop programs.
+36,Parallel_computing,2,Problems like raytracing are 'embarrassingly' suited to this technique because they minimize resources spent on communication.
+36,Parallel_computing,3,"Semaphores and other locks can maintain strict consistency in this technique, but it is typically eventually consistent because changes take (*) time to propagate."
+36,Parallel_computing,4,"Systems using this technique are more resilient due to their use of clusters, which may have only part of the data."
+36,Parallel_computing,5,"For 10 points, name this technique that divides computational tasks into smaller segments that are performed simultaneously."
+37,Shark,0,"A sculpture of a girl in a blue dress with the head of one of these creatures is a popular selfie spot in Buffalo, New York."
+37,Shark,1,A so-called 'alley' named for these creatures attracts tourists to South Africa's Geyser Rock.
+37,Shark,2,"The government of New South Wales uses drum lines to cull the population of these creatures, whose fermented meat constitutes a pungent Icelandic dish called (*) hákarl."
+37,Shark,3,A Peter Benchley novel based on a series of incidents involving these creatures in New Jersey in 1916 was turned into one of the first movie blockbusters.
+37,Shark,4,"Deep-water varieties of these species tend to have large, fatty livers."
+37,Shark,5,"For 10 points, name these creatures whose 'great white' variety occasionally attack humans."
+38,Persephone,0,"In an incident involving this woman, which was depicted in an unfinished epic by Claudian, the swineherd Eubuleus lost his pigs."
+38,Persephone,1,"In the Orphic religion, this woman and Zeus are the parents of Zagreus, a Dionysus analogue gobbled up by the Titans."
+38,Persephone,2,"In the Metamorphoses, this woman turns Ascalaphus into an owl by splashing him with water."
+38,Persephone,3,Theseus's friend (*) Pirithous is glued to a stone bench forever for trying to abduct this woman.
+38,Persephone,4,This woman raises Adonis from infancy and feuds with Aphrodite over him.
+38,Persephone,5,"Because this woman ate some pomegranate seeds, she is obliged to spend a third of each year underground."
+38,Persephone,6,"For 10 points, name this daughter of Demeter who becomes queen of the underworld after being abducted by Hades."
+39,Map,0,Abu Zayd al-Balkhi named a medieval school for producing these objects in Baghdad.
+39,Map,1,"In the 19th century, a celebrated object of this kind was produced by the working-class William 'Strata' Smith."
+39,Map,2,"Jerry Brotton, who wrote a 'History of the World' based on 12 of these objects, highlights the cultural exchange in Muhammad al-Idrisi's example, the Tabula Rogeriana."
+39,Map,3,One of these objects produced in Nuremberg posits the existence of (*) four-eyed men and centaurs.
+39,Map,4,The inaccurate Cosmographia of Claudius Ptolemy inspired medieval makers of these things like Martin Waldseemüller.
+39,Map,5,One of these objects notable for its size distortions was made in 1569 by Gerardus Mercator.
+39,Map,6,"For 10 points, cartographers produce what objects that are useful in navigation?"
+40,Banjo,0,"Bill Keith invented namesake devices that let players of this instrument quickly switch from G to D tuning, and pioneered the 'melodic' style of playing it."
+40,Banjo,1,Players of this instrument frequently use the right hand to create repeated patterns of eighth-note arpeggios known as 'rolls.'
+40,Banjo,2,Traditional players of this instrument use the (*) claw-hammer technique to play the 'bum-ditty' pattern.
+40,Banjo,3,"This instrument rose in popularity thanks to the song 'Foggy Mountain Breakdown,' which was written and recorded by Earl Scruggs."
+40,Banjo,4,"Béla Fleck plays this instrument, which typically has either four or five strings and a circular membrane, and was brought to America by African slaves."
+40,Banjo,5,"For 10 points, name this string instrument commonly used in bluegrass music."
+41,Parent,0,'Laissez-Faire' and 'Dismissing' are two approaches employed by these people according to psychologists John and Julie Gottman.
+41,Parent,1,Psychologist Diana Baumrind argues that these people should adopt a style that is both responsive and demanding.
+41,Parent,2,"In a book that helped popularize Freud's theories, these people were told 'you know more than you think you do.'"
+41,Parent,3,Leo Kaner and Bruno Bettelheim promulgated a theory that a lack of warmth in the (*) 'refrigerator' version of these people led to autism.
+41,Parent,4,Best-selling books written for these people include the What to Expect series and a 'Common Sense' guide written by Dr. Benjamin Spock.
+41,Parent,5,"For 10 points, 'helicopter' examples of what types of people are heavily involved in the lives of their children?"
+42,Phoenicia,0,This civilization's history was chronicled in the now-lost books of Sanchuniathon.
+42,Phoenicia,1,The scholar Josephine Quinn argued that this civilization 'did not in fact exist as a self-conscious collective' but all members did practice a type of infant sacrifice called the tophet.
+42,Phoenicia,2,The oldest surviving example of a system created by these people can be found on the Ahiram Epitaph.
+42,Phoenicia,3,A king of this civilization named Hiram sent (*) cedar wood to Jerusalem.
+42,Phoenicia,4,"By the 9th century CE, this civilization controlled Sidon and Byblos."
+42,Phoenicia,5,The god Melqart was worshiped in this civilization.
+42,Phoenicia,6,"Murex snails were harvested to produce a valuable purple dye by, for 10 points, what Mediterranean civilization that invented the alphabet?"
+43,Sun,0,A god of this domain granted a different god the ability to change his size at will in order to keep winds blowing on Earth.
+43,Sun,1,A legendary floating idol supported by magnets was housed in a temple dedicated to a god of this domain at Konark.
+43,Sun,2,"A god of this domain promised Kunti that her son with him would be born with ear-rings and breastplate armor; that child of a god of this domain was the Kaurava ally, (*) Karna."
+43,Sun,3,Hanuman mistook a god of this domain for a fruit and was struck by Indra while flying towards him.
+43,Sun,4,"A god of this domain was also called 'Mitra,' the latter of which is cognate with the Iranian 'Mithras.'"
+43,Sun,5,"The Hindu god Surya represents, for 10 points, what celestial object?"
+44,Puerto_Ricans,0,"A government serving these people lost significant tax revenue when Section 936 of the tax code was changed, eliminating incentives for pharma companies."
+44,Puerto_Ricans,1,"250 schools serving these people under the direction of Julia Keleher closed after an event that prompted at least 160,000 of these people to move."
+44,Puerto_Ricans,2,A federal law called Promesa reduced pensions for some of these people after a massive bankruptcy.
+44,Puerto_Ricans,3,"In 2017, (*) Whitefish Energy was controversially awarded a 300-million-dollar contract to repair an electric grid serving these people after a natural disaster."
+44,Puerto_Ricans,4,"In 2020, a plurality of these people voted in favor of a referendum on statehood."
+44,Puerto_Ricans,5,"For 10 points, name these American citizens whose island territory was devastated by Hurricane Maria in 2017."
+45,Mitochondrion,0,The degradation of these organelles is controlled by PINK1 and parkin and has an as-of-yet unknown association with Parkinson's disease.
+45,Mitochondrion,1,The majority of these organelles in neurons are distributed in the dendrites.
+45,Mitochondrion,2,"A metalloprotein found in this organelle is commonly used in molecular clock analysis, while another is the standard protein used in animal DNA barcoding."
+45,Mitochondrion,3,This organelle receives reducing equivalents from the (*) malate-aspartate shuttle.
+45,Mitochondrion,4,"Acute cyanide toxicity inhibits COX in this organelle, which forms Complex IV in this organelle's inner membrane."
+45,Mitochondrion,5,A proton gradient found in this organelle drives oxidative phosphorylation.
+45,Mitochondrion,6,"For 10 points, name this organelle that uses ATP synthase to power the cell."
+46,Origami,0,"A 2008 exhibition on these artworks featured examples by Erik Demaine, the youngest-ever MIT professor."
+46,Origami,1,The complexity of these artworks is governed by the Huzita–Hatori axioms proved by physics professor Robert J. Lang.
+46,Origami,2,The Yoshizawa–Randlett system is a way to diagram steps in making these artworks.
+46,Origami,3,"Since the 1970s, principles from making these artworks have been used to more easily deploy solar panels on satellites and to more efficiently (*) package car airbags."
+46,Origami,4,The Pureland form of this art only allows for actions named for mountains and valleys.
+46,Origami,5,All of the steps in making these works can be represented in one image in crease pattern diagrams.
+46,Origami,6,"For 10 points, name these artworks popular in Japan made from folding a piece of paper."
+47,Pierre_Trudeau,0,This politician was told he was better for the 'TV generation' than opponent Robert Stanfield in one of several letters exchanged with Marshall McLuhan.
+47,Pierre_Trudeau,1,This man won a huge electoral majority just days after he was pelted with rotten fruit in a John the Baptist Day parade.
+47,Pierre_Trudeau,2,Donal Brittain's documentary The Champions chronicles the rivalry between this head of state and independence advocate René Lévesque.
+47,Pierre_Trudeau,3,This PM instituted the official (*) bilingualism policy and secured the approval of his country's Charter of Rights and Freedom after succeeding Joe Clark.
+47,Pierre_Trudeau,4,He declared 'Just watch me' during the October Crisis over French separatism.
+47,Pierre_Trudeau,5,"For 10 points, name this Canadian Prime Minister during much of the 1970s, the father of the current PM Justin."
+48,Handbag,0, One of the most iconic of these objects gets its name from being introduced to the public in February 1955 and has a quilted pattern that intentionally resembles jockey jackets.
+48,Handbag,1,A bread-inspired one of these objects with an interlocking double-F logo became the first 'it' example of one of these objects after appearing in a robbery scene in Sex and the City.
+48,Handbag,2,One of these objects called the Chanel 2.55 features a linked gold (*) chain.
+48,Handbag,3,Another of these objects was created after an in-air conversation between Hermès designer Jean-Louis Dumas and actress Jane Birkin on the need for them to have pockets and handles.
+48,Handbag,4,"For 10 points, name these accessories that include a saddle-shaped one by Dior meant to be worn tight over the shoulder."
+49,Vertex_(graph_theory),0,An s–t cut can be uniquely defined by a single set of these objects because its two partitions are complements to each other.
+49,Vertex_(graph_theory),1,All of these objects but one are assigned an initial label of infinity in an overestimate that is improved by repeated relaxation steps during the Bellman–Ford algorithm.
+49,Vertex_(graph_theory),2,Determining how to reach all of these objects exactly once is the NP-complete Hamiltonian (*) cycle problem.
+49,Vertex_(graph_theory),3,"Given a specific one of these objects, the output of Dijkstra's algorithm spans all of the other ones with minimal distance."
+49,Vertex_(graph_theory),4,"The degree of these objects is highest in a complete graph, where they are all adjacent."
+49,Vertex_(graph_theory),5,"For 10 points, name these elements of graphs that are connected by edges."
+50,Atmosphere,0,The influence of this entity can be reduced by obtaining multiple 'lucky' exposures of short duration and combining them in speckle-based techniques.
+50,Atmosphere,1,Instruments can correct for low-order perturbations due to this entity using a segmented mirror that tips and tilts in response to incoming wavefront data in the primary application of adaptive optics.
+50,Atmosphere,2,Predictions of this entity's (*) transparency are found alongside cloud cover forecasts in clear sky charts.
+50,Atmosphere,3,"This entity spreads out the image of objects during astronomical seeing, and its impact is minimal at high elevation observatories like Mauna Kea."
+50,Atmosphere,4,"For 10 points, the twinkling of stars is caused by what turbulent region separating ground-based telescopes from space?"

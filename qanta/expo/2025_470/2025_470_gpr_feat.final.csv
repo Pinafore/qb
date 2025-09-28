@@ -1,23 +1,23 @@
-question,answer
-0,San Francisco
-1,Cholera
-2,Delhi
-3,Sigmund Freud
-4,Inverse function
-5,Caving
-6,Puja Room
-7,Kilogram
-8,Baghdad
-9,King Lear
-10,Philippines
-11,Giuseppe Verdi
-12,Japanese poetry
-13,Refugees
-14,Aluminium
-15,Recession
-16,Plough
-17,John McCain
-18,Medicine
-19,Fossil
-20,Oscar Wilde
-21,Temperature of the Ocean
+correct,question,answer
+True,0,San Francisco
+True,1,Cholera
+False,2,Delhi
+True,3,Sigmund Freud
+False,4,Inverse function
+True,5,Caving
+False,6,Puja Room
+False,7,Kilogram
+True,8,Baghdad
+True,9,King Lear
+True,10,Philippines
+True,11,Giuseppe Verdi
+False,12,Japanese poetry
+False,13,Refugees
+True,14,Aluminium
+True,15,Recession
+True,16,Plough
+True,17,John McCain
+False,18,Medicine
+True,19,Fossil
+True,20,Oscar Wilde
+False,21,Temperature of the Ocean
