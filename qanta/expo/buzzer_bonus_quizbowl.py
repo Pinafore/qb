@@ -961,8 +961,10 @@ def add_bonus_points(score, question_num=None, correct_answer=None):
     bonus_points = -1
     while bonus_points < 0:
         try:
-            bonus_points = int(input("How many points? ").strip())
+            raw_bonus = "".join(x for x in input("How many points? ").strip() if x.isdigit())
+            bonus_points = int(raw_bonus)
         except ValueError:
+            print("|%s|" % raw_bonus)
             bonus_points = -1
     score.human += bonus_points
     return score
