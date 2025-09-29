@@ -1,7 +1,7 @@
 correct,question,answer
 True,0,San Francisco
 True,1,Cholera
-False,2,Delhi
+True,2,New Delhi
 True,3,Sigmund Freud
 False,4,Inverse function
 True,5,Caving
@@ -11,13 +11,13 @@ True,8,Baghdad
 True,9,King Lear
 True,10,Philippines
 True,11,Giuseppe Verdi
-False,12,Japanese poetry
-False,13,Refugees
+True,12,Japanese poetry
+True,13,Refugees
 True,14,Aluminium
 True,15,Recession
 True,16,Plough
 True,17,John McCain
-False,18,Medicine
+True,18,Medicine
 True,19,Fossil
 True,20,Oscar Wilde
-False,21,Temperature of the Ocean
+True,21,Temperature of the Ocean
