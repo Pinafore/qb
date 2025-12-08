@@ -29,3 +29,215 @@ True,True,34,2,33,Egg,0.94,{'final': True}
 True,True,34,3,20,Egg,0.97,{'final': True}
 True,False,34,4,24,Egg (biology),0.84,{'final': True}
 True,False,34,4,24,Egg (biology),0.84,{'final': True}
+False,False,35,0,28,Trophy Stand,0.40,{'final': False}
+False,False,35,0,49,Super Star (Mario),0.66,{'final': False}
+False,False,35,0,53,Super Mario Galaxy 2,0.46,{'final': False}
+True,True,35,1,29,Rock Mushroom,0.72,{'final': True}
+False,True,35,1,48,Rock Mushroom,0.66,{'final': False}
+True,True,35,2,27,Rock Mushroom,0.90,{'final': True}
+True,True,35,2,28,Rock Mushroom,0.86,{'final': True}
+True,True,35,3,18,Rock Mushroom,0.93,{'final': True}
+True,True,35,3,18,Rock Mushroom,0.93,{'final': True}
+False,True,36,0,23,Monaco,0.55,{'final': False}
+True,True,36,1,22,Monaco,0.86,{'final': True}
+True,True,36,2,32,Monaco,0.93,{'final': True}
+True,True,36,2,35,Monaco,0.97,{'final': True}
+True,True,36,3,13,Monaco,0.86,{'final': True}
+True,True,36,4,12,Monaco,0.93,{'final': True}
+True,True,36,4,12,Monaco,0.93,{'final': True}
+False,False,37,0,15,Window,0.60,{'final': False}
+True,False,37,1,19,Binary code,0.74,{'final': True}
+True,True,37,2,31,Brick,0.84,{'final': True}
+True,True,37,2,35,Brick,0.88,{'final': True}
+True,True,37,3,30,Brick,0.94,{'final': True}
+True,True,37,3,37,Brick,0.97,{'final': True}
+True,True,37,4,8,Brick,0.95,{'final': True}
+True,True,37,4,8,Brick,0.95,{'final': True}
+False,False,38,0,21,Chipotle Mexican Grill,0.19,{'final': False}
+False,False,38,1,31,I Heart Mac & Cheese,0.62,{'final': False}
+False,False,38,2,21,Raising Cane's Chicken Fingers,0.62,{'final': False}
+True,False,38,3,17,Raising Cane's Chicken Fingers,0.94,{'final': True}
+True,False,38,3,17,Raising Cane's Chicken Fingers,0.94,{'final': True}
+False,False,6,0,29,The Devil in the White City,0.62,{'final': False}
+True,True,6,0,37,1Q84,0.90,{'final': True}
+True,True,6,1,24,1Q84,0.84,{'final': True}
+True,True,6,2,28,1Q84,0.83,{'final': True}
+True,True,6,2,36,1Q84,0.95,{'final': True}
+True,True,6,3,29,1Q84,0.92,{'final': True}
+True,True,6,3,52,1Q84,0.99,{'final': True}
+True,True,6,5,25,1Q84,0.98,{'final': True}
+True,True,6,5,35,1Q84,0.98,{'final': True}
+True,True,6,5,35,1Q84,0.98,{'final': True}
+False,False,7,0,18,Closest vector problem,0.39,{'final': False}
+False,False,7,1,25,Shor's algorithm,0.60,{'final': False}
+False,False,7,1,31,Integer factorization,0.68,{'final': False}
+True,False,7,2,23,Integer factorization,0.73,{'final': True}
+True,False,7,3,21,Shor's algorithm,0.83,{'final': True}
+True,False,7,4,15,Shor's algorithm,0.97,{'final': True}
+True,False,7,4,15,Shor's algorithm,0.97,{'final': True}
+True,True,8,0,28,Helsinki,0.90,{'final': True}
+True,True,8,1,23,Helsinki,0.94,{'final': True}
+True,True,8,2,14,Helsinki,0.93,{'final': True}
+True,True,8,3,15,Helsinki,0.93,{'final': True}
+True,True,8,4,13,Helsinki,0.97,{'final': True}
+True,True,8,5,13,Helsinki,0.97,{'final': True}
+True,True,8,6,26,Helsinki,0.98,{'final': True}
+True,True,8,6,29,Helsinki,0.96,{'final': True}
+True,True,8,6,29,Helsinki,0.96,{'final': True}
+False,False,9,0,25,Camfranglais,0.68,{'final': False}
+True,False,9,0,43,Turkish language,0.74,{'final': True}
+False,False,9,1,29,Swiss German,0.62,{'final': False}
+False,False,9,1,36,Swiss German,0.66,{'final': False}
+True,False,9,2,14,Swiss German,0.76,{'final': True}
+True,False,9,3,13,Swiss German,0.86,{'final': True}
+True,False,9,4,27,Swiss Standard German,0.86,{'final': True}
+True,False,9,4,50,Swiss Standard German,0.76,{'final': True}
+True,False,9,4,51,Swiss German,0.90,{'final': True}
+True,False,9,5,26,Swiss German,0.79,{'final': True}
+True,False,9,5,30,Swiss German,0.74,{'final': True}
+True,False,9,5,30,Swiss German,0.74,{'final': True}
+False,False,10,0,28,J. L. Austin,0.62,{'final': False}
+True,False,10,1,25,J. L. Austin,0.86,{'final': True}
+True,False,10,1,35,J. L. Austin,0.86,{'final': True}
+True,False,10,2,25,J. L. Austin,0.90,{'final': True}
+True,False,10,2,29,J. L. Austin,0.90,{'final': True}
+True,False,10,3,28,J. L. Austin,0.93,{'final': True}
+True,False,10,3,31,J. L. Austin,0.96,{'final': True}
+True,False,10,4,26,J. L. Austin,0.97,{'final': True}
+True,False,10,4,34,J. L. Austin,0.96,{'final': True}
+True,False,10,4,34,J. L. Austin,0.96,{'final': True}
+True,False,11,0,26,Diane Keaton,0.83,{'final': True}
+True,False,11,0,28,Jessica Lange,0.77,{'final': True}
+False,False,11,1,16,,0.00,{'final': False}
+True,True,11,2,27,Debra Winger,0.93,{'final': True}
+True,True,11,3,25,Debra Winger,0.99,{'final': True}
+True,True,11,3,26,Debra Winger,0.98,{'final': True}
+True,True,11,4,18,Debra Winger,0.99,{'final': True}
+True,True,11,4,18,Debra Winger,0.99,{'final': True}
+True,False,12,0,28,Proper noun,0.82,{'final': True}
+True,False,12,0,29,Boeing 787 Dreamliner,0.73,{'final': True}
+False,False,12,1,26,Semaglutide,0.64,{'final': False}
+False,False,12,1,27,Semaglutide,0.56,{'final': False}
+False,False,12,2,28,Captopril,0.66,{'final': False}
+True,False,12,2,34,Exenatide,0.73,{'final': True}
+False,False,12,3,25,Semaglutide,0.62,{'final': False}
+False,False,12,3,28,Exenatide,0.70,{'final': False}
+True,False,12,4,29,Semaglutide,0.87,{'final': True}
+True,False,12,4,31,Semaglutide,0.86,{'final': True}
+True,False,12,5,26,Semaglutide,0.82,{'final': True}
+True,False,12,5,26,Semaglutide,0.82,{'final': True}
+True,False,13,0,26,SFpark,0.76,{'final': True}
+True,False,13,0,31,SFpark,0.80,{'final': True}
+True,False,13,1,21,Parking,0.90,{'final': True}
+True,False,13,2,23,Parking,0.93,{'final': True}
+True,False,13,3,25,Parking,0.97,{'final': True}
+True,False,13,3,28,Parking,0.90,{'final': True}
+True,False,13,4,15,Parking,0.96,{'final': True}
+True,False,13,5,21,Parking,0.98,{'final': True}
+True,False,13,5,21,Parking,0.98,{'final': True}
+True,False,14,0,27,Top quark,0.73,{'final': True}
+True,False,14,1,25,Top quark,0.93,{'final': True}
+True,False,14,1,27,Top quark,0.95,{'final': True}
+True,False,14,2,13,Top quark,0.97,{'final': True}
+True,False,14,3,22,Top quark,0.98,{'final': True}
+True,False,14,4,14,Top quark,0.98,{'final': True}
+True,False,14,5,18,Top quark,0.99,{'final': True}
+True,False,14,5,18,Top quark,0.99,{'final': True}
+True,True,15,0,30,Cyrano de Bergerac,0.86,{'final': True}
+True,False,15,1,16,Cyrano de Bergerac (play),0.96,{'final': True}
+True,False,15,2,22,Cyrano de Bergerac (play),0.97,{'final': True}
+True,False,15,3,24,Cyrano de Bergerac (play),0.95,{'final': True}
+True,False,15,4,25,Cyrano de Bergerac (play),0.99,{'final': True}
+True,False,15,5,23,Cyrano de Bergerac (play),0.97,{'final': True}
+True,False,15,5,23,Cyrano de Bergerac (play),0.97,{'final': True}
+False,False,16,0,27,Manganese,0.63,{'final': False}
+False,False,16,0,30,Boron,0.54,{'final': False}
+True,False,16,1,26,Molybdenum,0.73,{'final': True}
+True,False,16,1,27,Molybdenum,0.76,{'final': True}
+True,False,16,2,24,Molybdenum,0.91,{'final': True}
+True,False,16,2,25,Molybdenum,0.78,{'final': True}
+True,False,16,3,20,Molybdenum,0.93,{'final': True}
+True,False,16,3,20,Molybdenum,0.93,{'final': True}
+True,False,17,0,22,Audrey Hepburn,0.76,{'final': True}
+False,False,17,1,25,,0.00,{'final': False}
+True,False,17,2,24,Tár (film),0.90,{'final': True}
+True,False,17,3,26,Tár (film),0.95,{'final': True}
+True,True,17,3,28,Lydia Tár,0.76,{'final': True}
+True,False,17,4,28,Tár,0.92,{'final': True}
+True,False,17,4,31,Tár (film),0.96,{'final': True}
+True,False,17,4,31,Tár (film),0.96,{'final': True}
+True,False,18,0,30,Suriname,0.90,{'final': True}
+True,False,18,1,13,Suriname,0.90,{'final': True}
+True,False,18,2,23,Suriname,0.95,{'final': True}
+True,False,18,2,25,Suriname,0.98,{'final': True}
+True,False,18,3,14,Suriname,0.96,{'final': True}
+True,False,18,4,10,Suriname,0.98,{'final': True}
+True,False,18,5,28,Suriname,0.97,{'final': True}
+True,False,18,5,49,Suriname,0.99,{'final': True}
+True,False,18,5,49,Suriname,0.99,{'final': True}
+True,False,19,0,25,Gregory House,0.78,{'final': True}
+True,False,19,0,29,Gregory House,0.80,{'final': True}
+True,False,19,1,25,Gregory House,0.84,{'final': True}
+True,False,19,1,39,Gregory House,0.90,{'final': True}
+True,False,19,2,9,Gregory House,0.88,{'final': True}
+True,False,19,3,17,Gregory House,0.95,{'final': True}
+True,False,19,4,16,Gregory House,0.93,{'final': True}
+True,False,19,4,16,Gregory House,0.93,{'final': True}
+False,False,20,0,27,,0.00,{'final': False}
+False,False,20,0,34,Dwight D. Eisenhower,0.63,{'final': False}
+False,False,20,1,26,Dwight D. Eisenhower,0.68,{'final': False}
+True,False,20,1,38,Dwight D. Eisenhower,0.78,{'final': True}
+True,False,20,2,25,Dwight D. Eisenhower,0.93,{'final': True}
+True,False,20,3,23,Dwight D. Eisenhower,0.98,{'final': True}
+True,False,20,3,23,Dwight D. Eisenhower,0.98,{'final': True}
+True,True,1,0,27,Nicolas Poussin,0.82,{'final': True}
+True,True,1,0,54,Nicolas Poussin,0.83,{'final': True}
+True,True,1,1,28,Nicolas Poussin,0.77,{'final': True}
+True,True,1,1,36,Nicolas Poussin,0.90,{'final': True}
+True,True,1,2,15,Nicolas Poussin,0.95,{'final': True}
+True,True,1,3,30,Nicolas Poussin,0.98,{'final': True}
+True,True,1,3,30,Nicolas Poussin,0.98,{'final': True}
+False,False,2,0,24,,0.00,{'final': False}
+False,False,2,1,25,,0.00,{'final': False}
+False,False,2,1,32,,0.00,{'final': False}
+False,False,2,2,23,,0.00,{'final': False}
+False,False,2,3,22,,0.00,{'final': False}
+False,False,2,4,25,,0.00,{'final': False}
+False,False,2,5,25,,0.00,{'final': False}
+False,False,2,5,25,,0.00,{'final': False}
+False,False,3,0,30,,0.00,{'final': False}
+False,False,3,0,35,,0.00,{'final': False}
+False,False,3,1,26,,0.00,{'final': False}
+False,False,3,2,25,,0.00,{'final': False}
+False,False,3,3,20,,0.00,{'final': False}
+False,False,3,4,24,,0.00,{'final': False}
+False,False,3,5,15,,0.00,{'final': False}
+False,False,3,6,26,,0.00,{'final': False}
+False,False,3,6,30,,0.00,{'final': False}
+False,False,3,6,30,,0.00,{'final': False}
+False,False,4,0,26,,0.00,{'final': False}
+False,False,4,0,40,,0.00,{'final': False}
+False,False,4,1,16,,0.00,{'final': False}
+False,False,4,2,12,,0.00,{'final': False}
+False,False,4,3,23,,0.00,{'final': False}
+False,False,4,3,26,,0.00,{'final': False}
+False,False,4,4,21,,0.00,{'final': False}
+False,False,4,5,19,,0.00,{'final': False}
+False,False,4,5,19,,0.00,{'final': False}
+False,False,5,0,26,,0.00,{'final': False}
+False,False,5,1,23,,0.00,{'final': False}
+False,False,5,2,23,,0.00,{'final': False}
+False,False,5,3,27,,0.00,{'final': False}
+False,False,5,3,30,,0.00,{'final': False}
+False,False,5,4,25,,0.00,{'final': False}
+False,False,5,4,33,,0.00,{'final': False}
+False,False,5,4,33,,0.00,{'final': False}
+False,False,39,0,26,,0.00,{'final': False}
+False,False,39,1,22,,0.00,{'final': False}
+False,False,39,1,31,,0.00,{'final': False}
+False,False,39,2,24,,0.00,{'final': False}
+False,False,39,2,31,,0.00,{'final': False}
+False,False,39,3,23,,0.00,{'final': False}
+True,False,39,4,17,Goblin Gang,0.75,{'final': True}
+True,True,39,5,16,Skeleton Army,0.79,{'final': True}
+True,True,39,5,16,Skeleton Army,0.79,{'final': True}

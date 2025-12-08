@@ -1,6 +1,31 @@
-correct,answer,question
-True,Fox,30
-False,6 and 7,31
-True,Moonlight Greatsword,32
-True,Chappell Roan,33
-False,Egg (biology),34
+correct,question,answer
+True,30,Fox
+False,31,6 and 7
+True,32,Moonlight Greatsword
+True,33,Chappell Roan
+False,34,Egg (biology)
+True,35,Rock Mushroom
+True,36,Monaco
+True,37,Brick
+False,38,Raising Cane's Chicken Fingers
+True,6,1Q84
+False,7,Shor's algorithm
+True,8,Helsinki
+False,9,Swiss German
+False,10,J. L. Austin
+True,11,Debra Winger
+False,12,Semaglutide
+False,13,Parking
+False,14,Top quark
+False,15,Cyrano de Bergerac (play)
+False,16,Molybdenum
+False,17,Tár (film)
+False,18,Suriname
+False,19,Gregory House
+False,20,Dwight D. Eisenhower
+True,1,Nicolas Poussin
+False,2,
+False,3,
+False,4,
+False,5,
+True,39,Skeleton Army
